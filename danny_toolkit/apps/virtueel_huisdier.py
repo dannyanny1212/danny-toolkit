@@ -43,6 +43,17 @@ def _get_weer_agent():
     except Exception:
         return None
 
+def _get_claude_chat():
+    """Lazy import voor Claude Chat met API client."""
+    try:
+        from ..ai.claude_chat import ClaudeChatApp
+        chat = ClaudeChatApp()
+        if chat._init_client():
+            return chat
+        return None
+    except Exception:
+        return None
+
 
 class VirtueelHuisdierApp:
     """Virtueel huisdier simulator - Uitgebreide versie."""
@@ -2271,7 +2282,7 @@ class VirtueelHuisdierApp:
         self._sla_op()
 
     def _leren_ai_gesprek(self):
-        """Huisdier heeft een gesprek met AI."""
+        """Huisdier heeft een gesprek met ECHTE Claude AI!"""
         if self.huisdier["munten"] < 15:
             print("\nJe hebt niet genoeg munten! (Nodig: 15)")
             return
@@ -2283,75 +2294,145 @@ class VirtueelHuisdierApp:
         self.huisdier["munten"] -= 15
         self.huisdier["energie"] = max(0, self.huisdier["energie"] - 20)
 
-        # Init stats
+        # Init stats en kennis
         if "ai_gesprekken" not in self.huisdier["stats"]:
             self.huisdier["stats"]["ai_gesprekken"] = 0
+        if "kennis" not in self.huisdier:
+            self.huisdier["kennis"] = {"feiten": [], "nieuws": [], "weer_historie": []}
 
         naam = self.huisdier["naam"]
         geluid = self.huisdier["geluid"]
         huisdier_type = self.huisdier["type"]
-
-        # AI gesprek onderwerpen
-        gesprekken = [
-            {
-                "vraag": "Wat is de zin van het leven?",
-                "antwoord": "Het leven gaat over leren, groeien en anderen helpen!",
-                "les": "Filosofie is nadenken over belangrijke vragen",
-            },
-            {
-                "vraag": "Hoe werkt kunstmatige intelligentie?",
-                "antwoord": "AI leert patronen van grote hoeveelheden data!",
-                "les": "AI is gebaseerd op wiskunde en statistiek",
-            },
-            {
-                "vraag": "Waarom is de lucht blauw?",
-                "antwoord": "Zonlicht verstrooit in de atmosfeer, blauw het meest!",
-                "les": "Dit heet Rayleigh-verstrooiing",
-            },
-            {
-                "vraag": "Hoe groot is het universum?",
-                "antwoord": "Het waarneembare universum is 93 miljard lichtjaar breed!",
-                "les": "Het universum breidt nog steeds uit",
-            },
-            {
-                "vraag": "Waarom hebben we slaap nodig?",
-                "antwoord": "Slaap helpt ons brein om herinneringen te verwerken!",
-                "les": "Slaap is essentieel voor gezondheid",
-            },
-            {
-                "vraag": f"Wat maakt een {huisdier_type} speciaal?",
-                "antwoord": f"Elke {huisdier_type} is uniek en heeft eigen talenten!",
-                "les": f"{naam} is heel bijzonder",
-            },
-        ]
+        iq = self.huisdier.get("intelligentie", 0)
 
         print("\n" + "=" * 50)
-        print(f"  [AI] {naam} PRAAT MET CLAUDE AI!")
+        print(f"  [AI] {naam} PRAAT MET ECHTE CLAUDE AI!")
         print("=" * 50)
         time.sleep(0.5)
 
         print(f"\n  {geluid}")
         print(f"  {naam} opent Claude Chat...")
-        time.sleep(0.8)
+        time.sleep(0.5)
 
+        # Probeer ECHTE Claude Chat te gebruiken
+        echte_ai = False
+        claude_chat = None
         intel_bonus = 0
         lessen_geleerd = []
 
-        # Voer 3 gesprekken
-        for gesprek in random.sample(gesprekken, 3):
-            print(f"\n  --- Nieuw Gesprek ---")
-            print(f"  {naam}: \"{gesprek['vraag']}\"")
-            time.sleep(0.6)
+        try:
+            claude_chat = _get_claude_chat()
+            if claude_chat:
+                echte_ai = True
+                print(f"  [OK] Verbonden met ECHTE {claude_chat.provider.upper()} API!")
+                print(f"  [MODEL] {claude_chat.model}")
+        except Exception as e:
+            print(f"  [!] Kon niet verbinden: {e}")
 
-            print(f"  Claude: \"{gesprek['antwoord']}\"")
-            time.sleep(0.4)
+        # Vragen die het huisdier kan stellen (aangepast aan IQ)
+        basis_vragen = [
+            "Wat is kunstmatige intelligentie in eenvoudige woorden?",
+            "Waarom is de lucht blauw?",
+            "Hoe werkt het internet?",
+            "Wat zijn zwarte gaten?",
+            "Hoe leren dieren trucs?",
+        ]
 
-            if random.randint(1, 100) <= 85:
-                lessen_geleerd.append(gesprek["les"])
-                intel_bonus += 3
-                print(f"  [LAMP] {naam} leert: {gesprek['les']}")
+        geavanceerde_vragen = [
+            "Leg uit hoe neural networks werken.",
+            "Wat is het verschil tussen machine learning en deep learning?",
+            "Hoe werkt natuurlijke taalverwerking (NLP)?",
+            "Wat zijn de ethische uitdagingen van AI?",
+            "Hoe kunnen computers creativiteit simuleren?",
+        ]
+
+        # Kies vragen gebaseerd op IQ
+        if iq >= 50:
+            alle_vragen = basis_vragen + geavanceerde_vragen
+        else:
+            alle_vragen = basis_vragen
+
+        # Systeem prompt voor educatieve antwoorden
+        systeem_prompt = f"""Je bent een vriendelijke leraar die praat met een slim virtueel huisdier genaamd {naam} (een {huisdier_type}).
+{naam} heeft een IQ van {iq} en wil graag leren.
+Geef korte, educatieve antwoorden (max 2-3 zinnen).
+Eindig elk antwoord met een interessant feit dat {naam} kan onthouden.
+Antwoord in het Nederlands."""
+
+        # Voer gesprekken
+        gekozen_vragen = random.sample(alle_vragen, min(3, len(alle_vragen)))
+
+        for i, vraag in enumerate(gekozen_vragen, 1):
+            print(f"\n  --- Gesprek {i}/3 ---")
+            print(f"  {naam}: \"{vraag}\"")
+            time.sleep(0.5)
+
+            antwoord = None
+            les = None
+
+            if echte_ai and claude_chat:
+                try:
+                    # ECHTE AI aanroep!
+                    berichten = [{"role": "user", "content": vraag}]
+                    antwoord = claude_chat._chat_conversatie(berichten, systeem_prompt)
+
+                    # Extract een les uit het antwoord (eerste zin of feit)
+                    zinnen = antwoord.replace("!", ".").replace("?", ".").split(".")
+                    for zin in zinnen:
+                        zin = zin.strip()
+                        if len(zin) > 15 and len(zin) < 150:
+                            les = zin
+                            break
+
+                    print(f"  Claude: \"{antwoord[:200]}{'...' if len(antwoord) > 200 else ''}\"")
+                    intel_bonus += 5  # Meer bonus voor echte AI
+                except Exception as e:
+                    print(f"  [!] API fout: {e}")
+                    antwoord = None
+
+            # Fallback naar gesimuleerde antwoorden
+            if not antwoord:
+                fallback_antwoorden = {
+                    "kunstmatige intelligentie": ("AI zijn computerprogramma's die kunnen leren!", "AI leert van data"),
+                    "lucht blauw": ("Zonlicht verstrooit in de atmosfeer!", "Rayleigh-verstrooiing"),
+                    "internet": ("Het internet verbindt computers wereldwijd!", "Data reist via kabels en wifi"),
+                    "zwarte gaten": ("Zwarte gaten hebben zo veel zwaartekracht dat licht niet ontsnapt!", "Einstein voorspelde ze"),
+                    "dieren trucs": ("Dieren leren door beloning en herhaling!", "Positieve bekrachtiging werkt"),
+                    "neural networks": ("Neural networks bootsen het brein na!", "Ze hebben lagen van neuronen"),
+                    "machine learning": ("ML leert van data, DL gebruikt diepe netwerken!", "Deep learning is krachtiger"),
+                }
+
+                for keyword, (resp, feit) in fallback_antwoorden.items():
+                    if keyword in vraag.lower():
+                        antwoord = resp
+                        les = feit
+                        break
+
+                if not antwoord:
+                    antwoord = "Dat is een interessante vraag! Ik moet hier meer over leren."
+                    les = "Nieuwsgierigheid is de sleutel tot leren"
+
+                print(f"  Claude: \"{antwoord}\"")
+                intel_bonus += 2
+
+            # Leer de les
+            if les and random.randint(1, 100) <= 90:
+                lessen_geleerd.append(les)
+                print(f"  [LAMP] {naam} leert: \"{les}\"")
+
+                # Sla op in permanente kennis als het echt is
+                if echte_ai and les not in self.huisdier["kennis"]["feiten"]:
+                    self.huisdier["kennis"]["feiten"].append(les)
+                    # Ook in permanente opslag
+                    permanente_kennis = self._laad_permanente_kennis()
+                    if les not in permanente_kennis["feiten"]:
+                        permanente_kennis["feiten"].append(les)
+                        permanente_kennis["bronnen"].append("Claude AI")
+                        permanente_kennis["geleerd_op"].append(datetime.now().isoformat())
+                        self._sla_permanente_kennis_op(permanente_kennis)
+                        print(f"  [SAVE] Opgeslagen in permanente kennis!")
             else:
-                print(f"  [?] {naam} moet hier nog over nadenken...")
+                print(f"  [?] {naam} denkt hier nog over na...")
 
             time.sleep(0.3)
 
@@ -2363,8 +2444,15 @@ class VirtueelHuisdierApp:
         xp_beloning = len(lessen_geleerd) * 15 + 10
         munt_beloning = len(lessen_geleerd) * 5
 
+        # Extra bonus voor echte AI
+        if echte_ai:
+            intel_bonus += 5
+            munt_beloning += 10
+
         print(f"\n  {naam}'s gesprek met Claude:")
         print(f"    [CHAT] Gesprekken: 3")
+        if echte_ai:
+            print(f"    [STAR] ECHTE AI gebruikt!")
         print(f"    [LAMP] Lessen geleerd: {len(lessen_geleerd)}")
         print(f"    [IQ] Intelligentie: +{intel_bonus}")
         print(f"    [MUNT] Munten: +{munt_beloning}")
