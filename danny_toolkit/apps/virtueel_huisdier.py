@@ -150,6 +150,11 @@ class VirtueelHuisdierApp:
         for key, value in defaults.items():
             if key not in data:
                 data[key] = value
+            elif isinstance(value, dict) and isinstance(data.get(key), dict):
+                # Ook geneste velden migreren
+                for sub_key, sub_value in value.items():
+                    if sub_key not in data[key]:
+                        data[key][sub_key] = sub_value
 
         return data
 
