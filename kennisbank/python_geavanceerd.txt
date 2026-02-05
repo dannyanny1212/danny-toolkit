@@ -182,15 +182,11 @@ Keywords: type hints, typing, Optional, List, Dict
 
 === HOE WERKT LRU_CACHE? ===
 
-lru_cache is een decorator uit de functools module die functie-resultaten cached (opslaat). LRU staat voor "Least Recently Used" - de minst recent gebruikte items worden verwijderd als de cache vol is.
+lru_cache is een Python decorator die functie-resultaten opslaat in een cache. Zo werkt het: eerste aanroep voert functie uit en slaat resultaat op. Volgende aanroep met zelfde argumenten haalt resultaat direct uit cache (supersnel). LRU betekent "Least Recently Used" - oudste ongebruikte items worden verwijderd als cache vol is. Gebruik: @lru_cache(maxsize=128) boven je functie. Ideaal voor dure berekeningen en recursieve functies. Keywords: lru_cache, cache, memoization, functools.
 
-Hoe werkt lru_cache:
-- Eerste keer: functie wordt uitgevoerd, resultaat opgeslagen
-- Volgende keer met zelfde argumenten: resultaat uit cache (supersnel)
-- Cache heeft maximale grootte (maxsize)
-- Oudste ongebruikte items worden verwijderd
+---
 
-Basis voorbeeld lru_cache:
+=== LRU_CACHE VOORBEELD ===
 
 from functools import lru_cache
 
@@ -200,25 +196,15 @@ def fibonacci(n):
         return n
     return fibonacci(n-1) + fibonacci(n-2)
 
-# Zonder cache: fibonacci(40) duurt seconden
-# Met cache: fibonacci(40) is instant
+Zonder cache duurt fibonacci(40) seconden. Met cache is het instant omdat eerder berekende waarden worden hergebruikt.
 
-Wanneer lru_cache gebruiken:
-- Dure berekeningen die vaak herhaald worden
-- Functies met dezelfde input -> zelfde output
-- Recursieve functies (zoals fibonacci)
-- API calls die gecached mogen worden
+---
 
-Parameters van lru_cache:
-- maxsize=128: maximaal 128 resultaten opslaan
-- maxsize=None: onbeperkte cache
-- typed=True: verschillende types apart cachen
+=== LRU_CACHE PARAMETERS ===
 
-Cache info bekijken:
-fibonacci.cache_info()  # hits, misses, size
-fibonacci.cache_clear()  # cache legen
+maxsize=128: maximaal 128 resultaten opslaan. maxsize=None: onbeperkte cache. typed=True: verschillende types apart cachen. Cache info: fibonacci.cache_info() toont hits en misses. Cache legen: fibonacci.cache_clear().
 
-Keywords: lru_cache, cache, caching, memoization, functools, opslaan
+Keywords: maxsize, cache_info, cache_clear
 
 ---
 
