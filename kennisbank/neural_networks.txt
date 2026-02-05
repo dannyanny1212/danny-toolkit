@@ -34,21 +34,19 @@ OUTPUT LAYER (Uitvoerlaag):
 
 === HOE WERKT BACKPROPAGATION? ===
 
-Backpropagation is het leeralgoritme voor neural networks. Zo werkt het: (1) Forward pass: data gaat door het netwerk en maakt voorspelling. (2) Loss berekenen: meet fout tussen voorspelling en correct antwoord. (3) Backward pass: bereken gradient van loss voor elke weight met chain rule. (4) Update weights: nieuwe weight = oude weight - learning_rate * gradient. Dit herhaalt tot het netwerk convergeert. Keywords: backpropagation, gradient descent, chain rule, leren.
+Backpropagation is het leeralgoritme voor neural networks. Het werkt in 4 stappen:
 
----
+STAP 1 FORWARD PASS: Data stroomt van input naar output. Elk neuron berekent output = activation(weights * inputs + bias). Het netwerk maakt een voorspelling.
 
-=== BACKPROPAGATION STAPPEN UITGELEGD ===
+STAP 2 LOSS BEREKENEN: De loss functie meet de fout tussen voorspelling en correct antwoord. Lage loss = goede voorspelling. Voorbeelden: MSE Loss, Cross-Entropy Loss.
 
-STAP 1 FORWARD PROPAGATION: Data stroomt van input naar output. Elk neuron berekent output = activation(weights * inputs + bias). Netwerk maakt voorspelling.
+STAP 3 BACKWARD PASS: Bereken de gradient (afgeleide) van de loss naar elke weight. Dit gebeurt met de chain rule uit calculus. De gradients stromen terug door het netwerk, vandaar de naam "back" propagation.
 
-STAP 2 LOSS CALCULATION: Loss functie meet de fout. Lage loss = goede voorspelling. Voorbeelden: MSE Loss, Cross-Entropy Loss.
+STAP 4 WEIGHTS UPDATEN: Pas de weights aan met de formule: nieuwe_weight = oude_weight - learning_rate * gradient. Optimizers zoals SGD, Adam en RMSprop bepalen hoe dit precies gebeurt.
 
-STAP 3 BACKWARD PROPAGATION: Bereken gradient (afgeleide) van loss naar elke weight. Gebruik chain rule uit calculus. Gradients stromen terug door netwerk.
+Dit proces herhaalt zich voor elke batch trainingsdata tot het netwerk convergeert (loss stopt met dalen).
 
-STAP 4 WEIGHT UPDATE: Pas weights aan met formule: weight = weight - learning_rate * gradient. Optimizers: SGD, Adam, RMSprop.
-
-Keywords: forward propagation, loss function, gradient, weight update, optimizer
+Keywords: backpropagation, back propagation, gradient descent, chain rule, forward pass, backward pass, loss function, weights updaten
 
 ---
 

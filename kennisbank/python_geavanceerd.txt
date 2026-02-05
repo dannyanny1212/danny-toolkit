@@ -182,12 +182,14 @@ Keywords: type hints, typing, Optional, List, Dict
 
 === HOE WERKT LRU_CACHE? ===
 
-lru_cache is een Python decorator die functie-resultaten opslaat in een cache. Zo werkt het: eerste aanroep voert functie uit en slaat resultaat op. Volgende aanroep met zelfde argumenten haalt resultaat direct uit cache (supersnel). LRU betekent "Least Recently Used" - oudste ongebruikte items worden verwijderd als cache vol is. Gebruik: @lru_cache(maxsize=128) boven je functie. Ideaal voor dure berekeningen en recursieve functies. Keywords: lru_cache, cache, memoization, functools.
+lru_cache is een Python decorator uit de functools module die functie-resultaten opslaat in een cache. LRU betekent "Least Recently Used".
 
----
+Zo werkt lru_cache stap voor stap:
+1. Eerste aanroep: functie wordt uitgevoerd, resultaat wordt opgeslagen in cache
+2. Volgende aanroep met zelfde argumenten: resultaat komt direct uit cache (supersnel, geen berekening)
+3. Cache vol? Oudste ongebruikte items worden automatisch verwijderd
 
-=== LRU_CACHE VOORBEELD ===
-
+Voorbeeld gebruik:
 from functools import lru_cache
 
 @lru_cache(maxsize=128)
@@ -198,13 +200,13 @@ def fibonacci(n):
 
 Zonder cache duurt fibonacci(40) seconden. Met cache is het instant omdat eerder berekende waarden worden hergebruikt.
 
----
+Parameters: maxsize=128 (max 128 resultaten), maxsize=None (onbeperkt), typed=True (types apart cachen).
 
-=== LRU_CACHE PARAMETERS ===
+Handig: fibonacci.cache_info() toont hits/misses, fibonacci.cache_clear() leegt de cache.
 
-maxsize=128: maximaal 128 resultaten opslaan. maxsize=None: onbeperkte cache. typed=True: verschillende types apart cachen. Cache info: fibonacci.cache_info() toont hits en misses. Cache legen: fibonacci.cache_clear().
+Wanneer gebruiken: dure berekeningen, recursieve functies, API calls die gecached mogen worden.
 
-Keywords: maxsize, cache_info, cache_clear
+Keywords: lru_cache, cache, caching, memoization, functools, decorator, opslaan, hergebruiken
 
 ---
 
