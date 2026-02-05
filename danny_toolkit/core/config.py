@@ -245,9 +245,9 @@ class Config:
     GROQ_MODEL = "llama-3.3-70b-versatile"
 
     # RAG Settings
-    CHUNK_SIZE = 500
-    CHUNK_OVERLAP = 100
-    TOP_K = 5
+    CHUNK_SIZE = 300
+    CHUNK_OVERLAP = 50
+    TOP_K = 8
 
     # Paths
     BASE_DIR = Path(__file__).parent.parent.parent

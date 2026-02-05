@@ -1,10 +1,11 @@
-Geavanceerd Python: Technieken voor Professionals
+PYTHON GEAVANCEERD - DECORATORS - GENERATORS - ASYNC
 
-Decorators
+=== WAT ZIJN PYTHON DECORATORS? ===
 
-Decorators zijn functies die andere functies "wrappen" om functionaliteit toe te voegen.
+Decorators zijn functies die andere functies "wrappen" om functionaliteit toe te voegen zonder de originele code te wijzigen.
 
-BASIS DECORATOR:
+Basis decorator voorbeeld:
+
 def timer(func):
     def wrapper(*args, **kwargs):
         start = time.time()
@@ -17,7 +18,18 @@ def timer(func):
 def slow_function():
     time.sleep(1)
 
-DECORATOR MET ARGUMENTEN:
+Hoe werkt een decorator:
+1. @timer boven een functie plaatsen
+2. Python vervangt de functie door wrapper
+3. wrapper roept originele functie aan
+4. Extra code wordt voor/na uitgevoerd
+
+Keywords: decorator, @decorator, wrapper, functie wrappen
+
+---
+
+=== DECORATOR MET ARGUMENTEN ===
+
 def repeat(times):
     def decorator(func):
         def wrapper(*args, **kwargs):
@@ -31,11 +43,44 @@ def repeat(times):
 def say_hello():
     print("Hallo!")
 
-Context Managers
+# Roept say_hello 3 keer aan
 
-Context managers zorgen voor setup en cleanup, vaak met "with" statement.
+---
 
-CLASS-BASED:
+=== WAT ZIJN PYTHON GENERATORS? ===
+
+Generators zijn functies die waarden een voor een produceren met yield. Ze zijn memory-efficient voor grote datasets.
+
+Generator functie:
+
+def fibonacci(n):
+    a, b = 0, 1
+    for _ in range(n):
+        yield a
+        a, b = b, a + b
+
+for num in fibonacci(10):
+    print(num)
+
+Voordelen van generators:
+- Lazy evaluation (berekent on-demand)
+- Zeer weinig geheugen nodig
+- Kan oneindige sequenties maken
+
+Generator expression:
+squares = (x**2 for x in range(1000000))
+# Neemt bijna geen geheugen!
+
+Keywords: generator, yield, lazy evaluation, memory efficient
+
+---
+
+=== WAT ZIJN CONTEXT MANAGERS? ===
+
+Context managers zorgen voor setup en cleanup code, vaak met "with" statement.
+
+Class-based context manager:
+
 class FileManager:
     def __init__(self, filename, mode):
         self.filename = filename
@@ -47,39 +92,17 @@ class FileManager:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.file.close()
-        return False  # Propagate exceptions
+        return False
 
-GENERATOR-BASED:
-from contextlib import contextmanager
+with FileManager("test.txt", "r") as f:
+    content = f.read()
+# Bestand wordt automatisch gesloten
 
-@contextmanager
-def timer_context():
-    start = time.time()
-    yield
-    print(f"Duurde: {time.time() - start:.2f}s")
+Keywords: context manager, with statement, __enter__, __exit__
 
-with timer_context():
-    slow_operation()
+---
 
-Generators en Iterators
-
-Generators zijn memory-efficient voor grote datasets.
-
-GENERATOR FUNCTIE:
-def fibonacci(n):
-    a, b = 0, 1
-    for _ in range(n):
-        yield a
-        a, b = b, a + b
-
-for num in fibonacci(10):
-    print(num)
-
-GENERATOR EXPRESSION:
-squares = (x**2 for x in range(1000000))  # Lazy evaluation
-sum(squares)  # Berekent on-demand
-
-Dataclasses
+=== PYTHON DATACLASSES ===
 
 Dataclasses reduceren boilerplate voor data containers.
 
@@ -96,16 +119,51 @@ class User:
     def is_adult(self) -> bool:
         return self.leeftijd >= 18
 
+# Automatisch gegenereerd: __init__, __repr__, __eq__
+
 @dataclass(frozen=True)  # Immutable
 class Point:
     x: float
     y: float
 
-Type Hints
+Keywords: dataclass, @dataclass, frozen, data container
 
-Type hints verbeteren code leesbaarheid en IDE ondersteuning.
+---
 
-from typing import List, Dict, Optional, Union, Callable
+=== PYTHON ASYNC/AWAIT ===
+
+Async programming voor I/O-bound taken (netwerk, bestanden).
+
+import asyncio
+import aiohttp
+
+async def fetch_url(url: str) -> str:
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            return await response.text()
+
+async def fetch_all(urls: list) -> list:
+    tasks = [fetch_url(url) for url in urls]
+    return await asyncio.gather(*tasks)
+
+# Uitvoeren
+results = asyncio.run(fetch_all(["url1", "url2"]))
+
+Wanneer async gebruiken:
+- Netwerk requests
+- Bestandsoperaties
+- Database queries
+- Meerdere taken parallel
+
+Keywords: async, await, asyncio, concurrent, parallel
+
+---
+
+=== PYTHON TYPE HINTS ===
+
+Type hints verbeteren leesbaarheid en IDE ondersteuning.
+
+from typing import List, Dict, Optional, Callable
 
 def process_items(
     items: List[str],
@@ -118,51 +176,15 @@ def get_user(user_id: int) -> Optional[User]:
     # Kan User of None teruggeven
     pass
 
-Async/Await
+Keywords: type hints, typing, Optional, List, Dict
 
-Asynchrone programmering voor I/O-bound taken.
+---
 
-import asyncio
-import aiohttp
-
-async def fetch_url(url: str) -> str:
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
-            return await response.text()
-
-async def fetch_all(urls: List[str]) -> List[str]:
-    tasks = [fetch_url(url) for url in urls]
-    return await asyncio.gather(*tasks)
-
-# Uitvoeren
-results = asyncio.run(fetch_all(["url1", "url2", "url3"]))
-
-Metaclasses
-
-Metaclasses zijn "klassen van klassen" - ze controleren hoe klassen worden gemaakt.
-
-class SingletonMeta(type):
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super().__call__(*args, **kwargs)
-        return cls._instances[cls]
-
-class Database(metaclass=SingletonMeta):
-    def __init__(self):
-        self.connection = "connected"
-
-# Altijd dezelfde instance
-db1 = Database()
-db2 = Database()
-assert db1 is db2  # True
-
-Functools Module
+=== FUNCTOOLS MODULE ===
 
 import functools
 
-# Caching
+# Caching met lru_cache
 @functools.lru_cache(maxsize=128)
 def expensive_calculation(n):
     return sum(i**2 for i in range(n))
@@ -176,4 +198,6 @@ cube = functools.partial(power, exponent=3)
 
 # Reduce
 from functools import reduce
-product = reduce(lambda x, y: x * y, [1, 2, 3, 4, 5])  # 120
+product = reduce(lambda x, y: x * y, [1, 2, 3, 4, 5])  # = 120
+
+Keywords: functools, lru_cache, partial, reduce

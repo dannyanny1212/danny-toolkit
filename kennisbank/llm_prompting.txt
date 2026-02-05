@@ -1,53 +1,108 @@
-LLM Prompting: Effectief Communiceren met AI
+LLM PROMPTING - PROMPT ENGINEERING - AI INSTRUCTIES
 
-Wat is Prompting?
-Prompting is de kunst van het formuleren van instructies voor Large Language Models (LLMs) zoals Claude, GPT en anderen. Een goede prompt kan het verschil maken tussen een nutteloos en een briljant antwoord.
+=== WAT IS PROMPTING? ===
 
-Basis Principes:
+Prompting is de kunst van het formuleren van instructies voor Large Language Models (LLMs) zoals Claude, GPT en anderen. Een goede prompt maakt het verschil tussen een nutteloos en een briljant antwoord.
+
+Keywords: prompting, prompt engineering, LLM, instructies, AI
+
+---
+
+=== BASIS PROMPTING PRINCIPES ===
 
 1. WEES SPECIFIEK
-   Slecht: "Schrijf iets over Python"
-   Goed: "Schrijf een Python functie die een lijst met getallen sorteert van laag naar hoog met bubble sort, inclusief comments"
+Slecht: "Schrijf iets over Python"
+Goed: "Schrijf een Python functie die een lijst sorteert met bubble sort, inclusief comments"
 
 2. GEEF CONTEXT
-   - Wie ben je? (rol)
-   - Wat is het doel?
-   - Voor wie is de output?
-   - Welke beperkingen zijn er?
+- Wie ben je? (rol)
+- Wat is het doel?
+- Voor wie is de output?
+- Welke beperkingen zijn er?
 
 3. GEEF VOORBEELDEN
-   - Few-shot learning: geef 2-3 voorbeelden van gewenste output
-   - Dit helpt het model het patroon te begrijpen
+- Few-shot learning: geef 2-3 voorbeelden
+- Dit helpt het model het patroon te begrijpen
 
-Prompting Technieken:
+Keywords: specifiek, context, voorbeelden, duidelijke instructies
 
-ZERO-SHOT PROMPTING
-- Directe vraag zonder voorbeelden
-- "Vertaal naar het Engels: Hallo wereld"
-- Werkt voor simpele taken
+---
 
-FEW-SHOT PROMPTING
-- Geef voorbeelden voor de vraag
-- "positief: Ik ben blij -> sentiment: positief
-   negatief: Dit is verschrikkelijk -> sentiment: negatief
-   Wat een mooie dag! -> sentiment:"
+=== WAT IS ZERO-SHOT PROMPTING? ===
 
-CHAIN-OF-THOUGHT (CoT)
-- Vraag het model stap voor stap te denken
-- "Los dit probleem stap voor stap op..."
-- Verbetert redenering bij complexe taken
+Zero-shot prompting is een vraag stellen zonder voorbeelden te geven. Het model moet de taak begrijpen uit alleen de instructie.
 
-ROLE PROMPTING
-- Geef het model een persona
+Voorbeeld:
+"Vertaal naar het Engels: Hallo wereld"
+
+Wanneer gebruiken:
+- Simpele taken
+- Model kent het format al
+- Snelle interactie
+
+Keywords: zero-shot, geen voorbeelden, directe vraag
+
+---
+
+=== WAT IS FEW-SHOT PROMPTING? ===
+
+Few-shot prompting geeft het model voorbeelden voor de vraag. Dit helpt het model het gewenste format te begrijpen.
+
+Voorbeeld:
+"positief: Ik ben blij -> sentiment: positief
+negatief: Dit is verschrikkelijk -> sentiment: negatief
+Wat een mooie dag! -> sentiment:"
+
+Wanneer gebruiken:
+- Specifiek output format nodig
+- Ongebruikelijke taken
+- Consistente resultaten gewenst
+
+Keywords: few-shot, voorbeelden, examples, in-context learning
+
+---
+
+=== WAT IS CHAIN-OF-THOUGHT PROMPTING? ===
+
+Chain-of-Thought (CoT) vraagt het model stap voor stap te denken. Dit verbetert redenering bij complexe problemen.
+
+Voorbeeld:
+"Los dit wiskundeprobleem stap voor stap op:
+Een trein rijdt 120 km in 2 uur. Wat is de snelheid?"
+
+Stappen in antwoord:
+1. Snelheid = afstand / tijd
+2. Snelheid = 120 km / 2 uur
+3. Snelheid = 60 km/uur
+
+Wanneer gebruiken:
+- Wiskundige problemen
+- Logische redenering
+- Multi-step taken
+
+Keywords: chain-of-thought, CoT, stap voor stap, redeneren, denken
+
+---
+
+=== WAT IS ROLE PROMPTING? ===
+
+Role prompting geeft het model een persona of rol. Dit beinvloedt de stijl en expertise van antwoorden.
+
+Voorbeelden:
 - "Je bent een ervaren Python developer..."
 - "Gedraag je als een vriendelijke leraar..."
+- "Je bent een security expert die code reviewt..."
 
-STRUCTURED OUTPUT
-- Vraag om specifiek formaat
-- "Antwoord in JSON formaat met keys: naam, leeftijd, stad"
-- "Geef je antwoord als een genummerde lijst"
+Waarom role prompting werkt:
+- Activeert relevante kennis
+- Zet juiste toon
+- Beperkt scope van antwoord
 
-Prompt Templates:
+Keywords: role prompting, persona, rol, expert, karakter
+
+---
+
+=== PROMPT TEMPLATES ===
 
 INSTRUCTIE TEMPLATE:
 """
@@ -78,28 +133,34 @@ Schrijf een [TAAL] functie die:
 - Output: [BESCHRIJVING]
 - Randgevallen: [LIJST]
 
-Voeg comments toe en gebruik beschrijvende variabelenamen.
+Voeg comments toe.
 """
 
-Veelgemaakte Fouten:
+---
+
+=== VEELGEMAAKTE PROMPTING FOUTEN ===
 
 1. Te vaag zijn
-   - Model moet niet gokken wat je wilt
+- Model moet niet gokken wat je wilt
 
-2. Te veel in een prompt stoppen
-   - Splits complexe taken op
+2. Te veel in een prompt
+- Splits complexe taken op
 
 3. Tegenstrijdige instructies
-   - "Wees kort maar geef veel detail"
+- "Wees kort maar geef veel detail"
 
 4. Geen format specificeren
-   - Je krijgt inconsistente outputs
+- Je krijgt inconsistente outputs
 
-Tips voor Betere Resultaten:
+---
 
-- Itereer: verfijn je prompt gebaseerd op output
+=== PROMPTING TIPS ===
+
+- Itereer: verfijn prompt gebaseerd op output
 - Test met variaties van je vraag
-- Gebruik delimiters (""", ---, ###) voor duidelijke secties
+- Gebruik delimiters (""", ---, ###)
 - Vraag om verificatie: "Controleer je antwoord"
 - Geef negatieve voorbeelden: "Doe NIET..."
-- Stel temperature in: laag voor consistent, hoog voor creatief
+- Temperature: laag voor consistent, hoog voor creatief
+
+Keywords: tips, best practices, verbeteren, itereren

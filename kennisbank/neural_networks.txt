@@ -1,88 +1,121 @@
-Neural Networks: Van Basis tot Deep Learning
+NEURAL NETWORKS - NEURALE NETWERKEN - DEEP LEARNING
 
-Wat is een Neural Network?
-Een neuraal netwerk is een machine learning model geinspireerd op het menselijk brein. Het bestaat uit lagen van "neuronen" die informatie verwerken en doorgeven.
+=== WAT IS EEN NEURAL NETWORK? ===
 
-Anatomie van een Neuraal Netwerk:
+Een neural network (neuraal netwerk) is een machine learning model geinspireerd op het menselijk brein. Het bestaat uit lagen van "neuronen" die informatie verwerken en doorgeven.
 
-INPUT LAYER (Invoerlaag)
+Neural networks kunnen complexe patronen leren die traditionele algoritmes niet kunnen ontdekken.
+
+Keywords: neural network, neuraal netwerk, deep learning, neuronen, lagen
+
+---
+
+=== STRUCTUUR VAN EEN NEURAL NETWORK ===
+
+INPUT LAYER (Invoerlaag):
 - Ontvangt de ruwe data
-- Elk neuron representeert een feature
-- Voorbeeld: Bij een 28x28 pixel afbeelding heb je 784 input neuronen
+- Elk neuron = een feature
+- Voorbeeld: 784 neuronen voor 28x28 afbeelding
 
-HIDDEN LAYERS (Verborgen Lagen)
-- Hier gebeurt de "magie"
-- Elke laag leert steeds abstractere features
-- Meer lagen = dieper netwerk = "Deep Learning"
+HIDDEN LAYERS (Verborgen Lagen):
+- Hier wordt geleerd
+- Elke laag leert abstractere features
+- Meer lagen = dieper netwerk = deep learning
 - Laag 1: detecteert randen
 - Laag 2: detecteert vormen
 - Laag 3: detecteert objecten
 
-OUTPUT LAYER (Uitvoerlaag)
+OUTPUT LAYER (Uitvoerlaag):
 - Geeft het eindresultaat
-- Bij classificatie: een neuron per klasse
-- Bij regressie: een neuron met continue waarde
+- Classificatie: een neuron per klasse
+- Regressie: een neuron met getal
 
-Hoe Leert een Neural Network?
+---
 
-1. FORWARD PROPAGATION
-   - Data stroomt van input naar output
-   - Elk neuron: output = activation(weights * inputs + bias)
-   - Netwerk maakt een voorspelling
+=== HOE WERKT BACKPROPAGATION? ===
 
-2. LOSS CALCULATION
-   - Vergelijk voorspelling met correct antwoord
-   - Loss functie meet de fout (bijv. Cross-Entropy, MSE)
+Backpropagation is het algoritme waarmee neural networks leren. Het berekent hoe elke weight bijdraagt aan de fout en past deze aan.
 
-3. BACKPROPAGATION
-   - Bereken hoe elke weight bijdraagt aan de fout
-   - Gebruik chain rule (kettingregel) van calculus
-   - Gradients stromen terug door het netwerk
+Stap 1 - FORWARD PROPAGATION:
+- Data stroomt van input naar output
+- Elk neuron: output = activation(weights * inputs + bias)
+- Netwerk maakt een voorspelling
 
-4. WEIGHT UPDATE
-   - Pas weights aan om loss te verminderen
-   - Optimizer bepaalt hoe (SGD, Adam, RMSprop)
-   - Learning rate bepaalt stapgrootte
+Stap 2 - LOSS CALCULATION:
+- Vergelijk voorspelling met correct antwoord
+- Loss functie meet de fout
+- Voorbeelden: Cross-Entropy Loss, MSE Loss
 
-Activation Functions:
+Stap 3 - BACKPROPAGATION:
+- Bereken gradient van loss naar elke weight
+- Gebruik chain rule (kettingregel)
+- Gradients stromen TERUG door het netwerk
+- Vandaar de naam "back" propagation
 
-ReLU (Rectified Linear Unit)
-- f(x) = max(0, x)
+Stap 4 - WEIGHT UPDATE:
+- Pas weights aan in richting die loss verlaagt
+- Optimizer bepaalt hoe (SGD, Adam, RMSprop)
+- Learning rate bepaalt stapgrootte
+
+Keywords: backpropagation, gradient descent, loss functie, weights, training
+
+---
+
+=== ACTIVATION FUNCTIONS ===
+
+ReLU (Rectified Linear Unit):
+- Formule: f(x) = max(0, x)
 - Meest populair voor hidden layers
-- Snel en effectief
+- Snel en voorkomt vanishing gradients
 
-Sigmoid
-- f(x) = 1 / (1 + e^-x)
+Sigmoid:
+- Formule: f(x) = 1 / (1 + e^-x)
 - Output tussen 0 en 1
-- Goed voor binaire classificatie
+- Goed voor binaire classificatie output
 
-Softmax
-- Zet outputs om naar kansen (som = 1)
+Tanh:
+- Formule: f(x) = (e^x - e^-x) / (e^x + e^-x)
+- Output tussen -1 en 1
+- Betere centering dan sigmoid
+
+Softmax:
+- Zet vector om naar kansen (som = 1)
 - Gebruikt voor multi-class classificatie
+- Laatste laag bij classificatie problemen
 
-Populaire Architecturen:
+---
 
-CNN (Convolutional Neural Networks)
+=== DEEP LEARNING ARCHITECTUREN ===
+
+CNN (Convolutional Neural Networks):
 - Speciaal voor beelden en spatiele data
 - Convolutional layers detecteren lokale patronen
-- Pooling layers reduceren dimensionaliteit
-- Toepassingen: beeldherkenning, medische scans
+- Pooling layers verkleinen de data
+- Toepassingen: beeldherkenning, object detectie
 
-RNN (Recurrent Neural Networks)
+RNN (Recurrent Neural Networks):
 - Voor sequentiele data (tekst, tijdreeksen)
-- Hebben "geheugen" van vorige inputs
-- Varianten: LSTM, GRU
+- Hebben geheugen van vorige inputs
+- Probleem: vanishing gradients bij lange sequenties
 
-Transformer
+LSTM (Long Short-Term Memory):
+- Verbeterde RNN met gates
+- Kan lange termijn afhankelijkheden leren
+- Gates: forget, input, output
+
+Transformer:
 - Revolutionair voor NLP
 - Attention mechanisme weegt relevantie
 - Basis voor GPT, BERT, Claude
-- Kan parallelliseren (sneller dan RNN)
+- Kan parallel verwerken (sneller dan RNN)
 
-Training Tips:
+---
+
+=== TRAINING TIPS ===
 
 - Begin met kleine learning rate (0.001)
 - Gebruik batch normalization
-- Dropout voorkomt overfitting
+- Dropout voorkomt overfitting (0.2-0.5)
 - Data augmentation vergroot je dataset
 - Monitor validation loss voor early stopping
+- Gebruik Adam optimizer als startpunt

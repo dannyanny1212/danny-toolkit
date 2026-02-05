@@ -1,75 +1,83 @@
-API Design: Best Practices voor REST en Modern APIs
+API DESIGN - REST API - HTTP METHODS - ENDPOINTS
 
-REST Principes
+=== WAT IS EEN REST API? ===
 
-REST (Representational State Transfer) is een architectuurstijl voor web APIs.
+REST (Representational State Transfer) is een architectuurstijl voor web APIs. Een REST API laat systemen communiceren via HTTP requests.
 
-DE 6 REST CONSTRAINTS:
+REST principes:
+1. Client-Server scheiding
+2. Stateless (geen sessie op server)
+3. Cacheable responses
+4. Uniform interface
+5. Layered system
 
-1. Client-Server Scheiding
-   - Frontend en backend zijn onafhankelijk
-   - Kunnen apart evolueren
+Keywords: REST, API, web service, HTTP, architectuur
 
-2. Stateless
-   - Elke request bevat alle benodigde informatie
-   - Server houdt geen sessie-state bij
+---
 
-3. Cacheable
-   - Responses kunnen gecached worden
-   - Verbetert performance
+=== HTTP METHODS UITGELEGD ===
 
-4. Uniform Interface
-   - Consistente manier van communiceren
-   - Resources, HTTP methods, representaties
+GET - Ophalen van data
+- Haalt resource(s) op
+- Wijzigt niets
+- Voorbeeld: GET /users/123
 
-5. Layered System
-   - Client weet niet of hij praat met eindserver
-   - Load balancers, proxies, gateways mogelijk
+POST - Nieuwe resource aanmaken
+- Maakt nieuwe resource
+- Body bevat de data
+- Voorbeeld: POST /users
 
-6. Code on Demand (optioneel)
-   - Server kan uitvoerbare code sturen
+PUT - Resource volledig vervangen
+- Vervangt hele resource
+- Idempotent (herhaald = zelfde resultaat)
+- Voorbeeld: PUT /users/123
 
-HTTP Methods
+PATCH - Resource gedeeltelijk updaten
+- Update specifieke velden
+- Voorbeeld: PATCH /users/123
 
-GET    - Ophalen van resource(s)
-POST   - Nieuwe resource aanmaken
-PUT    - Resource volledig vervangen
-PATCH  - Resource gedeeltelijk updaten
 DELETE - Resource verwijderen
+- Verwijdert resource
+- Idempotent
+- Voorbeeld: DELETE /users/123
 
-IDEMPOTENTIE:
-- GET, PUT, DELETE: idempotent (meerdere calls = zelfde resultaat)
-- POST: niet idempotent (elke call maakt nieuwe resource)
+Keywords: GET, POST, PUT, PATCH, DELETE, HTTP methods, CRUD
 
-URL Design
+---
 
-GOED:
-GET    /users              # Alle users
-GET    /users/123          # Specifieke user
-POST   /users              # Nieuwe user
-PUT    /users/123          # Update user
-DELETE /users/123          # Verwijder user
+=== HOE ONTWERP JE REST ENDPOINTS? ===
+
+GOEDE URL DESIGN:
+GET    /users              # Alle users ophalen
+GET    /users/123          # Specifieke user ophalen
+POST   /users              # Nieuwe user aanmaken
+PUT    /users/123          # User updaten
+DELETE /users/123          # User verwijderen
 GET    /users/123/orders   # Orders van user
 
-SLECHT:
-GET    /getUsers
-GET    /getUserById?id=123
-POST   /createUser
-POST   /deleteUser
+SLECHTE URL DESIGN:
+GET    /getUsers           # Werkwoord in URL
+GET    /getUserById?id=123 # Query param voor ID
+POST   /createUser         # Redundant
+POST   /deleteUser         # Verkeerde method
 
-REGELS:
+URL REGELS:
 - Gebruik zelfstandige naamwoorden (users, niet getUsers)
-- Meervoud voor collecties
-- Lowercase met hyphens (order-items, niet orderItems)
+- Meervoud voor collecties (/users)
+- Lowercase met hyphens (order-items)
 - Geen werkwoorden in URLs
 - Hierarchie voor relaties (/users/123/orders)
 
-Status Codes
+Keywords: endpoints, URL design, routes, REST design
+
+---
+
+=== HTTP STATUS CODES ===
 
 2xx SUCCESS:
 - 200 OK: Request succesvol
 - 201 Created: Resource aangemaakt
-- 204 No Content: Succes, geen response body
+- 204 No Content: Succes, geen body
 
 3xx REDIRECTION:
 - 301 Moved Permanently
@@ -77,17 +85,21 @@ Status Codes
 
 4xx CLIENT ERROR:
 - 400 Bad Request: Ongeldige input
-- 401 Unauthorized: Niet geauthenticeerd
+- 401 Unauthorized: Niet ingelogd
 - 403 Forbidden: Geen rechten
-- 404 Not Found: Resource bestaat niet
-- 422 Unprocessable Entity: Validatie gefaald
+- 404 Not Found: Bestaat niet
+- 422 Unprocessable: Validatie gefaald
 
 5xx SERVER ERROR:
 - 500 Internal Server Error
 - 502 Bad Gateway
 - 503 Service Unavailable
 
-Response Format
+Keywords: status codes, HTTP codes, 200, 404, 500, response codes
+
+---
+
+=== API RESPONSE FORMAT ===
 
 SUCCES RESPONSE:
 {
@@ -107,10 +119,7 @@ ERROR RESPONSE:
         "code": "VALIDATION_ERROR",
         "message": "Email is ongeldig",
         "details": [
-            {
-                "field": "email",
-                "message": "Moet een geldig email adres zijn"
-            }
+            {"field": "email", "message": "Ongeldig format"}
         ]
     }
 }
@@ -121,17 +130,15 @@ PAGINATIE:
     "pagination": {
         "page": 1,
         "per_page": 20,
-        "total": 100,
-        "total_pages": 5
-    },
-    "links": {
-        "self": "/users?page=1",
-        "next": "/users?page=2",
-        "last": "/users?page=5"
+        "total": 100
     }
 }
 
-Authenticatie
+Keywords: JSON response, error handling, paginatie
+
+---
+
+=== API AUTHENTICATIE ===
 
 API KEY:
 - Header: X-API-Key: abc123
@@ -146,11 +153,15 @@ JWT (JSON Web Token):
 
 OAUTH 2.0:
 - Industrie standaard
-- Access tokens + refresh tokens
+- Access + refresh tokens
 - Scopes voor permissies
-- Goed voor third-party access
+- Third-party access
 
-Versioning
+Keywords: authenticatie, API key, JWT, OAuth, Bearer token
+
+---
+
+=== API VERSIONING ===
 
 URL PATH (aanbevolen):
 /api/v1/users
@@ -162,7 +173,11 @@ Accept: application/vnd.api+json; version=1
 QUERY PARAMETER:
 /users?version=1
 
-Rate Limiting
+Keywords: versioning, v1, v2, backwards compatible
+
+---
+
+=== RATE LIMITING ===
 
 Headers teruggeven:
 X-RateLimit-Limit: 100
@@ -173,17 +188,4 @@ Bij limiet bereikt:
 HTTP 429 Too Many Requests
 Retry-After: 60
 
-Documentatie
-
-MUST-HAVES:
-- Endpoint overzicht
-- Request/response voorbeelden
-- Authenticatie uitleg
-- Error codes
-- Rate limits
-- Changelog
-
-TOOLS:
-- OpenAPI/Swagger
-- Postman Collections
-- README met curl voorbeelden
+Keywords: rate limiting, throttling, 429, quota

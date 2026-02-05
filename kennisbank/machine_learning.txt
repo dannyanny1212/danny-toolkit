@@ -1,53 +1,130 @@
-Machine Learning: Een Complete Introductie
+MACHINE LEARNING - KUNSTMATIGE INTELLIGENTIE - ML - AI
 
-Wat is Machine Learning?
-Machine Learning (ML) is een tak van kunstmatige intelligentie waarbij computers leren van data zonder expliciet geprogrammeerd te worden. In plaats van regels te schrijven, geef je het systeem voorbeelden en het ontdekt zelf patronen.
+=== WAT IS MACHINE LEARNING? ===
 
-Drie Hoofdtypen Machine Learning:
+Machine Learning (ML) is een tak van kunstmatige intelligentie (AI) waarbij computers leren van data zonder expliciet geprogrammeerd te worden. In plaats van regels te schrijven, geef je het systeem voorbeelden en het ontdekt zelf patronen.
 
-1. SUPERVISED LEARNING (Begeleid Leren)
-   - Je geeft het model gelabelde data (input + correct antwoord)
-   - Het model leert de relatie tussen input en output
-   - Voorbeelden: spam detectie, huizenprijzen voorspellen, beeldherkenning
-   - Algoritmes: Linear Regression, Decision Trees, Random Forest, Neural Networks
+Keywords: machine learning, ML, kunstmatige intelligentie, AI, leren van data, patronen herkennen
 
-2. UNSUPERVISED LEARNING (Onbegeleid Leren)
-   - Je geeft het model data zonder labels
-   - Het model ontdekt zelf structuren en patronen
-   - Voorbeelden: klantensegmentatie, anomalie detectie, topic modeling
-   - Algoritmes: K-Means Clustering, PCA, Autoencoders
+---
 
-3. REINFORCEMENT LEARNING (Bekrachtigingsleren)
-   - Een agent leert door trial-and-error in een omgeving
-   - Krijgt beloningen of straffen voor acties
-   - Voorbeelden: game AI, robotica, zelfrijdende auto's
-   - Algoritmes: Q-Learning, Policy Gradient, PPO
+=== WAT IS SUPERVISED LEARNING? ===
 
-Belangrijke Concepten:
+Supervised Learning (begeleid leren) is een type machine learning waarbij je het model gelabelde data geeft. Dit betekent: input data samen met het correcte antwoord (label).
 
-TRAINING vs INFERENCE
-- Training: Het model leert van data (kan uren/dagen duren)
-- Inference: Het getrainde model maakt voorspellingen (milliseconden)
+Hoe werkt supervised learning:
+- Je geeft het model voorbeelden met bekende antwoorden
+- Het model leert de relatie tussen input en output
+- Daarna kan het voorspellingen maken voor nieuwe data
 
-OVERFITTING vs UNDERFITTING
-- Overfitting: Model leert trainingsdata "uit het hoofd", generaliseert slecht
-- Underfitting: Model is te simpel, mist belangrijke patronen
-- Oplossing: Validatie sets, regularisatie, cross-validation
+Voorbeelden van supervised learning:
+- Spam detectie (email is spam of niet)
+- Huizenprijzen voorspellen
+- Beeldherkenning (foto van kat of hond)
+- Medische diagnose
 
-FEATURES en LABELS
-- Features: De input variabelen (bijv. leeftijd, inkomen, locatie)
-- Labels: De output die je wilt voorspellen (bijv. koopt wel/niet)
-- Feature Engineering: Het creeren van betere input variabelen
+Supervised learning algoritmes:
+- Linear Regression (voor continue waarden)
+- Logistic Regression (voor classificatie)
+- Decision Trees
+- Random Forest
+- Neural Networks
+- Support Vector Machines (SVM)
 
-Evaluatie Metrics:
+Keywords: supervised learning, begeleid leren, gelabelde data, classificatie, regressie, voorspellen
 
-Voor Classificatie:
-- Accuracy: Percentage correcte voorspellingen
-- Precision: Van alle positieve voorspellingen, hoeveel waren correct?
-- Recall: Van alle echte positieven, hoeveel zijn gevonden?
-- F1-Score: Harmonisch gemiddelde van precision en recall
+---
 
-Voor Regressie:
-- MSE (Mean Squared Error): Gemiddelde kwadratische fout
-- MAE (Mean Absolute Error): Gemiddelde absolute fout
-- R-squared: Hoeveel variantie verklaart het model?
+=== WAT IS UNSUPERVISED LEARNING? ===
+
+Unsupervised Learning (onbegeleid leren) is machine learning zonder labels. Het model krijgt alleen data zonder correcte antwoorden en moet zelf structuur ontdekken.
+
+Hoe werkt unsupervised learning:
+- Model ontvangt alleen input data
+- Zoekt zelf naar patronen en groepen
+- Geen "correcte" antwoorden om van te leren
+
+Voorbeelden van unsupervised learning:
+- Klantensegmentatie (groepen klanten vinden)
+- Anomalie detectie (uitschieters vinden)
+- Topic modeling (onderwerpen in tekst)
+- Dimensionaliteitsreductie
+
+Unsupervised learning algoritmes:
+- K-Means Clustering
+- Hierarchical Clustering
+- PCA (Principal Component Analysis)
+- Autoencoders
+- DBSCAN
+
+Keywords: unsupervised learning, onbegeleid leren, clustering, patronen, segmentatie
+
+---
+
+=== WAT IS REINFORCEMENT LEARNING? ===
+
+Reinforcement Learning (bekrachtigingsleren) is machine learning waarbij een agent leert door interactie met een omgeving. De agent krijgt beloningen of straffen voor acties.
+
+Hoe werkt reinforcement learning:
+- Agent neemt actie in omgeving
+- Omgeving geeft feedback (beloning/straf)
+- Agent leert optimale strategie (policy)
+- Doel: maximaliseer totale beloning
+
+Voorbeelden van reinforcement learning:
+- Game AI (schaken, Go, videogames)
+- Robotica (lopen, grijpen)
+- Zelfrijdende auto's
+- Aanbevelingssystemen
+
+Reinforcement learning algoritmes:
+- Q-Learning
+- Deep Q-Networks (DQN)
+- Policy Gradient
+- PPO (Proximal Policy Optimization)
+- Actor-Critic
+
+Keywords: reinforcement learning, bekrachtigingsleren, agent, beloning, policy, omgeving
+
+---
+
+=== TRAINING VS INFERENCE ===
+
+Training: Het proces waarbij het model leert van data
+- Kan uren of dagen duren
+- Vereist veel rekenkracht (GPU)
+- Gebeurt eenmalig of periodiek
+
+Inference: Het getrainde model gebruiken voor voorspellingen
+- Duurt milliseconden
+- Kan op gewone hardware
+- Gebeurt continu in productie
+
+---
+
+=== OVERFITTING EN UNDERFITTING ===
+
+Overfitting: Model leert trainingsdata "uit het hoofd"
+- Presteert goed op training, slecht op nieuwe data
+- Model is te complex
+- Oplossing: meer data, regularisatie, dropout
+
+Underfitting: Model is te simpel
+- Presteert slecht op zowel training als test data
+- Mist belangrijke patronen
+- Oplossing: complexer model, meer features
+
+---
+
+=== EVALUATIE METRICS ===
+
+Classificatie metrics:
+- Accuracy: percentage correcte voorspellingen
+- Precision: van positieve voorspellingen, hoeveel correct?
+- Recall: van echte positieven, hoeveel gevonden?
+- F1-Score: harmonisch gemiddelde van precision en recall
+
+Regressie metrics:
+- MSE (Mean Squared Error)
+- MAE (Mean Absolute Error)
+- R-squared (verklaarde variantie)

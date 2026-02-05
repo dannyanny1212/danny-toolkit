@@ -1,108 +1,138 @@
-Vector Databases: De Ruggengraat van Moderne AI
+VECTOR DATABASES - EMBEDDINGS - SIMILARITY SEARCH
 
-Wat is een Vector Database?
-Een vector database is geoptimaliseerd voor het opslaan en doorzoeken van vectoren (embeddings). In tegenstelling tot traditionele databases die zoeken op exacte waarden, vinden vector databases items die semantisch vergelijkbaar zijn.
+=== WAT IS EEN VECTOR DATABASE? ===
 
-Waarom Vector Databases?
+Een vector database is een database geoptimaliseerd voor het opslaan en doorzoeken van vectoren (embeddings). Anders dan traditionele databases die zoeken op exacte waarden, vinden vector databases items die semantisch vergelijkbaar zijn.
 
-TRADITIONELE DATABASE:
-- Zoekt exacte matches
-- Query: "SELECT * WHERE titel = 'machine learning'"
-- Vindt alleen documenten met exact die woorden
+Waarom vector databases:
+- Traditionele DB: zoekt exacte matches ("machine learning")
+- Vector DB: zoekt op betekenis (vindt ook "ML", "AI", "deep learning")
 
-VECTOR DATABASE:
-- Zoekt op betekenis/similariteit
-- Query: embedding van "kunstmatige intelligentie"
-- Vindt ook: "ML", "AI", "deep learning", "neural networks"
+Keywords: vector database, embeddings, similarity search, semantisch zoeken
 
-Hoe Werkt Het?
+---
 
-1. EMBEDDING GENERATIE
-   - Tekst/afbeelding/audio wordt omgezet naar vector
-   - Vector = lijst van getallen (bijv. 1536 dimensies)
-   - Semantisch vergelijkbare items hebben vergelijkbare vectoren
+=== WAT ZIJN EMBEDDINGS? ===
 
-2. INDEXERING
-   - Vectoren worden geindexeerd voor snelle zoekacties
-   - Algoritmes: HNSW, IVF, PQ
-   - Trade-off tussen snelheid en nauwkeurigheid
+Embeddings zijn numerieke representaties van data (tekst, afbeeldingen, audio) in een vector ruimte. Semantisch vergelijkbare items hebben vectoren die dicht bij elkaar liggen.
 
-3. SIMILARITY SEARCH
-   - Query vector wordt vergeleken met opgeslagen vectoren
-   - Meest vergelijkbare vectoren worden teruggegeven
-   - Metrics: Cosine Similarity, Euclidean Distance, Dot Product
+Hoe werken embeddings:
+- Tekst/afbeelding gaat door een neural network
+- Output is een vector met honderden/duizenden getallen
+- Voorbeeld: "kat" -> [0.2, -0.5, 0.8, 0.1, ...]
+- "poes" heeft een vergelijkbare vector
 
-Similarity Metrics:
+Embedding modellen:
+- OpenAI text-embedding-ada-002 (1536 dimensies)
+- Voyage AI (1024 dimensies)
+- Sentence Transformers (384-768 dimensies)
+- BERT embeddings
 
-COSINE SIMILARITY
-- Meet de hoek tussen twee vectoren
-- Range: -1 tot 1 (1 = identiek)
-- Formule: cos(θ) = (A · B) / (||A|| × ||B||)
-- Beste voor: tekst embeddings
+Keywords: embeddings, vectoren, numerieke representatie, embedding model
 
-EUCLIDEAN DISTANCE
-- Meet de "rechte lijn" afstand
+---
+
+=== HOE WERKT COSINE SIMILARITY? ===
+
+Cosine similarity meet de hoek tussen twee vectoren. Het is de meest gebruikte metric voor tekst embeddings.
+
+De formule:
+similarity = (A . B) / (||A|| x ||B||)
+
+Waarbij:
+- A . B = dot product van vectoren A en B
+- ||A|| = lengte (magnitude) van vector A
+- ||B|| = lengte van vector B
+
+Resultaat:
+- 1.0 = identiek (hoek = 0 graden)
+- 0.0 = geen relatie (hoek = 90 graden)
+- -1.0 = tegenovergesteld (hoek = 180 graden)
+
+Voorbeeld:
+- "hond" en "puppy" -> similarity ~0.85
+- "hond" en "auto" -> similarity ~0.15
+
+Keywords: cosine similarity, similarity score, vector vergelijking, hoek
+
+---
+
+=== ANDERE SIMILARITY METRICS ===
+
+Euclidean Distance (L2):
+- Meet de rechte lijn afstand
+- Formule: sqrt(sum((ai - bi)^2))
 - Kleiner = meer vergelijkbaar
-- Formule: √Σ(ai - bi)²
-- Beste voor: afbeeldingen, clustering
+- Goed voor: clustering, afbeeldingen
 
-DOT PRODUCT
+Dot Product:
 - Som van element-wise vermenigvuldiging
-- Formule: Σ(ai × bi)
-- Beste voor: genormaliseerde vectoren
+- Formule: sum(ai * bi)
+- Groter = meer vergelijkbaar
+- Goed voor: genormaliseerde vectoren
 
-Populaire Vector Databases:
+Manhattan Distance (L1):
+- Som van absolute verschillen
+- Formule: sum(|ai - bi|)
+- Minder gevoelig voor outliers
 
-PINECONE
+---
+
+=== POPULAIRE VECTOR DATABASES ===
+
+Pinecone:
 - Fully managed cloud service
-- Zeer schaalbaar
-- Makkelijke integratie
-- Prijs: per opgeslagen vector
+- Zeer schaalbaar (miljarden vectoren)
+- Makkelijke API
+- Prijs: per vector per maand
 
-CHROMADB
+ChromaDB:
 - Open source
 - Lokaal of in cloud
 - Python-native
 - Gratis voor lokaal gebruik
 
-WEAVIATE
+Weaviate:
 - Open source
 - Ingebouwde vectorisatie
 - GraphQL API
 - Hybrid search (vector + keyword)
 
-MILVUS
+Milvus:
 - Open source
 - Zeer schaalbaar
 - GPU ondersteuning
 - Enterprise ready
 
-QDRANT
+Qdrant:
 - Open source, Rust-based
 - Filtering en payloads
-- Gratis self-hosted
+- Snel en efficient
 
-FAISS (Facebook AI)
-- Library, geen database
+FAISS (Facebook):
+- Library, geen volledige database
 - Extreem snel
-- Beste voor research/prototyping
+- Beste voor research
 
-RAG Architectuur met Vector DB:
+---
 
-1. INDEXEER FASE:
-   Documenten → Chunking → Embedding Model → Vector DB
+=== RAG MET VECTOR DATABASE ===
 
-2. QUERY FASE:
-   Vraag → Embedding → Vector DB Search → Top-K Chunks
+RAG (Retrieval-Augmented Generation) combineert vector databases met LLMs.
 
-3. GENERATIE FASE:
-   Top-K Chunks + Vraag → LLM → Antwoord
+Indexeer fase:
+1. Documenten splitsen in chunks
+2. Elk chunk omzetten naar embedding
+3. Embeddings opslaan in vector DB
 
-Best Practices:
+Query fase:
+1. Vraag omzetten naar embedding
+2. Vector DB zoekt vergelijkbare chunks
+3. Top-K chunks ophalen
 
-- Kies chunk size zorgvuldig (300-500 tokens)
-- Overweeg overlap tussen chunks
-- Metadata opslaan voor filtering
-- Regelmatig herindexeren bij updates
-- Monitor query latency
-- Test verschillende embedding models
+Generatie fase:
+1. Chunks toevoegen aan LLM prompt
+2. LLM genereert antwoord met context
+3. Antwoord is gebaseerd op je documenten
+
+Keywords: RAG, retrieval augmented generation, chunks, indexeren
