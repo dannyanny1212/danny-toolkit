@@ -119,22 +119,63 @@ class VirtueelHuisdierApp:
         "alle_accessoires": {"naam": "Verzamelaar", "beschrijving": "Koop alle accessoires", "punten": 150},
     }
 
-    # Beschikbare tricks
+    # Beschikbare tricks met CONDITIONERING systeem
+    # - bekrachtiging_nodig: hoeveel succesvolle trainingen nodig om te leren
+    # - basis_kans: startkans op succes (verhoogt met training)
+    # - beloning_type: "voedsel", "aandacht", of "spel" (verschillende huisdieren reageren anders)
     TRICKS = {
-        "zit": {"naam": "Zitten", "moeilijkheid": 1, "geluk_bonus": 5, "beloning": 5},
-        "poot": {"naam": "Pootje geven", "moeilijkheid": 2, "geluk_bonus": 10, "beloning": 10},
-        "rol": {"naam": "Rollen", "moeilijkheid": 3, "geluk_bonus": 15, "beloning": 15},
-        "spring": {"naam": "Springen", "moeilijkheid": 4, "geluk_bonus": 20, "beloning": 20},
-        "dans": {"naam": "Dansen", "moeilijkheid": 5, "geluk_bonus": 25, "beloning": 50},
-        "spreek": {"naam": "Spreken", "moeilijkheid": 3, "geluk_bonus": 15, "beloning": 15},
-        "dood": {"naam": "Dood spelen", "moeilijkheid": 4, "geluk_bonus": 20, "beloning": 20},
-        "high_five": {"naam": "High Five", "moeilijkheid": 2, "geluk_bonus": 10, "beloning": 10},
-        # Nieuwe tricks
-        "backflip": {"naam": "Backflip", "moeilijkheid": 5, "geluk_bonus": 30, "beloning": 30},
-        "zingen": {"naam": "Zingen", "moeilijkheid": 3, "geluk_bonus": 20, "beloning": 20},
-        "magie": {"naam": "Goocheltruc", "moeilijkheid": 6, "geluk_bonus": 35, "beloning": 35},
-        "teleporteer": {"naam": "Teleporteren", "moeilijkheid": 7, "geluk_bonus": 40, "beloning": 50},
-        "onzichtbaar": {"naam": "Onzichtbaar worden", "moeilijkheid": 6, "geluk_bonus": 35, "beloning": 35},
+        "zit": {
+            "naam": "Zitten", "moeilijkheid": 1, "geluk_bonus": 5, "beloning": 5,
+            "bekrachtiging_nodig": 3, "basis_kans": 70, "beloning_type": "voedsel"
+        },
+        "poot": {
+            "naam": "Pootje geven", "moeilijkheid": 2, "geluk_bonus": 10, "beloning": 10,
+            "bekrachtiging_nodig": 5, "basis_kans": 60, "beloning_type": "aandacht"
+        },
+        "rol": {
+            "naam": "Rollen", "moeilijkheid": 3, "geluk_bonus": 15, "beloning": 15,
+            "bekrachtiging_nodig": 7, "basis_kans": 50, "beloning_type": "spel"
+        },
+        "spring": {
+            "naam": "Springen", "moeilijkheid": 4, "geluk_bonus": 20, "beloning": 20,
+            "bekrachtiging_nodig": 9, "basis_kans": 40, "beloning_type": "voedsel"
+        },
+        "dans": {
+            "naam": "Dansen", "moeilijkheid": 5, "geluk_bonus": 25, "beloning": 50,
+            "bekrachtiging_nodig": 12, "basis_kans": 35, "beloning_type": "aandacht"
+        },
+        "spreek": {
+            "naam": "Spreken", "moeilijkheid": 3, "geluk_bonus": 15, "beloning": 15,
+            "bekrachtiging_nodig": 8, "basis_kans": 45, "beloning_type": "voedsel"
+        },
+        "dood": {
+            "naam": "Dood spelen", "moeilijkheid": 4, "geluk_bonus": 20, "beloning": 20,
+            "bekrachtiging_nodig": 10, "basis_kans": 40, "beloning_type": "aandacht"
+        },
+        "high_five": {
+            "naam": "High Five", "moeilijkheid": 2, "geluk_bonus": 10, "beloning": 10,
+            "bekrachtiging_nodig": 4, "basis_kans": 65, "beloning_type": "spel"
+        },
+        "backflip": {
+            "naam": "Backflip", "moeilijkheid": 5, "geluk_bonus": 30, "beloning": 30,
+            "bekrachtiging_nodig": 12, "basis_kans": 30, "beloning_type": "spel"
+        },
+        "zingen": {
+            "naam": "Zingen", "moeilijkheid": 3, "geluk_bonus": 20, "beloning": 20,
+            "bekrachtiging_nodig": 6, "basis_kans": 55, "beloning_type": "aandacht"
+        },
+        "magie": {
+            "naam": "Goocheltruc", "moeilijkheid": 6, "geluk_bonus": 35, "beloning": 35,
+            "bekrachtiging_nodig": 15, "basis_kans": 25, "beloning_type": "spel"
+        },
+        "teleporteer": {
+            "naam": "Teleporteren", "moeilijkheid": 7, "geluk_bonus": 40, "beloning": 50,
+            "bekrachtiging_nodig": 20, "basis_kans": 20, "beloning_type": "aandacht"
+        },
+        "onzichtbaar": {
+            "naam": "Onzichtbaar worden", "moeilijkheid": 6, "geluk_bonus": 35, "beloning": 35,
+            "bekrachtiging_nodig": 15, "basis_kans": 25, "beloning_type": "spel"
+        },
     }
 
     # Accessoires
@@ -215,12 +256,14 @@ class VirtueelHuisdierApp:
             "intelligentie": 0,
             "evolutie_stadium": 0,
             "tricks_geleerd": [],
+            "tricks_training": {},  # Conditionering tracking per trick
             "accessoires": [],
             "achievements": [],
             "stats": {
                 "voedingen": 0,
                 "games_gewonnen": 0,
                 "tricks_uitgevoerd": 0,
+                "tricks_training_sessies": 0,
                 "dagen_gespeeld": 0,
                 "feiten_geleerd": 0,
                 "nieuws_gelezen": 0,
@@ -2481,41 +2524,75 @@ Antwoord in het Nederlands."""
         self._sla_op()
 
     def _tricks_menu(self):
-        """Tricks leren en uitvoeren."""
+        """Tricks menu met CONDITIONERING systeem - leren door beloning!"""
         while True:
             geleerde = self.huisdier["tricks_geleerd"]
+            training = self.huisdier.get("tricks_training", {})
+            iq = self.huisdier.get("intelligentie", 0)
 
-            print("\n+================================+")
-            print("|      TRICKS                    |")
-            print("+================================+")
-            print("|  LEREN:                        |")
+            print("\n" + "=" * 55)
+            print("  [TRICKS] CONDITIONERING TRAINING")
+            print("  Dieren leren door beloning en herhaling!")
+            print("=" * 55)
 
+            # Toon tricks in training
+            in_training = []
             beschikbaar = []
+
             for trick_id, trick in self.TRICKS.items():
-                if trick_id not in geleerde:
+                if trick_id in geleerde:
+                    continue
+                elif trick_id in training:
+                    in_training.append((trick_id, trick, training[trick_id]))
+                else:
                     beschikbaar.append((trick_id, trick))
-                    print(f"|  L{len(beschikbaar)}. {trick['naam']:<15} "
-                          f"(Moeilijkheid: {trick['moeilijkheid']}) |")
+
+            if in_training:
+                print("\n  [TRAINING] In opleiding:")
+                for i, (tid, trick, prog) in enumerate(in_training, 1):
+                    voortgang = prog.get("bekrachtiging", 0)
+                    nodig = trick["bekrachtiging_nodig"]
+                    pct = int((voortgang / nodig) * 100)
+                    balk = "#" * (pct // 10) + "." * (10 - pct // 10)
+                    print(f"  T{i}. {trick['naam']:<15} [{balk}] {pct}%")
+                    print(f"      Sessies: {prog.get('pogingen', 0)} | "
+                          f"Succes: {prog.get('successen', 0)}")
+
+            if beschikbaar:
+                print("\n  [NIEUW] Start training:")
+                for i, (tid, trick) in enumerate(beschikbaar, 1):
+                    print(f"  N{i}. {trick['naam']:<15} "
+                          f"(Niveau: {trick['moeilijkheid']}, "
+                          f"Nodig: {trick['bekrachtiging_nodig']}x)")
 
             if geleerde:
-                print("|                                |")
-                print("|  UITVOEREN:                    |")
+                print("\n  [GELEERD] Uitvoeren:")
                 for i, trick_id in enumerate(geleerde, 1):
                     trick = self.TRICKS[trick_id]
-                    print(f"|  {i}. {trick['naam']:<20} |")
+                    perf = training.get(trick_id, {}).get("perfectie", 50)
+                    print(f"  {i}. {trick['naam']:<15} "
+                          f"(Perfectie: {perf}%, +{trick['beloning']} munten)")
 
-            print("|  0. Terug                      |")
-            print("+================================+")
+            print("\n  [INFO] IQ bonus: +{} leersnelheid".format(iq // 20))
+            print("  0. Terug")
+            print("=" * 55)
 
             keuze = input("\nKeuze: ").strip().lower()
 
             if keuze == "0":
                 break
-            elif keuze.startswith("l") and len(keuze) > 1:
+            elif keuze.startswith("t") and len(keuze) > 1:
+                try:
+                    idx = int(keuze[1:]) - 1
+                    if 0 <= idx < len(in_training):
+                        self._train_trick(in_training[idx][0])
+                except (ValueError, IndexError):
+                    pass
+            elif keuze.startswith("n") and len(keuze) > 1:
                 try:
                     idx = int(keuze[1:]) - 1
                     if 0 <= idx < len(beschikbaar):
-                        self._leer_trick(beschikbaar[idx][0])
+                        self._start_trick_training(beschikbaar[idx][0])
                 except (ValueError, IndexError):
                     pass
             else:
@@ -2528,62 +2605,261 @@ Antwoord in het Nederlands."""
 
             input("\nDruk op Enter...")
 
-    def _leer_trick(self, trick_id: str):
-        """Leer een nieuwe trick."""
+    def _start_trick_training(self, trick_id: str):
+        """Start training voor een nieuwe trick."""
         trick = self.TRICKS[trick_id]
-        kosten = trick["moeilijkheid"] * 20
+        kosten = trick["moeilijkheid"] * 5  # Lagere kosten om te starten
+
+        if self.huisdier["munten"] < kosten:
+            print(f"\nJe hebt niet genoeg munten om te starten! (Nodig: {kosten})")
+            return
+
+        self.huisdier["munten"] -= kosten
+        naam = self.huisdier["naam"]
+
+        print(f"\n" + "=" * 50)
+        print(f"  [START] {naam} begint '{trick['naam']}' te leren!")
+        print("=" * 50)
+
+        # Init training data
+        if "tricks_training" not in self.huisdier:
+            self.huisdier["tricks_training"] = {}
+
+        self.huisdier["tricks_training"][trick_id] = {
+            "pogingen": 0,
+            "successen": 0,
+            "bekrachtiging": 0,
+            "perfectie": 50,
+            "laatste_beloning": None,
+            "motivatie": 100,
+            "gestart": datetime.now().isoformat()
+        }
+
+        print(f"\n  [AI] Conditionering principe:")
+        print(f"  - Train {trick['bekrachtiging_nodig']}x succesvol")
+        print(f"  - Beloning type: {trick['beloning_type']}")
+        print(f"  - Basis slaagkans: {trick['basis_kans']}%")
+        print(f"\n  Tip: Hogere IQ = sneller leren!")
+
+        self._sla_op()
+
+    def _train_trick(self, trick_id: str):
+        """Train een trick met CONDITIONERING - beloning en bestraffing."""
+        trick = self.TRICKS[trick_id]
+        training = self.huisdier["tricks_training"].get(trick_id, {})
+        naam = self.huisdier["naam"]
+        iq = self.huisdier.get("intelligentie", 0)
+        kosten = 3  # Kleine kosten per sessie
 
         if self.huisdier["munten"] < kosten:
             print(f"\nJe hebt niet genoeg munten! (Nodig: {kosten})")
             return
 
-        if self.huisdier["energie"] < 30:
-            print(f"\n{self.huisdier['naam']} is te moe om te leren!")
+        if self.huisdier["energie"] < 15:
+            print(f"\n{naam} is te moe om te trainen!")
             return
 
-        print(f"\nJe leert {self.huisdier['naam']} '{trick['naam']}'... (-{kosten} munten)")
-        time.sleep(1)
+        motivatie = training.get("motivatie", 100)
+        if motivatie < 20:
+            print(f"\n{naam} is gedemotiveerd! Geef eerst aandacht of voedsel.")
+            print("  Tip: Knuffelen of voeren herstelt motivatie.")
+            return
 
-        # Kans op succes
-        kans = 100 - (trick["moeilijkheid"] * 15)
-        if random.randint(1, 100) <= kans:
-            self.huisdier["munten"] -= kosten
-            self.huisdier["tricks_geleerd"].append(trick_id)
-            self.huisdier["energie"] = max(0, self.huisdier["energie"] - 20)
-            self.huisdier["ervaring"] += trick["moeilijkheid"] * 10
+        self.huisdier["munten"] -= kosten
+        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 10)
 
-            print(f"[OK] {self.huisdier['naam']} heeft '{trick['naam']}' geleerd!")
+        print(f"\n" + "=" * 50)
+        print(f"  [TRAINING] {naam} oefent '{trick['naam']}'")
+        print("=" * 50)
+        time.sleep(0.5)
 
-            if len(self.huisdier["tricks_geleerd"]) == 1:
-                self._unlock_achievement("eerste_trick")
-            if len(self.huisdier["tricks_geleerd"]) == len(self.TRICKS):
-                self._unlock_achievement("alle_tricks")
+        # Bereken slaagkans met conditionering factoren
+        basis_kans = trick["basis_kans"]
+        bekrachtiging = training.get("bekrachtiging", 0)
+        successen = training.get("successen", 0)
+        pogingen = training.get("pogingen", 0)
+
+        # Bonussen
+        iq_bonus = iq // 5  # +1% per 5 IQ
+        bekrachtiging_bonus = bekrachtiging * 3  # Eerder succes helpt
+        motivatie_bonus = (motivatie - 50) // 5  # Hoge motivatie helpt
+        geluk_bonus = (self.huisdier["geluk"] - 50) // 10
+
+        totaal_kans = min(95, basis_kans + iq_bonus + bekrachtiging_bonus +
+                         motivatie_bonus + geluk_bonus)
+
+        print(f"\n  Slaagkans: {totaal_kans}%")
+        print(f"    Basis: {basis_kans}%")
+        if iq_bonus > 0:
+            print(f"    IQ bonus: +{iq_bonus}%")
+        if bekrachtiging_bonus > 0:
+            print(f"    Bekrachtiging: +{bekrachtiging_bonus}%")
+        if motivatie_bonus != 0:
+            print(f"    Motivatie: {'+' if motivatie_bonus > 0 else ''}{motivatie_bonus}%")
+
+        time.sleep(0.5)
+        print(f"\n  {naam} probeert de trick...")
+        time.sleep(0.8)
+
+        # Update pogingen
+        training["pogingen"] = pogingen + 1
+
+        # Check succes
+        if random.randint(1, 100) <= totaal_kans:
+            # SUCCES - Positieve bekrachtiging!
+            training["successen"] = successen + 1
+            training["bekrachtiging"] = bekrachtiging + 1
+
+            # Kies beloning type
+            beloning_type = trick["beloning_type"]
+            if beloning_type == "voedsel":
+                print(f"\n  [OK] GOED ZO! {naam} krijgt een snoepje!")
+                self.huisdier["honger"] = min(100, self.huisdier["honger"] + 5)
+            elif beloning_type == "aandacht":
+                print(f"\n  [OK] GOED ZO! {naam} krijgt een aai over de bol!")
+                self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 5)
+            else:  # spel
+                print(f"\n  [OK] GOED ZO! {naam} mag even spelen!")
+                self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 3)
+
+            # Verhoog motivatie en perfectie
+            training["motivatie"] = min(100, training.get("motivatie", 100) + 10)
+            training["perfectie"] = min(100, training.get("perfectie", 50) + 2)
+            training["laatste_beloning"] = datetime.now().isoformat()
+
+            # Leer over conditionering
+            if random.randint(1, 100) <= 30:
+                les = "Positieve bekrachtiging versterkt gewenst gedrag"
+                print(f"\n  [LAMP] {naam} leert: \"{les}\"")
+                self.huisdier["intelligentie"] = iq + 1
+
+            # Check of trick geleerd is
+            nodig = trick["bekrachtiging_nodig"]
+            print(f"\n  Voortgang: {training['bekrachtiging']}/{nodig}")
+
+            if training["bekrachtiging"] >= nodig:
+                self._trick_geleerd(trick_id, trick)
         else:
-            self.huisdier["munten"] -= kosten // 2
-            self.huisdier["energie"] = max(0, self.huisdier["energie"] - 10)
-            print(f"Helaas, {self.huisdier['naam']} heeft het nog niet onder de knie...")
-            print(f"(-{kosten // 2} munten)")
+            # MISLUKT - Geen straf, maar minder motivatie
+            print(f"\n  [X] {naam} deed het niet goed...")
+            print(f"  Geen straf - we proberen het opnieuw!")
+
+            # Kleine motivatie daling (niet te streng!)
+            training["motivatie"] = max(10, training.get("motivatie", 100) - 5)
+
+            # Toch een klein beetje leren van fouten
+            if random.randint(1, 100) <= 20:
+                training["bekrachtiging"] = max(0, bekrachtiging + 0.5)
+                print(f"  [TIP] {naam} leerde iets van de poging!")
+
+            # AI uitleg
+            if random.randint(1, 100) <= 25:
+                print(f"\n  [AI] Bij conditionering:")
+                print(f"  - Beloon goed gedrag (positieve bekrachtiging)")
+                print(f"  - Negeer fout gedrag (geen straf nodig)")
+                print(f"  - Herhaling versterkt de connectie")
+
+        # Update stats
+        if "tricks_training_sessies" not in self.huisdier["stats"]:
+            self.huisdier["stats"]["tricks_training_sessies"] = 0
+        self.huisdier["stats"]["tricks_training_sessies"] += 1
+
+        self.huisdier["tricks_training"][trick_id] = training
+        self.huisdier["ervaring"] += 5
+        self._sla_op()
+
+    def _trick_geleerd(self, trick_id: str, trick: dict):
+        """Trick is volledig geleerd door conditionering!"""
+        naam = self.huisdier["naam"]
+        training = self.huisdier["tricks_training"].get(trick_id, {})
+
+        print("\n" + "=" * 50)
+        print(f"  [TROFEE] {naam} HEEFT '{trick['naam'].upper()}' GELEERD!")
+        print("=" * 50)
+        time.sleep(0.5)
+
+        self.huisdier["tricks_geleerd"].append(trick_id)
+
+        # Statistieken
+        pogingen = training.get("pogingen", 0)
+        successen = training.get("successen", 0)
+        succes_rate = int((successen / max(1, pogingen)) * 100)
+
+        print(f"\n  [STATS] Training voltooid:")
+        print(f"    Totaal sessies: {pogingen}")
+        print(f"    Succesvolle sessies: {successen}")
+        print(f"    Succes rate: {succes_rate}%")
+
+        # Bonus beloningen
+        munt_bonus = trick["moeilijkheid"] * 15
+        xp_bonus = trick["moeilijkheid"] * 20
+        intel_bonus = trick["moeilijkheid"]
+
+        self.huisdier["munten"] += munt_bonus
+        self.huisdier["ervaring"] += xp_bonus
+        self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + intel_bonus
+        self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 15)
+
+        print(f"\n  [BONUS] Beloningen:")
+        print(f"    +{munt_bonus} munten")
+        print(f"    +{xp_bonus} ervaring")
+        print(f"    +{intel_bonus} IQ")
+
+        # AI uitleg
+        print(f"\n  [AI] Conditionering succesvol!")
+        print(f"  Door herhaalde positieve bekrachtiging")
+        print(f"  heeft {naam} de associatie geleerd tussen")
+        print(f"  het commando en de actie.")
+
+        # Achievements
+        if len(self.huisdier["tricks_geleerd"]) == 1:
+            self._unlock_achievement("eerste_trick")
+        if len(self.huisdier["tricks_geleerd"]) == len(self.TRICKS):
+            self._unlock_achievement("alle_tricks")
 
     def _voer_trick_uit(self, trick_id: str):
-        """Voer een geleerde trick uit."""
+        """Voer een geleerde trick uit - perfectie verbetert met oefening!"""
         trick = self.TRICKS[trick_id]
+        training = self.huisdier.get("tricks_training", {}).get(trick_id, {})
+        naam = self.huisdier["naam"]
 
-        print(f"\n{self.huisdier['naam']} voert '{trick['naam']}' uit...")
+        perfectie = training.get("perfectie", 50)
+
+        print(f"\n  {naam} voert '{trick['naam']}' uit...")
         time.sleep(0.5)
+
+        # Perfectie bepaalt kwaliteit
+        if random.randint(1, 100) <= perfectie:
+            # Perfect uitgevoerd
+            bonus_mult = 1 + (perfectie - 50) / 100  # Tot 50% extra
+            beloning = int(trick["beloning"] * bonus_mult)
+
+            reacties_goed = [
+                f"[PERFECT] {naam} doet het feilloos!",
+                f"Wow! {naam} is een ster!",
+                f"Meesterlijk! {self.huisdier['geluid']}",
+            ]
+            print(random.choice(reacties_goed))
+
+            # Verhoog perfectie
+            if trick_id in self.huisdier.get("tricks_training", {}):
+                self.huisdier["tricks_training"][trick_id]["perfectie"] = min(100, perfectie + 1)
+        else:
+            # Niet perfect
+            beloning = trick["beloning"] // 2
+
+            reacties_ok = [
+                f"[OK] {naam} probeert het... bijna goed!",
+                f"{naam} doet een poging.",
+            ]
+            print(random.choice(reacties_ok))
 
         self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + trick["geluk_bonus"])
         self.huisdier["stats"]["tricks_uitgevoerd"] += 1
-        beloning = trick.get("beloning", trick["moeilijkheid"] * 2)
         self.huisdier["munten"] += beloning
-        self.huisdier["ervaring"] += trick["moeilijkheid"] * 5
+        self.huisdier["ervaring"] += trick["moeilijkheid"] * 3
 
-        reacties = [
-            f"[SHOW] Geweldig! {self.huisdier['naam']} doet het perfect!",
-            f"Wow! {self.huisdier['naam']} is een ster!",
-            f"{self.huisdier['geluid']} - Applaus!",
-        ]
-        print(random.choice(reacties))
-        print(f"+{beloning} munten!")
+        print(f"  +{beloning} munten! (Perfectie: {perfectie}%)")
 
     def _winkel(self):
         """Accessoires winkel."""
