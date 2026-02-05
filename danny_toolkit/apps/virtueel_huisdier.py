@@ -68,20 +68,20 @@ class VirtueelHuisdierApp:
 
     # Beschikbare tricks
     TRICKS = {
-        "zit": {"naam": "Zitten", "moeilijkheid": 1, "geluk_bonus": 5},
-        "poot": {"naam": "Pootje geven", "moeilijkheid": 2, "geluk_bonus": 10},
-        "rol": {"naam": "Rollen", "moeilijkheid": 3, "geluk_bonus": 15},
-        "spring": {"naam": "Springen", "moeilijkheid": 4, "geluk_bonus": 20},
-        "dans": {"naam": "Dansen", "moeilijkheid": 5, "geluk_bonus": 25},
-        "spreek": {"naam": "Spreken", "moeilijkheid": 3, "geluk_bonus": 15},
-        "dood": {"naam": "Dood spelen", "moeilijkheid": 4, "geluk_bonus": 20},
-        "high_five": {"naam": "High Five", "moeilijkheid": 2, "geluk_bonus": 10},
+        "zit": {"naam": "Zitten", "moeilijkheid": 1, "geluk_bonus": 5, "beloning": 5},
+        "poot": {"naam": "Pootje geven", "moeilijkheid": 2, "geluk_bonus": 10, "beloning": 10},
+        "rol": {"naam": "Rollen", "moeilijkheid": 3, "geluk_bonus": 15, "beloning": 15},
+        "spring": {"naam": "Springen", "moeilijkheid": 4, "geluk_bonus": 20, "beloning": 20},
+        "dans": {"naam": "Dansen", "moeilijkheid": 5, "geluk_bonus": 25, "beloning": 50},
+        "spreek": {"naam": "Spreken", "moeilijkheid": 3, "geluk_bonus": 15, "beloning": 15},
+        "dood": {"naam": "Dood spelen", "moeilijkheid": 4, "geluk_bonus": 20, "beloning": 20},
+        "high_five": {"naam": "High Five", "moeilijkheid": 2, "geluk_bonus": 10, "beloning": 10},
         # Nieuwe tricks
-        "backflip": {"naam": "Backflip", "moeilijkheid": 5, "geluk_bonus": 30},
-        "zingen": {"naam": "Zingen", "moeilijkheid": 3, "geluk_bonus": 20},
-        "magie": {"naam": "Goocheltruc", "moeilijkheid": 6, "geluk_bonus": 35},
-        "teleporteer": {"naam": "Teleporteren", "moeilijkheid": 7, "geluk_bonus": 40},
-        "onzichtbaar": {"naam": "Onzichtbaar worden", "moeilijkheid": 6, "geluk_bonus": 35},
+        "backflip": {"naam": "Backflip", "moeilijkheid": 5, "geluk_bonus": 30, "beloning": 30},
+        "zingen": {"naam": "Zingen", "moeilijkheid": 3, "geluk_bonus": 20, "beloning": 20},
+        "magie": {"naam": "Goocheltruc", "moeilijkheid": 6, "geluk_bonus": 35, "beloning": 35},
+        "teleporteer": {"naam": "Teleporteren", "moeilijkheid": 7, "geluk_bonus": 40, "beloning": 50},
+        "onzichtbaar": {"naam": "Onzichtbaar worden", "moeilijkheid": 6, "geluk_bonus": 35, "beloning": 35},
     }
 
     # Accessoires
@@ -930,7 +930,8 @@ class VirtueelHuisdierApp:
 
         self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + trick["geluk_bonus"])
         self.huisdier["stats"]["tricks_uitgevoerd"] += 1
-        self.huisdier["munten"] += trick["moeilijkheid"] * 2
+        beloning = trick.get("beloning", trick["moeilijkheid"] * 2)
+        self.huisdier["munten"] += beloning
         self.huisdier["ervaring"] += trick["moeilijkheid"] * 5
 
         reacties = [
@@ -939,7 +940,7 @@ class VirtueelHuisdierApp:
             f"{self.huisdier['geluid']} - Applaus!",
         ]
         print(random.choice(reacties))
-        print(f"+{trick['moeilijkheid'] * 2} munten!")
+        print(f"+{beloning} munten!")
 
     def _winkel(self):
         """Accessoires winkel."""
