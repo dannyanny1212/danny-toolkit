@@ -978,7 +978,7 @@ class VirtueelHuisdierApp:
             self._unlock_achievement("avonturier")
 
         # Level check
-        self._check_level_up()
+        self._check_evolutie()
 
         print(f"\n  {geluid}")
         self._sla_op()
@@ -1112,7 +1112,7 @@ class VirtueelHuisdierApp:
         if self.huisdier["stats"]["werk_taken"] >= 25:
             self._unlock_achievement("werkend_huisdier")
 
-        self._check_level_up()
+        self._check_evolutie()
         print(f"\n  {geluid}")
         self._sla_op()
 
@@ -1222,7 +1222,7 @@ class VirtueelHuisdierApp:
         if self.huisdier["stats"]["werk_taken"] >= 25:
             self._unlock_achievement("werkend_huisdier")
 
-        self._check_level_up()
+        self._check_evolutie()
         print(f"\n  {geluid}")
         self._sla_op()
 
@@ -1331,7 +1331,7 @@ class VirtueelHuisdierApp:
         if self.huisdier["stats"]["werk_taken"] >= 25:
             self._unlock_achievement("werkend_huisdier")
 
-        self._check_level_up()
+        self._check_evolutie()
         print(f"\n  {geluid}")
         self._sla_op()
 
