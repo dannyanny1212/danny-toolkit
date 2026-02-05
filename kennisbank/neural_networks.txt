@@ -1,0 +1,88 @@
+Neural Networks: Van Basis tot Deep Learning
+
+Wat is een Neural Network?
+Een neuraal netwerk is een machine learning model geinspireerd op het menselijk brein. Het bestaat uit lagen van "neuronen" die informatie verwerken en doorgeven.
+
+Anatomie van een Neuraal Netwerk:
+
+INPUT LAYER (Invoerlaag)
+- Ontvangt de ruwe data
+- Elk neuron representeert een feature
+- Voorbeeld: Bij een 28x28 pixel afbeelding heb je 784 input neuronen
+
+HIDDEN LAYERS (Verborgen Lagen)
+- Hier gebeurt de "magie"
+- Elke laag leert steeds abstractere features
+- Meer lagen = dieper netwerk = "Deep Learning"
+- Laag 1: detecteert randen
+- Laag 2: detecteert vormen
+- Laag 3: detecteert objecten
+
+OUTPUT LAYER (Uitvoerlaag)
+- Geeft het eindresultaat
+- Bij classificatie: een neuron per klasse
+- Bij regressie: een neuron met continue waarde
+
+Hoe Leert een Neural Network?
+
+1. FORWARD PROPAGATION
+   - Data stroomt van input naar output
+   - Elk neuron: output = activation(weights * inputs + bias)
+   - Netwerk maakt een voorspelling
+
+2. LOSS CALCULATION
+   - Vergelijk voorspelling met correct antwoord
+   - Loss functie meet de fout (bijv. Cross-Entropy, MSE)
+
+3. BACKPROPAGATION
+   - Bereken hoe elke weight bijdraagt aan de fout
+   - Gebruik chain rule (kettingregel) van calculus
+   - Gradients stromen terug door het netwerk
+
+4. WEIGHT UPDATE
+   - Pas weights aan om loss te verminderen
+   - Optimizer bepaalt hoe (SGD, Adam, RMSprop)
+   - Learning rate bepaalt stapgrootte
+
+Activation Functions:
+
+ReLU (Rectified Linear Unit)
+- f(x) = max(0, x)
+- Meest populair voor hidden layers
+- Snel en effectief
+
+Sigmoid
+- f(x) = 1 / (1 + e^-x)
+- Output tussen 0 en 1
+- Goed voor binaire classificatie
+
+Softmax
+- Zet outputs om naar kansen (som = 1)
+- Gebruikt voor multi-class classificatie
+
+Populaire Architecturen:
+
+CNN (Convolutional Neural Networks)
+- Speciaal voor beelden en spatiele data
+- Convolutional layers detecteren lokale patronen
+- Pooling layers reduceren dimensionaliteit
+- Toepassingen: beeldherkenning, medische scans
+
+RNN (Recurrent Neural Networks)
+- Voor sequentiele data (tekst, tijdreeksen)
+- Hebben "geheugen" van vorige inputs
+- Varianten: LSTM, GRU
+
+Transformer
+- Revolutionair voor NLP
+- Attention mechanisme weegt relevantie
+- Basis voor GPT, BERT, Claude
+- Kan parallelliseren (sneller dan RNN)
+
+Training Tips:
+
+- Begin met kleine learning rate (0.001)
+- Gebruik batch normalization
+- Dropout voorkomt overfitting
+- Data augmentation vergroot je dataset
+- Monitor validation loss voor early stopping

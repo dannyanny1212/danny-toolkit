@@ -1,0 +1,189 @@
+API Design: Best Practices voor REST en Modern APIs
+
+REST Principes
+
+REST (Representational State Transfer) is een architectuurstijl voor web APIs.
+
+DE 6 REST CONSTRAINTS:
+
+1. Client-Server Scheiding
+   - Frontend en backend zijn onafhankelijk
+   - Kunnen apart evolueren
+
+2. Stateless
+   - Elke request bevat alle benodigde informatie
+   - Server houdt geen sessie-state bij
+
+3. Cacheable
+   - Responses kunnen gecached worden
+   - Verbetert performance
+
+4. Uniform Interface
+   - Consistente manier van communiceren
+   - Resources, HTTP methods, representaties
+
+5. Layered System
+   - Client weet niet of hij praat met eindserver
+   - Load balancers, proxies, gateways mogelijk
+
+6. Code on Demand (optioneel)
+   - Server kan uitvoerbare code sturen
+
+HTTP Methods
+
+GET    - Ophalen van resource(s)
+POST   - Nieuwe resource aanmaken
+PUT    - Resource volledig vervangen
+PATCH  - Resource gedeeltelijk updaten
+DELETE - Resource verwijderen
+
+IDEMPOTENTIE:
+- GET, PUT, DELETE: idempotent (meerdere calls = zelfde resultaat)
+- POST: niet idempotent (elke call maakt nieuwe resource)
+
+URL Design
+
+GOED:
+GET    /users              # Alle users
+GET    /users/123          # Specifieke user
+POST   /users              # Nieuwe user
+PUT    /users/123          # Update user
+DELETE /users/123          # Verwijder user
+GET    /users/123/orders   # Orders van user
+
+SLECHT:
+GET    /getUsers
+GET    /getUserById?id=123
+POST   /createUser
+POST   /deleteUser
+
+REGELS:
+- Gebruik zelfstandige naamwoorden (users, niet getUsers)
+- Meervoud voor collecties
+- Lowercase met hyphens (order-items, niet orderItems)
+- Geen werkwoorden in URLs
+- Hierarchie voor relaties (/users/123/orders)
+
+Status Codes
+
+2xx SUCCESS:
+- 200 OK: Request succesvol
+- 201 Created: Resource aangemaakt
+- 204 No Content: Succes, geen response body
+
+3xx REDIRECTION:
+- 301 Moved Permanently
+- 304 Not Modified (caching)
+
+4xx CLIENT ERROR:
+- 400 Bad Request: Ongeldige input
+- 401 Unauthorized: Niet geauthenticeerd
+- 403 Forbidden: Geen rechten
+- 404 Not Found: Resource bestaat niet
+- 422 Unprocessable Entity: Validatie gefaald
+
+5xx SERVER ERROR:
+- 500 Internal Server Error
+- 502 Bad Gateway
+- 503 Service Unavailable
+
+Response Format
+
+SUCCES RESPONSE:
+{
+    "data": {
+        "id": 123,
+        "naam": "Jan",
+        "email": "jan@example.com"
+    },
+    "meta": {
+        "timestamp": "2024-01-15T10:30:00Z"
+    }
+}
+
+ERROR RESPONSE:
+{
+    "error": {
+        "code": "VALIDATION_ERROR",
+        "message": "Email is ongeldig",
+        "details": [
+            {
+                "field": "email",
+                "message": "Moet een geldig email adres zijn"
+            }
+        ]
+    }
+}
+
+PAGINATIE:
+{
+    "data": [...],
+    "pagination": {
+        "page": 1,
+        "per_page": 20,
+        "total": 100,
+        "total_pages": 5
+    },
+    "links": {
+        "self": "/users?page=1",
+        "next": "/users?page=2",
+        "last": "/users?page=5"
+    }
+}
+
+Authenticatie
+
+API KEY:
+- Header: X-API-Key: abc123
+- Simpel maar minder veilig
+- Goed voor server-to-server
+
+JWT (JSON Web Token):
+- Header: Authorization: Bearer <token>
+- Stateless authenticatie
+- Token bevat user info
+- Verloopt na bepaalde tijd
+
+OAUTH 2.0:
+- Industrie standaard
+- Access tokens + refresh tokens
+- Scopes voor permissies
+- Goed voor third-party access
+
+Versioning
+
+URL PATH (aanbevolen):
+/api/v1/users
+/api/v2/users
+
+HEADER:
+Accept: application/vnd.api+json; version=1
+
+QUERY PARAMETER:
+/users?version=1
+
+Rate Limiting
+
+Headers teruggeven:
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1609459200
+
+Bij limiet bereikt:
+HTTP 429 Too Many Requests
+Retry-After: 60
+
+Documentatie
+
+MUST-HAVES:
+- Endpoint overzicht
+- Request/response voorbeelden
+- Authenticatie uitleg
+- Error codes
+- Rate limits
+- Changelog
+
+TOOLS:
+- OpenAPI/Swagger
+- Postman Collections
+- README met curl voorbeelden

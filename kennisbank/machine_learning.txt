@@ -1,0 +1,53 @@
+Machine Learning: Een Complete Introductie
+
+Wat is Machine Learning?
+Machine Learning (ML) is een tak van kunstmatige intelligentie waarbij computers leren van data zonder expliciet geprogrammeerd te worden. In plaats van regels te schrijven, geef je het systeem voorbeelden en het ontdekt zelf patronen.
+
+Drie Hoofdtypen Machine Learning:
+
+1. SUPERVISED LEARNING (Begeleid Leren)
+   - Je geeft het model gelabelde data (input + correct antwoord)
+   - Het model leert de relatie tussen input en output
+   - Voorbeelden: spam detectie, huizenprijzen voorspellen, beeldherkenning
+   - Algoritmes: Linear Regression, Decision Trees, Random Forest, Neural Networks
+
+2. UNSUPERVISED LEARNING (Onbegeleid Leren)
+   - Je geeft het model data zonder labels
+   - Het model ontdekt zelf structuren en patronen
+   - Voorbeelden: klantensegmentatie, anomalie detectie, topic modeling
+   - Algoritmes: K-Means Clustering, PCA, Autoencoders
+
+3. REINFORCEMENT LEARNING (Bekrachtigingsleren)
+   - Een agent leert door trial-and-error in een omgeving
+   - Krijgt beloningen of straffen voor acties
+   - Voorbeelden: game AI, robotica, zelfrijdende auto's
+   - Algoritmes: Q-Learning, Policy Gradient, PPO
+
+Belangrijke Concepten:
+
+TRAINING vs INFERENCE
+- Training: Het model leert van data (kan uren/dagen duren)
+- Inference: Het getrainde model maakt voorspellingen (milliseconden)
+
+OVERFITTING vs UNDERFITTING
+- Overfitting: Model leert trainingsdata "uit het hoofd", generaliseert slecht
+- Underfitting: Model is te simpel, mist belangrijke patronen
+- Oplossing: Validatie sets, regularisatie, cross-validation
+
+FEATURES en LABELS
+- Features: De input variabelen (bijv. leeftijd, inkomen, locatie)
+- Labels: De output die je wilt voorspellen (bijv. koopt wel/niet)
+- Feature Engineering: Het creeren van betere input variabelen
+
+Evaluatie Metrics:
+
+Voor Classificatie:
+- Accuracy: Percentage correcte voorspellingen
+- Precision: Van alle positieve voorspellingen, hoeveel waren correct?
+- Recall: Van alle echte positieven, hoeveel zijn gevonden?
+- F1-Score: Harmonisch gemiddelde van precision en recall
+
+Voor Regressie:
+- MSE (Mean Squared Error): Gemiddelde kwadratische fout
+- MAE (Mean Absolute Error): Gemiddelde absolute fout
+- R-squared: Hoeveel variantie verklaart het model?

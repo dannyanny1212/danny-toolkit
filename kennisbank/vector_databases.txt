@@ -1,0 +1,108 @@
+Vector Databases: De Ruggengraat van Moderne AI
+
+Wat is een Vector Database?
+Een vector database is geoptimaliseerd voor het opslaan en doorzoeken van vectoren (embeddings). In tegenstelling tot traditionele databases die zoeken op exacte waarden, vinden vector databases items die semantisch vergelijkbaar zijn.
+
+Waarom Vector Databases?
+
+TRADITIONELE DATABASE:
+- Zoekt exacte matches
+- Query: "SELECT * WHERE titel = 'machine learning'"
+- Vindt alleen documenten met exact die woorden
+
+VECTOR DATABASE:
+- Zoekt op betekenis/similariteit
+- Query: embedding van "kunstmatige intelligentie"
+- Vindt ook: "ML", "AI", "deep learning", "neural networks"
+
+Hoe Werkt Het?
+
+1. EMBEDDING GENERATIE
+   - Tekst/afbeelding/audio wordt omgezet naar vector
+   - Vector = lijst van getallen (bijv. 1536 dimensies)
+   - Semantisch vergelijkbare items hebben vergelijkbare vectoren
+
+2. INDEXERING
+   - Vectoren worden geindexeerd voor snelle zoekacties
+   - Algoritmes: HNSW, IVF, PQ
+   - Trade-off tussen snelheid en nauwkeurigheid
+
+3. SIMILARITY SEARCH
+   - Query vector wordt vergeleken met opgeslagen vectoren
+   - Meest vergelijkbare vectoren worden teruggegeven
+   - Metrics: Cosine Similarity, Euclidean Distance, Dot Product
+
+Similarity Metrics:
+
+COSINE SIMILARITY
+- Meet de hoek tussen twee vectoren
+- Range: -1 tot 1 (1 = identiek)
+- Formule: cos(θ) = (A · B) / (||A|| × ||B||)
+- Beste voor: tekst embeddings
+
+EUCLIDEAN DISTANCE
+- Meet de "rechte lijn" afstand
+- Kleiner = meer vergelijkbaar
+- Formule: √Σ(ai - bi)²
+- Beste voor: afbeeldingen, clustering
+
+DOT PRODUCT
+- Som van element-wise vermenigvuldiging
+- Formule: Σ(ai × bi)
+- Beste voor: genormaliseerde vectoren
+
+Populaire Vector Databases:
+
+PINECONE
+- Fully managed cloud service
+- Zeer schaalbaar
+- Makkelijke integratie
+- Prijs: per opgeslagen vector
+
+CHROMADB
+- Open source
+- Lokaal of in cloud
+- Python-native
+- Gratis voor lokaal gebruik
+
+WEAVIATE
+- Open source
+- Ingebouwde vectorisatie
+- GraphQL API
+- Hybrid search (vector + keyword)
+
+MILVUS
+- Open source
+- Zeer schaalbaar
+- GPU ondersteuning
+- Enterprise ready
+
+QDRANT
+- Open source, Rust-based
+- Filtering en payloads
+- Gratis self-hosted
+
+FAISS (Facebook AI)
+- Library, geen database
+- Extreem snel
+- Beste voor research/prototyping
+
+RAG Architectuur met Vector DB:
+
+1. INDEXEER FASE:
+   Documenten → Chunking → Embedding Model → Vector DB
+
+2. QUERY FASE:
+   Vraag → Embedding → Vector DB Search → Top-K Chunks
+
+3. GENERATIE FASE:
+   Top-K Chunks + Vraag → LLM → Antwoord
+
+Best Practices:
+
+- Kies chunk size zorgvuldig (300-500 tokens)
+- Overweeg overlap tussen chunks
+- Metadata opslaan voor filtering
+- Regelmatig herindexeren bij updates
+- Monitor query latency
+- Test verschillende embedding models

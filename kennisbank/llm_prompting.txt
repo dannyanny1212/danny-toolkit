@@ -1,0 +1,105 @@
+LLM Prompting: Effectief Communiceren met AI
+
+Wat is Prompting?
+Prompting is de kunst van het formuleren van instructies voor Large Language Models (LLMs) zoals Claude, GPT en anderen. Een goede prompt kan het verschil maken tussen een nutteloos en een briljant antwoord.
+
+Basis Principes:
+
+1. WEES SPECIFIEK
+   Slecht: "Schrijf iets over Python"
+   Goed: "Schrijf een Python functie die een lijst met getallen sorteert van laag naar hoog met bubble sort, inclusief comments"
+
+2. GEEF CONTEXT
+   - Wie ben je? (rol)
+   - Wat is het doel?
+   - Voor wie is de output?
+   - Welke beperkingen zijn er?
+
+3. GEEF VOORBEELDEN
+   - Few-shot learning: geef 2-3 voorbeelden van gewenste output
+   - Dit helpt het model het patroon te begrijpen
+
+Prompting Technieken:
+
+ZERO-SHOT PROMPTING
+- Directe vraag zonder voorbeelden
+- "Vertaal naar het Engels: Hallo wereld"
+- Werkt voor simpele taken
+
+FEW-SHOT PROMPTING
+- Geef voorbeelden voor de vraag
+- "positief: Ik ben blij -> sentiment: positief
+   negatief: Dit is verschrikkelijk -> sentiment: negatief
+   Wat een mooie dag! -> sentiment:"
+
+CHAIN-OF-THOUGHT (CoT)
+- Vraag het model stap voor stap te denken
+- "Los dit probleem stap voor stap op..."
+- Verbetert redenering bij complexe taken
+
+ROLE PROMPTING
+- Geef het model een persona
+- "Je bent een ervaren Python developer..."
+- "Gedraag je als een vriendelijke leraar..."
+
+STRUCTURED OUTPUT
+- Vraag om specifiek formaat
+- "Antwoord in JSON formaat met keys: naam, leeftijd, stad"
+- "Geef je antwoord als een genummerde lijst"
+
+Prompt Templates:
+
+INSTRUCTIE TEMPLATE:
+"""
+Je bent [ROL].
+Je taak is om [TAAK].
+Houd rekening met [BEPERKINGEN].
+Formatteer je antwoord als [FORMAT].
+
+[INPUT]
+"""
+
+ANALYSE TEMPLATE:
+"""
+Analyseer de volgende [TYPE]:
+
+[CONTENT]
+
+Geef:
+1. Samenvatting (max 2 zinnen)
+2. Hoofdpunten (bullets)
+3. Conclusie
+"""
+
+CODE TEMPLATE:
+"""
+Schrijf een [TAAL] functie die:
+- Input: [BESCHRIJVING]
+- Output: [BESCHRIJVING]
+- Randgevallen: [LIJST]
+
+Voeg comments toe en gebruik beschrijvende variabelenamen.
+"""
+
+Veelgemaakte Fouten:
+
+1. Te vaag zijn
+   - Model moet niet gokken wat je wilt
+
+2. Te veel in een prompt stoppen
+   - Splits complexe taken op
+
+3. Tegenstrijdige instructies
+   - "Wees kort maar geef veel detail"
+
+4. Geen format specificeren
+   - Je krijgt inconsistente outputs
+
+Tips voor Betere Resultaten:
+
+- Itereer: verfijn je prompt gebaseerd op output
+- Test met variaties van je vraag
+- Gebruik delimiters (""", ---, ###) voor duidelijke secties
+- Vraag om verificatie: "Controleer je antwoord"
+- Geef negatieve voorbeelden: "Doe NIET..."
+- Stel temperature in: laag voor consistent, hoog voor creatief

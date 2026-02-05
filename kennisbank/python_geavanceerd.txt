@@ -1,0 +1,179 @@
+Geavanceerd Python: Technieken voor Professionals
+
+Decorators
+
+Decorators zijn functies die andere functies "wrappen" om functionaliteit toe te voegen.
+
+BASIS DECORATOR:
+def timer(func):
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        print(f"{func.__name__} duurde {time.time() - start:.2f}s")
+        return result
+    return wrapper
+
+@timer
+def slow_function():
+    time.sleep(1)
+
+DECORATOR MET ARGUMENTEN:
+def repeat(times):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            for _ in range(times):
+                result = func(*args, **kwargs)
+            return result
+        return wrapper
+    return decorator
+
+@repeat(3)
+def say_hello():
+    print("Hallo!")
+
+Context Managers
+
+Context managers zorgen voor setup en cleanup, vaak met "with" statement.
+
+CLASS-BASED:
+class FileManager:
+    def __init__(self, filename, mode):
+        self.filename = filename
+        self.mode = mode
+
+    def __enter__(self):
+        self.file = open(self.filename, self.mode)
+        return self.file
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.file.close()
+        return False  # Propagate exceptions
+
+GENERATOR-BASED:
+from contextlib import contextmanager
+
+@contextmanager
+def timer_context():
+    start = time.time()
+    yield
+    print(f"Duurde: {time.time() - start:.2f}s")
+
+with timer_context():
+    slow_operation()
+
+Generators en Iterators
+
+Generators zijn memory-efficient voor grote datasets.
+
+GENERATOR FUNCTIE:
+def fibonacci(n):
+    a, b = 0, 1
+    for _ in range(n):
+        yield a
+        a, b = b, a + b
+
+for num in fibonacci(10):
+    print(num)
+
+GENERATOR EXPRESSION:
+squares = (x**2 for x in range(1000000))  # Lazy evaluation
+sum(squares)  # Berekent on-demand
+
+Dataclasses
+
+Dataclasses reduceren boilerplate voor data containers.
+
+from dataclasses import dataclass, field
+from typing import List
+
+@dataclass
+class User:
+    naam: str
+    email: str
+    leeftijd: int = 0
+    tags: List[str] = field(default_factory=list)
+
+    def is_adult(self) -> bool:
+        return self.leeftijd >= 18
+
+@dataclass(frozen=True)  # Immutable
+class Point:
+    x: float
+    y: float
+
+Type Hints
+
+Type hints verbeteren code leesbaarheid en IDE ondersteuning.
+
+from typing import List, Dict, Optional, Union, Callable
+
+def process_items(
+    items: List[str],
+    callback: Callable[[str], int],
+    config: Optional[Dict[str, any]] = None
+) -> List[int]:
+    return [callback(item) for item in items]
+
+def get_user(user_id: int) -> Optional[User]:
+    # Kan User of None teruggeven
+    pass
+
+Async/Await
+
+Asynchrone programmering voor I/O-bound taken.
+
+import asyncio
+import aiohttp
+
+async def fetch_url(url: str) -> str:
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            return await response.text()
+
+async def fetch_all(urls: List[str]) -> List[str]:
+    tasks = [fetch_url(url) for url in urls]
+    return await asyncio.gather(*tasks)
+
+# Uitvoeren
+results = asyncio.run(fetch_all(["url1", "url2", "url3"]))
+
+Metaclasses
+
+Metaclasses zijn "klassen van klassen" - ze controleren hoe klassen worden gemaakt.
+
+class SingletonMeta(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super().__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+class Database(metaclass=SingletonMeta):
+    def __init__(self):
+        self.connection = "connected"
+
+# Altijd dezelfde instance
+db1 = Database()
+db2 = Database()
+assert db1 is db2  # True
+
+Functools Module
+
+import functools
+
+# Caching
+@functools.lru_cache(maxsize=128)
+def expensive_calculation(n):
+    return sum(i**2 for i in range(n))
+
+# Partial functions
+def power(base, exponent):
+    return base ** exponent
+
+square = functools.partial(power, exponent=2)
+cube = functools.partial(power, exponent=3)
+
+# Reduce
+from functools import reduce
+product = reduce(lambda x, y: x * y, [1, 2, 3, 4, 5])  # 120
