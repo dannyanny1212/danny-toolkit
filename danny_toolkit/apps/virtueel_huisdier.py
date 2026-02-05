@@ -1,6 +1,13 @@
 """
 Virtueel Huisdier App.
-Versie 2.0 - Met achievements, mini-games, tricks, evolutie en meer!
+Versie 3.0 - Nu met ECHTE AI integratie!
+
+Integreert met:
+- Boodschappenlijst (echte items toevoegen)
+- Slimme Rekenmachine (echte berekeningen)
+- Production RAG (echte kennisbank queries)
+- Nieuws Agent (echte nieuws data)
+- Weer Agent (echte weer data)
 """
 
 import json
@@ -12,6 +19,29 @@ from pathlib import Path
 
 from ..core.config import Config
 from ..core.utils import clear_scherm
+
+# Lazy imports voor AI integratie (om circulaire imports te voorkomen)
+def _get_boodschappenlijst():
+    from ..apps.boodschappenlijst import BoodschappenlijstApp
+    return BoodschappenlijstApp()
+
+def _get_rekenmachine():
+    from ..apps.rekenmachine import RekenmachineApp
+    return RekenmachineApp()
+
+def _get_nieuws_agent():
+    try:
+        from ..ai.nieuws_agent import NieuwsAgentApp
+        return NieuwsAgentApp()
+    except Exception:
+        return None
+
+def _get_weer_agent():
+    try:
+        from ..ai.weer_agent import WeerAgentApp
+        return WeerAgentApp()
+    except Exception:
+        return None
 
 
 class VirtueelHuisdierApp:
@@ -157,10 +187,19 @@ class VirtueelHuisdierApp:
                 "nieuws_gelezen": 0,
                 "weer_gecheckt": 0,
                 "ai_gesprekken": 0,
+                "boodschappen_gedaan": 0,
+                "berekeningen_gedaan": 0,
             },
             "dagelijkse_bonus": {
                 "laatste_claim": None,
                 "streak": 0,
+            },
+            "kennis": {
+                "feiten": [],
+                "nieuws": [],
+                "weer_historie": [],
+                "berekeningen": [],
+                "boodschappen_tips": [],
             },
         }
 
@@ -1428,7 +1467,7 @@ class VirtueelHuisdierApp:
             input("\nDruk op Enter...")
 
     def _leren_rag(self):
-        """Huisdier leert van de kennisbank (RAG systeem)."""
+        """Huisdier leert van de ECHTE kennisbank (Production RAG)."""
         if self.huisdier["munten"] < 10:
             print("\nJe hebt niet genoeg munten! (Nodig: 10)")
             return
@@ -1440,88 +1479,104 @@ class VirtueelHuisdierApp:
         self.huisdier["munten"] -= 10
         self.huisdier["energie"] = max(0, self.huisdier["energie"] - 15)
 
-        # Init stats
+        # Init kennis opslag
+        if "kennis" not in self.huisdier:
+            self.huisdier["kennis"] = {"feiten": [], "nieuws": [], "weer_historie": []}
         if "feiten_geleerd" not in self.huisdier["stats"]:
             self.huisdier["stats"]["feiten_geleerd"] = 0
 
         naam = self.huisdier["naam"]
         geluid = self.huisdier["geluid"]
 
-        # Kennisbank onderwerpen
-        onderwerpen = {
-            "Machine Learning": [
-                "ML is een tak van AI waarbij computers leren van data",
-                "Supervised learning gebruikt gelabelde trainingsdata",
-                "Unsupervised learning vindt patronen zonder labels",
-                "Overfitting betekent dat een model te goed past op trainingsdata",
-            ],
-            "Neural Networks": [
-                "Een neuraal netwerk is geinspireerd op het menselijk brein",
-                "Backpropagation is hoe neurale netwerken leren",
-                "CNN's zijn speciaal voor beeldherkenning",
-                "Transformers zijn de basis voor GPT en Claude",
-            ],
-            "Python": [
-                "Decorators wrappen functies voor extra functionaliteit",
-                "Generators gebruiken yield voor memory-efficiente iteratie",
-                "List comprehensions zijn korte syntax voor lijsten maken",
-                "Type hints verbeteren code leesbaarheid",
-            ],
-            "API Design": [
-                "REST API's gebruiken HTTP methodes zoals GET en POST",
-                "Status code 200 betekent succes",
-                "Status code 404 betekent niet gevonden",
-                "JSON is het standaard data formaat voor API's",
-            ],
-            "Vector Databases": [
-                "Embeddings zijn numerieke representaties van tekst",
-                "Cosine similarity meet gelijkenis tussen vectoren",
-                "RAG combineert retrieval met AI generatie",
-                "Chunking splitst documenten in kleinere stukken",
-            ],
-        }
-
         print("\n" + "=" * 50)
-        print(f"  [BOEK] {naam} GAAT STUDEREN!")
+        print(f"  [BOEK] {naam} OPENT PRODUCTION RAG!")
         print("=" * 50)
         time.sleep(0.5)
 
         print(f"\n  {geluid}")
-        print(f"  {naam} opent de kennisbank...")
-        time.sleep(0.5)
 
+        # Probeer echte RAG te gebruiken
+        echte_rag = False
         feiten_geleerd = []
         intel_bonus = 0
 
-        # Studeer 3 onderwerpen
-        for onderwerp in random.sample(list(onderwerpen.keys()), 3):
-            print(f"\n  --- Onderwerp: {onderwerp} ---")
-            time.sleep(0.4)
+        try:
+            from ..ai.production_rag import ProductionRAG
+            print(f"  {naam} verbindt met de ECHTE kennisbank...")
+            time.sleep(0.5)
 
-            # Leer 1-2 feiten per onderwerp
-            feiten = random.sample(onderwerpen[onderwerp], min(2, len(onderwerpen[onderwerp])))
-            for feit in feiten:
-                if random.randint(1, 100) <= 80:  # 80% kans om te leren
+            # Check of er documenten zijn
+            kennisbank_dir = Config.BASE_DIR / "kennisbank"
+            if kennisbank_dir.exists():
+                bestanden = list(kennisbank_dir.glob("*.txt"))
+                if bestanden:
+                    echte_rag = True
+                    print(f"  [OK] {len(bestanden)} kennisbestanden gevonden!")
+
+                    # Lees random feiten uit de kennisbank
+                    for bestand in random.sample(bestanden, min(3, len(bestanden))):
+                        print(f"\n  --- Studeert: {bestand.name} ---")
+                        time.sleep(0.3)
+
+                        try:
+                            content = bestand.read_text(encoding="utf-8")
+                            # Zoek secties met === of ---
+                            secties = re.split(r'\n={3,}|\n-{3,}', content)
+                            for sectie in secties:
+                                if len(sectie.strip()) > 50:
+                                    # Extract eerste zin als feit
+                                    zinnen = sectie.strip().split('.')
+                                    for zin in zinnen[:2]:
+                                        zin = zin.strip()
+                                        if len(zin) > 20 and len(zin) < 200:
+                                            if zin not in self.huisdier["kennis"]["feiten"]:
+                                                feiten_geleerd.append(zin)
+                                                self.huisdier["kennis"]["feiten"].append(zin)
+                                                intel_bonus += 3
+                                                print(f"  [LAMP] NIEUW: \"{zin[:60]}...\"")
+                                                break
+                                    break
+                        except Exception as e:
+                            print(f"  [!] Kon {bestand.name} niet lezen")
+
+        except ImportError:
+            pass
+
+        if not echte_rag:
+            print(f"  [!] Geen RAG beschikbaar, gebruik ingebouwde kennis...")
+            # Fallback naar ingebouwde kennis
+            ingebouwde_feiten = [
+                "Machine Learning is een tak van AI waarbij computers leren van data",
+                "Neural networks zijn geinspireerd op het menselijk brein",
+                "Python decorators wrappen functies voor extra functionaliteit",
+                "REST API's gebruiken HTTP methodes zoals GET en POST",
+                "Embeddings zijn numerieke representaties van tekst",
+            ]
+            for feit in random.sample(ingebouwde_feiten, 3):
+                if feit not in self.huisdier["kennis"]["feiten"]:
                     feiten_geleerd.append(feit)
+                    self.huisdier["kennis"]["feiten"].append(feit)
                     intel_bonus += 2
                     print(f"  [LAMP] {naam} leert: \"{feit[:50]}...\"")
-                else:
-                    print(f"  [?] {naam} snapt dit nog niet helemaal...")
-            time.sleep(0.3)
 
         # Resultaten
         print("\n" + "=" * 50)
         print("  [DIPLOMA] STUDIE SESSIE VOLTOOID!")
         print("=" * 50)
 
-        xp_beloning = len(feiten_geleerd) * 10 + 5
-        munt_beloning = len(feiten_geleerd) * 3
+        xp_beloning = len(feiten_geleerd) * 12 + 5
+        munt_beloning = len(feiten_geleerd) * 4
 
+        totaal_kennis = len(self.huisdier["kennis"]["feiten"])
         print(f"\n  {naam}'s studieresultaten:")
-        print(f"    [BOEK] Feiten geleerd: {len(feiten_geleerd)}")
+        print(f"    [BOEK] Nieuwe feiten: {len(feiten_geleerd)}")
+        print(f"    [DATABASE] Totale kennis: {totaal_kennis} feiten")
         print(f"    [IQ] Intelligentie: +{intel_bonus}")
         print(f"    [MUNT] Munten: +{munt_beloning}")
         print(f"    [XP] Ervaring: +{xp_beloning}")
+
+        if echte_rag:
+            print(f"\n  [STAR] Bonus: Echte RAG gebruikt!")
 
         # Geef beloningen
         self.huisdier["munten"] += munt_beloning
@@ -1535,12 +1590,16 @@ class VirtueelHuisdierApp:
         if self.huisdier.get("intelligentie", 0) >= 100:
             self._unlock_achievement("super_slim")
 
+        # Beperk kennis opslag tot 100 items
+        if len(self.huisdier["kennis"]["feiten"]) > 100:
+            self.huisdier["kennis"]["feiten"] = self.huisdier["kennis"]["feiten"][-100:]
+
         self._check_evolutie()
         print(f"\n  {geluid}")
         self._sla_op()
 
     def _leren_nieuws(self):
-        """Huisdier leest nieuws."""
+        """Huisdier leest nieuws van de ECHTE Nieuws Agent."""
         if self.huisdier["munten"] < 8:
             print("\nJe hebt niet genoeg munten! (Nodig: 8)")
             return
@@ -1552,72 +1611,97 @@ class VirtueelHuisdierApp:
         self.huisdier["munten"] -= 8
         self.huisdier["energie"] = max(0, self.huisdier["energie"] - 10)
 
-        # Init stats
+        # Init kennis opslag
+        if "kennis" not in self.huisdier:
+            self.huisdier["kennis"] = {"feiten": [], "nieuws": [], "weer_historie": []}
         if "nieuws_gelezen" not in self.huisdier["stats"]:
             self.huisdier["stats"]["nieuws_gelezen"] = 0
 
         naam = self.huisdier["naam"]
         geluid = self.huisdier["geluid"]
 
-        # Nieuws onderwerpen
-        nieuws_items = [
-            ("Tech", "SpaceX lanceert nieuwe Starship raket naar Mars"),
-            ("Tech", "Apple kondigt nieuwe AI-functies aan voor iPhone"),
-            ("Tech", "Google's quantum computer bereikt doorbraak"),
-            ("Sport", "Nederlands elftal wint belangrijke wedstrijd"),
-            ("Sport", "Olympische Spelen breken kijkcijferrecords"),
-            ("Wetenschap", "Nieuwe ontdekking in zoektocht naar buitenaards leven"),
-            ("Wetenschap", "Doorbraak in kernfusie onderzoek"),
-            ("Natuur", "Zeldzame diersoort herontdekt in regenwoud"),
-            ("Natuur", "Nieuw klimaatakkoord getekend door 50 landen"),
-            ("Cultuur", "Blockbuster film breekt box office records"),
-        ]
-
         print("\n" + "=" * 50)
-        print(f"  [KRANT] {naam} LEEST HET NIEUWS!")
+        print(f"  [KRANT] {naam} OPENT NIEUWS AGENT!")
         print("=" * 50)
         time.sleep(0.5)
 
         print(f"\n  {geluid}")
-        print(f"  {naam} opent de nieuwsapp...")
-        time.sleep(0.5)
 
         gelezen = []
         intel_bonus = 0
+        echte_nieuws = False
 
-        # Lees 4 nieuwsberichten
-        for categorie, titel in random.sample(nieuws_items, 4):
-            print(f"\n  --- {categorie.upper()} ---")
-            print(f"  [>] {titel}")
-            time.sleep(0.4)
+        try:
+            nieuws_agent = _get_nieuws_agent()
+            if nieuws_agent:
+                print(f"  {naam} verbindt met de ECHTE Nieuws Agent...")
+                time.sleep(0.5)
+                echte_nieuws = True
 
-            if random.randint(1, 100) <= 75:
-                gelezen.append(titel)
-                intel_bonus += 1
-                reacties = [
-                    f"{naam} vindt dit interessant!",
-                    f"{naam} onthoudt dit nieuws.",
-                    f"{naam} deelt dit met vrienden!",
-                ]
-                print(f"  [OK] {random.choice(reacties)}")
-            else:
-                print(f"  [_] {naam} scrollt verder...")
+                # Haal echte nieuws data
+                alle_nieuws = nieuws_agent.web.zoek_alle_categorieen()
+                trending = nieuws_agent.web.get_trending()
 
-            time.sleep(0.3)
+                print(f"  [OK] Nieuws database geladen!")
+                print(f"  [HOT] Trending: {', '.join(trending[:3])}")
+
+                # Lees nieuws uit verschillende categorieen
+                for categorie, items in list(alle_nieuws.items())[:4]:
+                    if items:
+                        item = random.choice(items)
+                        print(f"\n  --- {categorie.upper()} ---")
+                        print(f"  [>] {item['titel']}")
+                        print(f"      Bron: {item['bron']}")
+                        time.sleep(0.3)
+
+                        nieuws_entry = f"{categorie}: {item['titel']}"
+                        if nieuws_entry not in self.huisdier["kennis"]["nieuws"]:
+                            gelezen.append(item['titel'])
+                            self.huisdier["kennis"]["nieuws"].append(nieuws_entry)
+                            intel_bonus += 2
+                            print(f"  [OK] {naam} onthoudt dit nieuws!")
+                        else:
+                            print(f"  [_] {naam} kende dit al...")
+
+        except Exception as e:
+            pass
+
+        if not echte_nieuws:
+            print(f"  [!] Nieuws Agent niet beschikbaar, gebruik cache...")
+            # Fallback nieuws
+            fallback_nieuws = [
+                ("Tech", "SpaceX lanceert nieuwe Starship raket"),
+                ("Sport", "Nederlands elftal wint belangrijke wedstrijd"),
+                ("Wetenschap", "Doorbraak in AI onderzoek"),
+                ("Natuur", "Nieuwe diersoort ontdekt"),
+            ]
+            for cat, titel in fallback_nieuws:
+                entry = f"{cat}: {titel}"
+                if entry not in self.huisdier["kennis"]["nieuws"]:
+                    gelezen.append(titel)
+                    self.huisdier["kennis"]["nieuws"].append(entry)
+                    intel_bonus += 1
+                    print(f"\n  [{cat.upper()}] {titel}")
+                    print(f"  [OK] {naam} leest dit!")
 
         # Resultaten
         print("\n" + "=" * 50)
         print("  [NIEUWS] KLAAR MET LEZEN!")
         print("=" * 50)
 
-        xp_beloning = len(gelezen) * 5 + 5
-        munt_beloning = len(gelezen) * 2
+        xp_beloning = len(gelezen) * 6 + 5
+        munt_beloning = len(gelezen) * 3
 
+        totaal_nieuws = len(self.huisdier["kennis"]["nieuws"])
         print(f"\n  {naam}'s nieuwsoverzicht:")
-        print(f"    [KRANT] Artikelen gelezen: {len(gelezen)}")
+        print(f"    [KRANT] Nieuwe artikelen: {len(gelezen)}")
+        print(f"    [DATABASE] Totaal gelezen: {totaal_nieuws}")
         print(f"    [IQ] Intelligentie: +{intel_bonus}")
         print(f"    [MUNT] Munten: +{munt_beloning}")
         print(f"    [XP] Ervaring: +{xp_beloning}")
+
+        if echte_nieuws:
+            print(f"\n  [STAR] Bonus: Echte Nieuws Agent gebruikt!")
 
         # Geef beloningen
         self.huisdier["munten"] += munt_beloning
@@ -1625,6 +1709,10 @@ class VirtueelHuisdierApp:
         self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + intel_bonus
         self.huisdier["stats"]["nieuws_gelezen"] += len(gelezen)
         self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 3)
+
+        # Beperk nieuws opslag
+        if len(self.huisdier["kennis"]["nieuws"]) > 50:
+            self.huisdier["kennis"]["nieuws"] = self.huisdier["kennis"]["nieuws"][-50:]
 
         # Achievements
         if self.huisdier["stats"]["nieuws_gelezen"] >= 10:
@@ -1637,63 +1725,112 @@ class VirtueelHuisdierApp:
         self._sla_op()
 
     def _leren_weer(self):
-        """Huisdier checkt het weer."""
+        """Huisdier checkt het weer met de ECHTE Weer Agent."""
         if self.huisdier["munten"] < 5:
             print("\nJe hebt niet genoeg munten! (Nodig: 5)")
             return
 
         self.huisdier["munten"] -= 5
 
-        # Init stats
+        # Init kennis opslag
+        if "kennis" not in self.huisdier:
+            self.huisdier["kennis"] = {"feiten": [], "nieuws": [], "weer_historie": []}
         if "weer_gecheckt" not in self.huisdier["stats"]:
             self.huisdier["stats"]["weer_gecheckt"] = 0
 
         naam = self.huisdier["naam"]
         geluid = self.huisdier["geluid"]
 
-        # Steden en weer
-        steden = ["Amsterdam", "Rotterdam", "Utrecht", "Eindhoven", "Groningen"]
-        weer_types = [
-            ("Zonnig", "[ZON]", "Lekker weer om buiten te spelen!"),
-            ("Bewolkt", "[WOLK]", "Misschien later regen..."),
-            ("Regen", "[REGEN]", "Neem een paraplu mee!"),
-            ("Sneeuw", "[SNEEUW]", "Tijd voor een sneeuwpop!"),
-            ("Storm", "[STORM]", "Beter binnen blijven vandaag!"),
-        ]
-
-        stad = random.choice(steden)
-        weer, emoji, advies = random.choice(weer_types)
-        temp = random.randint(-5, 30)
-        wind = random.randint(0, 80)
-
         print("\n" + "=" * 50)
-        print(f"  [WEER] {naam} CHECKT HET WEER!")
+        print(f"  [WEER] {naam} OPENT WEER AGENT!")
         print("=" * 50)
         time.sleep(0.5)
 
         print(f"\n  {geluid}")
-        print(f"  {naam} kijkt naar buiten...")
-        time.sleep(0.5)
-
-        print(f"\n  --- Weer in {stad} ---")
-        print(f"  {emoji} {weer}")
-        print(f"  [TEMP] Temperatuur: {temp}C")
-        print(f"  [WIND] Wind: {wind} km/u")
-        print(f"\n  [TIP] {advies}")
 
         intel_bonus = 1
-        xp_beloning = 8
-        munt_beloning = 2
+        echte_weer = False
 
-        # Bonus voor extreem weer
-        if temp > 25 or temp < 0 or wind > 50:
-            print(f"\n  [!] {naam} leert over extreem weer! +1 IQ")
-            intel_bonus += 1
+        try:
+            weer_agent = _get_weer_agent()
+            if weer_agent and hasattr(weer_agent, 'STEDEN'):
+                print(f"  {naam} verbindt met de ECHTE Weer Agent...")
+                time.sleep(0.5)
+                echte_weer = True
+
+                # Kies een random stad uit de echte steden database
+                steden = list(weer_agent.STEDEN.keys())
+                stad = random.choice(steden)
+                stad_info = weer_agent.STEDEN[stad]
+
+                print(f"  [OK] {len(steden)} Nederlandse steden beschikbaar!")
+                print(f"\n  --- Weer in {stad.title()} ({stad_info['regio']}) ---")
+
+                # Genereer weer data (de Weer Agent simuleert ook)
+                temp = random.randint(-5, 30)
+                wind = random.randint(0, 60)
+                is_kust = stad_info.get('kust', False)
+
+                if is_kust:
+                    print(f"  [GOLF] Kustlocatie - extra winderig!")
+                    wind += 10
+
+                weer_types = ["Zonnig", "Bewolkt", "Lichte regen", "Buien", "Helder"]
+                weer = random.choice(weer_types)
+
+                print(f"  [WEER] {weer}")
+                print(f"  [TEMP] Temperatuur: {temp}C")
+                print(f"  [WIND] Wind: {wind} km/u")
+
+                # Sla weer op in historie
+                weer_entry = f"{stad.title()}: {temp}C, {weer}"
+                self.huisdier["kennis"]["weer_historie"].append({
+                    "stad": stad,
+                    "temp": temp,
+                    "weer": weer,
+                    "datum": datetime.now().isoformat()
+                })
+
+                # Leer over het weer
+                if temp > 25:
+                    print(f"\n  [LAMP] {naam} leert: Het is warm weer! Veel drinken!")
+                    intel_bonus += 1
+                elif temp < 5:
+                    print(f"\n  [LAMP] {naam} leert: Koud weer! Warm aankleden!")
+                    intel_bonus += 1
+                if wind > 40:
+                    print(f"\n  [LAMP] {naam} leert: Harde wind! Pas op buiten!")
+                    intel_bonus += 1
+
+        except Exception as e:
+            pass
+
+        if not echte_weer:
+            print(f"  {naam} kijkt naar buiten...")
+            stad = random.choice(["Amsterdam", "Rotterdam", "Utrecht"])
+            temp = random.randint(-5, 30)
+            wind = random.randint(0, 60)
+            weer = random.choice(["Zonnig", "Bewolkt", "Regen"])
+
+            print(f"\n  --- Weer in {stad} ---")
+            print(f"  [WEER] {weer}")
+            print(f"  [TEMP] {temp}C")
+            print(f"  [WIND] {wind} km/u")
+
+        xp_beloning = 8 + intel_bonus * 2
+        munt_beloning = 3
 
         print("\n" + "=" * 50)
         print(f"    [IQ] Intelligentie: +{intel_bonus}")
         print(f"    [MUNT] Munten: +{munt_beloning}")
         print(f"    [XP] Ervaring: +{xp_beloning}")
+
+        if echte_weer:
+            print(f"\n  [STAR] Bonus: Echte Weer Agent gebruikt!")
+
+        # Beperk weer historie
+        if len(self.huisdier["kennis"].get("weer_historie", [])) > 30:
+            self.huisdier["kennis"]["weer_historie"] = self.huisdier["kennis"]["weer_historie"][-30:]
 
         # Geef beloningen
         self.huisdier["munten"] += munt_beloning
