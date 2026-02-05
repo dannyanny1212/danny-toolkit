@@ -97,31 +97,96 @@ class SchatzoekApp:
             "muur": "🔥",
             "vloer": "🟥",
             "kleur": "rood"
+        },
+        "ijsgrot": {
+            "naam": "Bevroren IJsgrot",
+            "emoji": "🧊",
+            "muur": "❄️",
+            "vloer": "🔵",
+            "kleur": "cyan"
+        },
+        "moeras": {
+            "naam": "Giftig Moeras",
+            "emoji": "🌿",
+            "muur": "🌾",
+            "vloer": "🟩",
+            "kleur": "groen"
+        },
+        "jungle": {
+            "naam": "Tropische Jungle",
+            "emoji": "🌴",
+            "muur": "🌳",
+            "vloer": "🟢",
+            "kleur": "groen"
+        },
+        "oceaan": {
+            "naam": "Verzonken Stad",
+            "emoji": "🌊",
+            "muur": "🪸",
+            "vloer": "🔷",
+            "kleur": "blauw"
+        },
+        "schaduw": {
+            "naam": "Schaduwrijk",
+            "emoji": "🌙",
+            "muur": "👁️",
+            "vloer": "⬛",
+            "kleur": "magenta"
         }
     }
 
     # Campagne levels
     CAMPAGNE_LEVELS = [
+        # Hoofdstuk 1: Het Bos
         {"naam": "Het Begin", "biome": "bos", "grid": 5, "schatten": 1,
          "monsters": 0, "boss": False, "verhaal": "Je begint je avontuur in het mysterieuze bos..."},
         {"naam": "Eerste Gevaar", "biome": "bos", "grid": 6, "schatten": 2,
          "monsters": 1, "boss": False, "verhaal": "Er bewegen schaduwen tussen de bomen..."},
+        # Hoofdstuk 2: De Grot
         {"naam": "De Grot Ingang", "biome": "grot", "grid": 6, "schatten": 2,
          "monsters": 2, "boss": False, "verhaal": "Je vindt een donkere grot ingang."},
         {"naam": "Dieper de Grot In", "biome": "grot", "grid": 7, "schatten": 3,
          "monsters": 2, "boss": False, "verhaal": "Het wordt steeds donkerder..."},
         {"naam": "De Grot Bewaker", "biome": "grot", "grid": 7, "schatten": 2,
          "monsters": 1, "boss": True, "verhaal": "Een enorm wezen blokkeert de uitgang!"},
+        # Hoofdstuk 3: De Woestijn
         {"naam": "Woestijn Oase", "biome": "woestijn", "grid": 8, "schatten": 3,
          "monsters": 3, "boss": False, "verhaal": "De hitte is ondraaglijk..."},
         {"naam": "Zandstorm", "biome": "woestijn", "grid": 8, "schatten": 4,
          "monsters": 3, "boss": False, "verhaal": "Een zandstorm beperkt je zicht!"},
+        # Hoofdstuk 4: Het Kasteel
         {"naam": "Het Oude Kasteel", "biome": "kasteel", "grid": 9, "schatten": 4,
          "monsters": 4, "boss": False, "verhaal": "De muren fluisteren geheimen..."},
         {"naam": "De Troonzaal", "biome": "kasteel", "grid": 9, "schatten": 3,
          "monsters": 3, "boss": False, "verhaal": "Je nadert het hart van het kasteel."},
-        {"naam": "De Eindbaas", "biome": "vulkaan", "grid": 10, "schatten": 5,
-         "monsters": 2, "boss": True, "verhaal": "De ultieme uitdaging wacht..."}
+        # Hoofdstuk 5: De Vulkaan
+        {"naam": "Vulkaan Klim", "biome": "vulkaan", "grid": 9, "schatten": 4,
+         "monsters": 3, "boss": False, "verhaal": "De hitte wordt ondraaglijk..."},
+        # Hoofdstuk 6: IJsgrot
+        {"naam": "Bevroren Toegang", "biome": "ijsgrot", "grid": 8, "schatten": 3,
+         "monsters": 3, "boss": False, "verhaal": "De temperatuur daalt drastisch..."},
+        {"naam": "Het Hart van IJs", "biome": "ijsgrot", "grid": 9, "schatten": 4,
+         "monsters": 4, "boss": True, "verhaal": "Kristallen ijs omringt je!"},
+        # Hoofdstuk 7: Gifmoeras
+        {"naam": "Moeras Ingang", "biome": "moeras", "grid": 8, "schatten": 3,
+         "monsters": 4, "boss": False, "verhaal": "Giftige dampen vullen de lucht..."},
+        {"naam": "Giftige Diepten", "biome": "moeras", "grid": 9, "schatten": 4,
+         "monsters": 5, "boss": True, "verhaal": "Het moeras lijkt je op te slokken..."},
+        # Hoofdstuk 8: Jungle
+        {"naam": "Jungle Expeditie", "biome": "jungle", "grid": 9, "schatten": 4,
+         "monsters": 4, "boss": False, "verhaal": "De jungle is ondoordringbaar dicht..."},
+        {"naam": "Verborgen Tempel", "biome": "jungle", "grid": 10, "schatten": 5,
+         "monsters": 5, "boss": True, "verhaal": "Een oude tempel doemt op!"},
+        # Hoofdstuk 9: Verzonken Stad
+        {"naam": "Onderwater Ruines", "biome": "oceaan", "grid": 9, "schatten": 4,
+         "monsters": 4, "boss": False, "verhaal": "Je daalt af in de verzonken stad..."},
+        {"naam": "Zeebodem Troon", "biome": "oceaan", "grid": 10, "schatten": 5,
+         "monsters": 5, "boss": True, "verhaal": "De Kraken bewaakt de diepste schatten!"},
+        # Hoofdstuk 10: Schaduwrijk
+        {"naam": "Poort naar Duisternis", "biome": "schaduw", "grid": 10, "schatten": 4,
+         "monsters": 5, "boss": False, "verhaal": "De werkelijkheid vervaagt..."},
+        {"naam": "De Eindbaas", "biome": "schaduw", "grid": 11, "schatten": 6,
+         "monsters": 4, "boss": True, "verhaal": "De Heer der Schaduwen wacht op je!"}
     ]
 
     # Moeilijkheden voor vrij spel
@@ -148,18 +213,57 @@ class SchatzoekApp:
         "onzichtbaar": {"emoji": "👻", "beschrijving": "Monsters zien je niet"},
         "gezondheid": {"emoji": "❤️", "beschrijving": "Herstel 25 HP"},
         "sleutel": {"emoji": "🗝️", "beschrijving": "Open een deur"},
-        "vuurschild": {"emoji": "🔶", "beschrijving": "Immuun voor vuur/lava schade"}
+        "vuurschild": {"emoji": "🔶", "beschrijving": "Immuun voor vuur/lava schade"},
+        # Nieuwe power-ups voor nieuwe biomes
+        "ijsschild": {"emoji": "🧊", "beschrijving": "Immuun voor bevriezing"},
+        "tegengif": {"emoji": "💚", "beschrijving": "Immuun voor vergif"},
+        "machete": {"emoji": "🔪", "beschrijving": "Kap door jungle obstakels"},
+        "duikpak": {"emoji": "🤿", "beschrijving": "Adem onder water"},
+        "lantaarn": {"emoji": "🔦", "beschrijving": "Verdubbel zicht in duisternis"},
+        "warmtedrank": {"emoji": "☕", "beschrijving": "Herstel HP + ontdooi"},
+        "antigif": {"emoji": "💉", "beschrijving": "Verwijder alle vergif effecten"},
+        "schaduwmantel": {"emoji": "🌑", "beschrijving": "Immuun voor schaduw aanvallen"}
     }
 
     # Monsters
     MONSTERS = {
+        # Basis monsters
         "slijm": {"emoji": "🟢", "hp": 20, "schade": 10, "snelheid": 1, "xp": 10},
         "vleermuis": {"emoji": "🦇", "hp": 15, "schade": 15, "snelheid": 2, "xp": 15},
         "skelet": {"emoji": "💀", "hp": 30, "schade": 20, "snelheid": 1, "xp": 25},
         "geest": {"emoji": "👻", "hp": 25, "schade": 25, "snelheid": 1, "xp": 30},
         "orc": {"emoji": "👹", "hp": 50, "schade": 30, "snelheid": 1, "xp": 50},
         "lavagelem": {"emoji": "🔥", "hp": 45, "schade": 35, "snelheid": 1, "xp": 60,
-                     "speciaal": "brand"}
+                     "speciaal": "brand"},
+        # IJsgrot monsters
+        "ijsgeest": {"emoji": "🥶", "hp": 35, "schade": 20, "snelheid": 1, "xp": 40,
+                    "speciaal": "bevriezing"},
+        "sneeuwgollem": {"emoji": "⛄", "hp": 55, "schade": 25, "snelheid": 1, "xp": 55},
+        "ijswolf": {"emoji": "🐺", "hp": 40, "schade": 30, "snelheid": 2, "xp": 45,
+                   "speciaal": "bevriezing"},
+        # Moeras monsters
+        "gifslang": {"emoji": "🐍", "hp": 25, "schade": 20, "snelheid": 2, "xp": 35,
+                   "speciaal": "vergif"},
+        "moddermonster": {"emoji": "🟤", "hp": 60, "schade": 25, "snelheid": 1, "xp": 50},
+        "gifkikker": {"emoji": "🐸", "hp": 20, "schade": 30, "snelheid": 1, "xp": 40,
+                    "speciaal": "vergif"},
+        # Jungle monsters
+        "tijger": {"emoji": "🐅", "hp": 45, "schade": 35, "snelheid": 2, "xp": 55},
+        "aap": {"emoji": "🐒", "hp": 30, "schade": 15, "snelheid": 3, "xp": 25},
+        "python": {"emoji": "🐍", "hp": 40, "schade": 25, "snelheid": 1, "xp": 45,
+                  "speciaal": "wurging"},
+        # Oceaan monsters
+        "haai": {"emoji": "🦈", "hp": 50, "schade": 40, "snelheid": 2, "xp": 60},
+        "kwal": {"emoji": "🪼", "hp": 20, "schade": 25, "snelheid": 1, "xp": 35,
+                "speciaal": "verlamming"},
+        "zeemonster": {"emoji": "🐙", "hp": 55, "schade": 30, "snelheid": 1, "xp": 55},
+        # Schaduwrijk monsters
+        "schaduw": {"emoji": "👤", "hp": 30, "schade": 35, "snelheid": 2, "xp": 45,
+                   "speciaal": "levensroof"},
+        "nachtmerrie": {"emoji": "🌑", "hp": 40, "schade": 40, "snelheid": 1, "xp": 55,
+                       "speciaal": "angst"},
+        "demoon": {"emoji": "😈", "hp": 65, "schade": 45, "snelheid": 1, "xp": 70,
+                  "speciaal": "vloek"}
     }
 
     # Bosses
@@ -167,7 +271,18 @@ class SchatzoekApp:
         "grot_bewaker": {"emoji": "🐉", "naam": "Grot Draak", "hp": 100,
                         "schade": 25, "xp": 200},
         "eindbaas": {"emoji": "😈", "naam": "Demon Lord", "hp": 200,
-                    "schade": 40, "xp": 500}
+                    "schade": 40, "xp": 500},
+        # Nieuwe bosses voor nieuwe biomes
+        "ijskoning": {"emoji": "👑", "naam": "IJskoning Frostbite", "hp": 120,
+                     "schade": 30, "xp": 250, "speciaal": "bevriezing"},
+        "giftitan": {"emoji": "🧟", "naam": "Giftige Hydra", "hp": 130,
+                    "schade": 35, "xp": 275, "speciaal": "vergif"},
+        "junglebewaker": {"emoji": "🦁", "naam": "Koning der Jungle", "hp": 140,
+                         "schade": 40, "xp": 300},
+        "kraken": {"emoji": "🦑", "naam": "De Kraken", "hp": 160,
+                  "schade": 45, "xp": 350, "speciaal": "wurging"},
+        "schaduwvorst": {"emoji": "👿", "naam": "Heer der Schaduwen", "hp": 180,
+                        "schade": 50, "xp": 400, "speciaal": "levensroof"}
     }
 
     # Achievements
@@ -178,15 +293,22 @@ class SchatzoekApp:
         "eerste_monster": {"naam": "Monsterjager", "beschrijving": "Versla je eerste monster", "xp": 50},
         "tien_monsters": {"naam": "Veteraan", "beschrijving": "Versla 10 monsters", "xp": 150},
         "eerste_boss": {"naam": "Bossslayer", "beschrijving": "Versla een boss", "xp": 200},
-        "alle_bosses": {"naam": "Legende", "beschrijving": "Versla alle bosses", "xp": 500},
+        "alle_bosses": {"naam": "Legende", "beschrijving": "Versla alle 7 bosses", "xp": 750},
         "geen_schade": {"naam": "Onkwetsbaar", "beschrijving": "Rond een level af zonder schade", "xp": 100},
         "snelle_run": {"naam": "Speedrunner", "beschrijving": "Rond een level af in <20 stappen", "xp": 150},
         "rijkaard": {"naam": "Rijkaard", "beschrijving": "Verzamel 100 muntjes", "xp": 100},
         "verzamelaar": {"naam": "Verzamelaar", "beschrijving": "Gebruik 10 power-ups", "xp": 75},
-        "ontdekker": {"naam": "Wereldreiziger", "beschrijving": "Bezoek alle biomes", "xp": 200},
+        "ontdekker": {"naam": "Wereldreiziger", "beschrijving": "Bezoek alle 10 biomes", "xp": 300},
         "campagne_klaar": {"naam": "Held", "beschrijving": "Voltooi de campagne", "xp": 500},
         "level_10": {"naam": "Ervaren", "beschrijving": "Bereik level 10", "xp": 300},
-        "dagelijks_5": {"naam": "Toegewijd", "beschrijving": "Voltooi 5 dagelijkse uitdagingen", "xp": 200}
+        "dagelijks_5": {"naam": "Toegewijd", "beschrijving": "Voltooi 5 dagelijkse uitdagingen", "xp": 200},
+        # Nieuwe achievements voor nieuwe biomes
+        "ijsmeester": {"naam": "IJsmeester", "beschrijving": "Versla de IJskoning", "xp": 250},
+        "gifweerstand": {"naam": "Gifweerstand", "beschrijving": "Versla de Giftige Hydra", "xp": 275},
+        "junglekoning": {"naam": "Junglekoning", "beschrijving": "Versla de Koning der Jungle", "xp": 300},
+        "diepzeeduiker": {"naam": "Diepzeeduiker", "beschrijving": "Versla de Kraken", "xp": 350},
+        "schaduwjager": {"naam": "Schaduwjager", "beschrijving": "Versla de Heer der Schaduwen", "xp": 400},
+        "alle_nieuwe_bosses": {"naam": "Baasvernietiger", "beschrijving": "Versla alle 7 bosses", "xp": 750}
     }
 
     # Shop items
@@ -443,12 +565,19 @@ class SchatzoekApp:
                 bezet.add(pos)
 
         # Plaats monsters (met biome-specifieke monsters)
-        if biome == "vulkaan":
-            monster_types = ["lavagelem", "lavagelem", "skelet", "orc"]
+        biome_monsters = {
+            "vulkaan": ["lavagelem", "lavagelem", "skelet", "orc"],
+            "ijsgrot": ["ijsgeest", "sneeuwgollem", "ijswolf", "ijsgeest"],
+            "moeras": ["gifslang", "moddermonster", "gifkikker", "gifslang"],
+            "jungle": ["tijger", "aap", "python", "aap"],
+            "oceaan": ["haai", "kwal", "zeemonster", "kwal"],
+            "schaduw": ["schaduw", "nachtmerrie", "demoon", "schaduw"]
+        }
+        if biome in biome_monsters:
+            monster_types = biome_monsters[biome]
         else:
-            monster_types = list(self.MONSTERS.keys())
-            if "lavagelem" in monster_types:
-                monster_types.remove("lavagelem")
+            # Standaard monsters voor bos/grot/woestijn/kasteel
+            monster_types = ["slijm", "vleermuis", "skelet", "geest", "orc"]
 
         for _ in range(settings.get("monsters", 2)):
             pos = self._random_pos(bezet)
@@ -465,7 +594,22 @@ class SchatzoekApp:
         if is_boss:
             pos = self._random_pos(bezet, min_afstand=3)
             if pos:
-                boss_type = "eindbaas" if self.data["campagne"]["huidig_level"] >= 9 else "grot_bewaker"
+                # Kies boss gebaseerd op biome
+                biome_bosses = {
+                    "grot": "grot_bewaker",
+                    "ijsgrot": "ijskoning",
+                    "moeras": "giftitan",
+                    "jungle": "junglebewaker",
+                    "oceaan": "kraken",
+                    "schaduw": "schaduwvorst"
+                }
+                # Eindbaas voor laatste level
+                if self.data["campagne"]["huidig_level"] >= 19:
+                    boss_type = "schaduwvorst"
+                elif biome in biome_bosses:
+                    boss_type = biome_bosses[biome]
+                else:
+                    boss_type = "grot_bewaker"
                 self.boss = {
                     **self.BOSSES[boss_type],
                     "type": boss_type,
@@ -646,13 +790,48 @@ class SchatzoekApp:
                 # Monster aanval (als nog leeft)
                 if monster["hp"] > 0:
                     monster_schade = monster["schade"]
-                    # Lavagelem heeft vuurschade
-                    if monster.get("speciaal") == "brand":
+                    speciaal = monster.get("speciaal")
+
+                    # Speciale aanvallen per type
+                    if speciaal == "brand":
                         if "vuurschild" in self.actieve_effecten:
-                            print(kleur(f"  🔶 Je vuurschild blokkeert de vlammen!", "geel"))
+                            print(kleur("  🔶 Je vuurschild blokkeert de vlammen!", "geel"))
                             monster_schade = 0
                         else:
-                            print(kleur(f"  🔥 De lavagelem brandt je met vuur!", "rood"))
+                            print(kleur("  🔥 Je brandt!", "rood"))
+                    elif speciaal == "bevriezing":
+                        if "ijsschild" in self.actieve_effecten:
+                            print(kleur("  🧊 Je ijsschild beschermt je!", "cyan"))
+                            monster_schade = 0
+                        else:
+                            print(kleur("  ❄️ Je bevriest! Volgende beurt gemist!", "cyan"))
+                    elif speciaal == "vergif":
+                        if "tegengif" in self.actieve_effecten:
+                            print(kleur("  💚 Je tegengif neutraliseert het!", "groen"))
+                        else:
+                            extra = 10
+                            monster_schade += extra
+                            print(kleur(f"  🤢 Vergiftigd! +{extra} extra schade!", "groen"))
+                    elif speciaal == "wurging":
+                        print(kleur("  🐍 Je wordt gewurgd! Moeilijk te ontsnappen!", "geel"))
+                        monster_schade = int(monster_schade * 1.2)
+                    elif speciaal == "verlamming":
+                        print(kleur("  ⚡ Je bent verlamd! Beweging vertraagd!", "geel"))
+                    elif speciaal == "levensroof":
+                        if "schaduwmantel" in self.actieve_effecten:
+                            print(kleur("  🌑 Je schaduwmantel beschermt je!", "magenta"))
+                            monster_schade = 0
+                        else:
+                            heal = monster_schade // 2
+                            monster["hp"] = min(monster["hp"] + heal,
+                                              self.MONSTERS[monster["type"]]["hp"])
+                            print(kleur(f"  💀 Levenskracht gestolen! Vijand +{heal} HP!", "magenta"))
+                    elif speciaal == "angst":
+                        print(kleur("  😱 Angstaanval! Je vecht minder effectief!", "magenta"))
+                    elif speciaal == "vloek":
+                        print(kleur("  ☠️ Vervloekt! Dubbele schade genomen!", "rood"))
+                        monster_schade *= 2
+
                     if monster_schade > 0:
                         self._neem_schade(monster_schade)
                         print(kleur(f"  {monster['type'].title()} doet {monster_schade} schade!", "rood"))
@@ -739,7 +918,7 @@ class SchatzoekApp:
             self.data["statistieken"]["bosses_verslagen"] += 1
             succes(f"\n  🎊 {self.boss['naam']} VERSLAGEN! +{self.boss['xp']} XP")
             self._check_achievement("eerste_boss", self.data["statistieken"]["bosses_verslagen"] >= 1)
-            self._check_achievement("alle_bosses", self.data["statistieken"]["bosses_verslagen"] >= 2)
+            self._check_achievement("alle_bosses", self.data["statistieken"]["bosses_verslagen"] >= 7)
             self.boss = None
 
     def _toon_inventory_gevecht(self):
@@ -860,8 +1039,47 @@ class SchatzoekApp:
         elif powerup == "vuurschild":
             self.actieve_effecten.append("vuurschild")
             succes("🔶 Vuurschild geactiveerd! Je bent immuun voor vuur!")
+        elif powerup == "ijsschild":
+            self.actieve_effecten.append("ijsschild")
+            succes("🧊 IJsschild geactiveerd! Je bent immuun voor bevriezing!")
+        elif powerup == "tegengif":
+            self.actieve_effecten.append("tegengif")
+            succes("💚 Tegengif geactiveerd! Je bent immuun voor vergif!")
+        elif powerup == "machete":
+            # Verwijder nabije muren (jungle obstakels)
+            self._gebruik_machete()
+        elif powerup == "duikpak":
+            self.actieve_effecten.append("duikpak")
+            succes("🤿 Duikpak geactiveerd! Je kunt onder water ademen!")
+        elif powerup == "lantaarn":
+            self.zicht_radius *= 2
+            succes("🔦 Lantaarn aan! Je zicht is verdubbeld!")
+        elif powerup == "warmtedrank":
+            heal = min(30, self.max_hp - self.speler_hp)
+            self.speler_hp += heal
+            if "bevroren" in self.actieve_effecten:
+                self.actieve_effecten.remove("bevroren")
+            succes(f"☕ Warmtedrank! +{heal} HP en ontdooid!")
+        elif powerup == "antigif":
+            if "vergiftigd" in self.actieve_effecten:
+                self.actieve_effecten.remove("vergiftigd")
+            succes("💉 Alle vergif effecten verwijderd!")
+        elif powerup == "schaduwmantel":
+            self.actieve_effecten.append("schaduwmantel")
+            succes("🌑 Schaduwmantel geactiveerd! Immuun voor schaduw aanvallen!")
 
         return True
+
+    def _gebruik_machete(self):
+        """Machete: kap nabije muren/obstakels weg."""
+        x, y = self.speler_positie
+        verwijderd = 0
+        for dx, dy in [(0, -1), (0, 1), (-1, 0), (1, 0)]:
+            pos = (x + dx, y + dy)
+            if pos in self.muren:
+                self.muren.remove(pos)
+                verwijderd += 1
+        succes(f"🔪 Machete! {verwijderd} obstakels weggekapt!")
 
     def _gebruik_kompas(self):
         """Kompas: toont richting naar dichtstbijzijnde schat."""
@@ -1051,7 +1269,7 @@ class SchatzoekApp:
             self._toon_header("⚔️ Campagne Modus")
 
             huidig = self.data["campagne"]["huidig_level"]
-            print(f"\n  Voortgang: Level {huidig + 1}/10")
+            print(f"\n  Voortgang: Level {huidig + 1}/20")
 
             print(kleur("\n  Levels:", "geel"))
             for i, level in enumerate(self.CAMPAGNE_LEVELS):
@@ -1104,7 +1322,7 @@ class SchatzoekApp:
         if level["biome"] not in self.data["statistieken"]["biomes_bezocht"]:
             self.data["statistieken"]["biomes_bezocht"].append(level["biome"])
             self._check_achievement("ontdekker",
-                                   len(self.data["statistieken"]["biomes_bezocht"]) >= 5)
+                                   len(self.data["statistieken"]["biomes_bezocht"]) >= 10)
 
         # Speel
         resultaat = self._speel_level()
@@ -1120,7 +1338,7 @@ class SchatzoekApp:
             if self.stappen < 20:
                 self._check_achievement("snelle_run", True)
 
-            if level_idx == 9:
+            if level_idx == 19:
                 self._check_achievement("campagne_klaar", True)
                 self._toon_einde_campagne()
 
