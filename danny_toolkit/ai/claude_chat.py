@@ -1,5 +1,5 @@
 """
-Claude Chat App - Interactieve chat met Claude API.
+AI Chat App - Interactieve chat met Claude of Groq API.
 """
 
 import os
@@ -9,60 +9,95 @@ from ..core.utils import clear_scherm
 
 
 class ClaudeChatApp:
-    """Interactieve chat applicatie met Claude API."""
+    """Interactieve chat applicatie met Claude of Groq API."""
 
     def __init__(self):
-        self.api_key = Config.ANTHROPIC_API_KEY
+        self.provider = None
         self.client = None
-        self.model = Config.CLAUDE_MODEL
+        self.model = None
 
     def _init_client(self) -> bool:
-        """Initialiseert de Anthropic client."""
-        if not self.api_key:
-            print("\n[!] Geen API key gevonden!")
-            print("\nZo krijg je een API key:")
-            print("1. Ga naar: https://console.anthropic.com/")
-            print("2. Maak een account of log in")
-            print("3. Ga naar 'API Keys'")
-            print("4. Klik 'Create Key'")
-            print("\nStel de key in:")
-            print("  Windows: set ANTHROPIC_API_KEY=sk-ant-...")
-            print("  Mac/Linux: export ANTHROPIC_API_KEY=sk-ant-...")
-            print("\nOf voer hier je key in (alleen voor testen):")
+        """Initialiseert de API client (Groq of Claude)."""
 
-            self.api_key = input("\nAPI Key: ").strip()
-            if not self.api_key:
-                print("Geen key ingevoerd.")
-                return False
+        # Probeer Groq eerst (gratis!)
+        if Config.has_groq_key():
+            try:
+                import groq
+                self.client = groq.Groq(api_key=Config.GROQ_API_KEY)
+                self.model = Config.GROQ_MODEL
+                self.provider = "groq"
+                print(f"\n[OK] Groq API ({self.model}) - GRATIS!")
+                return True
+            except Exception as e:
+                print(f"[!] Groq error: {e}")
 
-        try:
-            import anthropic
-            self.client = anthropic.Anthropic(api_key=self.api_key)
-            print("\n[OK] API key gevalideerd!")
-            return True
-        except Exception as e:
-            print(f"\n[FOUT] {e}")
-            return False
+        # Probeer Claude
+        if Config.has_anthropic_key():
+            try:
+                import anthropic
+                self.client = anthropic.Anthropic(api_key=Config.ANTHROPIC_API_KEY)
+                self.model = Config.CLAUDE_MODEL
+                self.provider = "claude"
+                print(f"\n[OK] Claude API ({self.model})")
+                return True
+            except Exception as e:
+                print(f"[!] Claude error: {e}")
+
+        # Geen API key
+        print("\n[!] Geen API key gevonden!")
+        print("\nOptie 1 - Groq (GRATIS, aanbevolen):")
+        print("   1. Ga naar: https://console.groq.com/keys")
+        print("   2. Maak account en genereer key")
+        print("   3. set GROQ_API_KEY=gsk_...")
+        print("\nOptie 2 - Claude (betaald):")
+        print("   1. Ga naar: https://console.anthropic.com/")
+        print("   2. set ANTHROPIC_API_KEY=sk-ant-...")
+
+        return False
 
     def _chat(self, vraag: str, systeem: str = None) -> str:
-        """Stuur een vraag naar Claude."""
-        response = self.client.messages.create(
-            model=self.model,
-            max_tokens=1024,
-            system=systeem or "Je bent een behulpzame assistent. Antwoord in het Nederlands.",
-            messages=[{"role": "user", "content": vraag}]
-        )
-        return response.content[0].text
+        """Stuur een vraag naar de API."""
+        systeem = systeem or "Je bent een behulpzame assistent. Antwoord in het Nederlands."
+
+        if self.provider == "claude":
+            response = self.client.messages.create(
+                model=self.model,
+                max_tokens=1024,
+                system=systeem,
+                messages=[{"role": "user", "content": vraag}]
+            )
+            return response.content[0].text
+        else:  # groq
+            response = self.client.chat.completions.create(
+                model=self.model,
+                max_tokens=1024,
+                messages=[
+                    {"role": "system", "content": systeem},
+                    {"role": "user", "content": vraag}
+                ]
+            )
+            return response.choices[0].message.content
 
     def _chat_conversatie(self, berichten: list, systeem: str = None) -> str:
         """Houd een conversatie met meerdere berichten."""
-        response = self.client.messages.create(
-            model=self.model,
-            max_tokens=1024,
-            system=systeem or "Je bent een behulpzame assistent. Antwoord in het Nederlands.",
-            messages=berichten
-        )
-        return response.content[0].text
+        systeem = systeem or "Je bent een behulpzame assistent. Antwoord in het Nederlands."
+
+        if self.provider == "claude":
+            response = self.client.messages.create(
+                model=self.model,
+                max_tokens=1024,
+                system=systeem,
+                messages=berichten
+            )
+            return response.content[0].text
+        else:  # groq
+            messages = [{"role": "system", "content": systeem}] + berichten
+            response = self.client.chat.completions.create(
+                model=self.model,
+                max_tokens=1024,
+                messages=messages
+            )
+            return response.choices[0].message.content
 
     def _demo_modus(self):
         """Draait een korte demo."""
@@ -75,7 +110,7 @@ class ClaudeChatApp:
 
         try:
             antwoord = self._chat(vraag)
-            print(f"Claude: {antwoord}")
+            print(f"AI: {antwoord}")
         except Exception as e:
             print(f"[FOUT] {e}")
             return
@@ -85,19 +120,19 @@ class ClaudeChatApp:
         print("-" * 50)
 
         systeem = "Je bent een Nederlandse dichter. Antwoord altijd in rijmvorm."
-        vraag2 = "Beschrijf het weer vandaag."
+        vraag2 = "Beschrijf de lente."
 
         print(f"\nSystemen: {systeem}")
         print(f"Vraag: {vraag2}")
 
         antwoord2 = self._chat(vraag2, systeem)
-        print(f"Claude: {antwoord2}")
+        print(f"AI: {antwoord2}")
 
     def run(self):
         """Start de chat app."""
         clear_scherm()
         print("\n" + "=" * 50)
-        print("   CLAUDE CHAT - Interactieve AI Chat")
+        print("   AI CHAT - Claude of Groq (gratis!)")
         print("=" * 50)
 
         if not self._init_client():
@@ -113,7 +148,8 @@ class ClaudeChatApp:
         print("\n" + "=" * 50)
         print("INTERACTIEVE CHAT")
         print("=" * 50)
-        print("Chat met Claude! Typ 'stop' om te stoppen.")
+        provider_naam = "Groq (Llama)" if self.provider == "groq" else "Claude"
+        print(f"Chat met {provider_naam}! Typ 'stop' om te stoppen.")
         print("Tip: Typ '/systeem' om een systeem prompt in te stellen.\n")
 
         conversatie = []
@@ -134,7 +170,7 @@ class ClaudeChatApp:
                     systeem_prompt = input("Systeem prompt: ").strip()
                     if systeem_prompt:
                         print(f"[OK] Systeem prompt ingesteld.")
-                        conversatie = []  # Reset conversatie
+                        conversatie = []
                     else:
                         systeem_prompt = None
                         print("[OK] Systeem prompt gereset.")
@@ -145,15 +181,19 @@ class ClaudeChatApp:
                     print("[OK] Conversatie gereset.")
                     continue
 
+                if invoer == "/provider":
+                    print(f"[INFO] Huidige provider: {self.provider} ({self.model})")
+                    continue
+
                 conversatie.append({"role": "user", "content": invoer})
 
                 try:
                     antwoord = self._chat_conversatie(conversatie, systeem_prompt)
-                    print(f"Claude: {antwoord}\n")
+                    print(f"AI: {antwoord}\n")
                     conversatie.append({"role": "assistant", "content": antwoord})
                 except Exception as e:
                     print(f"[FOUT] {e}\n")
-                    conversatie.pop()  # Verwijder mislukte vraag
+                    conversatie.pop()
 
             except KeyboardInterrupt:
                 print("\n\nTot ziens!")

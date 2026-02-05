@@ -27,15 +27,16 @@ class ProductionRAG:
         self.vector_store = VectorStore(self.embedder)
         self.processor = DocumentProcessor()
 
-        if Config.has_anthropic_key():
+        # Probeer generator (Groq gratis, of Claude)
+        if Config.has_groq_key() or Config.has_anthropic_key():
             try:
-                self.generator = Generator()
+                self.generator = Generator()  # Auto-selecteert beste provider
             except Exception as e:
-                print(f"   [!] Claude API error: {e}")
+                print(f"   [!] API error: {e}")
                 self.generator = None
         else:
             self.generator = None
-            print("   [!] Geen ANTHROPIC_API_KEY - alleen retrieval")
+            print("   [!] Geen API key - alleen retrieval (set GROQ_API_KEY voor gratis AI)")
 
         print("-" * 40)
         print("[OK] RAG systeem klaar!\n")
@@ -82,7 +83,8 @@ class ProductionRAG:
 
         # Generation
         if self.generator:
-            print("   [AI] Claude genereert antwoord...")
+            provider = self.generator.provider.upper()
+            print(f"   [AI] {provider} genereert antwoord...")
             try:
                 antwoord = self.generator.genereer(vraag, resultaten)
             except Exception as e:
@@ -159,7 +161,7 @@ Productie tools:
         clear_scherm()
         print("\n" + "=" * 50)
         print("   PRODUCTION RAG SYSTEEM")
-        print("   Hash Embeddings + JSON Vector DB + Claude")
+        print("   Hash Embeddings + Vector DB + AI (Groq/Claude)")
         print("=" * 50)
 
         # Check voor bestaande data

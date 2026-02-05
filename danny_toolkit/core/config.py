@@ -12,10 +12,12 @@ class Config:
     # API Keys
     ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
     VOYAGE_API_KEY = os.environ.get("VOYAGE_API_KEY", "")
+    GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 
     # Models
     CLAUDE_MODEL = "claude-sonnet-4-20250514"
     VOYAGE_MODEL = "voyage-3"
+    GROQ_MODEL = "llama-3.3-70b-versatile"  # Gratis en snel!
 
     # RAG Settings
     CHUNK_SIZE = 500
@@ -55,3 +57,8 @@ class Config:
     def has_voyage_key(cls) -> bool:
         """Check of Voyage API key beschikbaar is."""
         return bool(cls.VOYAGE_API_KEY)
+
+    @classmethod
+    def has_groq_key(cls) -> bool:
+        """Check of Groq API key beschikbaar is."""
+        return bool(cls.GROQ_API_KEY)
