@@ -58,6 +58,8 @@ class VirtueelHuisdierApp:
         "50_voedingen": {"naam": "Fijnproever", "beschrijving": "Voed je huisdier 50 keer", "punten": 50},
         "mini_game_winnaar": {"naam": "Game Master", "beschrijving": "Win een mini-game", "punten": 15},
         "10_games_gewonnen": {"naam": "Kampioen", "beschrijving": "Win 10 mini-games", "punten": 75},
+        "schatzoeker": {"naam": "Schatzoeker", "beschrijving": "Vind 10 schatten in avonturen", "punten": 50},
+        "avonturier": {"naam": "Avonturier", "beschrijving": "Voltooi 5 schatzoek avonturen", "punten": 30},
         "dagelijkse_bonus": {"naam": "Trouwe Vriend", "beschrijving": "Claim 7 dagelijkse bonussen", "punten": 50},
         "evolutie_kind": {"naam": "Groeiend", "beschrijving": "Evolueer naar Kind stadium", "punten": 20},
         "evolutie_volwassen": {"naam": "Volgroeid", "beschrijving": "Evolueer naar Volwassen stadium", "punten": 50},
@@ -507,6 +509,7 @@ class VirtueelHuisdierApp:
             print("|  6. Race (12 munten)               |")
             print("|  7. Quiz (6 munten)                |")
             print("|  8. Vangen (10 munten)             |")
+            print("|  9. Schatzoek Avontuur (15 munten) |")
             print("|  0. Terug                          |")
             print("+====================================+")
 
@@ -530,6 +533,8 @@ class VirtueelHuisdierApp:
                 self._game_quiz()
             elif keuze == "8":
                 self._game_vangen()
+            elif keuze == "9":
+                self._game_schatzoek_avontuur()
 
             input("\nDruk op Enter...")
 
@@ -830,6 +835,148 @@ class VirtueelHuisdierApp:
             print(f"\nTe langzaam! ({reactietijd:.2f}s)")
 
         self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 5)
+
+    def _game_schatzoek_avontuur(self):
+        """Schatzoek avontuur - je huisdier gaat automatisch op schattenjacht!"""
+        if self.huisdier["munten"] < 15:
+            print("\nJe hebt niet genoeg munten! (Nodig: 15)")
+            return
+
+        if self.huisdier["energie"] < 20:
+            print(f"\n{self.huisdier['naam']} is te moe voor een avontuur!")
+            print("Laat je huisdier eerst rusten.")
+            return
+
+        self.huisdier["munten"] -= 15
+        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 20)
+
+        # Init stats als ze niet bestaan
+        if "schatten_gevonden" not in self.huisdier["stats"]:
+            self.huisdier["stats"]["schatten_gevonden"] = 0
+        if "avonturen_voltooid" not in self.huisdier["stats"]:
+            self.huisdier["stats"]["avonturen_voltooid"] = 0
+
+        naam = self.huisdier["naam"]
+        geluid = self.huisdier["geluid"]
+
+        # Moeilijkheid gebaseerd op evolutie
+        evolutie = self.huisdier.get("evolutie_stadium", 0)
+        geluk = self.huisdier["geluk"]
+
+        # Bereken success kansen
+        basis_kans = 50 + (evolutie * 5) + (geluk // 5)
+        basis_kans = min(90, basis_kans)  # Max 90%
+
+        print("\n" + "=" * 50)
+        print(f"  [AVONTUUR] {naam} GAAT OP SCHATTENJACHT!")
+        print("=" * 50)
+        time.sleep(0.5)
+
+        # Kies een biome
+        biomes = [
+            ("Mysterieus Bos", "[BOS]"),
+            ("Donkere Grot", "[GROT]"),
+            ("Verloren Woestijn", "[WOESTIJN]"),
+            ("Verlaten Kasteel", "[KASTEEL]"),
+            ("Bevroren IJsgrot", "[IJSGROT]"),
+        ]
+        biome_naam, biome_emoji = random.choice(biomes)
+
+        print(f"\n  {biome_emoji} Locatie: {biome_naam}")
+        print(f"  {geluid}")
+        time.sleep(0.8)
+
+        # Simuleer het avontuur
+        schatten = 0
+        monsters_verslagen = 0
+        events = []
+
+        # 5 kamers verkennen
+        for kamer in range(1, 6):
+            print(f"\n  --- Kamer {kamer}/5 ---")
+            time.sleep(0.4)
+
+            # Random events
+            event = random.choices(
+                ["schat", "monster", "val", "powerup", "leeg"],
+                weights=[25, 20, 15, 15, 25]
+            )[0]
+
+            if event == "schat":
+                if random.randint(1, 100) <= basis_kans:
+                    schatten += 1
+                    print(f"  [DIAMANT] {naam} vindt een schitterende schat!")
+                    events.append("schat")
+                else:
+                    print(f"  [?] {naam} ziet iets glinsteren maar kan er niet bij...")
+
+            elif event == "monster":
+                monster = random.choice(["Goblin", "Spin", "Vleermuis", "Slime"])
+                if random.randint(1, 100) <= basis_kans + 10:
+                    monsters_verslagen += 1
+                    print(f"  [ZWAARD] {naam} verslaat een {monster}!")
+                    events.append("monster")
+                else:
+                    print(f"  [!] Een {monster}! {naam} rent weg!")
+
+            elif event == "val":
+                if random.randint(1, 100) <= basis_kans:
+                    print(f"  [!] Een valstrik! {naam} ontwijkt hem handig!")
+                else:
+                    print(f"  [X] Oeps! {naam} trapt in een val! (-5 energie)")
+                    self.huisdier["energie"] = max(0, self.huisdier["energie"] - 5)
+
+            elif event == "powerup":
+                powerup = random.choice(["hartje", "ster", "trank"])
+                print(f"  [+] {naam} vindt een {powerup}! (+5 geluk)")
+                self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 5)
+                events.append("powerup")
+
+            else:  # leeg
+                print(f"  [_] Een lege kamer... {naam} snuffelt rond.")
+
+            time.sleep(0.3)
+
+        # Resultaten
+        print("\n" + "=" * 50)
+        print("  [VLAG] AVONTUUR VOLTOOID!")
+        print("=" * 50)
+
+        # Beloningen berekenen
+        munt_beloning = schatten * 20 + monsters_verslagen * 10
+        xp_beloning = schatten * 15 + monsters_verslagen * 10 + 10
+
+        print(f"\n  Resultaten van {naam}:")
+        print(f"    [DIAMANT] Schatten gevonden: {schatten}")
+        print(f"    [ZWAARD] Monsters verslagen: {monsters_verslagen}")
+        print(f"    [MUNT] Munten verdiend: +{munt_beloning}")
+        print(f"    [XP] Ervaring: +{xp_beloning}")
+
+        # Geef beloningen
+        self.huisdier["munten"] += munt_beloning
+        self.huisdier["ervaring"] += xp_beloning
+        self.huisdier["stats"]["schatten_gevonden"] += schatten
+        self.huisdier["stats"]["avonturen_voltooid"] += 1
+        self.huisdier["stats"]["games_gewonnen"] += 1 if schatten > 0 else 0
+
+        # Bonus voor perfect avontuur
+        if schatten >= 3:
+            bonus = 25
+            print(f"\n  [TROFEE] GEWELDIG! Bonus voor 3+ schatten: +{bonus} munten!")
+            self.huisdier["munten"] += bonus
+
+        # Achievements checken
+        self._check_game_achievements()
+        if self.huisdier["stats"]["schatten_gevonden"] >= 10:
+            self._unlock_achievement("schatzoeker")
+        if self.huisdier["stats"]["avonturen_voltooid"] >= 5:
+            self._unlock_achievement("avonturier")
+
+        # Level check
+        self._check_level_up()
+
+        print(f"\n  {geluid}")
+        self._sla_op()
 
     def _check_game_achievements(self):
         """Check game achievements."""
