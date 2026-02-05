@@ -430,10 +430,38 @@ class VirtueelHuisdierApp:
         print("+================================+")
 
     def _voeren(self):
-        """Voer het huisdier."""
+        """Voer het huisdier - met suggesties uit de ECHTE boodschappenlijst!"""
+        naam = self.huisdier["naam"]
+
+        # Check boodschappenlijst voor voedsel suggesties
+        boodschap_suggesties = []
+        try:
+            boodschappen_app = _get_boodschappenlijst()
+            if boodschappen_app.bestand.exists():
+                with open(boodschappen_app.bestand, "r", encoding="utf-8") as f:
+                    items = [line.strip() for line in f if line.strip()]
+                # Filter op voedsel-gerelateerde items
+                voedsel_woorden = ["brood", "melk", "kaas", "vlees", "groente",
+                                   "fruit", "appel", "banaan", "eieren", "yoghurt",
+                                   "vis", "kip", "rijst", "pasta", "snack"]
+                for item in items:
+                    for woord in voedsel_woorden:
+                        if woord in item.lower():
+                            boodschap_suggesties.append(item)
+                            break
+        except Exception:
+            pass
+
         print("\n+--------------------------------+")
         print("|     WAT WIL JE GEVEN?          |")
         print("+--------------------------------+")
+
+        # Toon boodschappenlijst suggesties
+        if boodschap_suggesties:
+            print("|  [LIJST] Van je boodschappen:  |")
+            for sug in boodschap_suggesties[:3]:
+                print(f"|    - {sug[:25]:<25}|")
+            print("+--------------------------------+")
 
         for key, voedsel in self.VOEDSEL.items():
             effecten = []
@@ -455,20 +483,28 @@ class VirtueelHuisdierApp:
             return
 
         voedsel = self.VOEDSEL[keuze]
-        print(f"\nJe geeft {self.huisdier['naam']} {voedsel['naam']}...")
+        print(f"\nJe geeft {naam} {voedsel['naam']}...")
         time.sleep(0.5)
+
+        # IQ bonus bij voeren - slim huisdier weet wat gezond is
+        iq = self.huisdier.get("intelligentie", 0)
+        iq_health_bonus = 0
+        if iq >= 50 and voedsel["gezondheid"] >= 0:
+            iq_health_bonus = iq // 25  # +1-4 extra gezondheid
+            print(f"  [IQ] {naam} eet slim - extra gezondheidsbonus!")
 
         self.huisdier["honger"] = min(100, self.huisdier["honger"] + voedsel["honger"])
         self.huisdier["energie"] = min(100, self.huisdier["energie"] + voedsel["energie"])
         self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + voedsel["geluk"])
-        self.huisdier["gezondheid"] = max(0, min(100, self.huisdier["gezondheid"] + voedsel["gezondheid"]))
+        self.huisdier["gezondheid"] = max(0, min(100,
+            self.huisdier["gezondheid"] + voedsel["gezondheid"] + iq_health_bonus))
 
         self.huisdier["stats"]["voedingen"] += 1
         self.huisdier["ervaring"] += 5
 
         reacties = [
-            f"{self.huisdier['naam']} smult ervan!",
-            f"Mmm! {self.huisdier['naam']} likt tevreden de bak leeg!",
+            f"{naam} smult ervan!",
+            f"Mmm! {naam} likt tevreden de bak leeg!",
             f"{self.huisdier['geluid']}",
         ]
         print(random.choice(reacties))
@@ -480,7 +516,7 @@ class VirtueelHuisdierApp:
             self._unlock_achievement("50_voedingen")
 
     def _spelen(self):
-        """Speelt met het huisdier."""
+        """Speelt met het huisdier - IQ bonus voor slimme huisdieren!"""
         if self.huisdier["energie"] < 20:
             print(f"\n{self.huisdier['naam']} is te moe om te spelen...")
             return
@@ -488,8 +524,13 @@ class VirtueelHuisdierApp:
         print(f"\nJe speelt met {self.huisdier['naam']}...")
         time.sleep(0.5)
 
-        bonus = self._get_evolutie_info()["bonus"]
-        self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 20 + bonus)
+        # Evolutie bonus + IQ bonus
+        evo_bonus = self._get_evolutie_info()["bonus"]
+        iq = self.huisdier.get("intelligentie", 0)
+        iq_bonus = iq // 20  # +1 geluk per 20 IQ
+
+        totaal_bonus = evo_bonus + iq_bonus
+        self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 20 + totaal_bonus)
         self.huisdier["energie"] = max(0, self.huisdier["energie"] - 15)
         self.huisdier["honger"] = max(0, self.huisdier["honger"] - 10)
         self.huisdier["ervaring"] += 10
@@ -502,60 +543,151 @@ class VirtueelHuisdierApp:
         ]
         print(random.choice(reacties))
 
+        # Slim huisdier deelt kennis tijdens spelen
+        if iq >= 30 and "kennis" in self.huisdier:
+            feiten = self.huisdier["kennis"].get("feiten", [])
+            if feiten and random.randint(1, 100) <= 30:
+                feit = random.choice(feiten)
+                print(f"\n  [IQ] {self.huisdier['naam']} zegt: \"{feit[:60]}...\"")
+                self.huisdier["ervaring"] += 5
+
     def _slapen(self):
-        """Laat het huisdier slapen."""
-        print(f"\n{self.huisdier['naam']} gaat slapen...")
+        """Laat het huisdier slapen - met IQ droombonus!"""
+        naam = self.huisdier["naam"]
+        iq = self.huisdier.get("intelligentie", 0)
+
+        print(f"\n{naam} gaat slapen...")
         time.sleep(1)
 
         bonus = 0
+        iq_bonus = 0
+
+        # Accessoire bonus
         if "bed" in self.huisdier["accessoires"]:
             bonus = 10
             print("(Bonus van luxe bedje!)")
 
+        # Slim huisdier droomt en leert tijdens slaap
+        if iq >= 20 and "kennis" in self.huisdier:
+            feiten = self.huisdier["kennis"].get("feiten", [])
+            if feiten and random.randint(1, 100) <= 40:
+                iq_bonus = 1
+                print(f"\n  [DROOM] {naam} droomt over geleerde kennis...")
+                print(f"  [IQ] +1 intelligentie door dromen!")
+
         self.huisdier["energie"] = min(100, self.huisdier["energie"] + 40 + bonus)
         self.huisdier["gezondheid"] = min(100, self.huisdier["gezondheid"] + 10)
         self.huisdier["ervaring"] += 5
+        if iq_bonus > 0:
+            self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + iq_bonus
 
-        print(f"Zzzzz... {self.huisdier['naam']} slaapt heerlijk.")
-        print(f"*gaaap* {self.huisdier['naam']} is weer uitgerust!")
+        print(f"Zzzzz... {naam} slaapt heerlijk.")
+        print(f"*gaaap* {naam} is weer uitgerust!")
 
     def _knuffelen(self):
-        """Knuffelt het huisdier."""
-        print(f"\nJe knuffelt {self.huisdier['naam']}...")
+        """Knuffelt het huisdier - slimme huisdieren waarderen aandacht meer!"""
+        naam = self.huisdier["naam"]
+        iq = self.huisdier.get("intelligentie", 0)
+
+        print(f"\nJe knuffelt {naam}...")
         time.sleep(0.5)
 
-        self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 15)
+        # IQ bonus - slimmer huisdier geniet meer van sociale interactie
+        iq_bonus = min(5, iq // 20)  # Max +5 extra geluk
+
+        self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 15 + iq_bonus)
         self.huisdier["gezondheid"] = min(100, self.huisdier["gezondheid"] + 5)
         self.huisdier["ervaring"] += 5
 
         reacties = [
-            f"{self.huisdier['naam']} geniet van de aandacht!",
-            f"Aaah! {self.huisdier['naam']} is zo blij!",
-            f"{self.huisdier['naam']} geeft je een likje!",
+            f"{naam} geniet van de aandacht!",
+            f"Aaah! {naam} is zo blij!",
+            f"{naam} geeft je een likje!",
             f"{self.huisdier['geluid']}",
         ]
         print(random.choice(reacties))
+
+        # Slim huisdier toont extra waardering
+        if iq >= 40 and iq_bonus > 0:
+            print(f"  [IQ] {naam} waardeert de sociale band extra! (+{iq_bonus} geluk)")
 
         if self.huisdier["gezondheid"] == 100:
             self._unlock_achievement("perfecte_gezondheid")
 
     def _dokter(self):
-        """Naar de dierenarts."""
-        if self.huisdier["gezondheid"] >= 90:
-            print(f"\n{self.huisdier['naam']} is kerngezond! Geen dokter nodig.")
+        """Naar de dierenarts - met IQ korting en gezondheid tips!"""
+        naam = self.huisdier["naam"]
+        iq = self.huisdier.get("intelligentie", 0)
+        gezondheid = self.huisdier["gezondheid"]
+
+        # Slim huisdier krijgt korting (kent zelf remedies)
+        basis_kosten = 25
+        iq_korting = min(10, iq // 10)  # Max 10 munten korting
+        kosten = max(10, basis_kosten - iq_korting)
+
+        # Toon gezondheid status
+        print("\n" + "=" * 40)
+        print(f"  [DOKTER] DIERENARTS BEZOEK")
+        print("=" * 40)
+        print(f"\n  Patient: {naam}")
+        print(f"  Gezondheid: {self._maak_balk(gezondheid)} {gezondheid}%")
+
+        # Slim huisdier geeft gezondheid tips uit geleerde kennis
+        if iq >= 30 and "kennis" in self.huisdier:
+            feiten = self.huisdier["kennis"].get("feiten", [])
+            gezondheid_feiten = [f for f in feiten if any(w in f.lower()
+                for w in ["gezond", "slaap", "eten", "energie", "brein"])]
+            if gezondheid_feiten:
+                print(f"\n  [IQ] {naam}'s eigen gezondheid tip:")
+                print(f"      \"{random.choice(gezondheid_feiten)[:60]}...\"")
+
+        if gezondheid >= 90:
+            print(f"\n  [OK] {naam} is kerngezond! Geen behandeling nodig.")
+            print("  De dokter geeft een snoepje als beloning!")
+            self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 5)
             return
 
-        kosten = 25
         if self.huisdier["munten"] < kosten:
-            print(f"\nJe hebt niet genoeg munten! (Nodig: {kosten})")
+            print(f"\n  [!] Je hebt niet genoeg munten! (Nodig: {kosten})")
             return
 
-        print(f"\nJe brengt {self.huisdier['naam']} naar de dierenarts... (-{kosten} munten)")
+        print(f"\n  Kosten: {kosten} munten", end="")
+        if iq_korting > 0:
+            print(f" (IQ korting: -{iq_korting}!)")
+        else:
+            print()
+
+        bevestig = input("\n  Behandeling starten? (j/n): ").strip().lower()
+        if bevestig != "j":
+            return
+
+        print(f"\n  De dokter onderzoekt {naam}...")
         time.sleep(1)
 
         self.huisdier["munten"] -= kosten
+        oude_gezondheid = self.huisdier["gezondheid"]
         self.huisdier["gezondheid"] = 100
-        print(f"{self.huisdier['naam']} is weer helemaal beter!")
+
+        # Diagnose gebaseerd op stats
+        diagnoses = []
+        if self.huisdier["honger"] < 30:
+            diagnoses.append("ondervoeding")
+        if self.huisdier["energie"] < 30:
+            diagnoses.append("uitputting")
+        if self.huisdier["geluk"] < 30:
+            diagnoses.append("stress")
+
+        if diagnoses:
+            print(f"  Diagnose: {', '.join(diagnoses)}")
+            print("  Advies: Goed voeren, slapen en spelen!")
+        else:
+            print("  Diagnose: Kleine kwaal")
+
+        print(f"\n  [OK] {naam} is weer helemaal beter!")
+        print(f"  Gezondheid: {oude_gezondheid}% -> 100%")
+
+        # Ervaring voor doktersbezoek
+        self.huisdier["ervaring"] += 5
 
     def _mini_games(self):
         """Mini-games menu."""
@@ -1076,7 +1208,7 @@ class VirtueelHuisdierApp:
             input("\nDruk op Enter...")
 
     def _werk_boodschappen(self):
-        """Huisdier gaat boodschappen doen en helpt met de boodschappenlijst."""
+        """Huisdier gaat boodschappen doen - integratie met ECHTE boodschappenlijst!"""
         if self.huisdier["munten"] < 10:
             print("\nJe hebt niet genoeg munten! (Nodig: 10)")
             return
@@ -1097,6 +1229,7 @@ class VirtueelHuisdierApp:
         naam = self.huisdier["naam"]
         geluid = self.huisdier["geluid"]
         huisdier_type = self.huisdier["type"]
+        iq = self.huisdier.get("intelligentie", 0)
 
         # Producten die het huisdier kan vinden
         winkel_secties = {
@@ -1111,12 +1244,32 @@ class VirtueelHuisdierApp:
         print("=" * 50)
         time.sleep(0.5)
 
+        # Check ECHTE boodschappenlijst
+        echte_lijst = []
+        try:
+            boodschappen_app = _get_boodschappenlijst()
+            if boodschappen_app.bestand.exists():
+                with open(boodschappen_app.bestand, "r", encoding="utf-8") as f:
+                    echte_lijst = [line.strip() for line in f if line.strip()]
+                if echte_lijst:
+                    print(f"\n  [LIJST] Je hebt {len(echte_lijst)} items op je boodschappenlijst!")
+                    for item in echte_lijst[:3]:
+                        print(f"    - {item}")
+                    if len(echte_lijst) > 3:
+                        print(f"    ... en {len(echte_lijst) - 3} meer")
+        except Exception:
+            pass
+
         print(f"\n  {geluid}")
         print(f"  {naam} pakt een winkelwagentje...")
         time.sleep(0.5)
 
         gevonden_items = []
         totaal_korting = 0
+        items_van_lijst = 0
+
+        # IQ bonus - slimmer huisdier vindt meer (60-85% kans)
+        basis_kans = 60 + min(25, iq // 4)
 
         # Bezoek 4 secties
         for sectie_naam, producten in random.sample(list(winkel_secties.items()), 4):
@@ -1124,13 +1277,21 @@ class VirtueelHuisdierApp:
             time.sleep(0.3)
 
             # Huisdier zoekt producten
-            if random.randint(1, 100) <= 70:  # 70% kans
+            if random.randint(1, 100) <= basis_kans:
                 product = random.choice(producten)
                 gevonden_items.append(product)
                 print(f"  [OK] {naam} vindt: {product}")
 
-                # Kans op korting
-                if random.randint(1, 100) <= 30:
+                # Check of product op echte lijst staat
+                for echte_item in echte_lijst:
+                    if product.lower() in echte_item.lower():
+                        items_van_lijst += 1
+                        print(f"  [LIJST] Dit stond op je boodschappenlijst!")
+                        break
+
+                # Kans op korting (IQ verhoogt kans)
+                korting_kans = 30 + min(20, iq // 5)
+                if random.randint(1, 100) <= korting_kans:
                     korting = random.randint(5, 20)
                     totaal_korting += korting
                     print(f"  [BONUS] Aanbieding gevonden! -{korting}% korting!")
@@ -1146,20 +1307,48 @@ class VirtueelHuisdierApp:
 
         munt_beloning = len(gevonden_items) * 8 + totaal_korting // 2
         xp_beloning = len(gevonden_items) * 5 + 10
+        intel_bonus = 0
+
+        # Extra bonus voor items van echte lijst
+        if items_van_lijst > 0:
+            munt_beloning += items_van_lijst * 5
+            intel_bonus = items_van_lijst
 
         print(f"\n  {naam}'s winkelresultaat:")
         print(f"    [TAS] Items gevonden: {len(gevonden_items)}")
         if gevonden_items:
             for item in gevonden_items:
                 print(f"        - {item}")
+        if items_van_lijst > 0:
+            print(f"    [LIJST] Van je lijst: {items_van_lijst} items")
         print(f"    [%] Totale korting: {totaal_korting}%")
         print(f"    [MUNT] Verdiend: +{munt_beloning} munten")
         print(f"    [XP] Ervaring: +{xp_beloning}")
+        if intel_bonus > 0:
+            print(f"    [IQ] Intelligentie: +{intel_bonus}")
+
+        # Vraag of gevonden items aan boodschappenlijst toegevoegd moeten worden
+        nieuwe_suggesties = [i for i in gevonden_items if i not in echte_lijst]
+        if nieuwe_suggesties and random.randint(1, 100) <= 50:
+            suggestie = random.choice(nieuwe_suggesties)
+            print(f"\n  [TIP] {naam} suggereert: \"{suggestie}\" toevoegen aan lijst?")
+            antwoord = input("  Toevoegen? (j/n): ").strip().lower()
+            if antwoord == "j":
+                try:
+                    boodschappen_app = _get_boodschappenlijst()
+                    with open(boodschappen_app.bestand, "a", encoding="utf-8") as f:
+                        f.write(f"{suggestie}\n")
+                    print(f"  [OK] {suggestie} toegevoegd aan ECHTE boodschappenlijst!")
+                    intel_bonus += 2
+                except Exception:
+                    pass
 
         # Geef beloningen
         self.huisdier["munten"] += munt_beloning
         self.huisdier["ervaring"] += xp_beloning
         self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 5)
+        if intel_bonus > 0:
+            self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + intel_bonus
         self.huisdier["stats"]["boodschappen_gedaan"] += 1
         self.huisdier["stats"]["werk_taken"] += 1
 
@@ -1174,7 +1363,7 @@ class VirtueelHuisdierApp:
         self._sla_op()
 
     def _werk_wiskunde(self):
-        """Huisdier lost wiskundige puzzels op."""
+        """Huisdier lost wiskundige puzzels op - met ECHTE Rekenmachine!"""
         if self.huisdier["munten"] < 8:
             print("\nJe hebt niet genoeg munten! (Nodig: 8)")
             return
@@ -1191,25 +1380,38 @@ class VirtueelHuisdierApp:
             self.huisdier["stats"]["sommen_opgelost"] = 0
         if "werk_taken" not in self.huisdier["stats"]:
             self.huisdier["stats"]["werk_taken"] = 0
+        if "berekeningen_gedaan" not in self.huisdier["stats"]:
+            self.huisdier["stats"]["berekeningen_gedaan"] = 0
 
         naam = self.huisdier["naam"]
         geluid = self.huisdier["geluid"]
         evolutie = self.huisdier.get("evolutie_stadium", 0)
+        iq = self.huisdier.get("intelligentie", 0)
 
-        # Moeilijkheid gebaseerd op evolutie
-        max_getal = 10 + (evolutie * 5)
+        # Moeilijkheid gebaseerd op evolutie EN IQ
+        max_getal = 10 + (evolutie * 5) + (iq // 10)
 
         print("\n" + "=" * 50)
         print(f"  [CALCULATOR] {naam} GAAT REKENEN!")
         print("=" * 50)
         time.sleep(0.5)
 
-        print(f"\n  {geluid}")
-        print(f"  {naam} pakt een rekenmachine...")
+        # Probeer ECHTE rekenmachine te laden
+        echte_rekenmachine = None
+        try:
+            echte_rekenmachine = _get_rekenmachine()
+            print(f"\n  {geluid}")
+            print(f"  {naam} opent de ECHTE Slimme Rekenmachine...")
+            time.sleep(0.5)
+            print(f"  [OK] Rekenmachine verbonden!")
+        except Exception:
+            print(f"\n  {geluid}")
+            print(f"  {naam} pakt een rekenmachine...")
         time.sleep(0.5)
 
         correct = 0
         totaal = 5
+        intel_bonus = 0
 
         operaties = [
             ("+", lambda a, b: a + b),
@@ -1217,28 +1419,46 @@ class VirtueelHuisdierApp:
             ("x", lambda a, b: a * b),
         ]
 
+        # Extra geavanceerde operaties voor slim huisdier
+        if iq >= 30:
+            operaties.append(("//", lambda a, b: a // b if b != 0 else 0))  # Deling
+        if iq >= 60:
+            operaties.append(("^", lambda a, b: a ** min(b, 3)))  # Machten (max 3)
+
         for ronde in range(1, totaal + 1):
             a = random.randint(1, max_getal)
-            b = random.randint(1, max_getal)
+            b = random.randint(1, max(1, max_getal // 2))
             op_sym, op_func = random.choice(operaties)
 
-            # Zorg dat aftrekken niet negatief wordt
+            # Zorg dat aftrekken niet negatief wordt en deling klopt
             if op_sym == "-" and b > a:
                 a, b = b, a
+            if op_sym == "//" and b == 0:
+                b = 1
 
             antwoord = op_func(a, b)
 
             print(f"\n  --- Som {ronde}/{totaal} ---")
             print(f"  Wat is {a} {op_sym} {b} = ?")
 
-            # Huisdier probeert te raden (AI simulatie)
-            basis_kans = 60 + (evolutie * 5) + (self.huisdier["geluk"] // 10)
+            # Huisdier probeert te raden (IQ gebaseerd)
+            basis_kans = 60 + (evolutie * 5) + (iq // 5) + (self.huisdier["geluk"] // 10)
             basis_kans = min(95, basis_kans)
 
             time.sleep(0.5)
 
             if random.randint(1, 100) <= basis_kans:
-                print(f"  {naam}: \"{antwoord}!\"")
+                # Gebruik echte rekenmachine voor verificatie als beschikbaar
+                if echte_rekenmachine:
+                    try:
+                        expr = f"{a}{op_sym.replace('x', '*').replace('^', '**')}{b}"
+                        result = eval(expr)  # Veilig want we controleren de input
+                        print(f"  {naam} (via Rekenmachine): \"{int(result)}!\"")
+                        intel_bonus += 1
+                    except Exception:
+                        print(f"  {naam}: \"{antwoord}!\"")
+                else:
+                    print(f"  {naam}: \"{antwoord}!\"")
                 print(f"  [OK] Correct!")
                 correct += 1
             else:
@@ -1257,8 +1477,14 @@ class VirtueelHuisdierApp:
         munt_beloning = correct * 6
         xp_beloning = correct * 8 + 5
 
+        # IQ bonus voor correct gebruik van rekenmachine
+        if intel_bonus > 0:
+            munt_beloning += intel_bonus * 2
+
         print(f"\n  {naam}'s score:")
         print(f"    [#] Correct: {correct}/{totaal}")
+        if intel_bonus > 0:
+            print(f"    [IQ] Rekenmachine bonus: +{intel_bonus}")
         print(f"    [MUNT] Verdiend: +{munt_beloning} munten")
         print(f"    [XP] Ervaring: +{xp_beloning}")
 
@@ -1267,17 +1493,25 @@ class VirtueelHuisdierApp:
             print(f"\n  [TROFEE] PERFECT! Bonus: +{bonus} munten!")
             munt_beloning += bonus
 
+        if echte_rekenmachine:
+            print(f"\n  [STAR] Bonus: ECHTE Rekenmachine gebruikt!")
+
         # Geef beloningen
         self.huisdier["munten"] += munt_beloning
         self.huisdier["ervaring"] += xp_beloning
         self.huisdier["stats"]["sommen_opgelost"] += correct
         self.huisdier["stats"]["werk_taken"] += 1
+        self.huisdier["stats"]["berekeningen_gedaan"] += correct
+        if intel_bonus > 0:
+            self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + intel_bonus
 
         # Achievements
         if self.huisdier["stats"]["sommen_opgelost"] >= 20:
             self._unlock_achievement("wiskunde_genie")
         if self.huisdier["stats"]["werk_taken"] >= 25:
             self._unlock_achievement("werkend_huisdier")
+        if self.huisdier.get("intelligentie", 0) >= 100:
+            self._unlock_achievement("super_slim")
 
         self._check_evolutie()
         print(f"\n  {geluid}")
