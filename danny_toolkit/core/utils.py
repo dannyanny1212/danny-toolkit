@@ -7,6 +7,7 @@ import os
 import sys
 import time
 import logging
+import subprocess
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
@@ -453,7 +454,10 @@ def fix_encoding():
 
 def clear_scherm():
     """Maakt het scherm leeg."""
-    os.system("cls" if os.name == "nt" else "clear")
+    if os.name == "nt":
+        subprocess.run(["cmd", "/c", "cls"], shell=False)
+    else:
+        subprocess.run(["clear"], shell=False)
 
 
 def toon_banner(titel: str, emoji: str = "", breedte: int = 60,
