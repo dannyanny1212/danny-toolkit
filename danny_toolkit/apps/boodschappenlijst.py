@@ -713,6 +713,7 @@ class BoodschappenlijstApp:
             print("    [nummer] = Ingrediënten toevoegen aan lijst")
             print("    n        = Nieuw recept maken")
             print("    v        = Recept verwijderen")
+            print("    s        = Suggesties (op basis van je lijst)")
             print("    0        = Terug")
 
             keuze = input(kleur("\n  Keuze: ", "cyan")).strip().lower()
@@ -723,6 +724,8 @@ class BoodschappenlijstApp:
                 self._maak_recept()
             elif keuze == "v":
                 self._verwijder_recept()
+            elif keuze == "s":
+                self._suggereer_recepten()
             else:
                 try:
                     idx = int(keuze) - 1
@@ -852,6 +855,136 @@ class BoodschappenlijstApp:
                 fout("Ongeldig nummer.")
         except ValueError:
             fout("Voer een nummer in.")
+
+    def _suggereer_recepten(self):
+        """Suggereert recepten op basis van items in de boodschappenlijst."""
+        self._toon_header("💡 Recept Suggesties")
+
+        items = self._get_items()
+        if not items:
+            waarschuwing("Je boodschappenlijst is leeg. Voeg eerst items toe!")
+            return
+
+        # Verzamel alle item namen (lowercase voor vergelijking)
+        lijst_items = set()
+        for item in items:
+            lijst_items.add(item["naam"].lower())
+
+        recepten = self.data["recepten"]
+        suggesties = []
+
+        for recept_naam, recept in recepten.items():
+            ingredienten = recept.get("ingredienten", [])
+            if not ingredienten:
+                continue
+
+            # Tel hoeveel ingrediënten al op de lijst staan
+            gevonden = 0
+            ontbrekend = []
+
+            for ing in ingredienten:
+                ing_naam = ing["naam"].lower()
+                if any(ing_naam in item or item in ing_naam
+                       for item in lijst_items):
+                    gevonden += 1
+                else:
+                    ontbrekend.append(ing["naam"])
+
+            totaal = len(ingredienten)
+            percentage = (gevonden / totaal) * 100 if totaal > 0 else 0
+
+            if gevonden > 0:
+                suggesties.append({
+                    "naam": recept_naam,
+                    "gevonden": gevonden,
+                    "totaal": totaal,
+                    "percentage": percentage,
+                    "ontbrekend": ontbrekend,
+                    "personen": recept.get("personen", 4)
+                })
+
+        # Sorteer op percentage (hoogste eerst)
+        suggesties.sort(key=lambda x: x["percentage"], reverse=True)
+
+        if not suggesties:
+            info("Geen recepten gevonden die passen bij je huidige items.")
+            print(kleur("\n  Tip: Voeg meer items toe of maak nieuwe recepten!", "grijs"))
+            return
+
+        print(kleur("\n  Recepten die je kunt maken met je huidige items:", "geel"))
+        print()
+
+        for i, sug in enumerate(suggesties[:5], 1):
+            # Kleur gebaseerd op completeness
+            if sug["percentage"] >= 80:
+                status_kleur = "groen"
+                status = "✓ Bijna compleet!"
+            elif sug["percentage"] >= 50:
+                status_kleur = "geel"
+                status = "◐ Goed op weg"
+            else:
+                status_kleur = "wit"
+                status = "○ Begin gemaakt"
+
+            print(f"    {i}. {kleur(sug['naam'], 'cyan')}")
+            print(f"       {sug['gevonden']}/{sug['totaal']} ingrediënten "
+                  f"({sug['percentage']:.0f}%) - "
+                  f"{kleur(status, status_kleur)}")
+
+            if sug["ontbrekend"] and len(sug["ontbrekend"]) <= 3:
+                ontbrekend_str = ", ".join(sug["ontbrekend"])
+                print(kleur(f"       Nog nodig: {ontbrekend_str}", "grijs"))
+            elif sug["ontbrekend"]:
+                print(kleur(f"       Nog {len(sug['ontbrekend'])} "
+                           f"ingrediënten nodig", "grijs"))
+            print()
+
+        # Optie om ontbrekende ingrediënten toe te voegen
+        print(kleur("  Wil je ontbrekende ingrediënten toevoegen?", "geel"))
+        keuze = input(kleur("  Nummer van recept (of 0 = terug): ", "cyan")).strip()
+
+        if keuze == "0" or not keuze:
+            return
+
+        try:
+            idx = int(keuze) - 1
+            if 0 <= idx < len(suggesties):
+                sug = suggesties[idx]
+                if not sug["ontbrekend"]:
+                    succes(f"Je hebt alle ingrediënten voor {sug['naam']}!")
+                    return
+
+                print(kleur(f"\n  Ontbrekende ingrediënten voor {sug['naam']}:", "geel"))
+                for ont in sug["ontbrekend"]:
+                    print(f"    • {ont}")
+
+                toevoegen = input(kleur(
+                    "\n  Alle ontbrekende toevoegen? (j/n): ", "cyan"
+                )).lower()
+
+                if toevoegen == "j":
+                    # Zoek recept voor categorie info
+                    recept = recepten[sug["naam"]]
+                    ing_dict = {i["naam"].lower(): i
+                               for i in recept.get("ingredienten", [])}
+
+                    for ont in sug["ontbrekend"]:
+                        ing_info = ing_dict.get(ont.lower(), {})
+                        nieuw_item = {
+                            "naam": ont,
+                            "hoeveelheid": ing_info.get("hoeveelheid", ""),
+                            "categorie": ing_info.get("categorie", "overig"),
+                            "prijs": 0,
+                            "prioriteit": "normaal",
+                            "notitie": f"Voor: {sug['naam']}",
+                            "afgevinkt": False,
+                            "toegevoegd": datetime.now().isoformat()
+                        }
+                        self._get_huidige_lijst()["items"].append(nieuw_item)
+
+                    succes(f"{len(sug['ontbrekend'])} ingrediënten toegevoegd!")
+        except ValueError:
+            fout("Voer een geldig nummer in.")
 
     # ==================== VOORRAAD ====================
 

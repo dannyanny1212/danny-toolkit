@@ -844,7 +844,8 @@ class WeerAgentApp:
             print(f"\n{kleur('!!! WAARSCHUWINGEN !!!', 'rood')}")
             for alert in alerts:
                 niveau_kleur = alert.get("kleur", "geel")
-                print(f"  {alert['icon']} {kleur(f'[{alert[\"niveau\"]}]', niveau_kleur)} {alert['type']}")
+                niveau = alert["niveau"]
+                print(f"  {alert['icon']} {kleur(f'[{niveau}]', niveau_kleur)} {alert['type']}")
                 print(f"     {alert['bericht']}")
 
         # Huidig weer

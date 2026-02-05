@@ -27,6 +27,9 @@ class VirtueelHuisdierApp:
         "7": {"naam": "draak", "emoji": "[DRAAK]", "geluid": "*ROARRR*"},
         "8": {"naam": "eenhoorn", "emoji": "[EENHOORN]", "geluid": "*magisch gehinnik*"},
         "9": {"naam": "robot", "emoji": "[ROBOT]", "geluid": "Beep boop!"},
+        "10": {"naam": "schildpad", "emoji": "[SCHILDPAD]", "geluid": "*langzaam knikt*"},
+        "11": {"naam": "panda", "emoji": "[PANDA]", "geluid": "*kauwt op bamboe*"},
+        "12": {"naam": "uil", "emoji": "[UIL]", "geluid": "Oehoe!"},
     }
 
     # Evolutie stadia
@@ -153,9 +156,9 @@ class VirtueelHuisdierApp:
         print("\nWelk type huisdier wil je?")
         print("-" * 30)
         for key, info in self.HUISDIER_TYPES.items():
-            print(f"  {key}. {info['emoji']} {info['naam'].capitalize()}")
+            print(f"  {key:>2}. {info['emoji']} {info['naam'].capitalize()}")
 
-        keuze = input("\nKies (1-9): ").strip()
+        keuze = input("\nKies (1-12): ").strip()
         if keuze not in self.HUISDIER_TYPES:
             keuze = "1"
 

@@ -283,10 +283,20 @@ class RekenmachineApp:
             print("    9. Log base 2 (log₂)")
             print("    a. Log willekeurige base")
 
+            print(kleur("\n  Hyperbolisch:", "geel"))
+            print("    e. Sinh (hyperbolische sinus)")
+            print("    f. Cosh (hyperbolische cosinus)")
+            print("    g. Tanh (hyperbolische tangens)")
+
+            print(kleur("\n  Combinatoriek:", "geel"))
+            print("    h. Permutaties (nPr)")
+            print("    i. Combinaties (nCr)")
+
             print(kleur("\n  Overig:", "geel"))
             print("    b. Factoriaal (n!)")
             print("    c. Constanten bekijken")
             print("    d. Graden ↔ Radialen")
+            print("    j. Afronden (floor/ceil/round)")
 
             print(kleur("\n    0. Terug", "grijs"))
 
@@ -380,6 +390,41 @@ class RekenmachineApp:
                     self._graden_radialen()
                     continue
 
+                elif keuze == "e":
+                    waarde = self._get_getal("Waarde: ")
+                    resultaat = math.sinh(waarde)
+                    berekening = f"sinh({waarde})"
+
+                elif keuze == "f":
+                    waarde = self._get_getal("Waarde: ")
+                    resultaat = math.cosh(waarde)
+                    berekening = f"cosh({waarde})"
+
+                elif keuze == "g":
+                    waarde = self._get_getal("Waarde: ")
+                    resultaat = math.tanh(waarde)
+                    berekening = f"tanh({waarde})"
+
+                elif keuze == "h":
+                    n = int(self._get_getal("n (totaal aantal): "))
+                    r = int(self._get_getal("r (te kiezen): "))
+                    if n < 0 or r < 0 or r > n:
+                        raise ValueError("Ongeldige waarden! (n >= r >= 0)")
+                    resultaat = math.factorial(n) // math.factorial(n - r)
+                    berekening = f"P({n},{r})"
+
+                elif keuze == "i":
+                    n = int(self._get_getal("n (totaal aantal): "))
+                    r = int(self._get_getal("r (te kiezen): "))
+                    if n < 0 or r < 0 or r > n:
+                        raise ValueError("Ongeldige waarden! (n >= r >= 0)")
+                    resultaat = math.comb(n, r)
+                    berekening = f"C({n},{r})"
+
+                elif keuze == "j":
+                    self._afronden_menu()
+                    continue
+
                 else:
                     fout("Ongeldige keuze.")
                     continue
@@ -417,6 +462,32 @@ class RekenmachineApp:
             radialen = self._get_getal("Radialen: ")
             graden = math.degrees(radialen)
             self._toon_resultaat(f"{radialen} rad → °", graden)
+
+    def _afronden_menu(self):
+        """Afrondingsfuncties menu."""
+        print(kleur("\n  Afronden:", "geel"))
+        print("    1. Floor (naar beneden)")
+        print("    2. Ceil (naar boven)")
+        print("    3. Round (normaal afronden)")
+        print("    4. Truncate (kap decimalen af)")
+
+        keuze = input(kleur("\n  Keuze: ", "cyan")).strip()
+        getal = self._get_getal("Getal: ")
+
+        if keuze == "1":
+            resultaat = math.floor(getal)
+            self._toon_resultaat(f"floor({getal})", resultaat)
+        elif keuze == "2":
+            resultaat = math.ceil(getal)
+            self._toon_resultaat(f"ceil({getal})", resultaat)
+        elif keuze == "3":
+            decimalen = input(kleur("  Aantal decimalen [0]: ", "cyan")).strip()
+            decimalen = int(decimalen) if decimalen else 0
+            resultaat = round(getal, decimalen)
+            self._toon_resultaat(f"round({getal}, {decimalen})", resultaat)
+        elif keuze == "4":
+            resultaat = math.trunc(getal)
+            self._toon_resultaat(f"trunc({getal})", resultaat)
 
     # ==================== EENHEDEN ====================
 
