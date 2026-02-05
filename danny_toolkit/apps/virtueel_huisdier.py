@@ -2000,16 +2000,40 @@ class VirtueelHuisdierApp:
 
         if not echte_rag:
             print(f"  [!] Geen RAG beschikbaar, gebruik ingebouwde kennis...")
-            # Fallback naar ingebouwde kennis
+            # Fallback naar ingebouwde AI/TECH kennis
             ingebouwde_feiten = [
-                "Machine Learning is een tak van AI waarbij computers leren van data",
-                "Neural networks zijn geinspireerd op het menselijk brein",
-                "Python decorators wrappen functies voor extra functionaliteit",
-                "REST API's gebruiken HTTP methodes zoals GET en POST",
-                "Embeddings zijn numerieke representaties van tekst",
-                "Backpropagation is het leeralgoritme voor neural networks",
-                "CNN staat voor Convolutional Neural Network voor beeldherkenning",
-                "Transformers gebruiken attention mechanismen voor NLP taken",
+                # Machine Learning & AI
+                "Machine Learning is een tak van AI waarbij computers leren van data zonder expliciete programmering",
+                "Neural networks zijn geinspireerd op het menselijk brein met lagen van kunstmatige neuronen",
+                "Deep Learning gebruikt diepe neural networks met vele verborgen lagen voor complexe taken",
+                "Backpropagation berekent gradients om de weights van een neural network aan te passen",
+                "Supervised learning traint met gelabelde data waar het juiste antwoord bekend is",
+                "Unsupervised learning vindt patronen in data zonder vooraf gedefinieerde labels",
+
+                # Vector Databases & Embeddings
+                "Een vector database is geoptimaliseerd voor het opslaan en doorzoeken van embeddings",
+                "Embeddings zijn numerieke vectoren die de betekenis van tekst of concepten representeren",
+                "Cosine similarity meet de gelijkenis tussen twee vectoren op basis van hun hoek",
+                "Semantic search vindt resultaten op basis van betekenis in plaats van exacte keywords",
+                "Vector databases maken snelle nearest neighbor search mogelijk voor AI toepassingen",
+
+                # REST API
+                "REST API's gebruiken HTTP methodes: GET (ophalen), POST (aanmaken), PUT (wijzigen), DELETE (verwijderen)",
+                "REST staat voor Representational State Transfer, een architectuurstijl voor web services",
+                "API endpoints zijn URLs waar je requests naartoe stuurt voor specifieke functionaliteit",
+                "JSON is het meest gebruikte dataformaat voor REST API communicatie",
+
+                # Transformers & NLP
+                "Transformers gebruiken attention mechanismen om relaties tussen woorden te begrijpen",
+                "Self-attention laat elk woord kijken naar alle andere woorden in een zin",
+                "GPT en BERT zijn grote taalmodellen gebaseerd op de transformer architectuur",
+                "NLP (Natural Language Processing) laat computers menselijke taal verwerken",
+
+                # RAG & Advanced
+                "RAG (Retrieval Augmented Generation) combineert zoeken met AI generatie voor betere antwoorden",
+                "Fine-tuning past een voorgetraind model aan voor een specifieke taak of domein",
+                "CNN (Convolutional Neural Network) is gespecialiseerd in beeldherkenning",
+                "RNN (Recurrent Neural Network) is ontworpen voor sequentiele data zoals tekst",
             ]
             for feit in random.sample(ingebouwde_feiten, 3):
                 if feit not in permanente_kennis["feiten"]:
@@ -2379,6 +2403,8 @@ class VirtueelHuisdierApp:
             "Hoe werkt het internet?",
             "Wat zijn zwarte gaten?",
             "Hoe leren dieren trucs?",
+            "Wat is machine learning?",
+            "Hoe werkt een REST API?",
         ]
 
         geavanceerde_vragen = [
@@ -2387,10 +2413,25 @@ class VirtueelHuisdierApp:
             "Hoe werkt natuurlijke taalverwerking (NLP)?",
             "Wat zijn de ethische uitdagingen van AI?",
             "Hoe kunnen computers creativiteit simuleren?",
+            "Wat is een vector database en waarvoor wordt het gebruikt?",
+            "Hoe werken embeddings in machine learning?",
+            "Wat is het verschil tussen supervised en unsupervised learning?",
+            "Hoe werkt een REST API met HTTP methodes?",
+            "Wat is de rol van backpropagation in neural networks?",
+        ]
+
+        expert_vragen = [
+            "Hoe werkt semantic search met vector databases?",
+            "Wat is RAG (Retrieval Augmented Generation)?",
+            "Hoe werkt cosine similarity bij embeddings?",
+            "Wat zijn transformers en attention mechanismen?",
+            "Hoe werkt fine-tuning van grote taalmodellen?",
         ]
 
         # Kies vragen gebaseerd op IQ
-        if iq >= 50:
+        if iq >= 80:
+            alle_vragen = basis_vragen + geavanceerde_vragen + expert_vragen
+        elif iq >= 50:
             alle_vragen = basis_vragen + geavanceerde_vragen
         else:
             alle_vragen = basis_vragen
@@ -2433,16 +2474,94 @@ Antwoord in het Nederlands."""
                     print(f"  [!] API fout: {e}")
                     antwoord = None
 
-            # Fallback naar gesimuleerde antwoorden
+            # Fallback naar gesimuleerde antwoorden met TECH KENNIS
             if not antwoord:
                 fallback_antwoorden = {
-                    "kunstmatige intelligentie": ("AI zijn computerprogramma's die kunnen leren!", "AI leert van data"),
+                    # Basis AI/ML
+                    "kunstmatige intelligentie": (
+                        "AI zijn computerprogramma's die kunnen leren en beslissingen nemen!",
+                        "AI bootst menselijke intelligentie na met algoritmes"
+                    ),
+                    "machine learning": (
+                        "Machine Learning laat computers leren van data zonder expliciete programmering!",
+                        "ML vindt patronen in data om voorspellingen te maken"
+                    ),
+                    "deep learning": (
+                        "Deep Learning gebruikt diepe neural networks met vele lagen!",
+                        "Meer lagen = meer abstracte features leren"
+                    ),
+                    "neural network": (
+                        "Neural networks zijn geinspireerd op het menselijk brein met neuronen en connecties!",
+                        "Neuronen geven signalen door via gewogen verbindingen"
+                    ),
+                    "backpropagation": (
+                        "Backpropagation berekent hoe weights aangepast moeten worden door de error terug te propageren!",
+                        "De chain rule uit calculus maakt backprop mogelijk"
+                    ),
+
+                    # Vector Databases
+                    "vector database": (
+                        "Een vector database slaat embeddings op en zoekt op basis van gelijkenis!",
+                        "Vectoren representeren betekenis als getallen"
+                    ),
+                    "embedding": (
+                        "Embeddings zijn numerieke representaties van tekst, woorden of concepten!",
+                        "Vergelijkbare betekenissen hebben vergelijkbare vectoren"
+                    ),
+                    "cosine similarity": (
+                        "Cosine similarity meet de hoek tussen twee vectoren om gelijkenis te bepalen!",
+                        "Waarde 1 = identiek, 0 = geen relatie"
+                    ),
+                    "semantic search": (
+                        "Semantic search vindt resultaten op basis van betekenis, niet alleen keywords!",
+                        "Vector databases maken semantic search mogelijk"
+                    ),
+
+                    # REST API
+                    "rest api": (
+                        "REST API's gebruiken HTTP methodes (GET, POST, PUT, DELETE) voor communicatie!",
+                        "REST staat voor Representational State Transfer"
+                    ),
+                    "http methode": (
+                        "GET haalt data op, POST stuurt nieuwe data, PUT wijzigt, DELETE verwijdert!",
+                        "Elke HTTP methode heeft een specifiek doel"
+                    ),
+
+                    # RAG & Advanced
+                    "rag": (
+                        "RAG combineert retrieval (zoeken) met generation (AI antwoorden) voor betere resultaten!",
+                        "RAG voorkomt hallucinaties door echte bronnen te gebruiken"
+                    ),
+                    "transformer": (
+                        "Transformers gebruiken attention om relaties tussen alle woorden tegelijk te zien!",
+                        "GPT en BERT zijn gebaseerd op transformers"
+                    ),
+                    "attention": (
+                        "Attention laat het model focussen op relevante delen van de input!",
+                        "Self-attention weegt elk woord tegen alle andere"
+                    ),
+                    "fine-tuning": (
+                        "Fine-tuning traint een voorgetraind model verder op specifieke data!",
+                        "Je past de weights aan voor jouw use case"
+                    ),
+                    "supervised": (
+                        "Supervised learning traint met gelabelde data waar het juiste antwoord bekend is!",
+                        "Het model leert input-output mappings"
+                    ),
+                    "unsupervised": (
+                        "Unsupervised learning vindt patronen in data zonder labels!",
+                        "Clustering en dimensie reductie zijn voorbeelden"
+                    ),
+                    "nlp": (
+                        "NLP (Natural Language Processing) laat computers menselijke taal begrijpen!",
+                        "Chatbots en vertalers gebruiken NLP"
+                    ),
+
+                    # Algemeen
                     "lucht blauw": ("Zonlicht verstrooit in de atmosfeer!", "Rayleigh-verstrooiing"),
                     "internet": ("Het internet verbindt computers wereldwijd!", "Data reist via kabels en wifi"),
-                    "zwarte gaten": ("Zwarte gaten hebben zo veel zwaartekracht dat licht niet ontsnapt!", "Einstein voorspelde ze"),
+                    "zwarte gaten": ("Zwarte gaten hebben extreme zwaartekracht!", "Einstein voorspelde ze"),
                     "dieren trucs": ("Dieren leren door beloning en herhaling!", "Positieve bekrachtiging werkt"),
-                    "neural networks": ("Neural networks bootsen het brein na!", "Ze hebben lagen van neuronen"),
-                    "machine learning": ("ML leert van data, DL gebruikt diepe netwerken!", "Deep learning is krachtiger"),
                 }
 
                 for keyword, (resp, feit) in fallback_antwoorden.items():
