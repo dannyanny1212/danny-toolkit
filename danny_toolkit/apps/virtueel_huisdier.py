@@ -64,6 +64,11 @@ class VirtueelHuisdierApp:
         "bug_hunter": {"naam": "Bug Hunter", "beschrijving": "Vind 15 bugs in code", "punten": 45},
         "boodschapper": {"naam": "Boodschapper", "beschrijving": "Doe 10 keer boodschappen", "punten": 35},
         "werkend_huisdier": {"naam": "Werkend Huisdier", "beschrijving": "Voltooi 25 werk taken", "punten": 75},
+        "kenniszoeker": {"naam": "Kenniszoeker", "beschrijving": "Leer 10 feiten uit de kennisbank", "punten": 40},
+        "nieuwslezer": {"naam": "Nieuwslezer", "beschrijving": "Lees 10 nieuwsberichten", "punten": 35},
+        "weerwatcher": {"naam": "Weer Watcher", "beschrijving": "Check 10 keer het weer", "punten": 30},
+        "ai_student": {"naam": "AI Student", "beschrijving": "Voer 10 AI gesprekken", "punten": 50},
+        "super_slim": {"naam": "Super Slim", "beschrijving": "Bereik 100 intelligentie", "punten": 100},
         "dagelijkse_bonus": {"naam": "Trouwe Vriend", "beschrijving": "Claim 7 dagelijkse bonussen", "punten": 50},
         "evolutie_kind": {"naam": "Groeiend", "beschrijving": "Evolueer naar Kind stadium", "punten": 20},
         "evolutie_volwassen": {"naam": "Volgroeid", "beschrijving": "Evolueer naar Volwassen stadium", "punten": 50},
@@ -137,6 +142,7 @@ class VirtueelHuisdierApp:
         defaults = {
             "munten": 100,
             "ervaring": 0,
+            "intelligentie": 0,
             "evolutie_stadium": 0,
             "tricks_geleerd": [],
             "accessoires": [],
@@ -146,6 +152,10 @@ class VirtueelHuisdierApp:
                 "games_gewonnen": 0,
                 "tricks_uitgevoerd": 0,
                 "dagen_gespeeld": 0,
+                "feiten_geleerd": 0,
+                "nieuws_gelezen": 0,
+                "weer_gecheckt": 0,
+                "ai_gesprekken": 0,
             },
             "dagelijkse_bonus": {
                 "laatste_claim": None,
@@ -204,6 +214,7 @@ class VirtueelHuisdierApp:
             "leeftijd_dagen": 0,
             "munten": 100,
             "ervaring": 0,
+            "intelligentie": 0,
             "evolutie_stadium": 0,
             "tricks_geleerd": [],
             "accessoires": [],
@@ -213,6 +224,10 @@ class VirtueelHuisdierApp:
                 "games_gewonnen": 0,
                 "tricks_uitgevoerd": 0,
                 "dagen_gespeeld": 1,
+                "feiten_geleerd": 0,
+                "nieuws_gelezen": 0,
+                "weer_gecheckt": 0,
+                "ai_gesprekken": 0,
             },
             "dagelijkse_bonus": {
                 "laatste_claim": None,
@@ -336,7 +351,8 @@ class VirtueelHuisdierApp:
         print(f"\n{'='*50}")
         print(f"  {h['emoji']} {h['naam']} de {h['type']} {stemming}")
         print(f"  Stadium: {evolutie['naam']} | Leeftijd: {h['leeftijd_dagen']} dagen")
-        print(f"  Munten: {h['munten']} | Ervaring: {h['ervaring']}")
+        intel = h.get('intelligentie', 0)
+        print(f"  Munten: {h['munten']} | Ervaring: {h['ervaring']} | IQ: {intel}")
         print(f"{'='*50}")
         print(f"\n  Honger:     {self._maak_balk(h['honger'])} {h['honger']}%")
         print(f"  Energie:    {self._maak_balk(h['energie'])} {h['energie']}%")
@@ -369,6 +385,7 @@ class VirtueelHuisdierApp:
         print("|  9. Achievements bekijken      |")
         print("| 10. Dagelijkse bonus           |")
         print("| 11. Huisdier Werk              |")
+        print("| 12. Huisdier Leren (AI)        |")
         print("|  0. Opslaan & Afsluiten        |")
         print("+================================+")
 
@@ -1335,6 +1352,449 @@ class VirtueelHuisdierApp:
         print(f"\n  {geluid}")
         self._sla_op()
 
+    # ==================== HUISDIER LEREN (AI) ====================
+
+    def _huisdier_leren(self):
+        """Menu voor huisdier AI leeractiviteiten."""
+        while True:
+            intel = self.huisdier.get("intelligentie", 0)
+            print("\n+====================================+")
+            print("|        HUISDIER LEREN (AI)         |")
+            print("+====================================+")
+            print(f"|  IQ van {self.huisdier['naam']}: {intel}")
+            print("+------------------------------------+")
+            print("|  1. RAG Studeren (10 munten)       |")
+            print("|     Leer feiten uit de kennisbank  |")
+            print("|  2. Nieuws Lezen (8 munten)        |")
+            print("|     Blijf op de hoogte van nieuws  |")
+            print("|  3. Weer Checken (5 munten)        |")
+            print("|     Leer over het weer             |")
+            print("|  4. AI Gesprek (15 munten)         |")
+            print("|     Praat met Claude AI            |")
+            print("|  0. Terug                          |")
+            print("+====================================+")
+
+            keuze = input("\nKies een activiteit: ").strip()
+
+            if keuze == "0":
+                break
+            elif keuze == "1":
+                self._leren_rag()
+            elif keuze == "2":
+                self._leren_nieuws()
+            elif keuze == "3":
+                self._leren_weer()
+            elif keuze == "4":
+                self._leren_ai_gesprek()
+
+            input("\nDruk op Enter...")
+
+    def _leren_rag(self):
+        """Huisdier leert van de kennisbank (RAG systeem)."""
+        if self.huisdier["munten"] < 10:
+            print("\nJe hebt niet genoeg munten! (Nodig: 10)")
+            return
+
+        if self.huisdier["energie"] < 15:
+            print(f"\n{self.huisdier['naam']} is te moe om te studeren!")
+            return
+
+        self.huisdier["munten"] -= 10
+        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 15)
+
+        # Init stats
+        if "feiten_geleerd" not in self.huisdier["stats"]:
+            self.huisdier["stats"]["feiten_geleerd"] = 0
+
+        naam = self.huisdier["naam"]
+        geluid = self.huisdier["geluid"]
+
+        # Kennisbank onderwerpen
+        onderwerpen = {
+            "Machine Learning": [
+                "ML is een tak van AI waarbij computers leren van data",
+                "Supervised learning gebruikt gelabelde trainingsdata",
+                "Unsupervised learning vindt patronen zonder labels",
+                "Overfitting betekent dat een model te goed past op trainingsdata",
+            ],
+            "Neural Networks": [
+                "Een neuraal netwerk is geinspireerd op het menselijk brein",
+                "Backpropagation is hoe neurale netwerken leren",
+                "CNN's zijn speciaal voor beeldherkenning",
+                "Transformers zijn de basis voor GPT en Claude",
+            ],
+            "Python": [
+                "Decorators wrappen functies voor extra functionaliteit",
+                "Generators gebruiken yield voor memory-efficiente iteratie",
+                "List comprehensions zijn korte syntax voor lijsten maken",
+                "Type hints verbeteren code leesbaarheid",
+            ],
+            "API Design": [
+                "REST API's gebruiken HTTP methodes zoals GET en POST",
+                "Status code 200 betekent succes",
+                "Status code 404 betekent niet gevonden",
+                "JSON is het standaard data formaat voor API's",
+            ],
+            "Vector Databases": [
+                "Embeddings zijn numerieke representaties van tekst",
+                "Cosine similarity meet gelijkenis tussen vectoren",
+                "RAG combineert retrieval met AI generatie",
+                "Chunking splitst documenten in kleinere stukken",
+            ],
+        }
+
+        print("\n" + "=" * 50)
+        print(f"  [BOEK] {naam} GAAT STUDEREN!")
+        print("=" * 50)
+        time.sleep(0.5)
+
+        print(f"\n  {geluid}")
+        print(f"  {naam} opent de kennisbank...")
+        time.sleep(0.5)
+
+        feiten_geleerd = []
+        intel_bonus = 0
+
+        # Studeer 3 onderwerpen
+        for onderwerp in random.sample(list(onderwerpen.keys()), 3):
+            print(f"\n  --- Onderwerp: {onderwerp} ---")
+            time.sleep(0.4)
+
+            # Leer 1-2 feiten per onderwerp
+            feiten = random.sample(onderwerpen[onderwerp], min(2, len(onderwerpen[onderwerp])))
+            for feit in feiten:
+                if random.randint(1, 100) <= 80:  # 80% kans om te leren
+                    feiten_geleerd.append(feit)
+                    intel_bonus += 2
+                    print(f"  [LAMP] {naam} leert: \"{feit[:50]}...\"")
+                else:
+                    print(f"  [?] {naam} snapt dit nog niet helemaal...")
+            time.sleep(0.3)
+
+        # Resultaten
+        print("\n" + "=" * 50)
+        print("  [DIPLOMA] STUDIE SESSIE VOLTOOID!")
+        print("=" * 50)
+
+        xp_beloning = len(feiten_geleerd) * 10 + 5
+        munt_beloning = len(feiten_geleerd) * 3
+
+        print(f"\n  {naam}'s studieresultaten:")
+        print(f"    [BOEK] Feiten geleerd: {len(feiten_geleerd)}")
+        print(f"    [IQ] Intelligentie: +{intel_bonus}")
+        print(f"    [MUNT] Munten: +{munt_beloning}")
+        print(f"    [XP] Ervaring: +{xp_beloning}")
+
+        # Geef beloningen
+        self.huisdier["munten"] += munt_beloning
+        self.huisdier["ervaring"] += xp_beloning
+        self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + intel_bonus
+        self.huisdier["stats"]["feiten_geleerd"] += len(feiten_geleerd)
+
+        # Achievements
+        if self.huisdier["stats"]["feiten_geleerd"] >= 10:
+            self._unlock_achievement("kenniszoeker")
+        if self.huisdier.get("intelligentie", 0) >= 100:
+            self._unlock_achievement("super_slim")
+
+        self._check_evolutie()
+        print(f"\n  {geluid}")
+        self._sla_op()
+
+    def _leren_nieuws(self):
+        """Huisdier leest nieuws."""
+        if self.huisdier["munten"] < 8:
+            print("\nJe hebt niet genoeg munten! (Nodig: 8)")
+            return
+
+        if self.huisdier["energie"] < 10:
+            print(f"\n{self.huisdier['naam']} is te moe om te lezen!")
+            return
+
+        self.huisdier["munten"] -= 8
+        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 10)
+
+        # Init stats
+        if "nieuws_gelezen" not in self.huisdier["stats"]:
+            self.huisdier["stats"]["nieuws_gelezen"] = 0
+
+        naam = self.huisdier["naam"]
+        geluid = self.huisdier["geluid"]
+
+        # Nieuws onderwerpen
+        nieuws_items = [
+            ("Tech", "SpaceX lanceert nieuwe Starship raket naar Mars"),
+            ("Tech", "Apple kondigt nieuwe AI-functies aan voor iPhone"),
+            ("Tech", "Google's quantum computer bereikt doorbraak"),
+            ("Sport", "Nederlands elftal wint belangrijke wedstrijd"),
+            ("Sport", "Olympische Spelen breken kijkcijferrecords"),
+            ("Wetenschap", "Nieuwe ontdekking in zoektocht naar buitenaards leven"),
+            ("Wetenschap", "Doorbraak in kernfusie onderzoek"),
+            ("Natuur", "Zeldzame diersoort herontdekt in regenwoud"),
+            ("Natuur", "Nieuw klimaatakkoord getekend door 50 landen"),
+            ("Cultuur", "Blockbuster film breekt box office records"),
+        ]
+
+        print("\n" + "=" * 50)
+        print(f"  [KRANT] {naam} LEEST HET NIEUWS!")
+        print("=" * 50)
+        time.sleep(0.5)
+
+        print(f"\n  {geluid}")
+        print(f"  {naam} opent de nieuwsapp...")
+        time.sleep(0.5)
+
+        gelezen = []
+        intel_bonus = 0
+
+        # Lees 4 nieuwsberichten
+        for categorie, titel in random.sample(nieuws_items, 4):
+            print(f"\n  --- {categorie.upper()} ---")
+            print(f"  [>] {titel}")
+            time.sleep(0.4)
+
+            if random.randint(1, 100) <= 75:
+                gelezen.append(titel)
+                intel_bonus += 1
+                reacties = [
+                    f"{naam} vindt dit interessant!",
+                    f"{naam} onthoudt dit nieuws.",
+                    f"{naam} deelt dit met vrienden!",
+                ]
+                print(f"  [OK] {random.choice(reacties)}")
+            else:
+                print(f"  [_] {naam} scrollt verder...")
+
+            time.sleep(0.3)
+
+        # Resultaten
+        print("\n" + "=" * 50)
+        print("  [NIEUWS] KLAAR MET LEZEN!")
+        print("=" * 50)
+
+        xp_beloning = len(gelezen) * 5 + 5
+        munt_beloning = len(gelezen) * 2
+
+        print(f"\n  {naam}'s nieuwsoverzicht:")
+        print(f"    [KRANT] Artikelen gelezen: {len(gelezen)}")
+        print(f"    [IQ] Intelligentie: +{intel_bonus}")
+        print(f"    [MUNT] Munten: +{munt_beloning}")
+        print(f"    [XP] Ervaring: +{xp_beloning}")
+
+        # Geef beloningen
+        self.huisdier["munten"] += munt_beloning
+        self.huisdier["ervaring"] += xp_beloning
+        self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + intel_bonus
+        self.huisdier["stats"]["nieuws_gelezen"] += len(gelezen)
+        self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 3)
+
+        # Achievements
+        if self.huisdier["stats"]["nieuws_gelezen"] >= 10:
+            self._unlock_achievement("nieuwslezer")
+        if self.huisdier.get("intelligentie", 0) >= 100:
+            self._unlock_achievement("super_slim")
+
+        self._check_evolutie()
+        print(f"\n  {geluid}")
+        self._sla_op()
+
+    def _leren_weer(self):
+        """Huisdier checkt het weer."""
+        if self.huisdier["munten"] < 5:
+            print("\nJe hebt niet genoeg munten! (Nodig: 5)")
+            return
+
+        self.huisdier["munten"] -= 5
+
+        # Init stats
+        if "weer_gecheckt" not in self.huisdier["stats"]:
+            self.huisdier["stats"]["weer_gecheckt"] = 0
+
+        naam = self.huisdier["naam"]
+        geluid = self.huisdier["geluid"]
+
+        # Steden en weer
+        steden = ["Amsterdam", "Rotterdam", "Utrecht", "Eindhoven", "Groningen"]
+        weer_types = [
+            ("Zonnig", "[ZON]", "Lekker weer om buiten te spelen!"),
+            ("Bewolkt", "[WOLK]", "Misschien later regen..."),
+            ("Regen", "[REGEN]", "Neem een paraplu mee!"),
+            ("Sneeuw", "[SNEEUW]", "Tijd voor een sneeuwpop!"),
+            ("Storm", "[STORM]", "Beter binnen blijven vandaag!"),
+        ]
+
+        stad = random.choice(steden)
+        weer, emoji, advies = random.choice(weer_types)
+        temp = random.randint(-5, 30)
+        wind = random.randint(0, 80)
+
+        print("\n" + "=" * 50)
+        print(f"  [WEER] {naam} CHECKT HET WEER!")
+        print("=" * 50)
+        time.sleep(0.5)
+
+        print(f"\n  {geluid}")
+        print(f"  {naam} kijkt naar buiten...")
+        time.sleep(0.5)
+
+        print(f"\n  --- Weer in {stad} ---")
+        print(f"  {emoji} {weer}")
+        print(f"  [TEMP] Temperatuur: {temp}C")
+        print(f"  [WIND] Wind: {wind} km/u")
+        print(f"\n  [TIP] {advies}")
+
+        intel_bonus = 1
+        xp_beloning = 8
+        munt_beloning = 2
+
+        # Bonus voor extreem weer
+        if temp > 25 or temp < 0 or wind > 50:
+            print(f"\n  [!] {naam} leert over extreem weer! +1 IQ")
+            intel_bonus += 1
+
+        print("\n" + "=" * 50)
+        print(f"    [IQ] Intelligentie: +{intel_bonus}")
+        print(f"    [MUNT] Munten: +{munt_beloning}")
+        print(f"    [XP] Ervaring: +{xp_beloning}")
+
+        # Geef beloningen
+        self.huisdier["munten"] += munt_beloning
+        self.huisdier["ervaring"] += xp_beloning
+        self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + intel_bonus
+        self.huisdier["stats"]["weer_gecheckt"] += 1
+
+        # Achievements
+        if self.huisdier["stats"]["weer_gecheckt"] >= 10:
+            self._unlock_achievement("weerwatcher")
+        if self.huisdier.get("intelligentie", 0) >= 100:
+            self._unlock_achievement("super_slim")
+
+        self._check_evolutie()
+        print(f"\n  {geluid}")
+        self._sla_op()
+
+    def _leren_ai_gesprek(self):
+        """Huisdier heeft een gesprek met AI."""
+        if self.huisdier["munten"] < 15:
+            print("\nJe hebt niet genoeg munten! (Nodig: 15)")
+            return
+
+        if self.huisdier["energie"] < 20:
+            print(f"\n{self.huisdier['naam']} is te moe voor een diep gesprek!")
+            return
+
+        self.huisdier["munten"] -= 15
+        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 20)
+
+        # Init stats
+        if "ai_gesprekken" not in self.huisdier["stats"]:
+            self.huisdier["stats"]["ai_gesprekken"] = 0
+
+        naam = self.huisdier["naam"]
+        geluid = self.huisdier["geluid"]
+        huisdier_type = self.huisdier["type"]
+
+        # AI gesprek onderwerpen
+        gesprekken = [
+            {
+                "vraag": "Wat is de zin van het leven?",
+                "antwoord": "Het leven gaat over leren, groeien en anderen helpen!",
+                "les": "Filosofie is nadenken over belangrijke vragen",
+            },
+            {
+                "vraag": "Hoe werkt kunstmatige intelligentie?",
+                "antwoord": "AI leert patronen van grote hoeveelheden data!",
+                "les": "AI is gebaseerd op wiskunde en statistiek",
+            },
+            {
+                "vraag": "Waarom is de lucht blauw?",
+                "antwoord": "Zonlicht verstrooit in de atmosfeer, blauw het meest!",
+                "les": "Dit heet Rayleigh-verstrooiing",
+            },
+            {
+                "vraag": "Hoe groot is het universum?",
+                "antwoord": "Het waarneembare universum is 93 miljard lichtjaar breed!",
+                "les": "Het universum breidt nog steeds uit",
+            },
+            {
+                "vraag": "Waarom hebben we slaap nodig?",
+                "antwoord": "Slaap helpt ons brein om herinneringen te verwerken!",
+                "les": "Slaap is essentieel voor gezondheid",
+            },
+            {
+                "vraag": f"Wat maakt een {huisdier_type} speciaal?",
+                "antwoord": f"Elke {huisdier_type} is uniek en heeft eigen talenten!",
+                "les": f"{naam} is heel bijzonder",
+            },
+        ]
+
+        print("\n" + "=" * 50)
+        print(f"  [AI] {naam} PRAAT MET CLAUDE AI!")
+        print("=" * 50)
+        time.sleep(0.5)
+
+        print(f"\n  {geluid}")
+        print(f"  {naam} opent Claude Chat...")
+        time.sleep(0.8)
+
+        intel_bonus = 0
+        lessen_geleerd = []
+
+        # Voer 3 gesprekken
+        for gesprek in random.sample(gesprekken, 3):
+            print(f"\n  --- Nieuw Gesprek ---")
+            print(f"  {naam}: \"{gesprek['vraag']}\"")
+            time.sleep(0.6)
+
+            print(f"  Claude: \"{gesprek['antwoord']}\"")
+            time.sleep(0.4)
+
+            if random.randint(1, 100) <= 85:
+                lessen_geleerd.append(gesprek["les"])
+                intel_bonus += 3
+                print(f"  [LAMP] {naam} leert: {gesprek['les']}")
+            else:
+                print(f"  [?] {naam} moet hier nog over nadenken...")
+
+            time.sleep(0.3)
+
+        # Resultaten
+        print("\n" + "=" * 50)
+        print("  [CHAT] AI GESPREK VOLTOOID!")
+        print("=" * 50)
+
+        xp_beloning = len(lessen_geleerd) * 15 + 10
+        munt_beloning = len(lessen_geleerd) * 5
+
+        print(f"\n  {naam}'s gesprek met Claude:")
+        print(f"    [CHAT] Gesprekken: 3")
+        print(f"    [LAMP] Lessen geleerd: {len(lessen_geleerd)}")
+        print(f"    [IQ] Intelligentie: +{intel_bonus}")
+        print(f"    [MUNT] Munten: +{munt_beloning}")
+        print(f"    [XP] Ervaring: +{xp_beloning}")
+
+        if len(lessen_geleerd) == 3:
+            bonus = 10
+            print(f"\n  [TROFEE] PERFECTE STUDENT! Bonus: +{bonus} munten!")
+            munt_beloning += bonus
+
+        # Geef beloningen
+        self.huisdier["munten"] += munt_beloning
+        self.huisdier["ervaring"] += xp_beloning
+        self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + intel_bonus
+        self.huisdier["stats"]["ai_gesprekken"] += 1
+        self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 5)
+
+        # Achievements
+        if self.huisdier["stats"]["ai_gesprekken"] >= 10:
+            self._unlock_achievement("ai_student")
+        if self.huisdier.get("intelligentie", 0) >= 100:
+            self._unlock_achievement("super_slim")
+
+        self._check_evolutie()
+        print(f"\n  {geluid}")
+        self._sla_op()
+
     def _tricks_menu(self):
         """Tricks leren en uitvoeren."""
         while True:
@@ -1611,6 +2071,8 @@ class VirtueelHuisdierApp:
                 self._dagelijkse_bonus()
             elif keuze == "11":
                 self._huisdier_werk()
+            elif keuze == "12":
+                self._huisdier_leren()
             elif keuze == "0":
                 self._sla_op()
                 print(f"\n{self.huisdier['naam']} is opgeslagen!")
