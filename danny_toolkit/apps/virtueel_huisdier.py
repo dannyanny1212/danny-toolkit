@@ -130,18 +130,114 @@ class VirtueelHuisdierApp:
         print(f"  Geluk:      {self._maak_balk(h['geluk'])} {h['geluk']}%")
         print(f"  Gezondheid: {self._maak_balk(h['gezondheid'])} {h['gezondheid']}%")
 
+    def _toon_voedsel_menu(self):
+        """Toont het voedsel keuzemenu."""
+        print("\n+--------------------------------+")
+        print("|     WAT WIL JE GEVEN?          |")
+        print("+--------------------------------+")
+        print("|  1. Standaard brokjes          |")
+        print("|     Honger +20                 |")
+        print("|  2. Premium vlees              |")
+        print("|     Honger +30, Geluk +10      |")
+        print("|  3. Verse groenten             |")
+        print("|     Honger +15, Gezondheid +10 |")
+        print("|  4. Lekkere snoepjes           |")
+        print("|     Honger +10, Geluk +20      |")
+        print("|     Gezondheid -5 (ongezond!)  |")
+        print("|  5. Superfood deluxe           |")
+        print("|     Honger +25, Energie +15    |")
+        print("|     Gezondheid +10             |")
+        print("|  0. Terug                      |")
+        print("+--------------------------------+")
+
     def _voeren(self):
-        """Geeft het huisdier eten."""
-        print(f"\nJe geeft {self.huisdier['naam']} te eten...")
+        """Geeft het huisdier eten met keuzemenu."""
+        self._toon_voedsel_menu()
+        keuze = input("\nKies voedsel (0-5): ").strip()
+
+        voedsel_opties = {
+            "1": {
+                "naam": "standaard brokjes",
+                "honger": 20,
+                "energie": 0,
+                "geluk": 0,
+                "gezondheid": 0,
+                "reacties": [
+                    f"{self.huisdier['naam']} eet de brokjes op.",
+                    f"{self.huisdier['naam']} knapt ervan op!",
+                ]
+            },
+            "2": {
+                "naam": "premium vlees",
+                "honger": 30,
+                "energie": 0,
+                "geluk": 10,
+                "gezondheid": 0,
+                "reacties": [
+                    f"{self.huisdier['naam']} smult van het vlees!",
+                    f"Mmm! {self.huisdier['naam']} likt tevreden de bak leeg!",
+                    f"{self.huisdier['naam']} kwispelt/spint van geluk!",
+                ]
+            },
+            "3": {
+                "naam": "verse groenten",
+                "honger": 15,
+                "energie": 0,
+                "geluk": 0,
+                "gezondheid": 10,
+                "reacties": [
+                    f"{self.huisdier['naam']} knabbelt gezond aan de groenten.",
+                    f"Knapperig! {self.huisdier['naam']} voelt zich fit!",
+                ]
+            },
+            "4": {
+                "naam": "lekkere snoepjes",
+                "honger": 10,
+                "energie": 0,
+                "geluk": 20,
+                "gezondheid": -5,
+                "reacties": [
+                    f"{self.huisdier['naam']} is SUPER blij met de snoepjes!",
+                    f"Yum! {self.huisdier['naam']} wil er meer!",
+                    f"{self.huisdier['naam']} springt van vreugde!",
+                ]
+            },
+            "5": {
+                "naam": "superfood deluxe",
+                "honger": 25,
+                "energie": 15,
+                "geluk": 0,
+                "gezondheid": 10,
+                "reacties": [
+                    f"{self.huisdier['naam']} geniet van de superfood!",
+                    f"Wow! {self.huisdier['naam']} bruist van energie!",
+                    f"{self.huisdier['naam']} voelt zich sterker dan ooit!",
+                ]
+            },
+        }
+
+        if keuze == "0":
+            print("Je geeft niets te eten.")
+            return
+
+        if keuze not in voedsel_opties:
+            print("Ongeldige keuze!")
+            return
+
+        voedsel = voedsel_opties[keuze]
+        print(f"\nJe geeft {self.huisdier['naam']} {voedsel['naam']}...")
         time.sleep(0.5)
-        self.huisdier["honger"] = min(100, self.huisdier["honger"] + 25)
-        self.huisdier["energie"] = min(100, self.huisdier["energie"] + 5)
-        reacties = [
-            f"{self.huisdier['naam']} smult ervan!",
-            f"{self.huisdier['naam']} likt tevreden de bak leeg!",
-            f"Wat lekker! {self.huisdier['naam']} is blij!"
-        ]
-        print(random.choice(reacties))
+
+        self.huisdier["honger"] = min(100, self.huisdier["honger"] + voedsel["honger"])
+        self.huisdier["energie"] = min(100, self.huisdier["energie"] + voedsel["energie"])
+        self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + voedsel["geluk"])
+        self.huisdier["gezondheid"] = max(0, min(100,
+            self.huisdier["gezondheid"] + voedsel["gezondheid"]))
+
+        print(random.choice(voedsel["reacties"]))
+
+        if voedsel["gezondheid"] < 0:
+            print("(Pas op: te veel snoep is niet gezond!)")
 
     def _spelen(self):
         """Speelt met het huisdier."""
