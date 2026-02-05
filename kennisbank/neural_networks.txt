@@ -34,30 +34,45 @@ OUTPUT LAYER (Uitvoerlaag):
 
 === HOE WERKT BACKPROPAGATION? ===
 
-Backpropagation is het algoritme waarmee neural networks leren. Het berekent hoe elke weight bijdraagt aan de fout en past deze aan.
+Backpropagation (back propagation) is het leeralgoritme voor neural networks. Het berekent hoe elke weight bijdraagt aan de fout en past deze aan om het netwerk te verbeteren.
 
-Stap 1 - FORWARD PROPAGATION:
-- Data stroomt van input naar output
-- Elk neuron: output = activation(weights * inputs + bias)
-- Netwerk maakt een voorspelling
+Backpropagation in detail:
 
-Stap 2 - LOSS CALCULATION:
-- Vergelijk voorspelling met correct antwoord
-- Loss functie meet de fout
-- Voorbeelden: Cross-Entropy Loss, MSE Loss
+STAP 1 - FORWARD PROPAGATION (voorwaarts):
+- Data stroomt van input layer naar output layer
+- Elk neuron berekent: output = activation(weights * inputs + bias)
+- Het netwerk maakt een voorspelling
+- Deze voorspelling wordt vergeleken met het correcte antwoord
 
-Stap 3 - BACKPROPAGATION:
-- Bereken gradient van loss naar elke weight
-- Gebruik chain rule (kettingregel)
-- Gradients stromen TERUG door het netwerk
-- Vandaar de naam "back" propagation
+STAP 2 - LOSS CALCULATION (fout berekenen):
+- Loss functie meet hoe ver de voorspelling afwijkt
+- Lage loss = goede voorspelling
+- Hoge loss = slechte voorspelling
+- Voorbeelden: MSE Loss, Cross-Entropy Loss
 
-Stap 4 - WEIGHT UPDATE:
-- Pas weights aan in richting die loss verlaagt
-- Optimizer bepaalt hoe (SGD, Adam, RMSprop)
-- Learning rate bepaalt stapgrootte
+STAP 3 - BACKPROPAGATION (terugwaarts):
+- Bereken de gradient (afgeleide) van de loss
+- Gebruik de chain rule (kettingregel) uit calculus
+- Gradients stromen TERUG door het netwerk (vandaar "back")
+- Elke weight krijgt een gradient die aangeeft hoeveel die weight bijdraagt aan de fout
 
-Keywords: backpropagation, gradient descent, loss functie, weights, training
+STAP 4 - WEIGHT UPDATE (gewichten aanpassen):
+- Nieuwe weight = oude weight - learning_rate * gradient
+- Learning rate bepaalt hoe groot de stappen zijn
+- Kleine learning rate = langzaam maar stabiel
+- Grote learning rate = snel maar kan overshieten
+
+Optimizers voor backpropagation:
+- SGD (Stochastic Gradient Descent): basis optimizer
+- Adam: combineert momentum en adaptive learning rate
+- RMSprop: past learning rate aan per parameter
+
+Waarom werkt backpropagation:
+- Het volgt de gradient naar het minimum van de loss
+- Dit heet gradient descent (afdalen langs de gradient)
+- Na vele iteraties convergeert het netwerk
+
+Keywords: backpropagation, back propagation, gradient descent, chain rule, loss, weights, training, leren
 
 ---
 
@@ -85,29 +100,79 @@ Softmax:
 
 ---
 
-=== DEEP LEARNING ARCHITECTUREN ===
+=== WAT IS EEN CNN? ===
 
-CNN (Convolutional Neural Networks):
-- Speciaal voor beelden en spatiele data
-- Convolutional layers detecteren lokale patronen
-- Pooling layers verkleinen de data
-- Toepassingen: beeldherkenning, object detectie
+Een CNN (Convolutional Neural Network) is een type neural network speciaal ontworpen voor het verwerken van beelden en afbeeldingen. CNN staat voor Convolutional Neural Network.
 
-RNN (Recurrent Neural Networks):
-- Voor sequentiele data (tekst, tijdreeksen)
-- Hebben geheugen van vorige inputs
+Hoe werkt een CNN:
+- Input: een afbeelding (bijvoorbeeld 224x224 pixels)
+- Convolutional layers: detecteren features zoals randen, vormen
+- Pooling layers: verkleinen de data, behouden belangrijkste info
+- Fully connected layers: maken de uiteindelijke classificatie
+
+Onderdelen van een CNN:
+
+CONVOLUTIONAL LAYER:
+- Past filters (kernels) toe op de afbeelding
+- Filter schuift over de afbeelding
+- Detecteert lokale patronen (randen, texturen)
+- Elke filter detecteert een ander patroon
+
+POOLING LAYER:
+- Verkleint de afbeelding (downsample)
+- Max pooling: neemt hoogste waarde in een gebied
+- Vermindert aantal parameters
+- Maakt netwerk robuuster
+
+Toepassingen van CNN:
+- Beeldherkenning (foto's classificeren)
+- Object detectie (waar is de kat?)
+- Gezichtsherkenning
+- Medische beeldanalyse
+- Zelfrijdende auto's
+
+Keywords: CNN, Convolutional Neural Network, beeldherkenning, convolutie, pooling, afbeeldingen
+
+---
+
+=== WAT IS EEN RNN? ===
+
+Een RNN (Recurrent Neural Network) is een neural network voor sequentiele data zoals tekst en tijdreeksen. RNN heeft een "geheugen" van vorige inputs.
+
+Kenmerken van RNN:
+- Verwerkt data stap voor stap
+- Houdt een hidden state bij
+- Output hangt af van vorige inputs
 - Probleem: vanishing gradients bij lange sequenties
 
-LSTM (Long Short-Term Memory):
-- Verbeterde RNN met gates
-- Kan lange termijn afhankelijkheden leren
-- Gates: forget, input, output
+Keywords: RNN, Recurrent Neural Network, sequenties, geheugen, tijdreeksen
 
-Transformer:
-- Revolutionair voor NLP
-- Attention mechanisme weegt relevantie
-- Basis voor GPT, BERT, Claude
+---
+
+=== WAT IS EEN LSTM? ===
+
+LSTM (Long Short-Term Memory) is een verbeterde versie van RNN die lange-termijn afhankelijkheden kan leren.
+
+LSTM gates:
+- Forget gate: wat vergeten uit geheugen
+- Input gate: wat toevoegen aan geheugen
+- Output gate: wat outputten
+
+Keywords: LSTM, Long Short-Term Memory, gates, lange termijn
+
+---
+
+=== WAT IS EEN TRANSFORMER? ===
+
+Transformer is een revolutionaire architectuur voor NLP (Natural Language Processing). Het is de basis voor GPT, BERT en Claude.
+
+Kenmerken van Transformer:
+- Attention mechanisme weegt relevantie van woorden
 - Kan parallel verwerken (sneller dan RNN)
+- Self-attention: elk woord kijkt naar alle andere woorden
+- Zeer effectief voor taal taken
+
+Keywords: Transformer, attention, self-attention, NLP, GPT, BERT
 
 ---
 

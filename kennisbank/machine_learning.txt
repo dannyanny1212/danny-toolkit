@@ -102,17 +102,50 @@ Inference: Het getrainde model gebruiken voor voorspellingen
 
 ---
 
-=== OVERFITTING EN UNDERFITTING ===
+=== WAT IS OVERFITTING? ===
 
-Overfitting: Model leert trainingsdata "uit het hoofd"
-- Presteert goed op training, slecht op nieuwe data
-- Model is te complex
-- Oplossing: meer data, regularisatie, dropout
+Overfitting is wanneer een machine learning model de trainingsdata "uit het hoofd" leert in plaats van algemene patronen te ontdekken. Het model presteert uitstekend op trainingsdata maar faalt op nieuwe, ongeziene data.
 
-Underfitting: Model is te simpel
-- Presteert slecht op zowel training als test data
-- Mist belangrijke patronen
-- Oplossing: complexer model, meer features
+Hoe herken je overfitting:
+- Training accuracy is hoog (bijvoorbeeld 99%)
+- Test/validatie accuracy is veel lager (bijvoorbeeld 70%)
+- Model is te complex voor de hoeveelheid data
+- Model vangt ruis op in plaats van signaal
+
+Oorzaken van overfitting:
+- Te weinig trainingsdata
+- Model heeft te veel parameters
+- Te lang getraind (te veel epochs)
+- Geen regularisatie toegepast
+
+Oplossingen voor overfitting:
+- Meer trainingsdata verzamelen
+- Regularisatie (L1, L2)
+- Dropout in neural networks
+- Early stopping
+- Cross-validation gebruiken
+- Simpeler model kiezen
+
+Keywords: overfitting, overfitten, te complex, generalisatie, trainingsdata
+
+---
+
+=== WAT IS UNDERFITTING? ===
+
+Underfitting is wanneer een machine learning model te simpel is om de patronen in de data te leren. Het presteert slecht op zowel training- als testdata.
+
+Hoe herken je underfitting:
+- Training accuracy is laag
+- Test accuracy is ook laag
+- Model mist duidelijke patronen
+
+Oplossingen voor underfitting:
+- Complexer model gebruiken
+- Meer features toevoegen
+- Langer trainen
+- Minder regularisatie
+
+Keywords: underfitting, te simpel, patronen missen
 
 ---
 

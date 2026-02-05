@@ -180,24 +180,75 @@ Keywords: type hints, typing, Optional, List, Dict
 
 ---
 
-=== FUNCTOOLS MODULE ===
+=== HOE WERKT LRU_CACHE? ===
 
-import functools
+lru_cache is een decorator uit de functools module die functie-resultaten cached (opslaat). LRU staat voor "Least Recently Used" - de minst recent gebruikte items worden verwijderd als de cache vol is.
 
-# Caching met lru_cache
-@functools.lru_cache(maxsize=128)
-def expensive_calculation(n):
-    return sum(i**2 for i in range(n))
+Hoe werkt lru_cache:
+- Eerste keer: functie wordt uitgevoerd, resultaat opgeslagen
+- Volgende keer met zelfde argumenten: resultaat uit cache (supersnel)
+- Cache heeft maximale grootte (maxsize)
+- Oudste ongebruikte items worden verwijderd
 
-# Partial functions
+Basis voorbeeld lru_cache:
+
+from functools import lru_cache
+
+@lru_cache(maxsize=128)
+def fibonacci(n):
+    if n < 2:
+        return n
+    return fibonacci(n-1) + fibonacci(n-2)
+
+# Zonder cache: fibonacci(40) duurt seconden
+# Met cache: fibonacci(40) is instant
+
+Wanneer lru_cache gebruiken:
+- Dure berekeningen die vaak herhaald worden
+- Functies met dezelfde input -> zelfde output
+- Recursieve functies (zoals fibonacci)
+- API calls die gecached mogen worden
+
+Parameters van lru_cache:
+- maxsize=128: maximaal 128 resultaten opslaan
+- maxsize=None: onbeperkte cache
+- typed=True: verschillende types apart cachen
+
+Cache info bekijken:
+fibonacci.cache_info()  # hits, misses, size
+fibonacci.cache_clear()  # cache legen
+
+Keywords: lru_cache, cache, caching, memoization, functools, opslaan
+
+---
+
+=== FUNCTOOLS PARTIAL ===
+
+functools.partial maakt een nieuwe functie met sommige argumenten al ingevuld.
+
+from functools import partial
+
 def power(base, exponent):
     return base ** exponent
 
-square = functools.partial(power, exponent=2)
-cube = functools.partial(power, exponent=3)
+square = partial(power, exponent=2)
+cube = partial(power, exponent=3)
 
-# Reduce
+print(square(5))  # 25
+print(cube(3))    # 27
+
+Keywords: partial, functools, argumenten, functie
+
+---
+
+=== FUNCTOOLS REDUCE ===
+
+reduce past een functie cumulatief toe op een lijst.
+
 from functools import reduce
-product = reduce(lambda x, y: x * y, [1, 2, 3, 4, 5])  # = 120
 
-Keywords: functools, lru_cache, partial, reduce
+# Product van alle getallen
+product = reduce(lambda x, y: x * y, [1, 2, 3, 4, 5])
+# 1*2=2, 2*3=6, 6*4=24, 24*5=120
+
+Keywords: reduce, functools, cumulatief, lijst
