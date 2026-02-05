@@ -156,7 +156,35 @@ class VirtueelHuisdierApp:
     def __init__(self):
         Config.ensure_dirs()
         self.bestand = Config.HUISDIER_FILE
+        # Aparte permanente kennis opslag - blijft bestaan tot huisdier reset
+        self.kennis_bestand = Config.APPS_DATA_DIR / "huisdier_kennis.json"
         self.huisdier = None
+
+    def _laad_permanente_kennis(self) -> dict:
+        """Laadt permanente kennis uit apart bestand op lokale PC."""
+        if self.kennis_bestand.exists():
+            try:
+                with open(self.kennis_bestand, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except (json.JSONDecodeError, IOError):
+                pass
+        return {
+            "feiten": [],
+            "bronnen": [],
+            "geleerd_op": [],
+            "totaal_sessies": 0
+        }
+
+    def _sla_permanente_kennis_op(self, kennis: dict):
+        """Slaat kennis permanent op naar lokale PC."""
+        with open(self.kennis_bestand, "w", encoding="utf-8") as f:
+            json.dump(kennis, f, indent=2, ensure_ascii=False)
+
+    def _reset_permanente_kennis(self):
+        """Reset alle permanente kennis (bij huisdier reset)."""
+        if self.kennis_bestand.exists():
+            self.kennis_bestand.unlink()
+            print("  [RESET] Permanente kennis gewist.")
 
     def _laad_huisdier(self) -> dict:
         """Laadt het huisdier uit bestand."""
@@ -283,6 +311,31 @@ class VirtueelHuisdierApp:
         print(f"\n{type_info['emoji']} {naam} de {type_info['naam']} is geboren!")
         print(f"{type_info['geluid']}")
         print(f"\nJe hebt 100 munten gekregen om te beginnen!")
+
+        # Check of er permanente kennis is
+        permanente_kennis = self._laad_permanente_kennis()
+        if permanente_kennis["feiten"]:
+            print(f"\n[KENNIS] Er is nog permanente kennis opgeslagen:")
+            print(f"         {len(permanente_kennis['feiten'])} feiten uit vorige sessies")
+            print(f"         {permanente_kennis['totaal_sessies']} studie sessies")
+            reset_keuze = input("\nWil je deze kennis BEHOUDEN of RESETTEN? (b/r): ").strip().lower()
+            if reset_keuze == "r":
+                self._reset_permanente_kennis()
+                print(f"[OK] {naam} begint met een schone lei!")
+            else:
+                print(f"[OK] {naam} erft de kennis van vorige huisdieren!")
+                # Kopieer kennis naar nieuw huisdier
+                self.huisdier["kennis"] = {
+                    "feiten": permanente_kennis["feiten"][-50:],  # Max 50 bij start
+                    "nieuws": [],
+                    "weer_historie": []
+                }
+                # Bonus IQ voor overgenomen kennis
+                intel_bonus = min(20, len(permanente_kennis["feiten"]) // 5)
+                self.huisdier["intelligentie"] = intel_bonus
+                print(f"[IQ] Start IQ bonus: +{intel_bonus} (gebaseerd op kennis)")
+                self._sla_op()
+
         input("\nDruk op Enter om verder te gaan...")
         return huisdier
 
@@ -411,6 +464,10 @@ class VirtueelHuisdierApp:
 
     def _toon_menu(self):
         """Toont het hoofdmenu."""
+        # Laad permanente kennis voor display
+        permanente_kennis = self._laad_permanente_kennis()
+        kennis_count = len(permanente_kennis["feiten"])
+
         print("\n+================================+")
         print("|       WAT WIL JE DOEN?         |")
         print("+================================+")
@@ -425,7 +482,9 @@ class VirtueelHuisdierApp:
         print("|  9. Achievements bekijken      |")
         print("| 10. Dagelijkse bonus           |")
         print("| 11. Huisdier Werk              |")
-        print("| 12. Huisdier Leren (AI)        |")
+        print(f"| 12. Huisdier Leren [{kennis_count:>3} feiten]|")
+        print("+--------------------------------+")
+        print("| 13. Reset Huisdier             |")
         print("|  0. Opslaan & Afsluiten        |")
         print("+================================+")
 
@@ -1673,10 +1732,14 @@ class VirtueelHuisdierApp:
         """Menu voor huisdier AI leeractiviteiten."""
         while True:
             intel = self.huisdier.get("intelligentie", 0)
+            permanente_kennis = self._laad_permanente_kennis()
+            totaal_feiten = len(permanente_kennis["feiten"])
+
             print("\n+====================================+")
             print("|        HUISDIER LEREN (AI)         |")
             print("+====================================+")
             print(f"|  IQ van {self.huisdier['naam']}: {intel}")
+            print(f"|  Permanente kennis: {totaal_feiten} feiten")
             print("+------------------------------------+")
             print("|  1. RAG Studeren (10 munten)       |")
             print("|     Leer feiten uit de kennisbank  |")
@@ -1686,6 +1749,8 @@ class VirtueelHuisdierApp:
             print("|     Leer over het weer             |")
             print("|  4. AI Gesprek (15 munten)         |")
             print("|     Praat met Claude AI            |")
+            print("|  5. Bekijk Kennisbibliotheek       |")
+            print("|     Alle geleerde feiten bekijken  |")
             print("|  0. Terug                          |")
             print("+====================================+")
 
@@ -1701,11 +1766,87 @@ class VirtueelHuisdierApp:
                 self._leren_weer()
             elif keuze == "4":
                 self._leren_ai_gesprek()
+            elif keuze == "5":
+                self._bekijk_kennisbibliotheek()
 
             input("\nDruk op Enter...")
 
+    def _bekijk_kennisbibliotheek(self):
+        """Bekijk alle permanent opgeslagen kennis."""
+        naam = self.huisdier["naam"]
+        permanente_kennis = self._laad_permanente_kennis()
+
+        print("\n" + "=" * 60)
+        print(f"  [BIBLIOTHEEK] {naam}'s PERMANENTE KENNISBANK")
+        print("=" * 60)
+        print(f"\n  Locatie: {self.kennis_bestand}")
+        print(f"  Totaal sessies: {permanente_kennis['totaal_sessies']}")
+        print(f"  Totaal feiten: {len(permanente_kennis['feiten'])}")
+
+        if not permanente_kennis["feiten"]:
+            print("\n  [LEEG] Nog geen feiten geleerd!")
+            print("  Tip: Gebruik 'RAG Studeren' om kennis te vergaren.")
+            return
+
+        print("\n  --- ALLE GELEERDE FEITEN ---")
+        for i, feit in enumerate(permanente_kennis["feiten"], 1):
+            bron = permanente_kennis["bronnen"][i-1] if i <= len(permanente_kennis["bronnen"]) else "onbekend"
+            print(f"\n  {i}. \"{feit[:70]}{'...' if len(feit) > 70 else ''}\"")
+            print(f"     Bron: {bron}")
+
+        print("\n" + "-" * 60)
+        print(f"  [INFO] Deze kennis blijft bewaard tot je huisdier reset!")
+        print(f"  [DISK] Opgeslagen op: {self.kennis_bestand}")
+
+    def _reset_huisdier(self) -> bool:
+        """Reset het huisdier en optioneel de permanente kennis."""
+        naam = self.huisdier["naam"]
+        permanente_kennis = self._laad_permanente_kennis()
+
+        print("\n" + "=" * 50)
+        print("  [WAARSCHUWING] HUISDIER RESETTEN")
+        print("=" * 50)
+        print(f"\n  Huidig huisdier: {self.huisdier['emoji']} {naam}")
+        print(f"  Leeftijd: {self.huisdier['leeftijd_dagen']} dagen")
+        print(f"  IQ: {self.huisdier.get('intelligentie', 0)}")
+        print(f"  Permanente kennis: {len(permanente_kennis['feiten'])} feiten")
+
+        print("\n  [!] Dit kan niet ongedaan gemaakt worden!")
+        bevestig = input("\n  Weet je zeker dat je wilt resetten? (ja/nee): ").strip().lower()
+
+        if bevestig != "ja":
+            print("\n  [OK] Reset geannuleerd.")
+            return False
+
+        print("\n  Wat wil je resetten?")
+        print("  1. Alleen huisdier (kennis BEHOUDEN)")
+        print("  2. Alles (huisdier EN permanente kennis)")
+        print("  0. Annuleren")
+
+        reset_keuze = input("\n  Keuze: ").strip()
+
+        if reset_keuze == "0":
+            print("\n  [OK] Reset geannuleerd.")
+            return False
+
+        if reset_keuze == "2":
+            # Reset permanente kennis
+            self._reset_permanente_kennis()
+            print("  [OK] Permanente kennis gewist!")
+
+        # Verwijder huisdier bestand
+        if self.bestand.exists():
+            self.bestand.unlink()
+            print(f"  [OK] {naam} is naar een boerderij gebracht...")
+
+        # Maak nieuw huisdier
+        print("\n  Tijd voor een nieuw huisdier!")
+        input("  Druk op Enter...")
+        self._maak_nieuw_huisdier()
+        return True
+
     def _leren_rag(self):
-        """Huisdier leert van de ECHTE kennisbank (Production RAG)."""
+        """Huisdier leert van de ECHTE kennisbank - PERMANENT opgeslagen op lokale PC!"""
         if self.huisdier["munten"] < 10:
             print("\nJe hebt niet genoeg munten! (Nodig: 10)")
             return
@@ -1717,7 +1858,7 @@ class VirtueelHuisdierApp:
         self.huisdier["munten"] -= 10
         self.huisdier["energie"] = max(0, self.huisdier["energie"] - 15)
 
-        # Init kennis opslag
+        # Init kennis opslag in huisdier
         if "kennis" not in self.huisdier:
             self.huisdier["kennis"] = {"feiten": [], "nieuws": [], "weer_historie": []}
         if "feiten_geleerd" not in self.huisdier["stats"]:
@@ -1731,11 +1872,17 @@ class VirtueelHuisdierApp:
         print("=" * 50)
         time.sleep(0.5)
 
+        # LAAD PERMANENTE KENNIS VAN LOKALE PC
+        permanente_kennis = self._laad_permanente_kennis()
+        print(f"\n  [DISK] Permanente kennis geladen van lokale PC")
+        print(f"  [DATABASE] {len(permanente_kennis['feiten'])} feiten in bibliotheek")
+
         print(f"\n  {geluid}")
 
         # Probeer echte RAG te gebruiken
         echte_rag = False
         feiten_geleerd = []
+        bronnen_gebruikt = []
         intel_bonus = 0
 
         try:
@@ -1754,6 +1901,7 @@ class VirtueelHuisdierApp:
                     # Lees random feiten uit de kennisbank
                     for bestand in random.sample(bestanden, min(3, len(bestanden))):
                         print(f"\n  --- Studeert: {bestand.name} ---")
+                        bronnen_gebruikt.append(bestand.name)
                         time.sleep(0.3)
 
                         try:
@@ -1767,12 +1915,27 @@ class VirtueelHuisdierApp:
                                     for zin in zinnen[:2]:
                                         zin = zin.strip()
                                         if len(zin) > 20 and len(zin) < 200:
-                                            if zin not in self.huisdier["kennis"]["feiten"]:
-                                                feiten_geleerd.append(zin)
+                                            # Check tegen PERMANENTE kennis
+                                            if zin not in permanente_kennis["feiten"]:
+                                                feiten_geleerd.append({
+                                                    "feit": zin,
+                                                    "bron": bestand.name,
+                                                    "datum": datetime.now().isoformat()
+                                                })
+                                                # Voeg toe aan permanente kennis
+                                                permanente_kennis["feiten"].append(zin)
+                                                permanente_kennis["bronnen"].append(bestand.name)
+                                                permanente_kennis["geleerd_op"].append(
+                                                    datetime.now().isoformat()
+                                                )
+                                                # Ook in huisdier kennis
                                                 self.huisdier["kennis"]["feiten"].append(zin)
                                                 intel_bonus += 3
                                                 print(f"  [LAMP] NIEUW: \"{zin[:60]}...\"")
+                                                print(f"        [SAVE] Opgeslagen naar lokale PC!")
                                                 break
+                                            else:
+                                                print(f"  [_] Dit wist {naam} al...")
                                     break
                         except Exception as e:
                             print(f"  [!] Kon {bestand.name} niet lezen")
@@ -1789,13 +1952,29 @@ class VirtueelHuisdierApp:
                 "Python decorators wrappen functies voor extra functionaliteit",
                 "REST API's gebruiken HTTP methodes zoals GET en POST",
                 "Embeddings zijn numerieke representaties van tekst",
+                "Backpropagation is het leeralgoritme voor neural networks",
+                "CNN staat voor Convolutional Neural Network voor beeldherkenning",
+                "Transformers gebruiken attention mechanismen voor NLP taken",
             ]
             for feit in random.sample(ingebouwde_feiten, 3):
-                if feit not in self.huisdier["kennis"]["feiten"]:
-                    feiten_geleerd.append(feit)
+                if feit not in permanente_kennis["feiten"]:
+                    feiten_geleerd.append({
+                        "feit": feit,
+                        "bron": "ingebouwde_kennis",
+                        "datum": datetime.now().isoformat()
+                    })
+                    permanente_kennis["feiten"].append(feit)
+                    permanente_kennis["bronnen"].append("ingebouwd")
+                    permanente_kennis["geleerd_op"].append(datetime.now().isoformat())
                     self.huisdier["kennis"]["feiten"].append(feit)
                     intel_bonus += 2
                     print(f"  [LAMP] {naam} leert: \"{feit[:50]}...\"")
+
+        # Update sessie teller
+        permanente_kennis["totaal_sessies"] += 1
+
+        # SLAAG PERMANENTE KENNIS OP NAAR LOKALE PC
+        self._sla_permanente_kennis_op(permanente_kennis)
 
         # Resultaten
         print("\n" + "=" * 50)
@@ -1805,16 +1984,20 @@ class VirtueelHuisdierApp:
         xp_beloning = len(feiten_geleerd) * 12 + 5
         munt_beloning = len(feiten_geleerd) * 4
 
-        totaal_kennis = len(self.huisdier["kennis"]["feiten"])
+        totaal_permanent = len(permanente_kennis["feiten"])
         print(f"\n  {naam}'s studieresultaten:")
         print(f"    [BOEK] Nieuwe feiten: {len(feiten_geleerd)}")
-        print(f"    [DATABASE] Totale kennis: {totaal_kennis} feiten")
+        print(f"    [DISK] PERMANENT opgeslagen: {totaal_permanent} feiten")
+        print(f"    [FILE] Locatie: {self.kennis_bestand}")
+        print(f"    [#] Studie sessies: {permanente_kennis['totaal_sessies']}")
         print(f"    [IQ] Intelligentie: +{intel_bonus}")
         print(f"    [MUNT] Munten: +{munt_beloning}")
         print(f"    [XP] Ervaring: +{xp_beloning}")
 
         if echte_rag:
             print(f"\n  [STAR] Bonus: Echte RAG gebruikt!")
+            if bronnen_gebruikt:
+                print(f"  [BRON] Bestudeerd: {', '.join(bronnen_gebruikt)}")
 
         # Geef beloningen
         self.huisdier["munten"] += munt_beloning
@@ -1828,12 +2011,12 @@ class VirtueelHuisdierApp:
         if self.huisdier.get("intelligentie", 0) >= 100:
             self._unlock_achievement("super_slim")
 
-        # Beperk kennis opslag tot 100 items
-        if len(self.huisdier["kennis"]["feiten"]) > 100:
-            self.huisdier["kennis"]["feiten"] = self.huisdier["kennis"]["feiten"][-100:]
+        # Sync permanente kennis naar huisdier (beperk tot 100)
+        self.huisdier["kennis"]["feiten"] = permanente_kennis["feiten"][-100:]
 
         self._check_evolutie()
         print(f"\n  {geluid}")
+        print(f"  [INFO] Kennis blijft bewaard tot huisdier reset!")
         self._sla_op()
 
     def _leren_nieuws(self):
@@ -2432,9 +2615,9 @@ class VirtueelHuisdierApp:
         """Start de app."""
         clear_scherm()
         print("+=======================================+")
-        print("|   VIRTUEEL HUISDIER SIMULATOR v2.0   |")
-        print("|   Met achievements, tricks & meer!   |")
-        print("+=======================================+")
+        print("|   VIRTUEEL HUISDIER SIMULATOR v3.0   |")
+        print("|   Met ECHTE AI & permanente kennis!  |")
+        print("+======================================+")
 
         self.huisdier = self._laad_huisdier()
 
@@ -2486,6 +2669,9 @@ class VirtueelHuisdierApp:
                 self._huisdier_werk()
             elif keuze == "12":
                 self._huisdier_leren()
+            elif keuze == "13":
+                if self._reset_huisdier():
+                    continue  # Na reset direct naar nieuwe huisdier
             elif keuze == "0":
                 self._sla_op()
                 print(f"\n{self.huisdier['naam']} is opgeslagen!")
