@@ -58,6 +58,42 @@ class SchatzoekApp:
             "snelheid": 1,
             "special": "Halve schade van monsters",
             "beschrijving": "Veel HP maar beperkt zicht"
+        },
+        "magier": {
+            "naam": "Magiër",
+            "emoji": "🧙",
+            "hp": 60,
+            "zicht": 3,
+            "snelheid": 1,
+            "special": "Dubbele aanvalsschade",
+            "beschrijving": "Krachtige magie maar weinig HP"
+        },
+        "jager": {
+            "naam": "Jager",
+            "emoji": "🏹",
+            "hp": 85,
+            "zicht": 5,
+            "snelheid": 2,
+            "special": "Eerste aanval altijd raak",
+            "beschrijving": "Scherpe ogen en snelle reflexen"
+        },
+        "vampier": {
+            "naam": "Vampier",
+            "emoji": "🧛",
+            "hp": 90,
+            "zicht": 4,
+            "snelheid": 1,
+            "special": "Steelt 25% HP bij aanval",
+            "beschrijving": "Duister wezen dat leeft van levenskracht"
+        },
+        "ijsmeester": {
+            "naam": "IJsmeester",
+            "emoji": "❄️",
+            "hp": 95,
+            "zicht": 3,
+            "snelheid": 1,
+            "special": "Immuun voor bevriezing, bonus in ijsgrot",
+            "beschrijving": "Beheerst de kracht van ijs"
         }
     }
 
@@ -784,8 +820,26 @@ class SchatzoekApp:
             if keuze == "a":
                 # Speler aanval
                 schade = random.randint(15, 25)
+                player_class = self.data["profiel"]["class"]
+
+                # Magiër: dubbele schade
+                if player_class == "magier":
+                    schade *= 2
+                    print(kleur("\n  🧙 Magische kracht verdubbelt je aanval!", "magenta"))
+
+                # Jager: eerste aanval bonus (altijd max schade)
+                if player_class == "jager" and monster["hp"] == self.MONSTERS[monster["type"]]["hp"]:
+                    schade = 35  # Gegarandeerde hoge schade
+                    print(kleur("\n  🏹 Perfecte eerste schot!", "geel"))
+
                 monster["hp"] -= schade
                 print(kleur(f"\n  Je doet {schade} schade!", "groen"))
+
+                # Vampier: steel HP
+                if player_class == "vampier":
+                    gestolen = schade // 4
+                    self.speler_hp = min(self.max_hp, self.speler_hp + gestolen)
+                    print(kleur(f"  🧛 Je steelt {gestolen} HP!", "rood"))
 
                 # Monster aanval (als nog leeft)
                 if monster["hp"] > 0:
@@ -800,8 +854,11 @@ class SchatzoekApp:
                         else:
                             print(kleur("  🔥 Je brandt!", "rood"))
                     elif speciaal == "bevriezing":
-                        if "ijsschild" in self.actieve_effecten:
-                            print(kleur("  🧊 Je ijsschild beschermt je!", "cyan"))
+                        if "ijsschild" in self.actieve_effecten or player_class == "ijsmeester":
+                            if player_class == "ijsmeester":
+                                print(kleur("  ❄️ Je IJsmeester krachten maken je immuun!", "cyan"))
+                            else:
+                                print(kleur("  🧊 Je ijsschild beschermt je!", "cyan"))
                             monster_schade = 0
                         else:
                             print(kleur("  ❄️ Je bevriest! Volgende beurt gemist!", "cyan"))
@@ -1592,7 +1649,7 @@ class SchatzoekApp:
             print(kleur(f"     {char_class['beschrijving']}", "grijs"))
             print(f"     HP: {char_class['hp']} | Zicht: {char_class['zicht']} | Special: {char_class['special']}")
 
-        keuze = input(kleur("\n  Keuze (1-3): ", "cyan")).strip()
+        keuze = input(kleur("\n  Keuze (1-7): ", "cyan")).strip()
         classes = list(self.CLASSES.keys())
         try:
             idx = int(keuze) - 1
