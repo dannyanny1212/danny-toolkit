@@ -1306,28 +1306,28 @@ class VirtueelHuisdierApp:
         geluid = self.huisdier["geluid"]
 
         # Code analyse patronen (verbeterd - minder false positives)
+        # Skip bestanden die zelf code analyse doen
+        analyse_skip_bestanden = ["code_analyse.py", "virtueel_huisdier.py"]
+
         analyse_patronen = {
             "Security": [
-                (r'\beval\s*\(', "eval() gevonden - potentieel gevaarlijk"),
-                (r'\bexec\s*\(', "exec() gevonden - potentieel gevaarlijk"),
-                (r'os\.system\s*\(', "os.system() - gebruik subprocess"),
-                (r'password\s*=\s*["\'][^"\']{3,}["\']', "Hardcoded password"),
-                (r'api_key\s*=\s*["\'][^"\']{10,}["\']', "Hardcoded API key"),
-                (r'secret\s*=\s*["\'][^"\']{5,}["\']', "Hardcoded secret"),
+                # Alleen echte calls, niet regex patronen (r'...')
+                (r'^[^#r]*\beval\s*\([^)]+\)', "eval() call gevonden"),
+                (r'^[^#r]*\bexec\s*\([^)]+\)', "exec() call gevonden"),
+                (r'^[^#r]*os\.system\s*\([^)]+\)', "os.system() call"),
+                (r'^\s*password\s*=\s*["\'][^"\']{3,}["\']', "Hardcoded password"),
+                (r'^\s*api_key\s*=\s*["\'][^"\']{10,}["\']', "Hardcoded API key"),
             ],
             "Code Smell": [
                 (r'#\s*(TODO|FIXME|XXX|HACK|BUG):', "TODO/FIXME commentaar"),
-                (r'except\s*:\s*$', "Bare except - specificeer exception type"),
+                (r'^\s*except\s*:\s*$', "Bare except"),
             ],
             "Logic": [
-                (r'==\s*None\b', "Gebruik 'is None' ipv '== None'"),
-                (r'!=\s*None\b', "Gebruik 'is not None' ipv '!= None'"),
-                (r'==\s*True\b', "Gebruik 'if x:' ipv 'if x == True'"),
-                (r'==\s*False\b', "Gebruik 'if not x:' ipv 'if x == False'"),
+                (r'[^!<>=]=\s*None\b', "Gebruik 'is None'"),
+                (r'!=\s*None\b', "Gebruik 'is not None'"),
             ],
             "Complexity": [
-                (r'if .+ and .+ and .+ and .+', "Complexe conditie (4+ and)"),
-                (r'lambda.*:.*lambda', "Geneste lambda functies"),
+                (r'if .+ and .+ and .+ and .+', "Complexe conditie"),
             ],
         }
 
@@ -1340,9 +1340,13 @@ class VirtueelHuisdierApp:
         print(f"  {naam} opent de Code Analyse tool...")
         time.sleep(0.5)
 
-        # Vind echte Python bestanden
+        # Vind echte Python bestanden (skip analyse bestanden)
         project_dir = Config.BASE_DIR / "danny_toolkit"
-        python_bestanden = list(project_dir.glob("**/*.py"))
+        alle_bestanden = list(project_dir.glob("**/*.py"))
+        python_bestanden = [
+            b for b in alle_bestanden
+            if b.name not in analyse_skip_bestanden
+        ]
 
         if not python_bestanden:
             print("  [!] Geen Python bestanden gevonden!")
