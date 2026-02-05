@@ -4,25 +4,43 @@ __pycache__/
 *$py.class
 *.so
 .Python
+build/
+dist/
+eggs/
+*.egg-info/
+*.egg
 venv/
 ENV/
+.venv/
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
-# Data (gegenereerd)
+# Environment variables
+.env
+.env.local
+
+# User data (gegenereerd)
+data/apps/
+data/output/rapporten/
 data/rag/vector_db.json
-data/output/rapporten/*.html
-data/apps/huisdier.json
 
-# Keep directories
-!data/rag/documenten/
-!data/apps/.gitkeep
-!data/output/.gitkeep
+# Keep directory structure
+!data/rag/documenten/.gitkeep
 
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Test coverage
+htmlcov/
+.coverage
+.pytest_cache/
