@@ -1266,26 +1266,29 @@ class VirtueelHuisdierApp:
         naam = self.huisdier["naam"]
         geluid = self.huisdier["geluid"]
 
-        # Code analyse patronen (van CodeAnalyseApp)
+        # Code analyse patronen (verbeterd - minder false positives)
         analyse_patronen = {
             "Security": [
-                (r'eval\s*\(', "eval() gevonden - potentieel gevaarlijk"),
-                (r'exec\s*\(', "exec() gevonden - potentieel gevaarlijk"),
+                (r'\beval\s*\(', "eval() gevonden - potentieel gevaarlijk"),
+                (r'\bexec\s*\(', "exec() gevonden - potentieel gevaarlijk"),
                 (r'os\.system\s*\(', "os.system() - gebruik subprocess"),
-                (r'password\s*=\s*["\'][^"\']+["\']', "Hardcoded password"),
+                (r'password\s*=\s*["\'][^"\']{3,}["\']', "Hardcoded password"),
+                (r'api_key\s*=\s*["\'][^"\']{10,}["\']', "Hardcoded API key"),
+                (r'secret\s*=\s*["\'][^"\']{5,}["\']', "Hardcoded secret"),
             ],
             "Code Smell": [
-                (r'#\s*(TODO|FIXME|XXX|HACK|BUG)', "TODO/FIXME commentaar"),
-                (r'print\s*\(.*(debug|test)', "Debug print statement"),
-                (r'except\s*:', "Bare except - specificeer exception"),
+                (r'#\s*(TODO|FIXME|XXX|HACK|BUG):', "TODO/FIXME commentaar"),
+                (r'except\s*:\s*$', "Bare except - specificeer exception type"),
             ],
-            "Style": [
-                (r'^\s{1,3}[^\s]', "Inconsistente indentatie"),
-                (r'[^\s]==[^\s]', "Missende spaties rond =="),
+            "Logic": [
+                (r'==\s*None\b', "Gebruik 'is None' ipv '== None'"),
+                (r'!=\s*None\b', "Gebruik 'is not None' ipv '!= None'"),
+                (r'==\s*True\b', "Gebruik 'if x:' ipv 'if x == True'"),
+                (r'==\s*False\b', "Gebruik 'if not x:' ipv 'if x == False'"),
             ],
             "Complexity": [
-                (r'if .* and .* and .* and', "Complexe conditie"),
-                (r'for .* in .*:\s*for .* in', "Geneste loops"),
+                (r'if .+ and .+ and .+ and .+', "Complexe conditie (4+ and)"),
+                (r'lambda.*:.*lambda', "Geneste lambda functies"),
             ],
         }
 
