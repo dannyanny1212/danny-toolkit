@@ -175,7 +175,7 @@ class VirtueelHuisdierApp:
         for key, info in self.HUISDIER_TYPES.items():
             print(f"  {key:>2}. {info['emoji']} {info['naam'].capitalize()}")
 
-        keuze = input("\nKies (1-12): ").strip()
+        keuze = input("\nKies (1-16): ").strip()
         if keuze not in self.HUISDIER_TYPES:
             keuze = "1"
 
@@ -285,7 +285,7 @@ class VirtueelHuisdierApp:
                 ach = self.ACHIEVEMENTS[achievement_id]
                 self.huisdier["achievements"].append(achievement_id)
                 self.huisdier["munten"] += ach["punten"]
-                print(f"\n🏆 ACHIEVEMENT UNLOCKED: {ach['naam']}!")
+                print(f"\n*** ACHIEVEMENT UNLOCKED: {ach['naam']}! ***")
                 print(f"   {ach['beschrijving']}")
                 print(f"   +{ach['punten']} munten!")
 
@@ -546,7 +546,7 @@ class VirtueelHuisdierApp:
                 gok = int(input(f"\nPoging {i+1}: ").strip())
                 if gok == getal:
                     winst = 15
-                    print(f"\n🎉 GOED! Je wint {winst} munten!")
+                    print(f"\n[OK] GOED! Je wint {winst} munten!")
                     self.huisdier["munten"] += winst
                     self.huisdier["stats"]["games_gewonnen"] += 1
                     self._check_game_achievements()
@@ -579,7 +579,7 @@ class VirtueelHuisdierApp:
         elif (keuze == "steen" and huisdier_keuze == "schaar") or \
              (keuze == "papier" and huisdier_keuze == "steen") or \
              (keuze == "schaar" and huisdier_keuze == "papier"):
-            print("🎉 Je wint! +10 munten!")
+            print("[OK] Je wint! +10 munten!")
             self.huisdier["munten"] += 10
             self.huisdier["stats"]["games_gewonnen"] += 1
             self._check_game_achievements()
@@ -607,7 +607,7 @@ class VirtueelHuisdierApp:
 
             if gebruiker_reeks == reeks:
                 winst = 30
-                print(f"\n🎉 PERFECT! Je wint {winst} munten!")
+                print(f"\n[OK] PERFECT! Je wint {winst} munten!")
                 self.huisdier["munten"] += winst
                 self.huisdier["stats"]["games_gewonnen"] += 1
                 self._check_game_achievements()
@@ -628,7 +628,7 @@ class VirtueelHuisdierApp:
         reactietijd = time.time() - start
 
         if reactietijd < 0.3:
-            print(f"🎉 BLIKSEMNEL! {reactietijd:.3f}s - +15 munten!")
+            print(f"[OK] BLIKSEMNEL! {reactietijd:.3f}s - +15 munten!")
             self.huisdier["munten"] += 15
             self.huisdier["stats"]["games_gewonnen"] += 1
             self._check_game_achievements()
@@ -672,7 +672,7 @@ class VirtueelHuisdierApp:
 
                     if gekozen == verstopplek:
                         winst = 20 + (pogingen - poging) * 5
-                        print(f"\n🎉 GEVONDEN! {self.huisdier['naam']} zat {verstopplek}!")
+                        print(f"\n[OK] GEVONDEN! {self.huisdier['naam']} zat {verstopplek}!")
                         print(f"{self.huisdier['naam']} springt blij in je armen!")
                         print(f"+{winst} munten!")
                         self.huisdier["munten"] += winst
@@ -728,7 +728,7 @@ class VirtueelHuisdierApp:
 
         if speler_tijd < huisdier_tijd:
             winst = 25
-            print(f"\n🎉 JE WINT! +{winst} munten!")
+            print(f"\n[OK] JE WINT! +{winst} munten!")
             self.huisdier["munten"] += winst
             self.huisdier["stats"]["games_gewonnen"] += 1
             self._check_game_achievements()
@@ -772,7 +772,7 @@ class VirtueelHuisdierApp:
 
             if gekozen == vraag["antwoord"].lower():
                 winst = 20
-                print(f"\n🎉 CORRECT! +{winst} munten!")
+                print(f"\n[OK] CORRECT! +{winst} munten!")
                 self.huisdier["munten"] += winst
                 self.huisdier["stats"]["games_gewonnen"] += 1
                 self._check_game_achievements()
@@ -809,10 +809,10 @@ class VirtueelHuisdierApp:
         if antwoord == obj and reactietijd < 2.0:
             if reactietijd < 0.8:
                 winst = 30
-                print(f"\n🎉 PERFECTE VANGST! {reactietijd:.2f}s - +{winst} munten!")
+                print(f"\n[OK] PERFECTE VANGST! {reactietijd:.2f}s - +{winst} munten!")
             elif reactietijd < 1.5:
                 winst = 20
-                print(f"\n🎉 Goed gevangen! {reactietijd:.2f}s - +{winst} munten!")
+                print(f"\n[OK] Goed gevangen! {reactietijd:.2f}s - +{winst} munten!")
             else:
                 winst = 10
                 print(f"\nNet op tijd! {reactietijd:.2f}s - +{winst} munten!")
@@ -904,7 +904,7 @@ class VirtueelHuisdierApp:
             self.huisdier["energie"] = max(0, self.huisdier["energie"] - 20)
             self.huisdier["ervaring"] += trick["moeilijkheid"] * 10
 
-            print(f"🎉 {self.huisdier['naam']} heeft '{trick['naam']}' geleerd!")
+            print(f"[OK] {self.huisdier['naam']} heeft '{trick['naam']}' geleerd!")
 
             if len(self.huisdier["tricks_geleerd"]) == 1:
                 self._unlock_achievement("eerste_trick")
@@ -929,7 +929,7 @@ class VirtueelHuisdierApp:
         self.huisdier["ervaring"] += trick["moeilijkheid"] * 5
 
         reacties = [
-            f"🎪 Geweldig! {self.huisdier['naam']} doet het perfect!",
+            f"[SHOW] Geweldig! {self.huisdier['naam']} doet het perfect!",
             f"Wow! {self.huisdier['naam']} is een ster!",
             f"{self.huisdier['geluid']} - Applaus!",
         ]
@@ -971,7 +971,7 @@ class VirtueelHuisdierApp:
                     if self.huisdier["munten"] >= acc["prijs"]:
                         self.huisdier["munten"] -= acc["prijs"]
                         self.huisdier["accessoires"].append(acc_id)
-                        print(f"\n🎁 Je hebt '{acc['naam']}' gekocht!")
+                        print(f"\n[BONUS] Je hebt '{acc['naam']}' gekocht!")
 
                         if len(self.huisdier["accessoires"]) == 1:
                             self._unlock_achievement("eerste_accessoire")
@@ -1036,7 +1036,7 @@ class VirtueelHuisdierApp:
         self.huisdier["munten"] += totaal
         self.huisdier["stats"]["dagen_gespeeld"] += 1
 
-        print(f"\n🎁 DAGELIJKSE BONUS!")
+        print(f"\n[BONUS] DAGELIJKSE BONUS!")
         print(f"   Basis: +{basis_bonus} munten")
         print(f"   Streak ({bonus_data['streak']} dagen): +{streak_bonus} munten")
         print(f"   Totaal: +{totaal} munten!")
