@@ -30,6 +30,11 @@ class VirtueelHuisdierApp:
         "10": {"naam": "schildpad", "emoji": "[SCHILDPAD]", "geluid": "*langzaam knikt*"},
         "11": {"naam": "panda", "emoji": "[PANDA]", "geluid": "*kauwt op bamboe*"},
         "12": {"naam": "uil", "emoji": "[UIL]", "geluid": "Oehoe!"},
+        # Nieuwe huisdier types
+        "13": {"naam": "alien", "emoji": "[ALIEN]", "geluid": "*telepathisch: Groetingen!*"},
+        "14": {"naam": "phoenix", "emoji": "[PHOENIX]", "geluid": "*majestueus gekrijs*"},
+        "15": {"naam": "dino", "emoji": "[DINO]", "geluid": "*prehistorisch gebrul*"},
+        "16": {"naam": "slime", "emoji": "[SLIME]", "geluid": "*bloop bloop*"},
     }
 
     # Evolutie stadia
@@ -71,6 +76,12 @@ class VirtueelHuisdierApp:
         "spreek": {"naam": "Spreken", "moeilijkheid": 3, "geluk_bonus": 15},
         "dood": {"naam": "Dood spelen", "moeilijkheid": 4, "geluk_bonus": 20},
         "high_five": {"naam": "High Five", "moeilijkheid": 2, "geluk_bonus": 10},
+        # Nieuwe tricks
+        "backflip": {"naam": "Backflip", "moeilijkheid": 5, "geluk_bonus": 30},
+        "zingen": {"naam": "Zingen", "moeilijkheid": 3, "geluk_bonus": 20},
+        "magie": {"naam": "Goocheltruc", "moeilijkheid": 6, "geluk_bonus": 35},
+        "teleporteer": {"naam": "Teleporteren", "moeilijkheid": 7, "geluk_bonus": 40},
+        "onzichtbaar": {"naam": "Onzichtbaar worden", "moeilijkheid": 6, "geluk_bonus": 35},
     }
 
     # Accessoires
@@ -82,6 +93,12 @@ class VirtueelHuisdierApp:
         "medicijn": {"naam": "Vitamines", "prijs": 45, "effect": "gezondheid", "bonus": 15},
         "outfit": {"naam": "Schattig Outfit", "prijs": 75, "effect": "geluk", "bonus": 20},
         "troon": {"naam": "Koninklijke Troon", "prijs": 200, "effect": "alles", "bonus": 10},
+        # Nieuwe accessoires
+        "kroon": {"naam": "Gouden Kroon", "prijs": 150, "effect": "geluk", "bonus": 25},
+        "vleugels": {"naam": "Engelenvleugels", "prijs": 120, "effect": "energie", "bonus": 20},
+        "cape": {"naam": "Superhelden Cape", "prijs": 80, "effect": "geluk", "bonus": 15},
+        "zonnebril": {"naam": "Coole Zonnebril", "prijs": 35, "effect": "geluk", "bonus": 10},
+        "jetpack": {"naam": "Mini Jetpack", "prijs": 250, "effect": "energie", "bonus": 30},
     }
 
     # Voedsel opties
@@ -474,16 +491,19 @@ class VirtueelHuisdierApp:
     def _mini_games(self):
         """Mini-games menu."""
         while True:
-            print("\n+================================+")
-            print("|        MINI-GAMES              |")
-            print("+================================+")
-            print("|  1. Raad het getal (5 munten)  |")
-            print("|  2. Steen-papier-schaar        |")
-            print("|  3. Memory (10 munten)         |")
-            print("|  4. Snelheidstest              |")
-            print("|  5. Verstoppertje (8 munten)   |")
-            print("|  0. Terug                      |")
-            print("+================================+")
+            print("\n+====================================+")
+            print("|          MINI-GAMES                |")
+            print("+====================================+")
+            print("|  1. Raad het getal (5 munten)      |")
+            print("|  2. Steen-papier-schaar            |")
+            print("|  3. Memory (10 munten)             |")
+            print("|  4. Snelheidstest                  |")
+            print("|  5. Verstoppertje (8 munten)       |")
+            print("|  6. Race (12 munten)               |")
+            print("|  7. Quiz (6 munten)                |")
+            print("|  8. Vangen (10 munten)             |")
+            print("|  0. Terug                          |")
+            print("+====================================+")
 
             keuze = input("\nKies een spel: ").strip()
 
@@ -499,6 +519,12 @@ class VirtueelHuisdierApp:
                 self._game_snelheid()
             elif keuze == "5":
                 self._game_verstoppertje()
+            elif keuze == "6":
+                self._game_race()
+            elif keuze == "7":
+                self._game_quiz()
+            elif keuze == "8":
+                self._game_vangen()
 
             input("\nDruk op Enter...")
 
@@ -668,6 +694,136 @@ class VirtueelHuisdierApp:
 
         print(f"\n{self.huisdier['naam']} komt tevoorschijn van {verstopplek}!")
         print(f"{self.huisdier['geluid']} - Beter geluk volgende keer!")
+        self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 5)
+
+    def _game_race(self):
+        """Race mini-game - race tegen je huisdier!"""
+        if self.huisdier["munten"] < 12:
+            print("\nJe hebt niet genoeg munten! (Nodig: 12)")
+            return
+
+        self.huisdier["munten"] -= 12
+
+        print(f"\n{self.huisdier['naam']} daagt je uit voor een race!")
+        print("Druk zo snel mogelijk op Enter wanneer de race begint!")
+        print("\nKlaar...")
+        time.sleep(1)
+        print("Set...")
+        time.sleep(random.uniform(0.5, 2))
+        print("\n>>> START! <<<")
+
+        # Speler moet 5x op enter drukken
+        start = time.time()
+        for i in range(5):
+            input(f"[{i+1}/5] DRUK ENTER!")
+        speler_tijd = time.time() - start
+
+        # Huisdier tijd (gebaseerd op geluk en energie)
+        basis_tijd = 3.0
+        huisdier_bonus = (self.huisdier["geluk"] + self.huisdier["energie"]) / 200
+        huisdier_tijd = basis_tijd - huisdier_bonus + random.uniform(-0.5, 0.5)
+
+        print(f"\nJouw tijd: {speler_tijd:.2f}s")
+        print(f"{self.huisdier['naam']}'s tijd: {huisdier_tijd:.2f}s")
+
+        if speler_tijd < huisdier_tijd:
+            winst = 25
+            print(f"\n🎉 JE WINT! +{winst} munten!")
+            self.huisdier["munten"] += winst
+            self.huisdier["stats"]["games_gewonnen"] += 1
+            self._check_game_achievements()
+        elif speler_tijd > huisdier_tijd:
+            print(f"\n{self.huisdier['naam']} wint! {self.huisdier['geluid']}")
+            self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 10)
+        else:
+            print("\nGelijkspel! +5 munten troostprijs!")
+            self.huisdier["munten"] += 5
+
+    def _game_quiz(self):
+        """Quiz mini-game - beantwoord vragen over huisdieren!"""
+        if self.huisdier["munten"] < 6:
+            print("\nJe hebt niet genoeg munten! (Nodig: 6)")
+            return
+
+        self.huisdier["munten"] -= 6
+
+        vragen = [
+            {"vraag": "Hoeveel levens heeft een kat volgens het gezegde?", "antwoord": "9", "opties": ["7", "9", "5", "3"]},
+            {"vraag": "Welk dier is het symbool van trouw?", "antwoord": "hond", "opties": ["kat", "hond", "vis", "vogel"]},
+            {"vraag": "Wat eet een konijn het liefst?", "antwoord": "wortels", "opties": ["vlees", "wortels", "vis", "brood"]},
+            {"vraag": "Hoe noem je een groep wolven?", "antwoord": "roedel", "opties": ["kudde", "zwerm", "roedel", "school"]},
+            {"vraag": "Welk dier slaapt staand?", "antwoord": "paard", "opties": ["hond", "kat", "paard", "konijn"]},
+            {"vraag": "Hoeveel poten heeft een spin?", "antwoord": "8", "opties": ["6", "8", "10", "4"]},
+            {"vraag": "Welk dier kan het hardst rennen?", "antwoord": "cheeta", "opties": ["leeuw", "cheeta", "paard", "hond"]},
+            {"vraag": "Wat is de grootste vogel ter wereld?", "antwoord": "struisvogel", "opties": ["adelaar", "struisvogel", "albatros", "condor"]},
+        ]
+
+        vraag = random.choice(vragen)
+        random.shuffle(vraag["opties"])
+
+        print(f"\n{self.huisdier['naam']} stelt een vraag:")
+        print(f"\n>> {vraag['vraag']}")
+        for i, optie in enumerate(vraag["opties"], 1):
+            print(f"  {i}. {optie}")
+
+        try:
+            keuze = int(input("\nJouw antwoord (1-4): ").strip())
+            gekozen = vraag["opties"][keuze - 1].lower()
+
+            if gekozen == vraag["antwoord"].lower():
+                winst = 20
+                print(f"\n🎉 CORRECT! +{winst} munten!")
+                self.huisdier["munten"] += winst
+                self.huisdier["stats"]["games_gewonnen"] += 1
+                self._check_game_achievements()
+            else:
+                print(f"\nHelaas! Het juiste antwoord was: {vraag['antwoord']}")
+        except (ValueError, IndexError):
+            print("Ongeldige keuze!")
+
+    def _game_vangen(self):
+        """Vangen mini-game - vang het vallende object!"""
+        if self.huisdier["munten"] < 10:
+            print("\nJe hebt niet genoeg munten! (Nodig: 10)")
+            return
+
+        self.huisdier["munten"] -= 10
+
+        objecten = ["bal", "bot", "muis", "veer", "ring"]
+        obj = random.choice(objecten)
+
+        print(f"\n{self.huisdier['naam']} gooit een {obj} in de lucht!")
+        print("Typ het object en druk Enter om te vangen!")
+        print("\n3...")
+        time.sleep(1)
+        print("2...")
+        time.sleep(1)
+        print("1...")
+        time.sleep(random.uniform(0.3, 1.0))
+        print(f"\n>>> {obj.upper()} <<<")
+
+        start = time.time()
+        antwoord = input("VANG: ").strip().lower()
+        reactietijd = time.time() - start
+
+        if antwoord == obj and reactietijd < 2.0:
+            if reactietijd < 0.8:
+                winst = 30
+                print(f"\n🎉 PERFECTE VANGST! {reactietijd:.2f}s - +{winst} munten!")
+            elif reactietijd < 1.5:
+                winst = 20
+                print(f"\n🎉 Goed gevangen! {reactietijd:.2f}s - +{winst} munten!")
+            else:
+                winst = 10
+                print(f"\nNet op tijd! {reactietijd:.2f}s - +{winst} munten!")
+            self.huisdier["munten"] += winst
+            self.huisdier["stats"]["games_gewonnen"] += 1
+            self._check_game_achievements()
+        elif antwoord != obj:
+            print(f"\nJe typte '{antwoord}' maar het was '{obj}'!")
+        else:
+            print(f"\nTe langzaam! ({reactietijd:.2f}s)")
+
         self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 5)
 
     def _check_game_achievements(self):

@@ -1576,6 +1576,177 @@ class CodeAnalyseApp:
             else:
                 print("  • Weinig duplicatie gevonden - goede code structuur!")
 
+    def analyze_imports(self, code: str = None) -> Dict[str, Any]:
+        """Analyseer imports - vind ongebruikte en problematische imports."""
+        code = code or self.huidige_code
+        if not code:
+            return {"fout": "Geen code geladen"}
+
+        result = {
+            "totaal_imports": 0,
+            "import_statements": [],
+            "ongebruikte_imports": [],
+            "wildcard_imports": [],
+            "relatieve_imports": [],
+            "standaard_lib": [],
+            "externe_packages": [],
+            "lokale_imports": [],
+            "circulaire_risico": [],
+            "aanbevelingen": []
+        }
+
+        # Parse de code met AST
+        try:
+            tree = ast.parse(code)
+        except SyntaxError:
+            return {"fout": "Syntax error in code"}
+
+        # Verzamel alle imports
+        imports = []
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    naam = alias.asname if alias.asname else alias.name
+                    imports.append({
+                        "module": alias.name,
+                        "alias": naam,
+                        "regel": node.lineno,
+                        "type": "import"
+                    })
+            elif isinstance(node, ast.ImportFrom):
+                module = node.module or ""
+                for alias in node.names:
+                    if alias.name == "*":
+                        result["wildcard_imports"].append({
+                            "module": module,
+                            "regel": node.lineno
+                        })
+                    naam = alias.asname if alias.asname else alias.name
+                    imports.append({
+                        "module": f"{module}.{alias.name}" if module else alias.name,
+                        "alias": naam,
+                        "regel": node.lineno,
+                        "type": "from",
+                        "relatief": node.level > 0
+                    })
+                    if node.level > 0:
+                        result["relatieve_imports"].append({
+                            "module": module,
+                            "naam": alias.name,
+                            "regel": node.lineno,
+                            "niveau": node.level
+                        })
+
+        result["totaal_imports"] = len(imports)
+        result["import_statements"] = imports
+
+        # Verzamel alle gebruikte namen in de code
+        gebruikte_namen = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Name):
+                gebruikte_namen.add(node.id)
+            elif isinstance(node, ast.Attribute):
+                # Voor module.functie() calls
+                if isinstance(node.value, ast.Name):
+                    gebruikte_namen.add(node.value.id)
+
+        # Check welke imports ongebruikt zijn
+        for imp in imports:
+            alias = imp["alias"]
+            # Split op . voor module imports (bv. os.path -> check 'os')
+            base_naam = alias.split(".")[0]
+            if base_naam not in gebruikte_namen and alias not in gebruikte_namen:
+                result["ongebruikte_imports"].append({
+                    "naam": alias,
+                    "module": imp["module"],
+                    "regel": imp["regel"]
+                })
+
+        # Categoriseer imports (standaard lib vs extern)
+        standaard_lib = {
+            "os", "sys", "re", "json", "time", "datetime", "math", "random",
+            "collections", "itertools", "functools", "pathlib", "typing",
+            "abc", "io", "copy", "hashlib", "logging", "unittest", "ast",
+            "subprocess", "threading", "multiprocessing", "socket", "http",
+            "urllib", "email", "html", "xml", "sqlite3", "csv", "pickle",
+            "gzip", "zipfile", "tarfile", "tempfile", "shutil", "glob",
+            "fnmatch", "stat", "fileinput", "struct", "codecs", "string",
+            "textwrap", "difflib", "enum", "dataclasses", "contextlib",
+            "warnings", "traceback", "inspect", "dis", "gc", "weakref"
+        }
+
+        for imp in imports:
+            base_module = imp["module"].split(".")[0]
+            if base_module in standaard_lib:
+                result["standaard_lib"].append(imp["module"])
+            elif imp.get("relatief"):
+                result["lokale_imports"].append(imp["module"])
+            else:
+                result["externe_packages"].append(imp["module"])
+
+        # Genereer aanbevelingen
+        if result["wildcard_imports"]:
+            result["aanbevelingen"].append(
+                "Vermijd wildcard imports (from x import *) - importeer specifieke namen"
+            )
+        if len(result["ongebruikte_imports"]) > 0:
+            result["aanbevelingen"].append(
+                f"Verwijder {len(result['ongebruikte_imports'])} ongebruikte import(s)"
+            )
+        if len(imports) > 20:
+            result["aanbevelingen"].append(
+                "Veel imports - overweeg de module op te splitsen"
+            )
+
+        return result
+
+    def _toon_import_analyse(self):
+        """Toon import analyse resultaten."""
+        if not self.huidige_code:
+            print(kleur("\nLaad eerst een bestand (optie 1)!", "rood"))
+            return
+
+        print("\n" + kleur("IMPORT ANALYZER", "cyaan"))
+        print("=" * 50)
+
+        result = self.analyze_imports()
+
+        if "fout" in result:
+            print(kleur(f"\nFout: {result['fout']}", "rood"))
+            return
+
+        print(f"\nTotaal imports: {result['totaal_imports']}")
+        print(f"  - Standaard library: {len(result['standaard_lib'])}")
+        print(f"  - Externe packages: {len(set(result['externe_packages']))}")
+        print(f"  - Lokale/relatieve: {len(result['relatieve_imports'])}")
+
+        # Ongebruikte imports
+        if result["ongebruikte_imports"]:
+            print(f"\n{kleur('Ongebruikte imports:', 'geel')}")
+            for imp in result["ongebruikte_imports"][:10]:
+                print(f"  Regel {imp['regel']}: {kleur(imp['naam'], 'oranje')} ({imp['module']})")
+            if len(result["ongebruikte_imports"]) > 10:
+                print(kleur(f"  ... en {len(result['ongebruikte_imports']) - 10} meer", "grijs"))
+
+        # Wildcard imports
+        if result["wildcard_imports"]:
+            print(f"\n{kleur('Wildcard imports (vermijden!):', 'rood')}")
+            for imp in result["wildcard_imports"]:
+                print(f"  Regel {imp['regel']}: from {imp['module']} import *")
+
+        # Relatieve imports
+        if result["relatieve_imports"]:
+            print(f"\n{kleur('Relatieve imports:', 'cyaan')}")
+            for imp in result["relatieve_imports"][:5]:
+                dots = "." * imp["niveau"]
+                print(f"  Regel {imp['regel']}: from {dots}{imp['module']} import {imp['naam']}")
+
+        # Aanbevelingen
+        if result["aanbevelingen"]:
+            print(f"\n{kleur('Aanbevelingen:', 'groen')}")
+            for aanbeveling in result["aanbevelingen"]:
+                print(f"  • {aanbeveling}")
+
     def _toon_formatting(self):
         """Toon formatting check en bied fix aan."""
         if not self.huidige_code:
