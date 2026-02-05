@@ -6,6 +6,7 @@ Versie 2.0 - Met achievements, mini-games, tricks, evolutie en meer!
 import json
 import time
 import random
+import re
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -1244,7 +1245,7 @@ class VirtueelHuisdierApp:
         self._sla_op()
 
     def _werk_bug_jacht(self):
-        """Huisdier zoekt bugs in code."""
+        """Huisdier zoekt bugs in ECHTE code bestanden."""
         if self.huisdier["munten"] < 12:
             print("\nJe hebt niet genoeg munten! (Nodig: 12)")
             return
@@ -1264,69 +1265,100 @@ class VirtueelHuisdierApp:
 
         naam = self.huisdier["naam"]
         geluid = self.huisdier["geluid"]
-        evolutie = self.huisdier.get("evolutie_stadium", 0)
 
-        # Bug types die gevonden kunnen worden
-        bug_types = [
-            ("Syntax Error", "Een vergeten haakje gevonden!"),
-            ("Typo", "Een typfout in variabele naam!"),
-            ("Logic Bug", "Oneindige loop ontdekt!"),
-            ("Security Issue", "Hardcoded wachtwoord gevonden!"),
-            ("Memory Leak", "Geheugenlek gedetecteerd!"),
-            ("Off-by-one", "Index fout in een loop!"),
-            ("Null Reference", "Missende null check!"),
-            ("Race Condition", "Mogelijke race conditie!"),
-        ]
+        # Code analyse patronen (van CodeAnalyseApp)
+        analyse_patronen = {
+            "Security": [
+                (r'eval\s*\(', "eval() gevonden - potentieel gevaarlijk"),
+                (r'exec\s*\(', "exec() gevonden - potentieel gevaarlijk"),
+                (r'os\.system\s*\(', "os.system() - gebruik subprocess"),
+                (r'password\s*=\s*["\'][^"\']+["\']', "Hardcoded password"),
+            ],
+            "Code Smell": [
+                (r'#\s*(TODO|FIXME|XXX|HACK|BUG)', "TODO/FIXME commentaar"),
+                (r'print\s*\(.*(debug|test)', "Debug print statement"),
+                (r'except\s*:', "Bare except - specificeer exception"),
+            ],
+            "Style": [
+                (r'^\s{1,3}[^\s]', "Inconsistente indentatie"),
+                (r'[^\s]==[^\s]', "Missende spaties rond =="),
+            ],
+            "Complexity": [
+                (r'if .* and .* and .* and', "Complexe conditie"),
+                (r'for .* in .*:\s*for .* in', "Geneste loops"),
+            ],
+        }
 
         print("\n" + "=" * 50)
-        print(f"  [CODE] {naam} GAAT BUGS ZOEKEN!")
+        print(f"  [CODE] {naam} ANALYSEERT ECHTE CODE!")
         print("=" * 50)
         time.sleep(0.5)
 
         print(f"\n  {geluid}")
-        print(f"  {naam} opent de code editor...")
+        print(f"  {naam} opent de Code Analyse tool...")
         time.sleep(0.5)
 
+        # Vind echte Python bestanden
+        project_dir = Config.BASE_DIR / "danny_toolkit"
+        python_bestanden = list(project_dir.glob("**/*.py"))
+
+        if not python_bestanden:
+            print("  [!] Geen Python bestanden gevonden!")
+            return
+
         bugs_gevonden = []
-        bestanden = ["main.py", "utils.py", "config.py", "api.py", "database.py"]
+        bestanden_geanalyseerd = 0
 
-        # Analyseer 5 bestanden
-        for bestand in random.sample(bestanden, 5):
-            print(f"\n  --- Analyseren: {bestand} ---")
-            time.sleep(0.4)
-
-            # Basis kans om bug te vinden
-            basis_kans = 50 + (evolutie * 8) + (self.huisdier["geluk"] // 5)
-            basis_kans = min(85, basis_kans)
-
-            if random.randint(1, 100) <= basis_kans:
-                bug_type, beschrijving = random.choice(bug_types)
-                bugs_gevonden.append((bug_type, bestand))
-                print(f"  [BUG] {naam} vindt een {bug_type}!")
-                print(f"        {beschrijving}")
-            else:
-                clean_msgs = [
-                    f"{naam} snuffelt door de code...",
-                    f"{naam} checkt de syntax...",
-                    f"{naam} vindt niks verdachts...",
-                ]
-                print(f"  [_] {random.choice(clean_msgs)}")
-
+        # Analyseer max 5 willekeurige bestanden
+        for bestand in random.sample(python_bestanden, min(5, len(python_bestanden))):
+            relative_path = bestand.relative_to(Config.BASE_DIR)
+            print(f"\n  --- Analyseren: {relative_path} ---")
             time.sleep(0.3)
+
+            bestanden_geanalyseerd += 1
+
+            try:
+                content = bestand.read_text(encoding="utf-8")
+                bestand_bugs = []
+
+                # Check alle patronen
+                for categorie, patronen in analyse_patronen.items():
+                    for patroon, beschrijving in patronen:
+                        matches = re.findall(patroon, content, re.MULTILINE)
+                        if matches:
+                            bestand_bugs.append((categorie, beschrijving, len(matches)))
+
+                if bestand_bugs:
+                    for categorie, beschrijving, count in bestand_bugs[:2]:  # Max 2 per bestand
+                        bugs_gevonden.append((categorie, beschrijving, str(relative_path)))
+                        print(f"  [BUG] {naam} vindt: {beschrijving}")
+                        print(f"        Categorie: {categorie} ({count}x)")
+                else:
+                    print(f"  [OK] {naam}: Code ziet er goed uit!")
+
+            except Exception as e:
+                print(f"  [!] Kon bestand niet lezen: {e}")
+
+            time.sleep(0.2)
 
         # Resultaten
         print("\n" + "=" * 50)
-        print("  [RAPPORT] CODE ANALYSE KLAAR!")
+        print("  [RAPPORT] ECHTE CODE ANALYSE KLAAR!")
         print("=" * 50)
 
-        munt_beloning = len(bugs_gevonden) * 10
-        xp_beloning = len(bugs_gevonden) * 12 + 10
+        # Intelligentie bonus voor echte analyse
+        intel_bonus = bestanden_geanalyseerd + len(bugs_gevonden)
+        munt_beloning = len(bugs_gevonden) * 8 + bestanden_geanalyseerd * 2
+        xp_beloning = len(bugs_gevonden) * 10 + bestanden_geanalyseerd * 5
 
         print(f"\n  {naam}'s analyse rapport:")
-        print(f"    [BUG] Bugs gevonden: {len(bugs_gevonden)}")
+        print(f"    [FILE] Bestanden geanalyseerd: {bestanden_geanalyseerd}")
+        print(f"    [BUG] Issues gevonden: {len(bugs_gevonden)}")
         if bugs_gevonden:
-            for bug_type, bestand in bugs_gevonden:
-                print(f"        - {bug_type} in {bestand}")
+            for categorie, beschrijving, bestand in bugs_gevonden[:5]:
+                print(f"        - [{categorie}] {beschrijving}")
+                print(f"          in: {bestand}")
+        print(f"    [IQ] Intelligentie: +{intel_bonus}")
         print(f"    [MUNT] Verdiend: +{munt_beloning} munten")
         print(f"    [XP] Ervaring: +{xp_beloning}")
 
@@ -1339,6 +1371,7 @@ class VirtueelHuisdierApp:
         # Geef beloningen
         self.huisdier["munten"] += munt_beloning
         self.huisdier["ervaring"] += xp_beloning
+        self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + intel_bonus
         self.huisdier["stats"]["bugs_gevonden"] += len(bugs_gevonden)
         self.huisdier["stats"]["werk_taken"] += 1
 
@@ -1347,6 +1380,8 @@ class VirtueelHuisdierApp:
             self._unlock_achievement("bug_hunter")
         if self.huisdier["stats"]["werk_taken"] >= 25:
             self._unlock_achievement("werkend_huisdier")
+        if self.huisdier.get("intelligentie", 0) >= 100:
+            self._unlock_achievement("super_slim")
 
         self._check_evolutie()
         print(f"\n  {geluid}")
