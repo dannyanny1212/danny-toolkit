@@ -60,6 +60,10 @@ class VirtueelHuisdierApp:
         "10_games_gewonnen": {"naam": "Kampioen", "beschrijving": "Win 10 mini-games", "punten": 75},
         "schatzoeker": {"naam": "Schatzoeker", "beschrijving": "Vind 10 schatten in avonturen", "punten": 50},
         "avonturier": {"naam": "Avonturier", "beschrijving": "Voltooi 5 schatzoek avonturen", "punten": 30},
+        "wiskunde_genie": {"naam": "Wiskunde Genie", "beschrijving": "Los 20 rekensommen op", "punten": 40},
+        "bug_hunter": {"naam": "Bug Hunter", "beschrijving": "Vind 15 bugs in code", "punten": 45},
+        "boodschapper": {"naam": "Boodschapper", "beschrijving": "Doe 10 keer boodschappen", "punten": 35},
+        "werkend_huisdier": {"naam": "Werkend Huisdier", "beschrijving": "Voltooi 25 werk taken", "punten": 75},
         "dagelijkse_bonus": {"naam": "Trouwe Vriend", "beschrijving": "Claim 7 dagelijkse bonussen", "punten": 50},
         "evolutie_kind": {"naam": "Groeiend", "beschrijving": "Evolueer naar Kind stadium", "punten": 20},
         "evolutie_volwassen": {"naam": "Volgroeid", "beschrijving": "Evolueer naar Volwassen stadium", "punten": 50},
@@ -364,6 +368,7 @@ class VirtueelHuisdierApp:
         print("|  8. Winkel (accessoires)       |")
         print("|  9. Achievements bekijken      |")
         print("| 10. Dagelijkse bonus           |")
+        print("| 11. Huisdier Werk              |")
         print("|  0. Opslaan & Afsluiten        |")
         print("+================================+")
 
@@ -984,6 +989,352 @@ class VirtueelHuisdierApp:
         if self.huisdier["stats"]["games_gewonnen"] >= 10:
             self._unlock_achievement("10_games_gewonnen")
 
+    # ==================== HUISDIER WERK ====================
+
+    def _huisdier_werk(self):
+        """Menu voor huisdier werk activiteiten."""
+        while True:
+            print("\n+====================================+")
+            print("|        HUISDIER WERK               |")
+            print("+====================================+")
+            print("|  Je huisdier kan helpen met taken! |")
+            print("+------------------------------------+")
+            print("|  1. Boodschappen Doen (10 munten)  |")
+            print("|  2. Wiskunde Uitdaging (8 munten)  |")
+            print("|  3. Bug Jacht (12 munten)          |")
+            print("|  0. Terug                          |")
+            print("+====================================+")
+
+            keuze = input("\nKies een activiteit: ").strip()
+
+            if keuze == "0":
+                break
+            elif keuze == "1":
+                self._werk_boodschappen()
+            elif keuze == "2":
+                self._werk_wiskunde()
+            elif keuze == "3":
+                self._werk_bug_jacht()
+
+            input("\nDruk op Enter...")
+
+    def _werk_boodschappen(self):
+        """Huisdier gaat boodschappen doen en helpt met de boodschappenlijst."""
+        if self.huisdier["munten"] < 10:
+            print("\nJe hebt niet genoeg munten! (Nodig: 10)")
+            return
+
+        if self.huisdier["energie"] < 15:
+            print(f"\n{self.huisdier['naam']} is te moe om boodschappen te doen!")
+            return
+
+        self.huisdier["munten"] -= 10
+        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 15)
+
+        # Init stats
+        if "boodschappen_gedaan" not in self.huisdier["stats"]:
+            self.huisdier["stats"]["boodschappen_gedaan"] = 0
+        if "werk_taken" not in self.huisdier["stats"]:
+            self.huisdier["stats"]["werk_taken"] = 0
+
+        naam = self.huisdier["naam"]
+        geluid = self.huisdier["geluid"]
+        huisdier_type = self.huisdier["type"]
+
+        # Producten die het huisdier kan vinden
+        winkel_secties = {
+            "dieren": ["Hondenvoer", "Kattenvoer", "Snacks", "Speeltjes", "Kattenbakkorrels"],
+            "snacks": ["Koekjes", "Chips", "Chocolade", "Nootjes"],
+            "groenten": ["Appels", "Bananen", "Wortels", "Tomaten"],
+            "zuivel": ["Melk", "Kaas", "Yoghurt", "Eieren"],
+        }
+
+        print("\n" + "=" * 50)
+        print(f"  [WINKEL] {naam} GAAT BOODSCHAPPEN DOEN!")
+        print("=" * 50)
+        time.sleep(0.5)
+
+        print(f"\n  {geluid}")
+        print(f"  {naam} pakt een winkelwagentje...")
+        time.sleep(0.5)
+
+        gevonden_items = []
+        totaal_korting = 0
+
+        # Bezoek 4 secties
+        for sectie_naam, producten in random.sample(list(winkel_secties.items()), 4):
+            print(f"\n  --- Sectie: {sectie_naam.upper()} ---")
+            time.sleep(0.3)
+
+            # Huisdier zoekt producten
+            if random.randint(1, 100) <= 70:  # 70% kans
+                product = random.choice(producten)
+                gevonden_items.append(product)
+                print(f"  [OK] {naam} vindt: {product}")
+
+                # Kans op korting
+                if random.randint(1, 100) <= 30:
+                    korting = random.randint(5, 20)
+                    totaal_korting += korting
+                    print(f"  [BONUS] Aanbieding gevonden! -{korting}% korting!")
+            else:
+                print(f"  [_] {naam} snuffelt rond maar vindt niks speciaals...")
+
+            time.sleep(0.3)
+
+        # Resultaten
+        print("\n" + "=" * 50)
+        print("  [KASSA] BOODSCHAPPEN KLAAR!")
+        print("=" * 50)
+
+        munt_beloning = len(gevonden_items) * 8 + totaal_korting // 2
+        xp_beloning = len(gevonden_items) * 5 + 10
+
+        print(f"\n  {naam}'s winkelresultaat:")
+        print(f"    [TAS] Items gevonden: {len(gevonden_items)}")
+        if gevonden_items:
+            for item in gevonden_items:
+                print(f"        - {item}")
+        print(f"    [%] Totale korting: {totaal_korting}%")
+        print(f"    [MUNT] Verdiend: +{munt_beloning} munten")
+        print(f"    [XP] Ervaring: +{xp_beloning}")
+
+        # Geef beloningen
+        self.huisdier["munten"] += munt_beloning
+        self.huisdier["ervaring"] += xp_beloning
+        self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 5)
+        self.huisdier["stats"]["boodschappen_gedaan"] += 1
+        self.huisdier["stats"]["werk_taken"] += 1
+
+        # Achievements
+        if self.huisdier["stats"]["boodschappen_gedaan"] >= 10:
+            self._unlock_achievement("boodschapper")
+        if self.huisdier["stats"]["werk_taken"] >= 25:
+            self._unlock_achievement("werkend_huisdier")
+
+        self._check_level_up()
+        print(f"\n  {geluid}")
+        self._sla_op()
+
+    def _werk_wiskunde(self):
+        """Huisdier lost wiskundige puzzels op."""
+        if self.huisdier["munten"] < 8:
+            print("\nJe hebt niet genoeg munten! (Nodig: 8)")
+            return
+
+        if self.huisdier["energie"] < 10:
+            print(f"\n{self.huisdier['naam']} is te moe om na te denken!")
+            return
+
+        self.huisdier["munten"] -= 8
+        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 10)
+
+        # Init stats
+        if "sommen_opgelost" not in self.huisdier["stats"]:
+            self.huisdier["stats"]["sommen_opgelost"] = 0
+        if "werk_taken" not in self.huisdier["stats"]:
+            self.huisdier["stats"]["werk_taken"] = 0
+
+        naam = self.huisdier["naam"]
+        geluid = self.huisdier["geluid"]
+        evolutie = self.huisdier.get("evolutie_stadium", 0)
+
+        # Moeilijkheid gebaseerd op evolutie
+        max_getal = 10 + (evolutie * 5)
+
+        print("\n" + "=" * 50)
+        print(f"  [CALCULATOR] {naam} GAAT REKENEN!")
+        print("=" * 50)
+        time.sleep(0.5)
+
+        print(f"\n  {geluid}")
+        print(f"  {naam} pakt een rekenmachine...")
+        time.sleep(0.5)
+
+        correct = 0
+        totaal = 5
+
+        operaties = [
+            ("+", lambda a, b: a + b),
+            ("-", lambda a, b: a - b),
+            ("x", lambda a, b: a * b),
+        ]
+
+        for ronde in range(1, totaal + 1):
+            a = random.randint(1, max_getal)
+            b = random.randint(1, max_getal)
+            op_sym, op_func = random.choice(operaties)
+
+            # Zorg dat aftrekken niet negatief wordt
+            if op_sym == "-" and b > a:
+                a, b = b, a
+
+            antwoord = op_func(a, b)
+
+            print(f"\n  --- Som {ronde}/{totaal} ---")
+            print(f"  Wat is {a} {op_sym} {b} = ?")
+
+            # Huisdier probeert te raden (AI simulatie)
+            basis_kans = 60 + (evolutie * 5) + (self.huisdier["geluk"] // 10)
+            basis_kans = min(95, basis_kans)
+
+            time.sleep(0.5)
+
+            if random.randint(1, 100) <= basis_kans:
+                print(f"  {naam}: \"{antwoord}!\"")
+                print(f"  [OK] Correct!")
+                correct += 1
+            else:
+                # Fout antwoord
+                fout_antwoord = antwoord + random.choice([-2, -1, 1, 2])
+                print(f"  {naam}: \"{fout_antwoord}?\"")
+                print(f"  [X] Fout! Het was {antwoord}")
+
+            time.sleep(0.3)
+
+        # Resultaten
+        print("\n" + "=" * 50)
+        print("  [RESULTAAT] WISKUNDE SESSIE KLAAR!")
+        print("=" * 50)
+
+        munt_beloning = correct * 6
+        xp_beloning = correct * 8 + 5
+
+        print(f"\n  {naam}'s score:")
+        print(f"    [#] Correct: {correct}/{totaal}")
+        print(f"    [MUNT] Verdiend: +{munt_beloning} munten")
+        print(f"    [XP] Ervaring: +{xp_beloning}")
+
+        if correct == totaal:
+            bonus = 15
+            print(f"\n  [TROFEE] PERFECT! Bonus: +{bonus} munten!")
+            munt_beloning += bonus
+
+        # Geef beloningen
+        self.huisdier["munten"] += munt_beloning
+        self.huisdier["ervaring"] += xp_beloning
+        self.huisdier["stats"]["sommen_opgelost"] += correct
+        self.huisdier["stats"]["werk_taken"] += 1
+
+        # Achievements
+        if self.huisdier["stats"]["sommen_opgelost"] >= 20:
+            self._unlock_achievement("wiskunde_genie")
+        if self.huisdier["stats"]["werk_taken"] >= 25:
+            self._unlock_achievement("werkend_huisdier")
+
+        self._check_level_up()
+        print(f"\n  {geluid}")
+        self._sla_op()
+
+    def _werk_bug_jacht(self):
+        """Huisdier zoekt bugs in code."""
+        if self.huisdier["munten"] < 12:
+            print("\nJe hebt niet genoeg munten! (Nodig: 12)")
+            return
+
+        if self.huisdier["energie"] < 20:
+            print(f"\n{self.huisdier['naam']} is te moe om code te analyseren!")
+            return
+
+        self.huisdier["munten"] -= 12
+        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 20)
+
+        # Init stats
+        if "bugs_gevonden" not in self.huisdier["stats"]:
+            self.huisdier["stats"]["bugs_gevonden"] = 0
+        if "werk_taken" not in self.huisdier["stats"]:
+            self.huisdier["stats"]["werk_taken"] = 0
+
+        naam = self.huisdier["naam"]
+        geluid = self.huisdier["geluid"]
+        evolutie = self.huisdier.get("evolutie_stadium", 0)
+
+        # Bug types die gevonden kunnen worden
+        bug_types = [
+            ("Syntax Error", "Een vergeten haakje gevonden!"),
+            ("Typo", "Een typfout in variabele naam!"),
+            ("Logic Bug", "Oneindige loop ontdekt!"),
+            ("Security Issue", "Hardcoded wachtwoord gevonden!"),
+            ("Memory Leak", "Geheugenlek gedetecteerd!"),
+            ("Off-by-one", "Index fout in een loop!"),
+            ("Null Reference", "Missende null check!"),
+            ("Race Condition", "Mogelijke race conditie!"),
+        ]
+
+        print("\n" + "=" * 50)
+        print(f"  [CODE] {naam} GAAT BUGS ZOEKEN!")
+        print("=" * 50)
+        time.sleep(0.5)
+
+        print(f"\n  {geluid}")
+        print(f"  {naam} opent de code editor...")
+        time.sleep(0.5)
+
+        bugs_gevonden = []
+        bestanden = ["main.py", "utils.py", "config.py", "api.py", "database.py"]
+
+        # Analyseer 5 bestanden
+        for bestand in random.sample(bestanden, 5):
+            print(f"\n  --- Analyseren: {bestand} ---")
+            time.sleep(0.4)
+
+            # Basis kans om bug te vinden
+            basis_kans = 50 + (evolutie * 8) + (self.huisdier["geluk"] // 5)
+            basis_kans = min(85, basis_kans)
+
+            if random.randint(1, 100) <= basis_kans:
+                bug_type, beschrijving = random.choice(bug_types)
+                bugs_gevonden.append((bug_type, bestand))
+                print(f"  [BUG] {naam} vindt een {bug_type}!")
+                print(f"        {beschrijving}")
+            else:
+                clean_msgs = [
+                    f"{naam} snuffelt door de code...",
+                    f"{naam} checkt de syntax...",
+                    f"{naam} vindt niks verdachts...",
+                ]
+                print(f"  [_] {random.choice(clean_msgs)}")
+
+            time.sleep(0.3)
+
+        # Resultaten
+        print("\n" + "=" * 50)
+        print("  [RAPPORT] CODE ANALYSE KLAAR!")
+        print("=" * 50)
+
+        munt_beloning = len(bugs_gevonden) * 10
+        xp_beloning = len(bugs_gevonden) * 12 + 10
+
+        print(f"\n  {naam}'s analyse rapport:")
+        print(f"    [BUG] Bugs gevonden: {len(bugs_gevonden)}")
+        if bugs_gevonden:
+            for bug_type, bestand in bugs_gevonden:
+                print(f"        - {bug_type} in {bestand}")
+        print(f"    [MUNT] Verdiend: +{munt_beloning} munten")
+        print(f"    [XP] Ervaring: +{xp_beloning}")
+
+        # Bonus voor veel bugs
+        if len(bugs_gevonden) >= 4:
+            bonus = 20
+            print(f"\n  [TROFEE] SUPER DETECTIVE! Bonus: +{bonus} munten!")
+            munt_beloning += bonus
+
+        # Geef beloningen
+        self.huisdier["munten"] += munt_beloning
+        self.huisdier["ervaring"] += xp_beloning
+        self.huisdier["stats"]["bugs_gevonden"] += len(bugs_gevonden)
+        self.huisdier["stats"]["werk_taken"] += 1
+
+        # Achievements
+        if self.huisdier["stats"]["bugs_gevonden"] >= 15:
+            self._unlock_achievement("bug_hunter")
+        if self.huisdier["stats"]["werk_taken"] >= 25:
+            self._unlock_achievement("werkend_huisdier")
+
+        self._check_level_up()
+        print(f"\n  {geluid}")
+        self._sla_op()
+
     def _tricks_menu(self):
         """Tricks leren en uitvoeren."""
         while True:
@@ -1258,6 +1609,8 @@ class VirtueelHuisdierApp:
                 self._achievements_bekijken()
             elif keuze == "10":
                 self._dagelijkse_bonus()
+            elif keuze == "11":
+                self._huisdier_werk()
             elif keuze == "0":
                 self._sla_op()
                 print(f"\n{self.huisdier['naam']} is opgeslagen!")
