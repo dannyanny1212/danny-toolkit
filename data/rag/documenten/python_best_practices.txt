@@ -1,0 +1,38 @@
+Python Best Practices voor Productie
+
+Configuratie Management:
+- Gebruik environment variables voor secrets
+- Maak een Config class voor centrale settings
+- Nooit API keys hardcoden in code!
+
+Error Handling:
+- Wrap alle API calls in try/except
+- Implementeer exponential backoff voor rate limits
+- Log errors met voldoende context voor debugging
+
+Type Hints zijn essentieel voor professionele code:
+def embed(teksten: list[str]) -> list[list[float]]:
+    '''Embed teksten naar vectoren.'''
+    pass
+
+Code structuur voor grote projecten:
+- config.py: Alle configuratie gecentraliseerd
+- models/: Dataclasses en Pydantic schemas
+- services/: Business logic en API clients
+- utils/: Herbruikbare helper functies
+
+Testing strategie:
+- Unit tests voor individuele functies
+- Integration tests voor API interacties
+- Mock externe services in tests
+- Gebruik pytest als framework
+
+Virtual Environments:
+Gebruik altijd een virtual environment voor je projecten.
+Dit voorkomt conflicten tussen dependencies.
+
+Commando's:
+python -m venv venv
+venv\Scripts\activate (Windows)
+source venv/bin/activate (Linux/Mac)
+pip install -r requirements.txt

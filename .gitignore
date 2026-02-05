@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Data (gegenereerd)
+data/rag/vector_db.json
+data/output/rapporten/*.html
+data/apps/huisdier.json
+
+# Keep directories
+!data/rag/documenten/
+!data/apps/.gitkeep
+!data/output/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db

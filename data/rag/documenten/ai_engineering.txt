@@ -1,0 +1,30 @@
+AI Engineering in 2026
+
+Een AI-Engineer bouwt systemen die zelfstandig kunnen denken en handelen.
+Dit noemen we "Agentic AI" - AI die proactief problemen oplost.
+
+De Agentic Loop:
+1. Perceptie: De AI verzamelt informatie uit de omgeving
+2. Planning: De AI analyseert en maakt een strategie
+3. Actie: De AI voert taken uit met beschikbare tools
+4. Verificatie: De AI controleert of het doel bereikt is
+
+Belangrijke AI modellen in 2026:
+- Claude Opus 4.5: Het krachtigste model van Anthropic, beste voor complexe taken
+- Claude Sonnet: Sneller en goedkoper, ideaal voor dagelijks gebruik
+- Claude Haiku: Razendsnel voor simpele taken en hoge volumes
+
+RAG (Retrieval-Augmented Generation) is essentieel voor productie AI:
+- Geeft AI toegang tot actuele, externe kennis
+- Voorkomt hallucinaties door antwoorden te baseren op echte bronnen
+- Werkt met embeddings (vector representaties) en vector databases
+
+Multi-Agent Systemen:
+Multi-agent systemen gebruiken meerdere gespecialiseerde agents die samenwerken.
+Elke agent heeft zijn eigen expertise en tools. Een orchestrator coordineert
+de taken en verzamelt de resultaten.
+
+Voordelen van multi-agent architectuur:
+- Betere scheiding van verantwoordelijkheden
+- Eenvoudiger te debuggen en testen
+- Schaalbaarheid door parallelle verwerking
