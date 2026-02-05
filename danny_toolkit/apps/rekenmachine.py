@@ -1079,6 +1079,358 @@ class RekenmachineApp:
         print(kleur(f"    Bij sport: {actief:.1f} liter/dag", "groen"))
         print(kleur(f"    Aantal glazen (250ml): {basis*4:.0f}-{actief*4:.0f}", "grijs"))
 
+    # ==================== MEETKUNDE ====================
+
+    def _meetkunde_menu(self):
+        """Meetkundige berekeningen menu."""
+        while True:
+            self._toon_header("📐 Meetkunde")
+
+            print(kleur("\n  2D Vormen:", "geel"))
+            print("    1. Cirkel (omtrek & oppervlakte)")
+            print("    2. Rechthoek (omtrek & oppervlakte)")
+            print("    3. Driehoek (omtrek & oppervlakte)")
+            print("    4. Vierkant (omtrek & oppervlakte)")
+            print("    5. Trapezium (oppervlakte)")
+            print("    6. Parallellogram (oppervlakte)")
+
+            print(kleur("\n  3D Vormen:", "geel"))
+            print("    7. Bol (oppervlakte & volume)")
+            print("    8. Kubus (oppervlakte & volume)")
+            print("    9. Cilinder (oppervlakte & volume)")
+            print("    a. Kegel (oppervlakte & volume)")
+            print("    b. Piramide (volume)")
+
+            print(kleur("\n  Overig:", "geel"))
+            print("    c. Pythagoras (zijden driehoek)")
+            print("    d. Afstand tussen punten")
+
+            print(kleur("\n    0. Terug", "grijs"))
+
+            keuze = input(kleur("\n  Keuze: ", "cyan")).strip().lower()
+
+            if keuze == "0":
+                break
+
+            try:
+                if keuze == "1":
+                    self._cirkel_berekening()
+                elif keuze == "2":
+                    self._rechthoek_berekening()
+                elif keuze == "3":
+                    self._driehoek_berekening()
+                elif keuze == "4":
+                    self._vierkant_berekening()
+                elif keuze == "5":
+                    self._trapezium_berekening()
+                elif keuze == "6":
+                    self._parallellogram_berekening()
+                elif keuze == "7":
+                    self._bol_berekening()
+                elif keuze == "8":
+                    self._kubus_berekening()
+                elif keuze == "9":
+                    self._cilinder_berekening()
+                elif keuze == "a":
+                    self._kegel_berekening()
+                elif keuze == "b":
+                    self._piramide_berekening()
+                elif keuze == "c":
+                    self._pythagoras_berekening()
+                elif keuze == "d":
+                    self._afstand_berekening()
+                else:
+                    fout("Ongeldige keuze.")
+                    continue
+
+            except ValueError as e:
+                fout(str(e))
+
+            input(kleur("\n  Druk op Enter om verder te gaan...", "grijs"))
+
+    def _cirkel_berekening(self):
+        """Berekent omtrek en oppervlakte van een cirkel."""
+        straal = self._get_getal("Straal: ")
+        if straal <= 0:
+            raise ValueError("Straal moet positief zijn!")
+
+        omtrek = 2 * math.pi * straal
+        oppervlakte = math.pi * straal ** 2
+
+        print(kleur("\n  ═══ Cirkel ═══", "geel"))
+        print(f"    Straal (r): {straal}")
+        print(kleur(f"    Omtrek (2πr): {omtrek:.4f}", "groen"))
+        print(kleur(f"    Oppervlakte (πr²): {oppervlakte:.4f}", "groen"))
+
+        self._voeg_geschiedenis_toe(f"Cirkel r={straal}", oppervlakte)
+
+    def _rechthoek_berekening(self):
+        """Berekent omtrek en oppervlakte van een rechthoek."""
+        lengte = self._get_getal("Lengte: ")
+        breedte = self._get_getal("Breedte: ")
+        if lengte <= 0 or breedte <= 0:
+            raise ValueError("Afmetingen moeten positief zijn!")
+
+        omtrek = 2 * (lengte + breedte)
+        oppervlakte = lengte * breedte
+        diagonaal = math.sqrt(lengte**2 + breedte**2)
+
+        print(kleur("\n  ═══ Rechthoek ═══", "geel"))
+        print(f"    Lengte: {lengte} | Breedte: {breedte}")
+        print(kleur(f"    Omtrek: {omtrek:.4f}", "groen"))
+        print(kleur(f"    Oppervlakte: {oppervlakte:.4f}", "groen"))
+        print(kleur(f"    Diagonaal: {diagonaal:.4f}", "groen"))
+
+        self._voeg_geschiedenis_toe(f"Rechthoek {lengte}x{breedte}", oppervlakte)
+
+    def _driehoek_berekening(self):
+        """Berekent omtrek en oppervlakte van een driehoek."""
+        print(kleur("\n  Berekeningswijze:", "geel"))
+        print("    1. Basis en hoogte")
+        print("    2. Drie zijden (Heron)")
+
+        methode = input(kleur("  Keuze: ", "cyan")).strip()
+
+        if methode == "1":
+            basis = self._get_getal("Basis: ")
+            hoogte = self._get_getal("Hoogte: ")
+            if basis <= 0 or hoogte <= 0:
+                raise ValueError("Afmetingen moeten positief zijn!")
+
+            oppervlakte = 0.5 * basis * hoogte
+
+            print(kleur("\n  ═══ Driehoek ═══", "geel"))
+            print(f"    Basis: {basis} | Hoogte: {hoogte}")
+            print(kleur(f"    Oppervlakte (½bh): {oppervlakte:.4f}", "groen"))
+
+        elif methode == "2":
+            a = self._get_getal("Zijde a: ")
+            b = self._get_getal("Zijde b: ")
+            c = self._get_getal("Zijde c: ")
+            if a <= 0 or b <= 0 or c <= 0:
+                raise ValueError("Zijden moeten positief zijn!")
+            if a + b <= c or b + c <= a or a + c <= b:
+                raise ValueError("Geen geldige driehoek!")
+
+            omtrek = a + b + c
+            s = omtrek / 2
+            oppervlakte = math.sqrt(s * (s-a) * (s-b) * (s-c))
+
+            print(kleur("\n  ═══ Driehoek (Heron) ═══", "geel"))
+            print(f"    Zijden: {a}, {b}, {c}")
+            print(kleur(f"    Omtrek: {omtrek:.4f}", "groen"))
+            print(kleur(f"    Oppervlakte: {oppervlakte:.4f}", "groen"))
+
+            self._voeg_geschiedenis_toe(f"Driehoek {a},{b},{c}", oppervlakte)
+
+    def _vierkant_berekening(self):
+        """Berekent omtrek en oppervlakte van een vierkant."""
+        zijde = self._get_getal("Zijde: ")
+        if zijde <= 0:
+            raise ValueError("Zijde moet positief zijn!")
+
+        omtrek = 4 * zijde
+        oppervlakte = zijde ** 2
+        diagonaal = zijde * math.sqrt(2)
+
+        print(kleur("\n  ═══ Vierkant ═══", "geel"))
+        print(f"    Zijde: {zijde}")
+        print(kleur(f"    Omtrek (4z): {omtrek:.4f}", "groen"))
+        print(kleur(f"    Oppervlakte (z²): {oppervlakte:.4f}", "groen"))
+        print(kleur(f"    Diagonaal (z√2): {diagonaal:.4f}", "groen"))
+
+        self._voeg_geschiedenis_toe(f"Vierkant z={zijde}", oppervlakte)
+
+    def _trapezium_berekening(self):
+        """Berekent oppervlakte van een trapezium."""
+        a = self._get_getal("Evenwijdige zijde a: ")
+        b = self._get_getal("Evenwijdige zijde b: ")
+        h = self._get_getal("Hoogte: ")
+        if a <= 0 or b <= 0 or h <= 0:
+            raise ValueError("Afmetingen moeten positief zijn!")
+
+        oppervlakte = 0.5 * (a + b) * h
+
+        print(kleur("\n  ═══ Trapezium ═══", "geel"))
+        print(f"    Zijden: {a} en {b} | Hoogte: {h}")
+        print(kleur(f"    Oppervlakte (½(a+b)h): {oppervlakte:.4f}", "groen"))
+
+        self._voeg_geschiedenis_toe(f"Trapezium", oppervlakte)
+
+    def _parallellogram_berekening(self):
+        """Berekent oppervlakte van een parallellogram."""
+        basis = self._get_getal("Basis: ")
+        hoogte = self._get_getal("Hoogte: ")
+        if basis <= 0 or hoogte <= 0:
+            raise ValueError("Afmetingen moeten positief zijn!")
+
+        oppervlakte = basis * hoogte
+
+        print(kleur("\n  ═══ Parallellogram ═══", "geel"))
+        print(f"    Basis: {basis} | Hoogte: {hoogte}")
+        print(kleur(f"    Oppervlakte (bh): {oppervlakte:.4f}", "groen"))
+
+        self._voeg_geschiedenis_toe(f"Parallellogram", oppervlakte)
+
+    def _bol_berekening(self):
+        """Berekent oppervlakte en volume van een bol."""
+        straal = self._get_getal("Straal: ")
+        if straal <= 0:
+            raise ValueError("Straal moet positief zijn!")
+
+        oppervlakte = 4 * math.pi * straal ** 2
+        volume = (4/3) * math.pi * straal ** 3
+
+        print(kleur("\n  ═══ Bol ═══", "geel"))
+        print(f"    Straal (r): {straal}")
+        print(kleur(f"    Oppervlakte (4πr²): {oppervlakte:.4f}", "groen"))
+        print(kleur(f"    Volume (4/3πr³): {volume:.4f}", "groen"))
+
+        self._voeg_geschiedenis_toe(f"Bol r={straal}", volume)
+
+    def _kubus_berekening(self):
+        """Berekent oppervlakte en volume van een kubus."""
+        zijde = self._get_getal("Zijde: ")
+        if zijde <= 0:
+            raise ValueError("Zijde moet positief zijn!")
+
+        oppervlakte = 6 * zijde ** 2
+        volume = zijde ** 3
+        ruimte_diagonaal = zijde * math.sqrt(3)
+
+        print(kleur("\n  ═══ Kubus ═══", "geel"))
+        print(f"    Zijde (z): {zijde}")
+        print(kleur(f"    Oppervlakte (6z²): {oppervlakte:.4f}", "groen"))
+        print(kleur(f"    Volume (z³): {volume:.4f}", "groen"))
+        print(kleur(f"    Ruimtediagonaal (z√3): {ruimte_diagonaal:.4f}", "groen"))
+
+        self._voeg_geschiedenis_toe(f"Kubus z={zijde}", volume)
+
+    def _cilinder_berekening(self):
+        """Berekent oppervlakte en volume van een cilinder."""
+        straal = self._get_getal("Straal: ")
+        hoogte = self._get_getal("Hoogte: ")
+        if straal <= 0 or hoogte <= 0:
+            raise ValueError("Afmetingen moeten positief zijn!")
+
+        mantel = 2 * math.pi * straal * hoogte
+        grondvlak = math.pi * straal ** 2
+        oppervlakte = 2 * grondvlak + mantel
+        volume = grondvlak * hoogte
+
+        print(kleur("\n  ═══ Cilinder ═══", "geel"))
+        print(f"    Straal: {straal} | Hoogte: {hoogte}")
+        print(kleur(f"    Manteloppervlakte: {mantel:.4f}", "groen"))
+        print(kleur(f"    Totaal oppervlakte: {oppervlakte:.4f}", "groen"))
+        print(kleur(f"    Volume (πr²h): {volume:.4f}", "groen"))
+
+        self._voeg_geschiedenis_toe(f"Cilinder r={straal} h={hoogte}", volume)
+
+    def _kegel_berekening(self):
+        """Berekent oppervlakte en volume van een kegel."""
+        straal = self._get_getal("Straal: ")
+        hoogte = self._get_getal("Hoogte: ")
+        if straal <= 0 or hoogte <= 0:
+            raise ValueError("Afmetingen moeten positief zijn!")
+
+        schuin = math.sqrt(straal**2 + hoogte**2)
+        grondvlak = math.pi * straal ** 2
+        mantel = math.pi * straal * schuin
+        oppervlakte = grondvlak + mantel
+        volume = (1/3) * grondvlak * hoogte
+
+        print(kleur("\n  ═══ Kegel ═══", "geel"))
+        print(f"    Straal: {straal} | Hoogte: {hoogte}")
+        print(kleur(f"    Schuine zijde: {schuin:.4f}", "groen"))
+        print(kleur(f"    Manteloppervlakte: {mantel:.4f}", "groen"))
+        print(kleur(f"    Totaal oppervlakte: {oppervlakte:.4f}", "groen"))
+        print(kleur(f"    Volume (1/3πr²h): {volume:.4f}", "groen"))
+
+        self._voeg_geschiedenis_toe(f"Kegel r={straal} h={hoogte}", volume)
+
+    def _piramide_berekening(self):
+        """Berekent volume van een piramide."""
+        print(kleur("\n  Grondvlak type:", "geel"))
+        print("    1. Rechthoekig grondvlak")
+        print("    2. Vierkant grondvlak")
+
+        keuze = input(kleur("  Keuze: ", "cyan")).strip()
+
+        if keuze == "1":
+            lengte = self._get_getal("Lengte grondvlak: ")
+            breedte = self._get_getal("Breedte grondvlak: ")
+            grondvlak = lengte * breedte
+        elif keuze == "2":
+            zijde = self._get_getal("Zijde grondvlak: ")
+            grondvlak = zijde ** 2
+        else:
+            grondvlak = self._get_getal("Oppervlakte grondvlak: ")
+
+        hoogte = self._get_getal("Hoogte: ")
+        if grondvlak <= 0 or hoogte <= 0:
+            raise ValueError("Afmetingen moeten positief zijn!")
+
+        volume = (1/3) * grondvlak * hoogte
+
+        print(kleur("\n  ═══ Piramide ═══", "geel"))
+        print(f"    Grondvlak: {grondvlak} | Hoogte: {hoogte}")
+        print(kleur(f"    Volume (1/3·G·h): {volume:.4f}", "groen"))
+
+        self._voeg_geschiedenis_toe(f"Piramide h={hoogte}", volume)
+
+    def _pythagoras_berekening(self):
+        """Berekent ontbrekende zijde met Pythagoras."""
+        print(kleur("\n  Wat wil je berekenen?", "geel"))
+        print("    1. Schuine zijde (c)")
+        print("    2. Rechthoekzijde (a of b)")
+
+        keuze = input(kleur("  Keuze: ", "cyan")).strip()
+
+        if keuze == "1":
+            a = self._get_getal("Rechthoekzijde a: ")
+            b = self._get_getal("Rechthoekzijde b: ")
+            c = math.sqrt(a**2 + b**2)
+
+            print(kleur("\n  ═══ Pythagoras ═══", "geel"))
+            print(f"    a = {a} | b = {b}")
+            print(kleur(f"    c = √(a² + b²) = {c:.4f}", "groen"))
+
+            self._voeg_geschiedenis_toe(f"Pythagoras a={a} b={b}", c)
+
+        elif keuze == "2":
+            c = self._get_getal("Schuine zijde c: ")
+            bekende = self._get_getal("Bekende rechthoekzijde: ")
+            if bekende >= c:
+                raise ValueError("Rechthoekzijde moet kleiner zijn dan schuine zijde!")
+
+            andere = math.sqrt(c**2 - bekende**2)
+
+            print(kleur("\n  ═══ Pythagoras ═══", "geel"))
+            print(f"    c = {c} | bekende zijde = {bekende}")
+            print(kleur(f"    Andere zijde = √(c² - a²) = {andere:.4f}", "groen"))
+
+            self._voeg_geschiedenis_toe(f"Pythagoras c={c}", andere)
+
+    def _afstand_berekening(self):
+        """Berekent afstand tussen twee punten."""
+        print(kleur("\n  Voer coördinaten in:", "geel"))
+        x1 = self._get_getal("Punt 1 - x: ")
+        y1 = self._get_getal("Punt 1 - y: ")
+        x2 = self._get_getal("Punt 2 - x: ")
+        y2 = self._get_getal("Punt 2 - y: ")
+
+        afstand = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+        midden_x = (x1 + x2) / 2
+        midden_y = (y1 + y2) / 2
+
+        print(kleur("\n  ═══ Afstand tussen punten ═══", "geel"))
+        print(f"    Punt 1: ({x1}, {y1})")
+        print(f"    Punt 2: ({x2}, {y2})")
+        print(kleur(f"    Afstand: {afstand:.4f}", "groen"))
+        print(kleur(f"    Middelpunt: ({midden_x:.2f}, {midden_y:.2f})", "groen"))
+
+        self._voeg_geschiedenis_toe(f"Afstand ({x1},{y1})-({x2},{y2})", afstand)
+
     # ==================== EXPRESSIE PARSER ====================
 
     def _expressie_menu(self):
@@ -1222,9 +1574,10 @@ class RekenmachineApp:
             ("4", "Financieel"),
             ("5", "Statistieken"),
             ("6", "Gezondheid"),
+            ("7", "Meetkunde"),
             ("", ""),
-            ("7", "Expressie calculator"),
-            ("8", "Geheugen & Geschiedenis"),
+            ("8", "Expressie calculator"),
+            ("9", "Geheugen & Geschiedenis"),
             ("", ""),
             ("0", "Terug naar hoofdmenu")
         ]
@@ -1281,8 +1634,10 @@ class RekenmachineApp:
             elif keuze == "6":
                 self._gezondheid_menu()
             elif keuze == "7":
-                self._expressie_menu()
+                self._meetkunde_menu()
             elif keuze == "8":
+                self._expressie_menu()
+            elif keuze == "9":
                 self._geheugen_menu()
             else:
                 fout("Ongeldige keuze.")

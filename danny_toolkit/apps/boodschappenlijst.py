@@ -37,7 +37,8 @@ class BoodschappenlijstApp:
         "diepvries": {"naam": "Diepvries", "emoji": "🧊", "volgorde": 9},
         "huishouden": {"naam": "Huishouden", "emoji": "🧹", "volgorde": 10},
         "verzorging": {"naam": "Verzorging", "emoji": "🧴", "volgorde": 11},
-        "overig": {"naam": "Overig", "emoji": "📦", "volgorde": 12}
+        "dieren": {"naam": "Dierbenodigdheden", "emoji": "🐾", "volgorde": 12},
+        "overig": {"naam": "Overig", "emoji": "📦", "volgorde": 13}
     }
 
     PRIORITEITEN = {
@@ -59,6 +60,8 @@ class BoodschappenlijstApp:
         "diepvries": ["Pizza", "Ijsjes", "Groenten mix", "Friet"],
         "huishouden": ["Afwasmiddel", "Schoonmaakspray", "Toiletpapier", "Vuilniszakken"],
         "verzorging": ["Shampoo", "Tandpasta", "Zeep", "Deodorant"],
+        "dieren": ["Hondenvoer", "Kattenvoer", "Kattenbakkorrels", "Snacks hond",
+                   "Snacks kat", "Vogelzaad", "Visvoer", "Knaagdiervoer"],
         "overig": ["Batterijen", "Lampen", "Tape"]
     }
 
@@ -368,7 +371,7 @@ class BoodschappenlijstApp:
         for i, (key, cat) in enumerate(cats, 1):
             print(f"    {i:2}. {cat['emoji']} {cat['naam']}")
 
-        keuze = input(kleur("\n  Categorie (1-12): ", "cyan")).strip()
+        keuze = input(kleur("\n  Categorie (1-13): ", "cyan")).strip()
         try:
             idx = int(keuze) - 1
             if 0 <= idx < len(cats):

@@ -481,6 +481,7 @@ class VirtueelHuisdierApp:
             print("|  2. Steen-papier-schaar        |")
             print("|  3. Memory (10 munten)         |")
             print("|  4. Snelheidstest              |")
+            print("|  5. Verstoppertje (8 munten)   |")
             print("|  0. Terug                      |")
             print("+================================+")
 
@@ -496,6 +497,8 @@ class VirtueelHuisdierApp:
                 self._game_memory()
             elif keuze == "4":
                 self._game_snelheid()
+            elif keuze == "5":
+                self._game_verstoppertje()
 
             input("\nDruk op Enter...")
 
@@ -608,6 +611,64 @@ class VirtueelHuisdierApp:
             self.huisdier["munten"] += 5
         else:
             print(f"Te langzaam! {reactietijd:.3f}s")
+
+    def _game_verstoppertje(self):
+        """Verstoppertje mini-game - zoek je huisdier!"""
+        if self.huisdier["munten"] < 8:
+            print("\nJe hebt niet genoeg munten! (Nodig: 8)")
+            return
+
+        self.huisdier["munten"] -= 8
+
+        # Maak een 3x3 grid met 9 verstopplekken
+        plekken = [
+            "achter de bank", "in de kast", "onder het bed",
+            "achter het gordijn", "in de wasmand", "onder de tafel",
+            "in de doos", "achter de deur", "onder de deken"
+        ]
+
+        verstopplek = random.choice(plekken)
+        pogingen = 3
+
+        print(f"\n{self.huisdier['naam']} heeft zich verstopt!")
+        print(f"{self.huisdier['geluid']}")
+        print(f"\nJe hebt {pogingen} pogingen om {self.huisdier['naam']} te vinden!")
+
+        print("\nWaar zou je zoeken?")
+        for i, plek in enumerate(plekken, 1):
+            print(f"  {i}. {plek.capitalize()}")
+
+        for poging in range(pogingen):
+            try:
+                keuze = int(input(f"\nPoging {poging + 1}/{pogingen} - Kies (1-9): ").strip())
+                if 1 <= keuze <= 9:
+                    gekozen = plekken[keuze - 1]
+
+                    if gekozen == verstopplek:
+                        winst = 20 + (pogingen - poging) * 5
+                        print(f"\n🎉 GEVONDEN! {self.huisdier['naam']} zat {verstopplek}!")
+                        print(f"{self.huisdier['naam']} springt blij in je armen!")
+                        print(f"+{winst} munten!")
+                        self.huisdier["munten"] += winst
+                        self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 15)
+                        self.huisdier["stats"]["games_gewonnen"] += 1
+                        self._check_game_achievements()
+                        return
+                    else:
+                        # Geef een hint
+                        if poging < pogingen - 1:
+                            verstop_idx = plekken.index(verstopplek)
+                            keuze_idx = keuze - 1
+                            if abs(verstop_idx - keuze_idx) <= 2:
+                                print(f"\n*je hoort geritsel* {self.huisdier['naam']} is dichtbij!")
+                            else:
+                                print(f"\n*stilte* {self.huisdier['naam']} is niet in de buurt...")
+            except ValueError:
+                print("Voer een nummer in (1-9)!")
+
+        print(f"\n{self.huisdier['naam']} komt tevoorschijn van {verstopplek}!")
+        print(f"{self.huisdier['geluid']} - Beter geluk volgende keer!")
+        self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 5)
 
     def _check_game_achievements(self):
         """Check game achievements."""

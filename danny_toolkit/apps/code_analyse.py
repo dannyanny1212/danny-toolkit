@@ -1205,22 +1205,23 @@ class CodeAnalyseApp:
         print("|  5. Code smell detector                          |")
         print("|  6. Complexity analyse                           |")
         print("|  7. Performance check                            |")
+        print("|  8. Duplicate code detector                      |")
         print(kleur("+" + "-" * 50 + "+", "grijs"))
         print(kleur("| STIJL                                            |", "wit"))
-        print("|  8. Formatting check/fix                         |")
-        print("|  9. Naming conventions                           |")
-        print("| 10. Documentatie coverage                        |")
-        print("| 11. Type hint coverage                           |")
-        print("| 12. Import analyse                               |")
+        print("|  9. Formatting check/fix                         |")
+        print("| 10. Naming conventions                           |")
+        print("| 11. Documentatie coverage                        |")
+        print("| 12. Type hint coverage                           |")
+        print("| 13. Import analyse                               |")
         print(kleur("+" + "-" * 50 + "+", "grijs"))
         print(kleur("| RAPPORT                                          |", "wit"))
-        print("| 13. Genereer rapport (TXT/JSON/HTML)             |")
-        print("| 14. Bekijk analyse geschiedenis                  |")
-        print("| 15. Statistieken                                 |")
+        print("| 14. Genereer rapport (TXT/JSON/HTML)             |")
+        print("| 15. Bekijk analyse geschiedenis                  |")
+        print("| 16. Statistieken                                 |")
         print(kleur("+" + "-" * 50 + "+", "grijs"))
         print(kleur("| TOOLS                                            |", "wit"))
-        print("| 16. Woordtelling                                 |")
-        print("| 17. Getallen statistieken                        |")
+        print("| 17. Woordtelling                                 |")
+        print("| 18. Getallen statistieken                        |")
         print(kleur("+" + "-" * 50 + "+", "grijs"))
         print("|  0. Terug naar hoofdmenu                         |")
         print(kleur("+" + "=" * 50 + "+", "cyaan"))
@@ -1469,6 +1470,112 @@ class CodeAnalyseApp:
                 print(f"  Regel {issue['regel']}: {kleur(issue['beschrijving'], 'oranje')}")
                 print(f"    {kleur(issue['code'], 'grijs')}")
 
+    def detect_duplicate_code(self, code: str = None, min_regels: int = 4) -> Dict[str, Any]:
+        """Detecteert duplicate code blokken."""
+        code = code or self.huidige_code
+        if not code:
+            return {"fout": "Geen code geladen"}
+
+        regels = code.split("\n")
+        duplicaten = []
+        gevonden_hashes = {}
+
+        # Normaliseer regels (verwijder leading whitespace voor vergelijking)
+        def normaliseer(regel):
+            return regel.strip()
+
+        # Zoek naar duplicate blokken van min_regels of meer
+        for start in range(len(regels) - min_regels + 1):
+            # Maak een blok van min_regels regels
+            blok_regels = []
+            for i in range(min_regels):
+                regel = normaliseer(regels[start + i])
+                if regel and not regel.startswith("#"):
+                    blok_regels.append(regel)
+
+            if len(blok_regels) < min_regels - 1:
+                continue
+
+            blok_hash = hash(tuple(blok_regels))
+
+            if blok_hash in gevonden_hashes:
+                # Check of het geen overlappend blok is
+                vorige_start = gevonden_hashes[blok_hash]
+                if abs(start - vorige_start) >= min_regels:
+                    duplicaten.append({
+                        "blok_1_start": vorige_start + 1,
+                        "blok_2_start": start + 1,
+                        "regels": min_regels,
+                        "code_preview": blok_regels[0][:50] + "..." if len(blok_regels[0]) > 50 else blok_regels[0]
+                    })
+            else:
+                gevonden_hashes[blok_hash] = start
+
+        # Verwijder duplicaten in de resultaten
+        unieke_duplicaten = []
+        gezien = set()
+        for dup in duplicaten:
+            key = (dup["blok_1_start"], dup["blok_2_start"])
+            if key not in gezien:
+                gezien.add(key)
+                unieke_duplicaten.append(dup)
+
+        # Bereken duplicate score
+        totaal_regels = len([r for r in regels if r.strip()])
+        duplicate_regels = len(unieke_duplicaten) * min_regels
+        duplicate_percentage = (duplicate_regels / totaal_regels * 100) if totaal_regels > 0 else 0
+
+        return {
+            "totaal_duplicaten": len(unieke_duplicaten),
+            "duplicaten": unieke_duplicaten[:20],
+            "duplicate_regels": duplicate_regels,
+            "duplicate_percentage": round(duplicate_percentage, 1),
+            "min_blok_grootte": min_regels
+        }
+
+    def _toon_duplicate_code(self):
+        """Toon duplicate code detectie."""
+        if not self.huidige_code:
+            print(kleur("\nLaad eerst een bestand (optie 1)!", "rood"))
+            return
+
+        print("\n" + kleur("DUPLICATE CODE DETECTOR", "cyaan"))
+        print("=" * 50)
+
+        min_regels_str = input(kleur(
+            "\nMinimum blokgrootte (aantal regels) [4]: ", "cyaan"
+        )).strip()
+        min_regels = int(min_regels_str) if min_regels_str.isdigit() else 4
+
+        result = self.detect_duplicate_code(min_regels=min_regels)
+
+        if "fout" in result:
+            print(kleur(f"\nFout: {result['fout']}", "rood"))
+            return
+
+        print(f"\nDuplicate blokken gevonden: {result['totaal_duplicaten']}")
+        print(f"Duplicate regels: ~{result['duplicate_regels']}")
+        print(f"Duplicate percentage: {result['duplicate_percentage']}%")
+
+        if result['duplicaten']:
+            print(f"\n{kleur('Gevonden duplicaten:', 'geel')}")
+            for i, dup in enumerate(result['duplicaten'][:10], 1):
+                print(f"\n  {i}. Regel {dup['blok_1_start']} ↔ Regel {dup['blok_2_start']}")
+                print(f"     ({dup['regels']} regels)")
+                print(kleur(f"     Preview: {dup['code_preview']}", "grijs"))
+
+            if result['totaal_duplicaten'] > 10:
+                print(kleur(f"\n  ... en {result['totaal_duplicaten'] - 10} meer", "grijs"))
+
+            print(f"\n{kleur('Aanbevelingen:', 'groen')}")
+            if result['duplicate_percentage'] > 10:
+                print("  • Overweeg duplicate code te refactoren naar functies")
+                print("  • Maak herbruikbare utilities voor veelgebruikte patronen")
+            elif result['duplicate_percentage'] > 5:
+                print("  • Er is enige duplicatie - review de gemarkeerde blokken")
+            else:
+                print("  • Weinig duplicatie gevonden - goede code structuur!")
+
     def _toon_formatting(self):
         """Toon formatting check en bied fix aan."""
         if not self.huidige_code:
@@ -1710,29 +1817,31 @@ class CodeAnalyseApp:
             elif keuze == "7":
                 self._toon_performance()
             elif keuze == "8":
-                self._toon_formatting()
+                self._toon_duplicate_code()
             elif keuze == "9":
-                self._toon_naming()
+                self._toon_formatting()
             elif keuze == "10":
-                self._toon_documentatie()
+                self._toon_naming()
             elif keuze == "11":
-                self._toon_type_hints()
+                self._toon_documentatie()
             elif keuze == "12":
-                self._toon_import_analyse()
+                self._toon_type_hints()
             elif keuze == "13":
-                self._genereer_rapport_menu()
+                self._toon_import_analyse()
             elif keuze == "14":
-                self._toon_geschiedenis()
+                self._genereer_rapport_menu()
             elif keuze == "15":
-                self._toon_statistieken()
+                self._toon_geschiedenis()
             elif keuze == "16":
+                self._toon_statistieken()
+            elif keuze == "17":
                 tekst = input("\nVoer tekst in: ")
                 if tekst:
                     telling = self.tel_woorden(tekst)
                     print(f"\nAantal unieke woorden: {len(telling)}")
                     top = Counter(telling).most_common(5)
                     print(f"Top 5: {top}")
-            elif keuze == "17":
+            elif keuze == "18":
                 invoer = input("\nVoer getallen in (gescheiden door spaties): ")
                 try:
                     nummers = [float(x) for x in invoer.split()]

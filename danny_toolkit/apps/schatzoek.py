@@ -147,7 +147,8 @@ class SchatzoekApp:
         "xray": {"emoji": "👁️", "beschrijving": "Zie door muren"},
         "onzichtbaar": {"emoji": "👻", "beschrijving": "Monsters zien je niet"},
         "gezondheid": {"emoji": "❤️", "beschrijving": "Herstel 25 HP"},
-        "sleutel": {"emoji": "🗝️", "beschrijving": "Open een deur"}
+        "sleutel": {"emoji": "🗝️", "beschrijving": "Open een deur"},
+        "vuurschild": {"emoji": "🔶", "beschrijving": "Immuun voor vuur/lava schade"}
     }
 
     # Monsters
@@ -156,7 +157,9 @@ class SchatzoekApp:
         "vleermuis": {"emoji": "🦇", "hp": 15, "schade": 15, "snelheid": 2, "xp": 15},
         "skelet": {"emoji": "💀", "hp": 30, "schade": 20, "snelheid": 1, "xp": 25},
         "geest": {"emoji": "👻", "hp": 25, "schade": 25, "snelheid": 1, "xp": 30},
-        "orc": {"emoji": "👹", "hp": 50, "schade": 30, "snelheid": 1, "xp": 50}
+        "orc": {"emoji": "👹", "hp": 50, "schade": 30, "snelheid": 1, "xp": 50},
+        "lavagelem": {"emoji": "🔥", "hp": 45, "schade": 35, "snelheid": 1, "xp": 60,
+                     "speciaal": "brand"}
     }
 
     # Bosses
@@ -439,8 +442,14 @@ class SchatzoekApp:
                 self.muntjes[pos] = random.randint(1, 3)
                 bezet.add(pos)
 
-        # Plaats monsters
-        monster_types = list(self.MONSTERS.keys())
+        # Plaats monsters (met biome-specifieke monsters)
+        if biome == "vulkaan":
+            monster_types = ["lavagelem", "lavagelem", "skelet", "orc"]
+        else:
+            monster_types = list(self.MONSTERS.keys())
+            if "lavagelem" in monster_types:
+                monster_types.remove("lavagelem")
+
         for _ in range(settings.get("monsters", 2)):
             pos = self._random_pos(bezet)
             if pos:
@@ -636,8 +645,17 @@ class SchatzoekApp:
 
                 # Monster aanval (als nog leeft)
                 if monster["hp"] > 0:
-                    self._neem_schade(monster["schade"])
-                    print(kleur(f"  {monster['type'].title()} doet {monster['schade']} schade!", "rood"))
+                    monster_schade = monster["schade"]
+                    # Lavagelem heeft vuurschade
+                    if monster.get("speciaal") == "brand":
+                        if "vuurschild" in self.actieve_effecten:
+                            print(kleur(f"  🔶 Je vuurschild blokkeert de vlammen!", "geel"))
+                            monster_schade = 0
+                        else:
+                            print(kleur(f"  🔥 De lavagelem brandt je met vuur!", "rood"))
+                    if monster_schade > 0:
+                        self._neem_schade(monster_schade)
+                        print(kleur(f"  {monster['type'].title()} doet {monster_schade} schade!", "rood"))
 
             elif keuze == "v":
                 # Vluchten
@@ -839,6 +857,9 @@ class SchatzoekApp:
             heal = min(25, self.max_hp - self.speler_hp)
             self.speler_hp += heal
             succes(f"❤️ +{heal} HP!")
+        elif powerup == "vuurschild":
+            self.actieve_effecten.append("vuurschild")
+            succes("🔶 Vuurschild geactiveerd! Je bent immuun voor vuur!")
 
         return True
 
