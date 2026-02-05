@@ -1616,8 +1616,9 @@ class VirtueelHuisdierApp:
                 (r'^\s*except\s*:\s*$', "Bare except"),
             ],
             "Logic": [
-                (r'[^!<>=]=\s*None\b', "Gebruik 'is None'"),
-                (r'!=\s*None\b', "Gebruik 'is not None'"),
+                # Alleen echte vergelijkingen, geen parameter defaults (x = None)
+                (r'==\s*None\b', "Gebruik 'is None' ipv '== None'"),
+                (r'!=\s*None\b', "Gebruik 'is not None' ipv '!= None'"),
             ],
             "Complexity": [
                 (r'if .+ and .+ and .+ and .+', "Complexe conditie"),
