@@ -2034,6 +2034,19 @@ class VirtueelHuisdierApp:
                 "Fine-tuning past een voorgetraind model aan voor een specifieke taak of domein",
                 "CNN (Convolutional Neural Network) is gespecialiseerd in beeldherkenning",
                 "RNN (Recurrent Neural Network) is ontworpen voor sequentiele data zoals tekst",
+
+                # Geavanceerde Concepten
+                "Anders dan traditionele databases die zoeken op exacte waarden, vinden vector databases items die semantisch vergelijkbaar zijn",
+                "Deep learning is in feite een subset van machine learning, gericht op diepe neural networks",
+                "Neural networks vormen de basis van deep learning en zijn geinspireerd op biologische neuronen",
+
+                # Natuurkunde & Wetenschap
+                "Rayleigh-verstrooiing is het fenomeen waarbij licht verstrooid wordt door kleine deeltjes in de atmosfeer",
+                "Dit fenomeen (Rayleigh-verstrooiing) verklaart waarom de lucht blauw is en zonsondergangen rood",
+
+                # Internet & Netwerken
+                "Internet verbindingen maken het mogelijk voor gebruikers om toegang te krijgen tot informatie en diensten van over de hele wereld",
+                "Het World Wide Web is een systeem van onderling verbonden documenten via hyperlinks",
             ]
             for feit in random.sample(ingebouwde_feiten, 3):
                 if feit not in permanente_kennis["feiten"]:
