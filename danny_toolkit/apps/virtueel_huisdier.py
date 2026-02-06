@@ -1802,9 +1802,21 @@ class VirtueelHuisdierApp:
             print("|     Blijf op de hoogte van nieuws  |")
             print("|  3. Weer Checken (5 munten)        |")
             print("|     Leer over het weer             |")
+            print("+------------------------------------+")
+            print("|  [AI KRACHTEN - Claude Integratie] |")
+            print("+------------------------------------+")
             print("|  4. AI Gesprek (15 munten)         |")
-            print("|     Praat met Claude AI            |")
-            print("|  5. Bekijk Kennisbibliotheek       |")
+            print("|     Stel vragen aan Claude AI      |")
+            print("|  5. AI Code Helper (20 munten)     |")
+            print("|     Leer programmeren met AI       |")
+            print("|  6. AI Quiz Master (12 munten)     |")
+            print("|     Test je kennis met AI vragen   |")
+            print("|  7. AI Verhalen (18 munten)        |")
+            print("|     Creatieve verhalen genereren   |")
+            print("|  8. AI Vertaler (10 munten)        |")
+            print("|     Vertaal tekst naar andere taal |")
+            print("+------------------------------------+")
+            print("|  9. Bekijk Kennisbibliotheek       |")
             print("|     Alle geleerde feiten bekijken  |")
             print("|  0. Terug                          |")
             print("+====================================+")
@@ -1822,6 +1834,14 @@ class VirtueelHuisdierApp:
             elif keuze == "4":
                 self._leren_ai_gesprek()
             elif keuze == "5":
+                self._ai_code_helper()
+            elif keuze == "6":
+                self._ai_quiz_master()
+            elif keuze == "7":
+                self._ai_verhalen()
+            elif keuze == "8":
+                self._ai_vertaler()
+            elif keuze == "9":
                 self._bekijk_kennisbibliotheek()
 
             input("\nDruk op Enter...")
@@ -2706,6 +2726,521 @@ Antwoord in het Nederlands."""
             self._unlock_achievement("super_slim")
 
         self._check_evolutie()
+        print(f"\n  {geluid}")
+        self._sla_op()
+
+    def _ai_code_helper(self):
+        """AI helpt met programmeren - code uitleggen en genereren!"""
+        if self.huisdier["munten"] < 20:
+            print("\nJe hebt niet genoeg munten! (Nodig: 20)")
+            return
+
+        if self.huisdier["energie"] < 25:
+            print(f"\n{self.huisdier['naam']} is te moe voor programmeren!")
+            return
+
+        self.huisdier["munten"] -= 20
+        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 25)
+
+        naam = self.huisdier["naam"]
+        geluid = self.huisdier["geluid"]
+        iq = self.huisdier.get("intelligentie", 0)
+
+        print("\n" + "=" * 55)
+        print(f"  [CODE] {naam} OPENT DE AI CODE HELPER!")
+        print("=" * 55)
+
+        print("\n  Wat wil je doen?")
+        print("  1. Code laten uitleggen")
+        print("  2. Code laten genereren")
+        print("  3. Programmeer concept leren")
+
+        keuze = input("\n  Keuze (1-3): ").strip()
+
+        intel_bonus = 0
+        code_geleerd = []
+
+        # Probeer echte AI
+        claude_chat = None
+        echte_ai = False
+        try:
+            claude_chat = _get_claude_chat()
+            if claude_chat:
+                echte_ai = True
+                print(f"\n  [OK] Verbonden met {claude_chat.provider.upper()} AI!")
+        except Exception:
+            pass
+
+        if keuze == "1":
+            # Code uitleggen
+            print("\n  --- CODE UITLEG ---")
+            print("  Plak je code hieronder (typ 'KLAAR' als je klaar bent):")
+            code_lines = []
+            while True:
+                line = input()
+                if line.strip().upper() == "KLAAR":
+                    break
+                code_lines.append(line)
+
+            code = "\n".join(code_lines)
+            if code.strip():
+                print(f"\n  {naam} analyseert de code...")
+                time.sleep(0.5)
+
+                if echte_ai and claude_chat:
+                    try:
+                        prompt = f"Leg deze code uit in het Nederlands, kort en duidelijk:\n\n{code}"
+                        berichten = [{"role": "user", "content": prompt}]
+                        uitleg = claude_chat._chat_conversatie(berichten, "Je bent een code uitleg expert. Antwoord in het Nederlands.")
+                        print(f"\n  Claude: {uitleg[:400]}{'...' if len(uitleg) > 400 else ''}")
+                        intel_bonus += 8
+                        code_geleerd.append("Code analyse uitgevoerd met AI")
+                    except Exception as e:
+                        print(f"  [!] API fout: {e}")
+                else:
+                    # Fallback: basis code analyse
+                    print(f"\n  [ANALYSE] Code bevat {len(code_lines)} regels")
+                    if "def " in code:
+                        print("  [LAMP] Gevonden: functie definitie(s)")
+                        code_geleerd.append("Python functies gebruiken 'def'")
+                    if "class " in code:
+                        print("  [LAMP] Gevonden: class definitie(s)")
+                        code_geleerd.append("Classes maken objecten")
+                    if "for " in code or "while " in code:
+                        print("  [LAMP] Gevonden: loop(s)")
+                        code_geleerd.append("Loops herhalen code")
+                    if "import " in code:
+                        print("  [LAMP] Gevonden: import statement(s)")
+                        code_geleerd.append("Imports laden modules")
+                    intel_bonus += 3
+
+        elif keuze == "2":
+            # Code genereren
+            print("\n  --- CODE GENERATOR ---")
+            beschrijving = input("  Beschrijf wat de code moet doen: ").strip()
+
+            if beschrijving:
+                print(f"\n  {naam} genereert code...")
+                time.sleep(0.5)
+
+                if echte_ai and claude_chat:
+                    try:
+                        prompt = f"Schrijf Python code die het volgende doet: {beschrijving}. Voeg comments toe in het Nederlands."
+                        berichten = [{"role": "user", "content": prompt}]
+                        code = claude_chat._chat_conversatie(berichten, "Je bent een Python expert. Geef alleen code met comments.")
+                        print(f"\n  --- GEGENEREERDE CODE ---\n{code[:600]}{'...' if len(code) > 600 else ''}")
+                        intel_bonus += 10
+                        code_geleerd.append(f"Code generatie: {beschrijving[:50]}")
+                    except Exception as e:
+                        print(f"  [!] API fout: {e}")
+                else:
+                    # Fallback: voorbeeldcode templates
+                    templates = {
+                        "lijst": "# Lijst maken\nmijn_lijst = [1, 2, 3]\nfor item in mijn_lijst:\n    print(item)",
+                        "functie": "# Functie maken\ndef mijn_functie(x):\n    return x * 2\n\nprint(mijn_functie(5))",
+                        "class": "# Class maken\nclass MijnClass:\n    def __init__(self):\n        self.waarde = 0",
+                        "bestand": "# Bestand lezen\nwith open('bestand.txt', 'r') as f:\n    inhoud = f.read()",
+                    }
+                    for key, template in templates.items():
+                        if key in beschrijving.lower():
+                            print(f"\n  --- VOORBEELD CODE ---\n{template}")
+                            code_geleerd.append(f"Geleerd: {key} code")
+                            break
+                    else:
+                        print("\n  [TIP] Probeer woorden als: lijst, functie, class, bestand")
+                    intel_bonus += 3
+
+        elif keuze == "3":
+            # Programmeer concept leren
+            print("\n  --- PROGRAMMEER CONCEPTEN ---")
+            concepten = {
+                "1": ("Variabelen", "Variabelen zijn containers voor data. x = 5 slaat het getal 5 op in x."),
+                "2": ("Loops", "Loops herhalen code. 'for i in range(5)' herhaalt 5 keer."),
+                "3": ("Functies", "Functies zijn herbruikbare codeblokken. 'def naam():' maakt een functie."),
+                "4": ("Classes", "Classes zijn blauwdrukken voor objecten met eigenschappen en methodes."),
+                "5": ("Lijsten", "Lijsten slaan meerdere waarden op. [1, 2, 3] is een lijst met 3 items."),
+                "6": ("Dictionaries", "Dictionaries slaan key-value paren op. {'naam': 'Jan'} heeft key 'naam'."),
+                "7": ("Error Handling", "Try/except vangt fouten op. try: code except: foutafhandeling"),
+                "8": ("List Comprehension", "Korte syntax voor lijsten: [x*2 for x in range(5)] maakt [0,2,4,6,8]"),
+            }
+            print("  Kies een concept:")
+            for num, (concept, _) in concepten.items():
+                print(f"    {num}. {concept}")
+
+            concept_keuze = input("\n  Keuze: ").strip()
+            if concept_keuze in concepten:
+                concept_naam, uitleg = concepten[concept_keuze]
+                print(f"\n  [LAMP] {concept_naam}:")
+                print(f"  {uitleg}")
+                code_geleerd.append(f"Concept geleerd: {concept_naam}")
+                intel_bonus += 5
+
+        # Resultaten
+        print("\n" + "=" * 55)
+        print("  [CODE] CODE SESSIE VOLTOOID!")
+        print("=" * 55)
+
+        xp_beloning = len(code_geleerd) * 20 + 15
+        munt_beloning = len(code_geleerd) * 8
+
+        if echte_ai:
+            munt_beloning += 15
+            intel_bonus += 5
+
+        print(f"\n  {naam}'s programmeer sessie:")
+        print(f"    [CODE] Items geleerd: {len(code_geleerd)}")
+        print(f"    [IQ] Intelligentie: +{intel_bonus}")
+        print(f"    [MUNT] Munten: +{munt_beloning}")
+        print(f"    [XP] Ervaring: +{xp_beloning}")
+
+        self.huisdier["munten"] += munt_beloning
+        self.huisdier["ervaring"] += xp_beloning
+        self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + intel_bonus
+        self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 5)
+
+        print(f"\n  {geluid}")
+        self._sla_op()
+
+    def _ai_quiz_master(self):
+        """AI stelt quiz vragen om kennis te testen!"""
+        if self.huisdier["munten"] < 12:
+            print("\nJe hebt niet genoeg munten! (Nodig: 12)")
+            return
+
+        if self.huisdier["energie"] < 15:
+            print(f"\n{self.huisdier['naam']} is te moe voor een quiz!")
+            return
+
+        self.huisdier["munten"] -= 12
+        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 15)
+
+        naam = self.huisdier["naam"]
+        geluid = self.huisdier["geluid"]
+        iq = self.huisdier.get("intelligentie", 0)
+
+        print("\n" + "=" * 55)
+        print(f"  [QUIZ] {naam} DOET DE AI QUIZ!")
+        print("=" * 55)
+
+        # Quiz vragen per niveau
+        quiz_vragen = {
+            "makkelijk": [
+                ("Wat is 2 + 2?", "4", ["4", "vier"]),
+                ("Welke kleur heeft de lucht overdag?", "blauw", ["blauw"]),
+                ("Hoeveel dagen heeft een week?", "7", ["7", "zeven"]),
+                ("Wat is de hoofdstad van Nederland?", "Amsterdam", ["amsterdam"]),
+                ("In welke taal is Python geschreven?", "C", ["c"]),
+            ],
+            "gemiddeld": [
+                ("Wat doet 'print()' in Python?", "tekst weergeven", ["print", "weergeven", "output", "tonen"]),
+                ("Wat is een variabele?", "container voor data", ["container", "opslag", "waarde"]),
+                ("Wat betekent AI?", "Artificial Intelligence", ["artificial", "kunstmatige", "intelligentie"]),
+                ("Wat is een loop in programmeren?", "code herhalen", ["herhalen", "repeat", "iteratie"]),
+                ("Welk HTTP method haalt data op?", "GET", ["get"]),
+            ],
+            "moeilijk": [
+                ("Wat is een neural network?", "model geinspireerd op het brein", ["brein", "neuronen", "lagen"]),
+                ("Wat doet backpropagation?", "gradients berekenen", ["gradient", "weights", "leren", "error"]),
+                ("Wat is cosine similarity?", "hoek tussen vectoren meten", ["hoek", "vector", "gelijkenis"]),
+                ("Wat is RAG?", "Retrieval Augmented Generation", ["retrieval", "generation", "zoeken"]),
+                ("Wat is een embedding?", "numerieke representatie", ["vector", "numeriek", "representatie"]),
+            ],
+        }
+
+        # Kies niveau op basis van IQ
+        if iq >= 70:
+            niveau = "moeilijk"
+            alle_vragen = quiz_vragen["moeilijk"] + quiz_vragen["gemiddeld"]
+        elif iq >= 40:
+            niveau = "gemiddeld"
+            alle_vragen = quiz_vragen["gemiddeld"] + quiz_vragen["makkelijk"]
+        else:
+            niveau = "makkelijk"
+            alle_vragen = quiz_vragen["makkelijk"]
+
+        print(f"\n  Quiz niveau: {niveau.upper()} (IQ: {iq})")
+        print("  Beantwoord 5 vragen!\n")
+
+        gekozen = random.sample(alle_vragen, min(5, len(alle_vragen)))
+        score = 0
+        intel_bonus = 0
+
+        for i, (vraag, antwoord, acceptabel) in enumerate(gekozen, 1):
+            print(f"  Vraag {i}: {vraag}")
+            gebruiker_antwoord = input("  Jouw antwoord: ").strip().lower()
+
+            correct = any(acc.lower() in gebruiker_antwoord for acc in acceptabel)
+            if correct:
+                print(f"  [OK] Correct! Het antwoord was: {antwoord}")
+                score += 1
+                intel_bonus += 3
+            else:
+                print(f"  [X] Helaas! Het antwoord was: {antwoord}")
+                intel_bonus += 1  # Ook leren van fouten
+
+            time.sleep(0.3)
+
+        # Resultaten
+        print("\n" + "=" * 55)
+        print("  [QUIZ] QUIZ VOLTOOID!")
+        print("=" * 55)
+
+        percentage = (score / 5) * 100
+        print(f"\n  Score: {score}/5 ({percentage:.0f}%)")
+
+        if percentage == 100:
+            print("  [TROFEE] PERFECTE SCORE!")
+            bonus = 20
+        elif percentage >= 80:
+            print("  [STAR] Uitstekend!")
+            bonus = 10
+        elif percentage >= 60:
+            print("  [OK] Goed gedaan!")
+            bonus = 5
+        else:
+            print("  [TIP] Blijf oefenen!")
+            bonus = 0
+
+        xp_beloning = score * 15 + 10
+        munt_beloning = score * 5 + bonus
+
+        print(f"\n  {naam}'s quiz resultaat:")
+        print(f"    [QUIZ] Score: {score}/5")
+        print(f"    [IQ] Intelligentie: +{intel_bonus}")
+        print(f"    [MUNT] Munten: +{munt_beloning}")
+        print(f"    [XP] Ervaring: +{xp_beloning}")
+
+        self.huisdier["munten"] += munt_beloning
+        self.huisdier["ervaring"] += xp_beloning
+        self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + intel_bonus
+        self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 5)
+
+        print(f"\n  {geluid}")
+        self._sla_op()
+
+    def _ai_verhalen(self):
+        """AI genereert creatieve verhalen!"""
+        if self.huisdier["munten"] < 18:
+            print("\nJe hebt niet genoeg munten! (Nodig: 18)")
+            return
+
+        if self.huisdier["energie"] < 20:
+            print(f"\n{self.huisdier['naam']} is te moe voor verhalen!")
+            return
+
+        self.huisdier["munten"] -= 18
+        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 20)
+
+        naam = self.huisdier["naam"]
+        geluid = self.huisdier["geluid"]
+        huisdier_type = self.huisdier["type"]
+
+        print("\n" + "=" * 55)
+        print(f"  [BOEK] {naam} MAAKT EEN VERHAAL!")
+        print("=" * 55)
+
+        print("\n  Kies een verhaal type:")
+        print("  1. Avontuur")
+        print("  2. Grappig")
+        print("  3. Mysterie")
+        print("  4. Sci-Fi")
+        print("  5. Eigen onderwerp")
+
+        keuze = input("\n  Keuze (1-5): ").strip()
+
+        themas = {
+            "1": "avontuurlijk verhaal vol actie",
+            "2": "grappig verhaal dat je laat lachen",
+            "3": "mysterieus verhaal met spanning",
+            "4": "science fiction verhaal in de toekomst",
+        }
+
+        if keuze == "5":
+            thema = input("  Beschrijf je verhaal onderwerp: ").strip()
+        else:
+            thema = themas.get(keuze, "spannend verhaal")
+
+        print(f"\n  {naam} bedenkt een verhaal...")
+        time.sleep(1)
+
+        # Probeer echte AI
+        verhaal = None
+        echte_ai = False
+        intel_bonus = 0
+
+        try:
+            claude_chat = _get_claude_chat()
+            if claude_chat:
+                echte_ai = True
+                prompt = f"Schrijf een kort {thema} voor kinderen over een {huisdier_type} genaamd {naam}. Max 150 woorden, in het Nederlands."
+                berichten = [{"role": "user", "content": prompt}]
+                verhaal = claude_chat._chat_conversatie(berichten, "Je bent een creatieve kinderverhalen schrijver.")
+                intel_bonus = 10
+        except Exception:
+            pass
+
+        if not verhaal:
+            # Fallback verhalen
+            fallback_verhalen = [
+                f"Op een dag besloot {naam} de {huisdier_type} op avontuur te gaan. "
+                f"Door het bos wandelend vond {naam} een glinsterende steen. "
+                f"Het bleek een magische steen te zijn die wensen vervulde! "
+                f"{naam} wenste voor altijd gelukkig te zijn met de beste eigenaar ooit.",
+
+                f"{naam} de {huisdier_type} werd wakker met een gek idee. "
+                f"Vandaag zou {naam} leren vliegen! Na veel pogingen en grappige buitelingen "
+                f"ontdekte {naam} dat vliegen niet nodig was - springen was veel leuker!",
+
+                f"In een land ver weg woonde {naam}, de slimste {huisdier_type} ter wereld. "
+                f"Wetenschappers kwamen van heinde en verre om {naam}'s wijsheid te horen. "
+                f"Het geheim? Elke dag iets nieuws leren en nooit opgeven!",
+            ]
+            verhaal = random.choice(fallback_verhalen)
+            intel_bonus = 4
+
+        print("\n  " + "-" * 50)
+        print(f"  {verhaal}")
+        print("  " + "-" * 50)
+
+        # Resultaten
+        print("\n" + "=" * 55)
+        print("  [BOEK] VERHAAL VOLTOOID!")
+        print("=" * 55)
+
+        xp_beloning = 25
+        munt_beloning = 8
+
+        if echte_ai:
+            munt_beloning += 10
+            intel_bonus += 5
+            print("  [STAR] ECHTE AI verhaal!")
+
+        print(f"\n  {naam}'s creatieve sessie:")
+        print(f"    [BOEK] Verhaal gemaakt!")
+        print(f"    [IQ] Intelligentie: +{intel_bonus} (creativiteit)")
+        print(f"    [MUNT] Munten: +{munt_beloning}")
+        print(f"    [XP] Ervaring: +{xp_beloning}")
+
+        self.huisdier["munten"] += munt_beloning
+        self.huisdier["ervaring"] += xp_beloning
+        self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + intel_bonus
+        self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 8)
+
+        print(f"\n  {geluid}")
+        self._sla_op()
+
+    def _ai_vertaler(self):
+        """AI vertaalt tekst naar andere talen!"""
+        if self.huisdier["munten"] < 10:
+            print("\nJe hebt niet genoeg munten! (Nodig: 10)")
+            return
+
+        if self.huisdier["energie"] < 10:
+            print(f"\n{self.huisdier['naam']} is te moe om te vertalen!")
+            return
+
+        self.huisdier["munten"] -= 10
+        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 10)
+
+        naam = self.huisdier["naam"]
+        geluid = self.huisdier["geluid"]
+
+        print("\n" + "=" * 55)
+        print(f"  [TAAL] {naam} DE VERTALER!")
+        print("=" * 55)
+
+        print("\n  Kies de doeltaal:")
+        print("  1. Engels")
+        print("  2. Duits")
+        print("  3. Frans")
+        print("  4. Spaans")
+        print("  5. Italiaans")
+
+        talen = {
+            "1": ("Engels", "English"),
+            "2": ("Duits", "German"),
+            "3": ("Frans", "French"),
+            "4": ("Spaans", "Spanish"),
+            "5": ("Italiaans", "Italian"),
+        }
+
+        keuze = input("\n  Keuze (1-5): ").strip()
+        if keuze not in talen:
+            keuze = "1"
+
+        taal_nl, taal_en = talen[keuze]
+        tekst = input(f"\n  Typ de tekst om te vertalen naar {taal_nl}: ").strip()
+
+        if not tekst:
+            print("  [!] Geen tekst ingevoerd!")
+            return
+
+        print(f"\n  {naam} vertaalt naar {taal_nl}...")
+        time.sleep(0.5)
+
+        vertaling = None
+        echte_ai = False
+        intel_bonus = 0
+
+        try:
+            claude_chat = _get_claude_chat()
+            if claude_chat:
+                echte_ai = True
+                prompt = f"Vertaal deze tekst naar {taal_en}. Geef alleen de vertaling, niets anders:\n\n{tekst}"
+                berichten = [{"role": "user", "content": prompt}]
+                vertaling = claude_chat._chat_conversatie(berichten, "Je bent een professionele vertaler.")
+                intel_bonus = 6
+        except Exception:
+            pass
+
+        if not vertaling:
+            # Fallback: basis woordenboek
+            basis_woorden = {
+                "Engels": {"hallo": "hello", "ja": "yes", "nee": "no", "dank je": "thank you", "hond": "dog", "kat": "cat"},
+                "Duits": {"hallo": "hallo", "ja": "ja", "nee": "nein", "dank je": "danke", "hond": "Hund", "kat": "Katze"},
+                "Frans": {"hallo": "bonjour", "ja": "oui", "nee": "non", "dank je": "merci", "hond": "chien", "kat": "chat"},
+                "Spaans": {"hallo": "hola", "ja": "si", "nee": "no", "dank je": "gracias", "hond": "perro", "kat": "gato"},
+                "Italiaans": {"hallo": "ciao", "ja": "si", "nee": "no", "dank je": "grazie", "hond": "cane", "kat": "gatto"},
+            }
+
+            woorden = basis_woorden.get(taal_nl, {})
+            vertaling = tekst.lower()
+            for nl, vertaald in woorden.items():
+                vertaling = vertaling.replace(nl, vertaald)
+
+            if vertaling == tekst.lower():
+                vertaling = f"[Basis vertaling niet beschikbaar - ECHTE AI nodig voor: '{tekst}']"
+            intel_bonus = 2
+
+        print(f"\n  --- VERTALING ({taal_nl}) ---")
+        print(f"  Origineel: {tekst}")
+        print(f"  Vertaald:  {vertaling}")
+        print("  " + "-" * 40)
+
+        # Resultaten
+        print("\n" + "=" * 55)
+        print("  [TAAL] VERTALING VOLTOOID!")
+        print("=" * 55)
+
+        xp_beloning = 15
+        munt_beloning = 5
+
+        if echte_ai:
+            munt_beloning += 8
+            intel_bonus += 3
+            print("  [STAR] ECHTE AI vertaling!")
+
+        print(f"\n  {naam}'s vertaal sessie:")
+        print(f"    [TAAL] Vertaald naar: {taal_nl}")
+        print(f"    [IQ] Intelligentie: +{intel_bonus}")
+        print(f"    [MUNT] Munten: +{munt_beloning}")
+        print(f"    [XP] Ervaring: +{xp_beloning}")
+
+        self.huisdier["munten"] += munt_beloning
+        self.huisdier["ervaring"] += xp_beloning
+        self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + intel_bonus
+        self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 3)
+
         print(f"\n  {geluid}")
         self._sla_op()
 
