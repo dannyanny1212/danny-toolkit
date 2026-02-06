@@ -2061,6 +2061,46 @@ class VirtueelHuisdierApp:
                 # Embeddings & Vectoren
                 "Embeddings wijzen een unieke vector toe aan elke entiteit, zodat vergelijkbare items dicht bij elkaar liggen in de vectorruimte",
                 "Machine learning en AI gebruiken embeddings voor taken als beeld- en tekstherkenning",
+
+                # LLM Prompting & AI Instructies
+                "Prompting is de kunst van instructies formuleren voor LLMs zoals Claude en GPT",
+                "Zero-shot prompting vraagt zonder voorbeelden - het model moet de taak zelf begrijpen",
+                "Few-shot prompting geeft voorbeelden waardoor het model het gewenste format leert",
+                "Chain-of-Thought prompting laat AI stap voor stap redeneren voor complexe problemen",
+                "Role prompting geeft het model een persona waardoor relevante kennis wordt geactiveerd",
+                "Temperature bepaalt AI creativiteit: laag voor consistente, hoog voor creatieve outputs",
+
+                # API Design & HTTP
+                "REST APIs zijn stateless: de server onthoudt geen sessie informatie tussen requests",
+                "HTTP statuscodes: 200 is succes, 404 niet gevonden, 500 is een server fout",
+                "JWT (JSON Web Token) is stateless authenticatie met ingebouwde gebruikersinfo",
+                "Rate limiting beschermt APIs tegen overbelasting met maximale requests per periode",
+                "API versioning via URL paden zoals /api/v1/ zorgt voor backwards compatibility",
+                "PATCH update specifieke velden terwijl PUT de hele resource vervangt",
+
+                # Vector Database Technologie
+                "ChromaDB en Pinecone zijn populaire vector databases voor AI toepassingen",
+                "Euclidean distance meet de rechte lijn afstand tussen twee vectoren",
+                "Bij RAG worden documenten eerst gesplit in chunks voor betere retrieval",
+                "Cosine similarity van 1.0 betekent identieke vectoren, 0.0 betekent geen relatie",
+
+                # ML Training & Evaluatie
+                "Reinforcement learning leert door beloning en straf, zoals bij game AI en robotica",
+                "Overfitting betekent dat het model trainingsdata uit het hoofd leert zonder te generaliseren",
+                "Underfitting betekent dat het model te simpel is om patronen in de data te leren",
+                "Model training kan uren of dagen duren, maar inference duurt slechts milliseconden",
+                "Cross-validation en regularisatie zijn technieken om overfitting te voorkomen",
+                "Precision meet hoeveel van de positieve voorspellingen correct zijn",
+                "Recall meet hoeveel van de echte positieve gevallen gevonden zijn",
+                "F1-Score is het harmonisch gemiddelde van precision en recall",
+
+                # Python Geavanceerd
+                "Decorators in Python wrappen functies om functionaliteit toe te voegen zonder code te wijzigen",
+                "Generators gebruiken yield om waarden een voor een te produceren, wat geheugen bespaart",
+                "Context managers met 'with' zorgen automatisch voor setup en cleanup van resources",
+                "Dataclasses reduceren boilerplate code voor data containers met automatische __init__",
+                "Async/await in Python maakt concurrent programmeren mogelijk voor I/O-bound taken",
+                "lru_cache slaat functie-resultaten op zodat herhaalde aanroepen instant zijn",
             ]
             for feit in random.sample(ingebouwde_feiten, 3):
                 if feit not in permanente_kennis["feiten"]:
