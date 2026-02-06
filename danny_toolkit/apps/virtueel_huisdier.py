@@ -567,6 +567,25 @@ class VirtueelHuisdierApp:
         print("| 26. Foto Album                 |")
         print("| 27. Weer Station               |")
         print("+--------------------------------+")
+        print("|  [POWER-UPS & MAGIE]           |")
+        print("+--------------------------------+")
+        print("| 28. Evolutie Systeem           |")
+        print("| 29. Huisdier Gym               |")
+        print("| 30. Magie & Spreuken           |")
+        print("+--------------------------------+")
+        print("|  [ENTERTAINMENT]               |")
+        print("+--------------------------------+")
+        print("| 31. Schatkist Jacht            |")
+        print("| 32. Huisdier Restaurant        |")
+        print("| 33. Muziek Studio              |")
+        print("| 34. Arcade Hal                 |")
+        print("+--------------------------------+")
+        print("|  [SPECIALE AVONTUREN]          |")
+        print("+--------------------------------+")
+        print("| 35. Tijdreizen                 |")
+        print("| 36. Magische Tuin              |")
+        print("| 37. Geheime Missies            |")
+        print("+--------------------------------+")
         print("| 13. Reset Huisdier             |")
         print("|  0. Opslaan & Afsluiten        |")
         print("+================================+")
@@ -5319,6 +5338,1057 @@ Antwoord in het Nederlands."""
             print(f"    {morgen_weer['emoji']} {morgen_weer['type'].title()}")
             print(f"    {morgen_weer['beschrijving']}")
 
+    # ==========================================
+    # POWER-UPS & MAGIE FEATURES
+    # ==========================================
+
+    def _evolutie_systeem(self):
+        """Evolueer je huisdier naar nieuwe vormen!"""
+        naam = self.huisdier["naam"]
+        huisdier_type = self.huisdier["type"]
+
+        # Init evolutie data
+        if "evolutie" not in self.huisdier:
+            self.huisdier["evolutie"] = {
+                "niveau": 1,
+                "vorm": "basis",
+                "krachten": []
+            }
+
+        evo = self.huisdier["evolutie"]
+
+        evolutie_paden = {
+            "hond": [
+                {"niveau": 2, "vorm": "Wolf Pup", "emoji": "🐺", "vereiste_xp": 500, "kracht": "Gehuil"},
+                {"niveau": 3, "vorm": "Alpha Wolf", "emoji": "🐺", "vereiste_xp": 1500, "kracht": "Roedel Leider"},
+                {"niveau": 4, "vorm": "Legendaire Fenrir", "emoji": "🌟🐺", "vereiste_xp": 5000, "kracht": "Ijs Adem"},
+            ],
+            "kat": [
+                {"niveau": 2, "vorm": "Mystieke Kat", "emoji": "🐱✨", "vereiste_xp": 500, "kracht": "Nacht Zicht"},
+                {"niveau": 3, "vorm": "Schaduw Panter", "emoji": "🐆", "vereiste_xp": 1500, "kracht": "Onzichtbaarheid"},
+                {"niveau": 4, "vorm": "Sphinx", "emoji": "🦁👑", "vereiste_xp": 5000, "kracht": "Wijsheid"},
+            ],
+            "vogel": [
+                {"niveau": 2, "vorm": "Vuurvogel", "emoji": "🐦‍🔥", "vereiste_xp": 500, "kracht": "Vuur Vleugels"},
+                {"niveau": 3, "vorm": "Phoenix", "emoji": "🔥🐦", "vereiste_xp": 1500, "kracht": "Herboren"},
+                {"niveau": 4, "vorm": "Hemelse Draak", "emoji": "🐉", "vereiste_xp": 5000, "kracht": "Vliegen"},
+            ],
+            "default": [
+                {"niveau": 2, "vorm": "Verbeterd", "emoji": "⭐", "vereiste_xp": 500, "kracht": "Kracht Boost"},
+                {"niveau": 3, "vorm": "Super", "emoji": "🌟", "vereiste_xp": 1500, "kracht": "Super Snelheid"},
+                {"niveau": 4, "vorm": "Legendarisch", "emoji": "👑", "vereiste_xp": 5000, "kracht": "Ultieme Kracht"},
+            ],
+        }
+
+        pad = evolutie_paden.get(huisdier_type, evolutie_paden["default"])
+
+        print("\n" + "=" * 55)
+        print(f"  [EVOLUTIE] {naam}'s EVOLUTIE SYSTEEM")
+        print("=" * 55)
+        print(f"\n  Huidige vorm: {evo['vorm']} (Niveau {evo['niveau']})")
+        print(f"  Ervaring: {self.huisdier['ervaring']} XP")
+        print(f"  Krachten: {', '.join(evo['krachten']) if evo['krachten'] else 'Geen'}")
+
+        print("\n  Evolutie Pad:")
+        for stage in pad:
+            if stage["niveau"] <= evo["niveau"]:
+                status = "✓ BEREIKT"
+            elif self.huisdier["ervaring"] >= stage["vereiste_xp"]:
+                status = "→ KLAAR!"
+            else:
+                status = f"Nodig: {stage['vereiste_xp']} XP"
+            print(f"    Nv.{stage['niveau']}: {stage['vorm']} {stage['emoji']} - {status}")
+            print(f"         Kracht: {stage['kracht']}")
+
+        print("\n  1. Evolueren (als klaar)")
+        print("  0. Terug")
+
+        keuze = input("\n  Keuze: ").strip()
+
+        if keuze == "1":
+            for stage in pad:
+                if stage["niveau"] == evo["niveau"] + 1:
+                    if self.huisdier["ervaring"] >= stage["vereiste_xp"]:
+                        evo["niveau"] = stage["niveau"]
+                        evo["vorm"] = stage["vorm"]
+                        evo["krachten"].append(stage["kracht"])
+                        self.huisdier["emoji"] = stage["emoji"]
+
+                        print(f"\n  [EVOLUTIE] {naam} evolueert!")
+                        time.sleep(1)
+                        print(f"  ✨ {naam} is nu een {stage['vorm']}! ✨")
+                        print(f"  Nieuwe kracht: {stage['kracht']}")
+
+                        # Bonussen
+                        self.huisdier["geluk"] = 100
+                        self.huisdier["energie"] = 100
+
+                        self._voeg_dagboek_toe(f"Geevolueerd naar {stage['vorm']}!")
+                        self._maak_foto(f"{naam} evolueerde naar {stage['vorm']}!")
+                    else:
+                        print(f"\n  [!] Niet genoeg XP! Nodig: {stage['vereiste_xp']}")
+                    break
+            else:
+                print("\n  [!] Maximale evolutie bereikt!")
+
+        self._sla_op()
+
+    def _huisdier_gym(self):
+        """Train je huisdier's stats!"""
+        naam = self.huisdier["naam"]
+
+        # Init gym data
+        if "gym" not in self.huisdier:
+            self.huisdier["gym"] = {
+                "kracht": 10,
+                "snelheid": 10,
+                "uithoudingsvermogen": 10,
+                "trainingen": 0
+            }
+
+        gym = self.huisdier["gym"]
+
+        oefeningen = {
+            "1": {"naam": "Hardlopen", "stat": "snelheid", "energie": 15, "bonus": 2},
+            "2": {"naam": "Gewichtheffen", "stat": "kracht", "energie": 20, "bonus": 3},
+            "3": {"naam": "Zwemmen", "stat": "uithoudingsvermogen", "energie": 18, "bonus": 2},
+            "4": {"naam": "Springen", "stat": "snelheid", "energie": 12, "bonus": 1},
+            "5": {"naam": "Touwtrekken", "stat": "kracht", "energie": 15, "bonus": 2},
+            "6": {"naam": "Yoga", "stat": "uithoudingsvermogen", "energie": 10, "bonus": 1},
+        }
+
+        while True:
+            totaal_power = gym["kracht"] + gym["snelheid"] + gym["uithoudingsvermogen"]
+
+            print("\n" + "=" * 55)
+            print(f"  [GYM] {naam}'s FITNESS CENTER")
+            print("=" * 55)
+            print(f"\n  💪 Kracht: {gym['kracht']}")
+            print(f"  🏃 Snelheid: {gym['snelheid']}")
+            print(f"  ❤️ Uithoudingsvermogen: {gym['uithoudingsvermogen']}")
+            print(f"  ⚡ Totale Power: {totaal_power}")
+            print(f"  🎯 Trainingen: {gym['trainingen']}")
+            print(f"\n  Energie: {self.huisdier['energie']}")
+
+            print("\n  Oefeningen:")
+            for oid, oef in oefeningen.items():
+                print(f"    {oid}. {oef['naam']} (-{oef['energie']} energie, +{oef['bonus']} {oef['stat']})")
+
+            print("  0. Terug")
+
+            keuze = input("\n  Kies oefening: ").strip()
+
+            if keuze == "0":
+                break
+
+            if keuze in oefeningen:
+                oef = oefeningen[keuze]
+                if self.huisdier["energie"] >= oef["energie"]:
+                    self.huisdier["energie"] -= oef["energie"]
+                    gym[oef["stat"]] += oef["bonus"]
+                    gym["trainingen"] += 1
+
+                    print(f"\n  {naam} doet {oef['naam']}!")
+                    time.sleep(0.5)
+                    print(f"  [+] {oef['stat'].title()}: +{oef['bonus']}")
+
+                    # Bonus XP
+                    xp = 10 + (gym["trainingen"] // 10)
+                    self.huisdier["ervaring"] += xp
+                    print(f"  [XP] +{xp} ervaring")
+
+                    # Achievements
+                    if gym["trainingen"] == 10:
+                        print("\n  [TROFEE] Eerste 10 trainingen!")
+                        self.huisdier["munten"] += 50
+                    if gym["trainingen"] == 100:
+                        print("\n  [TROFEE] Fitness Fanatiek! +200 munten")
+                        self.huisdier["munten"] += 200
+                else:
+                    print(f"\n  [!] Te moe! Nodig: {oef['energie']} energie")
+
+            self._sla_op()
+
+    def _magie_spreuken(self):
+        """Leer en gebruik magische spreuken!"""
+        naam = self.huisdier["naam"]
+        iq = self.huisdier.get("intelligentie", 0)
+
+        # Init magie data
+        if "magie" not in self.huisdier:
+            self.huisdier["magie"] = {
+                "mana": 50,
+                "max_mana": 50,
+                "geleerde_spreuken": [],
+                "spreuken_gebruikt": 0
+            }
+
+        magie = self.huisdier["magie"]
+
+        # Mana regenereert
+        magie["mana"] = min(magie["max_mana"], magie["mana"] + 5)
+
+        spreuken = {
+            "genezen": {"naam": "Genezing", "mana": 20, "effect": {"gezondheid": 30}, "iq_nodig": 10},
+            "energie": {"naam": "Energie Boost", "mana": 15, "effect": {"energie": 25}, "iq_nodig": 5},
+            "geluk": {"naam": "Fortuna", "mana": 25, "effect": {"geluk": 20, "munten": 25}, "iq_nodig": 20},
+            "wijsheid": {"naam": "Wijsheid", "mana": 30, "effect": {"intelligentie": 5}, "iq_nodig": 30},
+            "tijdstop": {"naam": "Tijd Stop", "mana": 40, "effect": {"energie": 50, "honger": 20}, "iq_nodig": 50},
+            "transmutatie": {"naam": "Transmutatie", "mana": 35, "effect": {"munten": 100}, "iq_nodig": 40},
+        }
+
+        while True:
+            print("\n" + "=" * 55)
+            print(f"  [MAGIE] {naam}'s SPREUKBOEK")
+            print("=" * 55)
+            print(f"\n  ✨ Mana: {magie['mana']}/{magie['max_mana']}")
+            print(f"  🧠 IQ: {iq}")
+            print(f"  📖 Geleerde spreuken: {len(magie['geleerde_spreuken'])}")
+
+            print("\n  Beschikbare spreuken:")
+            for i, (sid, sp) in enumerate(spreuken.items(), 1):
+                geleerd = "✓" if sid in magie["geleerde_spreuken"] else " "
+                kan_leren = "🔓" if iq >= sp["iq_nodig"] else "🔒"
+                print(f"    {i}. [{geleerd}] {kan_leren} {sp['naam']} - {sp['mana']} mana")
+                print(f"       Effect: {sp['effect']} | IQ nodig: {sp['iq_nodig']}")
+
+            print("\n  1. Spreuk leren")
+            print("  2. Spreuk gebruiken")
+            print("  3. Mana herstellen (20 munten)")
+            print("  0. Terug")
+
+            keuze = input("\n  Keuze: ").strip()
+
+            if keuze == "0":
+                break
+            elif keuze == "1":
+                print("\n  Welke spreuk leren? (nummer)")
+                sp_keuze = input("  Keuze: ").strip()
+                try:
+                    idx = int(sp_keuze) - 1
+                    sp_lijst = list(spreuken.items())
+                    if 0 <= idx < len(sp_lijst):
+                        sp_id, sp_data = sp_lijst[idx]
+                        if sp_id in magie["geleerde_spreuken"]:
+                            print("\n  [!] Al geleerd!")
+                        elif iq < sp_data["iq_nodig"]:
+                            print(f"\n  [!] IQ te laag! Nodig: {sp_data['iq_nodig']}")
+                        else:
+                            magie["geleerde_spreuken"].append(sp_id)
+                            print(f"\n  [MAGIE] {sp_data['naam']} geleerd!")
+                except (ValueError, IndexError):
+                    pass
+
+            elif keuze == "2":
+                if not magie["geleerde_spreuken"]:
+                    print("\n  [!] Geen spreuken geleerd!")
+                    continue
+
+                print("\n  Geleerde spreuken:")
+                for i, sp_id in enumerate(magie["geleerde_spreuken"], 1):
+                    sp = spreuken[sp_id]
+                    print(f"    {i}. {sp['naam']} ({sp['mana']} mana)")
+
+                sp_keuze = input("\n  Gebruik spreuk: ").strip()
+                try:
+                    idx = int(sp_keuze) - 1
+                    if 0 <= idx < len(magie["geleerde_spreuken"]):
+                        sp_id = magie["geleerde_spreuken"][idx]
+                        sp = spreuken[sp_id]
+
+                        if magie["mana"] >= sp["mana"]:
+                            magie["mana"] -= sp["mana"]
+                            magie["spreuken_gebruikt"] += 1
+
+                            print(f"\n  ✨ {naam} cast {sp['naam']}! ✨")
+                            time.sleep(0.5)
+
+                            for stat, waarde in sp["effect"].items():
+                                if stat == "munten":
+                                    self.huisdier["munten"] += waarde
+                                elif stat == "intelligentie":
+                                    self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + waarde
+                                elif stat in self.huisdier:
+                                    self.huisdier[stat] = min(100, self.huisdier[stat] + waarde)
+                                print(f"  [+] {stat.title()}: +{waarde}")
+                        else:
+                            print(f"\n  [!] Niet genoeg mana! Nodig: {sp['mana']}")
+                except (ValueError, IndexError):
+                    pass
+
+            elif keuze == "3":
+                if self.huisdier["munten"] >= 20:
+                    self.huisdier["munten"] -= 20
+                    magie["mana"] = magie["max_mana"]
+                    print("\n  [OK] Mana volledig hersteld!")
+                else:
+                    print("\n  [!] Niet genoeg munten!")
+
+            self._sla_op()
+
+    # ==========================================
+    # ENTERTAINMENT FEATURES
+    # ==========================================
+
+    def _schatkist_jacht(self):
+        """Graaf naar verborgen schatten!"""
+        naam = self.huisdier["naam"]
+
+        if self.huisdier["energie"] < 20:
+            print(f"\n  [!] {naam} is te moe om te graven!")
+            return
+
+        # Init schat data
+        if "schatten" not in self.huisdier:
+            self.huisdier["schatten"] = {
+                "gevonden": 0,
+                "zeldzame": [],
+                "totaal_waarde": 0
+            }
+
+        print("\n" + "=" * 55)
+        print(f"  [SCHATKIST] {naam}'s SCHATTENJACHT")
+        print("=" * 55)
+        print(f"\n  Schatten gevonden: {self.huisdier['schatten']['gevonden']}")
+        print(f"  Totale waarde: {self.huisdier['schatten']['totaal_waarde']} munten")
+
+        schatten = [
+            {"naam": "Oude munt", "waarde": 5, "kans": 30, "zeldzaam": False},
+            {"naam": "Zilveren ring", "waarde": 15, "kans": 20, "zeldzaam": False},
+            {"naam": "Gouden ketting", "waarde": 50, "kans": 10, "zeldzaam": False},
+            {"naam": "Diamant", "waarde": 100, "kans": 5, "zeldzaam": True},
+            {"naam": "Oude kaart", "waarde": 30, "kans": 8, "zeldzaam": False},
+            {"naam": "Magische steen", "waarde": 75, "kans": 3, "zeldzaam": True},
+            {"naam": "Kroon juweel", "waarde": 200, "kans": 1, "zeldzaam": True},
+            {"naam": "Niets", "waarde": 0, "kans": 23, "zeldzaam": False},
+        ]
+
+        print("\n  1. Graven (20 energie)")
+        print("  2. Zeldzame schatten bekijken")
+        print("  0. Terug")
+
+        keuze = input("\n  Keuze: ").strip()
+
+        if keuze == "1":
+            self.huisdier["energie"] -= 20
+
+            print(f"\n  {naam} begint te graven...")
+            time.sleep(1)
+
+            # Bepaal wat gevonden wordt
+            roll = random.randint(1, 100)
+            cumulative = 0
+            gevonden = None
+
+            for schat in schatten:
+                cumulative += schat["kans"]
+                if roll <= cumulative:
+                    gevonden = schat
+                    break
+
+            if gevonden and gevonden["waarde"] > 0:
+                print(f"  [SCHAT] {naam} vindt een {gevonden['naam']}!")
+                print(f"  Waarde: {gevonden['waarde']} munten!")
+
+                self.huisdier["munten"] += gevonden["waarde"]
+                self.huisdier["schatten"]["gevonden"] += 1
+                self.huisdier["schatten"]["totaal_waarde"] += gevonden["waarde"]
+
+                if gevonden["zeldzaam"]:
+                    print("  ⭐ ZELDZAME VONDST! ⭐")
+                    if gevonden["naam"] not in self.huisdier["schatten"]["zeldzame"]:
+                        self.huisdier["schatten"]["zeldzame"].append(gevonden["naam"])
+                    self.huisdier["ervaring"] += 50
+
+                self._voeg_dagboek_toe(f"Schat gevonden: {gevonden['naam']}")
+            else:
+                print(f"  {naam} vindt niets... Probeer opnieuw!")
+
+            self._sla_op()
+
+        elif keuze == "2":
+            print("\n  Zeldzame schatten collectie:")
+            if self.huisdier["schatten"]["zeldzame"]:
+                for schat in self.huisdier["schatten"]["zeldzame"]:
+                    print(f"    ⭐ {schat}")
+            else:
+                print("    (nog geen zeldzame schatten)")
+
+    def _huisdier_restaurant(self):
+        """Run je eigen restaurant!"""
+        naam = self.huisdier["naam"]
+
+        # Init restaurant data
+        if "restaurant" not in self.huisdier:
+            self.huisdier["restaurant"] = {
+                "naam": f"{naam}'s Bistro",
+                "niveau": 1,
+                "reputatie": 0,
+                "klanten_bediend": 0,
+                "inkomsten": 0
+            }
+
+        rest = self.huisdier["restaurant"]
+
+        gerechten = {
+            1: [{"naam": "Broodje", "prijs": 5, "tijd": 1}],
+            2: [{"naam": "Salade", "prijs": 10, "tijd": 2}, {"naam": "Soep", "prijs": 8, "tijd": 1}],
+            3: [{"naam": "Pasta", "prijs": 20, "tijd": 3}, {"naam": "Pizza", "prijs": 25, "tijd": 4}],
+            4: [{"naam": "Steak", "prijs": 40, "tijd": 5}, {"naam": "Vis", "prijs": 35, "tijd": 4}],
+            5: [{"naam": "Chef's Special", "prijs": 100, "tijd": 8}],
+        }
+
+        while True:
+            print("\n" + "=" * 55)
+            print(f"  [RESTAURANT] {rest['naam']}")
+            print("=" * 55)
+            print(f"\n  ⭐ Niveau: {rest['niveau']}")
+            print(f"  👥 Klanten bediend: {rest['klanten_bediend']}")
+            print(f"  💰 Totale inkomsten: {rest['inkomsten']} munten")
+            print(f"  📈 Reputatie: {rest['reputatie']}")
+
+            beschikbare_gerechten = []
+            for niv in range(1, rest["niveau"] + 1):
+                beschikbare_gerechten.extend(gerechten.get(niv, []))
+
+            print("\n  Menu:")
+            for i, g in enumerate(beschikbare_gerechten, 1):
+                print(f"    {i}. {g['naam']} - {g['prijs']} munten")
+
+            print("\n  1. Klant bedienen")
+            print("  2. Restaurant upgraden (100 munten)")
+            print("  3. Naam wijzigen")
+            print("  0. Terug")
+
+            keuze = input("\n  Keuze: ").strip()
+
+            if keuze == "0":
+                break
+            elif keuze == "1":
+                if self.huisdier["energie"] < 10:
+                    print(f"\n  [!] {naam} is te moe!")
+                    continue
+
+                self.huisdier["energie"] -= 10
+
+                # Random klant
+                klant_namen = ["Jan", "Lisa", "Piet", "Anna", "Tom", "Sara", "Max", "Emma"]
+                klant = random.choice(klant_namen)
+
+                print(f"\n  👤 {klant} komt binnen!")
+
+                # Klant bestelt
+                gerecht = random.choice(beschikbare_gerechten)
+                print(f"  {klant}: 'Ik wil graag de {gerecht['naam']}!'")
+
+                time.sleep(0.5)
+                print(f"\n  {naam} bereidt {gerecht['naam']} voor...")
+                time.sleep(0.5)
+
+                # Succes kans gebaseerd op energie en reputatie
+                succes_kans = 70 + (rest["reputatie"] // 10)
+                if random.randint(1, 100) <= succes_kans:
+                    print(f"  [OK] {klant}: 'Heerlijk! Dank je!'")
+                    fooi = gerecht["prijs"] // 3
+                    totaal = gerecht["prijs"] + fooi
+
+                    self.huisdier["munten"] += totaal
+                    rest["klanten_bediend"] += 1
+                    rest["inkomsten"] += totaal
+                    rest["reputatie"] += 1
+
+                    print(f"  [MUNT] +{gerecht['prijs']} + {fooi} fooi = {totaal} munten!")
+                else:
+                    print(f"  [X] {klant}: 'Dit is niet goed...'")
+                    rest["reputatie"] = max(0, rest["reputatie"] - 2)
+                    print(f"  [-] Reputatie -2")
+
+            elif keuze == "2":
+                if rest["niveau"] >= 5:
+                    print("\n  [!] Restaurant is al maximaal niveau!")
+                elif self.huisdier["munten"] >= 100:
+                    self.huisdier["munten"] -= 100
+                    rest["niveau"] += 1
+                    print(f"\n  [UP] Restaurant nu niveau {rest['niveau']}!")
+                    print("  Nieuwe gerechten beschikbaar!")
+                else:
+                    print("\n  [!] Niet genoeg munten!")
+
+            elif keuze == "3":
+                nieuwe_naam = input("  Nieuwe naam: ").strip()
+                if nieuwe_naam:
+                    rest["naam"] = nieuwe_naam
+                    print(f"\n  [OK] Restaurant heet nu: {nieuwe_naam}")
+
+            self._sla_op()
+
+    def _muziek_studio(self):
+        """Maak en luister naar muziek!"""
+        naam = self.huisdier["naam"]
+
+        # Init muziek data
+        if "muziek" not in self.huisdier:
+            self.huisdier["muziek"] = {
+                "nummers_gemaakt": [],
+                "favorieten": [],
+                "luister_tijd": 0
+            }
+
+        muziek = self.huisdier["muziek"]
+
+        genres = ["Pop", "Rock", "Jazz", "Klassiek", "Electronic", "Hip-Hop", "Country", "Reggae"]
+        stemmingen = ["Vrolijk", "Rustig", "Energiek", "Romantisch", "Mysterieus", "Episch"]
+
+        while True:
+            print("\n" + "=" * 55)
+            print(f"  [MUZIEK] {naam}'s STUDIO")
+            print("=" * 55)
+            print(f"\n  🎵 Nummers gemaakt: {len(muziek['nummers_gemaakt'])}")
+            print(f"  ⏱️ Luister tijd: {muziek['luister_tijd']} min")
+
+            print("\n  1. Nummer maken (15 energie)")
+            print("  2. Muziek luisteren (+geluk)")
+            print("  3. Mijn nummers")
+            print("  0. Terug")
+
+            keuze = input("\n  Keuze: ").strip()
+
+            if keuze == "0":
+                break
+            elif keuze == "1":
+                if self.huisdier["energie"] < 15:
+                    print(f"\n  [!] {naam} is te moe!")
+                    continue
+
+                self.huisdier["energie"] -= 15
+
+                print("\n  🎹 Kies een genre:")
+                for i, g in enumerate(genres, 1):
+                    print(f"    {i}. {g}")
+
+                genre_keuze = input("\n  Genre: ").strip()
+                try:
+                    genre = genres[int(genre_keuze) - 1]
+                except:
+                    genre = random.choice(genres)
+
+                stemming = random.choice(stemmingen)
+
+                print(f"\n  {naam} componeert een {stemming.lower()} {genre} nummer...")
+                time.sleep(1)
+
+                # Genereer naam
+                woorden1 = ["Midnight", "Golden", "Electric", "Dancing", "Dreaming", "Flying"]
+                woorden2 = ["Stars", "Heart", "Waves", "Dreams", "Light", "Soul"]
+                nummer_naam = f"{random.choice(woorden1)} {random.choice(woorden2)}"
+
+                nummer = {
+                    "naam": nummer_naam,
+                    "genre": genre,
+                    "stemming": stemming,
+                    "datum": datetime.now().strftime("%Y-%m-%d")
+                }
+                muziek["nummers_gemaakt"].append(nummer)
+
+                print(f"\n  [MUZIEK] '{nummer_naam}' is klaar!")
+                print(f"  Genre: {genre} | Stemming: {stemming}")
+
+                self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 10)
+                self.huisdier["ervaring"] += 20
+
+            elif keuze == "2":
+                print(f"\n  {naam} luistert naar muziek...")
+                time.sleep(0.5)
+
+                # Mood boost
+                self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 15)
+                self.huisdier["energie"] = min(100, self.huisdier["energie"] + 5)
+                muziek["luister_tijd"] += 5
+
+                print("  🎵 ♪ ♫ ♪ ♫")
+                print(f"\n  [HAPPY] +15 geluk!")
+                print(f"  [ENERGIE] +5 energie!")
+
+            elif keuze == "3":
+                if muziek["nummers_gemaakt"]:
+                    print("\n  Jouw nummers:")
+                    for i, n in enumerate(muziek["nummers_gemaakt"][-10:], 1):
+                        print(f"    {i}. '{n['naam']}' - {n['genre']} ({n['stemming']})")
+                else:
+                    print("\n  Nog geen nummers gemaakt!")
+
+            self._sla_op()
+
+    def _arcade_hal(self):
+        """Meer mini-games in de arcade!"""
+        naam = self.huisdier["naam"]
+
+        # Init arcade data
+        if "arcade" not in self.huisdier:
+            self.huisdier["arcade"] = {
+                "highscores": {},
+                "tokens": 10,
+                "totaal_gespeeld": 0
+            }
+
+        arcade = self.huisdier["arcade"]
+
+        games = {
+            "1": {"naam": "Flappy Bird", "tokens": 2, "type": "timing"},
+            "2": {"naam": "Snake", "tokens": 2, "type": "score"},
+            "3": {"naam": "Tetris", "tokens": 3, "type": "score"},
+            "4": {"naam": "Pac-Man", "tokens": 3, "type": "score"},
+            "5": {"naam": "Space Invaders", "tokens": 4, "type": "score"},
+        }
+
+        while True:
+            print("\n" + "=" * 55)
+            print(f"  [ARCADE] ARCADE HAL")
+            print("=" * 55)
+            print(f"\n  🎮 Tokens: {arcade['tokens']}")
+            print(f"  🕹️ Games gespeeld: {arcade['totaal_gespeeld']}")
+
+            print("\n  Games:")
+            for gid, game in games.items():
+                hs = arcade["highscores"].get(game["naam"], 0)
+                print(f"    {gid}. {game['naam']} ({game['tokens']} tokens) - Highscore: {hs}")
+
+            print("\n  a. Tokens kopen (10 munten = 5 tokens)")
+            print("  0. Terug")
+
+            keuze = input("\n  Kies game: ").strip().lower()
+
+            if keuze == "0":
+                break
+            elif keuze == "a":
+                if self.huisdier["munten"] >= 10:
+                    self.huisdier["munten"] -= 10
+                    arcade["tokens"] += 5
+                    print("\n  [OK] +5 tokens gekocht!")
+                else:
+                    print("\n  [!] Niet genoeg munten!")
+
+            elif keuze in games:
+                game = games[keuze]
+                if arcade["tokens"] < game["tokens"]:
+                    print(f"\n  [!] Niet genoeg tokens! Nodig: {game['tokens']}")
+                    continue
+
+                arcade["tokens"] -= game["tokens"]
+                arcade["totaal_gespeeld"] += 1
+
+                print(f"\n  🎮 {naam} speelt {game['naam']}!")
+                time.sleep(0.5)
+
+                # Simuleer game score
+                base_score = random.randint(100, 500)
+                skill_bonus = self.huisdier.get("intelligentie", 0) + (arcade["totaal_gespeeld"] * 2)
+                score = base_score + skill_bonus
+
+                print(f"  Score: {score}!")
+
+                if score > arcade["highscores"].get(game["naam"], 0):
+                    print("  🏆 NIEUWE HIGHSCORE!")
+                    arcade["highscores"][game["naam"]] = score
+                    bonus = 20
+                else:
+                    bonus = 5
+
+                self.huisdier["munten"] += bonus
+                print(f"  [MUNT] +{bonus} munten!")
+
+            self._sla_op()
+
+    # ==========================================
+    # SPECIALE AVONTUREN FEATURES
+    # ==========================================
+
+    def _tijdreizen(self):
+        """Reis naar verschillende tijdperken!"""
+        naam = self.huisdier["naam"]
+
+        if self.huisdier["energie"] < 30:
+            print(f"\n  [!] {naam} heeft 30 energie nodig om te tijdreizen!")
+            return
+
+        # Init tijdreis data
+        if "tijdreizen" not in self.huisdier:
+            self.huisdier["tijdreizen"] = {
+                "bezochte_tijdperken": [],
+                "artefacten": [],
+                "totaal_reizen": 0
+            }
+
+        tijdperken = {
+            "1": {
+                "naam": "Dinosaurus Era",
+                "emoji": "🦖",
+                "jaar": "65 miljoen v.Chr.",
+                "gevaar": 3,
+                "artefact": "Dino Tand",
+                "beschrijving": "Gigantische reptielen heersen over de aarde!"
+            },
+            "2": {
+                "naam": "Egypte",
+                "emoji": "🏺",
+                "jaar": "3000 v.Chr.",
+                "gevaar": 2,
+                "artefact": "Scarabee Amulet",
+                "beschrijving": "Piramides worden gebouwd door farao's!"
+            },
+            "3": {
+                "naam": "Middeleeuwen",
+                "emoji": "🏰",
+                "jaar": "1200 n.Chr.",
+                "gevaar": 2,
+                "artefact": "Ridder Helm",
+                "beschrijving": "Ridders en kastelen bepalen het landschap!"
+            },
+            "4": {
+                "naam": "Piratentijd",
+                "emoji": "🏴‍☠️",
+                "jaar": "1700 n.Chr.",
+                "gevaar": 3,
+                "artefact": "Piraten Kompas",
+                "beschrijving": "Zeerovers bevaren de oceanen!"
+            },
+            "5": {
+                "naam": "Toekomst",
+                "emoji": "🤖",
+                "jaar": "2500 n.Chr.",
+                "gevaar": 2,
+                "artefact": "Hologram Device",
+                "beschrijving": "Robots en ruimteschepen overal!"
+            },
+        }
+
+        print("\n" + "=" * 55)
+        print(f"  [TIJD] {naam}'s TIJDMACHINE")
+        print("=" * 55)
+        print(f"\n  Reizen gemaakt: {self.huisdier['tijdreizen']['totaal_reizen']}")
+        print(f"  Artefacten: {len(self.huisdier['tijdreizen']['artefacten'])}")
+
+        print("\n  Tijdperken:")
+        for tid, tp in tijdperken.items():
+            bezocht = "✓" if tp["naam"] in self.huisdier["tijdreizen"]["bezochte_tijdperken"] else " "
+            print(f"    {tid}. [{bezocht}] {tp['emoji']} {tp['naam']} ({tp['jaar']})")
+            print(f"       {tp['beschrijving']}")
+
+        print("\n  0. Terug")
+
+        keuze = input("\n  Reis naar: ").strip()
+
+        if keuze == "0" or keuze not in tijdperken:
+            return
+
+        tp = tijdperken[keuze]
+        self.huisdier["energie"] -= 30
+
+        print(f"\n  ⚡ Tijdmachine activeert...")
+        time.sleep(1)
+        print(f"  🌀 Reizen naar {tp['jaar']}...")
+        time.sleep(1)
+        print(f"\n  {tp['emoji']} Welkom in {tp['naam']}!")
+        print(f"  {tp['beschrijving']}")
+
+        # Mark als bezocht
+        if tp["naam"] not in self.huisdier["tijdreizen"]["bezochte_tijdperken"]:
+            self.huisdier["tijdreizen"]["bezochte_tijdperken"].append(tp["naam"])
+            print(f"\n  [NIEUW] Nieuw tijdperk ontdekt!")
+
+        self.huisdier["tijdreizen"]["totaal_reizen"] += 1
+
+        # Avontuur in het tijdperk
+        succes_kans = 70 - (tp["gevaar"] * 10) + (self.huisdier.get("gym", {}).get("kracht", 0))
+
+        if random.randint(1, 100) <= succes_kans:
+            print(f"\n  [AVONTUUR] {naam} heeft een geweldig avontuur!")
+
+            if tp["artefact"] not in self.huisdier["tijdreizen"]["artefacten"]:
+                self.huisdier["tijdreizen"]["artefacten"].append(tp["artefact"])
+                print(f"  [ARTEFACT] {tp['artefact']} gevonden!")
+                self.huisdier["munten"] += 75
+            else:
+                self.huisdier["munten"] += 40
+                print(f"  [MUNT] +40 munten!")
+
+            self.huisdier["ervaring"] += 50
+        else:
+            print(f"\n  [!] {naam} moest snel terug! Te gevaarlijk!")
+            self.huisdier["gezondheid"] = max(50, self.huisdier["gezondheid"] - 10)
+
+        print(f"\n  ⚡ Terug naar het heden...")
+        self._voeg_dagboek_toe(f"Tijdreis naar {tp['naam']}!")
+        self._sla_op()
+
+    def _magische_tuin(self):
+        """Onderhoud een magische tuin met speciale planten!"""
+        naam = self.huisdier["naam"]
+
+        # Init tuin data
+        if "magische_tuin" not in self.huisdier:
+            self.huisdier["magische_tuin"] = {
+                "planten": [],
+                "decoraties": [],
+                "magie_niveau": 1,
+                "bezoekers": 0
+            }
+
+        tuin = self.huisdier["magische_tuin"]
+
+        magische_planten = {
+            "1": {"naam": "Lichtbloem", "prijs": 30, "effect": "energie", "bonus": 10, "groeitijd": 2},
+            "2": {"naam": "Gelukskruid", "prijs": 40, "effect": "geluk", "bonus": 15, "groeitijd": 3},
+            "3": {"naam": "Wijsheidsmos", "prijs": 50, "effect": "intelligentie", "bonus": 5, "groeitijd": 5},
+            "4": {"naam": "Gouden Roos", "prijs": 75, "effect": "munten", "bonus": 25, "groeitijd": 4},
+            "5": {"naam": "Levensblad", "prijs": 60, "effect": "gezondheid", "bonus": 20, "groeitijd": 3},
+        }
+
+        decoraties = {
+            "fontein": {"prijs": 100, "magie": 5},
+            "standbeeld": {"prijs": 150, "magie": 10},
+            "vijver": {"prijs": 80, "magie": 3},
+            "lantaarn": {"prijs": 50, "magie": 2},
+        }
+
+        # Update planten
+        nu = datetime.now()
+        for plant in tuin["planten"]:
+            if not plant.get("volgroeid", False):
+                geplant = datetime.fromisoformat(plant["geplant"])
+                groeitijd = magische_planten[plant["type"]]["groeitijd"]
+                if (nu - geplant).seconds / 60 >= groeitijd:
+                    plant["volgroeid"] = True
+
+        while True:
+            print("\n" + "=" * 55)
+            print(f"  [TUIN] {naam}'s MAGISCHE TUIN")
+            print("=" * 55)
+            print(f"\n  ✨ Magie niveau: {tuin['magie_niveau']}")
+            print(f"  🌱 Planten: {len(tuin['planten'])}")
+            print(f"  🏛️ Decoraties: {len(tuin['decoraties'])}")
+
+            print("\n  Geplante planten:")
+            if tuin["planten"]:
+                for i, p in enumerate(tuin["planten"], 1):
+                    plant_data = magische_planten[p["type"]]
+                    status = "🌸 Bloeit!" if p.get("volgroeid") else "🌱 Groeit..."
+                    print(f"    {i}. {plant_data['naam']} - {status}")
+            else:
+                print("    (geen planten)")
+
+            print("\n  1. Plant planten")
+            print("  2. Oogsten")
+            print("  3. Decoratie plaatsen")
+            print("  4. Tuin water geven (+magie)")
+            print("  0. Terug")
+
+            keuze = input("\n  Keuze: ").strip()
+
+            if keuze == "0":
+                break
+            elif keuze == "1":
+                print("\n  Magische planten:")
+                for pid, plant in magische_planten.items():
+                    print(f"    {pid}. {plant['naam']} - {plant['prijs']} munten")
+                    print(f"       Effect: +{plant['bonus']} {plant['effect']}")
+
+                plant_keuze = input("\n  Kies plant: ").strip()
+                if plant_keuze in magische_planten:
+                    plant = magische_planten[plant_keuze]
+                    if self.huisdier["munten"] >= plant["prijs"]:
+                        self.huisdier["munten"] -= plant["prijs"]
+                        tuin["planten"].append({
+                            "type": plant_keuze,
+                            "geplant": datetime.now().isoformat(),
+                            "volgroeid": False
+                        })
+                        print(f"\n  [OK] {plant['naam']} geplant!")
+                    else:
+                        print("\n  [!] Niet genoeg munten!")
+
+            elif keuze == "2":
+                geoogst = []
+                for plant in tuin["planten"][:]:
+                    if plant.get("volgroeid"):
+                        plant_data = magische_planten[plant["type"]]
+                        stat = plant_data["effect"]
+                        bonus = plant_data["bonus"]
+
+                        if stat == "munten":
+                            self.huisdier["munten"] += bonus
+                        elif stat == "intelligentie":
+                            self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + bonus
+                        elif stat in self.huisdier:
+                            self.huisdier[stat] = min(100, self.huisdier[stat] + bonus)
+
+                        geoogst.append(f"{plant_data['naam']} (+{bonus} {stat})")
+                        tuin["planten"].remove(plant)
+
+                if geoogst:
+                    print(f"\n  [OOGST] Geoogst:")
+                    for g in geoogst:
+                        print(f"    - {g}")
+                else:
+                    print("\n  [!] Geen volgroeide planten!")
+
+            elif keuze == "3":
+                print("\n  Decoraties:")
+                for did, dec in decoraties.items():
+                    owned = "✓" if did in tuin["decoraties"] else " "
+                    print(f"    [{owned}] {did.title()} - {dec['prijs']} munten (+{dec['magie']} magie)")
+
+                dec_keuze = input("\n  Kies decoratie: ").strip().lower()
+                if dec_keuze in decoraties and dec_keuze not in tuin["decoraties"]:
+                    dec = decoraties[dec_keuze]
+                    if self.huisdier["munten"] >= dec["prijs"]:
+                        self.huisdier["munten"] -= dec["prijs"]
+                        tuin["decoraties"].append(dec_keuze)
+                        tuin["magie_niveau"] += dec["magie"]
+                        print(f"\n  [OK] {dec_keuze.title()} geplaatst!")
+                        print(f"  [+] Magie niveau: +{dec['magie']}")
+                    else:
+                        print("\n  [!] Niet genoeg munten!")
+
+            elif keuze == "4":
+                tuin["magie_niveau"] += 1
+                self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 5)
+                print(f"\n  {naam} geeft de tuin water...")
+                print(f"  [+] Magie niveau: +1")
+                print(f"  [HAPPY] +5 geluk")
+
+            self._sla_op()
+
+    def _geheime_missies(self):
+        """Geheime spion missies voor grote beloningen!"""
+        naam = self.huisdier["naam"]
+
+        # Init spion data
+        if "spion" not in self.huisdier:
+            self.huisdier["spion"] = {
+                "rang": "Rookie",
+                "missies_voltooid": 0,
+                "gadgets": [],
+                "geheime_punten": 0
+            }
+
+        spion = self.huisdier["spion"]
+
+        rangen = {
+            0: "Rookie",
+            5: "Agent",
+            15: "Senior Agent",
+            30: "Elite Agent",
+            50: "Legendarisch Spion"
+        }
+
+        # Update rang
+        for punten, rang in sorted(rangen.items(), reverse=True):
+            if spion["missies_voltooid"] >= punten:
+                spion["rang"] = rang
+                break
+
+        missies = [
+            {"naam": "Geheime Documenten Ophalen", "moeilijkheid": 1, "beloning": 50, "xp": 30},
+            {"naam": "Verdachte Volgen", "moeilijkheid": 2, "beloning": 80, "xp": 50},
+            {"naam": "Code Kraken", "moeilijkheid": 2, "beloning": 100, "xp": 60},
+            {"naam": "Undercover in Restaurant", "moeilijkheid": 3, "beloning": 150, "xp": 80},
+            {"naam": "Schurk Vangen", "moeilijkheid": 4, "beloning": 250, "xp": 120},
+            {"naam": "Wereld Redden", "moeilijkheid": 5, "beloning": 500, "xp": 200},
+        ]
+
+        print("\n" + "=" * 55)
+        print(f"  [GEHEIM] TOP SECRET - SPION HQ")
+        print("=" * 55)
+        print(f"\n  Agent: {naam}")
+        print(f"  🎖️ Rang: {spion['rang']}")
+        print(f"  📋 Missies voltooid: {spion['missies_voltooid']}")
+        print(f"  🔧 Gadgets: {len(spion['gadgets'])}")
+
+        print("\n  Beschikbare missies:")
+        for i, m in enumerate(missies, 1):
+            sterren = "⭐" * m["moeilijkheid"]
+            print(f"    {i}. {m['naam']}")
+            print(f"       Moeilijkheid: {sterren} | Beloning: {m['beloning']} munten")
+
+        print("\n  1. Missie starten")
+        print("  2. Gadget kopen")
+        print("  0. Terug")
+
+        keuze = input("\n  Keuze: ").strip()
+
+        if keuze == "1":
+            if self.huisdier["energie"] < 25:
+                print(f"\n  [!] {naam} heeft 25 energie nodig!")
+                return
+
+            missie_keuze = input("\n  Kies missie (1-6): ").strip()
+            try:
+                missie = missies[int(missie_keuze) - 1]
+            except:
+                return
+
+            self.huisdier["energie"] -= 25
+
+            print(f"\n  [MISSIE] {missie['naam']} gestart...")
+            time.sleep(1)
+
+            # Succes berekening
+            basis_kans = 80 - (missie["moeilijkheid"] * 10)
+            gadget_bonus = len(spion["gadgets"]) * 5
+            iq_bonus = self.huisdier.get("intelligentie", 0) // 5
+            gym_bonus = self.huisdier.get("gym", {}).get("snelheid", 0) // 5
+
+            succes_kans = basis_kans + gadget_bonus + iq_bonus + gym_bonus
+
+            print(f"  Succes kans: {min(95, succes_kans)}%")
+            time.sleep(0.5)
+
+            if random.randint(1, 100) <= succes_kans:
+                print(f"\n  [SUCCESS] Missie geslaagd!")
+                print(f"  🎵 Gefeliciteerd, Agent {naam}!")
+
+                self.huisdier["munten"] += missie["beloning"]
+                self.huisdier["ervaring"] += missie["xp"]
+                spion["missies_voltooid"] += 1
+                spion["geheime_punten"] += missie["moeilijkheid"]
+
+                print(f"  [MUNT] +{missie['beloning']} munten!")
+                print(f"  [XP] +{missie['xp']} ervaring!")
+
+                self._voeg_dagboek_toe(f"Geheime missie voltooid: {missie['naam']}")
+            else:
+                print(f"\n  [FAILED] Missie mislukt...")
+                print(f"  {naam} moest vluchten!")
+                self.huisdier["gezondheid"] = max(50, self.huisdier["gezondheid"] - 15)
+
+            self._sla_op()
+
+        elif keuze == "2":
+            gadgets = {
+                "invisibility_cloak": {"naam": "Onzichtbaarheidsmantel", "prijs": 200},
+                "grappling_hook": {"naam": "Klimhaak", "prijs": 100},
+                "night_vision": {"naam": "Nachtkijker", "prijs": 150},
+                "smoke_bomb": {"naam": "Rookbom", "prijs": 75},
+            }
+
+            print("\n  Gadgets winkel:")
+            for gid, g in gadgets.items():
+                owned = "✓" if gid in spion["gadgets"] else " "
+                print(f"    [{owned}] {g['naam']} - {g['prijs']} munten")
+
+            gadget_keuze = input("\n  Koop gadget (naam): ").strip().lower().replace(" ", "_")
+
+            for gid, g in gadgets.items():
+                if gadget_keuze in gid and gid not in spion["gadgets"]:
+                    if self.huisdier["munten"] >= g["prijs"]:
+                        self.huisdier["munten"] -= g["prijs"]
+                        spion["gadgets"].append(gid)
+                        print(f"\n  [OK] {g['naam']} gekocht!")
+                    else:
+                        print("\n  [!] Niet genoeg munten!")
+                    break
+
     def run(self):
         """Start de app."""
         clear_scherm()
@@ -5409,6 +6479,29 @@ Antwoord in het Nederlands."""
                 self._foto_album()
             elif keuze == "27":
                 self._weer_station()
+            # POWER-UPS & MAGIE
+            elif keuze == "28":
+                self._evolutie_systeem()
+            elif keuze == "29":
+                self._huisdier_gym()
+            elif keuze == "30":
+                self._magie_spreuken()
+            # ENTERTAINMENT
+            elif keuze == "31":
+                self._schatkist_jacht()
+            elif keuze == "32":
+                self._huisdier_restaurant()
+            elif keuze == "33":
+                self._muziek_studio()
+            elif keuze == "34":
+                self._arcade_hal()
+            # SPECIALE AVONTUREN
+            elif keuze == "35":
+                self._tijdreizen()
+            elif keuze == "36":
+                self._magische_tuin()
+            elif keuze == "37":
+                self._geheime_missies()
             elif keuze == "0":
                 self._sla_op()
                 print(f"\n{self.huisdier['naam']} is opgeslagen!")
