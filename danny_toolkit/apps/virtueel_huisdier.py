@@ -522,12 +522,15 @@ class VirtueelHuisdierApp:
         permanente_kennis = self._laad_permanente_kennis()
         kennis_count = len(permanente_kennis["feiten"])
 
+        # Check seizoens event
+        seizoen_event = self._get_seizoen_event()
+
         print("\n+================================+")
         print("|       WAT WIL JE DOEN?         |")
         print("+================================+")
         print("|  1. Voeren                     |")
         print("|  2. Spelen                     |")
-        print("|  3. Laten slapen               |")
+        print("|  3. Laten slapen & Dromen      |")
         print("|  4. Knuffelen                  |")
         print("|  5. Naar de dokter             |")
         print("|  6. Mini-games                 |")
@@ -537,6 +540,16 @@ class VirtueelHuisdierApp:
         print("| 10. Dagelijkse bonus           |")
         print("| 11. Huisdier Werk              |")
         print(f"| 12. Huisdier Leren [{kennis_count:>3} feiten]|")
+        print("+--------------------------------+")
+        print("|  [NIEUWE AVONTUREN]            |")
+        print("+--------------------------------+")
+        print("| 14. Verkenning Mode            |")
+        print("| 15. Huisdier Dagboek           |")
+        if seizoen_event:
+            print(f"| 16. {seizoen_event['naam']:<24}|")
+        else:
+            print("| 16. Seizoens Events            |")
+        print("| 17. Competities                |")
         print("+--------------------------------+")
         print("| 13. Reset Huisdier             |")
         print("|  0. Opslaan & Afsluiten        |")
@@ -665,7 +678,7 @@ class VirtueelHuisdierApp:
                 self.huisdier["ervaring"] += 5
 
     def _slapen(self):
-        """Laat het huisdier slapen - met IQ droombonus!"""
+        """Laat het huisdier slapen - met dromen voor extra beloningen!"""
         naam = self.huisdier["naam"]
         iq = self.huisdier.get("intelligentie", 0)
 
@@ -685,7 +698,7 @@ class VirtueelHuisdierApp:
             feiten = self.huisdier["kennis"].get("feiten", [])
             if feiten and random.randint(1, 100) <= 40:
                 iq_bonus = 1
-                print(f"\n  [DROOM] {naam} droomt over geleerde kennis...")
+                print(f"\n  [KENNIS DROOM] {naam} droomt over geleerde kennis...")
                 print(f"  [IQ] +1 intelligentie door dromen!")
 
         self.huisdier["energie"] = min(100, self.huisdier["energie"] + 40 + bonus)
@@ -695,6 +708,10 @@ class VirtueelHuisdierApp:
             self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + iq_bonus
 
         print(f"Zzzzz... {naam} slaapt heerlijk.")
+
+        # NIEUWE DROMEN SYSTEEM - kans op speciale dromen!
+        self._slapen_met_dromen()
+
         print(f"*gaaap* {naam} is weer uitgerust!")
 
     def _knuffelen(self):
@@ -3697,6 +3714,550 @@ Antwoord in het Nederlands."""
         if self.huisdier["leeftijd_dagen"] >= 30:
             self._unlock_achievement("maand_oud")
 
+    # ==========================================
+    # NIEUWE AVONTUREN FEATURES
+    # ==========================================
+
+    def _get_seizoen_event(self):
+        """Bepaal huidig seizoens event op basis van datum."""
+        nu = datetime.now()
+        maand = nu.month
+        dag = nu.day
+
+        events = {
+            # Winter events
+            (12, 1, 12, 31): {"naam": "Kerst Feest!", "type": "kerst", "bonus": 2.0},
+            (1, 1, 1, 7): {"naam": "Nieuwjaars Viering!", "type": "nieuwjaar", "bonus": 1.5},
+            # Lente events
+            (3, 20, 4, 20): {"naam": "Lente Festival!", "type": "lente", "bonus": 1.3},
+            (4, 27, 4, 27): {"naam": "Koningsdag!", "type": "koningsdag", "bonus": 2.0},
+            # Zomer events
+            (6, 21, 8, 31): {"naam": "Zomer Vakantie!", "type": "zomer", "bonus": 1.4},
+            # Herfst events
+            (10, 25, 11, 2): {"naam": "Halloween Spooktijd!", "type": "halloween", "bonus": 1.8},
+            (11, 11, 11, 11): {"naam": "Sint Maarten!", "type": "sintmaarten", "bonus": 1.5},
+            (12, 5, 12, 6): {"naam": "Sinterklaas!", "type": "sinterklaas", "bonus": 1.8},
+        }
+
+        for (m1, d1, m2, d2), event in events.items():
+            if (maand == m1 and dag >= d1) or (maand == m2 and dag <= d2) or (m1 < maand < m2):
+                return event
+        return None
+
+    def _verkenning_mode(self):
+        """Verken verschillende locaties met je huisdier!"""
+        if self.huisdier["energie"] < 20:
+            print(f"\n{self.huisdier['naam']} is te moe om te verkennen!")
+            return
+
+        naam = self.huisdier["naam"]
+        geluid = self.huisdier["geluid"]
+
+        # Init verkenning data
+        if "verkenning" not in self.huisdier:
+            self.huisdier["verkenning"] = {
+                "ontdekte_locaties": [],
+                "verzamelde_items": [],
+                "totaal_avonturen": 0
+            }
+
+        locaties = {
+            "1": {
+                "naam": "Mysterieus Bos",
+                "emoji": "🌲",
+                "beschrijving": "Een donker bos vol geheimen...",
+                "moeilijkheid": 1,
+                "beloningen": ["paddenstoel", "eikels", "veer", "kristal"],
+                "events": [
+                    "vindt een glinsterende steen!",
+                    "ontmoet een vriendelijke uil!",
+                    "vindt een verborgen pad!",
+                    "hoort mysterieuze geluiden..."
+                ]
+            },
+            "2": {
+                "naam": "Zonnig Strand",
+                "emoji": "🏖️",
+                "beschrijving": "Warm zand en ruisende golven...",
+                "moeilijkheid": 1,
+                "beloningen": ["schelp", "zeester", "parel", "drijfhout"],
+                "events": [
+                    "bouwt een zandkasteel!",
+                    "vindt een schatkist!",
+                    "ziet dolfijnen springen!",
+                    "vindt een bericht in een fles!"
+                ]
+            },
+            "3": {
+                "naam": "Drukke Stad",
+                "emoji": "🏙️",
+                "beschrijving": "Hoge gebouwen en veel mensen...",
+                "moeilijkheid": 2,
+                "beloningen": ["munt", "sleutel", "kaart", "gadget"],
+                "events": [
+                    "helpt een verdwaalde toerist!",
+                    "vindt een geheime steeg!",
+                    "ontdekt een cool cafe!",
+                    "ziet een straatartiest!"
+                ]
+            },
+            "4": {
+                "naam": "Oude Ruines",
+                "emoji": "🏛️",
+                "beschrijving": "Overblijfselen van een oude beschaving...",
+                "moeilijkheid": 3,
+                "beloningen": ["artefact", "oude_munt", "scroll", "amulet"],
+                "events": [
+                    "ontcijfert oude tekens!",
+                    "vindt een verborgen kamer!",
+                    "ontdekt een oude val!",
+                    "voelt mysterieuze energie..."
+                ]
+            },
+            "5": {
+                "naam": "Ruimtestation",
+                "emoji": "🚀",
+                "beschrijving": "Zwevend in de oneindige ruimte...",
+                "moeilijkheid": 4,
+                "beloningen": ["meteoriet", "sterrenstof", "alien_artefact", "ruimte_kristal"],
+                "events": [
+                    "ziet een prachtige sterrennevel!",
+                    "ontmoet een vriendelijke alien!",
+                    "zweeft in zero gravity!",
+                    "ontdekt een nieuw planeet!"
+                ]
+            },
+            "6": {
+                "naam": "Onderwater Wereld",
+                "emoji": "🌊",
+                "beschrijving": "Een magische wereld onder de golven...",
+                "moeilijkheid": 3,
+                "beloningen": ["koraal", "zeeuwse_parel", "zeewier", "schatkist"],
+                "events": [
+                    "zwemt met vissen!",
+                    "ontdekt een gezonken schip!",
+                    "ziet een gigantische walvis!",
+                    "vindt Atlantis?"
+                ]
+            },
+        }
+
+        print("\n" + "=" * 55)
+        print(f"  [KOMPAS] {naam}'s VERKENNING MODE!")
+        print("=" * 55)
+        print(f"\n  Ontdekte locaties: {len(self.huisdier['verkenning']['ontdekte_locaties'])}/{len(locaties)}")
+        print(f"  Verzamelde items: {len(self.huisdier['verkenning']['verzamelde_items'])}")
+        print(f"  Totaal avonturen: {self.huisdier['verkenning']['totaal_avonturen']}")
+
+        print("\n  Kies een locatie om te verkennen:")
+        for loc_id, loc in locaties.items():
+            ontdekt = "✓" if loc["naam"] in self.huisdier["verkenning"]["ontdekte_locaties"] else " "
+            sterren = "⭐" * loc["moeilijkheid"]
+            print(f"  {loc_id}. {loc['emoji']} {loc['naam']:<20} [{ontdekt}] {sterren}")
+        print("  0. Terug")
+
+        keuze = input("\n  Kies (0-6): ").strip()
+
+        if keuze == "0" or keuze not in locaties:
+            return
+
+        locatie = locaties[keuze]
+        energie_kosten = 15 + (locatie["moeilijkheid"] * 5)
+
+        if self.huisdier["energie"] < energie_kosten:
+            print(f"\n  [!] {naam} heeft meer energie nodig! (Nodig: {energie_kosten})")
+            return
+
+        self.huisdier["energie"] -= energie_kosten
+
+        print(f"\n  {naam} reist naar {locatie['emoji']} {locatie['naam']}...")
+        print(f"  {locatie['beschrijving']}")
+        time.sleep(1)
+
+        print(f"\n  {geluid}")
+
+        # Random events
+        event = random.choice(locatie["events"])
+        print(f"\n  [AVONTUUR] {naam} {event}")
+        time.sleep(0.5)
+
+        # Kans op item vinden
+        item_kans = 60 + (self.huisdier.get("intelligentie", 0) // 5)
+        if random.randint(1, 100) <= item_kans:
+            item = random.choice(locatie["beloningen"])
+            if item not in self.huisdier["verkenning"]["verzamelde_items"]:
+                self.huisdier["verkenning"]["verzamelde_items"].append(item)
+                print(f"  [VONDST] {naam} vindt een {item.replace('_', ' ')}!")
+            else:
+                bonus_munten = 10 * locatie["moeilijkheid"]
+                self.huisdier["munten"] += bonus_munten
+                print(f"  [MUNT] Al gevonden, verkoopt voor {bonus_munten} munten!")
+
+        # Mark als ontdekt
+        if locatie["naam"] not in self.huisdier["verkenning"]["ontdekte_locaties"]:
+            self.huisdier["verkenning"]["ontdekte_locaties"].append(locatie["naam"])
+            print(f"\n  [NIEUW] Nieuwe locatie ontdekt: {locatie['naam']}!")
+            self.huisdier["munten"] += 25
+
+        # Beloningen
+        self.huisdier["verkenning"]["totaal_avonturen"] += 1
+        xp_beloning = 20 * locatie["moeilijkheid"]
+        munt_beloning = 10 * locatie["moeilijkheid"]
+
+        self.huisdier["ervaring"] += xp_beloning
+        self.huisdier["munten"] += munt_beloning
+        self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 10)
+
+        print(f"\n  [XP] +{xp_beloning} ervaring")
+        print(f"  [MUNT] +{munt_beloning} munten")
+
+        # Dagboek entry
+        self._voeg_dagboek_toe(f"Verkende {locatie['naam']} en {event}")
+
+        self._sla_op()
+
+    def _huisdier_dagboek(self):
+        """Bekijk het automatische dagboek van je huisdier."""
+        naam = self.huisdier["naam"]
+
+        # Init dagboek
+        if "dagboek" not in self.huisdier:
+            self.huisdier["dagboek"] = []
+
+        print("\n" + "=" * 55)
+        print(f"  [BOEK] {naam}'s DAGBOEK")
+        print("=" * 55)
+
+        if not self.huisdier["dagboek"]:
+            print("\n  Het dagboek is nog leeg!")
+            print("  Ga op avontuur om herinneringen te maken!")
+            return
+
+        print(f"\n  Totaal herinneringen: {len(self.huisdier['dagboek'])}")
+        print("\n  --- RECENTE HERINNERINGEN ---")
+
+        # Toon laatste 10 entries
+        for entry in self.huisdier["dagboek"][-10:]:
+            print(f"\n  [{entry['datum']}]")
+            print(f"  {entry['tekst']}")
+
+        print("\n  " + "-" * 50)
+
+        # Statistieken
+        print(f"\n  [STATS] Dagboek Statistieken:")
+        print(f"    Eerste herinnering: {self.huisdier['dagboek'][0]['datum'] if self.huisdier['dagboek'] else 'Nog geen'}")
+        print(f"    Totaal entries: {len(self.huisdier['dagboek'])}")
+
+    def _voeg_dagboek_toe(self, tekst):
+        """Voeg een entry toe aan het dagboek."""
+        if "dagboek" not in self.huisdier:
+            self.huisdier["dagboek"] = []
+
+        entry = {
+            "datum": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "tekst": tekst
+        }
+        self.huisdier["dagboek"].append(entry)
+
+        # Houd max 50 entries
+        if len(self.huisdier["dagboek"]) > 50:
+            self.huisdier["dagboek"] = self.huisdier["dagboek"][-50:]
+
+    def _seizoens_events(self):
+        """Seizoens events met speciale beloningen!"""
+        naam = self.huisdier["naam"]
+        geluid = self.huisdier["geluid"]
+
+        event = self._get_seizoen_event()
+
+        print("\n" + "=" * 55)
+        print(f"  [KALENDER] SEIZOENS EVENTS")
+        print("=" * 55)
+
+        if not event:
+            print("\n  Er is momenteel geen speciaal event actief.")
+            print("\n  Komende events:")
+            print("    🎄 Kerst: 1-31 december")
+            print("    🎆 Nieuwjaar: 1-7 januari")
+            print("    🌸 Lente Festival: 20 maart - 20 april")
+            print("    👑 Koningsdag: 27 april")
+            print("    ☀️ Zomer Vakantie: 21 juni - 31 augustus")
+            print("    🎃 Halloween: 25 oktober - 2 november")
+            print("    🏮 Sint Maarten: 11 november")
+            print("    🎁 Sinterklaas: 5-6 december")
+            return
+
+        print(f"\n  [ACTIEF EVENT] {event['naam']}")
+        print(f"  Bonus multiplier: x{event['bonus']}")
+
+        # Event-specifieke activiteiten
+        activiteiten = {
+            "kerst": [
+                ("Kerstboom versieren", 20, 50),
+                ("Cadeautjes uitpakken", 30, 75),
+                ("Kerstkransje eten", 15, 30),
+            ],
+            "halloween": [
+                ("Trick or Treat", 15, 40),
+                ("Pompoen uithollen", 20, 50),
+                ("Spookhuis bezoeken", 25, 60),
+            ],
+            "zomer": [
+                ("Naar het strand", 10, 30),
+                ("IJsje eten", 5, 20),
+                ("Zwemmen", 15, 40),
+            ],
+            "koningsdag": [
+                ("Vrijmarkt bezoeken", 10, 100),
+                ("Oranje dragen", 5, 25),
+                ("Spelen organiseren", 20, 50),
+            ],
+            "lente": [
+                ("Bloemen plukken", 10, 25),
+                ("Paaseieren zoeken", 15, 40),
+                ("Picknicken", 10, 30),
+            ],
+            "sinterklaas": [
+                ("Schoen zetten", 5, 50),
+                ("Pepernoten vangen", 10, 30),
+                ("Surprises maken", 20, 45),
+            ],
+        }
+
+        event_acts = activiteiten.get(event["type"], [("Feest vieren", 15, 40)])
+
+        print("\n  Speciale activiteiten:")
+        for i, (act_naam, energie, beloning) in enumerate(event_acts, 1):
+            print(f"  {i}. {act_naam} (-{energie} energie, +{int(beloning * event['bonus'])} munten)")
+        print("  0. Terug")
+
+        keuze = input("\n  Kies activiteit: ").strip()
+
+        try:
+            idx = int(keuze) - 1
+            if 0 <= idx < len(event_acts):
+                act_naam, energie, beloning = event_acts[idx]
+
+                if self.huisdier["energie"] < energie:
+                    print(f"\n  [!] {naam} heeft niet genoeg energie!")
+                    return
+
+                self.huisdier["energie"] -= energie
+                echte_beloning = int(beloning * event["bonus"])
+                self.huisdier["munten"] += echte_beloning
+                self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 15)
+
+                print(f"\n  {geluid}")
+                print(f"  {naam} doet: {act_naam}!")
+                print(f"  [MUNT] +{echte_beloning} munten (x{event['bonus']} bonus)!")
+                print(f"  [HAPPY] +15 geluk!")
+
+                self._voeg_dagboek_toe(f"{event['naam']}: {act_naam}")
+                self._sla_op()
+        except (ValueError, IndexError):
+            pass
+
+    def _competities(self):
+        """Doe mee aan competities met je huisdier!"""
+        naam = self.huisdier["naam"]
+        geluid = self.huisdier["geluid"]
+        iq = self.huisdier.get("intelligentie", 0)
+
+        # Init competitie data
+        if "competities" not in self.huisdier:
+            self.huisdier["competities"] = {
+                "gewonnen": 0,
+                "deelgenomen": 0,
+                "trofees": []
+            }
+
+        competities = {
+            "1": {
+                "naam": "Schoonheidswedstrijd",
+                "emoji": "👑",
+                "kosten": 25,
+                "stat": "geluk",
+                "beschrijving": "Wie is het mooiste huisdier?"
+            },
+            "2": {
+                "naam": "Slimste Huisdier",
+                "emoji": "🧠",
+                "kosten": 30,
+                "stat": "intelligentie",
+                "beschrijving": "Test je kennis en wijsheid!"
+            },
+            "3": {
+                "naam": "Snelheidsrace",
+                "emoji": "🏃",
+                "kosten": 20,
+                "stat": "energie",
+                "beschrijving": "Wie is het snelste?"
+            },
+            "4": {
+                "naam": "Tricks Kampioenschap",
+                "emoji": "🎪",
+                "kosten": 35,
+                "stat": "tricks",
+                "beschrijving": "Toon je beste trucs!"
+            },
+            "5": {
+                "naam": "Vechttoernooi",
+                "emoji": "⚔️",
+                "kosten": 40,
+                "stat": "gezondheid",
+                "beschrijving": "Wie is de sterkste?"
+            },
+        }
+
+        print("\n" + "=" * 55)
+        print(f"  [TROFEE] {naam}'s COMPETITIES")
+        print("=" * 55)
+        print(f"\n  Gewonnen: {self.huisdier['competities']['gewonnen']}")
+        print(f"  Deelgenomen: {self.huisdier['competities']['deelgenomen']}")
+        print(f"  Trofees: {len(self.huisdier['competities']['trofees'])}")
+
+        print("\n  Beschikbare competities:")
+        for comp_id, comp in competities.items():
+            print(f"  {comp_id}. {comp['emoji']} {comp['naam']} ({comp['kosten']} munten)")
+            print(f"      {comp['beschrijving']}")
+        print("  0. Terug")
+
+        keuze = input("\n  Kies competitie: ").strip()
+
+        if keuze == "0" or keuze not in competities:
+            return
+
+        comp = competities[keuze]
+
+        if self.huisdier["munten"] < comp["kosten"]:
+            print(f"\n  [!] Niet genoeg munten! (Nodig: {comp['kosten']})")
+            return
+
+        if self.huisdier["energie"] < 30:
+            print(f"\n  [!] {naam} is te moe om mee te doen!")
+            return
+
+        self.huisdier["munten"] -= comp["kosten"]
+        self.huisdier["energie"] -= 30
+
+        print(f"\n  {naam} doet mee aan {comp['emoji']} {comp['naam']}!")
+        print(f"  {comp['beschrijving']}")
+        time.sleep(1)
+
+        # Bepaal score op basis van relevante stat
+        stat_waarde = 50  # basis
+        if comp["stat"] == "geluk":
+            stat_waarde = self.huisdier["geluk"]
+        elif comp["stat"] == "intelligentie":
+            stat_waarde = iq
+        elif comp["stat"] == "energie":
+            stat_waarde = self.huisdier["energie"] + 30  # add back what was used
+        elif comp["stat"] == "tricks":
+            stat_waarde = len(self.huisdier["tricks_geleerd"]) * 15
+        elif comp["stat"] == "gezondheid":
+            stat_waarde = self.huisdier["gezondheid"]
+
+        # Accessoire bonussen
+        accessoire_bonus = len(self.huisdier["accessoires"]) * 5
+
+        totaal_score = stat_waarde + accessoire_bonus + random.randint(-20, 20)
+        tegenstander_score = random.randint(30, 80)
+
+        print(f"\n  --- RESULTATEN ---")
+        print(f"  {naam}'s score: {totaal_score}")
+        print(f"  Tegenstander: {tegenstander_score}")
+        time.sleep(0.5)
+
+        self.huisdier["competities"]["deelgenomen"] += 1
+
+        if totaal_score > tegenstander_score:
+            print(f"\n  [TROFEE] {naam} WINT!")
+            print(f"  {geluid} {geluid} {geluid}")
+
+            self.huisdier["competities"]["gewonnen"] += 1
+            prijs = comp["kosten"] * 3
+            self.huisdier["munten"] += prijs
+            self.huisdier["ervaring"] += 50
+
+            # Trofee toekennen
+            trofee_naam = f"{comp['naam']} Kampioen"
+            if trofee_naam not in self.huisdier["competities"]["trofees"]:
+                self.huisdier["competities"]["trofees"].append(trofee_naam)
+                print(f"  [NIEUW] Trofee verdiend: {trofee_naam}!")
+
+            print(f"  [MUNT] +{prijs} munten!")
+            print(f"  [XP] +50 ervaring!")
+
+            self._voeg_dagboek_toe(f"Won {comp['naam']}!")
+        else:
+            print(f"\n  [X] {naam} verliest helaas...")
+            print(f"  Troostprijs: +10 munten")
+            self.huisdier["munten"] += 10
+
+            self._voeg_dagboek_toe(f"Deed mee aan {comp['naam']}")
+
+        self._sla_op()
+
+    def _slapen_met_dromen(self):
+        """Slapen met kans op dromen voor extra beloningen."""
+        naam = self.huisdier["naam"]
+        geluid = self.huisdier["geluid"]
+
+        # Init droom data
+        if "dromen" not in self.huisdier:
+            self.huisdier["dromen"] = {
+                "totaal": 0,
+                "unieke_dromen": []
+            }
+
+        dromen = [
+            {"naam": "Vliegende Droom", "beschrijving": f"{naam} droomt over vliegen door de wolken!", "bonus_type": "geluk", "bonus": 15},
+            {"naam": "Schat Droom", "beschrijving": f"{naam} droomt over een enorme schatkist!", "bonus_type": "munten", "bonus": 30},
+            {"naam": "Avontuur Droom", "beschrijving": f"{naam} droomt over een episch avontuur!", "bonus_type": "ervaring", "bonus": 40},
+            {"naam": "Eten Droom", "beschrijving": f"{naam} droomt over eindeloos lekker eten!", "bonus_type": "honger", "bonus": 20},
+            {"naam": "Kennis Droom", "beschrijving": f"{naam} droomt over wijze leraren!", "bonus_type": "intelligentie", "bonus": 10},
+            {"naam": "Vriendschap Droom", "beschrijving": f"{naam} droomt over geweldige vrienden!", "bonus_type": "geluk", "bonus": 20},
+            {"naam": "Nachtmerrie", "beschrijving": f"{naam} had een nachtmerrie... maar is nu wakker!", "bonus_type": "geen", "bonus": 0},
+            {"naam": "Herinneringen Droom", "beschrijving": f"{naam} droomt over mooie herinneringen!", "bonus_type": "geluk", "bonus": 10},
+        ]
+
+        # Kans op droom (hoger bij hogere geluk)
+        droom_kans = 40 + (self.huisdier["geluk"] // 5)
+
+        if random.randint(1, 100) <= droom_kans:
+            droom = random.choice(dromen)
+            self.huisdier["dromen"]["totaal"] += 1
+
+            print(f"\n  [DROOM] {naam} begint te dromen...")
+            time.sleep(0.5)
+            print(f"\n  ✨ {droom['naam']} ✨")
+            print(f"  {droom['beschrijving']}")
+
+            if droom["naam"] not in self.huisdier["dromen"]["unieke_dromen"]:
+                self.huisdier["dromen"]["unieke_dromen"].append(droom["naam"])
+                print(f"  [NIEUW] Eerste keer deze droom!")
+
+            # Pas bonus toe
+            if droom["bonus_type"] == "geluk":
+                self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + droom["bonus"])
+                print(f"  [HAPPY] +{droom['bonus']} geluk!")
+            elif droom["bonus_type"] == "munten":
+                self.huisdier["munten"] += droom["bonus"]
+                print(f"  [MUNT] +{droom['bonus']} munten!")
+            elif droom["bonus_type"] == "ervaring":
+                self.huisdier["ervaring"] += droom["bonus"]
+                print(f"  [XP] +{droom['bonus']} ervaring!")
+            elif droom["bonus_type"] == "honger":
+                self.huisdier["honger"] = min(100, self.huisdier["honger"] + droom["bonus"])
+                print(f"  [FOOD] +{droom['bonus']} honger!")
+            elif droom["bonus_type"] == "intelligentie":
+                self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + droom["bonus"]
+                print(f"  [IQ] +{droom['bonus']} intelligentie!")
+
+            self._voeg_dagboek_toe(f"Had een droom: {droom['naam']}")
+
+        return True
+
     def run(self):
         """Start de app."""
         clear_scherm()
@@ -3729,7 +4290,7 @@ Antwoord in het Nederlands."""
             self._toon_status()
             self._toon_menu()
 
-            keuze = input("\nJouw keuze (0-10): ").strip()
+            keuze = input("\nJouw keuze (0-17): ").strip()
 
             if keuze == "1":
                 self._voeren()
@@ -3758,6 +4319,14 @@ Antwoord in het Nederlands."""
             elif keuze == "13":
                 if self._reset_huisdier():
                     continue  # Na reset direct naar nieuwe huisdier
+            elif keuze == "14":
+                self._verkenning_mode()
+            elif keuze == "15":
+                self._huisdier_dagboek()
+            elif keuze == "16":
+                self._seizoens_events()
+            elif keuze == "17":
+                self._competities()
             elif keuze == "0":
                 self._sla_op()
                 print(f"\n{self.huisdier['naam']} is opgeslagen!")
