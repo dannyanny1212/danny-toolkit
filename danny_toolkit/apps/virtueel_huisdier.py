@@ -64,6 +64,51 @@ def _get_claude_chat():
         return None
 
 
+def _get_mood_tracker():
+    """Lazy import voor Mood Tracker."""
+    try:
+        from ..apps.mood_tracker import MoodTrackerApp
+        return MoodTrackerApp()
+    except Exception:
+        return None
+
+
+def _get_habit_tracker():
+    """Lazy import voor Habit Tracker."""
+    try:
+        from ..apps.habit_tracker import HabitTrackerApp
+        return HabitTrackerApp()
+    except Exception:
+        return None
+
+
+def _get_expense_tracker():
+    """Lazy import voor Expense Tracker."""
+    try:
+        from ..apps.expense_tracker import ExpenseTrackerApp
+        return ExpenseTrackerApp()
+    except Exception:
+        return None
+
+
+def _get_agenda_planner():
+    """Lazy import voor Agenda Planner."""
+    try:
+        from ..apps.agenda_planner import AgendaPlannerApp
+        return AgendaPlannerApp()
+    except Exception:
+        return None
+
+
+def _get_pomodoro_timer():
+    """Lazy import voor Pomodoro Timer."""
+    try:
+        from ..apps.pomodoro_timer import PomodoroTimerApp
+        return PomodoroTimerApp()
+    except Exception:
+        return None
+
+
 # =============================================================================
 # AI PERSONALITY TRAITS - Definieert huisdier persoonlijkheden
 # =============================================================================
@@ -2228,7 +2273,20 @@ Maak het dromerig en fantasierijk."""
             print("| 14. AI Brainstorm (18 munten)      |")
             print("|     Creatief brainstormen met AI   |")
             print("+------------------------------------+")
-            print("| 15. Bekijk Kennisbibliotheek       |")
+            print("|  [PRODUCTIVITEIT INTEGRATIES]      |")
+            print("+------------------------------------+")
+            print("| 15. Mood Tracker (10 munten)       |")
+            print("|     Track stemming met AI analyse  |")
+            print("| 16. Habit Coach (12 munten)        |")
+            print("|     AI helpt met gewoontes         |")
+            print("| 17. Budget Advisor (15 munten)     |")
+            print("|     AI spaartips en analyse        |")
+            print("| 18. Dag Planner (12 munten)        |")
+            print("|     AI helpt je dag plannen        |")
+            print("| 19. Focus Timer (8 munten)         |")
+            print("|     Pomodoro met AI tips           |")
+            print("+------------------------------------+")
+            print("| 20. Bekijk Kennisbibliotheek       |")
             print("|     Alle geleerde feiten bekijken  |")
             print("|  0. Terug                          |")
             print("+====================================+")
@@ -2266,6 +2324,16 @@ Maak het dromerig en fantasierijk."""
             elif keuze == "14":
                 self._ai_brainstorm()
             elif keuze == "15":
+                self._ai_mood_tracker()
+            elif keuze == "16":
+                self._ai_habit_coach()
+            elif keuze == "17":
+                self._ai_budget_advisor()
+            elif keuze == "18":
+                self._ai_dag_planner()
+            elif keuze == "19":
+                self._ai_focus_timer()
+            elif keuze == "20":
                 self._bekijk_kennisbibliotheek()
 
             input("\nDruk op Enter...")
@@ -4385,6 +4453,477 @@ Code:
         self.huisdier["ervaring"] += xp_beloning
         self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + intel_bonus
         self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 5)
+
+        print(f"\n  {geluid}")
+        self._sla_op()
+
+    # ==================== PRODUCTIVITEIT INTEGRATIES ====================
+
+    def _ai_mood_tracker(self):
+        """Huisdier helpt met stemming tracken en AI analyse!"""
+        if self.huisdier["munten"] < 10:
+            print("\nJe hebt niet genoeg munten! (Nodig: 10)")
+            return
+
+        self.huisdier["munten"] -= 10
+
+        naam = self.huisdier["naam"]
+        geluid = self.huisdier["geluid"]
+        emoji = self.huisdier["emoji"]
+
+        print("\n" + "=" * 55)
+        print(f"  {emoji} {naam} DE MOOD BUDDY!")
+        print("=" * 55)
+        print(f"\n  {naam} wil weten hoe je je voelt!")
+
+        print("\n  Hoe voel je je nu?")
+        print("  1. Geweldig! (5/5)")
+        print("  2. Goed (4/5)")
+        print("  3. Oké (3/5)")
+        print("  4. Niet zo goed (2/5)")
+        print("  5. Slecht (1/5)")
+
+        keuze = input("\n  Keuze (1-5): ").strip()
+        moods = {"1": 5, "2": 4, "3": 3, "4": 2, "5": 1}
+        mood_score = moods.get(keuze, 3)
+
+        notitie = input("  Waarom voel je je zo? ").strip()
+
+        print(f"\n  {naam} registreert je stemming...")
+        time.sleep(0.5)
+
+        intel_bonus = 3
+        geluk_bonus = 0
+        ai_advies = None
+
+        # Probeer echte Mood Tracker te gebruiken
+        try:
+            mood_tracker = _get_mood_tracker()
+            if mood_tracker and mood_tracker.client:
+                print(f"  [OK] ECHTE AI Mood Analyse!")
+                # Gebruik AI voor advies
+                prompt = f"""Iemand voelt zich {mood_score}/5. Notitie: "{notitie}"
+Geef kort (2-3 zinnen) empathisch advies. Nederlands."""
+                ai_advies = mood_tracker._ai_request(prompt, max_tokens=150)
+                intel_bonus = 8
+        except Exception:
+            pass
+
+        # Huisdier reageert op basis van mood
+        if mood_score >= 4:
+            print(f"\n  {naam}: {geluid} Geweldig! Ik ben zo blij voor je!")
+            geluk_bonus = 5
+        elif mood_score == 3:
+            print(f"\n  {naam}: {geluid} Oké dag? Laten we iets leuks doen!")
+            geluk_bonus = 3
+        else:
+            print(f"\n  {naam}: {geluid} Ik ben hier voor je! *knuffelt*")
+            geluk_bonus = 8  # Extra troost
+
+        if ai_advies:
+            print(f"\n  [AI Advies]: {ai_advies}")
+
+        # Resultaten
+        xp_beloning = 15
+        munt_beloning = 5
+
+        print("\n" + "=" * 55)
+        print("  [HART] MOOD CHECK VOLTOOID!")
+        print("=" * 55)
+        print(f"\n  Stemming geregistreerd: {mood_score}/5")
+        print(f"    [IQ] Emotionele intelligentie: +{intel_bonus}")
+        print(f"    [HART] Geluk: +{geluk_bonus}")
+        print(f"    [XP] Ervaring: +{xp_beloning}")
+
+        self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + intel_bonus
+        self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + geluk_bonus)
+        self.huisdier["ervaring"] += xp_beloning
+
+        self._ai_add_memory("mood", f"Baasje voelde zich {mood_score}/5: {notitie[:30]}")
+        print(f"\n  {geluid}")
+        self._sla_op()
+
+    def _ai_habit_coach(self):
+        """Huisdier wordt je persoonlijke AI habit coach!"""
+        if self.huisdier["munten"] < 12:
+            print("\nJe hebt niet genoeg munten! (Nodig: 12)")
+            return
+
+        self.huisdier["munten"] -= 12
+
+        naam = self.huisdier["naam"]
+        geluid = self.huisdier["geluid"]
+        emoji = self.huisdier["emoji"]
+
+        print("\n" + "=" * 55)
+        print(f"  {emoji} {naam} DE HABIT COACH!")
+        print("=" * 55)
+        print(f"\n  {naam} helpt je goede gewoontes opbouwen!")
+
+        print("\n  Wat wil je doen?")
+        print("  1. Nieuwe gewoonte starten")
+        print("  2. Motivatie voor een gewoonte")
+        print("  3. AI tips voor discipline")
+
+        keuze = input("\n  Keuze (1-3): ").strip()
+
+        intel_bonus = 5
+        ai_response = None
+
+        if keuze == "1":
+            gewoonte = input("  Welke gewoonte wil je starten? ").strip()
+            if gewoonte:
+                print(f"\n  {naam} denkt na over '{gewoonte}'...")
+                time.sleep(0.5)
+
+                try:
+                    habit_tracker = _get_habit_tracker()
+                    if habit_tracker and habit_tracker.client:
+                        prompt = f"""Help iemand de gewoonte '{gewoonte}' te starten.
+Geef 3 concrete tips om te beginnen. Kort en motiverend. Nederlands."""
+                        ai_response = habit_tracker._ai_request(prompt, max_tokens=200)
+                        intel_bonus = 10
+                except Exception:
+                    pass
+
+                if not ai_response:
+                    ai_response = f"Tips voor '{gewoonte}':\n1. Begin klein\n2. Koppel aan bestaande routine\n3. Beloon jezelf na elke keer"
+
+        elif keuze == "2":
+            gewoonte = input("  Welke gewoonte vind je moeilijk? ").strip()
+            if gewoonte:
+                try:
+                    habit_tracker = _get_habit_tracker()
+                    if habit_tracker and habit_tracker.client:
+                        prompt = f"""Geef een korte, krachtige motivatie boodschap voor iemand die moeite heeft met de gewoonte '{gewoonte}'. 2-3 zinnen. Nederlands."""
+                        ai_response = habit_tracker._ai_request(prompt, max_tokens=100)
+                        intel_bonus = 8
+                except Exception:
+                    pass
+
+                if not ai_response:
+                    ai_response = f"Elke dag dat je '{gewoonte}' doet, word je sterker. Je hebt dit!"
+
+        else:
+            try:
+                habit_tracker = _get_habit_tracker()
+                if habit_tracker and habit_tracker.client:
+                    prompt = "Geef 5 praktische tips voor meer discipline bij het opbouwen van gewoontes. Nederlands, kort."
+                    ai_response = habit_tracker._ai_request(prompt, max_tokens=250)
+                    intel_bonus = 10
+            except Exception:
+                pass
+
+            if not ai_response:
+                ai_response = "Discipline tips:\n1. Plan vooruit\n2. Maak het makkelijk\n3. Track je voortgang\n4. Wees geduldig\n5. Vier kleine overwinningen"
+
+        print(f"\n  [COACH] {naam}'s advies:")
+        print(f"  {ai_response}")
+
+        # Resultaten
+        xp_beloning = 18
+        munt_beloning = 6
+
+        print("\n" + "=" * 55)
+        print("  [COACH] HABIT COACHING VOLTOOID!")
+        print("=" * 55)
+        print(f"    [IQ] Intelligentie: +{intel_bonus}")
+        print(f"    [MUNT] Munten: +{munt_beloning}")
+        print(f"    [XP] Ervaring: +{xp_beloning}")
+
+        self.huisdier["munten"] += munt_beloning
+        self.huisdier["ervaring"] += xp_beloning
+        self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + intel_bonus
+
+        print(f"\n  {geluid}")
+        self._sla_op()
+
+    def _ai_budget_advisor(self):
+        """Huisdier geeft AI-powered budget en spaartips!"""
+        if self.huisdier["munten"] < 15:
+            print("\nJe hebt niet genoeg munten! (Nodig: 15)")
+            return
+
+        self.huisdier["munten"] -= 15
+
+        naam = self.huisdier["naam"]
+        geluid = self.huisdier["geluid"]
+        emoji = self.huisdier["emoji"]
+
+        print("\n" + "=" * 55)
+        print(f"  {emoji} {naam} DE BUDGET ADVISOR!")
+        print("=" * 55)
+        print(f"\n  {naam} helpt je slim met geld omgaan!")
+
+        print("\n  Wat wil je weten?")
+        print("  1. Algemene spaartips")
+        print("  2. Budget advies voor een categorie")
+        print("  3. Tips voor een specifiek doel")
+
+        keuze = input("\n  Keuze (1-3): ").strip()
+
+        intel_bonus = 5
+        ai_response = None
+
+        if keuze == "2":
+            categorie = input("  Categorie (bv. boodschappen, entertainment): ").strip()
+            if categorie:
+                try:
+                    expense_tracker = _get_expense_tracker()
+                    if expense_tracker and expense_tracker.client:
+                        prompt = f"""Geef 4 praktische bespaartips voor de categorie '{categorie}'. Concreet en direct toepasbaar. Nederlands."""
+                        ai_response = expense_tracker._ai_request(prompt, max_tokens=200)
+                        intel_bonus = 10
+                except Exception:
+                    pass
+
+                if not ai_response:
+                    ai_response = f"Tips voor {categorie}:\n1. Maak een budget\n2. Vergelijk prijzen\n3. Wacht 24 uur voor grote aankopen\n4. Zoek alternatieven"
+
+        elif keuze == "3":
+            doel = input("  Waar spaar je voor? ").strip()
+            if doel:
+                try:
+                    expense_tracker = _get_expense_tracker()
+                    if expense_tracker and expense_tracker.client:
+                        prompt = f"""Iemand wil sparen voor '{doel}'. Geef een motiverend en praktisch spaarplan in 3-4 punten. Nederlands."""
+                        ai_response = expense_tracker._ai_request(prompt, max_tokens=200)
+                        intel_bonus = 12
+                except Exception:
+                    pass
+
+                if not ai_response:
+                    ai_response = f"Spaarplan voor {doel}:\n1. Bepaal het benodigde bedrag\n2. Stel een deadline\n3. Automatiseer je sparen\n4. Track je voortgang"
+
+        else:
+            try:
+                expense_tracker = _get_expense_tracker()
+                if expense_tracker and expense_tracker.client:
+                    prompt = "Geef 5 slimme, praktische spaartips die direct toepasbaar zijn. Nederlands, kort en bondig."
+                    ai_response = expense_tracker._ai_request(prompt, max_tokens=250)
+                    intel_bonus = 8
+            except Exception:
+                pass
+
+            if not ai_response:
+                ai_response = "Spaartips:\n1. Betaal jezelf eerst\n2. Track al je uitgaven\n3. Maak onderscheid tussen wensen en behoeften\n4. Zoek gratis alternatieven\n5. Meal prep in plaats van afhaal"
+
+        print(f"\n  [MUNT] {naam}'s financiele wijsheid:")
+        print(f"  {ai_response}")
+
+        # Resultaten
+        xp_beloning = 20
+        munt_beloning = 10  # Ironisch: je verdient munten door over geld te leren!
+
+        print("\n" + "=" * 55)
+        print("  [MUNT] BUDGET ADVIES VOLTOOID!")
+        print("=" * 55)
+        print(f"    [IQ] Financiele intelligentie: +{intel_bonus}")
+        print(f"    [MUNT] Munten: +{munt_beloning}")
+        print(f"    [XP] Ervaring: +{xp_beloning}")
+
+        self.huisdier["munten"] += munt_beloning
+        self.huisdier["ervaring"] += xp_beloning
+        self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + intel_bonus
+
+        print(f"\n  {geluid}")
+        self._sla_op()
+
+    def _ai_dag_planner(self):
+        """Huisdier helpt je dag plannen met AI!"""
+        if self.huisdier["munten"] < 12:
+            print("\nJe hebt niet genoeg munten! (Nodig: 12)")
+            return
+
+        self.huisdier["munten"] -= 12
+
+        naam = self.huisdier["naam"]
+        geluid = self.huisdier["geluid"]
+        emoji = self.huisdier["emoji"]
+
+        print("\n" + "=" * 55)
+        print(f"  {emoji} {naam} DE DAG PLANNER!")
+        print("=" * 55)
+        print(f"\n  {naam} helpt je productief te zijn!")
+
+        print("\n  Wat wil je plannen?")
+        print("  1. Mijn dag optimaliseren")
+        print("  2. Prioriteiten stellen")
+        print("  3. Productiviteit tips")
+
+        keuze = input("\n  Keuze (1-3): ").strip()
+
+        intel_bonus = 5
+        ai_response = None
+
+        if keuze == "1":
+            taken = input("  Wat moet je vandaag doen? (komma-gescheiden): ").strip()
+            if taken:
+                try:
+                    agenda = _get_agenda_planner()
+                    if agenda and agenda.client:
+                        prompt = f"""Help met dagplanning voor deze taken: {taken}
+
+Geef een optimale volgorde en timing suggesties. Kort en praktisch. Nederlands."""
+                        ai_response = agenda._ai_request(prompt, max_tokens=250)
+                        intel_bonus = 12
+                except Exception:
+                    pass
+
+                if not ai_response:
+                    taken_list = taken.split(",")
+                    ai_response = "Aanbevolen volgorde:\n"
+                    for i, taak in enumerate(taken_list[:5], 1):
+                        ai_response += f"{i}. {taak.strip()}\n"
+                    ai_response += "\nTip: Begin met de moeilijkste taak!"
+
+        elif keuze == "2":
+            taken = input("  Welke taken moet je prioriteren? ").strip()
+            if taken:
+                try:
+                    agenda = _get_agenda_planner()
+                    if agenda and agenda.client:
+                        prompt = f"""Help prioriteiten stellen voor: {taken}
+
+Geef een ranking op urgentie/belang met korte uitleg. Nederlands."""
+                        ai_response = agenda._ai_request(prompt, max_tokens=200)
+                        intel_bonus = 10
+                except Exception:
+                    pass
+
+                if not ai_response:
+                    ai_response = "Prioriteer op basis van:\n1. Deadlines (urgent eerst)\n2. Impact (belangrijk eerst)\n3. Afhankelijkheden (blokkerende taken eerst)"
+
+        else:
+            try:
+                agenda = _get_agenda_planner()
+                if agenda and agenda.client:
+                    prompt = "Geef 5 concrete productiviteit tips voor een effectieve werkdag. Nederlands, praktisch."
+                    ai_response = agenda._ai_request(prompt, max_tokens=250)
+                    intel_bonus = 8
+            except Exception:
+                pass
+
+            if not ai_response:
+                ai_response = "Productiviteit tips:\n1. Plan je dag de avond ervoor\n2. Doe eerst je moeilijkste taak\n3. Werk in blokken van 25-50 min\n4. Neem regelmatig pauzes\n5. Elimineer afleidingen"
+
+        print(f"\n  [KALENDER] {naam}'s planning advies:")
+        print(f"  {ai_response}")
+
+        # Resultaten
+        xp_beloning = 18
+        munt_beloning = 6
+
+        print("\n" + "=" * 55)
+        print("  [KALENDER] PLANNING VOLTOOID!")
+        print("=" * 55)
+        print(f"    [IQ] Planning intelligentie: +{intel_bonus}")
+        print(f"    [MUNT] Munten: +{munt_beloning}")
+        print(f"    [XP] Ervaring: +{xp_beloning}")
+
+        self.huisdier["munten"] += munt_beloning
+        self.huisdier["ervaring"] += xp_beloning
+        self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + intel_bonus
+
+        print(f"\n  {geluid}")
+        self._sla_op()
+
+    def _ai_focus_timer(self):
+        """Huisdier geeft AI focus tips en motivatie!"""
+        if self.huisdier["munten"] < 8:
+            print("\nJe hebt niet genoeg munten! (Nodig: 8)")
+            return
+
+        self.huisdier["munten"] -= 8
+
+        naam = self.huisdier["naam"]
+        geluid = self.huisdier["geluid"]
+        emoji = self.huisdier["emoji"]
+
+        print("\n" + "=" * 55)
+        print(f"  {emoji} {naam} DE FOCUS MASTER!")
+        print("=" * 55)
+        print(f"\n  {naam} helpt je geconcentreerd te blijven!")
+
+        print("\n  Wat heb je nodig?")
+        print("  1. Focus tips voor nu")
+        print("  2. Motivatie boost")
+        print("  3. Anti-afleiding advies")
+
+        keuze = input("\n  Keuze (1-3): ").strip()
+
+        intel_bonus = 4
+        geluk_bonus = 3
+        ai_response = None
+
+        if keuze == "1":
+            taak = input("  Waar moet je op focussen? ").strip()
+            try:
+                pomodoro = _get_pomodoro_timer()
+                if pomodoro and pomodoro.client:
+                    prompt = f"""Geef 3 concrete focus tips voor iemand die moet werken aan: '{taak}'
+Kort, praktisch, direct toepasbaar. Nederlands."""
+                    ai_response = pomodoro._ai_request(prompt, max_tokens=150)
+                    intel_bonus = 8
+            except Exception:
+                pass
+
+            if not ai_response:
+                ai_response = f"Focus tips voor {taak if taak else 'je taak'}:\n1. Zet je telefoon weg\n2. Werk in 25-min blokken\n3. Maak je bureau leeg"
+
+        elif keuze == "2":
+            try:
+                pomodoro = _get_pomodoro_timer()
+                if pomodoro and pomodoro.client:
+                    prompt = "Geef een korte, krachtige motivatie boodschap om iemand aan te moedigen door te zetten met hun werk. 2-3 zinnen, energiek. Nederlands."
+                    ai_response = pomodoro._ai_request(prompt, max_tokens=100)
+                    intel_bonus = 6
+                    geluk_bonus = 5
+            except Exception:
+                pass
+
+            if not ai_response:
+                ai_response = "Je bent verder dan je denkt! Elke minuut focus brengt je dichter bij je doel. Jij kan dit!"
+
+        else:
+            try:
+                pomodoro = _get_pomodoro_timer()
+                if pomodoro and pomodoro.client:
+                    prompt = "Geef 4 praktische tips om afleidingen te minimaliseren tijdens het werken. Nederlands, direct toepasbaar."
+                    ai_response = pomodoro._ai_request(prompt, max_tokens=200)
+                    intel_bonus = 7
+            except Exception:
+                pass
+
+            if not ai_response:
+                ai_response = "Anti-afleiding tips:\n1. Notificaties uit\n2. Werk in een opgeruimde ruimte\n3. Gebruik website blockers\n4. Communiceer je focus-tijd"
+
+        print(f"\n  [FOCUS] {naam}'s focus wijsheid:")
+        print(f"  {ai_response}")
+
+        # Mini focus oefening
+        print(f"\n  {naam}: Laten we een korte focus oefening doen!")
+        print("  Sluit je ogen, adem 3x diep in en uit...")
+        input("  [Druk Enter als je klaar bent]")
+        print(f"  {naam}: {geluid} Goed gedaan! Je bent nu klaar om te focussen!")
+        geluk_bonus += 2
+
+        # Resultaten
+        xp_beloning = 12
+        munt_beloning = 4
+
+        print("\n" + "=" * 55)
+        print("  [FOCUS] FOCUS SESSIE VOLTOOID!")
+        print("=" * 55)
+        print(f"    [IQ] Focus intelligentie: +{intel_bonus}")
+        print(f"    [HART] Geluk: +{geluk_bonus}")
+        print(f"    [MUNT] Munten: +{munt_beloning}")
+        print(f"    [XP] Ervaring: +{xp_beloning}")
+
+        self.huisdier["munten"] += munt_beloning
+        self.huisdier["ervaring"] += xp_beloning
+        self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + intel_bonus
+        self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + geluk_bonus)
 
         print(f"\n  {geluid}")
         self._sla_op()
