@@ -28,6 +28,12 @@ ENV/
 data/apps/
 data/output/rapporten/
 data/rag/vector_db.json
+data/chat_data.json
+data/production_rag_data.json
+data/rag_data.json
+
+# Misc
+nul
 
 # Keep directory structure
 !data/rag/documenten/.gitkeep
