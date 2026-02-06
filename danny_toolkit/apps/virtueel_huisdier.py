@@ -586,6 +586,11 @@ class VirtueelHuisdierApp:
         print("| 36. Magische Tuin              |")
         print("| 37. Geheime Missies            |")
         print("+--------------------------------+")
+        print("|  [AUTO MODE]                   |")
+        print("+--------------------------------+")
+        print("| 38. Auto Learn & Sleep Mode    |")
+        print("|     Automatisch leren & rusten |")
+        print("+--------------------------------+")
         print("| 13. Reset Huisdier             |")
         print("|  0. Opslaan & Afsluiten        |")
         print("+================================+")
@@ -7137,6 +7142,224 @@ Code:
                         print("\n  [!] Niet genoeg munten!")
                     break
 
+    def _auto_mode(self):
+        """Automatische leer- en slaapmodus - huisdier leert en rust zelfstandig!"""
+        naam = self.huisdier["naam"]
+        geluid = self.huisdier["geluid"]
+        emoji = self.huisdier["emoji"]
+
+        print("\n" + "=" * 60)
+        print(f"  {emoji} AUTO LEARN & SLEEP MODE {emoji}")
+        print("=" * 60)
+        print(f"\n  {naam} gaat automatisch leren en rusten!")
+        print("  Dit simuleert meerdere leer- en slaapsessies.")
+        print("\n  Kies een modus:")
+        print("  1. Korte sessie (5 cycli) - 10 munten")
+        print("  2. Medium sessie (10 cycli) - 18 munten")
+        print("  3. Lange sessie (20 cycli) - 30 munten")
+        print("  4. Nacht modus (50 cycli) - 60 munten")
+        print("  5. AI Turbo Learn (100 cycli + AI) - 100 munten")
+        print("  0. Terug")
+
+        keuze = input("\n  Keuze: ").strip()
+
+        sessie_opties = {
+            "1": {"cycli": 5, "kosten": 10, "naam": "Korte"},
+            "2": {"cycli": 10, "kosten": 18, "naam": "Medium"},
+            "3": {"cycli": 20, "kosten": 30, "naam": "Lange"},
+            "4": {"cycli": 50, "kosten": 60, "naam": "Nacht"},
+            "5": {"cycli": 100, "kosten": 100, "naam": "AI Turbo"},
+        }
+
+        if keuze not in sessie_opties:
+            return
+
+        sessie = sessie_opties[keuze]
+
+        if self.huisdier["munten"] < sessie["kosten"]:
+            print(f"\n  [!] Niet genoeg munten! (Nodig: {sessie['kosten']})")
+            return
+
+        self.huisdier["munten"] -= sessie["kosten"]
+
+        print(f"\n  {naam} start {sessie['naam']} Auto Mode...")
+        print(f"  [MUNT] -{sessie['kosten']} munten")
+        print("\n  " + "-" * 50)
+        time.sleep(0.5)
+
+        # Statistieken bijhouden
+        totaal_energie = 0
+        totaal_intel = 0
+        totaal_xp = 0
+        totaal_geluk = 0
+        feiten_geleerd = 0
+        slaap_cycli = 0
+        leer_cycli = 0
+
+        # Laad permanente kennis
+        permanente_kennis = self._laad_permanente_kennis()
+
+        # Ingebouwde feiten voor auto-learn
+        auto_feiten = [
+            "Machine Learning is een subset van AI die patronen leert uit data",
+            "Neural networks bestaan uit lagen van kunstmatige neuronen",
+            "Backpropagation is het algoritme waarmee neural networks leren",
+            "REST APIs gebruiken HTTP methodes voor communicatie",
+            "Embeddings zijn numerieke vectoren die betekenis representeren",
+            "Cosine similarity meet gelijkenis tussen vectoren",
+            "Supervised learning gebruikt gelabelde trainingsdata",
+            "Unsupervised learning vindt patronen zonder labels",
+            "Transfer learning hergebruikt voorgetrainde modellen",
+            "RAG combineert retrieval met generatie voor betere antwoorden",
+            "Transformers gebruiken attention voor parallelle verwerking",
+            "LSTM lost het vanishing gradient probleem op",
+            "CNN is gespecialiseerd in beeldherkenning",
+            "Dropout voorkomt overfitting door neuronen uit te schakelen",
+            "Batch normalization versnelt en stabiliseert training",
+            "Python decorators wrappen functies voor extra functionaliteit",
+            "Generators gebruiken yield voor memory-efficiente iteratie",
+            "API rate limiting beschermt tegen overbelasting",
+            "JWT tokens bevatten user info voor stateless authenticatie",
+            "Gradient descent optimaliseert model parameters",
+            "Feature engineering verbetert model input",
+            "Cross-validation test model generalisatie",
+            "Hyperparameter tuning optimaliseert model configuratie",
+            "Data augmentation vergroot training datasets",
+            "Ensemble methods combineren meerdere modellen",
+        ]
+
+        # AI check voor turbo mode
+        echte_ai = False
+        if keuze == "5":
+            try:
+                claude_chat = _get_claude_chat()
+                if claude_chat:
+                    echte_ai = True
+                    print(f"  [AI] ECHTE Claude AI geactiveerd!")
+            except:
+                pass
+
+        # Start de cycli
+        for i in range(sessie["cycli"]):
+            # Voortgang tonen (elke 5 cycli of bij belangrijke momenten)
+            if i % 5 == 0 or i == sessie["cycli"] - 1:
+                voortgang = int((i + 1) / sessie["cycli"] * 100)
+                balk = "█" * (voortgang // 5) + "░" * (20 - voortgang // 5)
+                print(f"\r  [{balk}] {voortgang}% - Cyclus {i+1}/{sessie['cycli']}", end="", flush=True)
+
+            # Bepaal actie: 60% leren, 40% slapen
+            if random.random() < 0.6:
+                # LEER CYCLUS
+                leer_cycli += 1
+
+                # Leer een feit
+                beschikbare_feiten = [f for f in auto_feiten if f not in permanente_kennis["feiten"]]
+                if beschikbare_feiten:
+                    feit = random.choice(beschikbare_feiten)
+                    permanente_kennis["feiten"].append(feit)
+                    permanente_kennis["bronnen"].append("auto_learn")
+                    permanente_kennis["geleerd_op"].append(datetime.now().isoformat())
+                    feiten_geleerd += 1
+                    totaal_intel += 1
+
+                # IQ boost
+                totaal_intel += random.randint(1, 3)
+                totaal_xp += random.randint(5, 15)
+
+                # Kleine energie kosten
+                self.huisdier["energie"] = max(0, self.huisdier["energie"] - 0.2)
+
+            else:
+                # SLAAP CYCLUS
+                slaap_cycli += 1
+
+                # Energie herstel
+                energie_herstel = random.randint(3, 8)
+                self.huisdier["energie"] = min(100, self.huisdier["energie"] + energie_herstel)
+                totaal_energie += energie_herstel
+
+                # Geluk boost
+                geluk_boost = random.randint(1, 3)
+                self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + geluk_boost)
+                totaal_geluk += geluk_boost
+
+                # Kleine XP
+                totaal_xp += random.randint(2, 5)
+
+                # Dromen kunnen extra kennis geven
+                if random.random() < 0.3:
+                    totaal_intel += 1
+
+            # Kleine pauze voor effect (maar niet te lang)
+            if i % 10 == 0:
+                time.sleep(0.1)
+
+        # AI Turbo bonus
+        if echte_ai:
+            print(f"\n\n  [AI] Claude AI verwerkt geleerde kennis...")
+            time.sleep(0.5)
+            totaal_intel += 25
+            totaal_xp += 50
+            feiten_geleerd += 5
+            # Voeg extra AI feiten toe
+            ai_bonus_feiten = [
+                "AI Turbo: Self-attention weegt elk woord tegen alle andere woorden",
+                "AI Turbo: Multi-head attention biedt meerdere representaties",
+                "AI Turbo: Positional encoding geeft woordvolgorde informatie",
+                "AI Turbo: Layer normalization normaliseert per sample",
+                "AI Turbo: Residual connections helpen gradient flow",
+            ]
+            for feit in ai_bonus_feiten:
+                if feit not in permanente_kennis["feiten"]:
+                    permanente_kennis["feiten"].append(feit)
+                    permanente_kennis["bronnen"].append("ai_turbo")
+                    permanente_kennis["geleerd_op"].append(datetime.now().isoformat())
+
+        # Update permanente kennis
+        permanente_kennis["totaal_sessies"] += 1
+        self._sla_permanente_kennis_op(permanente_kennis)
+
+        # Update huisdier stats
+        self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + totaal_intel
+        self.huisdier["ervaring"] += totaal_xp
+        self.huisdier["stats"]["feiten_geleerd"] = self.huisdier["stats"].get("feiten_geleerd", 0) + feiten_geleerd
+
+        # Sync kennis
+        self.huisdier["kennis"]["feiten"] = permanente_kennis["feiten"][-100:]
+
+        # Resultaten
+        print("\n\n" + "=" * 60)
+        print(f"  {emoji} AUTO MODE VOLTOOID! {emoji}")
+        print("=" * 60)
+
+        print(f"\n  {naam}'s {sessie['naam']} sessie resultaten:")
+        print(f"  " + "-" * 45)
+        print(f"    [CYCLUS] Totaal: {sessie['cycli']} cycli")
+        print(f"    [LAMP] Leer cycli: {leer_cycli}")
+        print(f"    [BED] Slaap cycli: {slaap_cycli}")
+        print(f"  " + "-" * 45)
+        print(f"    [BOEK] Nieuwe feiten: {feiten_geleerd}")
+        print(f"    [DISK] Totaal opgeslagen: {len(permanente_kennis['feiten'])} feiten")
+        print(f"    [IQ] Intelligentie: +{totaal_intel}")
+        print(f"    [ENERGIE] Energie hersteld: +{totaal_energie}")
+        print(f"    [GELUK] Geluk: +{totaal_geluk}")
+        print(f"    [XP] Ervaring: +{totaal_xp}")
+
+        if echte_ai:
+            print(f"\n  [STAR] AI TURBO BONUS TOEGEPAST!")
+            print(f"  [AI] +25 IQ, +50 XP, +5 AI feiten!")
+
+        # Check achievements
+        if self.huisdier["stats"]["feiten_geleerd"] >= 10:
+            self._unlock_achievement("kenniszoeker")
+        if self.huisdier.get("intelligentie", 0) >= 100:
+            self._unlock_achievement("super_slim")
+
+        self._check_evolutie()
+        print(f"\n  {geluid}")
+        print(f"  {naam} voelt zich slimmer en uitgerust!")
+        self._sla_op()
+
     def run(self):
         """Start de app."""
         clear_scherm()
@@ -7250,6 +7473,8 @@ Code:
                 self._magische_tuin()
             elif keuze == "37":
                 self._geheime_missies()
+            elif keuze == "38":
+                self._auto_mode()
             elif keuze == "0":
                 self._sla_op()
                 print(f"\n{self.huisdier['naam']} is opgeslagen!")
