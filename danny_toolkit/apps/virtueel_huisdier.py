@@ -2047,6 +2047,20 @@ class VirtueelHuisdierApp:
                 # Internet & Netwerken
                 "Internet verbindingen maken het mogelijk voor gebruikers om toegang te krijgen tot informatie en diensten van over de hele wereld",
                 "Het World Wide Web is een systeem van onderling verbonden documenten via hyperlinks",
+
+                # RAG & Retrieval
+                "RAG combineert het opzoeken van bestaande informatie met het genereren van nieuwe informatie om vragen te beantwoorden",
+
+                # Neural Network Leerproces
+                "Door backpropagation kan een neural network leren van zijn fouten en zijn prestaties verbeteren",
+                "Hierbij worden algoritmen gebruikt om patronen en verbanden in data te ontdekken voor voorspellingen en beslissingen",
+
+                # API Communicatie
+                "Een REST API (Representational State Transfer) is een manier voor computers om via het internet te communiceren",
+
+                # Embeddings & Vectoren
+                "Embeddings wijzen een unieke vector toe aan elke entiteit, zodat vergelijkbare items dicht bij elkaar liggen in de vectorruimte",
+                "Machine learning en AI gebruiken embeddings voor taken als beeld- en tekstherkenning",
             ]
             for feit in random.sample(ingebouwde_feiten, 3):
                 if feit not in permanente_kennis["feiten"]:
