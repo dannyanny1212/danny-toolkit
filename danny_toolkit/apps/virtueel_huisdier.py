@@ -2636,6 +2636,19 @@ class VirtueelHuisdierApp:
             "Hoe leren dieren trucs?",
             "Wat is machine learning?",
             "Hoe werkt een REST API?",
+            "Wat is een computer virus?",
+            "Hoe werkt wifi?",
+            "Wat is de cloud?",
+            "Hoe werkt een zoekmachine?",
+            "Wat is een algoritme?",
+            "Hoe werkt een smartphone?",
+            "Wat is programmeren?",
+            "Hoe werkt een database?",
+            "Wat is een website?",
+            "Hoe werkt email?",
+            "Wat is cybersecurity?",
+            "Hoe werkt een browser?",
+            "Wat is open source software?",
         ]
 
         geavanceerde_vragen = [
@@ -2649,6 +2662,16 @@ class VirtueelHuisdierApp:
             "Wat is het verschil tussen supervised en unsupervised learning?",
             "Hoe werkt een REST API met HTTP methodes?",
             "Wat is de rol van backpropagation in neural networks?",
+            "Hoe werkt reinforcement learning?",
+            "Wat is overfitting en hoe voorkom je het?",
+            "Hoe werkt een CNN voor beeldherkenning?",
+            "Wat is tokenization in NLP?",
+            "Hoe werkt gradient descent?",
+            "Wat is transfer learning?",
+            "Hoe werken recommendation systems?",
+            "Wat is een decision tree?",
+            "Hoe werkt K-means clustering?",
+            "Wat is feature engineering?",
         ]
 
         expert_vragen = [
@@ -2657,6 +2680,21 @@ class VirtueelHuisdierApp:
             "Hoe werkt cosine similarity bij embeddings?",
             "Wat zijn transformers en attention mechanismen?",
             "Hoe werkt fine-tuning van grote taalmodellen?",
+            "Wat is de vanishing gradient problem?",
+            "Hoe werkt LSTM en waarom is het beter dan RNN?",
+            "Wat is batch normalization?",
+            "Hoe werkt dropout als regularisatie?",
+            "Wat is de softmax functie?",
+            "Hoe werkt multi-head attention?",
+            "Wat zijn positional encodings?",
+            "Hoe werkt beam search bij text generation?",
+            "Wat is knowledge distillation?",
+            "Hoe werkt RLHF (Reinforcement Learning from Human Feedback)?",
+            "Wat is prompt engineering?",
+            "Hoe werkt chain-of-thought prompting?",
+            "Wat is few-shot learning?",
+            "Hoe werkt contrastive learning?",
+            "Wat zijn graph neural networks?",
         ]
 
         # Kies vragen gebaseerd op IQ
@@ -2674,11 +2712,12 @@ Geef korte, educatieve antwoorden (max 2-3 zinnen).
 Eindig elk antwoord met een interessant feit dat {naam} kan onthouden.
 Antwoord in het Nederlands."""
 
-        # Voer gesprekken
-        gekozen_vragen = random.sample(alle_vragen, min(3, len(alle_vragen)))
+        # Voer gesprekken (20 vragen!)
+        aantal_vragen = 20
+        gekozen_vragen = random.sample(alle_vragen, min(aantal_vragen, len(alle_vragen)))
 
         for i, vraag in enumerate(gekozen_vragen, 1):
-            print(f"\n  --- Gesprek {i}/3 ---")
+            print(f"\n  --- Gesprek {i}/{len(gekozen_vragen)} ---")
             print(f"  {naam}: \"{vraag}\"")
             time.sleep(0.5)
 
@@ -2843,7 +2882,7 @@ Antwoord in het Nederlands."""
             munt_beloning += 10
 
         print(f"\n  {naam}'s gesprek met Claude:")
-        print(f"    [CHAT] Gesprekken: 3")
+        print(f"    [CHAT] Gesprekken: {len(gekozen_vragen)}")
         if echte_ai:
             print(f"    [STAR] ECHTE AI gebruikt!")
         print(f"    [LAMP] Lessen geleerd: {len(lessen_geleerd)}")
@@ -2851,9 +2890,13 @@ Antwoord in het Nederlands."""
         print(f"    [MUNT] Munten: +{munt_beloning}")
         print(f"    [XP] Ervaring: +{xp_beloning}")
 
-        if len(lessen_geleerd) == 3:
-            bonus = 10
-            print(f"\n  [TROFEE] PERFECTE STUDENT! Bonus: +{bonus} munten!")
+        if len(lessen_geleerd) >= 15:
+            bonus = 50
+            print(f"\n  [TROFEE] SUPER STUDENT! 15+ lessen! Bonus: +{bonus} munten!")
+            munt_beloning += bonus
+        elif len(lessen_geleerd) >= 10:
+            bonus = 25
+            print(f"\n  [TROFEE] GOEDE STUDENT! 10+ lessen! Bonus: +{bonus} munten!")
             munt_beloning += bonus
 
         # Geef beloningen
