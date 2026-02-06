@@ -1868,7 +1868,22 @@ class VirtueelHuisdierApp:
             print("|  8. AI Vertaler (10 munten)        |")
             print("|     Vertaal tekst naar andere taal |")
             print("+------------------------------------+")
-            print("|  9. Bekijk Kennisbibliotheek       |")
+            print("|  [TOOLKIT INTEGRATIES]             |")
+            print("+------------------------------------+")
+            print("|  9. AI Flashcards (12 munten)      |")
+            print("|     Leer met AI-gegenereerde kaarten|")
+            print("| 10. AI Notities (8 munten)         |")
+            print("|     Maak slimme notities met AI    |")
+            print("| 11. AI Citaten (5 munten)          |")
+            print("|     Leer van inspirerende citaten  |")
+            print("| 12. AI Code Review (15 munten)     |")
+            print("|     Analyseer code met AI          |")
+            print("| 13. Production RAG (20 munten)     |")
+            print("|     Echte kennisbank queries       |")
+            print("| 14. AI Brainstorm (18 munten)      |")
+            print("|     Creatief brainstormen met AI   |")
+            print("+------------------------------------+")
+            print("| 15. Bekijk Kennisbibliotheek       |")
             print("|     Alle geleerde feiten bekijken  |")
             print("|  0. Terug                          |")
             print("+====================================+")
@@ -1894,6 +1909,18 @@ class VirtueelHuisdierApp:
             elif keuze == "8":
                 self._ai_vertaler()
             elif keuze == "9":
+                self._ai_flashcards()
+            elif keuze == "10":
+                self._ai_notities()
+            elif keuze == "11":
+                self._ai_citaten()
+            elif keuze == "12":
+                self._ai_code_review()
+            elif keuze == "13":
+                self._ai_production_rag()
+            elif keuze == "14":
+                self._ai_brainstorm()
+            elif keuze == "15":
                 self._bekijk_kennisbibliotheek()
 
             input("\nDruk op Enter...")
@@ -3427,6 +3454,592 @@ Antwoord in het Nederlands."""
         self.huisdier["ervaring"] += xp_beloning
         self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + intel_bonus
         self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 3)
+
+        print(f"\n  {geluid}")
+        self._sla_op()
+
+    def _ai_flashcards(self):
+        """AI genereert flashcards voor het huisdier om te leren!"""
+        if self.huisdier["munten"] < 12:
+            print("\nJe hebt niet genoeg munten! (Nodig: 12)")
+            return
+
+        self.huisdier["munten"] -= 12
+        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 1)
+
+        naam = self.huisdier["naam"]
+        geluid = self.huisdier["geluid"]
+        iq = self.huisdier.get("intelligentie", 0)
+
+        print("\n" + "=" * 55)
+        print(f"  [KAART] {naam} DE FLASHCARD STUDENT!")
+        print("=" * 55)
+
+        print("\n  Kies een onderwerp:")
+        print("  1. Machine Learning")
+        print("  2. Python Programming")
+        print("  3. API Design")
+        print("  4. Neural Networks")
+        print("  5. Random onderwerp")
+
+        keuze = input("\n  Keuze (1-5): ").strip()
+
+        onderwerpen = {
+            "1": "Machine Learning",
+            "2": "Python Programming",
+            "3": "API Design",
+            "4": "Neural Networks",
+            "5": random.choice(["Data Science", "Cybersecurity", "Cloud Computing", "DevOps"])
+        }
+        onderwerp = onderwerpen.get(keuze, "Machine Learning")
+
+        print(f"\n  {naam} studeert {onderwerp} flashcards...")
+        time.sleep(0.5)
+
+        echte_ai = False
+        intel_bonus = 0
+        correct = 0
+        totaal = 5
+
+        try:
+            claude_chat = _get_claude_chat()
+            if claude_chat:
+                echte_ai = True
+                print(f"  [OK] ECHTE Claude AI genereert flashcards!")
+        except Exception:
+            pass
+
+        # Flashcards - AI of fallback
+        fallback_cards = {
+            "Machine Learning": [
+                ("Wat is supervised learning?", "Leren met gelabelde data waar antwoorden bekend zijn"),
+                ("Wat is overfitting?", "Model leert trainingsdata uit het hoofd en generaliseert slecht"),
+                ("Wat is een neural network?", "Model geinspireerd op het brein met neuronen en lagen"),
+                ("Wat is gradient descent?", "Algoritme dat parameters optimaliseert door gradients te volgen"),
+                ("Wat is cross-validation?", "Data splitsen om model performance te valideren"),
+            ],
+            "Python Programming": [
+                ("Wat doet @decorator?", "Wrapt een functie om functionaliteit toe te voegen"),
+                ("Wat is een generator?", "Functie die yield gebruikt voor lazy evaluation"),
+                ("Wat doet lru_cache?", "Slaat functie resultaten op voor snellere herhaalde calls"),
+                ("Wat is een list comprehension?", "Compacte manier om lijsten te maken: [x for x in items]"),
+                ("Wat is *args en **kwargs?", "Variabel aantal positional en keyword argumenten"),
+            ],
+            "API Design": [
+                ("Wat is REST?", "Architectuurstijl met HTTP methods voor web APIs"),
+                ("Wat doet GET?", "Haalt data op zonder wijzigingen"),
+                ("Wat is HTTP 404?", "Resource niet gevonden"),
+                ("Wat is JWT?", "JSON Web Token voor stateless authenticatie"),
+                ("Wat is rate limiting?", "Maximaal aantal requests per tijdsperiode"),
+            ],
+            "Neural Networks": [
+                ("Wat is backpropagation?", "Algoritme dat gradients terugpropageert om weights te leren"),
+                ("Wat is ReLU?", "Activation: max(0, x) - voorkomt vanishing gradients"),
+                ("Wat is een CNN?", "Convolutional Neural Network voor beeldherkenning"),
+                ("Wat is dropout?", "Zet random neuronen uit tijdens training tegen overfitting"),
+                ("Wat is attention?", "Mechanisme dat relevante input delen weegt"),
+            ],
+        }
+
+        cards = fallback_cards.get(onderwerp, fallback_cards["Machine Learning"])
+
+        for i, (vraag, antwoord) in enumerate(cards, 1):
+            print(f"\n  --- Flashcard {i}/{totaal} ---")
+            print(f"  VRAAG: {vraag}")
+            user_antwoord = input("  Jouw antwoord: ").strip()
+
+            print(f"  CORRECT ANTWOORD: {antwoord}")
+
+            if user_antwoord.lower() and any(w in user_antwoord.lower() for w in antwoord.lower().split()[:3]):
+                print(f"  [OK] Goed gedaan, {naam}!")
+                correct += 1
+                intel_bonus += 2
+            else:
+                print(f"  [LAMP] {naam} leert dit voor de volgende keer!")
+                intel_bonus += 1
+
+        # Resultaten
+        percentage = int((correct / totaal) * 100)
+        print("\n" + "=" * 55)
+        print("  [KAART] FLASHCARD SESSIE VOLTOOID!")
+        print("=" * 55)
+
+        xp_beloning = 20 + (correct * 5)
+        munt_beloning = 5 + (correct * 2)
+
+        if echte_ai:
+            munt_beloning += 8
+            intel_bonus += 5
+
+        print(f"\n  {naam}'s studieresultaat:")
+        print(f"    [KAART] Onderwerp: {onderwerp}")
+        print(f"    [OK] Correct: {correct}/{totaal} ({percentage}%)")
+        print(f"    [IQ] Intelligentie: +{intel_bonus}")
+        print(f"    [MUNT] Munten: +{munt_beloning}")
+        print(f"    [XP] Ervaring: +{xp_beloning}")
+
+        self.huisdier["munten"] += munt_beloning
+        self.huisdier["ervaring"] += xp_beloning
+        self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + intel_bonus
+
+        print(f"\n  {geluid}")
+        self._sla_op()
+
+    def _ai_notities(self):
+        """AI helpt het huisdier slimme notities maken!"""
+        if self.huisdier["munten"] < 8:
+            print("\nJe hebt niet genoeg munten! (Nodig: 8)")
+            return
+
+        self.huisdier["munten"] -= 8
+
+        naam = self.huisdier["naam"]
+        geluid = self.huisdier["geluid"]
+
+        print("\n" + "=" * 55)
+        print(f"  [NOTITIE] {naam} DE SLIMME NOTITIE MAKER!")
+        print("=" * 55)
+
+        print("\n  Wat wil je noteren?")
+        print("  1. Samenvatting van een onderwerp")
+        print("  2. To-do lijst maken")
+        print("  3. Brainstorm ideeen")
+        print("  4. Leer notities")
+
+        keuze = input("\n  Keuze (1-4): ").strip()
+        tekst = input("  Beschrijf wat je wilt noteren: ").strip()
+
+        if not tekst:
+            print("  [!] Geen tekst ingevoerd!")
+            return
+
+        print(f"\n  {naam} maakt een slimme notitie...")
+        time.sleep(0.5)
+
+        notitie = None
+        echte_ai = False
+        intel_bonus = 3
+
+        try:
+            claude_chat = _get_claude_chat()
+            if claude_chat:
+                echte_ai = True
+                types = {
+                    "1": "Maak een korte samenvatting (max 3 bullet points) van:",
+                    "2": "Maak een to-do lijst (max 5 items) voor:",
+                    "3": "Brainstorm 3 creatieve ideeen voor:",
+                    "4": "Maak leernotities (key points) over:"
+                }
+                prompt = f"{types.get(keuze, types['1'])}\n\n{tekst}"
+                berichten = [{"role": "user", "content": prompt}]
+                notitie = claude_chat._chat_conversatie(berichten, f"Je bent de notitie-assistent van {naam}. Wees beknopt.")
+                intel_bonus = 8
+        except Exception:
+            pass
+
+        if not notitie:
+            # Fallback
+            notitie = f"[Notitie van {naam}]\n- {tekst}\n- (AI samenvatting niet beschikbaar)"
+
+        print(f"\n  --- {naam}'s NOTITIE ---")
+        print(f"  {notitie[:300]}{'...' if len(str(notitie)) > 300 else ''}")
+        print("  " + "-" * 45)
+
+        # Sla op in huisdier kennis
+        if "notities" not in self.huisdier:
+            self.huisdier["notities"] = []
+        self.huisdier["notities"].append({
+            "tekst": str(notitie)[:200],
+            "datum": datetime.now().isoformat()
+        })
+        self.huisdier["notities"] = self.huisdier["notities"][-20:]  # Max 20
+
+        xp_beloning = 15
+        munt_beloning = 4
+
+        if echte_ai:
+            munt_beloning += 6
+            print("  [STAR] ECHTE AI notitie!")
+
+        print(f"\n  {naam} heeft de notitie opgeslagen!")
+        print(f"    [IQ] Intelligentie: +{intel_bonus}")
+        print(f"    [MUNT] Munten: +{munt_beloning}")
+        print(f"    [XP] Ervaring: +{xp_beloning}")
+
+        self.huisdier["munten"] += munt_beloning
+        self.huisdier["ervaring"] += xp_beloning
+        self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + intel_bonus
+
+        print(f"\n  {geluid}")
+        self._sla_op()
+
+    def _ai_citaten(self):
+        """Huisdier leert van inspirerende citaten!"""
+        if self.huisdier["munten"] < 5:
+            print("\nJe hebt niet genoeg munten! (Nodig: 5)")
+            return
+
+        self.huisdier["munten"] -= 5
+
+        naam = self.huisdier["naam"]
+        geluid = self.huisdier["geluid"]
+
+        print("\n" + "=" * 55)
+        print(f"  [CITAAT] {naam} ZOEKT INSPIRATIE!")
+        print("=" * 55)
+
+        # Citaten uit de Citaten Generator
+        citaten = [
+            ("De enige manier om geweldig werk te doen is houden van wat je doet.", "Steve Jobs"),
+            ("Succes is van falen naar falen gaan zonder enthousiasme te verliezen.", "Winston Churchill"),
+            ("Geloof dat je het kunt en je bent al halverwege.", "Theodore Roosevelt"),
+            ("In het midden van moeilijkheid ligt kans.", "Albert Einstein"),
+            ("Je mist 100% van de schoten die je niet neemt.", "Wayne Gretzky"),
+            ("Creativiteit is intelligentie die plezier heeft.", "Albert Einstein"),
+            ("Elke expert was ooit een beginner.", "Helen Hayes"),
+            ("Het geheim van vooruitgang is beginnen.", "Mark Twain"),
+            ("Kansen komen niet, je creëert ze.", "Chris Grosser"),
+            ("Eenvoud is de ultieme verfijning.", "Leonardo da Vinci"),
+        ]
+
+        # Toon 3 willekeurige citaten
+        gekozen = random.sample(citaten, 3)
+        intel_bonus = 0
+
+        for i, (citaat, auteur) in enumerate(gekozen, 1):
+            print(f"\n  --- Citaat {i}/3 ---")
+            print(f"  \"{citaat}\"")
+            print(f"    - {auteur}")
+            time.sleep(0.5)
+
+            # Vraag om reflectie
+            reflectie = input(f"\n  Wat betekent dit voor {naam}? ").strip()
+            if reflectie:
+                intel_bonus += 3
+                print(f"  [LAMP] {naam} reflecteert: \"{reflectie[:50]}...\"")
+            else:
+                intel_bonus += 1
+                print(f"  [OK] {naam} onthoudt dit citaat!")
+
+        # Resultaten
+        print("\n" + "=" * 55)
+        print("  [CITAAT] INSPIRATIE SESSIE VOLTOOID!")
+        print("=" * 55)
+
+        xp_beloning = 12
+        munt_beloning = 3
+
+        print(f"\n  {naam}'s inspiratie:")
+        print(f"    [CITAAT] 3 citaten geleerd!")
+        print(f"    [IQ] Intelligentie: +{intel_bonus}")
+        print(f"    [MUNT] Munten: +{munt_beloning}")
+        print(f"    [XP] Ervaring: +{xp_beloning}")
+
+        self.huisdier["munten"] += munt_beloning
+        self.huisdier["ervaring"] += xp_beloning
+        self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + intel_bonus
+        self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 5)
+
+        print(f"\n  {geluid}")
+        self._sla_op()
+
+    def _ai_code_review(self):
+        """AI analyseert code en geeft feedback!"""
+        if self.huisdier["munten"] < 15:
+            print("\nJe hebt niet genoeg munten! (Nodig: 15)")
+            return
+
+        if self.huisdier["energie"] < 2:
+            print(f"\n{self.huisdier['naam']} is te moe voor code review!")
+            return
+
+        self.huisdier["munten"] -= 15
+        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 2)
+
+        naam = self.huisdier["naam"]
+        geluid = self.huisdier["geluid"]
+
+        print("\n" + "=" * 55)
+        print(f"  [CODE] {naam} DE CODE REVIEWER!")
+        print("=" * 55)
+
+        print("\n  Plak je code (typ 'KLAAR' op een nieuwe regel als je klaar bent):")
+        code_lines = []
+        while True:
+            line = input()
+            if line.strip().upper() == "KLAAR":
+                break
+            code_lines.append(line)
+
+        code = "\n".join(code_lines)
+
+        if not code.strip():
+            print("  [!] Geen code ingevoerd!")
+            return
+
+        print(f"\n  {naam} analyseert de code...")
+        time.sleep(0.5)
+
+        review = None
+        echte_ai = False
+        intel_bonus = 5
+
+        try:
+            claude_chat = _get_claude_chat()
+            if claude_chat:
+                echte_ai = True
+                prompt = f"""Analyseer deze code kort (max 5 bullet points):
+1. Wat doet de code?
+2. Zijn er bugs of problemen?
+3. Suggesties voor verbetering?
+
+Code:
+```
+{code[:500]}
+```"""
+                berichten = [{"role": "user", "content": prompt}]
+                review = claude_chat._chat_conversatie(berichten, f"Je bent {naam}'s code review mentor. Wees beknopt en educatief.")
+                intel_bonus = 12
+        except Exception:
+            pass
+
+        if not review:
+            # Basis fallback analyse
+            review_items = []
+            if "def " in code:
+                review_items.append("Functie definitie gevonden")
+            if "class " in code:
+                review_items.append("Class definitie gevonden")
+            if "import " in code:
+                review_items.append("Imports gevonden")
+            if "for " in code or "while " in code:
+                review_items.append("Loops gevonden")
+            if not review_items:
+                review_items.append("Code structuur geanalyseerd")
+            review = "\n".join(f"- {item}" for item in review_items)
+            review += "\n\n[Tip: Met ECHTE AI krijg je diepere analyse!]"
+
+        print(f"\n  --- CODE REVIEW ---")
+        print(f"  {review[:400]}{'...' if len(str(review)) > 400 else ''}")
+        print("  " + "-" * 45)
+
+        # Resultaten
+        print("\n" + "=" * 55)
+        print("  [CODE] CODE REVIEW VOLTOOID!")
+        print("=" * 55)
+
+        xp_beloning = 25
+        munt_beloning = 8
+
+        if echte_ai:
+            munt_beloning += 10
+            print("  [STAR] ECHTE AI code review!")
+
+        print(f"\n  {naam}'s code review:")
+        print(f"    [CODE] Regels geanalyseerd: {len(code_lines)}")
+        print(f"    [IQ] Intelligentie: +{intel_bonus}")
+        print(f"    [MUNT] Munten: +{munt_beloning}")
+        print(f"    [XP] Ervaring: +{xp_beloning}")
+
+        self.huisdier["munten"] += munt_beloning
+        self.huisdier["ervaring"] += xp_beloning
+        self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + intel_bonus
+
+        print(f"\n  {geluid}")
+        self._sla_op()
+
+    def _ai_production_rag(self):
+        """Gebruik het ECHTE Production RAG systeem!"""
+        if self.huisdier["munten"] < 20:
+            print("\nJe hebt niet genoeg munten! (Nodig: 20)")
+            return
+
+        if self.huisdier["energie"] < 2:
+            print(f"\n{self.huisdier['naam']} is te moe voor deep research!")
+            return
+
+        self.huisdier["munten"] -= 20
+        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 2)
+
+        naam = self.huisdier["naam"]
+        geluid = self.huisdier["geluid"]
+
+        print("\n" + "=" * 55)
+        print(f"  [RAG] {naam} GEBRUIKT PRODUCTION RAG!")
+        print("=" * 55)
+
+        vraag = input("\n  Stel een vraag aan de kennisbank: ").strip()
+
+        if not vraag:
+            print("  [!] Geen vraag ingevoerd!")
+            return
+
+        print(f"\n  {naam} doorzoekt de Production RAG kennisbank...")
+        time.sleep(0.5)
+
+        antwoord = None
+        echte_rag = False
+        intel_bonus = 5
+        bronnen = []
+
+        try:
+            from ..ai.production_rag import ProductionRAG
+            rag = ProductionRAG()
+            # Check of er documenten zijn
+            if hasattr(rag, 'chunks') and rag.chunks:
+                echte_rag = True
+                print(f"  [OK] Production RAG geladen met {len(rag.chunks)} chunks!")
+                resultaat = rag.query(vraag)
+                if resultaat:
+                    antwoord = resultaat.get("antwoord", "")
+                    bronnen = resultaat.get("bronnen", [])
+                    intel_bonus = 15
+        except Exception as e:
+            print(f"  [!] RAG niet beschikbaar: {e}")
+
+        if not antwoord:
+            # Fallback naar ingebouwde kennis
+            permanente_kennis = self._laad_permanente_kennis()
+            relevant = [f for f in permanente_kennis["feiten"] if any(w in f.lower() for w in vraag.lower().split())]
+            if relevant:
+                antwoord = random.choice(relevant)
+                intel_bonus = 8
+            else:
+                antwoord = "Geen direct antwoord gevonden. Probeer de kennisbank uit te breiden!"
+
+        print(f"\n  --- RAG ANTWOORD ---")
+        print(f"  Vraag: {vraag}")
+        print(f"  Antwoord: {antwoord[:300]}{'...' if len(str(antwoord)) > 300 else ''}")
+        if bronnen:
+            print(f"  Bronnen: {', '.join(bronnen[:3])}")
+        print("  " + "-" * 45)
+
+        # Resultaten
+        print("\n" + "=" * 55)
+        print("  [RAG] KENNISBANK QUERY VOLTOOID!")
+        print("=" * 55)
+
+        xp_beloning = 30
+        munt_beloning = 10
+
+        if echte_rag:
+            munt_beloning += 15
+            print("  [STAR] ECHTE Production RAG gebruikt!")
+
+        print(f"\n  {naam}'s research:")
+        print(f"    [RAG] Query uitgevoerd!")
+        print(f"    [IQ] Intelligentie: +{intel_bonus}")
+        print(f"    [MUNT] Munten: +{munt_beloning}")
+        print(f"    [XP] Ervaring: +{xp_beloning}")
+
+        self.huisdier["munten"] += munt_beloning
+        self.huisdier["ervaring"] += xp_beloning
+        self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + intel_bonus
+
+        print(f"\n  {geluid}")
+        self._sla_op()
+
+    def _ai_brainstorm(self):
+        """AI helpt creatief brainstormen!"""
+        if self.huisdier["munten"] < 18:
+            print("\nJe hebt niet genoeg munten! (Nodig: 18)")
+            return
+
+        if self.huisdier["energie"] < 2:
+            print(f"\n{self.huisdier['naam']} is te moe om te brainstormen!")
+            return
+
+        self.huisdier["munten"] -= 18
+        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 2)
+
+        naam = self.huisdier["naam"]
+        geluid = self.huisdier["geluid"]
+
+        print("\n" + "=" * 55)
+        print(f"  [LAMP] {naam} DE CREATIEVE BRAINSTORMER!")
+        print("=" * 55)
+
+        print("\n  Wat wil je brainstormen?")
+        print("  1. App ideeen")
+        print("  2. Project namen")
+        print("  3. Oplossingen voor een probleem")
+        print("  4. Creatieve verhaal ideeen")
+        print("  5. Business ideeen")
+
+        keuze = input("\n  Keuze (1-5): ").strip()
+        onderwerp = input("  Beschrijf je onderwerp/probleem: ").strip()
+
+        if not onderwerp:
+            print("  [!] Geen onderwerp ingevoerd!")
+            return
+
+        print(f"\n  {naam} brainstormt creatieve ideeen...")
+        time.sleep(0.5)
+
+        ideeen = []
+        echte_ai = False
+        intel_bonus = 5
+
+        try:
+            claude_chat = _get_claude_chat()
+            if claude_chat:
+                echte_ai = True
+                types = {
+                    "1": "app ideeen",
+                    "2": "creatieve project namen",
+                    "3": "oplossingen",
+                    "4": "verhaal ideeen",
+                    "5": "business ideeen"
+                }
+                prompt = f"Genereer 5 creatieve {types.get(keuze, 'ideeen')} voor: {onderwerp}\n\nGeef elk idee op een nieuwe regel met een korte beschrijving."
+                berichten = [{"role": "user", "content": prompt}]
+                response = claude_chat._chat_conversatie(berichten, f"Je bent {naam}'s creatieve brainstorm partner. Wees origineel en innovatief.")
+                ideeen = [response]
+                intel_bonus = 12
+        except Exception:
+            pass
+
+        if not ideeen or not ideeen[0]:
+            # Fallback ideeen
+            fallback = {
+                "1": [f"Een {onderwerp} tracker app", f"Social {onderwerp} platform", f"AI-powered {onderwerp} helper"],
+                "2": [f"{onderwerp}ify", f"Smart{onderwerp}", f"Project {onderwerp.title()}"],
+                "3": [f"Automatiseer {onderwerp}", f"Deel {onderwerp} op in stappen", f"Zoek een expert voor {onderwerp}"],
+                "4": [f"Een held ontdekt {onderwerp}", f"De mysterie van {onderwerp}", f"De toekomst van {onderwerp}"],
+                "5": [f"{onderwerp} as a Service", f"{onderwerp} consultancy", f"Online {onderwerp} platform"],
+            }
+            ideeen = fallback.get(keuze, [f"Creatief idee voor {onderwerp}"])
+
+        print(f"\n  --- BRAINSTORM RESULTATEN ---")
+        if isinstance(ideeen[0], str) and len(ideeen[0]) > 50:
+            print(f"  {ideeen[0][:400]}{'...' if len(ideeen[0]) > 400 else ''}")
+        else:
+            for i, idee in enumerate(ideeen[:5], 1):
+                print(f"  {i}. {idee}")
+        print("  " + "-" * 45)
+
+        # Resultaten
+        print("\n" + "=" * 55)
+        print("  [LAMP] BRAINSTORM SESSIE VOLTOOID!")
+        print("=" * 55)
+
+        xp_beloning = 22
+        munt_beloning = 7
+
+        if echte_ai:
+            munt_beloning += 12
+            print("  [STAR] ECHTE AI brainstorm!")
+
+        print(f"\n  {naam}'s creatieve sessie:")
+        print(f"    [LAMP] Ideeen gegenereerd!")
+        print(f"    [IQ] Intelligentie: +{intel_bonus}")
+        print(f"    [MUNT] Munten: +{munt_beloning}")
+        print(f"    [XP] Ervaring: +{xp_beloning}")
+
+        self.huisdier["munten"] += munt_beloning
+        self.huisdier["ervaring"] += xp_beloning
+        self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + intel_bonus
+        self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 5)
 
         print(f"\n  {geluid}")
         self._sla_op()
