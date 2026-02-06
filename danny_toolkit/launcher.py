@@ -19,6 +19,16 @@ from .apps.rekenmachine import RekenmachineApp
 from .apps.virtueel_huisdier import VirtueelHuisdierApp
 from .apps.schatzoek import SchatzoekApp
 from .apps.code_analyse import CodeAnalyseApp
+from .apps.notitie_app import NotitieApp
+from .apps.wachtwoord_generator import WachtwoordGeneratorApp
+from .apps.pomodoro_timer import PomodoroTimerApp
+from .apps.habit_tracker import HabitTrackerApp
+from .apps.expense_tracker import ExpenseTrackerApp
+from .apps.flashcards import FlashcardsApp
+from .apps.unit_converter import UnitConverterApp
+from .apps.agenda_planner import AgendaPlannerApp
+from .apps.mood_tracker import MoodTrackerApp
+from .apps.citaten_generator import CitatenGeneratorApp
 
 from .ai.mini_rag import MiniRAG
 from .ai.production_rag import ProductionRAG
@@ -151,6 +161,16 @@ class Launcher:
         "8": ("Nieuws Agent", NieuwsAgentApp, "ai"),
         "9": ("Weer Agent", WeerAgentApp, "ai"),
         "10": ("Claude Chat", ClaudeChatApp, "ai"),
+        "11": ("Notitie App", NotitieApp, "productiviteit"),
+        "12": ("Wachtwoord Generator", WachtwoordGeneratorApp, "productiviteit"),
+        "13": ("Pomodoro Timer", PomodoroTimerApp, "productiviteit"),
+        "14": ("Habit Tracker", HabitTrackerApp, "productiviteit"),
+        "15": ("Expense Tracker", ExpenseTrackerApp, "productiviteit"),
+        "16": ("Flashcards", FlashcardsApp, "productiviteit"),
+        "17": ("Unit Converter", UnitConverterApp, "productiviteit"),
+        "18": ("Agenda Planner", AgendaPlannerApp, "productiviteit"),
+        "19": ("Mood Tracker", MoodTrackerApp, "productiviteit"),
+        "20": ("Citaten Generator", CitatenGeneratorApp, "productiviteit"),
     }
 
     # Sneltoetsen
@@ -162,6 +182,16 @@ class Launcher:
         "c": "5",   # Code analyse
         "n": "8",   # Nieuws
         "w": "9",   # Weer
+        "no": "11", # Notitie
+        "wg": "12", # Wachtwoord Generator
+        "po": "13", # Pomodoro
+        "ha": "14", # Habit
+        "ex": "15", # Expense
+        "fl": "16", # Flashcards
+        "un": "17", # Unit
+        "ag": "18", # Agenda
+        "mo": "19", # Mood
+        "ci": "20", # Citaten
     }
 
     def __init__(self):
@@ -237,6 +267,16 @@ class Launcher:
                   f"{self._kleur_tekst(gebruik_str, 'info')}")
         print()
 
+        # Productiviteit Apps
+        print(self._kleur_tekst("  ═══ PRODUCTIVITEIT ═══", "categorie"))
+        for key in ["11", "12", "13", "14", "15", "16", "17", "18", "19", "20"]:
+            naam, _, _ = self.APPS[key]
+            gebruik = self.stats.get_gebruik(naam)
+            gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
+            print(f"     {self._kleur_tekst(key, 'nummer')}. {naam}"
+                  f"{self._kleur_tekst(gebruik_str, 'info')}")
+        print()
+
         # Systeem opties
         print(self._kleur_tekst("  ═══ SYSTEEM ═══", "categorie"))
         print(f"     {self._kleur_tekst('z', 'nummer')}. Zoeken")
@@ -267,6 +307,19 @@ class Launcher:
         print(f"     {self._kleur_tekst('c', 'nummer')} = Code Analyse")
         print(f"     {self._kleur_tekst('n', 'nummer')} = Nieuws Agent")
         print(f"     {self._kleur_tekst('w', 'nummer')} = Weer Agent")
+        print()
+
+        print("  Productiviteit sneltoetsen:")
+        print(f"     {self._kleur_tekst('no', 'nummer')} = Notitie App")
+        print(f"     {self._kleur_tekst('wg', 'nummer')} = Wachtwoord Generator")
+        print(f"     {self._kleur_tekst('po', 'nummer')} = Pomodoro Timer")
+        print(f"     {self._kleur_tekst('ha', 'nummer')} = Habit Tracker")
+        print(f"     {self._kleur_tekst('ex', 'nummer')} = Expense Tracker")
+        print(f"     {self._kleur_tekst('fl', 'nummer')} = Flashcards")
+        print(f"     {self._kleur_tekst('un', 'nummer')} = Unit Converter")
+        print(f"     {self._kleur_tekst('ag', 'nummer')} = Agenda Planner")
+        print(f"     {self._kleur_tekst('mo', 'nummer')} = Mood Tracker")
+        print(f"     {self._kleur_tekst('ci', 'nummer')} = Citaten Generator")
         print()
 
         print("  Systeem commando's:")
@@ -546,15 +599,23 @@ Danny Toolkit v2.0
 
 Gebruik:
   python main.py              Start interactieve launcher
-  python main.py <nummer>     Start app direct (1-10)
-  python main.py <sneltoets>  Start app via sneltoets (b,r,h,s,c,n,w)
+  python main.py <nummer>     Start app direct (1-20)
+  python main.py <sneltoets>  Start app via sneltoets
   python main.py --help       Toon deze help
 
-Sneltoetsen:
-  b = Boodschappenlijst    r = Rekenmachine
-  h = Huisdier             s = Schatzoek
-  c = Code Analyse         n = Nieuws Agent
-  w = Weer Agent
+Apps (1-5):               AI (6-10):
+  b = Boodschappenlijst     n = Nieuws Agent
+  r = Rekenmachine          w = Weer Agent
+  h = Huisdier
+  s = Schatzoek
+  c = Code Analyse
+
+Productiviteit (11-20):
+  no = Notitie App          ha = Habit Tracker
+  wg = Wachtwoord Gen       ex = Expense Tracker
+  po = Pomodoro Timer       fl = Flashcards
+  un = Unit Converter       ag = Agenda Planner
+  mo = Mood Tracker         ci = Citaten Generator
 """)
             return
 
