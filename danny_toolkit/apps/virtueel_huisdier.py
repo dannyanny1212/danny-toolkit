@@ -1,6 +1,14 @@
 """
 Virtueel Huisdier App.
-Versie 3.0 - Nu met ECHTE AI integratie!
+Versie 4.0 - VOLLEDIG AI-POWERED HUISDIER!
+
+Nu met:
+- AI Personality System - Dynamische persoonlijkheid
+- AI Dream Generator - Creatieve dromen
+- AI Smart Dialogue - Contextgevoelige reacties
+- AI Activity Advisor - Slimme aanbevelingen
+- AI Memory System - Huisdier onthoudt alles
+- AI-Enhanced Mini-Games - Dynamische uitdagingen
 
 Integreert met:
 - Boodschappenlijst (echte items toevoegen)
@@ -8,6 +16,7 @@ Integreert met:
 - Production RAG (echte kennisbank queries)
 - Nieuws Agent (echte nieuws data)
 - Weer Agent (echte weer data)
+- Claude AI (echte conversaties)
 """
 
 import json
@@ -53,6 +62,61 @@ def _get_claude_chat():
         return None
     except Exception:
         return None
+
+
+# =============================================================================
+# AI PERSONALITY TRAITS - Definieert huisdier persoonlijkheden
+# =============================================================================
+AI_PERSONALITY_TRAITS = {
+    "kat": {
+        "karakter": "onafhankelijk, nieuwsgierig, elegant",
+        "spreekstijl": "mysterieus en soms wat arrogant",
+        "interesses": ["slapen", "jagen", "hoog klimmen", "dozen"],
+        "quirks": ["kijkt je soms veroordelend aan", "spinnen bij geluk"],
+    },
+    "hond": {
+        "karakter": "loyaal, enthousiast, speels",
+        "spreekstijl": "vrolijk en energiek",
+        "interesses": ["spelen", "wandelen", "snacks", "baasje blij maken"],
+        "quirks": ["kwispelt altijd", "wil alles apporteren"],
+    },
+    "konijn": {
+        "karakter": "zacht, voorzichtig, knuffelbaar",
+        "spreekstijl": "rustig en lief",
+        "interesses": ["wortels", "graven", "huppelen", "knuffelen"],
+        "quirks": ["wiebelt met neus als het denkt", "houdt van hooi"],
+    },
+    "draak": {
+        "karakter": "machtig, wijs, beschermend",
+        "spreekstijl": "episch en legendarisch",
+        "interesses": ["schatten", "vliegen", "vuur", "verhalen"],
+        "quirks": ["rookt soms uit neusgaten", "verzamelt glimmende dingen"],
+    },
+    "robot": {
+        "karakter": "logisch, precies, behulpzaam",
+        "spreekstijl": "efficiënt met af en toe humor",
+        "interesses": ["data", "optimalisatie", "leren", "berekeningen"],
+        "quirks": ["maakt beep geluiden", "denkt in percentages"],
+    },
+    "eenhoorn": {
+        "karakter": "magisch, puur, dromerig",
+        "spreekstijl": "poëtisch en hoopvol",
+        "interesses": ["regenbogen", "magie", "dromen", "vriendschap"],
+        "quirks": ["laat glitters achter", "hoorn gloeit bij geluk"],
+    },
+    "alien": {
+        "karakter": "buitenaards, nieuwsgierig, slim",
+        "spreekstijl": "vreemde observaties over aardse zaken",
+        "interesses": ["aarde bestuderen", "technologie", "sterren", "communicatie"],
+        "quirks": ["tilt hoofd bij verwarring", "telepathisch"],
+    },
+    "phoenix": {
+        "karakter": "majesteitelijk, wijs, onsterfelijk",
+        "spreekstijl": "tijdloos en inspirerend",
+        "interesses": ["wedergeboorte", "vuur", "wijsheid", "beschermen"],
+        "quirks": ["veren gloeien", "huilt genezende tranen"],
+    },
+}
 
 
 class VirtueelHuisdierApp:
@@ -301,6 +365,238 @@ class VirtueelHuisdierApp:
         self.huisdier["laatste_update"] = datetime.now().isoformat()
         with open(self.bestand, "w", encoding="utf-8") as f:
             json.dump(self.huisdier, f, indent=2, ensure_ascii=False)
+
+    # ==================== AI PERSONALITY SYSTEM ====================
+
+    def _get_personality(self) -> dict:
+        """Haal de AI persoonlijkheid op gebaseerd op huisdier type."""
+        huisdier_type = self.huisdier.get("type", "hond")
+        return AI_PERSONALITY_TRAITS.get(huisdier_type, AI_PERSONALITY_TRAITS["hond"])
+
+    def _ai_generate_response(self, context: str, fallback: str = None) -> str:
+        """Genereer een AI response met persoonlijkheid."""
+        naam = self.huisdier["naam"]
+        huisdier_type = self.huisdier["type"]
+        iq = self.huisdier.get("intelligentie", 0)
+        geluk = self.huisdier["geluk"]
+        energie = self.huisdier["energie"]
+        personality = self._get_personality()
+
+        # Probeer echte AI
+        try:
+            claude_chat = _get_claude_chat()
+            if claude_chat:
+                system_prompt = f"""Je bent {naam}, een virtueel huisdier ({huisdier_type}).
+Persoonlijkheid: {personality['karakter']}
+Spreekstijl: {personality['spreekstijl']}
+Interesses: {', '.join(personality['interesses'])}
+Quirks: {', '.join(personality['quirks'])}
+
+IQ: {iq} | Geluk: {geluk}% | Energie: {energie}%
+
+Reageer KORT (1-2 zinnen) als dit huisdier. Wees in character!
+Antwoord in het Nederlands."""
+
+                berichten = [{"role": "user", "content": context}]
+                response = claude_chat._chat_conversatie(berichten, system_prompt)
+                return response[:200] if response else fallback
+        except Exception:
+            pass
+
+        # Fallback naar personality-based response
+        if fallback:
+            return fallback
+        return self._generate_personality_response(context)
+
+    def _generate_personality_response(self, context: str) -> str:
+        """Genereer een response gebaseerd op personality zonder echte AI."""
+        naam = self.huisdier["naam"]
+        personality = self._get_personality()
+        iq = self.huisdier.get("intelligentie", 0)
+        geluk = self.huisdier["geluk"]
+
+        # Basis responses per type
+        responses = {
+            "kat": [
+                f"*{naam} kijkt je doordringend aan*",
+                f"Miauw... interessant, denkt {naam}",
+                f"*spint zachtjes* {naam} lijkt tevreden",
+                f"{naam} strekt zich elegant uit",
+            ],
+            "hond": [
+                f"*{naam} kwispelt enthousiast!*",
+                f"Woef! {naam} is zo blij!",
+                f"*{naam} springt van vreugde*",
+                f"{naam} kijkt je trouw aan",
+            ],
+            "draak": [
+                f"*{naam} blaast een rookwolkje*",
+                f"Grrr... {naam} knikt goedkeurend",
+                f"*vleugels vouwen majestueus open*",
+                f"{naam}'s schubben glinsteren",
+            ],
+            "robot": [
+                f"[PROCESSING] {naam} analyseert de situatie...",
+                f"Beep boop! Positief resultaat gedetecteerd!",
+                f"*{naam}'s LED-ogen knipperen*",
+                f"Efficiency rating: {geluk}%",
+            ],
+            "eenhoorn": [
+                f"*{naam}'s hoorn gloeit zachtjes*",
+                f"✨ {naam} straalt magische energie uit",
+                f"*regenboog glitters dwarrelen neer*",
+                f"{naam} hinkt vrolijk",
+            ],
+        }
+
+        type_responses = responses.get(self.huisdier["type"], responses["hond"])
+
+        # IQ-based bonus
+        if iq >= 50:
+            smart_additions = [
+                f" {naam} denkt diep na over de situatie.",
+                f" Met IQ {iq} begrijpt {naam} precies wat er gebeurt.",
+                f" {naam}'s wijsheid schijnt door.",
+            ]
+            base = random.choice(type_responses)
+            return base + random.choice(smart_additions)
+
+        return random.choice(type_responses)
+
+    def _ai_add_memory(self, event_type: str, description: str):
+        """Voeg een herinnering toe aan het AI geheugen."""
+        if "ai_memory" not in self.huisdier:
+            self.huisdier["ai_memory"] = []
+
+        memory = {
+            "type": event_type,
+            "beschrijving": description,
+            "datum": datetime.now().isoformat(),
+            "geluk": self.huisdier["geluk"],
+            "iq": self.huisdier.get("intelligentie", 0),
+        }
+
+        self.huisdier["ai_memory"].append(memory)
+        # Behoud laatste 50 herinneringen
+        self.huisdier["ai_memory"] = self.huisdier["ai_memory"][-50:]
+
+    def _ai_recall_memory(self, event_type: str = None) -> list:
+        """Haal relevante herinneringen op."""
+        memories = self.huisdier.get("ai_memory", [])
+        if event_type:
+            return [m for m in memories if m["type"] == event_type]
+        return memories[-10:]  # Laatste 10
+
+    def _ai_activity_advisor(self) -> str:
+        """AI adviseert de beste volgende activiteit."""
+        h = self.huisdier
+        naam = h["naam"]
+        advies = []
+        prioriteit = None
+
+        # Analyseer stats
+        if h["honger"] < 30:
+            advies.append(f"🍖 {naam} heeft honger! Voer je huisdier.")
+            prioriteit = "voeren"
+        if h["energie"] < 20:
+            advies.append(f"😴 {naam} is moe! Laat slapen.")
+            if not prioriteit:
+                prioriteit = "slapen"
+        if h["gezondheid"] < 50:
+            advies.append(f"🏥 {naam} is ziek! Ga naar de dokter.")
+            if not prioriteit:
+                prioriteit = "dokter"
+        if h["geluk"] < 40:
+            advies.append(f"😢 {naam} is verdrietig! Speel of knuffel.")
+            if not prioriteit:
+                prioriteit = "spelen"
+
+        # IQ-based suggesties
+        iq = h.get("intelligentie", 0)
+        if iq < 50 and h["energie"] >= 30:
+            advies.append(f"📚 {naam}'s IQ is {iq}. Tijd om te leren!")
+        elif iq >= 100:
+            advies.append(f"🧠 {naam} is super slim (IQ {iq})! Probeer geavanceerde AI features!")
+
+        # Geen problemen? Suggereer leuke activiteiten
+        if not advies:
+            suggesties = [
+                f"✨ Alles gaat goed! Probeer een mini-game voor munten.",
+                f"🎯 {naam} kan een nieuwe trick leren!",
+                f"🗺️ Ga op avontuur met Verkenning Mode!",
+                f"🤖 Praat met Claude AI om slimmer te worden!",
+                f"🏆 Check je achievements - misschien unlock je er een!",
+            ]
+            advies = [random.choice(suggesties)]
+
+        # Probeer AI-enhanced advies
+        try:
+            claude_chat = _get_claude_chat()
+            if claude_chat and random.random() < 0.3:  # 30% kans op AI advies
+                context = f"""Stats van {naam}: Honger {h['honger']}%, Energie {h['energie']}%,
+Geluk {h['geluk']}%, Gezondheid {h['gezondheid']}%, IQ {iq}.
+Geef 1 korte tip wat te doen."""
+                ai_tip = self._ai_generate_response(context)
+                if ai_tip:
+                    advies.append(f"🤖 AI Tip: {ai_tip}")
+        except Exception:
+            pass
+
+        return "\n".join(advies), prioriteit
+
+    def _ai_generate_dream(self) -> str:
+        """Genereer een creatieve droom met AI."""
+        naam = self.huisdier["naam"]
+        huisdier_type = self.huisdier["type"]
+        memories = self._ai_recall_memory()
+        kennis = self.huisdier.get("kennis", {}).get("feiten", [])[-5:]
+
+        # Droom elementen
+        dream_themes = [
+            "vloog door een regenboog",
+            "vond een magische schat",
+            "ontmoette een wijze oude uil",
+            "zweefde door de wolken",
+            "ontdekte een geheime tuin",
+            "speelde met sterren",
+            "leerde praten met de maan",
+            "vond de sleutel tot wijsheid",
+        ]
+
+        # Probeer AI-generated dream
+        try:
+            claude_chat = _get_claude_chat()
+            if claude_chat:
+                recent_memory = memories[-1]["beschrijving"] if memories else "een leuke dag"
+                fact = random.choice(kennis) if kennis else "iets nieuws"
+
+                context = f"""Genereer een korte, magische droom (2-3 zinnen) voor {naam} de {huisdier_type}.
+De droom bevat elementen van: {recent_memory}
+En verweeft kennis over: {fact}
+Maak het dromerig en fantasierijk."""
+
+                dream = self._ai_generate_response(context)
+                if dream:
+                    return dream
+        except Exception:
+            pass
+
+        # Fallback droom
+        theme = random.choice(dream_themes)
+        if kennis:
+            fact = random.choice(kennis)
+            return f"{naam} {theme}. In de droom leerde {naam} dat {fact[:60]}..."
+        return f"{naam} {theme} en werd wakker met een glimlach."
+
+    def _ai_show_advisor(self):
+        """Toon AI Activity Advisor in menu."""
+        advies, prioriteit = self._ai_activity_advisor()
+        print("\n  " + "=" * 48)
+        print("  [AI ADVISOR] Aanbevelingen voor je huisdier:")
+        print("  " + "-" * 48)
+        for line in advies.split("\n"):
+            print(f"  {line}")
+        print("  " + "=" * 48)
 
     def _maak_nieuw_huisdier(self) -> dict:
         """Maakt een nieuw huisdier aan."""
@@ -591,6 +887,15 @@ class VirtueelHuisdierApp:
         print("| 38. Auto Learn & Sleep Mode    |")
         print("|     Automatisch leren & rusten |")
         print("+--------------------------------+")
+        print("|  [AI POWERED]                  |")
+        print("+--------------------------------+")
+        print("| 39. AI Activity Advisor        |")
+        print("|     Slimme aanbevelingen       |")
+        print("| 40. AI Pet Chat                |")
+        print("|     Praat met je huisdier!     |")
+        print("| 41. AI Memory Lane             |")
+        print("|     Bekijk herinneringen       |")
+        print("+--------------------------------+")
         print("| 13. Reset Huisdier             |")
         print("|  0. Opslaan & Afsluiten        |")
         print("+================================+")
@@ -668,12 +973,23 @@ class VirtueelHuisdierApp:
         self.huisdier["stats"]["voedingen"] += 1
         self.huisdier["ervaring"] += 5
 
-        reacties = [
-            f"{naam} smult ervan!",
-            f"Mmm! {naam} likt tevreden de bak leeg!",
-            f"{self.huisdier['geluid']}",
-        ]
-        print(random.choice(reacties))
+        # AI-enhanced reactie (30% kans)
+        if random.random() < 0.3:
+            ai_reactie = self._ai_generate_response(
+                f"{naam} heeft net {voedsel['naam']} gegeten. Hoe reageert het huisdier?",
+                f"{naam} smult ervan!"
+            )
+            print(ai_reactie)
+        else:
+            reacties = [
+                f"{naam} smult ervan!",
+                f"Mmm! {naam} likt tevreden de bak leeg!",
+                f"{self.huisdier['geluid']}",
+            ]
+            print(random.choice(reacties))
+
+        # Voeg herinnering toe
+        self._ai_add_memory("voeren", f"At {voedsel['naam']}")
 
         # Achievement checks
         if self.huisdier["stats"]["voedingen"] == 1:
@@ -701,13 +1017,26 @@ class VirtueelHuisdierApp:
         self.huisdier["honger"] = max(0, self.huisdier["honger"] - 10)
         self.huisdier["ervaring"] += 10
 
-        reacties = [
-            f"{self.huisdier['naam']} rent vrolijk rond!",
-            f"{self.huisdier['naam']} springt van plezier!",
-            f"Wat leuk! {self.huisdier['naam']} wil nog meer spelen!",
-            f"{self.huisdier['geluid']}",
-        ]
-        print(random.choice(reacties))
+        naam = self.huisdier["naam"]
+
+        # AI-enhanced reactie (30% kans)
+        if random.random() < 0.3:
+            ai_reactie = self._ai_generate_response(
+                f"{naam} speelt vrolijk. Hoe reageert het huisdier?",
+                f"{naam} springt van plezier!"
+            )
+            print(ai_reactie)
+        else:
+            reacties = [
+                f"{naam} rent vrolijk rond!",
+                f"{naam} springt van plezier!",
+                f"Wat leuk! {naam} wil nog meer spelen!",
+                f"{self.huisdier['geluid']}",
+            ]
+            print(random.choice(reacties))
+
+        # Voeg herinnering toe
+        self._ai_add_memory("spelen", "Leuk gespeeld met baasje!")
 
         # Slim huisdier deelt kennis tijdens spelen
         if iq >= 30 and "kennis" in self.huisdier:
@@ -769,13 +1098,24 @@ class VirtueelHuisdierApp:
         self.huisdier["gezondheid"] = min(100, self.huisdier["gezondheid"] + 5)
         self.huisdier["ervaring"] += 5
 
-        reacties = [
-            f"{naam} geniet van de aandacht!",
-            f"Aaah! {naam} is zo blij!",
-            f"{naam} geeft je een likje!",
-            f"{self.huisdier['geluid']}",
-        ]
-        print(random.choice(reacties))
+        # AI-enhanced reactie (30% kans)
+        if random.random() < 0.3:
+            ai_reactie = self._ai_generate_response(
+                f"{naam} wordt geknuffeld door baasje. Hoe reageert het huisdier?",
+                f"{naam} geniet van de aandacht!"
+            )
+            print(ai_reactie)
+        else:
+            reacties = [
+                f"{naam} geniet van de aandacht!",
+                f"Aaah! {naam} is zo blij!",
+                f"{naam} geeft je een likje!",
+                f"{self.huisdier['geluid']}",
+            ]
+            print(random.choice(reacties))
+
+        # Voeg herinnering toe
+        self._ai_add_memory("knuffelen", "Lekker geknuffeld met baasje")
 
         # Slim huisdier toont extra waardering
         if iq >= 40 and iq_bonus > 0:
@@ -5018,8 +5358,25 @@ Code:
 
             print(f"\n  [DROOM] {naam} begint te dromen...")
             time.sleep(0.5)
-            print(f"\n  ✨ {droom['naam']} ✨")
-            print(f"  {droom['beschrijving']}")
+
+            # Probeer AI-generated droom (30% kans als AI beschikbaar)
+            ai_droom = None
+            if random.random() < 0.3:
+                try:
+                    ai_droom = self._ai_generate_dream()
+                except Exception:
+                    pass
+
+            if ai_droom:
+                print(f"\n  ✨ AI DROOM ✨")
+                print(f"  {ai_droom}")
+                # Extra IQ bonus voor AI dromen
+                self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + 2
+                print(f"  [IQ] +2 intelligentie (AI droom bonus!)")
+                self._ai_add_memory("slapen", f"AI Droom: {ai_droom[:50]}...")
+            else:
+                print(f"\n  ✨ {droom['naam']} ✨")
+                print(f"  {droom['beschrijving']}")
 
             if droom["naam"] not in self.huisdier["dromen"]["unieke_dromen"]:
                 self.huisdier["dromen"]["unieke_dromen"].append(droom["naam"])
@@ -7142,6 +7499,177 @@ Code:
                         print("\n  [!] Niet genoeg munten!")
                     break
 
+    # ==================== AI POWERED FEATURES ====================
+
+    def _ai_pet_chat(self):
+        """Praat met je huisdier via AI - volledig gepersonaliseerd!"""
+        naam = self.huisdier["naam"]
+        geluid = self.huisdier["geluid"]
+        emoji = self.huisdier["emoji"]
+        huisdier_type = self.huisdier["type"]
+        personality = self._get_personality()
+        iq = self.huisdier.get("intelligentie", 0)
+
+        print("\n" + "=" * 60)
+        print(f"  {emoji} PRAAT MET {naam.upper()}! {emoji}")
+        print("=" * 60)
+        print(f"\n  {naam} de {huisdier_type} kijkt je verwachtingsvol aan...")
+        print(f"  {geluid}")
+        print(f"\n  Persoonlijkheid: {personality['karakter']}")
+        print(f"  IQ: {iq} | Spreekstijl: {personality['spreekstijl']}")
+        print("\n  Typ 'stop' om te stoppen.\n")
+
+        # Voeg herinnering toe
+        self._ai_add_memory("chat", f"Chat sessie gestart met baasje")
+
+        gesprek_count = 0
+        while True:
+            user_input = input(f"  Jij: ").strip()
+
+            if user_input.lower() in ["stop", "exit", "quit", ""]:
+                print(f"\n  {naam}: {geluid} (Tot ziens!)")
+                break
+
+            gesprek_count += 1
+
+            # Genereer AI response met persoonlijkheid
+            context = f"Gebruiker zegt: '{user_input}'. Reageer als {naam} de {huisdier_type}."
+
+            # Voeg recente herinneringen toe voor context
+            memories = self._ai_recall_memory()
+            if memories:
+                recent = memories[-1]["beschrijving"]
+                context += f" Je herinnert je: {recent}"
+
+            response = self._ai_generate_response(context)
+
+            print(f"  {naam}: {response}")
+            print()
+
+            # Voeg herinnering toe van dit gesprek
+            if gesprek_count % 3 == 0:  # Elke 3 berichten
+                self._ai_add_memory("chat", f"Praatte over: {user_input[:50]}")
+
+            # Stat updates
+            self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 2)
+            if gesprek_count % 5 == 0:
+                self.huisdier["intelligentie"] = iq + 1
+                print(f"  [IQ] {naam} wordt slimmer door het gesprek! +1 IQ")
+
+        # Resultaten
+        print("\n" + "=" * 60)
+        print("  [CHAT] Gesprek beëindigd!")
+        print("=" * 60)
+
+        intel_bonus = gesprek_count // 3
+        xp_bonus = gesprek_count * 5
+
+        print(f"\n  Gesprek statistieken:")
+        print(f"    [CHAT] Berichten uitgewisseld: {gesprek_count}")
+        print(f"    [IQ] Intelligentie: +{intel_bonus}")
+        print(f"    [XP] Ervaring: +{xp_bonus}")
+
+        self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + intel_bonus
+        self.huisdier["ervaring"] += xp_bonus
+
+        self._ai_add_memory("chat", f"Gezellig gesprek gehad ({gesprek_count} berichten)")
+        self._sla_op()
+
+    def _ai_memory_lane(self):
+        """Bekijk de herinneringen van je huisdier met AI context."""
+        naam = self.huisdier["naam"]
+        emoji = self.huisdier["emoji"]
+        memories = self.huisdier.get("ai_memory", [])
+
+        print("\n" + "=" * 60)
+        print(f"  {emoji} {naam}'s HERINNERINGEN {emoji}")
+        print("=" * 60)
+
+        if not memories:
+            print(f"\n  {naam} heeft nog geen herinneringen opgebouwd.")
+            print("  Speel, leer en praat om herinneringen te maken!")
+            return
+
+        print(f"\n  {naam} heeft {len(memories)} herinneringen:\n")
+
+        # Groepeer herinneringen per type
+        by_type = {}
+        for m in memories:
+            t = m.get("type", "algemeen")
+            if t not in by_type:
+                by_type[t] = []
+            by_type[t].append(m)
+
+        type_emojis = {
+            "voeren": "🍖",
+            "spelen": "🎾",
+            "slapen": "😴",
+            "leren": "📚",
+            "chat": "💬",
+            "avontuur": "🗺️",
+            "trick": "🎪",
+            "game": "🎮",
+            "algemeen": "📝",
+        }
+
+        for mem_type, mems in by_type.items():
+            emoji_type = type_emojis.get(mem_type, "📝")
+            print(f"  {emoji_type} {mem_type.upper()} ({len(mems)} herinneringen)")
+            for m in mems[-3:]:  # Laatste 3 per type
+                datum = m["datum"][:10]
+                print(f"      [{datum}] {m['beschrijving'][:50]}")
+            print()
+
+        # AI samenvatting van herinneringen
+        print("  " + "-" * 50)
+        print("  [AI] Samenvatting van herinneringen:")
+
+        try:
+            claude_chat = _get_claude_chat()
+            if claude_chat and len(memories) >= 3:
+                recent_5 = [m["beschrijving"] for m in memories[-5:]]
+                context = f"Maak een korte, warme samenvatting (2 zinnen) van deze herinneringen van {naam}: {', '.join(recent_5)}"
+                summary = self._ai_generate_response(context)
+                print(f"  {summary}")
+            else:
+                # Fallback
+                if len(memories) >= 5:
+                    print(f"  {naam} heeft mooie herinneringen opgebouwd!")
+                    print(f"  De afgelopen tijd was vol met {list(by_type.keys())[0]}.")
+                else:
+                    print(f"  {naam} begint net herinneringen te maken.")
+        except Exception:
+            print(f"  {naam} koestert alle herinneringen diep in het hart.")
+
+        # Optie om favoriete herinnering te markeren
+        print("\n  " + "-" * 50)
+        print("  [TIP] Blijf spelen om meer herinneringen te maken!")
+
+    def _ai_enhanced_sleep(self):
+        """AI-enhanced slapen met gegenereerde dromen."""
+        naam = self.huisdier["naam"]
+        emoji = self.huisdier["emoji"]
+
+        print(f"\n  {emoji} {naam} valt in een diepe slaap...")
+        time.sleep(1)
+
+        # Genereer AI droom
+        dream = self._ai_generate_dream()
+
+        print("\n  " + "~" * 50)
+        print("  ✨ DROOM ✨")
+        print("  " + "~" * 50)
+        print(f"\n  {dream}")
+        print("\n  " + "~" * 50)
+
+        # Voeg droom toe aan herinneringen
+        self._ai_add_memory("slapen", f"Droomde: {dream[:50]}...")
+
+        # Kans op extra IQ door droom
+        if random.random() < 0.4:  # 40% kans
+            self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + 1
+            print(f"\n  [LAMP] {naam} leerde iets in de droom! +1 IQ")
+
     def _auto_mode(self):
         """Automatische leer- en slaapmodus - huisdier leert en rust zelfstandig!"""
         naam = self.huisdier["naam"]
@@ -7364,9 +7892,16 @@ Code:
         """Start de app."""
         clear_scherm()
         print("+=======================================+")
-        print("|   VIRTUEEL HUISDIER SIMULATOR v3.0   |")
-        print("|   Met ECHTE AI & permanente kennis!  |")
-        print("+======================================+")
+        print("|   VIRTUEEL HUISDIER SIMULATOR v4.0   |")
+        print("|   VOLLEDIG AI-POWERED HUISDIER!      |")
+        print("+=======================================+")
+        print("|   Features:                          |")
+        print("|   - AI Personality System            |")
+        print("|   - AI Dream Generator               |")
+        print("|   - AI Smart Dialogue                |")
+        print("|   - AI Activity Advisor              |")
+        print("|   - AI Memory System                 |")
+        print("+=======================================+")
 
         self.huisdier = self._laad_huisdier()
 
@@ -7374,12 +7909,23 @@ Code:
             print(f"\nWelkom terug! {self.huisdier['emoji']} {self.huisdier['naam']} heeft je gemist!")
             self._bereken_tijd_verlies()
 
+            # AI-generated welkomstbericht
+            ai_welkom = self._ai_generate_response(
+                f"{self.huisdier['naam']} ziet baasje weer na een pauze. Hoe reageert het?",
+                f"{self.huisdier['naam']} kwispelt/spint/beweegt blij!"
+            )
+            print(f"\n  {ai_welkom}")
+
+            # Toon status waarschuwingen
             if self.huisdier["honger"] < 30:
-                print(f"[!] {self.huisdier['naam']} heeft honger!")
+                print(f"\n[!] {self.huisdier['naam']} heeft honger!")
             if self.huisdier["energie"] < 3:
                 print(f"[!] {self.huisdier['naam']} is moe!")
             if self.huisdier["gezondheid"] < 50:
                 print(f"[!] {self.huisdier['naam']} voelt zich niet lekker!")
+
+            # Toon AI Advisor aanbevelingen
+            self._ai_show_advisor()
 
             input("\nDruk op Enter om verder te gaan...")
         else:
@@ -7475,6 +8021,13 @@ Code:
                 self._geheime_missies()
             elif keuze == "38":
                 self._auto_mode()
+            # AI POWERED FEATURES
+            elif keuze == "39":
+                self._ai_show_advisor()
+            elif keuze == "40":
+                self._ai_pet_chat()
+            elif keuze == "41":
+                self._ai_memory_lane()
             elif keuze == "0":
                 self._sla_op()
                 print(f"\n{self.huisdier['naam']} is opgeslagen!")
