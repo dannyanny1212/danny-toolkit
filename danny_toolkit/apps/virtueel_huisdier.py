@@ -541,7 +541,7 @@ class VirtueelHuisdierApp:
         print("| 11. Huisdier Werk              |")
         print(f"| 12. Huisdier Leren [{kennis_count:>3} feiten]|")
         print("+--------------------------------+")
-        print("|  [NIEUWE AVONTUREN]            |")
+        print("|  [AVONTUREN]                   |")
         print("+--------------------------------+")
         print("| 14. Verkenning Mode            |")
         print("| 15. Huisdier Dagboek           |")
@@ -550,6 +550,22 @@ class VirtueelHuisdierApp:
         else:
             print("| 16. Seizoens Events            |")
         print("| 17. Competities                |")
+        print("+--------------------------------+")
+        print("|  [LEVEN & ECONOMIE]            |")
+        print("+--------------------------------+")
+        print("| 18. Huisdier Huis              |")
+        print("| 19. Mini Farming               |")
+        print("| 20. Crafting Werkplaats        |")
+        print("| 21. Kook Keuken                |")
+        print("| 22. Huisdier Bank              |")
+        print("+--------------------------------+")
+        print("|  [SOCIAAL & DOELEN]            |")
+        print("+--------------------------------+")
+        print("| 23. Huisdier Vrienden          |")
+        print("| 24. Dagelijkse Missies         |")
+        print("| 25. Levensdoelen               |")
+        print("| 26. Foto Album                 |")
+        print("| 27. Weer Station               |")
         print("+--------------------------------+")
         print("| 13. Reset Huisdier             |")
         print("|  0. Opslaan & Afsluiten        |")
@@ -4258,6 +4274,1051 @@ Antwoord in het Nederlands."""
 
         return True
 
+    # ==========================================
+    # LEVEN & ECONOMIE FEATURES
+    # ==========================================
+
+    def _huisdier_huis(self):
+        """Bouw en decoreer het huis van je huisdier!"""
+        naam = self.huisdier["naam"]
+
+        # Init huis data
+        if "huis" not in self.huisdier:
+            self.huisdier["huis"] = {
+                "kamers": ["woonkamer"],
+                "meubels": {},
+                "niveau": 1,
+                "comfort": 10
+            }
+
+        huis = self.huisdier["huis"]
+
+        kamers_beschikbaar = {
+            "slaapkamer": {"prijs": 100, "comfort": 20, "beschrijving": "Een gezellige slaapplek"},
+            "keuken": {"prijs": 150, "comfort": 15, "beschrijving": "Kook heerlijke maaltijden"},
+            "tuin": {"prijs": 200, "comfort": 25, "beschrijving": "Verbouw je eigen groenten"},
+            "speelkamer": {"prijs": 120, "comfort": 30, "beschrijving": "Eindeloos speelplezier"},
+            "bibliotheek": {"prijs": 180, "comfort": 20, "beschrijving": "Leer en ontdek"},
+            "spa": {"prijs": 250, "comfort": 40, "beschrijving": "Ultieme ontspanning"},
+        }
+
+        meubels = {
+            "bank": {"prijs": 50, "comfort": 10},
+            "tv": {"prijs": 80, "comfort": 15},
+            "plant": {"prijs": 20, "comfort": 5},
+            "lamp": {"prijs": 30, "comfort": 8},
+            "tapijt": {"prijs": 40, "comfort": 12},
+            "aquarium": {"prijs": 100, "comfort": 20},
+        }
+
+        while True:
+            totaal_comfort = huis["comfort"] + sum(m.get("comfort", 0) for m in huis["meubels"].values())
+
+            print("\n" + "=" * 55)
+            print(f"  [HUIS] {naam}'s HUIS - Niveau {huis['niveau']}")
+            print("=" * 55)
+            print(f"  Kamers: {len(huis['kamers'])} | Comfort: {totaal_comfort}")
+            print(f"  Munten: {self.huisdier['munten']}")
+
+            print("\n  Huidige kamers:")
+            for kamer in huis["kamers"]:
+                print(f"    - {kamer.title()}")
+
+            print("\n  1. Kamer toevoegen")
+            print("  2. Meubel kopen")
+            print("  3. Huis bekijken")
+            print("  0. Terug")
+
+            keuze = input("\n  Keuze: ").strip()
+
+            if keuze == "0":
+                break
+            elif keuze == "1":
+                print("\n  Beschikbare kamers:")
+                beschikbaar = [(k, v) for k, v in kamers_beschikbaar.items() if k not in huis["kamers"]]
+                for i, (k, v) in enumerate(beschikbaar, 1):
+                    print(f"    {i}. {k.title()} - {v['prijs']} munten (+{v['comfort']} comfort)")
+                    print(f"       {v['beschrijving']}")
+
+                kamer_keuze = input("\n  Kies kamer (0=terug): ").strip()
+                try:
+                    idx = int(kamer_keuze) - 1
+                    if 0 <= idx < len(beschikbaar):
+                        kamer_naam, kamer_data = beschikbaar[idx]
+                        if self.huisdier["munten"] >= kamer_data["prijs"]:
+                            self.huisdier["munten"] -= kamer_data["prijs"]
+                            huis["kamers"].append(kamer_naam)
+                            huis["comfort"] += kamer_data["comfort"]
+                            huis["niveau"] = len(huis["kamers"])
+                            print(f"\n  [OK] {kamer_naam.title()} toegevoegd!")
+                            self._voeg_dagboek_toe(f"Nieuwe kamer: {kamer_naam}")
+                        else:
+                            print("\n  [!] Niet genoeg munten!")
+                except (ValueError, IndexError):
+                    pass
+
+            elif keuze == "2":
+                print("\n  Beschikbare meubels:")
+                for i, (m, v) in enumerate(meubels.items(), 1):
+                    owned = "✓" if m in huis["meubels"] else " "
+                    print(f"    {i}. [{owned}] {m.title()} - {v['prijs']} munten (+{v['comfort']} comfort)")
+
+                meubel_keuze = input("\n  Kies meubel (0=terug): ").strip()
+                try:
+                    idx = int(meubel_keuze) - 1
+                    meubel_lijst = list(meubels.items())
+                    if 0 <= idx < len(meubel_lijst):
+                        meubel_naam, meubel_data = meubel_lijst[idx]
+                        if meubel_naam not in huis["meubels"]:
+                            if self.huisdier["munten"] >= meubel_data["prijs"]:
+                                self.huisdier["munten"] -= meubel_data["prijs"]
+                                huis["meubels"][meubel_naam] = meubel_data
+                                print(f"\n  [OK] {meubel_naam.title()} gekocht!")
+                            else:
+                                print("\n  [!] Niet genoeg munten!")
+                        else:
+                            print("\n  [!] Je hebt dit meubel al!")
+                except (ValueError, IndexError):
+                    pass
+
+            elif keuze == "3":
+                print(f"\n  --- {naam}'s HUIS ---")
+                for kamer in huis["kamers"]:
+                    print(f"\n  [{kamer.upper()}]")
+                    kamer_meubels = [m for m in huis["meubels"].keys()]
+                    if kamer_meubels:
+                        for m in kamer_meubels[:2]:
+                            print(f"    - {m.title()}")
+                    else:
+                        print("    (leeg)")
+
+            self._sla_op()
+
+    def _mini_farming(self):
+        """Verbouw gewassen voor voedsel en munten!"""
+        naam = self.huisdier["naam"]
+
+        # Init farming data
+        if "farm" not in self.huisdier:
+            self.huisdier["farm"] = {
+                "velden": 2,
+                "gewassen": [],
+                "voorraad": {},
+                "totaal_geoogst": 0
+            }
+
+        farm = self.huisdier["farm"]
+
+        gewassen_types = {
+            "wortel": {"groeitijd": 1, "opbrengst": 3, "prijs": 5, "verkoop": 8},
+            "tomaat": {"groeitijd": 2, "opbrengst": 5, "prijs": 8, "verkoop": 15},
+            "aardappel": {"groeitijd": 2, "opbrengst": 4, "prijs": 6, "verkoop": 12},
+            "mais": {"groeitijd": 3, "opbrengst": 6, "prijs": 10, "verkoop": 20},
+            "pompoen": {"groeitijd": 4, "opbrengst": 2, "prijs": 15, "verkoop": 35},
+            "aardbei": {"groeitijd": 2, "opbrengst": 8, "prijs": 12, "verkoop": 25},
+        }
+
+        while True:
+            print("\n" + "=" * 55)
+            print(f"  [FARM] {naam}'s BOERDERIJ")
+            print("=" * 55)
+            print(f"  Velden: {len(farm['gewassen'])}/{farm['velden']} bezet")
+            print(f"  Munten: {self.huisdier['munten']}")
+
+            # Update groeiende gewassen
+            nu = datetime.now()
+            for gewas in farm["gewassen"]:
+                geplant = datetime.fromisoformat(gewas["geplant"])
+                groeitijd = gewassen_types[gewas["type"]]["groeitijd"]
+                klaar_tijd = geplant + timedelta(minutes=groeitijd)
+                gewas["klaar"] = nu >= klaar_tijd
+
+            print("\n  Huidige gewassen:")
+            if farm["gewassen"]:
+                for i, gewas in enumerate(farm["gewassen"], 1):
+                    status = "KLAAR!" if gewas["klaar"] else "groeit..."
+                    print(f"    {i}. {gewas['type'].title()} - {status}")
+            else:
+                print("    (geen gewassen)")
+
+            print("\n  Voorraad:")
+            if farm["voorraad"]:
+                for item, aantal in farm["voorraad"].items():
+                    print(f"    - {item.title()}: {aantal}x")
+            else:
+                print("    (leeg)")
+
+            print("\n  1. Gewas planten")
+            print("  2. Oogsten")
+            print("  3. Voorraad verkopen")
+            print("  4. Extra veld kopen (50 munten)")
+            print("  0. Terug")
+
+            keuze = input("\n  Keuze: ").strip()
+
+            if keuze == "0":
+                break
+            elif keuze == "1":
+                if len(farm["gewassen"]) >= farm["velden"]:
+                    print("\n  [!] Alle velden zijn bezet!")
+                    continue
+
+                print("\n  Beschikbare gewassen:")
+                for i, (g, v) in enumerate(gewassen_types.items(), 1):
+                    print(f"    {i}. {g.title()} - {v['prijs']} munten ({v['groeitijd']} min)")
+
+                gewas_keuze = input("\n  Kies gewas: ").strip()
+                try:
+                    idx = int(gewas_keuze) - 1
+                    gewas_lijst = list(gewassen_types.items())
+                    if 0 <= idx < len(gewas_lijst):
+                        gewas_naam, gewas_data = gewas_lijst[idx]
+                        if self.huisdier["munten"] >= gewas_data["prijs"]:
+                            self.huisdier["munten"] -= gewas_data["prijs"]
+                            farm["gewassen"].append({
+                                "type": gewas_naam,
+                                "geplant": datetime.now().isoformat(),
+                                "klaar": False
+                            })
+                            print(f"\n  [PLANT] {gewas_naam.title()} geplant!")
+                        else:
+                            print("\n  [!] Niet genoeg munten!")
+                except (ValueError, IndexError):
+                    pass
+
+            elif keuze == "2":
+                geoogst = []
+                for gewas in farm["gewassen"][:]:
+                    if gewas["klaar"]:
+                        gewas_data = gewassen_types[gewas["type"]]
+                        opbrengst = gewas_data["opbrengst"]
+                        farm["voorraad"][gewas["type"]] = farm["voorraad"].get(gewas["type"], 0) + opbrengst
+                        farm["totaal_geoogst"] += opbrengst
+                        geoogst.append(f"{gewas['type']} x{opbrengst}")
+                        farm["gewassen"].remove(gewas)
+
+                if geoogst:
+                    print(f"\n  [OOGST] Geoogst: {', '.join(geoogst)}")
+                    self._voeg_dagboek_toe(f"Oogst: {', '.join(geoogst)}")
+                else:
+                    print("\n  [!] Niets klaar om te oogsten!")
+
+            elif keuze == "3":
+                if not farm["voorraad"]:
+                    print("\n  [!] Voorraad is leeg!")
+                    continue
+
+                totaal = 0
+                for item, aantal in farm["voorraad"].items():
+                    prijs = gewassen_types[item]["verkoop"] * aantal
+                    totaal += prijs
+                    print(f"    {item.title()} x{aantal} = {prijs} munten")
+
+                bevestig = input(f"\n  Alles verkopen voor {totaal} munten? (j/n): ").strip().lower()
+                if bevestig == "j":
+                    self.huisdier["munten"] += totaal
+                    farm["voorraad"] = {}
+                    print(f"\n  [MUNT] +{totaal} munten!")
+
+            elif keuze == "4":
+                if self.huisdier["munten"] >= 50:
+                    self.huisdier["munten"] -= 50
+                    farm["velden"] += 1
+                    print(f"\n  [OK] Extra veld gekocht! Totaal: {farm['velden']}")
+                else:
+                    print("\n  [!] Niet genoeg munten!")
+
+            self._sla_op()
+
+    def _crafting_werkplaats(self):
+        """Maak items van verzamelde materialen!"""
+        naam = self.huisdier["naam"]
+
+        # Init crafting data
+        if "crafting" not in self.huisdier:
+            self.huisdier["crafting"] = {
+                "materialen": {},
+                "gemaakte_items": []
+            }
+
+        crafting = self.huisdier["crafting"]
+
+        # Voeg materialen toe van verkenning
+        if "verkenning" in self.huisdier:
+            for item in self.huisdier["verkenning"].get("verzamelde_items", []):
+                if item not in crafting["materialen"]:
+                    crafting["materialen"][item] = 1
+
+        recepten = {
+            "geluksamulet": {
+                "materialen": {"kristal": 1, "veer": 1},
+                "effect": {"geluk": 20},
+                "beschrijving": "Verhoogt permanent geluk"
+            },
+            "energie_drankje": {
+                "materialen": {"paddenstoel": 2, "zeewier": 1},
+                "effect": {"energie": 30},
+                "beschrijving": "Herstelt energie instant"
+            },
+            "wijsheid_scroll": {
+                "materialen": {"scroll": 1, "sterrenstof": 1},
+                "effect": {"intelligentie": 10},
+                "beschrijving": "Verhoogt IQ permanent"
+            },
+            "gouden_ring": {
+                "materialen": {"oude_munt": 3, "parel": 1},
+                "effect": {"munten": 100},
+                "beschrijving": "Verkoopt voor 100 munten"
+            },
+            "super_voedsel": {
+                "materialen": {"koraal": 1, "schelp": 2},
+                "effect": {"honger": 50, "gezondheid": 20},
+                "beschrijving": "Vult honger en gezondheid"
+            },
+        }
+
+        while True:
+            print("\n" + "=" * 55)
+            print(f"  [CRAFT] {naam}'s WERKPLAATS")
+            print("=" * 55)
+
+            print("\n  Materialen:")
+            if crafting["materialen"]:
+                for mat, aantal in crafting["materialen"].items():
+                    print(f"    - {mat.replace('_', ' ').title()}: {aantal}x")
+            else:
+                print("    (geen materialen - ga verkennen!)")
+
+            print("\n  Recepten:")
+            for i, (item, data) in enumerate(recepten.items(), 1):
+                kan_maken = all(crafting["materialen"].get(m, 0) >= a for m, a in data["materialen"].items())
+                status = "[OK]" if kan_maken else "[X]"
+                print(f"    {i}. {status} {item.replace('_', ' ').title()}")
+                print(f"       {data['beschrijving']}")
+                mats = ", ".join(f"{m}x{a}" for m, a in data["materialen"].items())
+                print(f"       Nodig: {mats}")
+
+            print("\n  0. Terug")
+
+            keuze = input("\n  Kies recept om te maken: ").strip()
+
+            if keuze == "0":
+                break
+
+            try:
+                idx = int(keuze) - 1
+                recept_lijst = list(recepten.items())
+                if 0 <= idx < len(recept_lijst):
+                    item_naam, item_data = recept_lijst[idx]
+
+                    # Check materialen
+                    kan_maken = all(crafting["materialen"].get(m, 0) >= a for m, a in item_data["materialen"].items())
+
+                    if kan_maken:
+                        # Verwijder materialen
+                        for mat, aantal in item_data["materialen"].items():
+                            crafting["materialen"][mat] -= aantal
+                            if crafting["materialen"][mat] <= 0:
+                                del crafting["materialen"][mat]
+
+                        # Pas effect toe
+                        for stat, waarde in item_data["effect"].items():
+                            if stat == "munten":
+                                self.huisdier["munten"] += waarde
+                            elif stat == "intelligentie":
+                                self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + waarde
+                            elif stat in self.huisdier:
+                                self.huisdier[stat] = min(100, self.huisdier[stat] + waarde)
+
+                        crafting["gemaakte_items"].append(item_naam)
+                        print(f"\n  [CRAFT] {item_naam.replace('_', ' ').title()} gemaakt!")
+                        print(f"  Effect: {item_data['effect']}")
+                        self._voeg_dagboek_toe(f"Crafting: {item_naam}")
+                    else:
+                        print("\n  [!] Niet genoeg materialen!")
+            except (ValueError, IndexError):
+                pass
+
+            self._sla_op()
+
+    def _kook_keuken(self):
+        """Kook maaltijden van ingrediënten!"""
+        naam = self.huisdier["naam"]
+
+        # Init keuken data
+        if "keuken" not in self.huisdier:
+            self.huisdier["keuken"] = {
+                "ingredienten": {"brood": 5, "kaas": 3, "tomaat": 2},
+                "recepten_geleerd": ["tosti"],
+                "maaltijden_gekookt": 0
+            }
+
+        keuken = self.huisdier["keuken"]
+
+        recepten = {
+            "tosti": {
+                "ingredienten": {"brood": 2, "kaas": 1},
+                "honger": 25, "geluk": 10, "energie": 5
+            },
+            "salade": {
+                "ingredienten": {"tomaat": 2, "wortel": 1},
+                "honger": 15, "geluk": 5, "gezondheid": 15
+            },
+            "pizza": {
+                "ingredienten": {"brood": 1, "kaas": 2, "tomaat": 1},
+                "honger": 40, "geluk": 20, "energie": 10
+            },
+            "soep": {
+                "ingredienten": {"wortel": 2, "aardappel": 2},
+                "honger": 30, "geluk": 10, "gezondheid": 20
+            },
+            "taart": {
+                "ingredienten": {"aardbei": 3, "mais": 1},
+                "honger": 20, "geluk": 35, "energie": 15
+            },
+        }
+
+        while True:
+            print("\n" + "=" * 55)
+            print(f"  [KOOK] {naam}'s KEUKEN")
+            print("=" * 55)
+            print(f"  Maaltijden gekookt: {keuken['maaltijden_gekookt']}")
+
+            print("\n  Ingrediënten:")
+            if keuken["ingredienten"]:
+                for ing, aantal in keuken["ingredienten"].items():
+                    print(f"    - {ing.title()}: {aantal}x")
+            else:
+                print("    (geen ingrediënten)")
+
+            # Voeg farm producten toe
+            if "farm" in self.huisdier and self.huisdier["farm"]["voorraad"]:
+                print("\n  [TIP] Je hebt producten op de farm!")
+
+            print("\n  Recepten:")
+            for i, (recept, data) in enumerate(recepten.items(), 1):
+                kan_koken = all(keuken["ingredienten"].get(ing, 0) >= a for ing, a in data["ingredienten"].items())
+                status = "[OK]" if kan_koken else "[X]"
+                print(f"    {i}. {status} {recept.title()}")
+                ings = ", ".join(f"{ing}x{a}" for ing, a in data["ingredienten"].items())
+                print(f"       Nodig: {ings}")
+                print(f"       Effect: +{data['honger']} honger, +{data['geluk']} geluk")
+
+            print("\n  a. Ingrediënten kopen")
+            print("  b. Farm producten ophalen")
+            print("  0. Terug")
+
+            keuze = input("\n  Keuze: ").strip().lower()
+
+            if keuze == "0":
+                break
+            elif keuze == "a":
+                winkel_items = {
+                    "brood": 5, "kaas": 8, "tomaat": 4,
+                    "wortel": 3, "aardappel": 4
+                }
+                print("\n  Ingrediënten winkel:")
+                for i, (item, prijs) in enumerate(winkel_items.items(), 1):
+                    print(f"    {i}. {item.title()} - {prijs} munten")
+
+                item_keuze = input("\n  Kies item: ").strip()
+                try:
+                    idx = int(item_keuze) - 1
+                    item_lijst = list(winkel_items.items())
+                    if 0 <= idx < len(item_lijst):
+                        item_naam, prijs = item_lijst[idx]
+                        if self.huisdier["munten"] >= prijs:
+                            self.huisdier["munten"] -= prijs
+                            keuken["ingredienten"][item_naam] = keuken["ingredienten"].get(item_naam, 0) + 1
+                            print(f"\n  [OK] {item_naam.title()} gekocht!")
+                        else:
+                            print("\n  [!] Niet genoeg munten!")
+                except (ValueError, IndexError):
+                    pass
+
+            elif keuze == "b":
+                if "farm" in self.huisdier and self.huisdier["farm"]["voorraad"]:
+                    for item, aantal in self.huisdier["farm"]["voorraad"].items():
+                        keuken["ingredienten"][item] = keuken["ingredienten"].get(item, 0) + aantal
+                    self.huisdier["farm"]["voorraad"] = {}
+                    print("\n  [OK] Farm producten opgehaald!")
+                else:
+                    print("\n  [!] Geen farm producten beschikbaar!")
+
+            else:
+                try:
+                    idx = int(keuze) - 1
+                    recept_lijst = list(recepten.items())
+                    if 0 <= idx < len(recept_lijst):
+                        recept_naam, recept_data = recept_lijst[idx]
+                        kan_koken = all(keuken["ingredienten"].get(ing, 0) >= a for ing, a in recept_data["ingredienten"].items())
+
+                        if kan_koken:
+                            for ing, aantal in recept_data["ingredienten"].items():
+                                keuken["ingredienten"][ing] -= aantal
+                                if keuken["ingredienten"][ing] <= 0:
+                                    del keuken["ingredienten"][ing]
+
+                            self.huisdier["honger"] = min(100, self.huisdier["honger"] + recept_data["honger"])
+                            self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + recept_data["geluk"])
+                            if "energie" in recept_data:
+                                self.huisdier["energie"] = min(100, self.huisdier["energie"] + recept_data["energie"])
+                            if "gezondheid" in recept_data:
+                                self.huisdier["gezondheid"] = min(100, self.huisdier["gezondheid"] + recept_data["gezondheid"])
+
+                            keuken["maaltijden_gekookt"] += 1
+                            print(f"\n  [KOOK] {recept_naam.title()} gemaakt en opgegeten!")
+                            print(f"  +{recept_data['honger']} honger, +{recept_data['geluk']} geluk!")
+                            self._voeg_dagboek_toe(f"Kookte: {recept_naam}")
+                        else:
+                            print("\n  [!] Niet genoeg ingrediënten!")
+                except (ValueError, IndexError):
+                    pass
+
+            self._sla_op()
+
+    def _huisdier_bank(self):
+        """Spaar munten en verdien rente!"""
+        naam = self.huisdier["naam"]
+
+        # Init bank data
+        if "bank" not in self.huisdier:
+            self.huisdier["bank"] = {
+                "saldo": 0,
+                "laatste_rente": datetime.now().isoformat(),
+                "totaal_rente": 0
+            }
+
+        bank = self.huisdier["bank"]
+
+        # Bereken rente (1% per dag, max 1x per dag)
+        laatste = datetime.fromisoformat(bank["laatste_rente"])
+        dagen_verstreken = (datetime.now() - laatste).days
+
+        if dagen_verstreken > 0 and bank["saldo"] > 0:
+            rente = int(bank["saldo"] * 0.01 * dagen_verstreken)
+            if rente > 0:
+                bank["saldo"] += rente
+                bank["totaal_rente"] += rente
+                bank["laatste_rente"] = datetime.now().isoformat()
+                print(f"\n  [BANK] Je hebt {rente} munten rente ontvangen!")
+
+        while True:
+            print("\n" + "=" * 55)
+            print(f"  [BANK] {naam}'s SPAARREKENING")
+            print("=" * 55)
+            print(f"  Saldo: {bank['saldo']} munten")
+            print(f"  Portemonnee: {self.huisdier['munten']} munten")
+            print(f"  Rente: 1% per dag")
+            print(f"  Totaal rente verdiend: {bank['totaal_rente']} munten")
+
+            print("\n  1. Storten")
+            print("  2. Opnemen")
+            print("  3. Alles opnemen")
+            print("  0. Terug")
+
+            keuze = input("\n  Keuze: ").strip()
+
+            if keuze == "0":
+                break
+            elif keuze == "1":
+                try:
+                    bedrag = int(input("  Hoeveel storten? ").strip())
+                    if bedrag > 0 and bedrag <= self.huisdier["munten"]:
+                        self.huisdier["munten"] -= bedrag
+                        bank["saldo"] += bedrag
+                        print(f"\n  [OK] {bedrag} munten gestort!")
+                    else:
+                        print("\n  [!] Ongeldig bedrag!")
+                except ValueError:
+                    print("\n  [!] Voer een getal in!")
+
+            elif keuze == "2":
+                try:
+                    bedrag = int(input("  Hoeveel opnemen? ").strip())
+                    if bedrag > 0 and bedrag <= bank["saldo"]:
+                        bank["saldo"] -= bedrag
+                        self.huisdier["munten"] += bedrag
+                        print(f"\n  [OK] {bedrag} munten opgenomen!")
+                    else:
+                        print("\n  [!] Ongeldig bedrag!")
+                except ValueError:
+                    print("\n  [!] Voer een getal in!")
+
+            elif keuze == "3":
+                if bank["saldo"] > 0:
+                    self.huisdier["munten"] += bank["saldo"]
+                    print(f"\n  [OK] {bank['saldo']} munten opgenomen!")
+                    bank["saldo"] = 0
+                else:
+                    print("\n  [!] Geen saldo!")
+
+            self._sla_op()
+
+    # ==========================================
+    # SOCIAAL & DOELEN FEATURES
+    # ==========================================
+
+    def _huisdier_vrienden(self):
+        """Ontmoet en bevriend NPC huisdieren!"""
+        naam = self.huisdier["naam"]
+
+        # Init vrienden data
+        if "vrienden" not in self.huisdier:
+            self.huisdier["vrienden"] = {
+                "lijst": [],
+                "interacties": 0
+            }
+
+        npc_huisdieren = {
+            "max": {"naam": "Max", "type": "hond", "emoji": "🐕", "persoonlijkheid": "speels"},
+            "luna": {"naam": "Luna", "type": "kat", "emoji": "🐱", "persoonlijkheid": "mysterieus"},
+            "pip": {"naam": "Pip", "type": "vogel", "emoji": "🐦", "persoonlijkheid": "vrolijk"},
+            "rocky": {"naam": "Rocky", "type": "schildpad", "emoji": "🐢", "persoonlijkheid": "wijs"},
+            "bella": {"naam": "Bella", "type": "konijn", "emoji": "🐰", "persoonlijkheid": "lief"},
+            "charlie": {"naam": "Charlie", "type": "hamster", "emoji": "🐹", "persoonlijkheid": "energiek"},
+        }
+
+        while True:
+            print("\n" + "=" * 55)
+            print(f"  [VRIENDEN] {naam}'s SOCIALE LEVEN")
+            print("=" * 55)
+            print(f"  Vrienden: {len(self.huisdier['vrienden']['lijst'])}/{len(npc_huisdieren)}")
+            print(f"  Totaal interacties: {self.huisdier['vrienden']['interacties']}")
+
+            print("\n  Bekende huisdieren:")
+            for npc_id, npc in npc_huisdieren.items():
+                is_vriend = npc_id in self.huisdier["vrienden"]["lijst"]
+                status = "👫 Vriend" if is_vriend else "👋 Ken je nog niet"
+                print(f"    {npc['emoji']} {npc['naam']} ({npc['type']}) - {status}")
+                print(f"       Persoonlijkheid: {npc['persoonlijkheid']}")
+
+            print("\n  1. Iemand ontmoeten (10 energie)")
+            print("  2. Met vriend spelen (15 energie)")
+            print("  0. Terug")
+
+            keuze = input("\n  Keuze: ").strip()
+
+            if keuze == "0":
+                break
+            elif keuze == "1":
+                if self.huisdier["energie"] < 10:
+                    print("\n  [!] Te moe om te socializen!")
+                    continue
+
+                self.huisdier["energie"] -= 10
+
+                # Kies random NPC die nog geen vriend is
+                niet_vrienden = [npc_id for npc_id in npc_huisdieren if npc_id not in self.huisdier["vrienden"]["lijst"]]
+
+                if niet_vrienden:
+                    npc_id = random.choice(niet_vrienden)
+                    npc = npc_huisdieren[npc_id]
+
+                    print(f"\n  {naam} ontmoet {npc['emoji']} {npc['naam']}!")
+                    time.sleep(0.5)
+
+                    # Kans om vrienden te worden
+                    kans = 50 + (self.huisdier["geluk"] // 2)
+                    if random.randint(1, 100) <= kans:
+                        self.huisdier["vrienden"]["lijst"].append(npc_id)
+                        print(f"  [VRIEND] {npc['naam']} en {naam} zijn nu vrienden!")
+                        self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 15)
+                        self._voeg_dagboek_toe(f"Nieuwe vriend: {npc['naam']}")
+                    else:
+                        print(f"  {npc['naam']} wil je beter leren kennen. Probeer later opnieuw!")
+
+                    self.huisdier["vrienden"]["interacties"] += 1
+                else:
+                    print("\n  [OK] Je bent al met iedereen bevriend!")
+
+            elif keuze == "2":
+                if self.huisdier["energie"] < 15:
+                    print("\n  [!] Te moe om te spelen!")
+                    continue
+
+                if not self.huisdier["vrienden"]["lijst"]:
+                    print("\n  [!] Je hebt nog geen vrienden!")
+                    continue
+
+                self.huisdier["energie"] -= 15
+
+                vriend_id = random.choice(self.huisdier["vrienden"]["lijst"])
+                vriend = npc_huisdieren[vriend_id]
+
+                activiteiten = [
+                    f"speelt verstoppertje met {vriend['naam']}!",
+                    f"rent door het park met {vriend['naam']}!",
+                    f"deelt snacks met {vriend['naam']}!",
+                    f"leert een nieuw spel van {vriend['naam']}!",
+                ]
+
+                print(f"\n  {naam} {random.choice(activiteiten)}")
+                self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 20)
+                self.huisdier["ervaring"] += 15
+                self.huisdier["vrienden"]["interacties"] += 1
+
+                print(f"  [HAPPY] +20 geluk!")
+                print(f"  [XP] +15 ervaring!")
+
+            self._sla_op()
+
+    def _dagelijkse_missies(self):
+        """Dagelijkse missies voor extra beloningen!"""
+        naam = self.huisdier["naam"]
+
+        # Init missies data
+        if "missies" not in self.huisdier:
+            self.huisdier["missies"] = {
+                "huidige": [],
+                "voltooid_vandaag": 0,
+                "laatste_reset": datetime.now().date().isoformat(),
+                "totaal_voltooid": 0
+            }
+
+        missies = self.huisdier["missies"]
+
+        # Reset missies elke dag
+        vandaag = datetime.now().date().isoformat()
+        if missies["laatste_reset"] != vandaag:
+            missies["huidige"] = []
+            missies["voltooid_vandaag"] = 0
+            missies["laatste_reset"] = vandaag
+
+        # Genereer missies als er geen zijn
+        alle_missies = [
+            {"naam": "Voer je huisdier 3x", "type": "voeren", "doel": 3, "beloning": 30},
+            {"naam": "Speel 2 mini-games", "type": "games", "doel": 2, "beloning": 25},
+            {"naam": "Laat je huisdier slapen", "type": "slapen", "doel": 1, "beloning": 15},
+            {"naam": "Leer een nieuw feit", "type": "leren", "doel": 1, "beloning": 35},
+            {"naam": "Ga op verkenning", "type": "verkennen", "doel": 1, "beloning": 40},
+            {"naam": "Win een competitie", "type": "competitie", "doel": 1, "beloning": 50},
+            {"naam": "Kook een maaltijd", "type": "koken", "doel": 1, "beloning": 25},
+            {"naam": "Oogst gewassen", "type": "oogsten", "doel": 1, "beloning": 20},
+        ]
+
+        if not missies["huidige"]:
+            dagelijkse = random.sample(alle_missies, 3)
+            missies["huidige"] = [{"missie": m, "voortgang": 0, "voltooid": False} for m in dagelijkse]
+
+        print("\n" + "=" * 55)
+        print(f"  [MISSIES] {naam}'s DAGELIJKSE MISSIES")
+        print("=" * 55)
+        print(f"  Voltooid vandaag: {missies['voltooid_vandaag']}/3")
+        print(f"  Totaal ooit voltooid: {missies['totaal_voltooid']}")
+
+        print("\n  Vandaag's missies:")
+        for i, m in enumerate(missies["huidige"], 1):
+            missie = m["missie"]
+            if m["voltooid"]:
+                status = "✓ VOLTOOID"
+            else:
+                status = f"{m['voortgang']}/{missie['doel']}"
+            print(f"    {i}. {missie['naam']}")
+            print(f"       Status: {status} | Beloning: {missie['beloning']} munten")
+
+        # Check voltooide missies
+        alle_voltooid = all(m["voltooid"] for m in missies["huidige"])
+        if alle_voltooid:
+            print("\n  [BONUS] Alle missies voltooid! +50 bonus munten beschikbaar!")
+
+        print("\n  1. Claim voltooide missies")
+        print("  0. Terug")
+
+        keuze = input("\n  Keuze: ").strip()
+
+        if keuze == "1":
+            geclaimed = 0
+            for m in missies["huidige"]:
+                if m["voortgang"] >= m["missie"]["doel"] and not m["voltooid"]:
+                    m["voltooid"] = True
+                    self.huisdier["munten"] += m["missie"]["beloning"]
+                    missies["voltooid_vandaag"] += 1
+                    missies["totaal_voltooid"] += 1
+                    geclaimed += m["missie"]["beloning"]
+                    print(f"  [OK] {m['missie']['naam']} voltooid! +{m['missie']['beloning']} munten")
+
+            # Bonus voor alle 3
+            if alle_voltooid and geclaimed > 0:
+                self.huisdier["munten"] += 50
+                print(f"  [BONUS] Alle missies klaar! +50 bonus munten!")
+
+            if geclaimed == 0:
+                print("\n  [!] Geen missies klaar om te claimen!")
+
+            self._sla_op()
+
+    def _levensdoelen(self):
+        """Lange termijn doelen om na te streven!"""
+        naam = self.huisdier["naam"]
+
+        # Init doelen data
+        if "levensdoelen" not in self.huisdier:
+            self.huisdier["levensdoelen"] = {
+                "voltooid": [],
+                "actief": None
+            }
+
+        doelen = self.huisdier["levensdoelen"]
+
+        alle_doelen = {
+            "rijkdom": {
+                "naam": "Word Miljonair",
+                "beschrijving": "Verzamel 10.000 munten totaal",
+                "check": lambda h: h["munten"] + h.get("bank", {}).get("saldo", 0) >= 10000,
+                "beloning": {"munten": 1000, "titel": "Rijkaard"}
+            },
+            "wijsheid": {
+                "naam": "Meester van Kennis",
+                "beschrijving": "Leer 50 feiten",
+                "check": lambda h: len(h.get("kennis", {}).get("feiten", [])) >= 50,
+                "beloning": {"intelligentie": 50, "titel": "Wijze"}
+            },
+            "avonturier": {
+                "naam": "Wereldreiziger",
+                "beschrijving": "Ontdek alle 6 locaties",
+                "check": lambda h: len(h.get("verkenning", {}).get("ontdekte_locaties", [])) >= 6,
+                "beloning": {"munten": 500, "titel": "Ontdekker"}
+            },
+            "sociaal": {
+                "naam": "Populair",
+                "beschrijving": "Maak 6 vrienden",
+                "check": lambda h: len(h.get("vrienden", {}).get("lijst", [])) >= 6,
+                "beloning": {"geluk": 50, "titel": "Vriend van Iedereen"}
+            },
+            "chef": {
+                "naam": "Meesterkok",
+                "beschrijving": "Kook 25 maaltijden",
+                "check": lambda h: h.get("keuken", {}).get("maaltijden_gekookt", 0) >= 25,
+                "beloning": {"munten": 300, "titel": "Chef"}
+            },
+            "boer": {
+                "naam": "Landeigenaar",
+                "beschrijving": "Oogst 100 gewassen",
+                "check": lambda h: h.get("farm", {}).get("totaal_geoogst", 0) >= 100,
+                "beloning": {"munten": 400, "titel": "Boer"}
+            },
+        }
+
+        print("\n" + "=" * 55)
+        print(f"  [DOEL] {naam}'s LEVENSDOELEN")
+        print("=" * 55)
+        print(f"  Doelen voltooid: {len(doelen['voltooid'])}/{len(alle_doelen)}")
+
+        if doelen["actief"]:
+            actief = alle_doelen.get(doelen["actief"])
+            if actief:
+                print(f"\n  Huidig doel: {actief['naam']}")
+                print(f"  {actief['beschrijving']}")
+
+        print("\n  Alle doelen:")
+        for i, (doel_id, doel) in enumerate(alle_doelen.items(), 1):
+            if doel_id in doelen["voltooid"]:
+                status = "✓ VOLTOOID"
+            elif doel_id == doelen["actief"]:
+                status = "→ ACTIEF"
+            else:
+                status = "  -"
+            print(f"    {i}. [{status}] {doel['naam']}")
+            print(f"       {doel['beschrijving']}")
+            print(f"       Beloning: {doel['beloning']}")
+
+        print("\n  1. Doel kiezen")
+        print("  2. Voortgang checken")
+        print("  0. Terug")
+
+        keuze = input("\n  Keuze: ").strip()
+
+        if keuze == "1":
+            beschikbaar = [(did, d) for did, d in alle_doelen.items() if did not in doelen["voltooid"]]
+            print("\n  Beschikbare doelen:")
+            for i, (did, d) in enumerate(beschikbaar, 1):
+                print(f"    {i}. {d['naam']}")
+
+            doel_keuze = input("\n  Kies doel: ").strip()
+            try:
+                idx = int(doel_keuze) - 1
+                if 0 <= idx < len(beschikbaar):
+                    doel_id, _ = beschikbaar[idx]
+                    doelen["actief"] = doel_id
+                    print(f"\n  [OK] Nieuw doel: {alle_doelen[doel_id]['naam']}")
+            except (ValueError, IndexError):
+                pass
+
+        elif keuze == "2":
+            if doelen["actief"]:
+                doel = alle_doelen[doelen["actief"]]
+                if doel["check"](self.huisdier):
+                    print(f"\n  [DOEL] {doel['naam']} VOLTOOID!")
+
+                    # Geef beloningen
+                    beloning = doel["beloning"]
+                    for stat, waarde in beloning.items():
+                        if stat == "munten":
+                            self.huisdier["munten"] += waarde
+                            print(f"  [MUNT] +{waarde} munten!")
+                        elif stat == "intelligentie":
+                            self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + waarde
+                            print(f"  [IQ] +{waarde} intelligentie!")
+                        elif stat == "geluk":
+                            self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + waarde)
+                            print(f"  [HAPPY] +{waarde} geluk!")
+                        elif stat == "titel":
+                            print(f"  [TITEL] Nieuwe titel: {waarde}!")
+
+                    doelen["voltooid"].append(doelen["actief"])
+                    doelen["actief"] = None
+                    self._voeg_dagboek_toe(f"Levensdoel voltooid: {doel['naam']}")
+                else:
+                    print(f"\n  [INFO] Nog niet voltooid. Blijf werken aan: {doel['beschrijving']}")
+            else:
+                print("\n  [!] Kies eerst een doel!")
+
+        self._sla_op()
+
+    def _foto_album(self):
+        """Bekijk en maak foto's van speciale momenten!"""
+        naam = self.huisdier["naam"]
+
+        # Init album data
+        if "album" not in self.huisdier:
+            self.huisdier["album"] = {
+                "fotos": [],
+                "collecties": []
+            }
+
+        album = self.huisdier["album"]
+
+        print("\n" + "=" * 55)
+        print(f"  [FOTO] {naam}'s FOTO ALBUM")
+        print("=" * 55)
+        print(f"  Foto's: {len(album['fotos'])}")
+
+        if album["fotos"]:
+            print("\n  Recente foto's:")
+            for foto in album["fotos"][-5:]:
+                print(f"    [{foto['datum']}] {foto['beschrijving']}")
+        else:
+            print("\n  Nog geen foto's!")
+            print("  Foto's worden automatisch gemaakt bij speciale momenten.")
+
+        print("\n  1. Selfie maken (5 munten)")
+        print("  2. Alle foto's bekijken")
+        print("  0. Terug")
+
+        keuze = input("\n  Keuze: ").strip()
+
+        if keuze == "1":
+            if self.huisdier["munten"] >= 5:
+                self.huisdier["munten"] -= 5
+
+                poses = [
+                    f"{naam} poseert schattig!",
+                    f"{naam} maakt een grappig gezicht!",
+                    f"{naam} lacht naar de camera!",
+                    f"{naam} zwaait naar de camera!",
+                    f"{naam} doet een coole pose!",
+                ]
+
+                foto = {
+                    "datum": datetime.now().strftime("%Y-%m-%d"),
+                    "beschrijving": random.choice(poses),
+                    "type": "selfie"
+                }
+                album["fotos"].append(foto)
+                print(f"\n  [FOTO] Nieuwe foto: {foto['beschrijving']}")
+                self._sla_op()
+            else:
+                print("\n  [!] Niet genoeg munten!")
+
+        elif keuze == "2":
+            if album["fotos"]:
+                print(f"\n  --- ALLE FOTO'S ({len(album['fotos'])}) ---")
+                for i, foto in enumerate(album["fotos"], 1):
+                    print(f"    {i}. [{foto['datum']}] {foto['beschrijving']}")
+            else:
+                print("\n  [!] Geen foto's in album!")
+
+    def _maak_foto(self, beschrijving):
+        """Automatisch een foto maken bij speciale momenten."""
+        if "album" not in self.huisdier:
+            self.huisdier["album"] = {"fotos": [], "collecties": []}
+
+        foto = {
+            "datum": datetime.now().strftime("%Y-%m-%d"),
+            "beschrijving": beschrijving,
+            "type": "automatisch"
+        }
+        self.huisdier["album"]["fotos"].append(foto)
+
+    def _weer_station(self):
+        """Bekijk het weer en hoe het je huisdier beïnvloedt!"""
+        naam = self.huisdier["naam"]
+
+        # Simuleer weer (of gebruik echte weer agent als beschikbaar)
+        weer_types = [
+            {"type": "zonnig", "emoji": "☀️", "effect": {"geluk": 10, "energie": 5}, "beschrijving": "Lekker weer om buiten te spelen!"},
+            {"type": "bewolkt", "emoji": "☁️", "effect": {"geluk": 0, "energie": 0}, "beschrijving": "Neutraal weer."},
+            {"type": "regenachtig", "emoji": "🌧️", "effect": {"geluk": -5, "energie": -5}, "beschrijving": "Blijf liever binnen..."},
+            {"type": "sneeuw", "emoji": "❄️", "effect": {"geluk": 15, "energie": -10}, "beschrijving": "Sneeuwpret maar wel koud!"},
+            {"type": "storm", "emoji": "⛈️", "effect": {"geluk": -10, "energie": -10}, "beschrijving": "Eng weer! Blijf binnen!"},
+            {"type": "mistig", "emoji": "🌫️", "effect": {"geluk": -3, "energie": 0}, "beschrijving": "Mysterieus en stil."},
+        ]
+
+        # Init weer data
+        if "weer" not in self.huisdier:
+            self.huisdier["weer"] = {
+                "huidig": random.choice(weer_types),
+                "laatste_update": datetime.now().isoformat()
+            }
+
+        # Update weer elke 30 minuten
+        laatste = datetime.fromisoformat(self.huisdier["weer"]["laatste_update"])
+        if (datetime.now() - laatste).seconds > 1800:
+            self.huisdier["weer"]["huidig"] = random.choice(weer_types)
+            self.huisdier["weer"]["laatste_update"] = datetime.now().isoformat()
+
+        weer = self.huisdier["weer"]["huidig"]
+
+        print("\n" + "=" * 55)
+        print(f"  [WEER] WEER STATION")
+        print("=" * 55)
+        print(f"\n  Huidig weer: {weer['emoji']} {weer['type'].upper()}")
+        print(f"  {weer['beschrijving']}")
+
+        print(f"\n  Effect op {naam}:")
+        for stat, waarde in weer["effect"].items():
+            if waarde > 0:
+                print(f"    {stat.title()}: +{waarde}")
+            elif waarde < 0:
+                print(f"    {stat.title()}: {waarde}")
+
+        print("\n  1. Weer effect toepassen (1x per uur)")
+        print("  2. Weer voorspelling")
+        print("  0. Terug")
+
+        keuze = input("\n  Keuze: ").strip()
+
+        if keuze == "1":
+            # Pas weer effect toe
+            for stat, waarde in weer["effect"].items():
+                if stat in self.huisdier:
+                    self.huisdier[stat] = max(0, min(100, self.huisdier[stat] + waarde))
+
+            print(f"\n  [OK] Weer effect toegepast!")
+            if weer["effect"]["geluk"] > 0:
+                print(f"  {naam} geniet van het {weer['type']}e weer!")
+            elif weer["effect"]["geluk"] < 0:
+                print(f"  {naam} vindt het {weer['type']}e weer niet leuk...")
+
+            self._sla_op()
+
+        elif keuze == "2":
+            print("\n  Weer voorspelling voor morgen:")
+            morgen_weer = random.choice(weer_types)
+            print(f"    {morgen_weer['emoji']} {morgen_weer['type'].title()}")
+            print(f"    {morgen_weer['beschrijving']}")
+
     def run(self):
         """Start de app."""
         clear_scherm()
@@ -4290,7 +5351,7 @@ Antwoord in het Nederlands."""
             self._toon_status()
             self._toon_menu()
 
-            keuze = input("\nJouw keuze (0-17): ").strip()
+            keuze = input("\nJouw keuze (0-27): ").strip()
 
             if keuze == "1":
                 self._voeren()
@@ -4327,6 +5388,27 @@ Antwoord in het Nederlands."""
                 self._seizoens_events()
             elif keuze == "17":
                 self._competities()
+            # NIEUWE FEATURES
+            elif keuze == "18":
+                self._huisdier_huis()
+            elif keuze == "19":
+                self._mini_farming()
+            elif keuze == "20":
+                self._crafting_werkplaats()
+            elif keuze == "21":
+                self._kook_keuken()
+            elif keuze == "22":
+                self._huisdier_bank()
+            elif keuze == "23":
+                self._huisdier_vrienden()
+            elif keuze == "24":
+                self._dagelijkse_missies()
+            elif keuze == "25":
+                self._levensdoelen()
+            elif keuze == "26":
+                self._foto_album()
+            elif keuze == "27":
+                self._weer_station()
             elif keuze == "0":
                 self._sla_op()
                 print(f"\n{self.huisdier['naam']} is opgeslagen!")
