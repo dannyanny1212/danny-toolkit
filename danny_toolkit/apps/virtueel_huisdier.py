@@ -405,7 +405,7 @@ class VirtueelHuisdierApp:
             bonus = self._bereken_accessoire_bonus()
 
             self.huisdier["honger"] = max(0, self.huisdier["honger"] - int(uren * 5) + bonus.get("honger", 0))
-            self.huisdier["energie"] = max(0, self.huisdier["energie"] - int(uren * 3) + bonus.get("energie", 0))
+            self.huisdier["energie"] = max(0, self.huisdier["energie"] - int(uren * 0.3) + bonus.get("energie", 0))
             self.huisdier["geluk"] = max(0, self.huisdier["geluk"] - int(uren * 4) + bonus.get("geluk", 0))
 
             if self.huisdier["honger"] < 20 or self.huisdier["energie"] < 20:
@@ -678,7 +678,7 @@ class VirtueelHuisdierApp:
 
     def _spelen(self):
         """Speelt met het huisdier - IQ bonus voor slimme huisdieren!"""
-        if self.huisdier["energie"] < 20:
+        if self.huisdier["energie"] < 2:
             print(f"\n{self.huisdier['naam']} is te moe om te spelen...")
             return
 
@@ -692,7 +692,7 @@ class VirtueelHuisdierApp:
 
         totaal_bonus = evo_bonus + iq_bonus
         self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 20 + totaal_bonus)
-        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 15)
+        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 2)
         self.huisdier["honger"] = max(0, self.huisdier["honger"] - 10)
         self.huisdier["ervaring"] += 10
 
@@ -837,7 +837,7 @@ class VirtueelHuisdierApp:
         diagnoses = []
         if self.huisdier["honger"] < 30:
             diagnoses.append("ondervoeding")
-        if self.huisdier["energie"] < 30:
+        if self.huisdier["energie"] < 3:
             diagnoses.append("uitputting")
         if self.huisdier["geluk"] < 30:
             diagnoses.append("stress")
@@ -1201,13 +1201,13 @@ class VirtueelHuisdierApp:
             print("\nJe hebt niet genoeg munten! (Nodig: 15)")
             return
 
-        if self.huisdier["energie"] < 20:
+        if self.huisdier["energie"] < 2:
             print(f"\n{self.huisdier['naam']} is te moe voor een avontuur!")
             print("Laat je huisdier eerst rusten.")
             return
 
         self.huisdier["munten"] -= 15
-        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 20)
+        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 2)
 
         # Init stats als ze niet bestaan
         if "schatten_gevonden" not in self.huisdier["stats"]:
@@ -1283,7 +1283,7 @@ class VirtueelHuisdierApp:
                     print(f"  [!] Een valstrik! {naam} ontwijkt hem handig!")
                 else:
                     print(f"  [X] Oeps! {naam} trapt in een val! (-5 energie)")
-                    self.huisdier["energie"] = max(0, self.huisdier["energie"] - 5)
+                    self.huisdier["energie"] = max(0, self.huisdier["energie"] - 1)
 
             elif event == "powerup":
                 powerup = random.choice(["hartje", "ster", "trank"])
@@ -1378,12 +1378,12 @@ class VirtueelHuisdierApp:
             print("\nJe hebt niet genoeg munten! (Nodig: 10)")
             return
 
-        if self.huisdier["energie"] < 15:
+        if self.huisdier["energie"] < 2:
             print(f"\n{self.huisdier['naam']} is te moe om boodschappen te doen!")
             return
 
         self.huisdier["munten"] -= 10
-        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 15)
+        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 2)
 
         # Init stats
         if "boodschappen_gedaan" not in self.huisdier["stats"]:
@@ -1533,12 +1533,12 @@ class VirtueelHuisdierApp:
             print("\nJe hebt niet genoeg munten! (Nodig: 8)")
             return
 
-        if self.huisdier["energie"] < 10:
+        if self.huisdier["energie"] < 1:
             print(f"\n{self.huisdier['naam']} is te moe om na te denken!")
             return
 
         self.huisdier["munten"] -= 8
-        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 10)
+        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 1)
 
         # Init stats
         if "sommen_opgelost" not in self.huisdier["stats"]:
@@ -1688,12 +1688,12 @@ class VirtueelHuisdierApp:
             print("\nJe hebt niet genoeg munten! (Nodig: 12)")
             return
 
-        if self.huisdier["energie"] < 20:
+        if self.huisdier["energie"] < 2:
             print(f"\n{self.huisdier['naam']} is te moe om code te analyseren!")
             return
 
         self.huisdier["munten"] -= 12
-        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 20)
+        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 2)
 
         # Init stats
         if "bugs_gevonden" not in self.huisdier["stats"]:
@@ -1978,12 +1978,12 @@ class VirtueelHuisdierApp:
             print("\nJe hebt niet genoeg munten! (Nodig: 10)")
             return
 
-        if self.huisdier["energie"] < 15:
+        if self.huisdier["energie"] < 2:
             print(f"\n{self.huisdier['naam']} is te moe om te studeren!")
             return
 
         self.huisdier["munten"] -= 10
-        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 15)
+        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 2)
 
         # Init kennis opslag in huisdier
         if "kennis" not in self.huisdier:
@@ -2335,12 +2335,12 @@ class VirtueelHuisdierApp:
             print("\nJe hebt niet genoeg munten! (Nodig: 8)")
             return
 
-        if self.huisdier["energie"] < 10:
+        if self.huisdier["energie"] < 1:
             print(f"\n{self.huisdier['naam']} is te moe om te lezen!")
             return
 
         self.huisdier["munten"] -= 8
-        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 10)
+        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 1)
 
         # Init kennis opslag
         if "kennis" not in self.huisdier:
@@ -2585,12 +2585,12 @@ class VirtueelHuisdierApp:
             print("\nJe hebt niet genoeg munten! (Nodig: 15)")
             return
 
-        if self.huisdier["energie"] < 20:
+        if self.huisdier["energie"] < 2:
             print(f"\n{self.huisdier['naam']} is te moe voor een diep gesprek!")
             return
 
         self.huisdier["munten"] -= 15
-        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 20)
+        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 2)
 
         # Init stats en kennis
         if "ai_gesprekken" not in self.huisdier["stats"]:
@@ -2922,12 +2922,12 @@ Antwoord in het Nederlands."""
             print("\nJe hebt niet genoeg munten! (Nodig: 20)")
             return
 
-        if self.huisdier["energie"] < 25:
+        if self.huisdier["energie"] < 3:
             print(f"\n{self.huisdier['naam']} is te moe voor programmeren!")
             return
 
         self.huisdier["munten"] -= 20
-        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 25)
+        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 3)
 
         naam = self.huisdier["naam"]
         geluid = self.huisdier["geluid"]
@@ -3094,12 +3094,12 @@ Antwoord in het Nederlands."""
             print("\nJe hebt niet genoeg munten! (Nodig: 12)")
             return
 
-        if self.huisdier["energie"] < 15:
+        if self.huisdier["energie"] < 2:
             print(f"\n{self.huisdier['naam']} is te moe voor een quiz!")
             return
 
         self.huisdier["munten"] -= 12
-        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 15)
+        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 2)
 
         naam = self.huisdier["naam"]
         geluid = self.huisdier["geluid"]
@@ -3211,12 +3211,12 @@ Antwoord in het Nederlands."""
             print("\nJe hebt niet genoeg munten! (Nodig: 18)")
             return
 
-        if self.huisdier["energie"] < 20:
+        if self.huisdier["energie"] < 2:
             print(f"\n{self.huisdier['naam']} is te moe voor verhalen!")
             return
 
         self.huisdier["munten"] -= 18
-        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 20)
+        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 2)
 
         naam = self.huisdier["naam"]
         geluid = self.huisdier["geluid"]
@@ -3322,12 +3322,12 @@ Antwoord in het Nederlands."""
             print("\nJe hebt niet genoeg munten! (Nodig: 10)")
             return
 
-        if self.huisdier["energie"] < 10:
+        if self.huisdier["energie"] < 1:
             print(f"\n{self.huisdier['naam']} is te moe om te vertalen!")
             return
 
         self.huisdier["munten"] -= 10
-        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 10)
+        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 1)
 
         naam = self.huisdier["naam"]
         geluid = self.huisdier["geluid"]
@@ -3563,7 +3563,7 @@ Antwoord in het Nederlands."""
             print(f"\nJe hebt niet genoeg munten! (Nodig: {kosten})")
             return
 
-        if self.huisdier["energie"] < 15:
+        if self.huisdier["energie"] < 2:
             print(f"\n{naam} is te moe om te trainen!")
             return
 
@@ -3574,7 +3574,7 @@ Antwoord in het Nederlands."""
             return
 
         self.huisdier["munten"] -= kosten
-        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 10)
+        self.huisdier["energie"] = max(0, self.huisdier["energie"] - 1)
 
         print(f"\n" + "=" * 50)
         print(f"  [TRAINING] {naam} oefent '{trick['naam']}'")
@@ -3916,7 +3916,7 @@ Antwoord in het Nederlands."""
 
     def _verkenning_mode(self):
         """Verken verschillende locaties met je huisdier!"""
-        if self.huisdier["energie"] < 20:
+        if self.huisdier["energie"] < 2:
             print(f"\n{self.huisdier['naam']} is te moe om te verkennen!")
             return
 
@@ -4032,7 +4032,7 @@ Antwoord in het Nederlands."""
             return
 
         locatie = locaties[keuze]
-        energie_kosten = 15 + (locatie["moeilijkheid"] * 5)
+        energie_kosten = 2 + (locatie["moeilijkheid"] * 1)  # x10 minder energie
 
         if self.huisdier["energie"] < energie_kosten:
             print(f"\n  [!] {naam} heeft meer energie nodig! (Nodig: {energie_kosten})")
@@ -4303,12 +4303,12 @@ Antwoord in het Nederlands."""
             print(f"\n  [!] Niet genoeg munten! (Nodig: {comp['kosten']})")
             return
 
-        if self.huisdier["energie"] < 30:
+        if self.huisdier["energie"] < 3:
             print(f"\n  [!] {naam} is te moe om mee te doen!")
             return
 
         self.huisdier["munten"] -= comp["kosten"]
-        self.huisdier["energie"] -= 30
+        self.huisdier["energie"] -= 3
 
         print(f"\n  {naam} doet mee aan {comp['emoji']} {comp['naam']}!")
         print(f"  {comp['beschrijving']}")
@@ -5056,11 +5056,11 @@ Antwoord in het Nederlands."""
             if keuze == "0":
                 break
             elif keuze == "1":
-                if self.huisdier["energie"] < 10:
+                if self.huisdier["energie"] < 1:
                     print("\n  [!] Te moe om te socializen!")
                     continue
 
-                self.huisdier["energie"] -= 10
+                self.huisdier["energie"] -= 1
 
                 # Kies random NPC die nog geen vriend is
                 niet_vrienden = [npc_id for npc_id in npc_huisdieren if npc_id not in self.huisdier["vrienden"]["lijst"]]
@@ -5087,7 +5087,7 @@ Antwoord in het Nederlands."""
                     print("\n  [OK] Je bent al met iedereen bevriend!")
 
             elif keuze == "2":
-                if self.huisdier["energie"] < 15:
+                if self.huisdier["energie"] < 2:
                     print("\n  [!] Te moe om te spelen!")
                     continue
 
@@ -5095,7 +5095,7 @@ Antwoord in het Nederlands."""
                     print("\n  [!] Je hebt nog geen vrienden!")
                     continue
 
-                self.huisdier["energie"] -= 15
+                self.huisdier["energie"] -= 2
 
                 vriend_id = random.choice(self.huisdier["vrienden"]["lijst"])
                 vriend = npc_huisdieren[vriend_id]
@@ -5411,11 +5411,11 @@ Antwoord in het Nederlands."""
 
         # Simuleer weer (of gebruik echte weer agent als beschikbaar)
         weer_types = [
-            {"type": "zonnig", "emoji": "☀️", "effect": {"geluk": 10, "energie": 5}, "beschrijving": "Lekker weer om buiten te spelen!"},
+            {"type": "zonnig", "emoji": "☀️", "effect": {"geluk": 10, "energie": 1}, "beschrijving": "Lekker weer om buiten te spelen!"},
             {"type": "bewolkt", "emoji": "☁️", "effect": {"geluk": 0, "energie": 0}, "beschrijving": "Neutraal weer."},
-            {"type": "regenachtig", "emoji": "🌧️", "effect": {"geluk": -5, "energie": -5}, "beschrijving": "Blijf liever binnen..."},
-            {"type": "sneeuw", "emoji": "❄️", "effect": {"geluk": 15, "energie": -10}, "beschrijving": "Sneeuwpret maar wel koud!"},
-            {"type": "storm", "emoji": "⛈️", "effect": {"geluk": -10, "energie": -10}, "beschrijving": "Eng weer! Blijf binnen!"},
+            {"type": "regenachtig", "emoji": "🌧️", "effect": {"geluk": -5, "energie": -1}, "beschrijving": "Blijf liever binnen..."},
+            {"type": "sneeuw", "emoji": "❄️", "effect": {"geluk": 15, "energie": -1}, "beschrijving": "Sneeuwpret maar wel koud!"},
+            {"type": "storm", "emoji": "⛈️", "effect": {"geluk": -10, "energie": -1}, "beschrijving": "Eng weer! Blijf binnen!"},
             {"type": "mistig", "emoji": "🌫️", "effect": {"geluk": -3, "energie": 0}, "beschrijving": "Mysterieus en stil."},
         ]
 
@@ -5584,12 +5584,12 @@ Antwoord in het Nederlands."""
         gym = self.huisdier["gym"]
 
         oefeningen = {
-            "1": {"naam": "Hardlopen", "stat": "snelheid", "energie": 15, "bonus": 2},
-            "2": {"naam": "Gewichtheffen", "stat": "kracht", "energie": 20, "bonus": 3},
-            "3": {"naam": "Zwemmen", "stat": "uithoudingsvermogen", "energie": 18, "bonus": 2},
-            "4": {"naam": "Springen", "stat": "snelheid", "energie": 12, "bonus": 1},
-            "5": {"naam": "Touwtrekken", "stat": "kracht", "energie": 15, "bonus": 2},
-            "6": {"naam": "Yoga", "stat": "uithoudingsvermogen", "energie": 10, "bonus": 1},
+            "1": {"naam": "Hardlopen", "stat": "snelheid", "energie": 2, "bonus": 2},
+            "2": {"naam": "Gewichtheffen", "stat": "kracht", "energie": 2, "bonus": 3},
+            "3": {"naam": "Zwemmen", "stat": "uithoudingsvermogen", "energie": 2, "bonus": 2},
+            "4": {"naam": "Springen", "stat": "snelheid", "energie": 1, "bonus": 1},
+            "5": {"naam": "Touwtrekken", "stat": "kracht", "energie": 2, "bonus": 2},
+            "6": {"naam": "Yoga", "stat": "uithoudingsvermogen", "energie": 1, "bonus": 1},
         }
 
         while True:
@@ -5769,7 +5769,7 @@ Antwoord in het Nederlands."""
         """Graaf naar verborgen schatten!"""
         naam = self.huisdier["naam"]
 
-        if self.huisdier["energie"] < 20:
+        if self.huisdier["energie"] < 2:
             print(f"\n  [!] {naam} is te moe om te graven!")
             return
 
@@ -5805,7 +5805,7 @@ Antwoord in het Nederlands."""
         keuze = input("\n  Keuze: ").strip()
 
         if keuze == "1":
-            self.huisdier["energie"] -= 20
+            self.huisdier["energie"] -= 2
 
             print(f"\n  {naam} begint te graven...")
             time.sleep(1)
@@ -5900,11 +5900,11 @@ Antwoord in het Nederlands."""
             if keuze == "0":
                 break
             elif keuze == "1":
-                if self.huisdier["energie"] < 10:
+                if self.huisdier["energie"] < 1:
                     print(f"\n  [!] {naam} is te moe!")
                     continue
 
-                self.huisdier["energie"] -= 10
+                self.huisdier["energie"] -= 1
 
                 # Random klant
                 klant_namen = ["Jan", "Lisa", "Piet", "Anna", "Tom", "Sara", "Max", "Emma"]
@@ -5991,11 +5991,11 @@ Antwoord in het Nederlands."""
             if keuze == "0":
                 break
             elif keuze == "1":
-                if self.huisdier["energie"] < 15:
+                if self.huisdier["energie"] < 2:
                     print(f"\n  [!] {naam} is te moe!")
                     continue
 
-                self.huisdier["energie"] -= 15
+                self.huisdier["energie"] -= 2
 
                 print("\n  🎹 Kies een genre:")
                 for i, g in enumerate(genres, 1):
@@ -6142,7 +6142,7 @@ Antwoord in het Nederlands."""
         """Reis naar verschillende tijdperken!"""
         naam = self.huisdier["naam"]
 
-        if self.huisdier["energie"] < 30:
+        if self.huisdier["energie"] < 3:
             print(f"\n  [!] {naam} heeft 30 energie nodig om te tijdreizen!")
             return
 
@@ -6217,7 +6217,7 @@ Antwoord in het Nederlands."""
             return
 
         tp = tijdperken[keuze]
-        self.huisdier["energie"] -= 30
+        self.huisdier["energie"] -= 3
 
         print(f"\n  ⚡ Tijdmachine activeert...")
         time.sleep(1)
@@ -6453,7 +6453,7 @@ Antwoord in het Nederlands."""
         keuze = input("\n  Keuze: ").strip()
 
         if keuze == "1":
-            if self.huisdier["energie"] < 25:
+            if self.huisdier["energie"] < 3:
                 print(f"\n  [!] {naam} heeft 25 energie nodig!")
                 return
 
@@ -6463,7 +6463,7 @@ Antwoord in het Nederlands."""
             except:
                 return
 
-            self.huisdier["energie"] -= 25
+            self.huisdier["energie"] -= 3
 
             print(f"\n  [MISSIE] {missie['naam']} gestart...")
             time.sleep(1)
@@ -6540,7 +6540,7 @@ Antwoord in het Nederlands."""
 
             if self.huisdier["honger"] < 30:
                 print(f"[!] {self.huisdier['naam']} heeft honger!")
-            if self.huisdier["energie"] < 30:
+            if self.huisdier["energie"] < 3:
                 print(f"[!] {self.huisdier['naam']} is moe!")
             if self.huisdier["gezondheid"] < 50:
                 print(f"[!] {self.huisdier['naam']} voelt zich niet lekker!")
