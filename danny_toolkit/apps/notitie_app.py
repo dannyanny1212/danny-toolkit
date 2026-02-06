@@ -1,21 +1,33 @@
 """
-Notitie App - Notities maken en organiseren.
+Notitie App v2.0 - AI-Powered Notities maken en organiseren.
 """
 
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 from ..core.config import Config
 from ..core.utils import clear_scherm
 
+# AI Integration
+try:
+    from anthropic import Anthropic
+    AI_BESCHIKBAAR = True
+except ImportError:
+    AI_BESCHIKBAAR = False
+
 
 class NotitieApp:
-    """Een app voor het maken en organiseren van notities."""
+    """Een AI-powered app voor het maken en organiseren van notities."""
+
+    VERSIE = "2.0"
 
     def __init__(self):
         Config.ensure_dirs()
         self.bestand = Config.APPS_DATA_DIR / "notities.json"
         self.notities = self._laad_notities()
+        self.client = None
+        self._init_ai()
 
     def _laad_notities(self) -> dict:
         """Laad notities uit bestand."""
@@ -27,6 +39,30 @@ class NotitieApp:
                 pass
         return {"notities": [], "categorieen": ["Algemeen", "Werk", "Persoonlijk", "Ideeen"]}
 
+    def _init_ai(self):
+        """Initialiseer AI client."""
+        if AI_BESCHIKBAAR:
+            api_key = os.environ.get("ANTHROPIC_API_KEY")
+            if api_key:
+                try:
+                    self.client = Anthropic(api_key=api_key)
+                except Exception:
+                    self.client = None
+
+    def _ai_request(self, prompt: str, max_tokens: int = 500) -> str:
+        """Maak een AI request."""
+        if not self.client:
+            return None
+        try:
+            response = self.client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=max_tokens,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            return response.content[0].text
+        except Exception:
+            return None
+
     def _sla_op(self):
         """Sla notities op."""
         with open(self.bestand, "w", encoding="utf-8") as f:
@@ -37,7 +73,9 @@ class NotitieApp:
         while True:
             clear_scherm()
             print("+" + "=" * 50 + "+")
-            print("|          NOTITIE APP                             |")
+            print("|          NOTITIE APP v2.0                        |")
+            if self.client:
+                print("|          [AI POWERED]                            |")
             print("+" + "=" * 50 + "+")
             print(f"|  Totaal notities: {len(self.notities['notities']):<30}|")
             print("+" + "-" * 50 + "+")
@@ -46,6 +84,13 @@ class NotitieApp:
             print("|  3. Notitie zoeken                               |")
             print("|  4. Notitie verwijderen                          |")
             print("|  5. Categorieen beheren                          |")
+            print("+" + "-" * 50 + "+")
+            print("|  [AI FUNCTIES]                                   |")
+            print("|  6. AI Samenvatting                              |")
+            print("|  7. AI Brainstorm                                |")
+            print("|  8. AI Categoriseer                              |")
+            print("|  9. AI Schrijfhulp                               |")
+            print("+" + "-" * 50 + "+")
             print("|  0. Terug                                        |")
             print("+" + "=" * 50 + "+")
 
@@ -63,6 +108,14 @@ class NotitieApp:
                 self._verwijder_notitie()
             elif keuze == "5":
                 self._beheer_categorieen()
+            elif keuze == "6":
+                self._ai_samenvatting()
+            elif keuze == "7":
+                self._ai_brainstorm()
+            elif keuze == "8":
+                self._ai_categoriseer()
+            elif keuze == "9":
+                self._ai_schrijfhulp()
 
             input("\nDruk op Enter...")
 
@@ -196,3 +249,328 @@ class NotitieApp:
                 self.notities["categorieen"].append(nieuwe)
                 self._sla_op()
                 print(f"[OK] Categorie '{nieuwe}' toegevoegd!")
+
+    # ==================== AI FUNCTIES ====================
+
+    def _ai_samenvatting(self):
+        """AI maakt een samenvatting van een notitie."""
+        print("\n--- AI SAMENVATTING ---")
+
+        if not self.notities["notities"]:
+            print("[!] Geen notities om samen te vatten.")
+            return
+
+        # Toon notities
+        for i, n in enumerate(self.notities["notities"], 1):
+            print(f"  {i}. {n['titel'][:40]}")
+
+        try:
+            keuze = int(input("\nWelke notitie samenvatten? ").strip()) - 1
+            if 0 <= keuze < len(self.notities["notities"]):
+                notitie = self.notities["notities"][keuze]
+
+                if not self.client:
+                    # Fallback zonder AI
+                    woorden = notitie["inhoud"].split()
+                    samenvatting = " ".join(woorden[:30]) + "..." if len(woorden) > 30 else notitie["inhoud"]
+                    print(f"\n[Basis samenvatting]: {samenvatting}")
+                    return
+
+                print("\n[AI denkt na...]")
+                prompt = f"""Maak een korte, heldere samenvatting van deze notitie in het Nederlands.
+Houd het beknopt (max 3-4 zinnen).
+
+Titel: {notitie['titel']}
+Inhoud: {notitie['inhoud']}"""
+
+                response = self._ai_request(prompt)
+                if response:
+                    print(f"\n[AI Samenvatting]:")
+                    print(f"  {response}")
+                else:
+                    print("[!] AI niet beschikbaar, probeer later.")
+        except (ValueError, IndexError):
+            print("[!] Ongeldige keuze.")
+
+    def _ai_brainstorm(self):
+        """AI helpt met brainstormen over een onderwerp."""
+        print("\n--- AI BRAINSTORM ---")
+
+        onderwerp = input("Waar wil je over brainstormen? ").strip()
+        if not onderwerp:
+            print("[!] Geen onderwerp ingevoerd.")
+            return
+
+        if not self.client:
+            # Fallback suggesties
+            fallback_tips = [
+                f"- Wat zijn de voor- en nadelen van {onderwerp}?",
+                f"- Wie kan je helpen met {onderwerp}?",
+                f"- Wat is de eerste stap voor {onderwerp}?",
+                f"- Welke bronnen heb je nodig voor {onderwerp}?",
+                f"- Wat is je deadline voor {onderwerp}?"
+            ]
+            print("\n[Brainstorm vragen]:")
+            for tip in fallback_tips:
+                print(f"  {tip}")
+            return
+
+        print("\n[AI brainstormt...]")
+        prompt = f"""Help me brainstormen over: {onderwerp}
+
+Geef me 5-7 creatieve ideeen, vragen of invalshoeken om over na te denken.
+Gebruik bullet points en houd het praktisch en inspirerend.
+Antwoord in het Nederlands."""
+
+        response = self._ai_request(prompt, max_tokens=600)
+        if response:
+            print(f"\n[AI Brainstorm Ideeen]:")
+            print(response)
+
+            # Optie om als notitie op te slaan
+            opslaan = input("\nOpslaan als notitie? (j/n): ").strip().lower()
+            if opslaan == "j":
+                self.notities["notities"].append({
+                    "id": len(self.notities["notities"]) + 1,
+                    "titel": f"Brainstorm: {onderwerp}",
+                    "inhoud": response,
+                    "categorie": "Ideeen",
+                    "gemaakt": datetime.now().isoformat(),
+                    "gewijzigd": datetime.now().isoformat()
+                })
+                self._sla_op()
+                print("[OK] Brainstorm opgeslagen als notitie!")
+        else:
+            print("[!] AI niet beschikbaar.")
+
+    def _ai_categoriseer(self):
+        """AI suggereert categorien voor notities."""
+        print("\n--- AI CATEGORISEER ---")
+
+        ongecategoriseerd = [
+            n for n in self.notities["notities"]
+            if n.get("categorie") == "Algemeen"
+        ]
+
+        if not ongecategoriseerd:
+            print("[i] Alle notities zijn al gecategoriseerd!")
+            return
+
+        print(f"Er zijn {len(ongecategoriseerd)} notities in 'Algemeen'.")
+
+        for notitie in ongecategoriseerd[:5]:  # Max 5 tegelijk
+            print(f"\n  Notitie: {notitie['titel']}")
+
+            if self.client:
+                prompt = f"""Bekijk deze notitie en suggereer de beste categorie.
+Beschikbare categorieen: {', '.join(self.notities['categorieen'])}
+
+Titel: {notitie['titel']}
+Inhoud: {notitie['inhoud'][:200]}
+
+Antwoord met alleen de categorie naam, niets anders."""
+
+                response = self._ai_request(prompt, max_tokens=50)
+                if response:
+                    suggestie = response.strip()
+                    # Check of suggestie geldig is
+                    if suggestie in self.notities["categorieen"]:
+                        print(f"  AI suggestie: {suggestie}")
+                        bevestig = input(f"  Toepassen? (j/n): ").strip().lower()
+                        if bevestig == "j":
+                            notitie["categorie"] = suggestie
+                            notitie["gewijzigd"] = datetime.now().isoformat()
+                            print(f"  [OK] Categorie gewijzigd naar '{suggestie}'")
+                    else:
+                        print(f"  AI suggestie: {suggestie} (nieuwe categorie)")
+                        toevoegen = input("  Categorie toevoegen en toepassen? (j/n): ").strip().lower()
+                        if toevoegen == "j":
+                            self.notities["categorieen"].append(suggestie)
+                            notitie["categorie"] = suggestie
+                            print(f"  [OK] Nieuwe categorie '{suggestie}' toegevoegd!")
+            else:
+                print("  [!] AI niet beschikbaar voor suggestie")
+
+        self._sla_op()
+        print("\n[OK] Categorisatie voltooid!")
+
+    def _ai_schrijfhulp(self):
+        """AI helpt met het schrijven of verbeteren van notities."""
+        print("\n--- AI SCHRIJFHULP ---")
+        print("\n  1. Notitie uitbreiden")
+        print("  2. Notitie verbeteren")
+        print("  3. Nieuwe notitie dicteren")
+
+        keuze = input("\nKeuze: ").strip()
+
+        if keuze == "1":
+            self._ai_uitbreiden()
+        elif keuze == "2":
+            self._ai_verbeteren()
+        elif keuze == "3":
+            self._ai_dicteren()
+
+    def _ai_uitbreiden(self):
+        """AI breidt een korte notitie uit."""
+        if not self.notities["notities"]:
+            print("[!] Geen notities beschikbaar.")
+            return
+
+        for i, n in enumerate(self.notities["notities"], 1):
+            print(f"  {i}. {n['titel'][:40]}")
+
+        try:
+            keuze = int(input("\nWelke notitie uitbreiden? ").strip()) - 1
+            notitie = self.notities["notities"][keuze]
+
+            if not self.client:
+                print("[!] AI niet beschikbaar voor uitbreiding.")
+                return
+
+            print("\n[AI breidt uit...]")
+            prompt = f"""Breid deze notitie uit met meer details, context en nuttige informatie.
+Behoud de originele boodschap maar maak het completer.
+
+Titel: {notitie['titel']}
+Originele inhoud: {notitie['inhoud']}
+
+Schrijf de uitgebreide versie in het Nederlands."""
+
+            response = self._ai_request(prompt, max_tokens=800)
+            if response:
+                print(f"\n[Uitgebreide versie]:")
+                print(response)
+
+                toepassen = input("\nDeze versie opslaan? (j/n): ").strip().lower()
+                if toepassen == "j":
+                    notitie["inhoud"] = response
+                    notitie["gewijzigd"] = datetime.now().isoformat()
+                    self._sla_op()
+                    print("[OK] Notitie bijgewerkt!")
+        except (ValueError, IndexError):
+            print("[!] Ongeldige keuze.")
+
+    def _ai_verbeteren(self):
+        """AI verbetert spelling en stijl van een notitie."""
+        if not self.notities["notities"]:
+            print("[!] Geen notities beschikbaar.")
+            return
+
+        for i, n in enumerate(self.notities["notities"], 1):
+            print(f"  {i}. {n['titel'][:40]}")
+
+        try:
+            keuze = int(input("\nWelke notitie verbeteren? ").strip()) - 1
+            notitie = self.notities["notities"][keuze]
+
+            if not self.client:
+                print("[!] AI niet beschikbaar.")
+                return
+
+            print("\n[AI controleert...]")
+            prompt = f"""Verbeter deze notitie qua spelling, grammatica en leesbaarheid.
+Behoud de originele inhoud en betekenis, maar maak het professioneler.
+
+Titel: {notitie['titel']}
+Inhoud: {notitie['inhoud']}
+
+Geef alleen de verbeterde tekst terug, in het Nederlands."""
+
+            response = self._ai_request(prompt, max_tokens=600)
+            if response:
+                print(f"\n[Verbeterde versie]:")
+                print(response)
+
+                toepassen = input("\nDeze versie opslaan? (j/n): ").strip().lower()
+                if toepassen == "j":
+                    notitie["inhoud"] = response
+                    notitie["gewijzigd"] = datetime.now().isoformat()
+                    self._sla_op()
+                    print("[OK] Notitie verbeterd!")
+        except (ValueError, IndexError):
+            print("[!] Ongeldige keuze.")
+
+    def _ai_dicteren(self):
+        """AI helpt met het structureren van gedicteerde gedachten."""
+        print("\n--- AI DICTEREN ---")
+        print("Typ je gedachten (ongestructureerd is OK):")
+        print("(Typ 'KLAAR' op een nieuwe regel als je klaar bent)")
+
+        gedachten = []
+        while True:
+            regel = input()
+            if regel.strip().upper() == "KLAAR":
+                break
+            gedachten.append(regel)
+
+        tekst = "\n".join(gedachten)
+        if not tekst.strip():
+            print("[!] Geen tekst ingevoerd.")
+            return
+
+        if not self.client:
+            # Sla gewoon op zonder AI
+            titel = tekst[:30] + "..." if len(tekst) > 30 else tekst
+            self.notities["notities"].append({
+                "id": len(self.notities["notities"]) + 1,
+                "titel": titel,
+                "inhoud": tekst,
+                "categorie": "Algemeen",
+                "gemaakt": datetime.now().isoformat(),
+                "gewijzigd": datetime.now().isoformat()
+            })
+            self._sla_op()
+            print("[OK] Notitie opgeslagen!")
+            return
+
+        print("\n[AI structureert...]")
+        prompt = f"""Neem deze ruwe gedachten en maak er een gestructureerde notitie van.
+Geef een passende titel en organiseer de inhoud logisch.
+
+Ruwe tekst:
+{tekst}
+
+Format je antwoord als:
+TITEL: [passende titel]
+---
+[gestructureerde inhoud]"""
+
+        response = self._ai_request(prompt, max_tokens=600)
+        if response:
+            # Parse response
+            if "TITEL:" in response and "---" in response:
+                delen = response.split("---", 1)
+                titel = delen[0].replace("TITEL:", "").strip()
+                inhoud = delen[1].strip() if len(delen) > 1 else tekst
+            else:
+                titel = tekst[:30] + "..."
+                inhoud = response
+
+            print(f"\n[AI Resultaat]:")
+            print(f"Titel: {titel}")
+            print(f"Inhoud:\n{inhoud}")
+
+            opslaan = input("\nOpslaan als notitie? (j/n): ").strip().lower()
+            if opslaan == "j":
+                categorie = self._kies_categorie_simpel()
+                self.notities["notities"].append({
+                    "id": len(self.notities["notities"]) + 1,
+                    "titel": titel,
+                    "inhoud": inhoud,
+                    "categorie": categorie,
+                    "gemaakt": datetime.now().isoformat(),
+                    "gewijzigd": datetime.now().isoformat()
+                })
+                self._sla_op()
+                print("[OK] Notitie opgeslagen!")
+
+    def _kies_categorie_simpel(self) -> str:
+        """Simpele categorie keuze."""
+        print("\nCategorieen:")
+        for i, cat in enumerate(self.notities["categorieen"], 1):
+            print(f"  {i}. {cat}")
+        try:
+            keuze = int(input("Keuze: ").strip()) - 1
+            return self.notities["categorieen"][keuze]
+        except (ValueError, IndexError):
+            return "Algemeen"

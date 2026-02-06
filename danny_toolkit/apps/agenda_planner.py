@@ -1,20 +1,56 @@
 """
-Agenda Planner - Plan je afspraken en taken.
+Agenda Planner v2.0 - AI-Powered planning assistent.
 """
 
 import json
+import os
 from datetime import datetime, timedelta
 from ..core.config import Config
 from ..core.utils import clear_scherm
 
+# AI Integration
+try:
+    from anthropic import Anthropic
+    AI_BESCHIKBAAR = True
+except ImportError:
+    AI_BESCHIKBAAR = False
+
 
 class AgendaPlannerApp:
-    """Plan en beheer je agenda."""
+    """AI-Powered agenda en planning assistent."""
+
+    VERSIE = "2.0"
 
     def __init__(self):
         Config.ensure_dirs()
         self.bestand = Config.APPS_DATA_DIR / "agenda.json"
         self.data = self._laad_data()
+        self.client = None
+        self._init_ai()
+
+    def _init_ai(self):
+        """Initialiseer AI client."""
+        if AI_BESCHIKBAAR:
+            api_key = os.environ.get("ANTHROPIC_API_KEY")
+            if api_key:
+                try:
+                    self.client = Anthropic(api_key=api_key)
+                except Exception:
+                    self.client = None
+
+    def _ai_request(self, prompt: str, max_tokens: int = 500) -> str:
+        """Maak een AI request."""
+        if not self.client:
+            return None
+        try:
+            response = self.client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=max_tokens,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            return response.content[0].text
+        except Exception:
+            return None
 
     def _laad_data(self) -> dict:
         """Laad agenda data."""
@@ -40,7 +76,9 @@ class AgendaPlannerApp:
         while True:
             clear_scherm()
             print("+" + "=" * 50 + "+")
-            print("|          AGENDA PLANNER                           |")
+            print("|          AGENDA PLANNER v2.0                      |")
+            if self.client:
+                print("|          [AI POWERED]                            |")
             print("+" + "=" * 50 + "+")
             self._toon_vandaag()
             print("+" + "-" * 50 + "+")
@@ -50,6 +88,12 @@ class AgendaPlannerApp:
             print("|  4. Alle afspraken                                |")
             print("|  5. Taken beheren                                 |")
             print("|  6. Afspraak verwijderen                          |")
+            print("+" + "-" * 50 + "+")
+            print("|  [AI FUNCTIES]                                    |")
+            print("|  7. AI Dag Planning                               |")
+            print("|  8. AI Prioriteiten                               |")
+            print("|  9. AI Productiviteit Tips                        |")
+            print("+" + "-" * 50 + "+")
             print("|  0. Terug                                         |")
             print("+" + "=" * 50 + "+")
 
@@ -69,6 +113,12 @@ class AgendaPlannerApp:
                 self._beheer_taken()
             elif keuze == "6":
                 self._verwijder_afspraak()
+            elif keuze == "7":
+                self._ai_dag_planning()
+            elif keuze == "8":
+                self._ai_prioriteiten()
+            elif keuze == "9":
+                self._ai_productiviteit_tips()
 
             input("\nDruk op Enter...")
 
@@ -304,3 +354,130 @@ class AgendaPlannerApp:
                     break
         except ValueError:
             pass
+
+    # ==================== AI FUNCTIES ====================
+
+    def _get_agenda_context(self) -> str:
+        """Verzamel agenda data voor AI."""
+        vandaag = datetime.now().date()
+        context = "Agenda overzicht:\n\n"
+
+        # Afspraken komende week
+        context += "Afspraken komende week:\n"
+        for i in range(7):
+            dag = vandaag + timedelta(days=i)
+            dag_str = dag.isoformat()
+            afspraken = [a for a in self.data["afspraken"] if a["datum"] == dag_str]
+            if afspraken:
+                context += f"- {dag.strftime('%A %d-%m')}:\n"
+                for a in afspraken:
+                    context += f"  • {a.get('tijd', '')} {a['titel']}\n"
+
+        # Open taken
+        open_taken = [t for t in self.data["taken"] if not t.get("voltooid")]
+        if open_taken:
+            context += "\nOpen taken:\n"
+            for t in open_taken:
+                prio = t.get("prioriteit", "normaal")
+                context += f"- [{prio}] {t['titel']}\n"
+
+        return context
+
+    def _ai_dag_planning(self):
+        """AI helpt met dagplanning."""
+        print("\n--- AI DAG PLANNING ---")
+
+        context = self._get_agenda_context()
+
+        if not self.client:
+            print("\n[Planning Tips]:")
+            print("  • Begin met je belangrijkste taak")
+            print("  • Plan pauzes tussen afspraken")
+            print("  • Houd buffer voor onverwachte zaken")
+            return
+
+        print("\n[AI plant je dag...]")
+        prompt = f"""Maak een optimale dagplanning op basis van:
+
+{context}
+
+Geef:
+1. Voorgestelde volgorde van taken
+2. Beste tijden voor focus werk
+3. Wanneer pauzes te nemen
+4. Tips voor de dag
+
+Praktisch en uitvoerbaar. Nederlands."""
+
+        response = self._ai_request(prompt, max_tokens=500)
+        if response:
+            print(f"\n[AI Dagplanning]:\n{response}")
+
+    def _ai_prioriteiten(self):
+        """AI helpt met prioriteiten stellen."""
+        print("\n--- AI PRIORITEITEN ---")
+
+        open_taken = [t for t in self.data["taken"] if not t.get("voltooid")]
+        if not open_taken:
+            print("[!] Geen open taken om te prioriteren.")
+            return
+
+        if not self.client:
+            print("\n[Prioriteiten Advies]:")
+            hoog = [t for t in open_taken if t.get("prioriteit") == "hoog"]
+            if hoog:
+                print(f"  Focus eerst op: {hoog[0]['titel']}")
+            return
+
+        taken_lijst = "\n".join([
+            f"- {t['titel']} (prio: {t.get('prioriteit', 'normaal')})"
+            for t in open_taken
+        ])
+
+        print("\n[AI analyseert prioriteiten...]")
+        prompt = f"""Help me prioriteiten stellen voor deze taken:
+
+{taken_lijst}
+
+Geef:
+1. Aanbevolen volgorde (meest urgent eerst)
+2. Wat vandaag af moet
+3. Wat kan wachten
+4. Tips voor focus
+
+Wees specifiek. Nederlands."""
+
+        response = self._ai_request(prompt, max_tokens=400)
+        if response:
+            print(f"\n[AI Prioriteiten]:\n{response}")
+
+    def _ai_productiviteit_tips(self):
+        """AI geeft productiviteit tips."""
+        print("\n--- AI PRODUCTIVITEIT TIPS ---")
+
+        context = self._get_agenda_context()
+
+        if not self.client:
+            print("\n[Productiviteit Tips]:")
+            print("  • Werk in blokken van 25-50 minuten")
+            print("  • Elimineer afleidingen")
+            print("  • Begin met de moeilijkste taak")
+            print("  • Neem regelmatig pauzes")
+            return
+
+        print("\n[AI genereert tips...]")
+        prompt = f"""Geef productiviteit tips gebaseerd op deze agenda:
+
+{context}
+
+Geef 5 concrete, persoonlijke tips voor:
+- Beter tijdmanagement
+- Meer focus
+- Stress verminderen
+- Taken efficienter afronden
+
+Praktisch en direct toepasbaar. Nederlands."""
+
+        response = self._ai_request(prompt, max_tokens=400)
+        if response:
+            print(f"\n[AI Tips]:\n{response}")

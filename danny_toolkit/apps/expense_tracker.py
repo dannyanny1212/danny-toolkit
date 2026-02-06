@@ -1,21 +1,57 @@
 """
-Expense Tracker - Houd je uitgaven bij.
+Expense Tracker v2.0 - AI-Powered uitgaven tracker.
 """
 
 import json
+import os
 from datetime import datetime
 from collections import defaultdict
 from ..core.config import Config
 from ..core.utils import clear_scherm
 
+# AI Integration
+try:
+    from anthropic import Anthropic
+    AI_BESCHIKBAAR = True
+except ImportError:
+    AI_BESCHIKBAAR = False
+
 
 class ExpenseTrackerApp:
-    """Beheer je uitgaven en budget."""
+    """AI-Powered uitgaven en budget tracker."""
+
+    VERSIE = "2.0"
 
     def __init__(self):
         Config.ensure_dirs()
         self.bestand = Config.APPS_DATA_DIR / "expenses.json"
         self.data = self._laad_data()
+        self.client = None
+        self._init_ai()
+
+    def _init_ai(self):
+        """Initialiseer AI client."""
+        if AI_BESCHIKBAAR:
+            api_key = os.environ.get("ANTHROPIC_API_KEY")
+            if api_key:
+                try:
+                    self.client = Anthropic(api_key=api_key)
+                except Exception:
+                    self.client = None
+
+    def _ai_request(self, prompt: str, max_tokens: int = 500) -> str:
+        """Maak een AI request."""
+        if not self.client:
+            return None
+        try:
+            response = self.client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=max_tokens,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            return response.content[0].text
+        except Exception:
+            return None
 
     def _laad_data(self) -> dict:
         """Laad expense data."""
@@ -46,7 +82,9 @@ class ExpenseTrackerApp:
         while True:
             clear_scherm()
             print("+" + "=" * 50 + "+")
-            print("|          EXPENSE TRACKER                          |")
+            print("|          EXPENSE TRACKER v2.0                     |")
+            if self.client:
+                print("|          [AI POWERED]                            |")
             print("+" + "=" * 50 + "+")
             self._toon_saldo()
             print("+" + "-" * 50 + "+")
@@ -56,6 +94,12 @@ class ExpenseTrackerApp:
             print("|  4. Uitgaven per categorie                        |")
             print("|  5. Budget instellen                              |")
             print("|  6. Alle transacties                              |")
+            print("+" + "-" * 50 + "+")
+            print("|  [AI FUNCTIES]                                    |")
+            print("|  7. AI Uitgaven Analyse                           |")
+            print("|  8. AI Budget Advies                              |")
+            print("|  9. AI Spaartips                                  |")
+            print("+" + "-" * 50 + "+")
             print("|  0. Terug                                         |")
             print("+" + "=" * 50 + "+")
 
@@ -75,6 +119,12 @@ class ExpenseTrackerApp:
                 self._budget_instellen()
             elif keuze == "6":
                 self._alle_transacties()
+            elif keuze == "7":
+                self._ai_uitgaven_analyse()
+            elif keuze == "8":
+                self._ai_budget_advies()
+            elif keuze == "9":
+                self._ai_spaartips()
 
             input("\nDruk op Enter...")
 
@@ -276,3 +326,127 @@ class ExpenseTrackerApp:
                 print(f"  {datum}  -€{t['bedrag']:7.2f}  {t['categorie'][:15]}")
             else:
                 print(f"  {datum}  +€{t['bedrag']:7.2f}  {t['beschrijving'][:15]}")
+
+    # ==================== AI FUNCTIES ====================
+
+    def _get_finance_context(self) -> str:
+        """Verzamel financiele data voor AI."""
+        maand = datetime.now().strftime("%Y-%m")
+        uitgaven = [u for u in self.data["uitgaven"] if u["datum"].startswith(maand)]
+        inkomsten = [i for i in self.data["inkomsten"] if i["datum"].startswith(maand)]
+
+        totaal_uit = sum(u["bedrag"] for u in uitgaven)
+        totaal_in = sum(i["bedrag"] for i in inkomsten)
+
+        per_cat = defaultdict(float)
+        for u in uitgaven:
+            per_cat[u["categorie"]] += u["bedrag"]
+
+        context = f"Financieel overzicht deze maand:\n"
+        context += f"- Inkomen: €{totaal_in:.2f}\n"
+        context += f"- Uitgaven: €{totaal_uit:.2f}\n"
+        context += f"- Verschil: €{totaal_in - totaal_uit:.2f}\n\n"
+        context += "Uitgaven per categorie:\n"
+        for cat, bedrag in sorted(per_cat.items(), key=lambda x: x[1], reverse=True):
+            pct = (bedrag / totaal_uit * 100) if totaal_uit > 0 else 0
+            context += f"- {cat}: €{bedrag:.2f} ({pct:.0f}%)\n"
+
+        return context
+
+    def _ai_uitgaven_analyse(self):
+        """AI analyseert je uitgavenpatronen."""
+        print("\n--- AI UITGAVEN ANALYSE ---")
+
+        if not self.data["uitgaven"]:
+            print("[!] Geen uitgaven om te analyseren.")
+            return
+
+        context = self._get_finance_context()
+
+        if not self.client:
+            maand = datetime.now().strftime("%Y-%m")
+            uitgaven = [u for u in self.data["uitgaven"] if u["datum"].startswith(maand)]
+            totaal = sum(u["bedrag"] for u in uitgaven)
+            print(f"\n[Analyse]: €{totaal:.2f} uitgegeven deze maand.")
+            if totaal > 1000:
+                print("  Let op je grote uitgaven!")
+            return
+
+        print("\n[AI analyseert...]")
+        prompt = f"""Analyseer deze uitgaven en geef inzichten.
+
+{context}
+
+Geef:
+1. Uitgavenpatroon observaties
+2. Opvallende posten
+3. Vergelijking met typische huishoudens
+4. Concrete bespaartips
+
+Wees specifiek en praktisch. Nederlands."""
+
+        response = self._ai_request(prompt, max_tokens=500)
+        if response:
+            print(f"\n[AI Analyse]:\n{response}")
+
+    def _ai_budget_advies(self):
+        """AI geeft budget advies."""
+        print("\n--- AI BUDGET ADVIES ---")
+
+        context = self._get_finance_context()
+
+        if not self.client:
+            print("\n[Advies]: Algemene budgetregel 50/30/20:")
+            print("  - 50% voor vaste lasten")
+            print("  - 30% voor wensen")
+            print("  - 20% voor sparen")
+            return
+
+        print("\n[AI genereert advies...]")
+        prompt = f"""Geef persoonlijk budget advies op basis van:
+
+{context}
+
+Budgetten ingesteld: {self.data.get('budget', {})}
+
+Geef:
+1. Evaluatie huidige verdeling
+2. Aanbevolen budget per categorie
+3. Tips voor budget discipline
+4. Prioriteiten stellen
+
+Praktisch en haalbaar. Nederlands."""
+
+        response = self._ai_request(prompt, max_tokens=500)
+        if response:
+            print(f"\n[AI Budget Advies]:\n{response}")
+
+    def _ai_spaartips(self):
+        """AI geeft spaartips."""
+        print("\n--- AI SPAARTIPS ---")
+
+        context = self._get_finance_context()
+
+        if not self.client:
+            print("\n[Spaartips]:")
+            print("  • Maak een automatische spaaropdracht")
+            print("  • Wacht 24 uur voor grote aankopen")
+            print("  • Maak boodschappenlijstjes")
+            print("  • Vergelijk prijzen online")
+            return
+
+        print("\n[AI genereert tips...]")
+        prompt = f"""Geef gepersonaliseerde spaartips op basis van:
+
+{context}
+
+Geef 5-7 concrete spaartips:
+- Specifiek voor de grootste uitgavencategorien
+- Praktisch en direct toepasbaar
+- Mix van kleine en grote besparingen
+
+Nederlands, motiverend."""
+
+        response = self._ai_request(prompt, max_tokens=500)
+        if response:
+            print(f"\n[AI Spaartips]:\n{response}")

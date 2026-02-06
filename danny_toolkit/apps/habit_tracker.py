@@ -1,20 +1,56 @@
 """
-Habit Tracker - Volg je dagelijkse gewoontes.
+Habit Tracker v2.0 - AI-Powered gewoonte tracker.
 """
 
 import json
+import os
 from datetime import datetime, timedelta
 from ..core.config import Config
 from ..core.utils import clear_scherm
 
+# AI Integration
+try:
+    from anthropic import Anthropic
+    AI_BESCHIKBAAR = True
+except ImportError:
+    AI_BESCHIKBAAR = False
+
 
 class HabitTrackerApp:
-    """Track en bouw goede gewoontes."""
+    """AI-Powered habit tracker voor betere gewoontes."""
+
+    VERSIE = "2.0"
 
     def __init__(self):
         Config.ensure_dirs()
         self.bestand = Config.APPS_DATA_DIR / "habits.json"
         self.data = self._laad_data()
+        self.client = None
+        self._init_ai()
+
+    def _init_ai(self):
+        """Initialiseer AI client."""
+        if AI_BESCHIKBAAR:
+            api_key = os.environ.get("ANTHROPIC_API_KEY")
+            if api_key:
+                try:
+                    self.client = Anthropic(api_key=api_key)
+                except Exception:
+                    self.client = None
+
+    def _ai_request(self, prompt: str, max_tokens: int = 500) -> str:
+        """Maak een AI request."""
+        if not self.client:
+            return None
+        try:
+            response = self.client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=max_tokens,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            return response.content[0].text
+        except Exception:
+            return None
 
     def _laad_data(self) -> dict:
         """Laad habits data."""
@@ -40,7 +76,9 @@ class HabitTrackerApp:
         while True:
             clear_scherm()
             print("+" + "=" * 50 + "+")
-            print("|          HABIT TRACKER                            |")
+            print("|          HABIT TRACKER v2.0                       |")
+            if self.client:
+                print("|          [AI POWERED]                            |")
             print("+" + "=" * 50 + "+")
             self._toon_vandaag_status()
             print("+" + "-" * 50 + "+")
@@ -49,6 +87,13 @@ class HabitTrackerApp:
             print("|  3. Habits bekijken                               |")
             print("|  4. Statistieken                                  |")
             print("|  5. Habit verwijderen                             |")
+            print("+" + "-" * 50 + "+")
+            print("|  [AI FUNCTIES]                                    |")
+            print("|  6. AI Motivatie                                  |")
+            print("|  7. AI Habit Suggesties                           |")
+            print("|  8. AI Streak Analyse                             |")
+            print("|  9. AI Habit Coach                                |")
+            print("+" + "-" * 50 + "+")
             print("|  0. Terug                                         |")
             print("+" + "=" * 50 + "+")
 
@@ -66,6 +111,14 @@ class HabitTrackerApp:
                 self._statistieken()
             elif keuze == "5":
                 self._verwijder_habit()
+            elif keuze == "6":
+                self._ai_motivatie()
+            elif keuze == "7":
+                self._ai_habit_suggesties()
+            elif keuze == "8":
+                self._ai_streak_analyse()
+            elif keuze == "9":
+                self._ai_habit_coach()
 
             input("\nDruk op Enter...")
 
@@ -261,3 +314,128 @@ class HabitTrackerApp:
 
         except ValueError:
             print("[!] Voer een geldig nummer in!")
+
+    # ==================== AI FUNCTIES ====================
+
+    def _get_habits_context(self) -> str:
+        """Verzamel habit data voor AI context."""
+        if not self.data["habits"]:
+            return "Geen habits geconfigureerd."
+
+        context = "Huidige habits:\n"
+        for h in self.data["habits"]:
+            streak = self.data["streaks"].get(str(h["id"]), 0)
+            context += f"- {h['naam']} ({h['frequentie']}, streak: {streak})\n"
+
+        vandaag = datetime.now().date()
+        context += "\nVoortgang laatste 7 dagen:\n"
+        for i in range(7):
+            dag = vandaag - timedelta(days=i)
+            voltooid = self.data["history"].get(dag.isoformat(), [])
+            namen = [h["naam"] for h in self.data["habits"] if h["id"] in voltooid]
+            context += f"- {dag.strftime('%a')}: {', '.join(namen) if namen else 'Geen'}\n"
+
+        return context
+
+    def _ai_motivatie(self):
+        """AI geeft gepersonaliseerde motivatie."""
+        print("\n--- AI MOTIVATIE ---")
+
+        if not self.data["habits"]:
+            print("[!] Voeg eerst habits toe!")
+            return
+
+        vandaag = datetime.now().date().isoformat()
+        voltooid = self.data["history"].get(vandaag, [])
+        open_habits = [h for h in self.data["habits"] if h["id"] not in voltooid]
+
+        if not self.client:
+            if not open_habits:
+                print("\n🎉 Geweldig! Alle habits van vandaag voltooid!")
+            else:
+                print(f"\n💪 Nog {len(open_habits)} habit(s) te gaan. Je kunt dit!")
+            return
+
+        print("\n[AI genereert motivatie...]")
+        context = self._get_habits_context()
+
+        prompt = f"""Geef korte, krachtige motivatie voor iemand met habits.
+
+{context}
+Open vandaag: {[h['naam'] for h in open_habits]}
+
+Geef 2-3 energieke zinnen. Wees specifiek. Nederlands."""
+
+        response = self._ai_request(prompt, max_tokens=200)
+        if response:
+            print(f"\n💪 {response}")
+
+    def _ai_habit_suggesties(self):
+        """AI suggereert nieuwe habits."""
+        print("\n--- AI HABIT SUGGESTIES ---")
+        print("\n  1. Gezondheid    2. Productiviteit")
+        print("  3. Mindfulness   4. Leren")
+
+        keuze = input("\nCategorie (1-4): ").strip()
+        cats = {"1": "gezondheid", "2": "productiviteit", "3": "mindfulness", "4": "leren"}
+        cat = cats.get(keuze, "algemeen")
+
+        if not self.client:
+            tips = {"1": ["10 min wandelen", "8 glazen water"],
+                    "2": ["To-do lijst", "2 uur focus"],
+                    "3": ["5 min meditatie", "Dankbaarheid schrijven"],
+                    "4": ["20 pagina's lezen", "Nieuwe skill oefenen"]}
+            print(f"\n[Suggesties]:")
+            for t in tips.get(keuze, ["Begin klein", "Wees consistent"]):
+                print(f"  • {t}")
+            return
+
+        prompt = f"""Suggereer 4 {cat} habits. Kort en praktisch. Nederlands."""
+        response = self._ai_request(prompt, max_tokens=300)
+        if response:
+            print(f"\n[AI Suggesties]:\n{response}")
+
+    def _ai_streak_analyse(self):
+        """AI analyseert streak patronen."""
+        print("\n--- AI STREAK ANALYSE ---")
+
+        if not self.data["habits"]:
+            print("[!] Geen habits.")
+            return
+
+        if not self.client:
+            beste = max(self.data["streaks"].values()) if self.data["streaks"] else 0
+            print(f"\n  Beste streak: {beste} dagen")
+            return
+
+        context = self._get_habits_context()
+        prompt = f"""Analyseer habit streaks kort. {context}
+
+Geef: sterke punten, verbeterpunten, 2 tips. Nederlands."""
+
+        response = self._ai_request(prompt, max_tokens=400)
+        if response:
+            print(f"\n[Analyse]:\n{response}")
+
+    def _ai_habit_coach(self):
+        """AI habit coach voor vragen."""
+        print("\n--- AI HABIT COACH ---")
+
+        vraag = input("\nStel je vraag: ").strip()
+        if not vraag:
+            return
+
+        if not self.client:
+            print("\n[Tips]: Begin klein, koppel aan routines, track voortgang.")
+            return
+
+        context = self._get_habits_context()
+        prompt = f"""Je bent een habit coach. Vraag: "{vraag}"
+
+Context: {context}
+
+Geef praktisch, warm antwoord. Nederlands."""
+
+        response = self._ai_request(prompt, max_tokens=400)
+        if response:
+            print(f"\n[Coach]:\n{response}")

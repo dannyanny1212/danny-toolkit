@@ -1,21 +1,33 @@
 """
-Citaten Generator - Inspirerende citaten.
+Citaten Generator v2.0 - AI-Powered inspirerende citaten.
 """
 
 import json
+import os
 import random
 from datetime import datetime
 from ..core.config import Config
 from ..core.utils import clear_scherm
 
+# AI Integration
+try:
+    from anthropic import Anthropic
+    AI_BESCHIKBAAR = True
+except ImportError:
+    AI_BESCHIKBAAR = False
+
 
 class CitatenGeneratorApp:
-    """Genereer en bewaar inspirerende citaten."""
+    """AI-Powered citaten generator."""
+
+    VERSIE = "2.0"
 
     def __init__(self):
         Config.ensure_dirs()
         self.bestand = Config.APPS_DATA_DIR / "citaten.json"
         self.data = self._laad_data()
+        self.client = None
+        self._init_ai()
 
         # Ingebouwde citaten
         self.citaten = [
@@ -65,6 +77,30 @@ class CitatenGeneratorApp:
             "citaat_van_de_dag": {"datum": "", "citaat": "", "auteur": ""}
         }
 
+    def _init_ai(self):
+        """Initialiseer AI client."""
+        if AI_BESCHIKBAAR:
+            api_key = os.environ.get("ANTHROPIC_API_KEY")
+            if api_key:
+                try:
+                    self.client = Anthropic(api_key=api_key)
+                except Exception:
+                    self.client = None
+
+    def _ai_request(self, prompt: str, max_tokens: int = 500) -> str:
+        """Maak een AI request."""
+        if not self.client:
+            return None
+        try:
+            response = self.client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=max_tokens,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            return response.content[0].text
+        except Exception:
+            return None
+
     def _sla_op(self):
         """Sla data op."""
         with open(self.bestand, "w", encoding="utf-8") as f:
@@ -75,7 +111,9 @@ class CitatenGeneratorApp:
         while True:
             clear_scherm()
             print("+" + "=" * 50 + "+")
-            print("|          CITATEN GENERATOR                        |")
+            print("|          CITATEN GENERATOR v2.0                   |")
+            if self.client:
+                print("|          [AI POWERED]                            |")
             print("+" + "=" * 50 + "+")
             self._toon_citaat_van_de_dag()
             print("+" + "-" * 50 + "+")
@@ -84,6 +122,12 @@ class CitatenGeneratorApp:
             print("|  3. Eigen citaat toevoegen                        |")
             print("|  4. Favorieten bekijken                           |")
             print("|  5. Alle eigen citaten                            |")
+            print("+" + "-" * 50 + "+")
+            print("|  [AI FUNCTIES]                                    |")
+            print("|  6. AI Citaat Genereren                           |")
+            print("|  7. AI Citaat Uitleg                              |")
+            print("|  8. AI Persoonlijk Citaat                         |")
+            print("+" + "-" * 50 + "+")
             print("|  0. Terug                                         |")
             print("+" + "=" * 50 + "+")
 
@@ -101,6 +145,12 @@ class CitatenGeneratorApp:
                 self._bekijk_favorieten()
             elif keuze == "5":
                 self._eigen_citaten()
+            elif keuze == "6":
+                self._ai_citaat_genereren()
+            elif keuze == "7":
+                self._ai_citaat_uitleg()
+            elif keuze == "8":
+                self._ai_persoonlijk_citaat()
 
             input("\nDruk op Enter...")
 
@@ -250,3 +300,134 @@ class CitatenGeneratorApp:
         for i, ec in enumerate(self.data["eigen_citaten"], 1):
             print(f"\n  {i}. \"{ec['citaat'][:50]}{'...' if len(ec['citaat']) > 50 else ''}\"")
             print(f"     - {ec['auteur']}")
+
+    # ==================== AI FUNCTIES ====================
+
+    def _ai_citaat_genereren(self):
+        """AI genereert een citaat over een thema."""
+        print("\n--- AI CITAAT GENEREREN ---")
+
+        print("Thema's: motivatie, wijsheid, liefde, succes, geluk, vriendschap")
+        thema = input("Kies thema (of eigen woord): ").strip()
+        if not thema:
+            thema = "inspiratie"
+
+        if not self.client:
+            # Fallback: random ingebouwd citaat
+            citaat, auteur = random.choice(self.citaten)
+            print(f"\n\"{citaat}\"")
+            print(f"    - {auteur}")
+            return
+
+        print("\n[AI genereert citaat...]")
+        prompt = f"""Genereer een origineel, inspirerend citaat over: {thema}
+
+Het citaat moet:
+- Diepzinnig maar toegankelijk zijn
+- Tussen 10-25 woorden
+- Tijdloos en universeel
+
+Format:
+CITAAT: [het citaat]
+AUTEUR: AI Wijsheid"""
+
+        response = self._ai_request(prompt, max_tokens=150)
+        if response:
+            print(f"\n{response}")
+
+            opslaan = input("\nOpslaan in eigen citaten? (j/n): ").strip().lower()
+            if opslaan == "j":
+                # Parse
+                if "CITAAT:" in response:
+                    citaat = response.split("CITAAT:")[1].split("AUTEUR:")[0].strip()
+                    auteur = "AI Wijsheid"
+                    self.data["eigen_citaten"].append({
+                        "citaat": citaat,
+                        "auteur": auteur,
+                        "toegevoegd": datetime.now().isoformat()
+                    })
+                    self._sla_op()
+                    print("[OK] Citaat opgeslagen!")
+
+    def _ai_citaat_uitleg(self):
+        """AI legt een citaat uit."""
+        print("\n--- AI CITAAT UITLEG ---")
+
+        # Toon wat citaten
+        print("\nRecente citaten:")
+        sample = self.citaten[:5]
+        for i, (c, a) in enumerate(sample, 1):
+            print(f"  {i}. \"{c[:40]}...\" - {a}")
+
+        keuze = input("\nKies nummer of typ eigen citaat: ").strip()
+
+        try:
+            idx = int(keuze) - 1
+            citaat, auteur = sample[idx]
+        except (ValueError, IndexError):
+            citaat = keuze
+            auteur = "Onbekend"
+
+        if not self.client:
+            print(f"\n[Citaat]: \"{citaat}\"")
+            print("\n[Betekenis]: Denk na over hoe dit van toepassing is op jouw leven.")
+            return
+
+        print("\n[AI analyseert...]")
+        prompt = f"""Leg dit citaat uit:
+
+"{citaat}" - {auteur}
+
+Geef:
+1. De kernboodschap
+2. Historische/filosofische context
+3. Hoe je het kunt toepassen in je leven
+4. Gerelateerde wijsheid
+
+Helder en inspirerend. Nederlands."""
+
+        response = self._ai_request(prompt, max_tokens=500)
+        if response:
+            print(f"\n[AI Uitleg]:\n{response}")
+
+    def _ai_persoonlijk_citaat(self):
+        """AI maakt een persoonlijk citaat voor jou."""
+        print("\n--- AI PERSOONLIJK CITAAT ---")
+
+        print("Vertel me over je situatie (werk, liefde, uitdaging, etc.):")
+        situatie = input("> ").strip()
+        if not situatie:
+            print("[!] Beschrijf je situatie voor een persoonlijk citaat.")
+            return
+
+        if not self.client:
+            print("\n[Persoonlijke wijsheid]:")
+            print("  Elke reis begint met een enkele stap.")
+            return
+
+        print("\n[AI creëert persoonlijk citaat...]")
+        prompt = f"""Iemand beschrijft hun situatie: "{situatie}"
+
+Creëer een kort, krachtig citaat specifiek voor hen.
+Het moet:
+- Direct relevant zijn voor hun situatie
+- Bemoedigend en empowerend
+- Poëtisch maar praktisch
+- 10-20 woorden
+
+Geef alleen het citaat, niets anders."""
+
+        response = self._ai_request(prompt, max_tokens=100)
+        if response:
+            print(f"\n  \"{response}\"")
+            print("    - Speciaal voor jou")
+
+            opslaan = input("\nOpslaan? (j/n): ").strip().lower()
+            if opslaan == "j":
+                self.data["eigen_citaten"].append({
+                    "citaat": response.strip('"'),
+                    "auteur": "Persoonlijke AI",
+                    "toegevoegd": datetime.now().isoformat()
+                })
+                self._sla_op()
+                print("[OK] Opgeslagen!")

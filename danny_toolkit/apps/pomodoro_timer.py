@@ -1,21 +1,57 @@
 """
-Pomodoro Timer - Focus timer voor productiviteit.
+Pomodoro Timer v2.0 - AI-Powered focus timer.
 """
 
 import time
 import json
+import os
 from datetime import datetime, timedelta
 from ..core.config import Config
 from ..core.utils import clear_scherm
 
+# AI Integration
+try:
+    from anthropic import Anthropic
+    AI_BESCHIKBAAR = True
+except ImportError:
+    AI_BESCHIKBAAR = False
+
 
 class PomodoroTimerApp:
-    """Pomodoro techniek timer."""
+    """AI-Powered Pomodoro techniek timer."""
+
+    VERSIE = "2.0"
 
     def __init__(self):
         Config.ensure_dirs()
         self.bestand = Config.APPS_DATA_DIR / "pomodoro_stats.json"
         self.stats = self._laad_stats()
+        self.client = None
+        self._init_ai()
+
+    def _init_ai(self):
+        """Initialiseer AI client."""
+        if AI_BESCHIKBAAR:
+            api_key = os.environ.get("ANTHROPIC_API_KEY")
+            if api_key:
+                try:
+                    self.client = Anthropic(api_key=api_key)
+                except Exception:
+                    self.client = None
+
+    def _ai_request(self, prompt: str, max_tokens: int = 500) -> str:
+        """Maak een AI request."""
+        if not self.client:
+            return None
+        try:
+            response = self.client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=max_tokens,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            return response.content[0].text
+        except Exception:
+            return None
 
     def _laad_stats(self) -> dict:
         """Laad pomodoro statistieken."""
@@ -43,7 +79,9 @@ class PomodoroTimerApp:
         while True:
             clear_scherm()
             print("+" + "=" * 50 + "+")
-            print("|          POMODORO TIMER                          |")
+            print("|          POMODORO TIMER v2.0                     |")
+            if self.client:
+                print("|          [AI POWERED]                            |")
             print("+" + "=" * 50 + "+")
             print(f"|  Totaal pomodoros: {self.stats['totaal_pomodoros']:<29}|")
             print(f"|  Totaal focus tijd: {self.stats['totaal_minuten']} minuten{' ' * (21 - len(str(self.stats['totaal_minuten'])))}|")
@@ -53,6 +91,12 @@ class PomodoroTimerApp:
             print("|  3. Lange pauze (15 min)                         |")
             print("|  4. Aangepaste timer                             |")
             print("|  5. Statistieken                                 |")
+            print("+" + "-" * 50 + "+")
+            print("|  [AI FUNCTIES]                                   |")
+            print("|  6. AI Focus Tips                                |")
+            print("|  7. AI Motivatie                                 |")
+            print("|  8. AI Productiviteit Analyse                    |")
+            print("+" + "-" * 50 + "+")
             print("|  0. Terug                                        |")
             print("+" + "=" * 50 + "+")
 
@@ -70,6 +114,15 @@ class PomodoroTimerApp:
                 self._aangepaste_timer()
             elif keuze == "5":
                 self._toon_statistieken()
+                input("\nDruk op Enter...")
+            elif keuze == "6":
+                self._ai_focus_tips()
+                input("\nDruk op Enter...")
+            elif keuze == "7":
+                self._ai_motivatie()
+                input("\nDruk op Enter...")
+            elif keuze == "8":
+                self._ai_productiviteit_analyse()
                 input("\nDruk op Enter...")
 
     def _start_timer(self, minuten: int, type_timer: str):
@@ -166,3 +219,97 @@ class PomodoroTimerApp:
                 datum = s["datum"][:10]
                 taak = s.get("taak", "")[:20]
                 print(f"    - {datum}: {s['minuten']}min {taak}")
+
+    # ==================== AI FUNCTIES ====================
+
+    def _ai_focus_tips(self):
+        """AI geeft focus tips."""
+        print("\n--- AI FOCUS TIPS ---")
+
+        if not self.client:
+            print("\n[Focus Tips]:")
+            print("  • Schakel notificaties uit")
+            print("  • Werk in een opgeruimde ruimte")
+            print("  • Drink genoeg water")
+            print("  • Neem korte pauzes")
+            print("  • Gebruik noise-cancelling")
+            return
+
+        print("\n[AI genereert tips...]")
+        prompt = f"""Geef 5 wetenschappelijk onderbouwde focus tips.
+
+Gebruiker statistieken:
+- Totaal pomodoros: {self.stats['totaal_pomodoros']}
+- Focus minuten: {self.stats['totaal_minuten']}
+
+Geef praktische, direct toepasbare tips voor betere concentratie.
+Varieer tussen mindset en praktische tips. Nederlands."""
+
+        response = self._ai_request(prompt, max_tokens=400)
+        if response:
+            print(f"\n[AI Focus Tips]:\n{response}")
+
+    def _ai_motivatie(self):
+        """AI geeft motivatie boost."""
+        print("\n--- AI MOTIVATIE ---")
+
+        if not self.client:
+            print("\n💪 Je bent bezig met focus bouwen!")
+            print(f"   Al {self.stats['totaal_pomodoros']} pomodoros voltooid.")
+            print("   Elke sessie maakt je productiever!")
+            return
+
+        print("\n[AI genereert motivatie...]")
+        prompt = f"""Geef een korte, krachtige motivatie boodschap.
+
+Gebruiker heeft {self.stats['totaal_pomodoros']} pomodoros voltooid.
+Dat is {self.stats['totaal_minuten']} minuten focus tijd!
+
+Geef een persoonlijke, energieke motivatie in 2-3 zinnen.
+Vier hun voortgang. Nederlands."""
+
+        response = self._ai_request(prompt, max_tokens=150)
+        if response:
+            print(f"\n🔥 {response}")
+
+    def _ai_productiviteit_analyse(self):
+        """AI analyseert productiviteit patronen."""
+        print("\n--- AI PRODUCTIVITEIT ANALYSE ---")
+
+        if not self.stats["sessies"]:
+            print("[!] Geen sessie data voor analyse.")
+            return
+
+        if not self.client:
+            print(f"\n[Analyse]:")
+            print(f"  Totaal sessies: {len(self.stats['sessies'])}")
+            avg = self.stats['totaal_minuten'] / max(self.stats['totaal_pomodoros'], 1)
+            print(f"  Gemiddelde sessie: {avg:.0f} minuten")
+            return
+
+        # Verzamel context
+        sessies_info = "\n".join([
+            f"- {s['datum'][:10]}: {s['minuten']}min - {s.get('taak', 'Geen taak')}"
+            for s in self.stats["sessies"][-20:]
+        ])
+
+        print("\n[AI analyseert...]")
+        prompt = f"""Analyseer deze productiviteit data:
+
+Totaal pomodoros: {self.stats['totaal_pomodoros']}
+Totaal minuten: {self.stats['totaal_minuten']}
+
+Recente sessies:
+{sessies_info}
+
+Geef:
+1. Productiviteit patroon observaties
+2. Beste tijden/dagen (indien zichtbaar)
+3. Tips voor verbetering
+4. Moedig aan om door te gaan
+
+Kort en praktisch. Nederlands."""
+
+        response = self._ai_request(prompt, max_tokens=400)
+        if response:
+            print(f"\n[AI Analyse]:\n{response}")

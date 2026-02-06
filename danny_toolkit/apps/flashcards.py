@@ -1,21 +1,57 @@
 """
-Flashcards - Leer met digitale flashcards.
+Flashcards v2.0 - AI-Powered digitale flashcards.
 """
 
 import json
+import os
 import random
 from datetime import datetime, timedelta
 from ..core.config import Config
 from ..core.utils import clear_scherm
 
+# AI Integration
+try:
+    from anthropic import Anthropic
+    AI_BESCHIKBAAR = True
+except ImportError:
+    AI_BESCHIKBAAR = False
+
 
 class FlashcardsApp:
-    """Leer met spaced repetition flashcards."""
+    """AI-Powered spaced repetition flashcards."""
+
+    VERSIE = "2.0"
 
     def __init__(self):
         Config.ensure_dirs()
         self.bestand = Config.APPS_DATA_DIR / "flashcards.json"
         self.data = self._laad_data()
+        self.client = None
+        self._init_ai()
+
+    def _init_ai(self):
+        """Initialiseer AI client."""
+        if AI_BESCHIKBAAR:
+            api_key = os.environ.get("ANTHROPIC_API_KEY")
+            if api_key:
+                try:
+                    self.client = Anthropic(api_key=api_key)
+                except Exception:
+                    self.client = None
+
+    def _ai_request(self, prompt: str, max_tokens: int = 500) -> str:
+        """Maak een AI request."""
+        if not self.client:
+            return None
+        try:
+            response = self.client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=max_tokens,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            return response.content[0].text
+        except Exception:
+            return None
 
     def _laad_data(self) -> dict:
         """Laad flashcard data."""
@@ -43,7 +79,9 @@ class FlashcardsApp:
         while True:
             clear_scherm()
             print("+" + "=" * 50 + "+")
-            print("|          FLASHCARDS                               |")
+            print("|          FLASHCARDS v2.0                          |")
+            if self.client:
+                print("|          [AI POWERED]                            |")
             print("+" + "=" * 50 + "+")
             print(f"|  Decks: {len(self.data['decks']):<41}|")
             print(f"|  Reviews: {self.data['stats']['totaal_reviews']:<39}|")
@@ -54,6 +92,12 @@ class FlashcardsApp:
             print("|  4. Decks bekijken                                |")
             print("|  5. Statistieken                                  |")
             print("|  6. Deck verwijderen                              |")
+            print("+" + "-" * 50 + "+")
+            print("|  [AI FUNCTIES]                                    |")
+            print("|  7. AI Kaarten Genereren                          |")
+            print("|  8. AI Uitleg                                     |")
+            print("|  9. AI Quiz Mode                                  |")
+            print("+" + "-" * 50 + "+")
             print("|  0. Terug                                         |")
             print("+" + "=" * 50 + "+")
 
@@ -73,6 +117,12 @@ class FlashcardsApp:
                 self._statistieken()
             elif keuze == "6":
                 self._verwijder_deck()
+            elif keuze == "7":
+                self._ai_kaarten_genereren()
+            elif keuze == "8":
+                self._ai_uitleg()
+            elif keuze == "9":
+                self._ai_quiz_mode()
 
             input("\nDruk op Enter...")
 
@@ -285,3 +335,158 @@ class FlashcardsApp:
             self.data["decks"].remove(deck)
             self._sla_op()
             print("[OK] Deck verwijderd!")
+
+    # ==================== AI FUNCTIES ====================
+
+    def _ai_kaarten_genereren(self):
+        """AI genereert flashcards over een onderwerp."""
+        print("\n--- AI KAARTEN GENEREREN ---")
+
+        onderwerp = input("Onderwerp voor kaarten: ").strip()
+        if not onderwerp:
+            print("[!] Geen onderwerp ingevoerd.")
+            return
+
+        aantal = input("Aantal kaarten (5-20): ").strip()
+        try:
+            aantal = max(5, min(20, int(aantal)))
+        except ValueError:
+            aantal = 10
+
+        if not self.client:
+            print("\n[!] AI niet beschikbaar. Voeg handmatig kaarten toe.")
+            return
+
+        print(f"\n[AI genereert {aantal} kaarten over '{onderwerp}'...]")
+
+        prompt = f"""Genereer {aantal} flashcards over: {onderwerp}
+
+Format elke kaart als:
+VRAAG: [vraag]
+ANTWOORD: [antwoord]
+---
+
+Maak de vragen duidelijk en de antwoorden beknopt maar compleet.
+Varieer in moeilijkheid. Nederlands."""
+
+        response = self._ai_request(prompt, max_tokens=1000)
+        if response:
+            print("\n[AI Kaarten]:")
+            print(response)
+
+            # Vraag of ze toegevoegd moeten worden
+            toevoegen = input("\nToevoegen aan deck? (j/n): ").strip().lower()
+            if toevoegen == "j":
+                deck = self._kies_deck()
+                if not deck:
+                    # Maak nieuw deck
+                    deck = {
+                        "id": len(self.data["decks"]) + 1,
+                        "naam": onderwerp,
+                        "kaarten": [],
+                        "aangemaakt": datetime.now().isoformat()
+                    }
+                    self.data["decks"].append(deck)
+
+                # Parse kaarten
+                kaarten_raw = response.split("---")
+                toegevoegd = 0
+                for k in kaarten_raw:
+                    if "VRAAG:" in k and "ANTWOORD:" in k:
+                        try:
+                            vraag = k.split("VRAAG:")[1].split("ANTWOORD:")[0].strip()
+                            antwoord = k.split("ANTWOORD:")[1].strip()
+                            if vraag and antwoord:
+                                deck["kaarten"].append({
+                                    "id": len(deck["kaarten"]) + 1,
+                                    "voorkant": vraag,
+                                    "achterkant": antwoord,
+                                    "niveau": 0,
+                                    "volgende_review": datetime.now().isoformat()
+                                })
+                                toegevoegd += 1
+                        except IndexError:
+                            pass
+
+                self._sla_op()
+                print(f"[OK] {toegevoegd} kaarten toegevoegd aan '{deck['naam']}'!")
+
+    def _ai_uitleg(self):
+        """AI legt een concept uit."""
+        print("\n--- AI UITLEG ---")
+
+        concept = input("Welk concept wil je uitgelegd hebben? ").strip()
+        if not concept:
+            return
+
+        if not self.client:
+            print("\n[!] AI niet beschikbaar.")
+            return
+
+        print("\n[AI legt uit...]")
+        prompt = f"""Leg dit concept duidelijk uit: {concept}
+
+Geef:
+1. Simpele definitie
+2. Uitgebreidere uitleg
+3. Praktisch voorbeeld
+4. Veelgemaakte fouten
+
+Geschikt voor studenten. Nederlands."""
+
+        response = self._ai_request(prompt, max_tokens=600)
+        if response:
+            print(f"\n[AI Uitleg]:\n{response}")
+
+    def _ai_quiz_mode(self):
+        """AI stelt vragen over je kaarten."""
+        print("\n--- AI QUIZ MODE ---")
+
+        deck = self._kies_deck()
+        if not deck or not deck["kaarten"]:
+            print("[!] Kies een deck met kaarten.")
+            return
+
+        if not self.client:
+            # Fallback: gewoon studeren
+            self._studeren()
+            return
+
+        print(f"\n[AI Quiz over '{deck['naam']}']")
+        print("De AI stelt vragen op basis van je kaarten.\n")
+
+        # Verzamel kaarten context
+        kaarten_info = "\n".join([
+            f"- {k['voorkant']}: {k['achterkant']}"
+            for k in deck["kaarten"][:15]  # Max 15
+        ])
+
+        for ronde in range(3):  # 3 vragen
+            print(f"\n--- Vraag {ronde + 1}/3 ---")
+
+            prompt = f"""Op basis van deze flashcards, stel een creatieve vraag:
+
+{kaarten_info}
+
+Stel een vraag die de kennis test maar anders geformuleerd is dan de originele kaarten.
+Geef alleen de vraag, geen antwoord. Nederlands."""
+
+            vraag = self._ai_request(prompt, max_tokens=150)
+            if vraag:
+                print(f"\n{vraag}")
+                antwoord = input("\nJouw antwoord: ").strip()
+
+                # Laat AI evalueren
+                eval_prompt = f"""Evalueer dit antwoord.
+Vraag: {vraag}
+Gegeven antwoord: {antwoord}
+Relevante kaarten: {kaarten_info}
+
+Geef kort feedback: is het correct, deels correct, of onjuist?
+Geef het juiste antwoord als het fout was. Nederlands, 2-3 zinnen."""
+
+                feedback = self._ai_request(eval_prompt, max_tokens=200)
+                if feedback:
+                    print(f"\n[Feedback]: {feedback}")
+
+        print("\n[OK] Quiz voltooid!")

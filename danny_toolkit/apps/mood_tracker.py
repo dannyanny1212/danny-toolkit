@@ -1,21 +1,33 @@
 """
-Mood Tracker - Houd je stemming bij.
+Mood Tracker v2.0 - AI-Powered stemming tracker.
 """
 
 import json
+import os
 from datetime import datetime, timedelta
 from collections import Counter
 from ..core.config import Config
 from ..core.utils import clear_scherm
 
+# AI Integration
+try:
+    from anthropic import Anthropic
+    AI_BESCHIKBAAR = True
+except ImportError:
+    AI_BESCHIKBAAR = False
+
 
 class MoodTrackerApp:
-    """Track je dagelijkse stemming en emoties."""
+    """AI-Powered mood tracker voor stemming en emoties."""
+
+    VERSIE = "2.0"
 
     def __init__(self):
         Config.ensure_dirs()
         self.bestand = Config.APPS_DATA_DIR / "mood.json"
         self.data = self._laad_data()
+        self.client = None
+        self._init_ai()
 
         self.stemmingen = {
             "1": ("Geweldig", "😄", 5),
@@ -43,6 +55,30 @@ class MoodTrackerApp:
             "streak": 0
         }
 
+    def _init_ai(self):
+        """Initialiseer AI client."""
+        if AI_BESCHIKBAAR:
+            api_key = os.environ.get("ANTHROPIC_API_KEY")
+            if api_key:
+                try:
+                    self.client = Anthropic(api_key=api_key)
+                except Exception:
+                    self.client = None
+
+    def _ai_request(self, prompt: str, max_tokens: int = 500) -> str:
+        """Maak een AI request."""
+        if not self.client:
+            return None
+        try:
+            response = self.client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=max_tokens,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            return response.content[0].text
+        except Exception:
+            return None
+
     def _sla_op(self):
         """Sla data op."""
         with open(self.bestand, "w", encoding="utf-8") as f:
@@ -53,7 +89,9 @@ class MoodTrackerApp:
         while True:
             clear_scherm()
             print("+" + "=" * 50 + "+")
-            print("|          MOOD TRACKER                             |")
+            print("|          MOOD TRACKER v2.0                        |")
+            if self.client:
+                print("|          [AI POWERED]                            |")
             print("+" + "=" * 50 + "+")
             self._toon_recente_mood()
             print("+" + "-" * 50 + "+")
@@ -62,6 +100,13 @@ class MoodTrackerApp:
             print("|  3. Week overzicht                                |")
             print("|  4. Statistieken                                  |")
             print("|  5. Mood patronen                                 |")
+            print("+" + "-" * 50 + "+")
+            print("|  [AI FUNCTIES]                                    |")
+            print("|  6. AI Mood Analyse                               |")
+            print("|  7. AI Welzijns Tips                              |")
+            print("|  8. AI Mood Voorspelling                          |")
+            print("|  9. AI Dagboek Reflectie                          |")
+            print("+" + "-" * 50 + "+")
             print("|  0. Terug                                         |")
             print("+" + "=" * 50 + "+")
 
@@ -79,6 +124,14 @@ class MoodTrackerApp:
                 self._statistieken()
             elif keuze == "5":
                 self._mood_patronen()
+            elif keuze == "6":
+                self._ai_mood_analyse()
+            elif keuze == "7":
+                self._ai_welzijns_tips()
+            elif keuze == "8":
+                self._ai_mood_voorspelling()
+            elif keuze == "9":
+                self._ai_dagboek_reflectie()
 
             input("\nDruk op Enter...")
 
@@ -299,3 +352,234 @@ class MoodTrackerApp:
                 print("\n  📉 Je mood lijkt te dalen. Zorg goed voor jezelf!")
             else:
                 print("\n  📊 Je mood is stabiel.")
+
+    # ==================== AI FUNCTIES ====================
+
+    def _get_mood_context(self) -> str:
+        """Verzamel mood data voor AI context."""
+        if not self.data["entries"]:
+            return "Geen mood data beschikbaar."
+
+        # Laatste 7 dagen data
+        vandaag = datetime.now().date()
+        week_data = []
+        for i in range(7):
+            dag = vandaag - timedelta(days=i)
+            dag_str = dag.isoformat()
+            entries = [e for e in self.data["entries"] if e["datum"].startswith(dag_str)]
+            if entries:
+                avg_score = sum(e["score"] for e in entries) / len(entries)
+                stemmingen = [e["stemming"] for e in entries]
+                activiteiten = []
+                for e in entries:
+                    activiteiten.extend(e.get("activiteiten", []))
+                notities = [e.get("notitie", "") for e in entries if e.get("notitie")]
+                week_data.append({
+                    "dag": dag.strftime("%A"),
+                    "score": avg_score,
+                    "stemmingen": stemmingen,
+                    "activiteiten": list(set(activiteiten)),
+                    "notities": notities
+                })
+
+        context = "Mood data afgelopen week:\n"
+        for d in week_data:
+            context += f"- {d['dag']}: Score {d['score']:.1f}/5, "
+            context += f"Stemmingen: {', '.join(d['stemmingen'])}"
+            if d['activiteiten']:
+                context += f", Activiteiten: {', '.join(d['activiteiten'])}"
+            if d['notities']:
+                context += f", Notities: {'; '.join(d['notities'][:2])}"
+            context += "\n"
+
+        return context
+
+    def _ai_mood_analyse(self):
+        """AI analyseert je mood patronen diepgaand."""
+        print("\n--- AI MOOD ANALYSE ---")
+
+        if len(self.data["entries"]) < 3:
+            print("[!] Minimaal 3 mood entries nodig voor analyse.")
+            return
+
+        context = self._get_mood_context()
+
+        if not self.client:
+            # Fallback analyse
+            scores = [e["score"] for e in self.data["entries"][-14:]]
+            gem = sum(scores) / len(scores)
+            if gem >= 4:
+                print("\n[Analyse]: Je mood is overwegend positief!")
+            elif gem >= 3:
+                print("\n[Analyse]: Je mood is stabiel met ups en downs.")
+            else:
+                print("\n[Analyse]: Je mood lijkt wat lager. Overweeg zelfzorg.")
+            return
+
+        print("\n[AI analyseert je mood data...]")
+        prompt = f"""Analyseer deze mood tracking data en geef persoonlijke inzichten.
+
+{context}
+
+Geef een warme, ondersteunende analyse met:
+1. Algemene mood trend
+2. Opvallende patronen (dagen, activiteiten)
+3. Positieve punten om te vieren
+4. Zachte suggesties voor verbetering
+
+Houd het persoonlijk en empathisch. Antwoord in het Nederlands."""
+
+        response = self._ai_request(prompt, max_tokens=700)
+        if response:
+            print(f"\n[AI Mood Analyse]:")
+            print(response)
+        else:
+            print("[!] AI niet beschikbaar.")
+
+    def _ai_welzijns_tips(self):
+        """AI geeft gepersonaliseerde welzijnstips."""
+        print("\n--- AI WELZIJNS TIPS ---")
+
+        # Bepaal huidige mood context
+        vandaag = datetime.now().date().isoformat()
+        vandaag_entries = [e for e in self.data["entries"] if e["datum"].startswith(vandaag)]
+
+        if vandaag_entries:
+            huidige_mood = vandaag_entries[-1]["stemming"]
+            score = vandaag_entries[-1]["score"]
+        else:
+            huidige_mood = "onbekend"
+            score = 3
+
+        if not self.client:
+            # Fallback tips
+            tips = {
+                5: ["Deel je positieve energie met anderen!", "Dit is een goed moment voor creatieve projecten."],
+                4: ["Geniet van dit goede gevoel.", "Overweeg een wandeling te maken."],
+                3: ["Neem even pauze als je dat nodig hebt.", "Een kopje thee kan helpen."],
+                2: ["Wees lief voor jezelf vandaag.", "Praat met iemand die je vertrouwt."],
+                1: ["Het is OK om je zo te voelen.", "Kleine stapjes zijn ook stapjes."]
+            }
+            print("\n[Welzijns Tips]:")
+            for tip in tips.get(score, tips[3]):
+                print(f"  • {tip}")
+            return
+
+        print("\n[AI genereert persoonlijke tips...]")
+
+        context = self._get_mood_context() if self.data["entries"] else ""
+
+        prompt = f"""Geef 5 gepersonaliseerde welzijnstips gebaseerd op deze informatie:
+
+Huidige mood: {huidige_mood} (score: {score}/5)
+{context}
+
+Geef praktische, warme en uitvoerbare tips die passen bij de huidige stemming.
+Wees empathisch en ondersteunend. Antwoord in het Nederlands met bullet points."""
+
+        response = self._ai_request(prompt, max_tokens=500)
+        if response:
+            print(f"\n[AI Welzijns Tips voor jou]:")
+            print(response)
+        else:
+            print("[!] AI niet beschikbaar.")
+
+    def _ai_mood_voorspelling(self):
+        """AI voorspelt mood trends."""
+        print("\n--- AI MOOD VOORSPELLING ---")
+
+        if len(self.data["entries"]) < 7:
+            print("[!] Minimaal 7 entries nodig voor voorspelling.")
+            return
+
+        context = self._get_mood_context()
+
+        if not self.client:
+            # Simpele trend berekening
+            scores = [e["score"] for e in self.data["entries"][-7:]]
+            trend = scores[0] - scores[-1] if len(scores) > 1 else 0
+            if trend > 0:
+                print("\n[Trend]: Stijgende lijn verwacht!")
+            elif trend < 0:
+                print("\n[Trend]: Let op jezelf, dalende trend.")
+            else:
+                print("\n[Trend]: Stabiele mood verwacht.")
+            return
+
+        print("\n[AI analyseert patronen...]")
+        prompt = f"""Analyseer deze mood data en geef een voorzichtige voorspelling.
+
+{context}
+
+Geef:
+1. Verwachte mood trend voor komende dagen
+2. Welke dag waarschijnlijk het beste wordt
+3. Tips om de mood positief te houden
+4. Waarschuwingen voor potentieel moeilijke momenten
+
+Wees voorzichtig met voorspellingen en benadruk dat dit slechts indicaties zijn.
+Antwoord in het Nederlands."""
+
+        response = self._ai_request(prompt, max_tokens=600)
+        if response:
+            print(f"\n[AI Mood Voorspelling]:")
+            print(response)
+        else:
+            print("[!] AI niet beschikbaar.")
+
+    def _ai_dagboek_reflectie(self):
+        """AI helpt met dagelijkse reflectie."""
+        print("\n--- AI DAGBOEK REFLECTIE ---")
+
+        print("\nHoe was je dag? Vertel me erover:")
+        print("(Typ wat er gebeurd is, hoe je je voelde, etc.)")
+        print("(Typ 'KLAAR' om te stoppen)")
+
+        regels = []
+        while True:
+            regel = input()
+            if regel.strip().upper() == "KLAAR":
+                break
+            regels.append(regel)
+
+        tekst = "\n".join(regels)
+        if not tekst.strip():
+            print("[!] Geen tekst ingevoerd.")
+            return
+
+        if not self.client:
+            print("\n[Reflectie]: Bedankt voor het delen!")
+            print("  Neem even de tijd om te waarderen wat je vandaag hebt meegemaakt.")
+            return
+
+        print("\n[AI reflecteert met je mee...]")
+        prompt = f"""Iemand deelt hun dag met je:
+
+"{tekst}"
+
+Geef een warme, empathische reflectie:
+1. Erken hun gevoelens
+2. Benoem positieve aspecten die je opvalt
+3. Geef een zachte, ondersteunende observatie
+4. Eindig met een positieve gedachte of vraag om over na te denken
+
+Wees als een warme, begripvolle vriend. Antwoord in het Nederlands."""
+
+        response = self._ai_request(prompt, max_tokens=500)
+        if response:
+            print(f"\n[AI Reflectie]:")
+            print(response)
+
+            # Optie om als notitie bij vandaag te voegen
+            opslaan = input("\nDeze reflectie opslaan bij vandaag? (j/n): ").strip().lower()
+            if opslaan == "j":
+                vandaag = datetime.now().date().isoformat()
+                vandaag_entries = [e for e in self.data["entries"] if e["datum"].startswith(vandaag)]
+                if vandaag_entries:
+                    vandaag_entries[-1]["notitie"] = f"{vandaag_entries[-1].get('notitie', '')} | Reflectie: {response[:200]}"
+                    self._sla_op()
+                    print("[OK] Reflectie opgeslagen!")
+                else:
+                    print("[i] Log eerst je mood om reflecties op te slaan.")
+        else:
+            print("[!] AI niet beschikbaar.")
