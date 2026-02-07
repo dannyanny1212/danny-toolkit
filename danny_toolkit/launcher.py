@@ -61,7 +61,10 @@ from .daemon.daemon_core import DigitalDaemon
 from .main_omega import OmegaAI
 from .brain.sanctuary_dashboard import SanctuaryDashboard, get_sanctuary
 from .brain.dream_monitor import dream_monitor, quick_peek
-from .brain.nexus_bridge import NexusBridge, create_nexus_bridge
+from .brain.nexus_bridge import (
+    NexusBridge, create_nexus_bridge,
+    get_nexus_greeting, NexusOracleMode,
+)
 from .brain.trinity_omega import PrometheusBrain, get_prometheus
 from .apps.visual_nexus import VisualNexus, build_visual_nexus
 
@@ -427,7 +430,7 @@ class NexusBridgeApp:
         """, Kleur.FEL_CYAAN))
 
         bridge = create_nexus_bridge()
-        greeting = bridge.get_context_aware_greeting()
+        greeting = get_nexus_greeting()
         print(kleur(f"  Nexus: {greeting}\n", Kleur.CYAAN))
 
         insights = bridge.get_proactive_insights()
@@ -435,8 +438,8 @@ class NexusBridgeApp:
             print(kleur("  INZICHTEN:", Kleur.FEL_GEEL))
             for ins in insights[:5]:
                 print(kleur(
-                    f"    - [{ins.get('type', '?')}] "
-                    f"{ins.get('bericht', '')}",
+                    f"    - [{ins.get('emotie', '?')}] "
+                    f"{ins.get('tekst', '')}",
                     Kleur.GEEL,
                 ))
             print()
@@ -463,8 +466,8 @@ class NexusBridgeApp:
                     if ins:
                         for i in ins[:5]:
                             print(kleur(
-                                f"  [{i.get('type', '?')}] "
-                                f"{i.get('bericht', '')}",
+                                f"  [{i.get('emotie', '?')}] "
+                                f"{i.get('tekst', '')}",
                                 Kleur.CYAAN,
                             ))
                     else:
@@ -473,17 +476,18 @@ class NexusBridgeApp:
                             Kleur.DIM,
                         ))
                 elif cmd == "greeting":
-                    g = bridge.get_context_aware_greeting()
+                    g = get_nexus_greeting()
                     print(kleur(f"  Nexus: {g}", Kleur.CYAAN))
                 elif cmd.startswith("oracle"):
                     query = cmd[7:].strip() if len(cmd) > 7 else ""
                     if not query:
                         query = input("  Query: ").strip()
                     if query:
-                        oracle = bridge.get_oracle_mode()
-                        result = oracle.query(query)
+                        oracle = NexusOracleMode(bridge)
+                        oracle.activate()
+                        result = oracle.divine_insight(query)
                         print(kleur(
-                            f"  Oracle: {result.get('answer', '...')}",
+                            f"  Oracle: {result}",
                             Kleur.FEL_MAGENTA,
                         ))
                 else:
