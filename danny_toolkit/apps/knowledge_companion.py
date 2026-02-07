@@ -110,12 +110,10 @@ class KnowledgeCompanion:
 
         print(kleur("\n[INIT] Knowledge Companion laden...", "cyaan"))
 
-        # Vector Store (gedeeld met RAG)
+        # Vector Store (eigen database voor companion)
         self.embedder = get_embedder(True)
-        self.vector_store = VectorStore(
-            self.embedder,
-            db_naam="knowledge_companion"
-        )
+        companion_db = Config.DATA_DIR / "knowledge_companion_vectors.json"
+        self.vector_store = VectorStore(self.embedder, db_file=companion_db)
 
         # Document processor
         self.processor = DocumentProcessor()
@@ -202,7 +200,7 @@ class KnowledgeCompanion:
         if nieuw_level > oud_level:
             self.data["level"] = nieuw_level
             self._update_persona()
-            print(kleur(f"\n  ★★★ LEVEL UP! ★★★", "geel"))
+            print(kleur(f"\n  *** LEVEL UP! ***", "geel"))
             print(kleur(f"  {self._get_companion_naam()} is nu level {nieuw_level}!", "geel"))
 
             # Achievement check
@@ -234,7 +232,7 @@ class KnowledgeCompanion:
 
         if beste_persona != self.data["persona"]:
             self.data["persona"] = beste_persona
-            print(kleur(f"\n  ✧ EVOLUTIE! ✧", "magenta"))
+            print(kleur(f"\n  ** EVOLUTIE! **", "magenta"))
             print(kleur(f"  Je companion is nu: {COMPANION_PERSONAS[beste_persona]['naam']}!", "magenta"))
             self._sla_op()
 
@@ -423,7 +421,9 @@ CONTEXT UIT KENNISBANK:
 {context_tekst}"""
 
             try:
-                antwoord = self.generator.genereer(vraag, resultaten, system_prompt)
+                # Gebruik chat methode met custom system prompt
+                berichten = [{"role": "user", "content": vraag}]
+                antwoord = self.generator.chat(berichten, systeem=system_prompt)
                 return antwoord
             except Exception as e:
                 pass
@@ -484,11 +484,9 @@ BRONNEN OM TE SYNTHETISEREN:
 {context}"""
 
             try:
-                synthese = self.generator.genereer(
-                    f"Synthetiseer kennis over: {onderwerp}",
-                    resultaten,
-                    system_prompt
-                )
+                # Gebruik chat methode met custom system prompt
+                berichten = [{"role": "user", "content": f"Synthetiseer kennis over: {onderwerp}"}]
+                synthese = self.generator.chat(berichten, systeem=system_prompt)
 
                 self._sla_op()
                 return synthese
@@ -510,7 +508,7 @@ BRONNEN OM TE SYNTHETISEREN:
         """Unlock een achievement."""
         if key not in self.data["achievements"]:
             self.data["achievements"].append(key)
-            print(kleur(f"\n  🏆 ACHIEVEMENT UNLOCKED: {key}!", "geel"))
+            print(kleur(f"\n  [ACHIEVEMENT] UNLOCKED: {key}!", "geel"))
             self._sla_op()
 
     # ========================================================================
