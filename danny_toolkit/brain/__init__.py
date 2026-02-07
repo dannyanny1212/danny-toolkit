@@ -45,6 +45,12 @@ from .dream_monitor import (
     quick_peek,
 )
 
+# Morning Protocol - 3-Laags Verificatie
+from .morning_protocol import (
+    run_morning_protocol,
+    quick_check,
+)
+
 # Prometheus Protocol - Federated Swarm Intelligence
 from .trinity_omega import (
     PrometheusBrain,
@@ -101,6 +107,9 @@ __all__ = [
     # Dream Monitor
     "dream_monitor",
     "quick_peek",
+    # Morning Protocol
+    "run_morning_protocol",
+    "quick_check",
     # Legacy Trinity Symbiosis
     "TrinitySymbiosis",
     "TrinityRole",
