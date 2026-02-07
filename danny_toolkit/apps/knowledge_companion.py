@@ -688,15 +688,48 @@ BRONNEN OM TE SYNTHETISEREN:
 
 
 class KnowledgeCompanionApp:
-    """Wrapper class voor launcher compatibiliteit."""
+    """Wrapper class voor launcher en Central Brain compatibiliteit."""
 
     def __init__(self):
-        self.companion = None
+        # Lazy load companion voor performance
+        self._companion = None
+
+    @property
+    def companion(self):
+        """Lazy load de companion."""
+        if self._companion is None:
+            self._companion = KnowledgeCompanion()
+        return self._companion
 
     def run(self):
-        """Start de Knowledge Companion."""
-        self.companion = KnowledgeCompanion()
+        """Start de interactieve Knowledge Companion."""
         self.companion.run()
+
+    # === DELEGATE METHODS VOOR CENTRAL BRAIN ===
+
+    def vraag(self, vraag: str) -> str:
+        """Stel een vraag aan de companion."""
+        return self.companion.vraag(vraag)
+
+    def voed(self, pad: str) -> dict:
+        """Voed de companion met een document."""
+        return self.companion.voed(pad)
+
+    def voed_url(self, url: str) -> dict:
+        """Voed de companion met een URL."""
+        return self.companion.voed_url(url)
+
+    def voed_tekst(self, tekst: str, doc_id: str = "document") -> dict:
+        """Voed de companion met tekst."""
+        return self.companion.voed_tekst(tekst, doc_id)
+
+    def synthetiseer(self, onderwerp: str) -> str:
+        """Synthetiseer kennis over een onderwerp."""
+        return self.companion.synthetiseer(onderwerp)
+
+    def status(self) -> dict:
+        """Haal de status van de companion op."""
+        return self.companion.status()
 
 
 def main():
