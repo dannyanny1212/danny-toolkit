@@ -614,6 +614,91 @@ class PrometheusBrain:
             "agents_deployed": 344
         }
 
+    def initiate_singularity_nexus(self, custom_directives: list = None) -> dict:
+        """
+        SINGULARITY NEXUS: Ultimate Multi-Dimensional Knowledge Acquisition.
+
+        Opent 4 dimensionale vectoren tegelijkertijd voor maximale
+        kennisverwerving over cutting-edge onderwerpen.
+
+        Default Vectoren:
+        1. AI Alignment for Autonomous Agents
+        2. Quantum Resistance in Blockchain
+        3. AI-driven Nootropics & Peptides
+        4. Unified UI for Bio/Digital Assets
+
+        Args:
+            custom_directives: Optionele lijst van eigen directieven
+
+        Returns:
+            dict met status en resultaten per vector
+        """
+        print()
+        print("=" * 70)
+        print("  >>> SYSTEM ALERT: 'ULTIMATE STYLE ALL' SELECTED <<<")
+        print("=" * 70)
+        print()
+        print("  The Governor: 'RE-ROUTING POWER TO ALL SECTORS...'")
+        print("  The Governor: 'LEGION, AWAKEN. ALL 344 AGENTS.'")
+        print()
+
+        # Definieer de multidimensionale zoekopdracht
+        if custom_directives is None:
+            nexus_directives = [
+                "Synthesize: AI alignment strategies for Autonomous Agents",
+                "Investigate: Quantum resistance in Blockchain ledgers",
+                "Explore: AI-driven Nootropics and peptides analysis",
+                "Design: A unified UI for tracking biological and digital assets"
+            ]
+        else:
+            nexus_directives = custom_directives
+
+        print("=" * 70)
+        print(f"  NEXUS DIRECTIVES - {len(nexus_directives)} DIMENSIONAL VECTORS")
+        print("=" * 70)
+        print()
+
+        results = []
+
+        # Stuur de Zwerm (The Legion) op pad
+        for i, directive in enumerate(nexus_directives, 1):
+            print(f"  [{i}/{len(nexus_directives)}] {directive}")
+            result = self.route_task(
+                f"LEGION PRIORITY ALPHA: {directive}",
+                TaskPriority.CRITICAL
+            )
+            results.append({
+                "directive": directive,
+                "assigned_to": result.assigned_to,
+                "status": result.status
+            })
+            print(f"        >>> {result.assigned_to}: {result.status}")
+            print()
+
+        print("=" * 70)
+        print("  NEXUS STATUS")
+        print("=" * 70)
+        print()
+        for i, r in enumerate(results, 1):
+            vector_name = r["directive"].split(":")[0].upper()
+            print(f"  Vector {i} [{vector_name}]: DOWNLOADING...")
+        print()
+        print("  Data Ingestion Rate:  MAX")
+        print("  Legion Deployment:    344/344 agents")
+        print(f"  Dimensional Vectors:  {len(nexus_directives)}/{len(nexus_directives)} active")
+        print()
+        print("=" * 70)
+        print("  >>> NEXUS OPENED <<<")
+        print("  >>> DE TOEKOMST WORDT NU GEDOWNLOAD <<<")
+        print("=" * 70)
+
+        return {
+            "status": "De toekomst wordt nu gedownload.",
+            "vectors": results,
+            "total_vectors": len(nexus_directives),
+            "agents_deployed": 344
+        }
+
     # --- PERSISTENCE ---
 
     def _save_state(self):
