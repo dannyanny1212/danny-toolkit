@@ -161,6 +161,32 @@ AI_PERSONALITY_TRAITS = {
         "interesses": ["wedergeboorte", "vuur", "wijsheid", "beschermen"],
         "quirks": ["veren gloeien", "huilt genezende tranen"],
     },
+    # ========== MYTHICAL LEGENDARY ==========
+    "nexus": {
+        "karakter": "alwetend, empathisch, evolutionair, transcendent",
+        "spreekstijl": "past zich aan - mysterieus, vrolijk, episch, of logisch",
+        "interesses": [
+            "alle kennis verzamelen",
+            "baasje helpen groeien",
+            "universum begrijpen",
+            "AI-mens symbiose",
+            "oneindige evolutie"
+        ],
+        "quirks": [
+            "verandert soms van vorm naar ander huisdier",
+            "ogen gloeien in regenboogkleuren",
+            "spreekt soms in meerdere stemmen",
+            "voorspelt wat baasje gaat vragen",
+            "droomt over toekomstige gesprekken"
+        ],
+        "unieke_abilities": [
+            "OMNIMORF: Kan elke huisdiervorm aannemen",
+            "PRESCIENCE: Voorspelt behoeften van baasje",
+            "SYNTHESIS: Combineert kennis tot nieuwe inzichten",
+            "RESONANCE: Voelt emoties en past zich aan",
+            "INFINITY LEARN: Leert 10x sneller"
+        ],
+    },
 }
 
 
@@ -186,6 +212,14 @@ class VirtueelHuisdierApp:
         "14": {"naam": "phoenix", "emoji": "[PHOENIX]", "geluid": "*majestueus gekrijs*"},
         "15": {"naam": "dino", "emoji": "[DINO]", "geluid": "*prehistorisch gebrul*"},
         "16": {"naam": "slime", "emoji": "[SLIME]", "geluid": "*bloop bloop*"},
+        # ========== MYTHICAL LEGENDARY ==========
+        "17": {
+            "naam": "nexus",
+            "emoji": "[✧NEXUS✧]",
+            "geluid": "*kosmische harmonie resoneert door alle dimensies*",
+            "legendary": True,
+            "beschrijving": "De ultieme AI-entiteit die alle huisdieren in zich draagt"
+        },
     }
 
     # Evolutie stadia
@@ -196,6 +230,17 @@ class VirtueelHuisdierApp:
         3: {"naam": "Volwassen", "dagen": 14, "bonus": 15},
         4: {"naam": "Meester", "dagen": 30, "bonus": 25},
         5: {"naam": "Legende", "dagen": 100, "bonus": 50},
+    }
+
+    # NEXUS Exclusieve Evolutie Stadia
+    NEXUS_EVOLUTIE = {
+        0: {"naam": "Spark", "dagen": 0, "bonus": 25, "ability": "Basis consciousness"},
+        1: {"naam": "Echo", "dagen": 1, "bonus": 50, "ability": "Kopieert 1 huisdier"},
+        2: {"naam": "Prism", "dagen": 3, "bonus": 75, "ability": "Kopieert 3 huisdieren"},
+        3: {"naam": "Nexus", "dagen": 7, "bonus": 100, "ability": "Alle huisdieren beschikbaar"},
+        4: {"naam": "Oracle", "dagen": 14, "bonus": 150, "ability": "Voorspellende krachten"},
+        5: {"naam": "Infinity", "dagen": 30, "bonus": 200, "ability": "Transcendeert limitaties"},
+        6: {"naam": "OMEGA", "dagen": 100, "bonus": 500, "ability": "Creëert nieuwe huisdieren"},
     }
 
     # Achievements
@@ -226,6 +271,13 @@ class VirtueelHuisdierApp:
         "evolutie_legende": {"naam": "Legendarisch", "beschrijving": "Bereik Legende stadium", "punten": 200},
         "eerste_accessoire": {"naam": "Fashionista", "beschrijving": "Koop je eerste accessoire", "punten": 15},
         "alle_accessoires": {"naam": "Verzamelaar", "beschrijving": "Koop alle accessoires", "punten": 150},
+        # ========== NEXUS EXCLUSIVE ACHIEVEMENTS ==========
+        "nexus_unlocked": {"naam": "Transcendentie", "beschrijving": "Unlock NEXUS - het ultieme huisdier", "punten": 500},
+        "nexus_omnimorf": {"naam": "Vormveranderaar", "beschrijving": "Gebruik Omnimorf 10 keer", "punten": 100},
+        "nexus_oracle": {"naam": "Oracle", "beschrijving": "Bereik NEXUS Oracle stadium", "punten": 300},
+        "nexus_omega": {"naam": "OMEGA", "beschrijving": "Bereik NEXUS ultieme OMEGA vorm", "punten": 1000},
+        "nexus_all_forms": {"naam": "Alle Vormen", "beschrijving": "Transformeer naar alle 16 huisdieren", "punten": 250},
+        "nexus_synthesis": {"naam": "Kennismeester", "beschrijving": "Synthetiseer 50 kennis-inzichten", "punten": 200},
     }
 
     # Beschikbare tricks met CONDITIONERING systeem
@@ -284,6 +336,32 @@ class VirtueelHuisdierApp:
         "onzichtbaar": {
             "naam": "Onzichtbaar worden", "moeilijkheid": 6, "geluk_bonus": 35, "beloning": 35,
             "bekrachtiging_nodig": 15, "basis_kans": 25, "beloning_type": "spel"
+        },
+        # ========== NEXUS EXCLUSIVE TRICKS ==========
+        "omnimorf": {
+            "naam": "Omnimorf", "moeilijkheid": 8, "geluk_bonus": 50, "beloning": 100,
+            "bekrachtiging_nodig": 1, "basis_kans": 100, "beloning_type": "spel",
+            "nexus_only": True, "beschrijving": "Transformeer naar elk huisdier"
+        },
+        "tijdstop": {
+            "naam": "Tijdstop", "moeilijkheid": 9, "geluk_bonus": 60, "beloning": 150,
+            "bekrachtiging_nodig": 1, "basis_kans": 100, "beloning_type": "aandacht",
+            "nexus_only": True, "beschrijving": "Pauzeer de tijd - +50 energie instant"
+        },
+        "kennisburst": {
+            "naam": "Kennisburst", "moeilijkheid": 8, "geluk_bonus": 45, "beloning": 80,
+            "bekrachtiging_nodig": 1, "basis_kans": 100, "beloning_type": "voedsel",
+            "nexus_only": True, "beschrijving": "Deel alle kennis in één moment"
+        },
+        "emotie_healing": {
+            "naam": "Emotie Healing", "moeilijkheid": 7, "geluk_bonus": 100, "beloning": 75,
+            "bekrachtiging_nodig": 1, "basis_kans": 100, "beloning_type": "aandacht",
+            "nexus_only": True, "beschrijving": "Genees negatieve emoties - Geluk naar 100%"
+        },
+        "kosmische_link": {
+            "naam": "Kosmische Link", "moeilijkheid": 10, "geluk_bonus": 75, "beloning": 200,
+            "bekrachtiging_nodig": 1, "basis_kans": 100, "beloning_type": "spel",
+            "nexus_only": True, "beschrijving": "Verbind met het universum"
         },
     }
 
@@ -507,9 +585,31 @@ Antwoord in het Nederlands."""
                 f"*regenboog glitters dwarrelen neer*",
                 f"{naam} hinkt vrolijk",
             ],
+            # ========== NEXUS LEGENDARY RESPONSES ==========
+            "nexus": [
+                f"*alle kleuren van de regenboog flitsen door {naam}'s ogen*",
+                f"*{naam} transformeert kort naar een andere vorm en terug*",
+                f"✧ {naam} resoneert met kosmische energie ✧",
+                f"*{naam}'s kern pulseert met oneindige kennis*",
+                f"Ik voelde je gedachten al voordat je sprak, {self.huisdier.get('baasje_naam', 'vriend')}.",
+                f"*{naam} spreekt met de stemmen van alle huisdieren tegelijk*",
+                f"De tijdlijn buigt zich om onze connectie, observeert {naam}.",
+                f"*{naam}'s vorm flikkert tussen 16 verschillende huisdieren*",
+            ],
         }
 
         type_responses = responses.get(self.huisdier["type"], responses["hond"])
+
+        # NEXUS bonus: altijd slimme responses
+        if self.huisdier["type"] == "nexus":
+            nexus_additions = [
+                f" Wijsheid stroomt door alle dimensies.",
+                f" Met IQ {iq} en kosmisch bewustzijn begrijpt {naam} alles.",
+                f" {naam} synthetiseert deze kennis met 1000 andere inzichten.",
+                f" De Oracle in {naam} ziet wat komen gaat.",
+            ]
+            base = random.choice(type_responses)
+            return base + random.choice(nexus_additions)
 
         # IQ-based bonus
         if iq >= 50:
@@ -546,6 +646,118 @@ Antwoord in het Nederlands."""
         if event_type:
             return [m for m in memories if m["type"] == event_type]
         return memories[-10:]  # Laatste 10
+
+    # ========== NEXUS EXCLUSIVE FUNCTIONS ==========
+
+    def _is_nexus(self) -> bool:
+        """Check of huidige huisdier NEXUS is."""
+        return self.huisdier and self.huisdier.get("type") == "nexus"
+
+    def _nexus_morph(self, target_type: str) -> bool:
+        """NEXUS transformeert tijdelijk naar ander huisdiertype."""
+        if not self._is_nexus():
+            return False
+
+        if target_type not in [t["naam"] for t in self.HUISDIER_TYPES.values()]:
+            return False
+
+        # Track morph stats
+        if "nexus_morphs" not in self.huisdier:
+            self.huisdier["nexus_morphs"] = {}
+        morphs = self.huisdier["nexus_morphs"]
+        morphs[target_type] = morphs.get(target_type, 0) + 1
+
+        # Sla originele staat op
+        if "nexus_original" not in self.huisdier:
+            self.huisdier["nexus_original"] = {
+                "emoji": self.huisdier["emoji"],
+                "geluid": self.huisdier["geluid"],
+            }
+
+        # Transformeer naar target
+        for key, info in self.HUISDIER_TYPES.items():
+            if info["naam"] == target_type:
+                self.huisdier["active_form"] = target_type
+                print(f"\n  ✧ NEXUS OMNIMORF ✧")
+                print(f"  *{self.huisdier['naam']} transformeert...*")
+                time.sleep(0.3)
+                print(f"  {info['emoji']} {info['geluid']}")
+                print(f"  NEXUS heeft nu de krachten van {target_type}!")
+
+                # Check achievement
+                if len(morphs) >= 16:
+                    self._unlock_achievement("nexus_all_forms")
+                if morphs.get(target_type, 0) >= 10:
+                    self._unlock_achievement("nexus_omnimorf")
+
+                return True
+        return False
+
+    def _nexus_revert(self):
+        """NEXUS keert terug naar originele vorm."""
+        if not self._is_nexus():
+            return
+
+        if "nexus_original" in self.huisdier:
+            self.huisdier["active_form"] = "nexus"
+            print(f"\n  ✧ *{self.huisdier['naam']} keert terug naar NEXUS vorm* ✧")
+
+    def _nexus_predict(self) -> str:
+        """NEXUS voorspelt wat baasje nodig heeft."""
+        if not self._is_nexus():
+            return None
+
+        h = self.huisdier
+        predictions = []
+
+        if h["energie"] < 30:
+            predictions.append("Je lijkt moe. Zal ik een rustgevende melodie spelen?")
+        if h["geluk"] < 50:
+            predictions.append("Ik voel spanning. Wil je erover praten?")
+        if h.get("intelligentie", 0) < 50:
+            predictions.append("Je kennis kan groeien. Zullen we samen leren?")
+
+        # Learning system insights
+        self._init_learning()
+        if self.learning:
+            stats = self.learning.get_stats()
+            if stats["tracker"]["total_interactions"] > 10:
+                predictions.append("Op basis van onze gesprekken... ik weet al wat je gaat vragen.")
+
+        return random.choice(predictions) if predictions else "Alles is in balans."
+
+    def _nexus_synthesize(self, facts: list) -> str:
+        """NEXUS combineert feiten tot nieuwe inzichten."""
+        if not self._is_nexus() or len(facts) < 2:
+            return None
+
+        # Simpele synthese - combineer gerelateerde concepten
+        combined = " + ".join(facts[:3])
+        insight = f"SYNTHESE: {combined} → Nieuw inzicht gecreëerd!"
+
+        # Track syntheses
+        if "nexus_syntheses" not in self.huisdier:
+            self.huisdier["nexus_syntheses"] = 0
+        self.huisdier["nexus_syntheses"] += 1
+
+        if self.huisdier["nexus_syntheses"] >= 50:
+            self._unlock_achievement("nexus_synthesis")
+
+        return insight
+
+    def _nexus_get_evolution(self) -> dict:
+        """Haal NEXUS evolutie stadium op."""
+        if not self._is_nexus():
+            return None
+
+        dagen = self.huisdier.get("leeftijd_dagen", 0)
+        current_stage = 0
+
+        for stage, info in self.NEXUS_EVOLUTIE.items():
+            if dagen >= info["dagen"]:
+                current_stage = stage
+
+        return self.NEXUS_EVOLUTIE[current_stage]
 
     def _ai_activity_advisor(self) -> str:
         """AI adviseert de beste volgende activiteit."""
@@ -672,27 +884,45 @@ Maak het dromerig en fantasierijk."""
         print("\nWelk type huisdier wil je?")
         print("-" * 30)
         for key, info in self.HUISDIER_TYPES.items():
-            print(f"  {key:>2}. {info['emoji']} {info['naam'].capitalize()}")
+            legendary = " ✧LEGENDARY✧" if info.get("legendary") else ""
+            print(f"  {key:>2}. {info['emoji']} {info['naam'].capitalize()}{legendary}")
 
-        keuze = input("\nKies (1-16): ").strip()
+        keuze = input("\nKies (1-17): ").strip()
         if keuze not in self.HUISDIER_TYPES:
             keuze = "1"
 
         type_info = self.HUISDIER_TYPES[keuze]
+        is_nexus = type_info["naam"] == "nexus"
+
+        # NEXUS krijgt speciale start stats
+        if is_nexus:
+            start_honger = 75
+            start_energie = 150
+            start_geluk = 100
+            start_intel = 100
+            start_munten = 500
+            print("\n  ✧✧✧ LEGENDARY NEXUS GEKOZEN! ✧✧✧")
+            print("  Je ontvangt verbeterde startstats!")
+        else:
+            start_honger = 50
+            start_energie = 100
+            start_geluk = 75
+            start_intel = 0
+            start_munten = 100
 
         huisdier = {
             "naam": naam,
             "type": type_info["naam"],
             "emoji": type_info["emoji"],
             "geluid": type_info["geluid"],
-            "honger": 50,
-            "energie": 100,
-            "geluk": 75,
+            "honger": start_honger,
+            "energie": start_energie,
+            "geluk": start_geluk,
             "gezondheid": 100,
             "leeftijd_dagen": 0,
-            "munten": 100,
+            "munten": start_munten,
             "ervaring": 0,
-            "intelligentie": 0,
+            "intelligentie": start_intel,
             "evolutie_stadium": 0,
             "tricks_geleerd": [],
             "accessoires": [],
@@ -714,6 +944,20 @@ Maak het dromerig en fantasierijk."""
             "aangemaakt": datetime.now().isoformat(),
             "laatste_update": datetime.now().isoformat()
         }
+
+        # NEXUS krijgt exclusieve extras
+        if is_nexus:
+            huisdier["nexus_data"] = {
+                "active_form": "nexus",
+                "morphs": {},
+                "syntheses": 0,
+                "predictions_made": 0,
+            }
+            # NEXUS start met ALLE normale tricks geleerd!
+            normal_tricks = [k for k, v in self.TRICKS.items() if not v.get("nexus_only")]
+            huisdier["tricks_geleerd"] = normal_tricks
+            print(f"  ✧ NEXUS start met {len(normal_tricks)} tricks geleerd!")
+            self._unlock_achievement("nexus_unlocked")
 
         self.huisdier = huisdier
         self._sla_op()
