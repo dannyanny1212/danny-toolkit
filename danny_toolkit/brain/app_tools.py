@@ -1364,6 +1364,43 @@ APP_TOOLS: Dict[str, AppDefinition] = {
                 beschrijving="Toon mogelijk evolutie pad en vereisten",
                 parameters={}
             ),
+            AppActie(
+                naam="say",
+                beschrijving="Stel een vraag EN spreek het antwoord uit met emotionele stem",
+                parameters={
+                    "vraag": {
+                        "type": "string",
+                        "description": "De vraag om te beantwoorden en uit te spreken",
+                        "required": True
+                    }
+                }
+            ),
+            AppActie(
+                naam="speak",
+                beschrijving="Spreek tekst uit met emotionele stem detectie",
+                parameters={
+                    "tekst": {
+                        "type": "string",
+                        "description": "Tekst om uit te spreken",
+                        "required": True
+                    }
+                }
+            ),
+            AppActie(
+                naam="voice_toggle",
+                beschrijving="Schakel emotionele stem in of uit",
+                parameters={
+                    "enabled": {
+                        "type": "boolean",
+                        "description": "True om in te schakelen, False om uit te schakelen"
+                    }
+                }
+            ),
+            AppActie(
+                naam="voice_status",
+                beschrijving="Bekijk voice engine status (backends, enabled, etc)",
+                parameters={}
+            ),
         ]
     ),
 }

@@ -238,6 +238,8 @@ class Config:
     ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
     VOYAGE_API_KEY = os.environ.get("VOYAGE_API_KEY", "")
     GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+    ELEVENLABS_API_KEY = os.environ.get("ELEVENLABS_API_KEY", "")
+    OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
     # Models
     CLAUDE_MODEL = "claude-sonnet-4-20250514"
@@ -303,6 +305,16 @@ class Config:
         return bool(cls.GROQ_API_KEY)
 
     @classmethod
+    def has_elevenlabs_key(cls) -> bool:
+        """Check of ElevenLabs API key beschikbaar is."""
+        return bool(cls.ELEVENLABS_API_KEY)
+
+    @classmethod
+    def has_openai_key(cls) -> bool:
+        """Check of OpenAI API key beschikbaar is."""
+        return bool(cls.OPENAI_API_KEY)
+
+    @classmethod
     def laad_env_bestand(cls, pad: Path = None) -> dict:
         """
         Laad environment variables uit .env bestand.
@@ -328,6 +340,8 @@ class Config:
         cls.ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
         cls.VOYAGE_API_KEY = os.environ.get("VOYAGE_API_KEY", "")
         cls.GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+        cls.ELEVENLABS_API_KEY = os.environ.get("ELEVENLABS_API_KEY", "")
+        cls.OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
         return geladen
 

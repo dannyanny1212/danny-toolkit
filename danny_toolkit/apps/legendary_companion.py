@@ -8,7 +8,7 @@ Upgrades:
 1. Dynamic Evolution - Document flavor bepaalt evolutie
 2. Active Nudge - Spaced repetition quiz systeem
 3. Dream Mode - Nachtelijke inzichten generatie
-4. Audio-First - Emotionele spraak (future)
+4. Audio-First - Emotionele spraak met sentiment detectie
 """
 
 import json
@@ -25,6 +25,15 @@ from ..core.vector_store import VectorStore
 from ..core.embeddings import get_embedder
 from ..core.document_processor import DocumentProcessor
 from ..core.generator import Generator
+
+# Audio-First imports (optioneel)
+try:
+    from ..core.emotional_voice import EmotionalVoice, SentimentAnalyzer, Emotion
+    VOICE_AVAILABLE = True
+except ImportError:
+    VOICE_AVAILABLE = False
+    EmotionalVoice = None
+    Emotion = None
 
 
 # =============================================================================
@@ -580,6 +589,20 @@ class LegendaryCompanion:
         print(kleur(f"   [OK] Form: {form['emoji']} {form['naam']}", "groen"))
         print(kleur(f"   [OK] XP: {self.data['xp']} | Docs: {self.data['stats']['totaal_docs']}", "groen"))
 
+        # Audio-First: Emotionele stem
+        self.voice = None
+        self.voice_enabled = self.data.get("voice_enabled", False)
+        if VOICE_AVAILABLE:
+            try:
+                self.voice = EmotionalVoice()
+                status = self.voice.get_status()
+                if status["active_backend"] != "none":
+                    print(kleur(f"   [OK] Voice: {status['active_backend'].upper()}", "groen"))
+                else:
+                    print(kleur("   [!] Voice: Geen TTS backend", "geel"))
+            except Exception as e:
+                print(kleur(f"   [!] Voice error: {e}", "geel"))
+
     def _laad_data(self) -> dict:
         """Laad companion data."""
         if self.data_file.exists():
@@ -811,6 +834,63 @@ Antwoord in karakter, gebaseerd op de context."""
 
         return f"{prefix}\n\n{context}..."
 
+    def speak(self, text: str, play_audio: bool = True) -> dict:
+        """
+        Spreek tekst uit met emotionele stem.
+
+        Args:
+            text: Tekst om te spreken
+            play_audio: Direct afspelen (True) of alleen analyseren
+
+        Returns:
+            Dict met emotion, confidence, audio_path
+        """
+        if not self.voice or not self.voice_enabled:
+            return {
+                "text": text,
+                "emotion": "neutral",
+                "voice_enabled": False,
+                "message": "Voice is uitgeschakeld. Gebruik 'voice on' om in te schakelen."
+            }
+
+        return self.voice.speak_with_analysis(text, play_audio)
+
+    def ask_and_speak(self, question: str) -> Tuple[str, dict]:
+        """
+        Stel een vraag en spreek het antwoord uit.
+
+        Returns:
+            Tuple van (antwoord_tekst, voice_info)
+        """
+        answer = self.ask(question)
+        voice_info = self.speak(answer)
+        return answer, voice_info
+
+    def toggle_voice(self, enabled: bool = None) -> bool:
+        """Schakel voice in/uit."""
+        if enabled is None:
+            self.voice_enabled = not self.voice_enabled
+        else:
+            self.voice_enabled = enabled
+
+        self.data["voice_enabled"] = self.voice_enabled
+        self._sla_op()
+        return self.voice_enabled
+
+    def get_voice_status(self) -> dict:
+        """Haal voice engine status op."""
+        if not self.voice:
+            return {
+                "available": False,
+                "enabled": False,
+                "message": "Voice module niet beschikbaar"
+            }
+
+        status = self.voice.get_status()
+        status["enabled"] = self.voice_enabled
+        status["available"] = VOICE_AVAILABLE
+        return status
+
     # =========================================================================
     # QUIZ - Active Nudge
     # =========================================================================
@@ -996,9 +1076,12 @@ ANTWOORD: [het antwoord]"""
 
         print(kleur("\nCOMMANDO'S:", "geel"))
         print("  ask <vraag>    - Stel een vraag")
+        print("  say <vraag>    - Vraag + spreek antwoord uit")
         print("  feed <tekst>   - Voed met kennis")
         print("  file <pad>     - Voed met bestand")
         print("  quiz           - Start quiz")
+        print("  dream          - Activeer dream mode")
+        print("  voice on/off   - Schakel stem in/uit")
         print("  status         - Toon status")
         print("  stop           - Afsluiten")
 
@@ -1063,6 +1146,55 @@ ANTWOORD: [het antwoord]"""
                         pass
                 else:
                     print(kleur("[OK] Geen quizzes op dit moment!", "groen"))
+
+            elif cmd == "say" and args:
+                # Vraag + spreek antwoord uit
+                answer, voice_info = self.ask_and_speak(args)
+                print(kleur("\n" + "=" * 50, "groen"))
+                print(answer)
+                print(kleur("=" * 50, "groen"))
+                if voice_info.get("emotion"):
+                    print(kleur(f"[VOICE] Emotie: {voice_info['emotion']} | Backend: {voice_info.get('backend', 'none')}", "magenta"))
+
+            elif cmd == "voice":
+                if args.lower() == "on":
+                    self.toggle_voice(True)
+                    print(kleur("[OK] Voice ingeschakeld!", "groen"))
+                    status = self.get_voice_status()
+                    print(kleur(f"     Backend: {status.get('active_backend', 'none')}", "cyaan"))
+                elif args.lower() == "off":
+                    self.toggle_voice(False)
+                    print(kleur("[OK] Voice uitgeschakeld", "geel"))
+                elif args.lower() == "status":
+                    status = self.get_voice_status()
+                    print(kleur("\n[VOICE STATUS]", "cyaan"))
+                    print(f"  Enabled: {status.get('enabled', False)}")
+                    print(f"  Backend: {status.get('active_backend', 'none')}")
+                    print(f"  ElevenLabs: {status.get('elevenlabs', False)}")
+                    print(f"  Edge-TTS: {status.get('edge_tts', False)}")
+                    print(f"  pyttsx3: {status.get('pyttsx3', False)}")
+                else:
+                    self.toggle_voice()
+                    staat = "aan" if self.voice_enabled else "uit"
+                    print(kleur(f"[OK] Voice staat nu {staat}", "groen"))
+
+            elif cmd == "speak" and args:
+                # Direct tekst uitspreken
+                result = self.speak(args)
+                if result.get("voice_enabled") == False:
+                    print(kleur(result.get("message", "Voice uitgeschakeld"), "geel"))
+                else:
+                    print(kleur(f"[VOICE] Emotie: {result['emotion']}", "magenta"))
+
+            elif cmd == "dream":
+                print(kleur("\n[DREAM] Activeren dream mode...", "magenta"))
+                insights = self.dream_engine.run_dream_cycle()
+                if insights:
+                    print(kleur(f"[OK] {len(insights)} inzichten gegenereerd:", "groen"))
+                    for insight in insights:
+                        print(kleur(f"  - {insight[:100]}...", "magenta"))
+                else:
+                    print(kleur("[!] Niet genoeg documenten voor dromen. Voed me meer!", "geel"))
 
             elif cmd == "status":
                 self.toon_status()
@@ -1171,6 +1303,31 @@ class LegendaryCompanionApp:
             "flavor_punten": flavors,
             "mogelijke_evoluties": possible[:5]
         }
+
+    # Voice delegate methods
+    def speak(self, tekst: str) -> dict:
+        """Spreek tekst uit met emotie."""
+        return self.companion.speak(tekst)
+
+    def say(self, vraag: str) -> dict:
+        """Vraag + spreek antwoord uit."""
+        answer, voice_info = self.companion.ask_and_speak(vraag)
+        return {
+            "antwoord": answer,
+            "voice": voice_info
+        }
+
+    def voice_toggle(self, enabled: bool = None) -> dict:
+        """Toggle voice aan/uit."""
+        result = self.companion.toggle_voice(enabled)
+        return {
+            "voice_enabled": result,
+            "status": self.companion.get_voice_status()
+        }
+
+    def voice_status(self) -> dict:
+        """Haal voice status op."""
+        return self.companion.get_voice_status()
 
 
 def main():
