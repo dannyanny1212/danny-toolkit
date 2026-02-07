@@ -35,6 +35,14 @@ except ImportError:
     EmotionalVoice = None
     Emotion = None
 
+# THE HUNT imports (optioneel)
+try:
+    from ..core.ultimate_hunt import UltimateHunt, HuntStatus, HuntAnimator
+    HUNT_AVAILABLE = True
+except ImportError:
+    HUNT_AVAILABLE = False
+    UltimateHunt = None
+
 
 # =============================================================================
 # DOCUMENT FLAVORS - Bepaalt evolutie richting
@@ -892,6 +900,94 @@ Antwoord in karakter, gebaseerd op de context."""
         return status
 
     # =========================================================================
+    # THE HUNT - Ultimate Go Fetch
+    # =========================================================================
+
+    def hunt(self, query: str) -> dict:
+        """
+        THE HUNT - Stuur companion op jacht!
+
+        Args:
+            query: Wat te zoeken
+
+        Returns:
+            Hunt resultaten met trofee
+        """
+        if not HUNT_AVAILABLE:
+            return {
+                "success": False,
+                "error": "Hunt module niet beschikbaar"
+            }
+
+        import asyncio
+
+        # Maak hunter met companion naam
+        hunter = UltimateHunt(pet_name=self.data.get("naam", "Buddy"))
+
+        # Voer hunt uit
+        try:
+            result = asyncio.run(hunter.hunt(query))
+
+            # Geef XP aan companion
+            if result.get("success"):
+                xp_gain = 30 if result.get("best") else 10
+                self.data["xp"] += xp_gain
+                self._update_evolution()
+                self._sla_op()
+                result["companion_xp_gained"] = xp_gain
+
+            return result
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    def hunt_with_context(self, query: str,
+                          notes: List[str] = None,
+                          agenda: List[str] = None) -> dict:
+        """
+        Hunt met extra context (notities, agenda).
+
+        Args:
+            query: Zoekvraag
+            notes: Recente notities
+            agenda: Agenda items
+
+        Returns:
+            Hunt resultaten
+        """
+        if not HUNT_AVAILABLE:
+            return {"success": False, "error": "Hunt niet beschikbaar"}
+
+        import asyncio
+
+        hunter = UltimateHunt(pet_name=self.data.get("naam", "Buddy"))
+
+        try:
+            result = asyncio.run(hunter.hunt(query, notes, agenda))
+
+            if result.get("success"):
+                self.data["xp"] += 30
+                self._update_evolution()
+                self._sla_op()
+
+            return result
+
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    def hunt_feedback(self, was_good: bool, source: str = None):
+        """Good Boy / Bad Dog feedback voor hunt."""
+        if was_good:
+            self.data["xp"] += 10
+            print(kleur(f"\n  {self.data['naam']}: *kwispelt* BRAAF! +10 XP", "groen"))
+        else:
+            print(kleur(f"\n  {self.data['naam']}: *oren omlaag* Sorry baas...", "geel"))
+        self._sla_op()
+
+    # =========================================================================
     # QUIZ - Active Nudge
     # =========================================================================
 
@@ -1075,6 +1171,7 @@ ANTWOORD: [het antwoord]"""
             print(kleur(f"  Quiz: {quiz['vraag']}", "geel"))
 
         print(kleur("\nCOMMANDO'S:", "geel"))
+        print("  hunt <query>   - THE HUNT - Stuur op jacht!")
         print("  ask <vraag>    - Stel een vraag")
         print("  say <vraag>    - Vraag + spreek antwoord uit")
         print("  feed <tekst>   - Voed met kennis")
@@ -1106,6 +1203,19 @@ ANTWOORD: [het antwoord]"""
                 prefix = random.choice(personality["voorvoegsels"])
                 print(kleur(f"\n{form['emoji']} {prefix} Tot de volgende keer!", "cyaan"))
                 break
+
+            elif cmd == "hunt" and args:
+                # THE HUNT!
+                result = self.hunt(args)
+                if result.get("success"):
+                    # Good Boy / Bad Dog feedback
+                    feedback = input("\n  Was dit nuttig? (j=Braaf / n=Stout): ").strip().lower()
+                    if feedback == "j":
+                        self.hunt_feedback(True, result.get("best", {}).bron if result.get("best") else None)
+                    elif feedback == "n":
+                        self.hunt_feedback(False)
+                else:
+                    print(kleur(f"[!] {result.get('error', 'Hunt mislukt')}", "rood"))
 
             elif cmd == "ask" and args:
                 answer = self.ask(args)
@@ -1328,6 +1438,21 @@ class LegendaryCompanionApp:
     def voice_status(self) -> dict:
         """Haal voice status op."""
         return self.companion.get_voice_status()
+
+    # THE HUNT delegate methods
+    def hunt(self, query: str) -> dict:
+        """THE HUNT - Stuur companion op jacht!"""
+        return self.companion.hunt(query)
+
+    def hunt_with_context(self, query: str,
+                          notes: List[str] = None,
+                          agenda: List[str] = None) -> dict:
+        """Hunt met extra context."""
+        return self.companion.hunt_with_context(query, notes, agenda)
+
+    def hunt_feedback(self, was_good: bool, source: str = None):
+        """Good Boy / Bad Dog feedback."""
+        self.companion.hunt_feedback(was_good, source)
 
 
 def main():

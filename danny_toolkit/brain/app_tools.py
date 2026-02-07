@@ -1401,6 +1401,38 @@ APP_TOOLS: Dict[str, AppDefinition] = {
                 beschrijving="Bekijk voice engine status (backends, enabled, etc)",
                 parameters={}
             ),
+            AppActie(
+                naam="hunt",
+                beschrijving="THE HUNT - Stuur companion op jacht door meerdere bronnen (RAG, nieuws, code, archief)",
+                parameters={
+                    "query": {
+                        "type": "string",
+                        "description": "Wat te zoeken - companion analyseert context en kiest bronnen",
+                        "required": True
+                    }
+                }
+            ),
+            AppActie(
+                naam="hunt_with_context",
+                beschrijving="Hunt met extra context van notities en agenda voor betere resultaten",
+                parameters={
+                    "query": {
+                        "type": "string",
+                        "description": "Zoekvraag",
+                        "required": True
+                    },
+                    "notes": {
+                        "type": "array",
+                        "description": "Recente notities voor context",
+                        "items": {"type": "string"}
+                    },
+                    "agenda": {
+                        "type": "array",
+                        "description": "Agenda items voor context",
+                        "items": {"type": "string"}
+                    }
+                }
+            ),
         ]
     ),
 }
