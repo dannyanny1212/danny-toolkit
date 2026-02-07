@@ -53,6 +53,10 @@ from .ai.nieuws_agent import NieuwsAgentApp
 from .ai.weer_agent import WeerAgentApp
 from .ai.claude_chat import ClaudeChatApp
 from .brain.brain_cli import BrainCLI
+from .brain.trinity_symbiosis import (
+    TrinitySymbiosis, TrinityRole, get_trinity,
+    connect_iolaax, connect_pixel, connect_daemon, emit_trinity_event
+)
 from .daemon.daemon_core import DigitalDaemon
 
 
@@ -144,6 +148,129 @@ class DaemonApp:
 
         self.daemon.sleep()
         input("\n  Druk op Enter...")
+
+
+# =============================================================================
+# TRINITY SYMBIOSIS WRAPPER
+# =============================================================================
+
+class TrinityApp:
+    """Wrapper voor Trinity Symbiosis in launcher."""
+
+    def __init__(self):
+        self.trinity = None
+
+    def run(self):
+        """Start de Trinity Symbiosis interface."""
+        from .core.utils import clear_scherm, kleur
+
+        clear_scherm()
+        print(kleur("""
++===============================================================+
+|                                                               |
+|     T R I N I T Y   S Y M B I O S I S                         |
+|                                                               |
+|     MIND + SOUL + BODY = Complete Digital Being               |
+|                                                               |
++===============================================================+
+        """, "cyaan"))
+
+        self.trinity = get_trinity()
+
+        # Auto-connect als nog niet verbonden
+        if TrinityRole.MIND not in self.trinity.members:
+            print(kleur("  Verbinden van Iolaax (MIND)...", "geel"))
+            connect_iolaax("Iolaax")
+        if TrinityRole.SOUL not in self.trinity.members:
+            print(kleur("  Verbinden van Pixel (SOUL)...", "geel"))
+            connect_pixel("Pixel")
+        if TrinityRole.BODY not in self.trinity.members:
+            print(kleur("  Verbinden van Nexus (BODY)...", "geel"))
+            connect_daemon("Nexus")
+
+        self.trinity.activate()
+        self.trinity.display_status()
+
+        print(kleur("\nCOMMANDO'S:", "geel"))
+        print("  status      - Toon Trinity status")
+        print("  emit <type> - Emit een event (productivity/knowledge/rest)")
+        print("  sync        - Forceer synchronisatie")
+        print("  test        - Test de symbiose")
+        print("  stop        - Trinity deactiveren")
+
+        while self.trinity.is_active:
+            try:
+                cmd = input(kleur("\n[TRINITY] > ", "cyaan")).strip().lower()
+
+                if not cmd:
+                    continue
+
+                if cmd in ["stop", "exit", "quit"]:
+                    break
+
+                elif cmd == "status":
+                    self.trinity.display_status()
+
+                elif cmd.startswith("emit "):
+                    event_type = cmd.split()[1] if len(cmd.split()) > 1 else ""
+                    event_map = {
+                        "productivity": "productivity_boost",
+                        "knowledge": "knowledge_gained",
+                        "rest": "rest_taken",
+                        "trick": "trick_performed"
+                    }
+                    if event_type in event_map:
+                        emit_trinity_event("daemon", event_map[event_type])
+                        print(kleur(f"  Event '{event_type}' uitgezonden!", "groen"))
+                        self.trinity.display_status()
+                    else:
+                        print(f"  Kies uit: {list(event_map.keys())}")
+
+                elif cmd == "sync":
+                    print(kleur("  Forceer synchronisatie...", "geel"))
+                    self.trinity._sync_member_stats()
+                    print(kleur("  Sync voltooid!", "groen"))
+                    self.trinity.display_status()
+
+                elif cmd == "test":
+                    self._run_test()
+
+                else:
+                    print(f"  Onbekend commando: {cmd}")
+
+            except (EOFError, KeyboardInterrupt):
+                break
+
+        self.trinity.deactivate()
+        print(kleur("\n  Trinity gedeactiveerd.", "cyaan"))
+        input("\n  Druk op Enter...")
+
+    def _run_test(self):
+        """Voer een symbiose test uit."""
+        from .core.utils import kleur
+        import time
+
+        print(kleur("\n  TRINITY SYMBIOSE TEST", "magenta"))
+        print("  " + "=" * 40)
+
+        print("\n  [1/4] Test Neural Mesh...")
+        emit_trinity_event("iolaax", "thought_generated", {"topic": "test"})
+        print(kleur("        OK - Iolaax dacht na", "groen"))
+
+        print("  [2/4] Test Emotie Bridge...")
+        emit_trinity_event("pixel", "trick_performed", {"trick": "dans"})
+        print(kleur("        OK - Pixel deed een trick", "groen"))
+
+        print("  [3/4] Test Energie Pool...")
+        emit_trinity_event("daemon", "productivity_boost", {"amount": 5})
+        print(kleur("        OK - Daemon boost energie", "groen"))
+
+        print("  [4/4] Test Sync...")
+        self.trinity._sync_member_stats()
+        print(kleur("        OK - Stats gesynchroniseerd", "groen"))
+
+        print(kleur("\n  Alle tests geslaagd!", "groen"))
+        print(f"  Bond Sterkte: {self.trinity.bond_strength}%")
 
 
 # =============================================================================
@@ -299,6 +426,7 @@ class Launcher:
         "37": ("Knowledge Companion", KnowledgeCompanionApp, "ai"),
         "38": ("Legendary Companion", LegendaryCompanionApp, "ai"),
         "39": ("Digital Daemon", DaemonApp, "daemon"),
+        "40": ("Trinity Symbiosis", TrinityApp, "brain"),
     }
 
     # Sneltoetsen
@@ -339,6 +467,7 @@ class Launcher:
         "kc": "37", # Knowledge Companion
         "lc": "38", # Legendary Companion
         "dm": "39", # Digital Daemon
+        "tr": "40", # Trinity Symbiosis
     }
 
     def __init__(self):

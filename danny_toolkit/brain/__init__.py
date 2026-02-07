@@ -9,12 +9,23 @@ Componenten:
 - UnifiedMemory: Gedeelde vector database voor alle apps
 - Workflows: Super-workflows (Health Loop, Deep Work Loop, etc.)
 - BrainCLI: Command-line interface
+- TrinitySymbiosis: Verbinding tussen Mind, Soul en Body
 """
 
 from .central_brain import CentralBrain
 from .unified_memory import UnifiedMemory
 from .workflows import WorkflowEngine, SUPER_WORKFLOWS
 from .brain_cli import BrainCLI
+from .trinity_symbiosis import (
+    TrinitySymbiosis,
+    TrinityRole,
+    TrinityChannel,
+    get_trinity,
+    connect_iolaax,
+    connect_pixel,
+    connect_daemon,
+    emit_trinity_event,
+)
 
 __all__ = [
     "CentralBrain",
@@ -22,6 +33,14 @@ __all__ = [
     "WorkflowEngine",
     "SUPER_WORKFLOWS",
     "BrainCLI",
+    "TrinitySymbiosis",
+    "TrinityRole",
+    "TrinityChannel",
+    "get_trinity",
+    "connect_iolaax",
+    "connect_pixel",
+    "connect_daemon",
+    "emit_trinity_event",
 ]
 
 __version__ = "1.0.0"
