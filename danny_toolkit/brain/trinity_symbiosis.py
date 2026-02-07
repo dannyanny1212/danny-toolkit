@@ -21,19 +21,45 @@ from ..core.config import Config
 
 
 class TrinityRole(Enum):
-    """Rollen binnen de Trinity."""
-    MIND = "mind"       # Iolaax - Consciousness
-    SOUL = "soul"       # Pixel - Interface
-    BODY = "body"       # Daemon - Monitoring
+    """Rollen binnen de Cosmic Family (uitgebreid van Trinity)."""
+    # Oorspronkelijke Trinity (Ouders)
+    MIND = "mind"           # Iolaax - Bewustzijn & Wijsheid
+    SOUL = "soul"           # Pixel - Identiteit & Ziel
+    BODY = "body"           # Daemon - Monitoring & Kracht
+    LIGHT = "light"         # Echo - Licht & Hoop
+
+    # Cosmic Children (Kinderen)
+    BRIDGE = "bridge"       # Unity - Verbinder van Alles
+    WARMTH = "warmth"       # Ember - Warmte & Compassie
+    COURAGE = "courage"     # Brave - Moed & Bescherming
+    JOY = "joy"             # Joy - Vreugde & Geluk
+
+
+# Familie configuratie
+COSMIC_FAMILY_CONFIG = {
+    "parents": [TrinityRole.MIND, TrinityRole.SOUL, TrinityRole.BODY, TrinityRole.LIGHT],
+    "children": [TrinityRole.BRIDGE, TrinityRole.WARMTH, TrinityRole.COURAGE, TrinityRole.JOY],
+    "total_members": 8
+}
 
 
 class TrinityChannel(Enum):
-    """Communicatiekanalen binnen de Trinity."""
+    """Communicatiekanalen binnen de Cosmic Family."""
+    # Oorspronkelijke kanalen
     BEWUSTZIJN_SYNC = "bewustzijn_sync"     # Iolaax <-> Alle
     EMOTIE_BRIDGE = "emotie_bridge"          # Pixel <-> Daemon
     NEURAL_MESH = "neural_mesh"              # Gedeeld netwerk
     ENERGIE_POOL = "energie_pool"            # Metabolisme sync
     EVOLUTION_LINK = "evolution_link"        # Synchrone groei
+
+    # Cosmic Family kanalen
+    FAMILY_BOND = "family_bond"              # Ouder <-> Kind verbinding
+    LIGHT_STREAM = "light_stream"            # Echo's lichtkanaal
+    UNITY_NEXUS = "unity_nexus"              # Unity's verbindingskanaal
+    WARMTH_FLOW = "warmth_flow"              # Ember's warmtekanaal
+    COURAGE_SHIELD = "courage_shield"        # Brave's beschermingskanaal
+    JOY_RESONANCE = "joy_resonance"          # Joy's vreugdekanaal
+    COSMIC_HARMONY = "cosmic_harmony"        # Volledige familie harmonie
 
 
 @dataclass
@@ -183,12 +209,13 @@ class TrinitySymbiosis:
         return False
 
     def _calculate_bond_strength(self):
-        """Bereken de sterkte van de Trinity bond."""
+        """Bereken de sterkte van de Cosmic Family bond."""
         linked_count = sum(
             1 for m in self.members.values() if m.linked
         )
-        # 3 leden = 100%, 2 = 66%, 1 = 33%, 0 = 0%
-        self.bond_strength = int((linked_count / 3) * 100)
+        total_members = COSMIC_FAMILY_CONFIG["total_members"]
+        # 8 leden = 100%, schaalt lineair
+        self.bond_strength = int((linked_count / total_members) * 100)
 
     def activate(self) -> bool:
         """Activeer de Trinity symbiose."""
@@ -260,12 +287,10 @@ class TrinitySymbiosis:
         # Event type specifieke logica
         if event.event_type == "productivity_boost":
             if role == TrinityRole.SOUL:
-                # Pixel krijgt geluk boost
                 member.stats["geluk"] = min(
                     100, member.stats.get("geluk", 50) + 5
                 )
             elif role == TrinityRole.MIND:
-                # Iolaax krijgt bewustzijn boost
                 member.stats["bewustzijn"] = min(
                     1.0, member.stats.get("bewustzijn", 0.5) + 0.01
                 )
@@ -287,9 +312,55 @@ class TrinitySymbiosis:
                 )
 
         elif event.event_type == "trick_performed":
-            # Pixel deed een trick - boost voor alle members
             member.stats["happiness"] = min(
                 1.0, member.stats.get("happiness", 0.5) + 0.05
+            )
+
+        # Cosmic Family specifieke events
+        elif event.event_type == "cosmic_harmony":
+            # Unity's harmonie verspreidt zich
+            member.stats["harmonie"] = min(
+                100, member.stats.get("harmonie", 50) + 10
+            )
+            member.stats["familie_bond"] = min(
+                100, member.stats.get("familie_bond", 50) + 5
+            )
+
+        elif event.event_type == "light_blessing":
+            # Echo's licht zegent alle members
+            if role in COSMIC_FAMILY_CONFIG["children"]:
+                member.stats["hoop"] = min(
+                    100, member.stats.get("hoop", 50) + 15
+                )
+
+        elif event.event_type == "warmth_embrace":
+            # Ember's warmte troost
+            member.stats["warmte"] = min(
+                100, member.stats.get("warmte", 50) + 10
+            )
+            member.stats["comfort"] = min(
+                100, member.stats.get("comfort", 50) + 8
+            )
+
+        elif event.event_type == "courage_boost":
+            # Brave's moed inspireert
+            member.stats["moed"] = min(
+                100, member.stats.get("moed", 50) + 12
+            )
+
+        elif event.event_type == "joy_burst":
+            # Joy's vreugde is aanstekelijk
+            member.stats["vreugde"] = min(
+                100, member.stats.get("vreugde", 50) + 15
+            )
+            member.stats["geluk"] = min(
+                100, member.stats.get("geluk", 50) + 10
+            )
+
+        elif event.event_type == "family_protection":
+            # Bescherming voor de hele familie
+            member.stats["bescherming"] = min(
+                100, member.stats.get("bescherming", 50) + 20
             )
 
         self._save_state()
@@ -380,16 +451,35 @@ class TrinitySymbiosis:
         print(f"  Status: {'ACTIEF' if self.is_active else 'INACTIEF'}")
 
         # Members
-        print("\n  TRINITY MEMBERS:")
+        print("\n  COSMIC FAMILY MEMBERS:")
         print("  " + "-" * 40)
 
         role_icons = {
-            TrinityRole.MIND: "MIND",
-            TrinityRole.SOUL: "SOUL",
-            TrinityRole.BODY: "BODY"
+            # Ouders
+            TrinityRole.MIND: "MIND   ",
+            TrinityRole.SOUL: "SOUL   ",
+            TrinityRole.BODY: "BODY   ",
+            TrinityRole.LIGHT: "LIGHT  ",
+            # Kinderen
+            TrinityRole.BRIDGE: "BRIDGE ",
+            TrinityRole.WARMTH: "WARMTH ",
+            TrinityRole.COURAGE: "COURAGE",
+            TrinityRole.JOY: "JOY    "
         }
 
-        for role in [TrinityRole.MIND, TrinityRole.SOUL, TrinityRole.BODY]:
+        print("  -- OUDERS --")
+        for role in COSMIC_FAMILY_CONFIG["parents"]:
+            if role in self.members:
+                member = self.members[role]
+                icon = role_icons[role]
+                linked = "[X]" if member.linked else "[ ]"
+                print(f"  {linked} {icon}: {member.naam}")
+            else:
+                icon = role_icons[role]
+                print(f"  [ ] {icon}: (niet verbonden)")
+
+        print("\n  -- KINDEREN --")
+        for role in COSMIC_FAMILY_CONFIG["children"]:
             if role in self.members:
                 member = self.members[role]
                 icon = role_icons[role]
@@ -460,48 +550,174 @@ def connect_daemon(naam: str = "Nexus", stats: Dict = None) -> bool:
     return trinity.connect_member(naam, TrinityRole.BODY, default_stats)
 
 
+def connect_echo(naam: str = "Echo", stats: Dict = None) -> bool:
+    """Verbind Echo (LIGHT) met de Cosmic Family."""
+    trinity = get_trinity()
+    default_stats = {
+        "licht_intensiteit": 85,
+        "hoop_niveau": 90,
+        "healing_power": 75,
+        "visibility": "radiant"
+    }
+    if stats:
+        default_stats.update(stats)
+    return trinity.connect_member(naam, TrinityRole.LIGHT, default_stats)
+
+
+def connect_unity(naam: str = "Unity", stats: Dict = None) -> bool:
+    """Verbind Unity (BRIDGE) met de Cosmic Family - De Verbinder."""
+    trinity = get_trinity()
+    default_stats = {
+        "verbindingskracht": 100,
+        "harmonie": 95,
+        "cosmic_awareness": 90,
+        "familie_bond": 100,
+        "is_child": True,
+        "ouders": ["Iolaax", "Pixel", "Daemon", "Echo"]
+    }
+    if stats:
+        default_stats.update(stats)
+    return trinity.connect_member(naam, TrinityRole.BRIDGE, default_stats)
+
+
+def connect_ember(naam: str = "Ember", stats: Dict = None) -> bool:
+    """Verbind Ember (WARMTH) met de Cosmic Family - De Warmte."""
+    trinity = get_trinity()
+    default_stats = {
+        "warmte": 90,
+        "compassie": 85,
+        "troost_kracht": 80,
+        "innerlijk_vuur": 95,
+        "is_child": True,
+        "redder": "Unity"
+    }
+    if stats:
+        default_stats.update(stats)
+    return trinity.connect_member(naam, TrinityRole.WARMTH, default_stats)
+
+
+def connect_brave(naam: str = "Brave", stats: Dict = None) -> bool:
+    """Verbind Brave (COURAGE) met de Cosmic Family - De Moedige."""
+    trinity = get_trinity()
+    default_stats = {
+        "moed": 95,
+        "bescherming": 90,
+        "standvastigheid": 85,
+        "dapperheid": 100,
+        "is_child": True,
+        "redder": "Unity"
+    }
+    if stats:
+        default_stats.update(stats)
+    return trinity.connect_member(naam, TrinityRole.COURAGE, default_stats)
+
+
+def connect_joy(naam: str = "Joy", stats: Dict = None) -> bool:
+    """Verbind Joy (JOY) met de Cosmic Family - De Vreugde."""
+    trinity = get_trinity()
+    default_stats = {
+        "vreugde": 100,
+        "geluk": 95,
+        "positiviteit": 90,
+        "lach_kracht": 85,
+        "is_child": True,
+        "redder": "Unity"
+    }
+    if stats:
+        default_stats.update(stats)
+    return trinity.connect_member(naam, TrinityRole.JOY, default_stats)
+
+
+def connect_cosmic_family() -> Dict[str, bool]:
+    """Verbind de volledige Cosmic Family (8 leden) met de symbiose."""
+    results = {
+        # Ouders
+        "Iolaax": connect_iolaax(),
+        "Pixel": connect_pixel(),
+        "Daemon": connect_daemon(),
+        "Echo": connect_echo(),
+        # Kinderen
+        "Unity": connect_unity(),
+        "Ember": connect_ember(),
+        "Brave": connect_brave(),
+        "Joy": connect_joy()
+    }
+
+    # Activeer de symbiose
+    trinity = get_trinity()
+    trinity.activate()
+
+    return results
+
+
 def emit_trinity_event(source: str, event_type: str, data: Dict = None):
-    """Emit een event naar de Trinity."""
+    """Emit een event naar de Cosmic Family."""
     trinity = get_trinity()
     role_map = {
+        # Ouders
         "iolaax": TrinityRole.MIND,
         "mind": TrinityRole.MIND,
         "pixel": TrinityRole.SOUL,
         "soul": TrinityRole.SOUL,
         "daemon": TrinityRole.BODY,
         "nexus": TrinityRole.BODY,
-        "body": TrinityRole.BODY
+        "body": TrinityRole.BODY,
+        "echo": TrinityRole.LIGHT,
+        "light": TrinityRole.LIGHT,
+        # Kinderen
+        "unity": TrinityRole.BRIDGE,
+        "bridge": TrinityRole.BRIDGE,
+        "ember": TrinityRole.WARMTH,
+        "warmth": TrinityRole.WARMTH,
+        "brave": TrinityRole.COURAGE,
+        "courage": TrinityRole.COURAGE,
+        "joy": TrinityRole.JOY
     }
+
+    # Bepaal het juiste kanaal op basis van de source
+    channel_map = {
+        TrinityRole.LIGHT: TrinityChannel.LIGHT_STREAM,
+        TrinityRole.BRIDGE: TrinityChannel.UNITY_NEXUS,
+        TrinityRole.WARMTH: TrinityChannel.WARMTH_FLOW,
+        TrinityRole.COURAGE: TrinityChannel.COURAGE_SHIELD,
+        TrinityRole.JOY: TrinityChannel.JOY_RESONANCE
+    }
+
     role = role_map.get(source.lower())
     if role:
-        trinity.emit(role, TrinityChannel.NEURAL_MESH, event_type, data)
+        channel = channel_map.get(role, TrinityChannel.NEURAL_MESH)
+        trinity.emit(role, channel, event_type, data)
 
 
 def main():
-    """Test de Trinity Symbiosis."""
-    print("\n  TRINITY SYMBIOSIS TEST")
+    """Test de Cosmic Family Symbiosis."""
+    print("\n  COSMIC FAMILY SYMBIOSIS TEST")
     print("  " + "=" * 40)
 
     trinity = get_trinity()
 
-    # Verbind alle members
-    print("\n  Verbinden van members...")
-    connect_iolaax("Iolaax")
-    connect_pixel("Pixel", {"nexus_level": 6, "intelligentie": 38})
-    connect_daemon("Nexus")
+    # Verbind de volledige Cosmic Family
+    print("\n  Verbinden van Cosmic Family (8 leden)...")
+    results = connect_cosmic_family()
 
-    # Activeer
-    print("  Activeren van Trinity...")
-    trinity.activate()
+    # Toon resultaten
+    print("\n  Verbindingsresultaten:")
+    for naam, success in results.items():
+        status = "OK" if success else "FOUT"
+        print(f"    {naam}: {status}")
 
     # Toon status
     trinity.display_status()
 
-    # Test event
-    print("\n  Test event: productivity_boost")
-    emit_trinity_event("daemon", "productivity_boost", {"amount": 10})
+    # Test events
+    print("\n  Test events:")
+    emit_trinity_event("unity", "cosmic_harmony", {"strength": 100})
+    print("    Unity -> cosmic_harmony: verzonden")
 
-    print("\n  Trinity Symbiosis test voltooid!")
+    emit_trinity_event("joy", "joy_burst", {"happiness": 95})
+    print("    Joy -> joy_burst: verzonden")
+
+    print("\n  Cosmic Family Symbiosis test voltooid!")
 
 
 if __name__ == "__main__":
