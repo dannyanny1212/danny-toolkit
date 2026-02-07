@@ -34,6 +34,15 @@ from .apps.goals_tracker import GoalsTrackerApp
 from .apps.room_planner import RoomPlannerApp
 from .apps.artificial_life import ArtificialLifeApp
 from .apps.nlp_studio import NLPStudioApp
+from .apps.music_composer import MusicComposerApp
+from .apps.recipe_generator import RecipeGeneratorApp
+from .apps.fitness_tracker import FitnessTrackerApp
+from .apps.dream_journal import DreamJournalApp
+from .apps.code_snippets import CodeSnippetsApp
+from .apps.language_tutor import LanguageTutorApp
+from .apps.decision_maker import DecisionMakerApp
+from .apps.time_capsule import TimeCapsuleApp
+from .apps.advanced_questions import AdvancedQuestionsApp
 
 from .ai.mini_rag import MiniRAG
 from .ai.production_rag import ProductionRAG
@@ -181,6 +190,15 @@ class Launcher:
         "23": ("Room Planner", RoomPlannerApp, "productiviteit"),
         "24": ("Artificial Life", ArtificialLifeApp, "ai"),
         "25": ("NLP Studio", NLPStudioApp, "ai"),
+        "26": ("Music Composer", MusicComposerApp, "creatief"),
+        "27": ("Recipe Generator", RecipeGeneratorApp, "productiviteit"),
+        "28": ("Fitness Tracker", FitnessTrackerApp, "productiviteit"),
+        "29": ("Dream Journal", DreamJournalApp, "productiviteit"),
+        "30": ("Code Snippets", CodeSnippetsApp, "productiviteit"),
+        "31": ("Language Tutor", LanguageTutorApp, "productiviteit"),
+        "32": ("Decision Maker", DecisionMakerApp, "productiviteit"),
+        "33": ("Time Capsule", TimeCapsuleApp, "productiviteit"),
+        "34": ("Advanced Questions", AdvancedQuestionsApp, "ai"),
     }
 
     # Sneltoetsen
@@ -207,6 +225,15 @@ class Launcher:
         "ro": "23", # Room Planner
         "al": "24", # Artificial Life
         "nl": "25", # NLP Studio
+        "mu": "26", # Music Composer
+        "re": "27", # Recipe Generator
+        "fi": "28", # Fitness Tracker
+        "dr": "29", # Dream Journal
+        "cs": "30", # Code Snippets
+        "la": "31", # Language Tutor
+        "de": "32", # Decision Maker
+        "tc": "33", # Time Capsule
+        "aq": "34", # Advanced Questions
     }
 
     def __init__(self):
@@ -274,7 +301,7 @@ class Launcher:
 
         # AI Systemen
         print(self._kleur_tekst("  ═══ AI SYSTEMEN ═══", "categorie"))
-        for key in ["6", "7", "8", "9", "10", "21", "24", "25"]:
+        for key in ["6", "7", "8", "9", "10", "21", "24", "25", "34"]:
             naam, _, _ = self.APPS[key]
             gebruik = self.stats.get_gebruik(naam)
             gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
@@ -285,7 +312,17 @@ class Launcher:
         # Productiviteit Apps
         print(self._kleur_tekst("  ═══ PRODUCTIVITEIT ═══", "categorie"))
         for key in ["11", "12", "13", "14", "15", "16", "17", "18", "19", "20",
-                    "22", "23"]:
+                    "22", "23", "27", "28", "29", "30", "31", "32", "33"]:
+            naam, _, _ = self.APPS[key]
+            gebruik = self.stats.get_gebruik(naam)
+            gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
+            print(f"     {self._kleur_tekst(key, 'nummer')}. {naam}"
+                  f"{self._kleur_tekst(gebruik_str, 'info')}")
+        print()
+
+        # Creatief
+        print(self._kleur_tekst("  ═══ CREATIEF ═══", "categorie"))
+        for key in ["26"]:
             naam, _, _ = self.APPS[key]
             gebruik = self.stats.get_gebruik(naam)
             gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""

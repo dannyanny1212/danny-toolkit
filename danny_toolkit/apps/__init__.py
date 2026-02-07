@@ -10,6 +10,15 @@ from .goals_tracker import GoalsTrackerApp
 from .room_planner import RoomPlannerApp
 from .artificial_life import ArtificialLifeApp
 from .nlp_studio import NLPStudioApp
+from .music_composer import MusicComposerApp
+from .recipe_generator import RecipeGeneratorApp
+from .fitness_tracker import FitnessTrackerApp
+from .dream_journal import DreamJournalApp
+from .code_snippets import CodeSnippetsApp
+from .language_tutor import LanguageTutorApp
+from .decision_maker import DecisionMakerApp
+from .time_capsule import TimeCapsuleApp
+from .advanced_questions import AdvancedQuestionsApp
 
 __all__ = [
     "BoodschappenlijstApp",
@@ -22,4 +31,13 @@ __all__ = [
     "RoomPlannerApp",
     "ArtificialLifeApp",
     "NLPStudioApp",
+    "MusicComposerApp",
+    "RecipeGeneratorApp",
+    "FitnessTrackerApp",
+    "DreamJournalApp",
+    "CodeSnippetsApp",
+    "LanguageTutorApp",
+    "DecisionMakerApp",
+    "TimeCapsuleApp",
+    "AdvancedQuestionsApp",
 ]
