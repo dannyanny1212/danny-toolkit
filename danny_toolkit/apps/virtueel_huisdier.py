@@ -3152,8 +3152,8 @@ Geef korte, educatieve antwoorden (max 2-3 zinnen).
 Eindig elk antwoord met een interessant feit dat {naam} kan onthouden.
 Antwoord in het Nederlands."""
 
-        # Voer gesprekken (20 vragen!)
-        aantal_vragen = 20
+        # Voer gesprekken (3 vragen!)
+        aantal_vragen = 3
         gekozen_vragen = random.sample(alle_vragen, min(aantal_vragen, len(alle_vragen)))
 
         for i, vraag in enumerate(gekozen_vragen, 1):
