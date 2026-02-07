@@ -45,6 +45,7 @@ from .apps.time_capsule import TimeCapsuleApp
 from .apps.advanced_questions import AdvancedQuestionsApp
 from .apps.ml_studio import MLStudioApp
 from .apps.knowledge_companion import KnowledgeCompanionApp
+from .apps.legendary_companion import LegendaryCompanionApp
 
 from .ai.mini_rag import MiniRAG
 from .ai.production_rag import ProductionRAG
@@ -205,6 +206,7 @@ class Launcher:
         "35": ("ML Studio", MLStudioApp, "ai"),
         "36": ("Central Brain", BrainCLI, "brain"),
         "37": ("Knowledge Companion", KnowledgeCompanionApp, "ai"),
+        "38": ("Legendary Companion", LegendaryCompanionApp, "ai"),
     }
 
     # Sneltoetsen
@@ -243,6 +245,7 @@ class Launcher:
         "ml": "35", # ML Studio
         "br": "36", # Central Brain
         "kc": "37", # Knowledge Companion
+        "lc": "38", # Legendary Companion
     }
 
     def __init__(self):
