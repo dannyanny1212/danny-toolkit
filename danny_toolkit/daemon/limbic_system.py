@@ -88,12 +88,12 @@ class LimbicSystem:
     - Balans (mood tracking, workouts)
     """
 
-    # Gewichten voor happiness berekening
+    # Gewichten voor happiness berekening (gebalanceerd)
     HAPPINESS_WEIGHTS = {
-        "productivity": 0.35,    # Taken en doelen
-        "knowledge": 0.25,       # Leren en RAG
-        "rest": 0.20,            # Pauzes en balans
-        "health": 0.20,          # Fitness en welzijn
+        "productivity": 0.28,    # Taken en doelen
+        "knowledge": 0.28,       # Leren en RAG
+        "rest": 0.22,            # Pauzes en balans
+        "health": 0.22,          # Fitness en welzijn
     }
 
     # Mood thresholds
@@ -127,13 +127,22 @@ class LimbicSystem:
 
     def _register_listeners(self):
         """Registreer listeners voor relevante events."""
-        # Productiviteit events
+        # Productiviteit events (verhoogde boosts)
         self.sensorium.register_listener(
             EventType.TASK_COMPLETE,
-            lambda e: self._on_productivity_event(e, 0.1)
+            lambda e: self._on_productivity_event(e, 0.18)
         )
         self.sensorium.register_listener(
             EventType.GOAL_PROGRESS,
+            lambda e: self._on_productivity_event(e, 0.25)
+        )
+        # RAG en CODE events triggeren ook productivity
+        self.sensorium.register_listener(
+            EventType.RAG_UPLOAD,
+            lambda e: self._on_productivity_event(e, 0.12)
+        )
+        self.sensorium.register_listener(
+            EventType.CODE_COMMIT,
             lambda e: self._on_productivity_event(e, 0.15)
         )
 
@@ -332,17 +341,18 @@ class LimbicSystem:
         """
         Natuurlijk verval van scores over tijd.
         Roep dit periodiek aan om realistische dynamiek te krijgen.
+        Decay rate verlaagd voor realistischer gedrag (was 0.02).
         """
-        decay_rate = 0.02 * hours
+        decay_rate = 0.008 * hours  # 60% reductie van origineel
 
-        self._productivity_score = max(0.3, self._productivity_score - decay_rate)
-        self._knowledge_score = max(0.3, self._knowledge_score - decay_rate)
-        self._rest_score = max(0.2, self._rest_score - decay_rate * 0.5)
-        self._health_score = max(0.3, self._health_score - decay_rate * 0.3)
+        self._productivity_score = max(0.4, self._productivity_score - decay_rate)
+        self._knowledge_score = max(0.35, self._knowledge_score - decay_rate)
+        self._rest_score = max(0.35, self._rest_score - decay_rate * 0.5)
+        self._health_score = max(0.35, self._health_score - decay_rate * 0.3)
 
-        # Stress bouwt op als er geen rust is
-        if self._rest_score < 0.3:
-            self.state.stress = min(1.0, self.state.stress + decay_rate * 0.5)
+        # Stress bouwt alleen op bij overwerk (lage rust + hoge productiviteit)
+        if self._rest_score < 0.3 and self._productivity_score > 0.6:
+            self.state.stress = min(1.0, self.state.stress + decay_rate * 0.3)
 
         self._recalculate_state()
 

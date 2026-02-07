@@ -132,6 +132,70 @@ class InteractionTracker:
                 return True
         return False
 
+    def apply_feedback(
+        self,
+        interaction_id: str,
+        rating: int,
+        helpful: bool,
+        category: str = "rated"
+    ) -> bool:
+        """
+        Pas user feedback toe op een interactie.
+
+        Args:
+            interaction_id: ID van de interactie
+            rating: 1-5 sterren
+            helpful: Was het antwoord nuttig?
+            category: Type feedback
+
+        Returns:
+            True als feedback succesvol toegepast
+        """
+        for interaction in self._data["interactions"]:
+            if interaction.get("id") == interaction_id:
+                # Store feedback
+                interaction["feedback"] = {
+                    "rating": rating,
+                    "helpful": helpful,
+                    "category": category,
+                    "timestamp": datetime.now().isoformat()
+                }
+                # Calculate actual score from rating (1-5 -> 0.2-1.0)
+                interaction["actual_score"] = (rating / 5.0) * 0.8 + 0.2
+                # Update success_score to reflect actual feedback
+                interaction["success_score"] = interaction["actual_score"]
+                self._update_avg_success()
+                self.save()
+                return True
+        return False
+
+    def get_feedback_stats(self) -> dict:
+        """Haal feedback statistieken op."""
+        with_feedback = [
+            i for i in self._data["interactions"]
+            if i.get("feedback")
+        ]
+
+        if not with_feedback:
+            return {
+                "count": 0,
+                "avg_rating": 0.0,
+                "helpful_ratio": 0.0,
+                "feedback_coverage": 0.0
+            }
+
+        total = len(self._data["interactions"])
+        return {
+            "count": len(with_feedback),
+            "avg_rating": sum(
+                i["feedback"]["rating"] for i in with_feedback
+            ) / len(with_feedback),
+            "helpful_ratio": sum(
+                1 for i in with_feedback if i["feedback"]["helpful"]
+            ) / len(with_feedback),
+            "feedback_coverage": len(with_feedback) / max(total, 1)
+        }
+
     def get_recent(self, n: int = 10, interaction_type: Optional[str] = None) -> list:
         """Haal recente interacties op."""
         interactions = self._data["interactions"]
