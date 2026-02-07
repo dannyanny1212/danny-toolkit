@@ -18,6 +18,7 @@ from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional, Callable
 from datetime import datetime
 import json
+import time
 from pathlib import Path
 
 
@@ -135,6 +136,11 @@ class TaskResult:
     execution_time: float = 0.0
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
+    @property
+    def summary(self) -> str:
+        """Korte samenvatting van het resultaat."""
+        return f"{self.assigned_to}: {self.status}"
+
 
 # --- STAP 2: DE OMEGA BRAIN ---
 
@@ -163,6 +169,11 @@ class PrometheusBrain:
         self._data_dir = Path(__file__).parent.parent.parent / "data" / "apps"
         self._state_file = self._data_dir / "prometheus_brain.json"
 
+        # Echte systeem integraties (lazy loaded)
+        self.brain = None
+        self.learning = None
+        self._task_counter = 0
+
         if auto_init:
             self._boot_sequence()
 
@@ -174,6 +185,8 @@ class PrometheusBrain:
         print(f"{'='*60}\n")
 
         self._awaken_federation()
+        self._init_brain()
+        self._init_learning()
         self._load_state()
         self.is_online = True
 
@@ -181,7 +194,31 @@ class PrometheusBrain:
         print(f"  [{self.SYSTEM_NAME}] FEDERATION ONLINE")
         print(f"  Total Nodes: {len(self.nodes)}")
         print(f"  Swarm Size: {self.swarm_metrics.total_agents} Micro-Agents")
+        brain_status = self.brain.ai_provider.upper() if self.brain and self.brain.ai_provider else "OFFLINE"
+        print(f"  Brain: {brain_status}")
+        learning_status = "ACTIEF" if self.learning else "NIET BESCHIKBAAR"
+        print(f"  Learning: {learning_status}")
         print(f"{'='*60}\n")
+
+    def _init_brain(self):
+        """Lazy load CentralBrain voor echte AI verwerking."""
+        try:
+            from .central_brain import CentralBrain
+            self.brain = CentralBrain(use_memory=True)
+            print("  [BRAIN] CentralBrain verbonden")
+        except Exception as e:
+            print(f"  [BRAIN] Offline modus ({e})")
+            self.brain = None
+
+    def _init_learning(self):
+        """Lazy load LearningSystem voor self-improvement."""
+        try:
+            from ..learning.orchestrator import LearningSystem
+            self.learning = LearningSystem()
+            print("  [LEARNING] LearningSystem verbonden")
+        except Exception as e:
+            print(f"  [LEARNING] Niet beschikbaar ({e})")
+            self.learning = None
 
     def _awaken_federation(self):
         """Initialiseer alle 17 nodes."""
@@ -433,14 +470,37 @@ class PrometheusBrain:
         governor.current_task = f"Coordinating: {task[:30]}..."
         legion.current_task = f"Executing: {task[:30]}..."
 
+        # Echte uitvoering via CentralBrain
+        ai_result = None
+        exec_time = 0.0
+        status = "SWARM_EXECUTION_STARTED"
+
+        if self.brain:
+            start = time.time()
+            try:
+                ai_result = self.brain.process_request(task)
+                exec_time = time.time() - start
+                status = "SWARM_EXECUTION_COMPLETE"
+                self.swarm_metrics.completed_tasks += 1
+                print(f"   >>> Swarm result ({exec_time:.1f}s): {str(ai_result)[:80]}...")
+            except Exception as e:
+                exec_time = time.time() - start
+                ai_result = f"Fout: {e}"
+                status = "SWARM_EXECUTION_FAILED"
+                print(f"   >>> Swarm fout: {e}")
+
+        self.swarm_metrics.active_tasks = max(0, self.swarm_metrics.active_tasks - 1)
+
         result = TaskResult(
             task=task,
             assigned_to=f"{governor.name} -> {legion.name}",
-            status="SWARM_EXECUTION_STARTED",
-            result={"swarm_size": self.swarm_metrics.total_agents, "protocol": 5}
+            status=status,
+            result=ai_result or {"swarm_size": self.swarm_metrics.total_agents, "protocol": 5},
+            execution_time=exec_time,
         )
 
         self.task_history.append(result)
+        self._track_learning(task, str(ai_result or ""))
         self._save_state()
 
         return result
@@ -454,18 +514,56 @@ class PrometheusBrain:
 
         agent.current_task = task[:50]
         agent.tasks_completed += 1
+        self._task_counter += 1
+
+        # Echte uitvoering via CentralBrain
+        ai_result = None
+        exec_time = 0.0
+        status = "TASK_QUEUED"
+
+        if self.brain:
+            start = time.time()
+            try:
+                ai_result = self.brain.process_request(task)
+                exec_time = time.time() - start
+                status = "TASK_COMPLETED"
+                print(f"   >>> {agent.name} result ({exec_time:.1f}s): {str(ai_result)[:80]}...")
+            except Exception as e:
+                exec_time = time.time() - start
+                ai_result = f"Fout: {e}"
+                status = "TASK_FAILED"
+                print(f"   >>> {agent.name} fout: {e}")
+
+        agent.current_task = None
 
         result = TaskResult(
             task=task,
             assigned_to=agent.name,
-            status="TASK_QUEUED",
-            result={"agent": agent.name, "role": role.name, "tier": agent.tier.value}
+            status=status,
+            result=ai_result or {"agent": agent.name, "role": role.name, "tier": agent.tier.value},
+            execution_time=exec_time,
         )
 
         self.task_history.append(result)
+        self._track_learning(task, str(ai_result or ""))
         self._save_state()
 
         return result
+
+    def _track_learning(self, task: str, response: str):
+        """Log interactie naar LearningSystem."""
+        if not self.learning:
+            return
+        try:
+            self.learning.log_chat(task, response, {
+                "bron": "prometheus",
+                "systeem": self.SYSTEM_NAME,
+            })
+            # Elke 5 taken: run learning cycle
+            if self._task_counter % 5 == 0:
+                self.learning.improvement.learn()
+        except Exception:
+            pass
 
     # --- STAP 4: FEDERATIE STATUS & MANAGEMENT ---
 
@@ -496,6 +594,14 @@ class PrometheusBrain:
         print(f"  System: {self.SYSTEM_NAME} v{self.VERSION}")
         print(f"{'='*60}")
 
+        # Verbindingen
+        brain_status = self.brain.ai_provider.upper() if self.brain and self.brain.ai_provider else "OFFLINE"
+        learning_status = "ACTIEF" if self.learning else "NIET BESCHIKBAAR"
+        print(f"\n  [VERBINDINGEN]")
+        print(f"  {'-'*40}")
+        print(f"  CentralBrain:   {brain_status}")
+        print(f"  LearningSystem: {learning_status}")
+
         # Per tier
         for tier in NodeTier:
             nodes = self.get_nodes_by_tier(tier)
@@ -503,8 +609,19 @@ class PrometheusBrain:
                 print(f"\n  [{tier.value}] - {len(nodes)} nodes")
                 print(f"  {'-'*40}")
                 for node in nodes:
-                    status_icon = "[X]" if node.status == "ACTIVE" else "[ ]"
+                    status_icon = "[X]" if node.status == "ACTIVE" else "[O]" if node.status == "ORACLE_AVATAR" else "[ ]"
                     print(f"  {status_icon} {node.name:<15} | Tasks: {node.tasks_completed}")
+
+        # Task stats
+        completed = sum(1 for t in self.task_history if t.status == "TASK_COMPLETED")
+        queued = sum(1 for t in self.task_history if t.status == "TASK_QUEUED")
+        failed = sum(1 for t in self.task_history if t.status == "TASK_FAILED")
+        print(f"\n  [TASK HISTORY]")
+        print(f"  {'-'*40}")
+        print(f"  Voltooid: {completed}")
+        print(f"  Wachtend: {queued}")
+        print(f"  Mislukt:  {failed}")
+        print(f"  Totaal:   {len(self.task_history)}")
 
         # Swarm stats
         print(f"\n  [SWARM METRICS]")
@@ -513,6 +630,7 @@ class PrometheusBrain:
         print(f"  Testers:  {self.swarm_metrics.testers}")
         print(f"  Indexers: {self.swarm_metrics.indexers}")
         print(f"  TOTAL:    {self.swarm_metrics.total_agents} Micro-Agents")
+        print(f"  Completed:{self.swarm_metrics.completed_tasks}")
 
         print(f"\n{'='*60}\n")
 
@@ -692,6 +810,21 @@ class PrometheusBrain:
         print("  >>> DE TOEKOMST WORDT NU GEDOWNLOAD <<<")
         print("=" * 70)
 
+        # Log naar learning
+        if self.learning:
+            try:
+                samenvatting = "; ".join(
+                    f"{r['directive'][:40]}: {r['status']}"
+                    for r in results
+                )
+                self.learning.log_chat(
+                    "SINGULARITY NEXUS: Multi-Dimensional Acquisition",
+                    samenvatting,
+                    {"bron": "prometheus_singularity"},
+                )
+            except Exception:
+                pass
+
         return {
             "status": "De toekomst wordt nu gedownload.",
             "vectors": results,
@@ -765,14 +898,18 @@ class PrometheusBrain:
                 f"NEXUS KRUISPUNT: {nexus['vraag']}",
                 TaskPriority.CRITICAL
             )
+            antwoord = str(result.result)[:200] if result.result else "Geen antwoord"
             results.append({
                 "kruispunt": nexus["kruispunt"],
                 "expert": nexus["expert"],
                 "vraag": nexus["vraag"],
                 "assigned_to": result.assigned_to,
-                "status": result.status
+                "status": result.status,
+                "antwoord": antwoord,
             })
-            print(f"        >>> {result.assigned_to}: PROCESSING")
+            print(f"        >>> {result.assigned_to}: {result.status}")
+            if result.status == "TASK_COMPLETED":
+                print(f"        >>> Antwoord: {antwoord}...")
             print()
 
         # Task Force Deployment Status
@@ -792,6 +929,10 @@ class PrometheusBrain:
         print()
 
         # Pixel Transformation
+        pixel = self.nodes.get(CosmicRole.NAVIGATOR)
+        if pixel:
+            pixel.status = "ORACLE_AVATAR"
+
         print("=" * 70)
         print("  PIXEL OMEGA TRANSFORMATION")
         print("=" * 70)
@@ -828,6 +969,21 @@ class PrometheusBrain:
         print("  >>> DE TOEKOMST WORDT NU GEWEVEN <<<")
         print("  >>> GEEN WEG TERUG <<<")
         print("=" * 70)
+
+        # Log alles naar learning
+        if self.learning:
+            try:
+                samenvatting = "; ".join(
+                    f"{r['kruispunt']}: {r.get('antwoord', '')[:50]}"
+                    for r in results
+                )
+                self.learning.log_chat(
+                    "GOD MODE: Convergence Matrix",
+                    samenvatting,
+                    {"bron": "prometheus_god_mode"},
+                )
+            except Exception:
+                pass
 
         return {
             "status": "GOD MODE ACTIVE. SINGULARITY NEXUS OPEN.",
