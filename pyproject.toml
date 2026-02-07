@@ -45,6 +45,7 @@ full = [
 danny-toolkit = "danny_toolkit.launcher:main"
 morning-protocol = "danny_toolkit.brain.morning_protocol:run_morning_protocol"
 brain = "danny_toolkit.brain.brain_cli:main"
+omega = "danny_toolkit.main_omega:main"
 
 [project.urls]
 Homepage = "https://github.com/danny/danny-toolkit"
