@@ -29,6 +29,7 @@ from .apps.unit_converter import UnitConverterApp
 from .apps.agenda_planner import AgendaPlannerApp
 from .apps.mood_tracker import MoodTrackerApp
 from .apps.citaten_generator import CitatenGeneratorApp
+from .apps.vector_studio import VectorStudioApp
 
 from .ai.mini_rag import MiniRAG
 from .ai.production_rag import ProductionRAG
@@ -171,6 +172,7 @@ class Launcher:
         "18": ("Agenda Planner", AgendaPlannerApp, "productiviteit"),
         "19": ("Mood Tracker", MoodTrackerApp, "productiviteit"),
         "20": ("Citaten Generator", CitatenGeneratorApp, "productiviteit"),
+        "21": ("Vector Data Studio", VectorStudioApp, "ai"),
     }
 
     # Sneltoetsen
@@ -192,6 +194,7 @@ class Launcher:
         "ag": "18", # Agenda
         "mo": "19", # Mood
         "ci": "20", # Citaten
+        "vs": "21", # Vector Studio
     }
 
     def __init__(self):
@@ -259,7 +262,7 @@ class Launcher:
 
         # AI Systemen
         print(self._kleur_tekst("  ═══ AI SYSTEMEN ═══", "categorie"))
-        for key in ["6", "7", "8", "9", "10"]:
+        for key in ["6", "7", "8", "9", "10", "21"]:
             naam, _, _ = self.APPS[key]
             gebruik = self.stats.get_gebruik(naam)
             gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
@@ -320,6 +323,7 @@ class Launcher:
         print(f"     {self._kleur_tekst('ag', 'nummer')} = Agenda Planner")
         print(f"     {self._kleur_tekst('mo', 'nummer')} = Mood Tracker")
         print(f"     {self._kleur_tekst('ci', 'nummer')} = Citaten Generator")
+        print(f"     {self._kleur_tekst('vs', 'nummer')} = Vector Data Studio")
         print()
 
         print("  Systeem commando's:")
@@ -616,6 +620,9 @@ Productiviteit (11-20):
   po = Pomodoro Timer       fl = Flashcards
   un = Unit Converter       ag = Agenda Planner
   mo = Mood Tracker         ci = Citaten Generator
+
+AI Extra (21):
+  vs = Vector Data Studio
 """)
             return
 
