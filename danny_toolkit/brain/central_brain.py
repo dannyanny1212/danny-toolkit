@@ -33,9 +33,15 @@ from .workflows import WorkflowEngine, SUPER_WORKFLOWS, get_workflow_by_intent
 # AI Integration
 try:
     from anthropic import Anthropic
-    AI_BESCHIKBAAR = True
+    ANTHROPIC_BESCHIKBAAR = True
 except ImportError:
-    AI_BESCHIKBAAR = False
+    ANTHROPIC_BESCHIKBAAR = False
+
+try:
+    from groq import Groq
+    GROQ_BESCHIKBAAR = True
+except ImportError:
+    GROQ_BESCHIKBAAR = False
 
 
 class CentralBrain:
@@ -65,11 +71,18 @@ class CentralBrain:
         self.data_dir.mkdir(exist_ok=True)
         self.data_file = self.data_dir / "brain_data.json"
 
-        # AI Client
+        # AI Client - probeer GROQ eerst (gratis), dan Anthropic
         self.client = None
-        if AI_BESCHIKBAAR and Config.has_anthropic_key():
+        self.ai_provider = None
+
+        if GROQ_BESCHIKBAAR and Config.has_groq_key():
+            self.client = Groq()
+            self.ai_provider = "groq"
+            print(kleur("   [OK] Central Brain AI actief (GROQ)", "groen"))
+        elif ANTHROPIC_BESCHIKBAAR and Config.has_anthropic_key():
             self.client = Anthropic()
-            print(kleur("   [OK] Central Brain AI actief", "groen"))
+            self.ai_provider = "anthropic"
+            print(kleur("   [OK] Central Brain AI actief (Anthropic)", "groen"))
         else:
             print(kleur("   [!] Central Brain in offline modus", "geel"))
 
@@ -300,9 +313,145 @@ Belangrijke regels:
             "content": user_input
         })
 
+        # Route naar juiste provider
+        if self.ai_provider == "groq":
+            return self._process_groq(system_message, use_tools, max_turns)
+        else:
+            return self._process_anthropic(system_message, use_tools, max_turns)
+
+    def _process_groq(
+        self,
+        system_message: str,
+        use_tools: bool,
+        max_turns: int
+    ) -> str:
+        """Verwerk request via GROQ API."""
+        messages = [{"role": "system", "content": system_message}]
+        messages.extend(self.conversation_history)
+
+        # Converteer tools naar OpenAI format voor GROQ
+        tools = None
+        if use_tools and self.tool_definitions:
+            tools = []
+            for tool in self.tool_definitions:
+                # Clean up schema - verwijder 'required' boolean uit properties
+                schema = tool["input_schema"].copy()
+                if "properties" in schema:
+                    clean_props = {}
+                    required_fields = []
+                    for prop_name, prop_def in schema["properties"].items():
+                        clean_prop = {k: v for k, v in prop_def.items()
+                                     if k != "required"}
+                        clean_props[prop_name] = clean_prop
+                        if prop_def.get("required"):
+                            required_fields.append(prop_name)
+                    schema["properties"] = clean_props
+                    if required_fields:
+                        schema["required"] = required_fields
+
+                tools.append({
+                    "type": "function",
+                    "function": {
+                        "name": tool["name"],
+                        "description": tool["description"],
+                        "parameters": schema
+                    }
+                })
+
+        for turn in range(max_turns):
+            try:
+                response = self.client.chat.completions.create(
+                    model="llama-3.3-70b-versatile",
+                    messages=messages,
+                    tools=tools,
+                    tool_choice="auto" if tools else None,
+                    max_tokens=2000
+                )
+
+                choice = response.choices[0]
+                message = choice.message
+
+                # Check voor tool calls
+                if message.tool_calls:
+                    # Voeg assistant message toe
+                    messages.append({
+                        "role": "assistant",
+                        "content": message.content,
+                        "tool_calls": [
+                            {
+                                "id": tc.id,
+                                "type": "function",
+                                "function": {
+                                    "name": tc.function.name,
+                                    "arguments": tc.function.arguments
+                                }
+                            }
+                            for tc in message.tool_calls
+                        ]
+                    })
+
+                    # Voer tools uit
+                    for tool_call in message.tool_calls:
+                        tool_name = tool_call.function.name
+                        try:
+                            tool_input = json.loads(tool_call.function.arguments)
+                        except json.JSONDecodeError:
+                            tool_input = {}
+
+                        # Parse tool name
+                        app_naam, actie_naam = parse_tool_call(tool_name)
+
+                        if app_naam and actie_naam:
+                            print(kleur(
+                                f"   [TOOL] {app_naam}.{actie_naam}",
+                                "cyaan"
+                            ))
+
+                            result = asyncio.run(
+                                self._execute_app_action(
+                                    app_naam, actie_naam, tool_input
+                                )
+                            )
+                        else:
+                            result = {"error": f"Tool '{tool_name}' niet gevonden"}
+
+                        # Voeg tool result toe
+                        messages.append({
+                            "role": "tool",
+                            "tool_call_id": tool_call.id,
+                            "content": json.dumps(
+                                result, ensure_ascii=False, default=str
+                            )[:5000]
+                        })
+
+                else:
+                    # Geen tool calls, return antwoord
+                    final_response = message.content or ""
+
+                    self.conversation_history.append({
+                        "role": "assistant",
+                        "content": final_response
+                    })
+
+                    self._sla_stats_op()
+                    return final_response
+
+            except Exception as e:
+                self._sla_stats_op()
+                return f"Er is een fout opgetreden: {e}"
+
+        self._sla_stats_op()
+        return "Maximum aantal rondes bereikt. Probeer een specifiekere vraag."
+
+    def _process_anthropic(
+        self,
+        system_message: str,
+        use_tools: bool,
+        max_turns: int
+    ) -> str:
+        """Verwerk request via Anthropic API."""
         messages = self.conversation_history.copy()
 
-        # Tool-use loop
         for turn in range(max_turns):
             try:
                 response = self.client.messages.create(
@@ -315,7 +464,6 @@ Belangrijke regels:
 
                 # Check voor tool use
                 if response.stop_reason == "tool_use":
-                    # Verzamel tool calls
                     tool_results = []
 
                     for block in response.content:
@@ -323,7 +471,6 @@ Belangrijke regels:
                             tool_name = block.name
                             tool_input = block.input
 
-                            # Parse tool name
                             app_naam, actie_naam = parse_tool_call(tool_name)
 
                             if app_naam and actie_naam:
@@ -332,7 +479,6 @@ Belangrijke regels:
                                     "cyaan"
                                 ))
 
-                                # Voer tool uit
                                 result = asyncio.run(
                                     self._execute_app_action(
                                         app_naam, actie_naam, tool_input
@@ -344,7 +490,7 @@ Belangrijke regels:
                                     "tool_use_id": block.id,
                                     "content": json.dumps(
                                         result, ensure_ascii=False, default=str
-                                    )[:5000]  # Limiteer grootte
+                                    )[:5000]
                                 })
                             else:
                                 tool_results.append({
@@ -354,7 +500,6 @@ Belangrijke regels:
                                     "is_error": True
                                 })
 
-                    # Voeg assistant message en tool results toe
                     messages.append({
                         "role": "assistant",
                         "content": response.content
@@ -365,13 +510,11 @@ Belangrijke regels:
                     })
 
                 else:
-                    # Geen tool use meer, extract tekst
                     final_response = ""
                     for block in response.content:
                         if hasattr(block, "text"):
                             final_response += block.text
 
-                    # Voeg toe aan history
                     self.conversation_history.append({
                         "role": "assistant",
                         "content": final_response
@@ -525,6 +668,7 @@ Belangrijke regels:
         return {
             "versie": self.VERSIE,
             "ai_actief": self.client is not None,
+            "ai_provider": self.ai_provider or "offline",
             "memory_actief": self.unified_memory is not None,
             "apps_geregistreerd": len(self.app_registry),
             "apps_geladen": len(self.app_instances),
