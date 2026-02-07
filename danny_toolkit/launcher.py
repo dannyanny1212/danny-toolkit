@@ -33,6 +33,7 @@ from .apps.vector_studio import VectorStudioApp
 from .apps.goals_tracker import GoalsTrackerApp
 from .apps.room_planner import RoomPlannerApp
 from .apps.artificial_life import ArtificialLifeApp
+from .apps.nlp_studio import NLPStudioApp
 
 from .ai.mini_rag import MiniRAG
 from .ai.production_rag import ProductionRAG
@@ -179,6 +180,7 @@ class Launcher:
         "22": ("Goals Tracker", GoalsTrackerApp, "productiviteit"),
         "23": ("Room Planner", RoomPlannerApp, "productiviteit"),
         "24": ("Artificial Life", ArtificialLifeApp, "ai"),
+        "25": ("NLP Studio", NLPStudioApp, "ai"),
     }
 
     # Sneltoetsen
@@ -204,6 +206,7 @@ class Launcher:
         "go": "22", # Goals Tracker
         "ro": "23", # Room Planner
         "al": "24", # Artificial Life
+        "nl": "25", # NLP Studio
     }
 
     def __init__(self):
@@ -271,7 +274,7 @@ class Launcher:
 
         # AI Systemen
         print(self._kleur_tekst("  ═══ AI SYSTEMEN ═══", "categorie"))
-        for key in ["6", "7", "8", "9", "10", "21", "24"]:
+        for key in ["6", "7", "8", "9", "10", "21", "24", "25"]:
             naam, _, _ = self.APPS[key]
             gebruik = self.stats.get_gebruik(naam)
             gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
@@ -336,6 +339,8 @@ class Launcher:
         print(f"     {self._kleur_tekst('vs', 'nummer')} = Vector Data Studio")
         print(f"     {self._kleur_tekst('go', 'nummer')} = Goals Tracker")
         print(f"     {self._kleur_tekst('ro', 'nummer')} = Room Planner")
+        print(f"     {self._kleur_tekst('al', 'nummer')} = Artificial Life")
+        print(f"     {self._kleur_tekst('nl', 'nummer')} = NLP Studio")
         print()
 
         print("  Systeem commando's:")
@@ -634,8 +639,10 @@ Productiviteit (11-20, 22-23):
   mo = Mood Tracker         ci = Citaten Generator
   go = Goals Tracker        ro = Room Planner
 
-AI Extra (21):
+AI Extra (21, 24-25):
   vs = Vector Data Studio
+  al = Artificial Life
+  nl = NLP Studio
 """)
             return
 
