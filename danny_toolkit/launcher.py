@@ -314,11 +314,11 @@ class SanctuaryApp:
 |     Het Levende Systeem Dashboard                             |
 |                                                               |
 +===============================================================+
-        """, "\033[36m"))
+        """, Kleur.CYAAN))
 
         print(sanctuary.render_live_dashboard())
 
-        print(kleur("\nCOMMANDO'S:", "\033[33m"))
+        print(kleur("\nCOMMANDO'S:", Kleur.GEEL))
         print("  live        - Toon live dashboard")
         print("  hibernate   - Toon hibernation protocol")
         print("  awaken      - Toon awakening protocol")
@@ -330,7 +330,7 @@ class SanctuaryApp:
         while True:
             try:
                 cmd = input(kleur(
-                    "\n[SANCTUARY] > ", "\033[36m"
+                    "\n[SANCTUARY] > ", Kleur.CYAAN
                 )).strip().lower()
 
                 if not cmd:
