@@ -79,10 +79,10 @@ class DigitalDaemon:
    /|#####|\\
         """,
         AvatarForm.GLITCH: """
-    /̷\\̷_̷_̷_̷/̷\\̷
-   (̷ ̷x̷ ̷_̷ ̷x̷ ̷)̷  GLITCH
-    >̷ ̷?̷ ̷<̷
-   /̷|̷ ̷ ̷ ̷ ̷|̷\\̷
+    /\\???/\\
+   ( x _ x )  GLITCH
+    > ? <    *bzzt*
+   /|.....|\\
         """,
         AvatarForm.OVERHEATED: """
     /\\~~~~/\\
