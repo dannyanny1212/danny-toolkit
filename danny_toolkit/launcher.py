@@ -32,6 +32,7 @@ from .apps.citaten_generator import CitatenGeneratorApp
 from .apps.vector_studio import VectorStudioApp
 from .apps.goals_tracker import GoalsTrackerApp
 from .apps.room_planner import RoomPlannerApp
+from .apps.artificial_life import ArtificialLifeApp
 
 from .ai.mini_rag import MiniRAG
 from .ai.production_rag import ProductionRAG
@@ -177,6 +178,7 @@ class Launcher:
         "21": ("Vector Data Studio", VectorStudioApp, "ai"),
         "22": ("Goals Tracker", GoalsTrackerApp, "productiviteit"),
         "23": ("Room Planner", RoomPlannerApp, "productiviteit"),
+        "24": ("Artificial Life", ArtificialLifeApp, "ai"),
     }
 
     # Sneltoetsen
@@ -201,6 +203,7 @@ class Launcher:
         "vs": "21", # Vector Studio
         "go": "22", # Goals Tracker
         "ro": "23", # Room Planner
+        "al": "24", # Artificial Life
     }
 
     def __init__(self):
@@ -268,7 +271,7 @@ class Launcher:
 
         # AI Systemen
         print(self._kleur_tekst("  ═══ AI SYSTEMEN ═══", "categorie"))
-        for key in ["6", "7", "8", "9", "10", "21"]:
+        for key in ["6", "7", "8", "9", "10", "21", "24"]:
             naam, _, _ = self.APPS[key]
             gebruik = self.stats.get_gebruik(naam)
             gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""

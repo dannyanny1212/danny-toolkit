@@ -8,6 +8,7 @@ from .code_analyse import CodeAnalyseApp
 from .vector_studio import VectorStudioApp
 from .goals_tracker import GoalsTrackerApp
 from .room_planner import RoomPlannerApp
+from .artificial_life import ArtificialLifeApp
 
 __all__ = [
     "BoodschappenlijstApp",
@@ -18,4 +19,5 @@ __all__ = [
     "VectorStudioApp",
     "GoalsTrackerApp",
     "RoomPlannerApp",
+    "ArtificialLifeApp",
 ]
