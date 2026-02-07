@@ -1116,6 +1116,62 @@ class LegendaryCompanionApp:
     def status(self) -> dict:
         return self.companion.status()
 
+    # Aliassen voor app_tools.py compatibiliteit
+    def voed(self, pad: str) -> dict:
+        """Voed via bestandspad."""
+        return self.feed_file(pad)
+
+    def voed_tekst(self, tekst: str, doc_id: str = None) -> dict:
+        """Voed met directe tekst."""
+        return self.feed(tekst, doc_id)
+
+    def vraag(self, vraag: str) -> str:
+        """Stel een vraag."""
+        return self.ask(vraag)
+
+    def quiz(self, aantal: int = 5) -> dict:
+        """Start quiz sessie."""
+        results = []
+        for _ in range(aantal):
+            q = self.get_quiz()
+            if q:
+                results.append(q)
+            else:
+                break
+        return {"quizzes": results, "aantal": len(results)}
+
+    def dream(self) -> dict:
+        """Activeer dream mode."""
+        insights = self.companion.dream_engine.run_dream_cycle()
+        return {"insights": insights, "aantal": len(insights)}
+
+    def evolutie_pad(self) -> dict:
+        """Toon evolutie pad."""
+        current_form = self.companion.data.get("current_form", "spark")
+        flavors = self.companion.data.get("flavor_stats", {})
+        current_form_data = EVOLUTION_FORMS.get(current_form, {})
+        possible = []
+        for form_key, form_data in EVOLUTION_FORMS.items():
+            if "vereist" in form_data:
+                vereist = form_data["vereist"]
+                can_evolve = all(
+                    flavors.get(flavor, 0) >= points
+                    for flavor, points in vereist.items()
+                )
+                if not can_evolve:
+                    possible.append({
+                        "vorm": form_data["naam"],
+                        "emoji": form_data.get("emoji", "[?]"),
+                        "vereist": vereist,
+                        "huidige_punten": {f: flavors.get(f, 0) for f in vereist}
+                    })
+        return {
+            "huidige_vorm": current_form_data.get("naam", "Spark"),
+            "huidige_emoji": current_form_data.get("emoji", "[*]"),
+            "flavor_punten": flavors,
+            "mogelijke_evoluties": possible[:5]
+        }
+
 
 def main():
     app = LegendaryCompanionApp()

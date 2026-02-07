@@ -1292,6 +1292,80 @@ APP_TOOLS: Dict[str, AppDefinition] = {
             ),
         ]
     ),
+
+    # === LEGENDARY COMPANION - Digital Organism ===
+    "legendary_companion": AppDefinition(
+        naam="legendary_companion",
+        beschrijving="Digitaal organisme dat evolueert door kennis - RAG + Evolution + Spaced Repetition + Dream Mode",
+        categorie=AppCategorie.AI,
+        module_path="danny_toolkit.apps.legendary_companion",
+        class_name="LegendaryCompanionApp",
+        prioriteit=10,  # Hoogste prioriteit - ultieme companion
+        acties=[
+            AppActie(
+                naam="voed",
+                beschrijving="Voed de companion met een document - detecteert automatisch flavor (tech/arts/science/wisdom/business/social)",
+                parameters={
+                    "pad": {
+                        "type": "string",
+                        "description": "Pad naar bestand of map om te indexeren",
+                        "required": True
+                    }
+                }
+            ),
+            AppActie(
+                naam="voed_tekst",
+                beschrijving="Voed de companion met directe tekst - bepaalt flavor en geeft XP",
+                parameters={
+                    "tekst": {
+                        "type": "string",
+                        "description": "Tekst om te consumeren",
+                        "required": True
+                    },
+                    "doc_id": {
+                        "type": "string",
+                        "description": "Document ID (optioneel)"
+                    }
+                }
+            ),
+            AppActie(
+                naam="vraag",
+                beschrijving="Stel een vraag - antwoord gekleurd door companion's persoonlijkheid",
+                parameters={
+                    "vraag": {
+                        "type": "string",
+                        "description": "De vraag om te beantwoorden",
+                        "required": True
+                    }
+                }
+            ),
+            AppActie(
+                naam="quiz",
+                beschrijving="Start spaced repetition quiz - SuperMemo-2 algoritme",
+                parameters={
+                    "aantal": {
+                        "type": "integer",
+                        "description": "Aantal vragen (default 5)"
+                    }
+                }
+            ),
+            AppActie(
+                naam="dream",
+                beschrijving="Activeer Dream Mode - vind cross-document insights",
+                parameters={}
+            ),
+            AppActie(
+                naam="status",
+                beschrijving="Bekijk volledige status: level, XP, flavor punten, evolutie vorm",
+                parameters={}
+            ),
+            AppActie(
+                naam="evolutie_pad",
+                beschrijving="Toon mogelijk evolutie pad en vereisten",
+                parameters={}
+            ),
+        ]
+    ),
 }
 
 
