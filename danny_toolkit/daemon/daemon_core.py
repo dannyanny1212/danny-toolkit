@@ -15,7 +15,7 @@ from typing import Dict, List, Optional, Callable, Any
 from dataclasses import dataclass
 
 from ..core.config import Config
-from ..core.utils import kleur
+from ..core.utils import kleur, Kleur
 
 from .sensorium import Sensorium, EventType, SensoryEvent
 from .limbic_system import LimbicSystem, Mood, EnergyState, AvatarForm
@@ -163,7 +163,7 @@ class DigitalDaemon:
         self._data_file = Config.APPS_DATA_DIR / "digital_daemon.json"
         self._load_data()
 
-        print(kleur(f"\n[DAEMON] {naam} ontwaakt...", "magenta"))
+        print(kleur(f"\n[DAEMON] {naam} ontwaakt...", Kleur.MAGENTA))
 
     def _load_data(self):
         """Laad daemon data."""
@@ -207,7 +207,7 @@ class DigitalDaemon:
         # Greeting
         self._morning_or_return_greeting()
 
-        print(kleur(f"[DAEMON] {self.naam} is LEVEND!", "groen"))
+        print(kleur(f"[DAEMON] {self.naam} is LEVEND!", Kleur.FEL_GROEN))
 
     def sleep(self):
         """Laat de daemon slapen."""
@@ -220,7 +220,7 @@ class DigitalDaemon:
             self._main_thread.join(timeout=5)
 
         self._save_data()
-        print(kleur(f"[DAEMON] {self.naam} gaat slapen...", "cyaan"))
+        print(kleur(f"[DAEMON] {self.naam} gaat slapen...", Kleur.CYAAN))
 
     def _main_loop(self):
         """Hoofd loop van de daemon."""
@@ -239,7 +239,7 @@ class DigitalDaemon:
                 self._run_housekeeper()
 
             except Exception as e:
-                print(kleur(f"[DAEMON] Loop error: {e}", "rood"))
+                print(kleur(f"[DAEMON] Loop error: {e}", Kleur.ROOD))
 
             time.sleep(60)  # Check elke minuut
 
@@ -332,7 +332,7 @@ class DigitalDaemon:
 
         # Console output
         if priority >= 2:
-            print(kleur(f"\n[{self.naam}] {text}", "magenta"))
+            print(kleur(f"\n[{self.naam}] {text}", Kleur.MAGENTA))
 
     def register_message_callback(self, callback: Callable):
         """Registreer callback voor berichten."""
@@ -366,7 +366,7 @@ class DigitalDaemon:
 {'='*60}
   DIGITAL DAEMON - {self.naam}
 {'='*60}
-""", "cyaan"))
+""", Kleur.CYAAN))
 
         # Avatar
         print(kleur(self.get_avatar(), self._form_to_color(limbic["state"]["form"])))
@@ -382,28 +382,28 @@ class DigitalDaemon:
 
   Total: {meta['total']:.0f}% | Balance: {meta['balance']:.0%}
   State: {meta['state']}
-""", "cyaan"))
+""", Kleur.CYAAN))
 
         # Recommendations
         if meta["recommendations"]:
-            print(kleur("  AANBEVELINGEN:", "geel"))
+            print(kleur("  AANBEVELINGEN:", Kleur.GEEL))
             for rec in meta["recommendations"]:
-                print(kleur(f"    - {rec}", "geel"))
+                print(kleur(f"    - {rec}", Kleur.GEEL))
 
-        print(kleur(f"{'='*60}", "cyaan"))
+        print(kleur(f"{'='*60}", Kleur.CYAAN))
 
     def _form_to_color(self, form: str) -> str:
         """Map form naar kleur."""
         colors = {
-            "focus": "cyaan",
-            "creative": "magenta",
-            "dreaming": "blauw",
-            "guardian": "geel",
-            "glitch": "rood",
-            "overheated": "rood",
-            "zombie": "groen",
+            "focus": Kleur.CYAAN,
+            "creative": Kleur.MAGENTA,
+            "dreaming": Kleur.BLAUW,
+            "guardian": Kleur.GEEL,
+            "glitch": Kleur.ROOD,
+            "overheated": Kleur.ROOD,
+            "zombie": Kleur.GROEN,
         }
-        return colors.get(form, "wit")
+        return colors.get(form, Kleur.WIT)
 
     def interact(self, message: str) -> str:
         """Interacteer met de daemon."""
@@ -439,12 +439,12 @@ class DigitalDaemon:
     def force_form(self, form: AvatarForm):
         """Forceer een specifieke avatar vorm."""
         self.limbic.state.form = form
-        print(kleur(f"[DAEMON] Vorm geforceerd naar: {form.value}", "magenta"))
+        print(kleur(f"[DAEMON] Vorm geforceerd naar: {form.value}", Kleur.MAGENTA))
 
     def feed(self, nutrient: str, amount: float):
         """Voed de daemon direct."""
         self.metabolisme.consume(nutrient, amount)
-        print(kleur(f"[DAEMON] +{amount} {nutrient}!", "groen"))
+        print(kleur(f"[DAEMON] +{amount} {nutrient}!", Kleur.FEL_GROEN))
 
 
 def create_daemon(naam: str = "Nexus") -> DigitalDaemon:
