@@ -50,6 +50,7 @@ from .ai.production_rag import ProductionRAG
 from .ai.nieuws_agent import NieuwsAgentApp
 from .ai.weer_agent import WeerAgentApp
 from .ai.claude_chat import ClaudeChatApp
+from .brain.brain_cli import BrainCLI
 
 
 # =============================================================================
@@ -201,6 +202,7 @@ class Launcher:
         "33": ("Time Capsule", TimeCapsuleApp, "productiviteit"),
         "34": ("Advanced Questions", AdvancedQuestionsApp, "ai"),
         "35": ("ML Studio", MLStudioApp, "ai"),
+        "36": ("Central Brain", BrainCLI, "brain"),
     }
 
     # Sneltoetsen
@@ -237,6 +239,7 @@ class Launcher:
         "tc": "33", # Time Capsule
         "aq": "34", # Advanced Questions
         "ml": "35", # ML Studio
+        "br": "36", # Central Brain
     }
 
     def __init__(self):
@@ -331,6 +334,16 @@ class Launcher:
             gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
             print(f"     {self._kleur_tekst(key, 'nummer')}. {naam}"
                   f"{self._kleur_tekst(gebruik_str, 'info')}")
+        print()
+
+        # Central Brain - AI Ecosysteem
+        print(self._kleur_tekst("  ═══ CENTRAL BRAIN ═══", "categorie"))
+        naam, _, _ = self.APPS["36"]
+        gebruik = self.stats.get_gebruik(naam)
+        gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
+        print(f"     {self._kleur_tekst('36', 'nummer')}. {naam} "
+              f"{self._kleur_tekst('[AI ECOSYSTEEM]', 'info')}"
+              f"{self._kleur_tekst(gebruik_str, 'info')}")
         print()
 
         # Systeem opties
