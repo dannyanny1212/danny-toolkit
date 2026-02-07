@@ -8223,7 +8223,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
         print("\n  Kies een modus:")
         print("  1. Korte sessie (5 cycli) - 10 munten")
         print("  2. Medium sessie (10 cycli) - 18 munten")
-        print("  3. Lange sessie (20 cycli) - 30 munten")
+        print("  3. Lange sessie (3 cycli) - 30 munten")
         print("  4. Nacht modus (50 cycli) - 60 munten")
         print("  5. AI Turbo Learn (100 cycli + AI) - 100 munten")
         print("  0. Terug")
@@ -8233,7 +8233,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
         sessie_opties = {
             "1": {"cycli": 5, "kosten": 10, "naam": "Korte"},
             "2": {"cycli": 10, "kosten": 18, "naam": "Medium"},
-            "3": {"cycli": 20, "kosten": 30, "naam": "Lange"},
+            "3": {"cycli": 3, "kosten": 30, "naam": "Lange"},
             "4": {"cycli": 50, "kosten": 60, "naam": "Nacht"},
             "5": {"cycli": 100, "kosten": 100, "naam": "AI Turbo"},
         }
