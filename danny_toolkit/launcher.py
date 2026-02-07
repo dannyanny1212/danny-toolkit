@@ -30,6 +30,8 @@ from .apps.agenda_planner import AgendaPlannerApp
 from .apps.mood_tracker import MoodTrackerApp
 from .apps.citaten_generator import CitatenGeneratorApp
 from .apps.vector_studio import VectorStudioApp
+from .apps.goals_tracker import GoalsTrackerApp
+from .apps.room_planner import RoomPlannerApp
 
 from .ai.mini_rag import MiniRAG
 from .ai.production_rag import ProductionRAG
@@ -173,6 +175,8 @@ class Launcher:
         "19": ("Mood Tracker", MoodTrackerApp, "productiviteit"),
         "20": ("Citaten Generator", CitatenGeneratorApp, "productiviteit"),
         "21": ("Vector Data Studio", VectorStudioApp, "ai"),
+        "22": ("Goals Tracker", GoalsTrackerApp, "productiviteit"),
+        "23": ("Room Planner", RoomPlannerApp, "productiviteit"),
     }
 
     # Sneltoetsen
@@ -195,6 +199,8 @@ class Launcher:
         "mo": "19", # Mood
         "ci": "20", # Citaten
         "vs": "21", # Vector Studio
+        "go": "22", # Goals Tracker
+        "ro": "23", # Room Planner
     }
 
     def __init__(self):
@@ -272,7 +278,8 @@ class Launcher:
 
         # Productiviteit Apps
         print(self._kleur_tekst("  ═══ PRODUCTIVITEIT ═══", "categorie"))
-        for key in ["11", "12", "13", "14", "15", "16", "17", "18", "19", "20"]:
+        for key in ["11", "12", "13", "14", "15", "16", "17", "18", "19", "20",
+                    "22", "23"]:
             naam, _, _ = self.APPS[key]
             gebruik = self.stats.get_gebruik(naam)
             gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
@@ -324,6 +331,8 @@ class Launcher:
         print(f"     {self._kleur_tekst('mo', 'nummer')} = Mood Tracker")
         print(f"     {self._kleur_tekst('ci', 'nummer')} = Citaten Generator")
         print(f"     {self._kleur_tekst('vs', 'nummer')} = Vector Data Studio")
+        print(f"     {self._kleur_tekst('go', 'nummer')} = Goals Tracker")
+        print(f"     {self._kleur_tekst('ro', 'nummer')} = Room Planner")
         print()
 
         print("  Systeem commando's:")
@@ -614,12 +623,13 @@ Apps (1-5):               AI (6-10):
   s = Schatzoek
   c = Code Analyse
 
-Productiviteit (11-20):
+Productiviteit (11-20, 22-23):
   no = Notitie App          ha = Habit Tracker
   wg = Wachtwoord Gen       ex = Expense Tracker
   po = Pomodoro Timer       fl = Flashcards
   un = Unit Converter       ag = Agenda Planner
   mo = Mood Tracker         ci = Citaten Generator
+  go = Goals Tracker        ro = Room Planner
 
 AI Extra (21):
   vs = Vector Data Studio

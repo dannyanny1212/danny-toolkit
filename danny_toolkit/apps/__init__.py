@@ -6,6 +6,8 @@ from .virtueel_huisdier import VirtueelHuisdierApp
 from .schatzoek import SchatzoekApp
 from .code_analyse import CodeAnalyseApp
 from .vector_studio import VectorStudioApp
+from .goals_tracker import GoalsTrackerApp
+from .room_planner import RoomPlannerApp
 
 __all__ = [
     "BoodschappenlijstApp",
@@ -14,4 +16,6 @@ __all__ = [
     "SchatzoekApp",
     "CodeAnalyseApp",
     "VectorStudioApp",
+    "GoalsTrackerApp",
+    "RoomPlannerApp",
 ]
