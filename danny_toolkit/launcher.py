@@ -43,6 +43,7 @@ from .apps.language_tutor import LanguageTutorApp
 from .apps.decision_maker import DecisionMakerApp
 from .apps.time_capsule import TimeCapsuleApp
 from .apps.advanced_questions import AdvancedQuestionsApp
+from .apps.ml_studio import MLStudioApp
 
 from .ai.mini_rag import MiniRAG
 from .ai.production_rag import ProductionRAG
@@ -199,6 +200,7 @@ class Launcher:
         "32": ("Decision Maker", DecisionMakerApp, "productiviteit"),
         "33": ("Time Capsule", TimeCapsuleApp, "productiviteit"),
         "34": ("Advanced Questions", AdvancedQuestionsApp, "ai"),
+        "35": ("ML Studio", MLStudioApp, "ai"),
     }
 
     # Sneltoetsen
@@ -234,6 +236,7 @@ class Launcher:
         "de": "32", # Decision Maker
         "tc": "33", # Time Capsule
         "aq": "34", # Advanced Questions
+        "ml": "35", # ML Studio
     }
 
     def __init__(self):
@@ -301,7 +304,7 @@ class Launcher:
 
         # AI Systemen
         print(self._kleur_tekst("  ═══ AI SYSTEMEN ═══", "categorie"))
-        for key in ["6", "7", "8", "9", "10", "21", "24", "25", "34"]:
+        for key in ["6", "7", "8", "9", "10", "21", "24", "25", "34", "35"]:
             naam, _, _ = self.APPS[key]
             gebruik = self.stats.get_gebruik(naam)
             gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""

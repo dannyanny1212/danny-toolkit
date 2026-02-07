@@ -19,6 +19,7 @@ from .language_tutor import LanguageTutorApp
 from .decision_maker import DecisionMakerApp
 from .time_capsule import TimeCapsuleApp
 from .advanced_questions import AdvancedQuestionsApp
+from .ml_studio import MLStudioApp
 
 __all__ = [
     "BoodschappenlijstApp",
@@ -40,4 +41,5 @@ __all__ = [
     "DecisionMakerApp",
     "TimeCapsuleApp",
     "AdvancedQuestionsApp",
+    "MLStudioApp",
 ]
