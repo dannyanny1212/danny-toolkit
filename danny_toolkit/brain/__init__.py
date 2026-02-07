@@ -39,6 +39,12 @@ from .sanctuary_dashboard import (
     goodmorning,
 )
 
+# Dream Monitor - Passive Observation Mode
+from .dream_monitor import (
+    dream_monitor,
+    quick_peek,
+)
+
 # Prometheus Protocol - Federated Swarm Intelligence
 from .trinity_omega import (
     PrometheusBrain,
@@ -92,6 +98,9 @@ __all__ = [
     "show_biology",
     "goodnight",
     "goodmorning",
+    # Dream Monitor
+    "dream_monitor",
+    "quick_peek",
     # Legacy Trinity Symbiosis
     "TrinitySymbiosis",
     "TrinityRole",
