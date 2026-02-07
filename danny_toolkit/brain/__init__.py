@@ -10,12 +10,28 @@ Componenten:
 - Workflows: Super-workflows (Health Loop, Deep Work Loop, etc.)
 - BrainCLI: Command-line interface
 - TrinitySymbiosis: Verbinding tussen Mind, Soul en Body
+- PrometheusBrain: Federated Swarm Intelligence (17 Nodes)
 """
 
 from .central_brain import CentralBrain
 from .unified_memory import UnifiedMemory
 from .workflows import WorkflowEngine, SUPER_WORKFLOWS
 from .brain_cli import BrainCLI
+
+# Prometheus Protocol - Federated Swarm Intelligence
+from .trinity_omega import (
+    PrometheusBrain,
+    CosmicRole,
+    NodeTier,
+    TaskPriority,
+    AgentNode,
+    SwarmMetrics,
+    TaskResult,
+    get_prometheus,
+    route,
+)
+
+# Legacy Trinity Symbiosis (backwards compatibility)
 from .trinity_symbiosis import (
     TrinitySymbiosis,
     TrinityRole,
@@ -35,11 +51,13 @@ from .trinity_symbiosis import (
 )
 
 __all__ = [
+    # Central Brain
     "CentralBrain",
     "UnifiedMemory",
     "WorkflowEngine",
     "SUPER_WORKFLOWS",
     "BrainCLI",
+    # Legacy Trinity Symbiosis
     "TrinitySymbiosis",
     "TrinityRole",
     "TrinityChannel",
@@ -55,6 +73,16 @@ __all__ = [
     "connect_joy",
     "connect_cosmic_family",
     "emit_trinity_event",
+    # Prometheus Protocol - Federated Swarm Intelligence
+    "PrometheusBrain",
+    "CosmicRole",
+    "NodeTier",
+    "TaskPriority",
+    "AgentNode",
+    "SwarmMetrics",
+    "TaskResult",
+    "get_prometheus",
+    "route",
 ]
 
 __version__ = "1.0.0"
