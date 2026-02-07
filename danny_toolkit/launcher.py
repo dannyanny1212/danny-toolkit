@@ -533,8 +533,11 @@ class Launcher:
         "h": "3",   # Huisdier
         "s": "4",   # Schatzoek
         "c": "5",   # Code analyse
+        "mr": "6",  # Mini-RAG
+        "pr": "7",  # Production RAG
         "n": "8",   # Nieuws
         "w": "9",   # Weer
+        "cc": "10", # Claude Chat
         "no": "11", # Notitie
         "wg": "12", # Wachtwoord Generator
         "po": "13", # Pomodoro
