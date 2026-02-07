@@ -31,6 +31,7 @@ data/rag/vector_db.json
 data/chat_data.json
 data/production_rag_data.json
 data/rag_data.json
+data/learning/
 
 # Misc
 nul

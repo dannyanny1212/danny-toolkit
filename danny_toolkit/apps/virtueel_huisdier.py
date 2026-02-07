@@ -320,6 +320,21 @@ class VirtueelHuisdierApp:
         # Aparte permanente kennis opslag - blijft bestaan tot huisdier reset
         self.kennis_bestand = Config.APPS_DATA_DIR / "huisdier_kennis.json"
         self.huisdier = None
+        # Learning System - lazy loaded voor performance
+        self.learning = None
+
+    def _init_learning(self):
+        """Initialiseer het Self-Learning System (lazy loaded)."""
+        if self.learning is None:
+            try:
+                from ..learning import LearningSystem
+                self.learning = LearningSystem(self)
+                # Sync met bestaande huisdier kennis
+                if self.huisdier and "kennis" in self.huisdier:
+                    self.learning.sync_with_huisdier(self.huisdier)
+            except ImportError:
+                self.learning = None
+        return self.learning
 
     def _laad_permanente_kennis(self) -> dict:
         """Laadt permanente kennis uit apart bestand op lokale PC."""
@@ -2767,6 +2782,21 @@ Maak het dromerig en fantasierijk."""
         self._check_evolutie()
         print(f"\n  {geluid}")
         print(f"  [INFO] Kennis blijft bewaard tot huisdier reset!")
+
+        # LEARNING: Log RAG sessie naar Learning System
+        if feiten_geleerd:
+            self._init_learning()
+            if self.learning:
+                self.learning.log_rag_session(
+                    files_read=bronnen_gebruikt,
+                    facts_learned=[f["feit"] for f in feiten_geleerd],
+                    context={
+                        "iq": self.huisdier.get("intelligentie", 0),
+                        "sessie": permanente_kennis["totaal_sessies"],
+                    }
+                )
+                print(f"  [LEARN] {len(feiten_geleerd)} feiten naar Learning System!")
+
         self._sla_op()
 
     def _leren_nieuws(self):
@@ -2893,6 +2923,20 @@ Maak het dromerig en fantasierijk."""
 
         self._check_evolutie()
         print(f"\n  {geluid}")
+
+        # LEARNING: Log nieuws sessie naar Learning System
+        if gelezen:
+            self._init_learning()
+            if self.learning:
+                self.learning.log_news_session(
+                    topics=["tech", "ai", "science"],
+                    facts_learned=[g["titel"] for g in gelezen],
+                    context={
+                        "iq": self.huisdier.get("intelligentie", 0),
+                        "geluk": self.huisdier.get("geluk", 50),
+                    }
+                )
+
         self._sla_op()
 
     def _leren_weer(self):
@@ -3017,6 +3061,19 @@ Maak het dromerig en fantasierijk."""
 
         self._check_evolutie()
         print(f"\n  {geluid}")
+
+        # LEARNING: Log weer sessie naar Learning System
+        self._init_learning()
+        if self.learning:
+            weer_info = f"{stad}: {weer}, {temp}C, {wind}km/u"
+            self.learning.log_weather_session(
+                location=stad,
+                weather_info=weer_info,
+                context={
+                    "iq": self.huisdier.get("intelligentie", 0),
+                }
+            )
+
         self._sla_op()
 
     def _leren_ai_gesprek(self):
@@ -3354,6 +3411,22 @@ Antwoord in het Nederlands."""
 
         self._check_evolutie()
         print(f"\n  {geluid}")
+
+        # LEARNING: Log AI gesprek naar Learning System
+        if lessen_geleerd:
+            self._init_learning()
+            if self.learning:
+                self.learning.log_ai_conversation(
+                    questions=gekozen_vragen,
+                    answers=[],  # Antwoorden niet opgeslagen
+                    lessons=lessen_geleerd,
+                    context={
+                        "iq": self.huisdier.get("intelligentie", 0),
+                        "echte_ai": echte_ai,
+                    }
+                )
+                print(f"  [LEARN] {len(lessen_geleerd)} lessen opgeslagen!")
+
         self._sla_op()
 
     def _ai_code_helper(self):
@@ -8049,6 +8122,9 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
         personality = self._get_personality()
         iq = self.huisdier.get("intelligentie", 0)
 
+        # Initialiseer Learning System voor deze chat sessie
+        self._init_learning()
+
         print("\n" + "=" * 60)
         print(f"  {emoji} PRAAT MET {naam.upper()}! {emoji}")
         print("=" * 60)
@@ -8056,6 +8132,8 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
         print(f"  {geluid}")
         print(f"\n  Persoonlijkheid: {personality['karakter']}")
         print(f"  IQ: {iq} | Spreekstijl: {personality['spreekstijl']}")
+        if self.learning:
+            print(f"  [LEARN] Self-Learning actief!")
         print("\n  Typ 'stop' om te stoppen.\n")
 
         # Voeg herinnering toe
@@ -8071,6 +8149,16 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
 
             gesprek_count += 1
 
+            # LEARNING: Check voor cached response (instant antwoord!)
+            response = None
+            if self.learning:
+                cached = self.learning.get_cached_response(user_input)
+                if cached:
+                    response = cached
+                    print(f"  {naam}: {response} [CACHED]")
+                    print()
+                    continue
+
             # Genereer AI response met persoonlijkheid
             context = f"Gebruiker zegt: '{user_input}'. Reageer als {naam} de {huisdier_type}."
 
@@ -8084,6 +8172,16 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
 
             print(f"  {naam}: {response}")
             print()
+
+            # LEARNING: Log interactie voor learning
+            if self.learning:
+                learning_context = {
+                    "geluk": self.huisdier.get("geluk", 50),
+                    "energie": self.huisdier.get("energie", 50),
+                    "iq": iq,
+                    "huisdier_type": huisdier_type,
+                }
+                self.learning.log_chat(user_input, response, learning_context)
 
             # Voeg herinnering toe van dit gesprek
             if gesprek_count % 3 == 0:  # Elke 3 berichten
@@ -8425,7 +8523,48 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
         self._check_evolutie()
         print(f"\n  {geluid}")
         print(f"  {naam} voelt zich slimmer en uitgerust!")
+
+        # LEARNING: Trigger kennisoptimalisatie na auto mode sessie
+        self._trigger_optimization()
+
         self._sla_op()
+
+    def _trigger_optimization(self):
+        """Trigger Learning System optimalisatie na sessie."""
+        self._init_learning()
+        if not self.learning:
+            return
+
+        try:
+            # Sync huisdier kennis naar learning system
+            if "kennis" in self.huisdier:
+                self.learning.sync_with_huisdier(self.huisdier)
+
+            # Trigger optimalisatie als nodig
+            result = self.learning.trigger_optimization()
+            if result:
+                print(f"\n  [OPT] LEARNING SYSTEM OPTIMALISATIE")
+                print(f"  " + "-" * 40)
+                print(f"    Geconsolideerd: {result.get('consolidated', 0)}")
+                print(f"    Duplicaten verwijderd: {result.get('duplicates_removed', 0)}")
+                print(f"    Oude interacties: {result.get('old_interactions_removed', 0)}")
+                print(f"    Cache opgeruimd: {result.get('cache_entries_removed', 0)}")
+
+            # Toon suggesties
+            suggestions = self.learning.get_suggestions()
+            if suggestions:
+                print(f"\n  [TIP] Learning suggesties:")
+                for sug in suggestions[:2]:
+                    print(f"    - {sug[:60]}...")
+
+            # Sync geoptimaliseerde kennis terug
+            optimized_facts = self.learning.export_to_huisdier()
+            if optimized_facts:
+                self.huisdier["kennis"]["feiten"] = optimized_facts[:100]
+
+        except Exception as e:
+            # Silently fail - learning is optional
+            pass
 
     def run(self):
         """Start de app."""
