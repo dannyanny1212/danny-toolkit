@@ -59,6 +59,7 @@ from .brain.trinity_symbiosis import (
 )
 from .daemon.daemon_core import DigitalDaemon
 from .main_omega import OmegaAI
+from .brain.sanctuary_dashboard import SanctuaryDashboard, get_sanctuary
 
 
 # =============================================================================
@@ -288,6 +289,86 @@ class OmegaApp:
 
 
 # =============================================================================
+# SANCTUARY DASHBOARD WRAPPER
+# =============================================================================
+
+class SanctuaryApp:
+    """Wrapper voor Sanctuary Dashboard in launcher."""
+
+    def run(self):
+        """Start het Sanctuary Dashboard interactief."""
+        from .core.utils import clear_scherm, kleur
+
+        sanctuary = get_sanctuary()
+
+        clear_scherm()
+        print(kleur("""
++===============================================================+
+|                                                               |
+|     S A N C T U A R Y   D A S H B O A R D                     |
+|                                                               |
+|     Het Levende Systeem Dashboard                             |
+|                                                               |
++===============================================================+
+        """, "\033[36m"))
+
+        print(sanctuary.render_live_dashboard())
+
+        print(kleur("\nCOMMANDO'S:", "\033[33m"))
+        print("  live        - Toon live dashboard")
+        print("  hibernate   - Toon hibernation protocol")
+        print("  awaken      - Toon awakening protocol")
+        print("  biology     - Toon biologische analogie")
+        print("  goodnight   - Volledige slaap sequence")
+        print("  goodmorning - Volledige wakker sequence")
+        print("  stop        - Terug naar launcher")
+
+        while True:
+            try:
+                cmd = input(kleur(
+                    "\n[SANCTUARY] > ", "\033[36m"
+                )).strip().lower()
+
+                if not cmd:
+                    continue
+
+                if cmd in ["stop", "exit", "quit"]:
+                    break
+                elif cmd == "live":
+                    print(sanctuary.render_live_dashboard())
+                elif cmd == "hibernate":
+                    print(
+                        sanctuary.render_hibernation_dashboard()
+                    )
+                elif cmd == "awaken":
+                    print(
+                        sanctuary.render_awakening_dashboard()
+                    )
+                elif cmd == "biology":
+                    print(
+                        sanctuary.render_biology_explanation()
+                    )
+                elif cmd == "goodnight":
+                    print(
+                        sanctuary.render_hibernation_dashboard()
+                    )
+                    print(
+                        sanctuary.render_biology_explanation()
+                    )
+                elif cmd == "goodmorning":
+                    print(
+                        sanctuary.render_awakening_dashboard()
+                    )
+                else:
+                    print(f"  Onbekend commando: {cmd}")
+
+            except (EOFError, KeyboardInterrupt):
+                break
+
+        input("\n  Druk op Enter...")
+
+
+# =============================================================================
 # ASCII BANNERS
 # =============================================================================
 
@@ -442,6 +523,7 @@ class Launcher:
         "39": ("Digital Daemon", DaemonApp, "daemon"),
         "40": ("Trinity Symbiosis", TrinityApp, "brain"),
         "41": ("Omega AI", OmegaApp, "omega"),
+        "42": ("Sanctuary Dashboard", SanctuaryApp, "brain"),
     }
 
     # Sneltoetsen
@@ -484,6 +566,7 @@ class Launcher:
         "dm": "39", # Digital Daemon
         "tr": "40", # Trinity Symbiosis
         "om": "41", # Omega AI
+        "sa": "42", # Sanctuary Dashboard
     }
 
     def __init__(self):
@@ -582,12 +665,17 @@ class Launcher:
 
         # Central Brain - AI Ecosysteem
         print(self._kleur_tekst("  ═══ CENTRAL BRAIN ═══", "categorie"))
-        naam, _, _ = self.APPS["36"]
-        gebruik = self.stats.get_gebruik(naam)
-        gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
-        print(f"     {self._kleur_tekst('36', 'nummer')}. {naam} "
-              f"{self._kleur_tekst('[AI ECOSYSTEEM]', 'info')}"
-              f"{self._kleur_tekst(gebruik_str, 'info')}")
+        for key in ["36", "42"]:
+            naam, _, _ = self.APPS[key]
+            gebruik = self.stats.get_gebruik(naam)
+            gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
+            label = {
+                "36": "[AI ECOSYSTEEM]",
+                "42": "[LEVEND DASHBOARD]",
+            }.get(key, "")
+            print(f"     {self._kleur_tekst(key, 'nummer')}. {naam} "
+                  f"{self._kleur_tekst(label, 'info')}"
+                  f"{self._kleur_tekst(gebruik_str, 'info')}")
         print()
 
         # Digital Daemon - Levende Interface
@@ -660,6 +748,7 @@ class Launcher:
         print(f"     {self._kleur_tekst('nl', 'nummer')} = NLP Studio")
         print(f"     {self._kleur_tekst('dm', 'nummer')} = Digital Daemon")
         print(f"     {self._kleur_tekst('om', 'nummer')} = Omega AI")
+        print(f"     {self._kleur_tekst('sa', 'nummer')} = Sanctuary Dashboard")
         print()
 
         print("  Systeem commando's:")
