@@ -44,6 +44,7 @@ from .apps.decision_maker import DecisionMakerApp
 from .apps.time_capsule import TimeCapsuleApp
 from .apps.advanced_questions import AdvancedQuestionsApp
 from .apps.ml_studio import MLStudioApp
+from .apps.knowledge_companion import KnowledgeCompanionApp
 
 from .ai.mini_rag import MiniRAG
 from .ai.production_rag import ProductionRAG
@@ -203,6 +204,7 @@ class Launcher:
         "34": ("Advanced Questions", AdvancedQuestionsApp, "ai"),
         "35": ("ML Studio", MLStudioApp, "ai"),
         "36": ("Central Brain", BrainCLI, "brain"),
+        "37": ("Knowledge Companion", KnowledgeCompanionApp, "ai"),
     }
 
     # Sneltoetsen
@@ -240,6 +242,7 @@ class Launcher:
         "aq": "34", # Advanced Questions
         "ml": "35", # ML Studio
         "br": "36", # Central Brain
+        "kc": "37", # Knowledge Companion
     }
 
     def __init__(self):

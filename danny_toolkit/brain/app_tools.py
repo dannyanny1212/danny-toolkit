@@ -1216,6 +1216,82 @@ APP_TOOLS: Dict[str, AppDefinition] = {
             ),
         ]
     ),
+
+    # === KNOWLEDGE COMPANION ===
+    "knowledge_companion": AppDefinition(
+        naam="knowledge_companion",
+        beschrijving="AI Companion die groeit door kennis te consumeren - RAG + Gamification",
+        categorie=AppCategorie.AI,
+        module_path="danny_toolkit.apps.knowledge_companion",
+        class_name="KnowledgeCompanionApp",
+        prioriteit=9,
+        acties=[
+            AppActie(
+                naam="vraag",
+                beschrijving="Stel een vraag aan de Knowledge Companion",
+                parameters={
+                    "vraag": {
+                        "type": "string",
+                        "description": "De vraag om te beantwoorden",
+                        "required": True
+                    }
+                }
+            ),
+            AppActie(
+                naam="voed",
+                beschrijving="Voed de companion met een document (bestand/map pad)",
+                parameters={
+                    "pad": {
+                        "type": "string",
+                        "description": "Pad naar bestand of map om te indexeren",
+                        "required": True
+                    }
+                }
+            ),
+            AppActie(
+                naam="voed_url",
+                beschrijving="Voed de companion met content van een URL",
+                parameters={
+                    "url": {
+                        "type": "string",
+                        "description": "URL om te indexeren",
+                        "required": True
+                    }
+                }
+            ),
+            AppActie(
+                naam="voed_tekst",
+                beschrijving="Voed de companion met directe tekst",
+                parameters={
+                    "tekst": {
+                        "type": "string",
+                        "description": "Tekst om te indexeren",
+                        "required": True
+                    },
+                    "doc_id": {
+                        "type": "string",
+                        "description": "Document ID"
+                    }
+                }
+            ),
+            AppActie(
+                naam="synthetiseer",
+                beschrijving="Combineer kennis over een onderwerp tot nieuwe inzichten",
+                parameters={
+                    "onderwerp": {
+                        "type": "string",
+                        "description": "Onderwerp om te synthetiseren",
+                        "required": True
+                    }
+                }
+            ),
+            AppActie(
+                naam="status",
+                beschrijving="Haal de status van de companion op (level, XP, stats)",
+                parameters={}
+            ),
+        ]
+    ),
 }
 
 
