@@ -27,6 +27,18 @@ from .nexus_bridge import (
     get_nexus_greeting,
 )
 
+# Digital Sanctuary Dashboard
+from .sanctuary_dashboard import (
+    SanctuaryDashboard,
+    get_sanctuary,
+    show_hibernation,
+    show_awakening,
+    show_live,
+    show_biology,
+    goodnight,
+    goodmorning,
+)
+
 # Prometheus Protocol - Federated Swarm Intelligence
 from .trinity_omega import (
     PrometheusBrain,
@@ -71,6 +83,15 @@ __all__ = [
     "NexusOracleMode",
     "create_nexus_bridge",
     "get_nexus_greeting",
+    # Digital Sanctuary Dashboard
+    "SanctuaryDashboard",
+    "get_sanctuary",
+    "show_hibernation",
+    "show_awakening",
+    "show_live",
+    "show_biology",
+    "goodnight",
+    "goodmorning",
     # Legacy Trinity Symbiosis
     "TrinitySymbiosis",
     "TrinityRole",
