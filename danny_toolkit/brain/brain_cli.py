@@ -7,7 +7,7 @@ Interactieve interface om met het AI ecosysteem te communiceren.
 import json
 from datetime import datetime
 
-from ..core.utils import clear_scherm, kleur
+from ..core.utils import clear_scherm, kleur, fix_encoding
 from ..core.config import Config
 
 from .central_brain import CentralBrain
@@ -20,6 +20,7 @@ class BrainCLI:
     VERSIE = "1.0.0"
 
     def __init__(self):
+        fix_encoding()
         print(kleur("\n   Laden van Central Brain...\n", "cyaan"))
         self.brain = CentralBrain()
 
