@@ -14,7 +14,7 @@ from typing import Optional, Callable, Any
 from enum import Enum
 
 from ..core.config import Config
-from ..core.utils import kleur
+from ..core.utils import kleur, Kleur
 from .tool import ToolRegistry
 
 
@@ -184,7 +184,7 @@ class Agent:
 
             self.log(f"State geladen van {self.state_file.name}")
         except Exception as e:
-            self.log(f"Kon state niet laden: {e}", "rood")
+            self.log(f"Kon state niet laden: {e}", Kleur.ROOD)
 
     def _sla_state_op(self):
         """Sla agent state op."""
@@ -211,9 +211,9 @@ class Agent:
             with open(self.state_file, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
         except Exception as e:
-            self.log(f"Kon state niet opslaan: {e}", "rood")
+            self.log(f"Kon state niet opslaan: {e}", Kleur.ROOD)
 
-    def log(self, bericht: str, kleur_naam: str = "cyaan"):
+    def log(self, bericht: str, kleur_naam: str = Kleur.CYAAN):
         """Log een bericht met kleur."""
         timestamp = datetime.now().strftime("%H:%M:%S")
         log_entry = f"[{timestamp}] [{self.naam}] {bericht}"
@@ -226,7 +226,7 @@ class Agent:
             try:
                 hook(self, *args)
             except Exception as e:
-                self.log(f"Hook error: {e}", "rood")
+                self.log(f"Hook error: {e}", Kleur.ROOD)
 
     def add_hook(self, event: str, callback: Callable):
         """Voeg een event hook toe."""
@@ -384,7 +384,7 @@ class Agent:
                     }
 
             except Exception as e:
-                self.log(f"API error (poging {attempt + 1}): {e}", "geel")
+                self.log(f"API error (poging {attempt + 1}): {e}", Kleur.GEEL)
                 if attempt < self.config.retry_attempts - 1:
                     await asyncio.sleep(self.config.retry_delay * (attempt + 1))
                 else:
@@ -404,7 +404,7 @@ class Agent:
         self.stats.totaal_taken += 1
         self.stats.laatste_activiteit = datetime.now()
 
-        self.log(f"Start taak: {taak[:50]}...", "cyaan")
+        self.log(f"Start taak: {taak[:50]}...", Kleur.CYAAN)
         self._trigger_hook(self.on_start, taak)
 
         # Voeg taak toe aan geheugen
@@ -412,7 +412,7 @@ class Agent:
 
         try:
             for i in range(max_iteraties):
-                self.log(f"Iteratie {i+1}/{max_iteraties}", "geel")
+                self.log(f"Iteratie {i+1}/{max_iteraties}", Kleur.GEEL)
 
                 # Roep AI aan
                 response = await self._call_api(self.memory.korte_termijn)
@@ -472,7 +472,7 @@ class Agent:
                             tool_id = tool_call.id
 
                         input_str = json.dumps(tool_input, ensure_ascii=False)
-                        self.log(f"Tool: {tool_name}({input_str[:50]}...)", "magenta")
+                        self.log(f"Tool: {tool_name}({input_str[:50]}...)", Kleur.MAGENTA)
 
                         # Track tool gebruik
                         if tool_name not in self.stats.tool_gebruik:
@@ -514,14 +514,14 @@ class Agent:
                     self.stats.totaal_tijd_sec += elapsed
                     self.state = AgentState.IDLE
 
-                    self.log(f"Taak voltooid in {elapsed:.2f}s!", "groen")
+                    self.log(f"Taak voltooid in {elapsed:.2f}s!", Kleur.GROEN)
                     self._trigger_hook(self.on_complete, final_text)
                     self._sla_state_op()
 
                     return final_text
 
             # Max iteraties bereikt
-            self.log("Max iteraties bereikt", "rood")
+            self.log("Max iteraties bereikt", Kleur.ROOD)
             self.stats.gefaalde_taken += 1
             self.state = AgentState.IDLE
             self._sla_state_op()
@@ -530,7 +530,7 @@ class Agent:
         except Exception as e:
             self.state = AgentState.ERROR
             self.stats.gefaalde_taken += 1
-            self.log(f"Error: {e}", "rood")
+            self.log(f"Error: {e}", Kleur.ROOD)
             self._trigger_hook(self.on_error, e)
             self._sla_state_op()
             raise
@@ -542,7 +542,7 @@ class Agent:
         Args:
             vraag: Optionele vraag om over te reflecteren
         """
-        self.log("Reflecteren...", "magenta")
+        self.log("Reflecteren...", Kleur.MAGENTA)
 
         reflection_prompt = f"""Reflecteer op je recente acties en ervaringen.
 
@@ -582,7 +582,7 @@ Geef een korte, inzichtelijke reflectie."""
         self.memory.korte_termijn = []
         self.logs = []
         self.state = AgentState.IDLE
-        self.log("Geheugen gereset", "geel")
+        self.log("Geheugen gereset", Kleur.GEEL)
 
     def reset_all(self):
         """Reset alles inclusief lange-termijn geheugen."""
@@ -594,27 +594,27 @@ Geef een korte, inzichtelijke reflectie."""
         if self.state_file.exists():
             self.state_file.unlink()
 
-        self.log("Volledig gereset", "geel")
+        self.log("Volledig gereset", Kleur.GEEL)
 
     def toon_status(self):
         """Toon agent status."""
-        print(kleur(f"\n{'='*50}", "cyaan"))
-        print(kleur(f"AGENT: {self.naam}", "cyaan"))
-        print(kleur("=" * 50, "cyaan"))
+        print(kleur(f"\n{'='*50}", Kleur.CYAAN))
+        print(kleur(f"AGENT: {self.naam}", Kleur.CYAAN))
+        print(kleur("=" * 50, Kleur.CYAAN))
         print(f"  Provider:     {self.provider.value} ({self.model})")
         print(f"  State:        {self.state.value}")
         print(f"  Geheugen:     {len(self.memory.korte_termijn)} berichten")
         print(f"  Lang-termijn: {len(self.memory.lange_termijn)} feiten")
         print(f"  Vaardigheden: {len(self.memory.vaardigheden)}")
         print(f"  Tools:        {len(self.tools.tools)}")
-        print(kleur("\nStatistieken:", "geel"))
+        print(kleur("\nStatistieken:", Kleur.GEEL))
         print(f"  Taken:        {self.stats.totaal_taken} "
               f"({self.stats.succesvolle_taken} ok, "
               f"{self.stats.gefaalde_taken} failed)")
         print(f"  Tokens:       {self.stats.totaal_tokens}")
         print(f"  Tijd:         {self.stats.totaal_tijd_sec:.1f}s totaal")
         if self.stats.tool_gebruik:
-            print(kleur("\nTool gebruik:", "geel"))
+            print(kleur("\nTool gebruik:", Kleur.GEEL))
             for tool, count in self.stats.tool_gebruik.items():
                 print(f"  {tool}: {count}x")
 

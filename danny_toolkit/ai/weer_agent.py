@@ -23,7 +23,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 
-from ..core.utils import clear_scherm, kleur
+from ..core.utils import clear_scherm, kleur, Kleur
 
 
 class WeerAgentApp:
@@ -312,15 +312,15 @@ class WeerAgentApp:
     def _get_uv_advies(self, uv: int) -> tuple:
         """Geef UV advies."""
         if uv <= 2:
-            return ("Laag", "groen", "Geen bescherming nodig")
+            return ("Laag", Kleur.GROEN, "Geen bescherming nodig")
         elif uv <= 5:
-            return ("Matig", "geel", "Zonnebrand SPF 15+ aanbevolen")
+            return ("Matig", Kleur.GEEL, "Zonnebrand SPF 15+ aanbevolen")
         elif uv <= 7:
             return ("Hoog", "oranje", "Zonnebrand SPF 30+, hoed en zonnebril")
         elif uv <= 10:
-            return ("Zeer hoog", "rood", "Vermijd zon 11-15u, SPF 50+")
+            return ("Zeer hoog", Kleur.ROOD, "Vermijd zon 11-15u, SPF 50+")
         else:
-            return ("Extreem", "rood", "Blijf binnen tussen 11-16u!")
+            return ("Extreem", Kleur.ROOD, "Blijf binnen tussen 11-16u!")
 
     def _get_luchtkwaliteit(self) -> dict:
         """Simuleer luchtkwaliteit (AQI)."""
@@ -329,11 +329,11 @@ class WeerAgentApp:
 
         if aqi <= 50:
             kwaliteit = "Goed"
-            kleur_naam = "groen"
+            kleur_naam = Kleur.GROEN
             advies = "Luchtkwaliteit is uitstekend"
         elif aqi <= 100:
             kwaliteit = "Matig"
-            kleur_naam = "geel"
+            kleur_naam = Kleur.GEEL
             advies = "Acceptabel voor de meeste mensen"
         elif aqi <= 150:
             kwaliteit = "Ongezond voor gevoelige groepen"
@@ -341,7 +341,7 @@ class WeerAgentApp:
             advies = "Mensen met luchtwegproblemen opgelet"
         else:
             kwaliteit = "Ongezond"
-            kleur_naam = "rood"
+            kleur_naam = Kleur.ROOD
             advies = "Beperk buitenactiviteiten"
 
         return {
@@ -359,13 +359,13 @@ class WeerAgentApp:
         if not actieve_pollen:
             return {
                 "niveau": "Geen",
-                "kleur": "groen",
+                "kleur": Kleur.GROEN,
                 "pollen": [],
                 "advies": "Geen pollenactiviteit"
             }
 
         niveau = random.choice(["Laag", "Matig", "Hoog"])
-        kleur_naam = {"Laag": "groen", "Matig": "geel", "Hoog": "rood"}.get(niveau, "geel")
+        kleur_naam = {"Laag": Kleur.GROEN, "Matig": Kleur.GEEL, "Hoog": Kleur.ROOD}.get(niveau, Kleur.GEEL)
 
         advies = {
             "Laag": "Minimale hinder voor hooikoortspatienten",
@@ -546,11 +546,11 @@ class WeerAgentApp:
 
         # Code kleuren
         def maak_alert(type_naam, niveau, bericht, icon):
-            kleur_map = {"ROOD": "rood", "ORANJE": "oranje", "GEEL": "geel"}
+            kleur_map = {"ROOD": Kleur.ROOD, "ORANJE": "oranje", "GEEL": Kleur.GEEL}
             return {
                 "type": type_naam,
                 "niveau": niveau,
-                "kleur": kleur_map.get(niveau, "geel"),
+                "kleur": kleur_map.get(niveau, Kleur.GEEL),
                 "bericht": bericht,
                 "icon": icon
             }
@@ -641,13 +641,13 @@ class WeerAgentApp:
             # Totaal score
             if temp_ok and wind_ok and weer_ok:
                 score = "Uitstekend"
-                kleur_naam = "groen"
+                kleur_naam = Kleur.GROEN
             elif (temp_ok or wind_ok) and weer_ok:
                 score = "Matig"
-                kleur_naam = "geel"
+                kleur_naam = Kleur.GEEL
             else:
                 score = "Niet aanbevolen"
-                kleur_naam = "rood"
+                kleur_naam = Kleur.ROOD
 
             resultaten[sport] = {
                 "score": score,
@@ -758,7 +758,7 @@ class WeerAgentApp:
 
     def _toon_steden_lijst(self):
         """Toont beschikbare steden per regio."""
-        print("\n" + kleur("Beschikbare steden:", "geel"))
+        print("\n" + kleur("Beschikbare steden:", Kleur.GEEL))
 
         # Groepeer per regio
         regios = {}
@@ -778,26 +778,26 @@ class WeerAgentApp:
     def _toon_menu(self):
         """Toon het hoofdmenu."""
         print()
-        print(kleur("+" + "=" * 55 + "+", "cyaan"))
-        print(kleur("|       WEER AGENT v2.0                                |", "cyaan"))
-        print(kleur("+" + "=" * 55 + "+", "cyaan"))
-        print(kleur("| WEER                                                 |", "wit"))
+        print(kleur("+" + "=" * 55 + "+", Kleur.CYAAN))
+        print(kleur("|       WEER AGENT v2.0                                |", Kleur.CYAAN))
+        print(kleur("+" + "=" * 55 + "+", Kleur.CYAAN))
+        print(kleur("| WEER                                                 |", Kleur.WIT))
         print("|  1. Compleet weerrapport                             |")
         print("|  2. Snelle weer check                                |")
         print("|  3. 7-daagse voorspelling                            |")
         print("|  4. Uur-voor-uur voorspelling                        |")
         print(kleur("+" + "-" * 55 + "+", "grijs"))
-        print(kleur("| EXTRA INFO                                           |", "wit"))
+        print(kleur("| EXTRA INFO                                           |", Kleur.WIT))
         print("|  5. Sport weer                                       |")
         print("|  6. UV-index en luchtkwaliteit                       |")
         print("|  7. Pollen en allergieinfo                           |")
         print("|  8. Vergelijk twee steden                            |")
         print(kleur("+" + "-" * 55 + "+", "grijs"))
-        print(kleur("| INSTELLINGEN                                         |", "wit"))
+        print(kleur("| INSTELLINGEN                                         |", Kleur.WIT))
         print("|  9. Favoriete locaties                               |")
         print(kleur("+" + "-" * 55 + "+", "grijs"))
         print("|  0. Terug naar hoofdmenu                             |")
-        print(kleur("+" + "=" * 55 + "+", "cyaan"))
+        print(kleur("+" + "=" * 55 + "+", Kleur.CYAAN))
 
     def _vraag_locatie(self) -> str:
         """Vraag gebruiker om locatie."""
@@ -835,15 +835,15 @@ class WeerAgentApp:
                                advies: str, activiteiten: list, sport: dict,
                                pollen: dict, lucht: dict, zon: dict, maanfase: dict):
         """Toon volledig weerrapport."""
-        print("\n" + kleur("=" * 60, "cyaan"))
-        print(kleur("              COMPLEET WEERRAPPORT", "geel"))
-        print(kleur("=" * 60, "cyaan"))
+        print("\n" + kleur("=" * 60, Kleur.CYAAN))
+        print(kleur("              COMPLEET WEERRAPPORT", Kleur.GEEL))
+        print(kleur("=" * 60, Kleur.CYAAN))
 
         # Alerts bovenaan
         if alerts:
             print(f"\n{kleur('!!! WAARSCHUWINGEN !!!', 'rood')}")
             for alert in alerts:
-                niveau_kleur = alert.get("kleur", "geel")
+                niveau_kleur = alert.get("kleur", Kleur.GEEL)
                 niveau = alert["niveau"]
                 print(f"  {alert['icon']} {kleur(f'[{niveau}]', niveau_kleur)} {alert['type']}")
                 print(f"     {alert['bericht']}")
@@ -853,7 +853,7 @@ class WeerAgentApp:
         print(f"  {weer['icon']} {weer['conditie'].title()}")
         print(f"  Temperatuur:    {kleur(str(weer['temp']) + '°C', 'cyaan')}", end="")
         if weer['gevoels_temp'] != weer['temp']:
-            gevoels_kleur = "blauw" if weer['gevoels_temp'] < weer['temp'] else "rood"
+            gevoels_kleur = Kleur.BLAUW if weer['gevoels_temp'] < weer['temp'] else Kleur.ROOD
             print(f" (voelt als {kleur(str(weer['gevoels_temp']) + '°C', gevoels_kleur)})")
         else:
             print()
@@ -895,7 +895,7 @@ class WeerAgentApp:
         print("  " + "-" * 55)
         for dag in voorspelling:
             temp_str = f"{dag['temp_min']:>2}°C - {dag['temp_max']}°C"
-            neerslag_kleur = "blauw" if dag['neerslag_kans'] > 50 else "grijs"
+            neerslag_kleur = Kleur.BLAUW if dag['neerslag_kans'] > 50 else "grijs"
             print(f"  {dag['dag']} {dag['datum']}: {dag['icon']} {temp_str:<14} "
                   f"{kleur(str(dag['neerslag_kans']) + '%', neerslag_kleur)} neerslag, {dag['wind']} Bft")
 
@@ -918,7 +918,7 @@ class WeerAgentApp:
         for act in activiteiten[:5]:
             print(f"  - {act}")
 
-        print("\n" + kleur("=" * 60, "cyaan"))
+        print("\n" + kleur("=" * 60, Kleur.CYAAN))
 
     def _toon_voorspelling_uur(self, voorspelling: list, stad: str):
         """Toon uur-voor-uur voorspelling."""
@@ -926,7 +926,7 @@ class WeerAgentApp:
         print("  " + "-" * 50)
 
         for uur_data in voorspelling:
-            neerslag_kleur = "blauw" if uur_data['neerslag_kans'] > 50 else "grijs"
+            neerslag_kleur = Kleur.BLAUW if uur_data['neerslag_kans'] > 50 else "grijs"
             print(f"  {uur_data['uur']}: {uur_data['icon']} {uur_data['temp']:>2}°C  "
                   f"{kleur(str(uur_data['neerslag_kans']) + '%', neerslag_kleur)} neerslag")
 
@@ -971,11 +971,11 @@ class WeerAgentApp:
                 if nieuwe_loc not in self.data["favoriete_locaties"]:
                     self.data["favoriete_locaties"].append(nieuwe_loc)
                     self._sla_data_op()
-                    print(kleur(f"{nieuwe_loc} toegevoegd!", "groen"))
+                    print(kleur(f"{nieuwe_loc} toegevoegd!", Kleur.GROEN))
                 else:
-                    print(kleur("Al in favorieten.", "geel"))
+                    print(kleur("Al in favorieten.", Kleur.GEEL))
             else:
-                print(kleur("Stad niet gevonden.", "rood"))
+                print(kleur("Stad niet gevonden.", Kleur.ROOD))
         elif keuze == "v" and self.data["favoriete_locaties"]:
             idx = input("Nummer om te verwijderen: ").strip()
             try:
@@ -983,7 +983,7 @@ class WeerAgentApp:
                 if 0 <= idx < len(self.data["favoriete_locaties"]):
                     verwijderd = self.data["favoriete_locaties"].pop(idx)
                     self._sla_data_op()
-                    print(kleur(f"{verwijderd} verwijderd!", "groen"))
+                    print(kleur(f"{verwijderd} verwijderd!", Kleur.GROEN))
             except ValueError:
                 pass
 
@@ -1027,7 +1027,7 @@ class WeerAgentApp:
 
         print(f"   {kleur('[TOOL]', 'grijs')} check_alerts() aanroepen...")
         alerts = self._tool_check_alerts(weer)
-        alert_kleur = "rood" if alerts else "groen"
+        alert_kleur = Kleur.ROOD if alerts else Kleur.GROEN
         print(f"   {kleur('[OK]', alert_kleur)} {len(alerts)} alert(s) gevonden")
 
         print(f"   {kleur('[TOOL]', 'grijs')} get_extra_info() aanroepen...")
@@ -1079,7 +1079,7 @@ class WeerAgentApp:
 
         alles_ok = True
         for naam, status in checks:
-            symbool = kleur("[OK]", "groen") if status else kleur("[!!]", "rood")
+            symbool = kleur("[OK]", Kleur.GROEN) if status else kleur("[!!]", Kleur.ROOD)
             print(f"   {symbool} {naam}")
             if not status:
                 alles_ok = False
@@ -1089,14 +1089,14 @@ class WeerAgentApp:
     def run(self):
         """Start de interactieve weer agent."""
         clear_scherm()
-        print(kleur("+" + "=" * 58 + "+", "cyaan"))
-        print(kleur("|    WEER-AGENT v2.0: Professioneel Weerstation           |", "cyaan"))
-        print(kleur("|                                                          |", "cyaan"))
+        print(kleur("+" + "=" * 58 + "+", Kleur.CYAAN))
+        print(kleur("|    WEER-AGENT v2.0: Professioneel Weerstation           |", Kleur.CYAAN))
+        print(kleur("|                                                          |", Kleur.CYAAN))
         print(kleur("|    Features:                                             |", "grijs"))
         print(kleur("|    - 50+ Nederlandse steden   - 7-daagse voorspelling    |", "grijs"))
         print(kleur("|    - UV-index & luchtkwaliteit - Sport weer              |", "grijs"))
         print(kleur("|    - Pollen informatie        - Kledingadvies            |", "grijs"))
-        print(kleur("+" + "=" * 58 + "+", "cyaan"))
+        print(kleur("+" + "=" * 58 + "+", Kleur.CYAAN))
 
         while True:
             self._toon_menu()
@@ -1122,7 +1122,7 @@ class WeerAgentApp:
                         resultaat["zon"], resultaat["maanfase"]
                     )
                 else:
-                    print(kleur("\n[!!] Er ging iets mis.", "rood"))
+                    print(kleur("\n[!!] Er ging iets mis.", Kleur.ROOD))
 
             elif keuze == "2":
                 # Snelle check
@@ -1194,6 +1194,6 @@ class WeerAgentApp:
                 self._beheer_favorieten()
 
             else:
-                print(kleur("Ongeldige keuze.", "rood"))
+                print(kleur("Ongeldige keuze.", Kleur.ROOD))
 
             input(kleur("\nDruk op Enter om verder te gaan...", "grijs"))

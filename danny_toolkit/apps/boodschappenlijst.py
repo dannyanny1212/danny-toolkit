@@ -17,7 +17,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from ..core.config import Config
-from ..core.utils import clear_scherm, kleur, succes, fout, waarschuwing, info
+from ..core.utils import clear_scherm, kleur, Kleur, succes, fout, waarschuwing, info
 
 
 class BoodschappenlijstApp:
@@ -42,8 +42,8 @@ class BoodschappenlijstApp:
     }
 
     PRIORITEITEN = {
-        "hoog": {"naam": "Hoog", "kleur": "rood", "symbool": "!!!"},
-        "normaal": {"naam": "Normaal", "kleur": "wit", "symbool": ""},
+        "hoog": {"naam": "Hoog", "kleur": Kleur.ROOD, "symbool": "!!!"},
+        "normaal": {"naam": "Normaal", "kleur": Kleur.WIT, "symbool": ""},
         "laag": {"naam": "Laag", "kleur": "grijs", "symbool": "..."}
     }
 
@@ -225,7 +225,7 @@ class BoodschappenlijstApp:
         self._toon_header(f"📋 {lijst['naam']} ({lijst['winkel']})")
 
         if not items:
-            print(kleur("\n  De boodschappenlijst is leeg.", "geel"))
+            print(kleur("\n  De boodschappenlijst is leeg.", Kleur.GEEL))
             return
 
         # Groepeer per categorie
@@ -248,16 +248,16 @@ class BoodschappenlijstApp:
             if cat_items:
                 emoji = cat_info["emoji"]
                 naam = cat_info["naam"]
-                print(kleur(f"\n  {emoji} {naam.upper()}", "geel"))
+                print(kleur(f"\n  {emoji} {naam.upper()}", Kleur.GEEL))
 
                 for idx, item in cat_items:
                     # Status
                     if item.get("afgevinkt", False):
-                        status = kleur("[✓]", "groen")
+                        status = kleur("[✓]", Kleur.GROEN)
                         naam_kleur = "grijs"
                     else:
                         status = "[ ]"
-                        naam_kleur = "wit"
+                        naam_kleur = Kleur.WIT
 
                     # Prioriteit
                     prio = item.get("prioriteit", "normaal")
@@ -275,7 +275,7 @@ class BoodschappenlijstApp:
                     # Prijs
                     prijs = item.get("prijs", 0)
                     if prijs > 0:
-                        prijs_str = kleur(f" €{prijs:.2f}", "groen")
+                        prijs_str = kleur(f" €{prijs:.2f}", Kleur.GROEN)
                         if not item.get("afgevinkt", False):
                             totaal_prijs += prijs
                     else:
@@ -285,7 +285,7 @@ class BoodschappenlijstApp:
                     notitie = " 📝" if item.get("notitie") else ""
 
                     if prio == "hoog":
-                        tekst = kleur(tekst, "rood")
+                        tekst = kleur(tekst, Kleur.ROOD)
                     elif item.get("afgevinkt"):
                         tekst = kleur(tekst, "grijs")
 
@@ -304,9 +304,9 @@ class BoodschappenlijstApp:
             if budget > 0:
                 rest = budget - totaal_prijs
                 if rest < 0:
-                    budget_str = kleur(f" | Budget: €{rest:.2f}", "rood")
+                    budget_str = kleur(f" | Budget: €{rest:.2f}", Kleur.ROOD)
                 else:
-                    budget_str = kleur(f" | Budget over: €{rest:.2f}", "groen")
+                    budget_str = kleur(f" | Budget over: €{rest:.2f}", Kleur.GROEN)
             else:
                 budget_str = ""
             print(f"  💰 Totaal: €{totaal_prijs:.2f}{budget_str}")
@@ -322,7 +322,7 @@ class BoodschappenlijstApp:
 
         print()
         print(kleur("┌" + "─" * 40 + "┐", "cyan"))
-        print(kleur("│", "cyan") + kleur("     🛒 BOODSCHAPPENLIJST v2.0", "geel") +
+        print(kleur("│", "cyan") + kleur("     🛒 BOODSCHAPPENLIJST v2.0", Kleur.GEEL) +
               kleur("        │", "cyan"))
         print(kleur("│", "cyan") +
               f"     Lijst: {lijst['naam'][:20]:<20}" + kleur("│", "cyan"))
@@ -365,7 +365,7 @@ class BoodschappenlijstApp:
 
     def _kies_categorie(self) -> str:
         """Laat gebruiker een categorie kiezen."""
-        print(kleur("\n  Kies een categorie:", "geel"))
+        print(kleur("\n  Kies een categorie:", Kleur.GEEL))
 
         cats = sorted(self.CATEGORIEEN.items(), key=lambda x: x[1]["volgorde"])
         for i, (key, cat) in enumerate(cats, 1):
@@ -404,7 +404,7 @@ class BoodschappenlijstApp:
             prijs = 0
 
         # Prioriteit
-        print(kleur("\n  Prioriteit:", "geel"))
+        print(kleur("\n  Prioriteit:", Kleur.GEEL))
         print("    1. Normaal")
         print("    2. Hoog (urgent)")
         print("    3. Laag")
@@ -447,7 +447,7 @@ class BoodschappenlijstApp:
             top_items = sorted(meest_gekocht.items(),
                              key=lambda x: x[1], reverse=True)[:5]
             if top_items:
-                print(kleur("\n  💡 Suggesties (vaak gekocht):", "geel"))
+                print(kleur("\n  💡 Suggesties (vaak gekocht):", Kleur.GEEL))
                 for naam, aantal in top_items:
                     print(f"      • {naam} ({aantal}x)")
 
@@ -455,7 +455,7 @@ class BoodschappenlijstApp:
         voorraad_laag = [v for v in self.data["voorraad"]
                         if v.get("aantal", 0) <= 1]
         if voorraad_laag:
-            print(kleur("\n  ⚠️  Bijna op (uit voorraad):", "geel"))
+            print(kleur("\n  ⚠️  Bijna op (uit voorraad):", Kleur.GEEL))
             for item in voorraad_laag[:3]:
                 print(f"      • {item['naam']}")
 
@@ -475,7 +475,7 @@ class BoodschappenlijstApp:
                                             self.CATEGORIEEN["overig"])
             print(f"    {i:2}. {cat_info['emoji']} {fav['naam']}")
         print(kleur("\n     0. Annuleren", "grijs"))
-        print(kleur("     a. Alle favorieten toevoegen", "geel"))
+        print(kleur("     a. Alle favorieten toevoegen", Kleur.GEEL))
 
         keuze = input(kleur("\n  Welke toevoegen? ", "cyan")).strip().lower()
 
@@ -530,7 +530,7 @@ class BoodschappenlijstApp:
             return
 
         self._toon_lijst()
-        print(kleur("\n  Opties:", "geel"))
+        print(kleur("\n  Opties:", Kleur.GEEL))
         print("    [nummer]  = Afvinken/onafvinken")
         print("    [n1,n2]   = Meerdere afvinken (bijv: 1,3,5)")
         print("    a         = Alles afvinken")
@@ -623,7 +623,7 @@ class BoodschappenlijstApp:
             return
 
         self._toon_lijst()
-        print(kleur("\n  Opties:", "geel"))
+        print(kleur("\n  Opties:", Kleur.GEEL))
         print("    [nummer]  = Verwijder specifiek item")
         print("    a         = Verwijder alle afgevinkte items")
         print("    w         = Wis hele lijst")
@@ -644,7 +644,7 @@ class BoodschappenlijstApp:
 
         elif keuze == "w":
             bevestig = input(kleur(
-                "  Weet je zeker dat je alles wilt wissen? (j/n): ", "rood"
+                "  Weet je zeker dat je alles wilt wissen? (j/n): ", Kleur.ROOD
             )).lower()
             if bevestig == "j":
                 self._voeg_toe_aan_geschiedenis(items)
@@ -712,7 +712,7 @@ class BoodschappenlijstApp:
                 aantal_ing = len(recept.get("ingredienten", []))
                 print(f"    {i:2}. {naam} ({personen} pers, {aantal_ing} ingrediënten)")
 
-            print(kleur("\n  Opties:", "geel"))
+            print(kleur("\n  Opties:", Kleur.GEEL))
             print("    [nummer] = Ingrediënten toevoegen aan lijst")
             print("    n        = Nieuw recept maken")
             print("    v        = Recept verwijderen")
@@ -749,7 +749,7 @@ class BoodschappenlijstApp:
             fout("Recept niet gevonden.")
             return
 
-        print(kleur(f"\n  📋 {recept_naam}", "geel"))
+        print(kleur(f"\n  📋 {recept_naam}", Kleur.GEEL))
         print(f"     Voor {recept.get('personen', '?')} personen")
 
         personen = input(kleur(
@@ -806,7 +806,7 @@ class BoodschappenlijstApp:
             personen = 4
 
         ingredienten = []
-        print(kleur("\n  Voeg ingrediënten toe (leeg = klaar):", "geel"))
+        print(kleur("\n  Voeg ingrediënten toe (leeg = klaar):", Kleur.GEEL))
 
         while True:
             ing_naam = input(kleur("    Ingrediënt: ", "cyan")).strip()
@@ -839,7 +839,7 @@ class BoodschappenlijstApp:
             waarschuwing("Geen recepten om te verwijderen.")
             return
 
-        print(kleur("\n  Welk recept verwijderen?", "geel"))
+        print(kleur("\n  Welk recept verwijderen?", Kleur.GEEL))
         for i, naam in enumerate(recepten, 1):
             print(f"    {i}. {naam}")
 
@@ -849,7 +849,7 @@ class BoodschappenlijstApp:
             if 0 <= idx < len(recepten):
                 naam = recepten[idx]
                 bevestig = input(kleur(
-                    f"  Weet je zeker dat je '{naam}' wilt verwijderen? (j/n): ", "rood"
+                    f"  Weet je zeker dat je '{naam}' wilt verwijderen? (j/n): ", Kleur.ROOD
                 )).lower()
                 if bevestig == "j":
                     del self.data["recepten"][naam]
@@ -914,19 +914,19 @@ class BoodschappenlijstApp:
             print(kleur("\n  Tip: Voeg meer items toe of maak nieuwe recepten!", "grijs"))
             return
 
-        print(kleur("\n  Recepten die je kunt maken met je huidige items:", "geel"))
+        print(kleur("\n  Recepten die je kunt maken met je huidige items:", Kleur.GEEL))
         print()
 
         for i, sug in enumerate(suggesties[:5], 1):
             # Kleur gebaseerd op completeness
             if sug["percentage"] >= 80:
-                status_kleur = "groen"
+                status_kleur = Kleur.GROEN
                 status = "✓ Bijna compleet!"
             elif sug["percentage"] >= 50:
-                status_kleur = "geel"
+                status_kleur = Kleur.GEEL
                 status = "◐ Goed op weg"
             else:
-                status_kleur = "wit"
+                status_kleur = Kleur.WIT
                 status = "○ Begin gemaakt"
 
             print(f"    {i}. {kleur(sug['naam'], 'cyan')}")
@@ -943,7 +943,7 @@ class BoodschappenlijstApp:
             print()
 
         # Optie om ontbrekende ingrediënten toe te voegen
-        print(kleur("  Wil je ontbrekende ingrediënten toevoegen?", "geel"))
+        print(kleur("  Wil je ontbrekende ingrediënten toevoegen?", Kleur.GEEL))
         keuze = input(kleur("  Nummer van recept (of 0 = terug): ", "cyan")).strip()
 
         if keuze == "0" or not keuze:
@@ -957,7 +957,7 @@ class BoodschappenlijstApp:
                     succes(f"Je hebt alle ingrediënten voor {sug['naam']}!")
                     return
 
-                print(kleur(f"\n  Ontbrekende ingrediënten voor {sug['naam']}:", "geel"))
+                print(kleur(f"\n  Ontbrekende ingrediënten voor {sug['naam']}:", Kleur.GEEL))
                 for ont in sug["ontbrekend"]:
                     print(f"    • {ont}")
 
@@ -1002,17 +1002,17 @@ class BoodschappenlijstApp:
                 for i, item in enumerate(voorraad, 1):
                     aantal = item.get("aantal", 0)
                     if aantal <= 1:
-                        status = kleur("⚠️ Bijna op!", "rood")
+                        status = kleur("⚠️ Bijna op!", Kleur.ROOD)
                     elif aantal <= 3:
-                        status = kleur("📉 Weinig", "geel")
+                        status = kleur("📉 Weinig", Kleur.GEEL)
                     else:
-                        status = kleur("✓ Voldoende", "groen")
+                        status = kleur("✓ Voldoende", Kleur.GROEN)
 
                     print(f"    {i:2}. {item['naam']}: {aantal} {status}")
             else:
-                print(kleur("\n  Je voorraad is nog leeg.", "geel"))
+                print(kleur("\n  Je voorraad is nog leeg.", Kleur.GEEL))
 
-            print(kleur("\n  Opties:", "geel"))
+            print(kleur("\n  Opties:", Kleur.GEEL))
             print("    n = Nieuw item toevoegen")
             print("    [nummer] = Aantal aanpassen")
             print("    v = Item verwijderen")
@@ -1065,7 +1065,7 @@ class BoodschappenlijstApp:
     def _voorraad_aanpassen(self, idx: int):
         """Past de hoeveelheid van een voorraad item aan."""
         item = self.data["voorraad"][idx]
-        print(kleur(f"\n  {item['naam']}: huidig aantal = {item['aantal']}", "geel"))
+        print(kleur(f"\n  {item['naam']}: huidig aantal = {item['aantal']}", Kleur.GEEL))
 
         nieuw = input(kleur("  Nieuw aantal: ", "cyan")).strip()
         try:
@@ -1099,7 +1099,7 @@ class BoodschappenlijstApp:
             info("Geen items met lage voorraad!")
             return
 
-        print(kleur("\n  Items met lage voorraad:", "geel"))
+        print(kleur("\n  Items met lage voorraad:", Kleur.GEEL))
         for item in laag:
             print(f"    • {item['naam']} ({item.get('aantal', 0)}x)")
 
@@ -1137,9 +1137,9 @@ class BoodschappenlijstApp:
                     aantal = len(sjabloon.get("items", []))
                     print(f"    {i}. {sjabloon['naam']} ({aantal} items)")
             else:
-                print(kleur("\n  Geen sjablonen.", "geel"))
+                print(kleur("\n  Geen sjablonen.", Kleur.GEEL))
 
-            print(kleur("\n  Opties:", "geel"))
+            print(kleur("\n  Opties:", Kleur.GEEL))
             print("    [nummer] = Sjabloon toevoegen aan lijst")
             print("    n        = Nieuw sjabloon maken")
             print("    h        = Huidige lijst als sjabloon opslaan")
@@ -1178,7 +1178,7 @@ class BoodschappenlijstApp:
         key = naam.lower().replace(" ", "_")
         items = []
 
-        print(kleur("\n  Voeg items toe (leeg = klaar):", "geel"))
+        print(kleur("\n  Voeg items toe (leeg = klaar):", Kleur.GEEL))
         while True:
             item_naam = input(kleur("    Item: ", "cyan")).strip()
             if not item_naam:
@@ -1269,7 +1269,7 @@ class BoodschappenlijstApp:
                 items = len(lijst.get("items", []))
                 print(f"    {i}. {lijst['naam']} ({lijst['winkel']}) - {items} items{kleur(actief, 'groen')}")
 
-            print(kleur("\n  Opties:", "geel"))
+            print(kleur("\n  Opties:", Kleur.GEEL))
             print("    [nummer] = Selecteer lijst")
             print("    n        = Nieuwe lijst maken")
             print("    v        = Lijst verwijderen")
@@ -1335,7 +1335,7 @@ class BoodschappenlijstApp:
 
                 naam = self.data["lijsten"][key]["naam"]
                 bevestig = input(kleur(
-                    f"  Weet je zeker dat je '{naam}' wilt verwijderen? (j/n): ", "rood"
+                    f"  Weet je zeker dat je '{naam}' wilt verwijderen? (j/n): ", Kleur.ROOD
                 )).lower()
 
                 if bevestig == "j":
@@ -1361,9 +1361,9 @@ class BoodschappenlijstApp:
                     )
                     print(f"    {i}. {cat_info['emoji']} {fav['naam']}")
             else:
-                print(kleur("\n  Nog geen favorieten!", "geel"))
+                print(kleur("\n  Nog geen favorieten!", Kleur.GEEL))
 
-            print(kleur("\n  Opties:", "geel"))
+            print(kleur("\n  Opties:", Kleur.GEEL))
             print("    n        = Nieuwe favoriet")
             print("    [nummer] = Favoriet verwijderen")
             print("    0        = Terug")
@@ -1448,14 +1448,14 @@ class BoodschappenlijstApp:
 
         stats = self.data["statistieken"]
 
-        print(kleur("\n  Algemeen:", "geel"))
+        print(kleur("\n  Algemeen:", Kleur.GEEL))
         print(f"    • Totaal items gekocht: {stats.get('totaal_items_gekocht', 0)}")
         print(f"    • Totaal uitgegeven: €{stats.get('totaal_uitgegeven', 0):.2f}")
 
         # Meest gekocht
         meest = stats.get("meest_gekocht", {})
         if meest:
-            print(kleur("\n  Top 10 meest gekocht:", "geel"))
+            print(kleur("\n  Top 10 meest gekocht:", Kleur.GEEL))
             top = sorted(meest.items(), key=lambda x: x[1], reverse=True)[:10]
             for i, (naam, aantal) in enumerate(top, 1):
                 print(f"    {i:2}. {naam}: {aantal}x")
@@ -1463,7 +1463,7 @@ class BoodschappenlijstApp:
         # Uitgaven per maand
         per_maand = stats.get("uitgaven_per_maand", {})
         if per_maand:
-            print(kleur("\n  Uitgaven per maand:", "geel"))
+            print(kleur("\n  Uitgaven per maand:", Kleur.GEEL))
             for maand in sorted(per_maand.keys(), reverse=True)[:6]:
                 bedrag = per_maand[maand]
                 print(f"    • {maand}: €{bedrag:.2f}")
@@ -1471,7 +1471,7 @@ class BoodschappenlijstApp:
         # Geschiedenis
         gesch = self.data["geschiedenis"]
         if gesch:
-            print(kleur(f"\n  Laatste {min(5, len(gesch))} aankopen:", "geel"))
+            print(kleur(f"\n  Laatste {min(5, len(gesch))} aankopen:", Kleur.GEEL))
             for entry in gesch[-5:]:
                 datum = entry["datum"][:10]
                 aantal = len(entry["items"])
@@ -1484,7 +1484,7 @@ class BoodschappenlijstApp:
         """Export opties."""
         self._toon_header("📤 Exporteren")
 
-        print(kleur("\n  Opties:", "geel"))
+        print(kleur("\n  Opties:", Kleur.GEEL))
         print("    1. Exporteer als tekst (.txt)")
         print("    2. Exporteer als JSON")
         print("    3. Kopieerbare lijst (simpel)")
@@ -1564,7 +1564,7 @@ class BoodschappenlijstApp:
             waarschuwing("De lijst is leeg.")
             return
 
-        print(kleur("\n  Kopieerbare lijst:", "geel"))
+        print(kleur("\n  Kopieerbare lijst:", Kleur.GEEL))
         print("  " + "-" * 30)
 
         for item in items:

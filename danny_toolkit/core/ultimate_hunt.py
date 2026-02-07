@@ -23,7 +23,7 @@ from typing import Optional, List, Dict, Any, Tuple
 from dataclasses import dataclass, field
 
 from .config import Config
-from .utils import kleur
+from .utils import kleur, Kleur
 
 
 # =============================================================================
@@ -132,18 +132,18 @@ class HuntAnimator:
         """Toon hunt status met animatie."""
         # Kleur per status type
         kleur_map = {
-            "sniffing": "cyaan",
-            "analyzing": "cyaan",
-            "hunting": "geel",
-            "digging": "magenta",
-            "retrieving": "groen",
-            "proud": "groen",
-            "sad": "geel",
-            "error": "rood",
+            "sniffing": Kleur.CYAAN,
+            "analyzing": Kleur.CYAAN,
+            "hunting": Kleur.GEEL,
+            "digging": Kleur.MAGENTA,
+            "retrieving": Kleur.GROEN,
+            "proud": Kleur.GROEN,
+            "sad": Kleur.GEEL,
+            "error": Kleur.ROOD,
         }
 
         status_type = status.key.split("_")[0]
-        color = kleur_map.get(status_type, "wit")
+        color = kleur_map.get(status_type, Kleur.WIT)
 
         # Bouw output
         emoji = status.emoji
@@ -169,17 +169,17 @@ class HuntAnimator:
         }
 
         trophy_colors = {
-            "treasure": "geel",
-            "bone": "groen",
-            "stick": "cyaan",
-            "rabbit": "rood",
+            "treasure": Kleur.GEEL,
+            "bone": Kleur.GROEN,
+            "stick": Kleur.CYAAN,
+            "rabbit": Kleur.ROOD,
         }
 
         icon = trophy_icons.get(result.trophy_type, "[?]")
-        color = trophy_colors.get(result.trophy_type, "wit")
+        color = trophy_colors.get(result.trophy_type, Kleur.WIT)
 
         print(kleur(f"\n  {icon} GEVONDEN in {result.bron.upper()}", color))
-        print(kleur(f"  Confidence: {result.confidence:.0%} | Relevantie: {result.relevance:.0%}", "cyaan"))
+        print(kleur(f"  Confidence: {result.confidence:.0%} | Relevantie: {result.relevance:.0%}", Kleur.CYAAN))
 
 
 # =============================================================================
@@ -501,10 +501,10 @@ class UltimateHunt:
         """
         start_time = time.time()
 
-        print(kleur(f"\n{'='*60}", "cyaan"))
-        print(kleur(f"  THE HUNT - {self.pet_name} gaat op jacht!", "geel"))
-        print(kleur(f"  Query: \"{query}\"", "cyaan"))
-        print(kleur(f"{'='*60}\n", "cyaan"))
+        print(kleur(f"\n{'='*60}", Kleur.CYAAN))
+        print(kleur(f"  THE HUNT - {self.pet_name} gaat op jacht!", Kleur.GEEL))
+        print(kleur(f"  Query: \"{query}\"", Kleur.CYAAN))
+        print(kleur(f"{'='*60}\n", Kleur.CYAAN))
 
         # Fase 1: SNIFFING - Analyseer context
         self._status_callback(HuntStatus.SNIFFING, "Ruikt het spoor...")
@@ -512,10 +512,10 @@ class UltimateHunt:
 
         self._status_callback(HuntStatus.ANALYZING,
                               f"Intent: {context.detected_intent}")
-        print(kleur(f"  Bronnen: {', '.join(context.sources_to_check)}", "cyaan"))
+        print(kleur(f"  Bronnen: {', '.join(context.sources_to_check)}", Kleur.CYAAN))
 
         if context.topics:
-            print(kleur(f"  Topics: {', '.join(context.topics[:5])}", "cyaan"))
+            print(kleur(f"  Topics: {', '.join(context.topics[:5])}", Kleur.CYAAN))
 
         # Fase 2: HUNTING - Multi-source zoeken
         print()
@@ -555,17 +555,17 @@ class UltimateHunt:
             self.xp += 5
 
         # Toon beste resultaat
-        print(kleur(f"\n  RESULTAAT:", "groen"))
-        print(kleur(f"  {'-'*50}", "groen"))
+        print(kleur(f"\n  RESULTAAT:", Kleur.GROEN))
+        print(kleur(f"  {'-'*50}", Kleur.GROEN))
 
         # Pre-chewed output
         output = self._format_output(best_result, context)
         print(output)
 
-        print(kleur(f"  {'-'*50}", "groen"))
+        print(kleur(f"  {'-'*50}", Kleur.GROEN))
 
         duration = time.time() - start_time
-        print(kleur(f"\n  Jacht duurde {duration:.1f}s | XP: +{self.xp}", "cyaan"))
+        print(kleur(f"\n  Jacht duurde {duration:.1f}s | XP: +{self.xp}", Kleur.CYAAN))
 
         # Sla op in history
         self.history.append({
@@ -601,7 +601,7 @@ class UltimateHunt:
         }
 
         intro = bron_intros.get(result.bron, "  Ik vond dit:")
-        lines.append(kleur(intro, "magenta"))
+        lines.append(kleur(intro, Kleur.MAGENTA))
         lines.append("")
 
         # Content (beperkt)
@@ -615,7 +615,7 @@ class UltimateHunt:
         # Cross-reference als er context was
         if context.notes_context:
             lines.append("")
-            lines.append(kleur("  [!] Dit sluit aan bij je recente notities!", "geel"))
+            lines.append(kleur("  [!] Dit sluit aan bij je recente notities!", Kleur.GEEL))
 
         return "\n".join(lines)
 
@@ -628,12 +628,12 @@ class UltimateHunt:
             source: Welke bron feedback krijgt
         """
         if was_good:
-            print(kleur(f"\n  {self.pet_name}: *kwispelt wild* BRAAF! +10 XP", "groen"))
+            print(kleur(f"\n  {self.pet_name}: *kwispelt wild* BRAAF! +10 XP", Kleur.GROEN))
             self.xp += 10
             if source and source in self.source_scores:
                 self.source_scores[source] = min(2.0, self.source_scores[source] + 0.1)
         else:
-            print(kleur(f"\n  {self.pet_name}: *laat oren hangen* Sorry baas...", "geel"))
+            print(kleur(f"\n  {self.pet_name}: *laat oren hangen* Sorry baas...", Kleur.GEEL))
             if source and source in self.source_scores:
                 self.source_scores[source] = max(0.1, self.source_scores[source] - 0.2)
 

@@ -12,7 +12,7 @@ from collections import Counter
 from datetime import datetime
 
 from ..core.config import Config
-from ..core.utils import clear_scherm, kleur
+from ..core.utils import clear_scherm, kleur, Kleur
 
 
 class MiniRAG:
@@ -351,7 +351,7 @@ class MiniRAG:
                     return f.read()
 
         except Exception as e:
-            print(kleur(f"   [!] Fout bij lezen {pad.name}: {e}", "rood"))
+            print(kleur(f"   [!] Fout bij lezen {pad.name}: {e}", Kleur.ROOD))
             return ""
 
     def _json_naar_tekst(self, data, prefix: str = "") -> str:
@@ -378,12 +378,12 @@ class MiniRAG:
     def indexeer(self, toon_voortgang: bool = True):
         """Indexeer alle documenten."""
         if toon_voortgang:
-            print(kleur("\n[INDEXEREN] Documenten laden...", "cyaan"))
+            print(kleur("\n[INDEXEREN] Documenten laden...", Kleur.CYAAN))
 
         if not self.documenten_map.exists():
             self.documenten_map.mkdir(parents=True, exist_ok=True)
             if toon_voortgang:
-                print(kleur(f"   Map aangemaakt: {self.documenten_map}", "geel"))
+                print(kleur(f"   Map aangemaakt: {self.documenten_map}", Kleur.GEEL))
                 print("   Plaats bestanden (.txt, .md, .json, .csv, .html) in deze map.")
             return
 
@@ -395,7 +395,7 @@ class MiniRAG:
 
         if not bestanden:
             if toon_voortgang:
-                print(kleur(f"   Geen documenten gevonden in: {self.documenten_map}", "geel"))
+                print(kleur(f"   Geen documenten gevonden in: {self.documenten_map}", Kleur.GEEL))
             return
 
         totaal_chunks = 0
@@ -421,14 +421,14 @@ class MiniRAG:
             self.documenten.append(doc)
 
             if toon_voortgang:
-                print(kleur(f"   [OK] {bestand.name}", "groen") +
+                print(kleur(f"   [OK] {bestand.name}", Kleur.GROEN) +
                       f" ({len(chunks)} chunks, {doc['woorden']} woorden)")
 
             totaal_chunks += len(chunks)
 
         # Bouw index met TF
         if toon_voortgang:
-            print(kleur("\n[INDEXEREN] Index opbouwen...", "cyaan"))
+            print(kleur("\n[INDEXEREN] Index opbouwen...", Kleur.CYAAN))
 
         totaal_lengte = 0
 
@@ -463,8 +463,8 @@ class MiniRAG:
         self._sla_data_op()
 
         if toon_voortgang:
-            print(kleur(f"   [OK] {len(self.index)} chunks geïndexeerd", "groen"))
-            print(kleur(f"   [OK] {len(self.idf)} unieke termen", "groen"))
+            print(kleur(f"   [OK] {len(self.index)} chunks geïndexeerd", Kleur.GROEN))
+            print(kleur(f"   [OK] {len(self.idf)} unieke termen", Kleur.GROEN))
 
     def zoek(self, vraag: str, top_k: int = None, methode: str = "hybrid") -> list:
         """Zoek relevante chunks met verschillende methodes."""
@@ -555,7 +555,7 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
                 )
                 return response.choices[0].message.content
         except Exception as e:
-            print(kleur(f"   [!] AI fout: {e}", "rood"))
+            print(kleur(f"   [!] AI fout: {e}", Kleur.ROOD))
             return None
 
     def genereer_antwoord(self, vraag: str, chunks: list) -> str:
@@ -574,7 +574,7 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
             ai_antwoord = self._genereer_ai_antwoord(vraag, context)
             if ai_antwoord:
                 bronnen = set(c["doc_naam"] for c in chunks)
-                return f"{ai_antwoord}\n\n" + kleur(f"Bronnen: {', '.join(bronnen)}", "cyaan")
+                return f"{ai_antwoord}\n\n" + kleur(f"Bronnen: {', '.join(bronnen)}", Kleur.CYAAN)
 
         # Fallback: extractief antwoord
         vraag_lower = vraag.lower()
@@ -595,7 +595,7 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
             # Sorteer op overlap
             relevante_zinnen.sort(key=lambda x: x[1], reverse=True)
 
-            antwoord = kleur("Op basis van de documenten:\n", "groen")
+            antwoord = kleur("Op basis van de documenten:\n", Kleur.GROEN)
             gezien = set()
             for zin, _, bron in relevante_zinnen[:5]:
                 if zin not in gezien:
@@ -605,11 +605,11 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
                     gezien.add(zin)
 
             bronnen = set(c["doc_naam"] for c in chunks)
-            antwoord += "\n\n" + kleur(f"Bronnen: {', '.join(bronnen)}", "cyaan")
+            antwoord += "\n\n" + kleur(f"Bronnen: {', '.join(bronnen)}", Kleur.CYAAN)
             return antwoord
 
         # Fallback: toon relevante context
-        antwoord = kleur("Relevante context gevonden:\n", "geel")
+        antwoord = kleur("Relevante context gevonden:\n", Kleur.GEEL)
         for chunk in chunks[:2]:
             tekst = chunk["chunk"][:300]
             antwoord += f"\n[{chunk['doc_naam']}]:\n{tekst}...\n"
@@ -619,12 +619,12 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
     def vraag(self, vraag: str, toon_scores: bool = True) -> str:
         """Beantwoord een vraag met RAG."""
         if toon_scores:
-            print(kleur(f"\n[ZOEKEN] \"{vraag}\"", "cyaan"))
+            print(kleur(f"\n[ZOEKEN] \"{vraag}\"", Kleur.CYAAN))
 
         chunks = self.zoek(vraag)
 
         if chunks and toon_scores:
-            print(kleur(f"   [OK] {len(chunks)} relevante chunks gevonden:", "groen"))
+            print(kleur(f"   [OK] {len(chunks)} relevante chunks gevonden:", Kleur.GROEN))
             for c in chunks[:3]:
                 print(f"      • {c['doc_naam']} (score: {c['score']:.3f})")
 
@@ -639,19 +639,19 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
     def _toon_document_info(self, doc_idx: int):
         """Toon gedetailleerde info over een document."""
         if doc_idx < 0 or doc_idx >= len(self.documenten):
-            print(kleur("[!] Ongeldig document nummer.", "rood"))
+            print(kleur("[!] Ongeldig document nummer.", Kleur.ROOD))
             return
 
         doc = self.documenten[doc_idx]
 
-        print(kleur(f"\n{'='*50}", "cyaan"))
-        print(kleur(f"DOCUMENT: {doc['naam']}", "cyaan"))
-        print(kleur(f"{'='*50}", "cyaan"))
+        print(kleur(f"\n{'='*50}", Kleur.CYAAN))
+        print(kleur(f"DOCUMENT: {doc['naam']}", Kleur.CYAAN))
+        print(kleur(f"{'='*50}", Kleur.CYAAN))
         print(f"  Formaat:     {doc['formaat']}")
         print(f"  Woorden:     {doc['woorden']}")
         print(f"  Chunks:      {len(doc['chunks'])}")
         print(f"  Geïndexeerd: {doc['geindexeerd'][:19]}")
-        print(kleur("\nPreview:", "geel"))
+        print(kleur("\nPreview:", Kleur.GEEL))
         print(f"  {doc['inhoud_preview'][:300]}...")
 
         # Keywords voor dit document
@@ -664,7 +664,7 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
 
         top_terms = doc_terms.most_common(10)
         if top_terms:
-            print(kleur("\nBelangrijkste termen:", "geel"))
+            print(kleur("\nBelangrijkste termen:", Kleur.GEEL))
             for term, score in top_terms:
                 print(f"  • {term} ({score:.3f})")
 
@@ -672,16 +672,16 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
         """Toon uitgebreide statistieken."""
         stats = self.data["statistieken"]
 
-        print(kleur("\n╔════════════════════════════════════════════════════╗", "cyaan"))
-        print(kleur("║              RAG STATISTIEKEN                      ║", "cyaan"))
-        print(kleur("╠════════════════════════════════════════════════════╣", "cyaan"))
-        print(kleur("║  INDEX                                             ║", "cyaan"))
+        print(kleur("\n╔════════════════════════════════════════════════════╗", Kleur.CYAAN))
+        print(kleur("║              RAG STATISTIEKEN                      ║", Kleur.CYAAN))
+        print(kleur("╠════════════════════════════════════════════════════╣", Kleur.CYAAN))
+        print(kleur("║  INDEX                                             ║", Kleur.CYAAN))
         print(f"║  Documenten:            {stats['documenten_geindexeerd']:>20}  ║")
         print(f"║  Chunks:                {stats['chunks_totaal']:>20}  ║")
         print(f"║  Unieke termen:         {len(self.idf):>20}  ║")
         print(f"║  Gem. chunk lengte:     {stats.get('avg_chunk_length', 0):>17.1f}  ║")
-        print(kleur("║                                                    ║", "cyaan"))
-        print(kleur("║  GEBRUIK                                           ║", "cyaan"))
+        print(kleur("║                                                    ║", Kleur.CYAAN))
+        print(kleur("║  GEBRUIK                                           ║", Kleur.CYAAN))
         print(f"║  Totaal zoekopdrachten: {stats['totaal_zoekopdrachten']:>20}  ║")
         print(f"║  Zoekgeschiedenis:      {len(self.data['zoekgeschiedenis']):>20}  ║")
         print(f"║  Favoriete vragen:      {len(self.data['favoriete_vragen']):>20}  ║")
@@ -690,25 +690,25 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
             eerste = datetime.fromisoformat(stats["eerste_gebruik"]).strftime("%d-%m-%Y")
             print(f"║  Eerste gebruik:        {eerste:>20}  ║")
 
-        print(kleur("║                                                    ║", "cyaan"))
-        print(kleur("║  INSTELLINGEN                                      ║", "cyaan"))
+        print(kleur("║                                                    ║", Kleur.CYAAN))
+        print(kleur("║  INSTELLINGEN                                      ║", Kleur.CYAAN))
         inst = self.data["instellingen"]
         print(f"║  Chunk strategie:       {inst['chunk_strategie']:>20}  ║")
         print(f"║  Chunk grootte:         {inst['chunk_grootte']:>20}  ║")
         print(f"║  Top K resultaten:      {inst['top_k']:>20}  ║")
         ai_status = "Aan" if inst['gebruik_ai'] and self.ai_client else "Uit"
         print(f"║  AI antwoorden:         {ai_status:>20}  ║")
-        print(kleur("╚════════════════════════════════════════════════════╝", "cyaan"))
+        print(kleur("╚════════════════════════════════════════════════════╝", Kleur.CYAAN))
 
     def _toon_zoekgeschiedenis(self):
         """Toon recente zoekgeschiedenis."""
         geschiedenis = self.data["zoekgeschiedenis"]
 
         if not geschiedenis:
-            print(kleur("[!] Geen zoekgeschiedenis.", "rood"))
+            print(kleur("[!] Geen zoekgeschiedenis.", Kleur.ROOD))
             return
 
-        print(kleur("\n=== RECENTE ZOEKOPDRACHTEN ===", "cyaan"))
+        print(kleur("\n=== RECENTE ZOEKOPDRACHTEN ===", Kleur.CYAAN))
 
         for i, item in enumerate(reversed(geschiedenis[-10:]), 1):
             datum = datetime.fromisoformat(item["datum"]).strftime("%d-%m %H:%M")
@@ -718,7 +718,7 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
     def _beheer_favorieten(self):
         """Beheer favoriete vragen."""
         while True:
-            print(kleur("\n=== FAVORIETE VRAGEN ===", "geel"))
+            print(kleur("\n=== FAVORIETE VRAGEN ===", Kleur.GEEL))
 
             favorieten = self.data["favoriete_vragen"]
 
@@ -743,7 +743,7 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
                         "datum": datetime.now().isoformat()
                     })
                     self._sla_data_op()
-                    print(kleur("[OK] Favoriet toegevoegd!", "groen"))
+                    print(kleur("[OK] Favoriet toegevoegd!", Kleur.GROEN))
             else:
                 try:
                     idx = int(keuze) - 1
@@ -752,7 +752,7 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
                         vraag = favorieten[idx]["vraag"]
                         antwoord = self.vraag(vraag)
                         print("\n" + "-" * 50)
-                        print(kleur("ANTWOORD:", "groen"))
+                        print(kleur("ANTWOORD:", Kleur.GROEN))
                         print("-" * 50)
                         print(antwoord)
                 except ValueError:
@@ -763,18 +763,18 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
         while True:
             inst = self.data["instellingen"]
 
-            print(kleur("\n╔════════════════════════════════════════════════════╗", "geel"))
-            print(kleur("║              INSTELLINGEN                          ║", "geel"))
-            print(kleur("╠════════════════════════════════════════════════════╣", "geel"))
+            print(kleur("\n╔════════════════════════════════════════════════════╗", Kleur.GEEL))
+            print(kleur("║              INSTELLINGEN                          ║", Kleur.GEEL))
+            print(kleur("╠════════════════════════════════════════════════════╣", Kleur.GEEL))
             print(f"║  1. Chunk strategie:    {inst['chunk_strategie']:>20}  ║")
             print(f"║  2. Chunk grootte:      {inst['chunk_grootte']:>20}  ║")
             print(f"║  3. Top K resultaten:   {inst['top_k']:>20}  ║")
             print(f"║  4. Min. score:         {inst['min_score']:>20}  ║")
             ai_status = "Aan" if inst['gebruik_ai'] else "Uit"
             print(f"║  5. AI antwoorden:      {ai_status:>20}  ║")
-            print(kleur("║                                                    ║", "geel"))
+            print(kleur("║                                                    ║", Kleur.GEEL))
             print("║  0. Terug (en herindexeer indien nodig)            ║")
-            print(kleur("╚════════════════════════════════════════════════════╝", "geel"))
+            print(kleur("╚════════════════════════════════════════════════════╝", Kleur.GEEL))
 
             keuze = input("\nKeuze: ").strip()
 
@@ -814,18 +814,18 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
                 inst["gebruik_ai"] = not inst["gebruik_ai"]
                 if inst["gebruik_ai"] and not self.ai_client:
                     if self._init_ai():
-                        print(kleur(f"[OK] AI geactiveerd ({self.ai_provider})", "groen"))
+                        print(kleur(f"[OK] AI geactiveerd ({self.ai_provider})", Kleur.GROEN))
                     else:
-                        print(kleur("[!] Geen AI beschikbaar (geen API key)", "rood"))
+                        print(kleur("[!] Geen AI beschikbaar (geen API key)", Kleur.ROOD))
                         inst["gebruik_ai"] = False
 
             self._sla_data_op()
 
     def _toon_help(self):
         """Toon hulp informatie."""
-        print(kleur("\n╔════════════════════════════════════════════════════╗", "cyaan"))
-        print(kleur("║              MINI-RAG HELP                         ║", "cyaan"))
-        print(kleur("╠════════════════════════════════════════════════════╣", "cyaan"))
+        print(kleur("\n╔════════════════════════════════════════════════════╗", Kleur.CYAAN))
+        print(kleur("║              MINI-RAG HELP                         ║", Kleur.CYAAN))
+        print(kleur("╠════════════════════════════════════════════════════╣", Kleur.CYAAN))
         print("║  COMMANDO'S                                        ║")
         print("║  /docs       - Bekijk geïndexeerde documenten      ║")
         print("║  /stats      - Toon statistieken                   ║")
@@ -836,20 +836,20 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
         print("║  /reindex    - Herindexeer documenten              ║")
         print("║  /help       - Deze hulp                           ║")
         print("║  stop        - Afsluiten                           ║")
-        print(kleur("║                                                    ║", "cyaan"))
+        print(kleur("║                                                    ║", Kleur.CYAAN))
         print("║  TIPS                                              ║")
         print("║  • Stel specifieke vragen voor betere resultaten   ║")
         print("║  • Gebruik meerdere zoektermen                     ║")
         print("║  • Zet AI aan voor betere antwoorden               ║")
-        print(kleur("╚════════════════════════════════════════════════════╝", "cyaan"))
+        print(kleur("╚════════════════════════════════════════════════════╝", Kleur.CYAAN))
 
     def _toon_documenten(self):
         """Toon lijst van geïndexeerde documenten."""
         if not self.documenten:
-            print(kleur("[!] Geen documenten geïndexeerd.", "rood"))
+            print(kleur("[!] Geen documenten geïndexeerd.", Kleur.ROOD))
             return
 
-        print(kleur("\n=== GEÏNDEXEERDE DOCUMENTEN ===", "cyaan"))
+        print(kleur("\n=== GEÏNDEXEERDE DOCUMENTEN ===", Kleur.CYAAN))
 
         for i, doc in enumerate(self.documenten, 1):
             print(f"\n  {i}. {kleur(doc['naam'], 'groen')}")
@@ -870,10 +870,10 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
     def _toon_keywords(self):
         """Toon belangrijkste keywords."""
         if not self.idf:
-            print(kleur("[!] Geen index beschikbaar.", "rood"))
+            print(kleur("[!] Geen index beschikbaar.", Kleur.ROOD))
             return
 
-        print(kleur("\n=== BELANGRIJKSTE KEYWORDS ===", "cyaan"))
+        print(kleur("\n=== BELANGRIJKSTE KEYWORDS ===", Kleur.CYAAN))
         keywords = self._extraheer_keywords(20)
 
         for i, (term, score) in enumerate(keywords, 1):
@@ -884,10 +884,10 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
     def run(self):
         """Start de interactieve Mini-RAG modus."""
         clear_scherm()
-        print(kleur("\n╔════════════════════════════════════════════════════╗", "cyaan"))
-        print(kleur("║      MINI-RAG v2.0 - Document Vraag & Antwoord     ║", "cyaan"))
-        print(kleur("║      Met TF-IDF, BM25 en AI integratie             ║", "cyaan"))
-        print(kleur("╚════════════════════════════════════════════════════╝", "cyaan"))
+        print(kleur("\n╔════════════════════════════════════════════════════╗", Kleur.CYAAN))
+        print(kleur("║      MINI-RAG v2.0 - Document Vraag & Antwoord     ║", Kleur.CYAAN))
+        print(kleur("║      Met TF-IDF, BM25 en AI integratie             ║", Kleur.CYAAN))
+        print(kleur("╚════════════════════════════════════════════════════╝", Kleur.CYAAN))
 
         # Laad instellingen
         self.chunk_strategie = self.data["instellingen"]["chunk_strategie"]
@@ -896,27 +896,27 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
         # Initialiseer AI indien gewenst
         if self.data["instellingen"]["gebruik_ai"]:
             if self._init_ai():
-                print(kleur(f"[OK] AI geactiveerd ({self.ai_provider})", "groen"))
+                print(kleur(f"[OK] AI geactiveerd ({self.ai_provider})", Kleur.GROEN))
 
         # Indexeer documenten
         self.indexeer()
 
         if not self.index:
-            print(kleur(f"\nGeen documenten gevonden in: {self.documenten_map}", "geel"))
+            print(kleur(f"\nGeen documenten gevonden in: {self.documenten_map}", Kleur.GEEL))
             print("Ondersteunde formaten: .txt, .md, .json, .csv, .html")
             input("\nDruk op Enter...")
             return
 
-        print(kleur("\n" + "=" * 50, "cyaan"))
-        print(kleur("VRAAG & ANTWOORD - Typ /help voor commando's", "cyaan"))
-        print(kleur("=" * 50, "cyaan"))
+        print(kleur("\n" + "=" * 50, Kleur.CYAAN))
+        print(kleur("VRAAG & ANTWOORD - Typ /help voor commando's", Kleur.CYAAN))
+        print(kleur("=" * 50, Kleur.CYAAN))
 
         while True:
             try:
-                vraag = input(kleur("\nVraag: ", "geel")).strip()
+                vraag = input(kleur("\nVraag: ", Kleur.GEEL)).strip()
 
                 if vraag.lower() in ["stop", "quit", "exit", "q"]:
-                    print(kleur("\nTot ziens!", "cyaan"))
+                    print(kleur("\nTot ziens!", Kleur.CYAAN))
                     break
 
                 if not vraag:
@@ -941,30 +941,30 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
                     elif cmd == "/settings":
                         self._instellingen_menu()
                         # Herindexeer na instellingen wijziging
-                        print(kleur("\n[HERINDEXEREN]...", "cyaan"))
+                        print(kleur("\n[HERINDEXEREN]...", Kleur.CYAAN))
                         self.documenten = []
                         self.index = {}
                         self.indexeer(toon_voortgang=False)
-                        print(kleur("[OK] Herindexeren voltooid.", "groen"))
+                        print(kleur("[OK] Herindexeren voltooid.", Kleur.GROEN))
                     elif cmd == "/reindex":
-                        print(kleur("\n[HERINDEXEREN]...", "cyaan"))
+                        print(kleur("\n[HERINDEXEREN]...", Kleur.CYAAN))
                         self.documenten = []
                         self.index = {}
                         self.indexeer()
                     else:
-                        print(kleur(f"[!] Onbekend commando: {cmd}", "rood"))
+                        print(kleur(f"[!] Onbekend commando: {cmd}", Kleur.ROOD))
 
                     continue
 
                 # Beantwoord vraag
                 antwoord = self.vraag(vraag)
                 print("\n" + "-" * 50)
-                print(kleur("ANTWOORD:", "groen"))
+                print(kleur("ANTWOORD:", Kleur.GROEN))
                 print("-" * 50)
                 print(antwoord)
 
             except KeyboardInterrupt:
-                print(kleur("\n\nTot ziens!", "cyaan"))
+                print(kleur("\n\nTot ziens!", Kleur.CYAAN))
                 break
             except EOFError:
                 break

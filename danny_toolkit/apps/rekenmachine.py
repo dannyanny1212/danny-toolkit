@@ -16,7 +16,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 from ..core.config import Config
-from ..core.utils import clear_scherm, kleur, succes, fout, waarschuwing, info
+from ..core.utils import clear_scherm, kleur, Kleur, succes, fout, waarschuwing, info
 
 
 class RekenmachineApp:
@@ -174,7 +174,7 @@ class RekenmachineApp:
         while True:
             self._toon_header("🔢 Basis Berekeningen")
 
-            print(kleur("\n  Operaties:", "geel"))
+            print(kleur("\n  Operaties:", Kleur.GEEL))
             print("    1. Optellen (+)")
             print("    2. Aftrekken (-)")
             print("    3. Vermenigvuldigen (×)")
@@ -269,7 +269,7 @@ class RekenmachineApp:
         while True:
             self._toon_header("🔬 Wetenschappelijk")
 
-            print(kleur("\n  Trigonometrie:", "geel"))
+            print(kleur("\n  Trigonometrie:", Kleur.GEEL))
             print("    1. Sinus (sin)")
             print("    2. Cosinus (cos)")
             print("    3. Tangens (tan)")
@@ -277,22 +277,22 @@ class RekenmachineApp:
             print("    5. Inverse cos (acos)")
             print("    6. Inverse tan (atan)")
 
-            print(kleur("\n  Logaritmen:", "geel"))
+            print(kleur("\n  Logaritmen:", Kleur.GEEL))
             print("    7. Natuurlijke log (ln)")
             print("    8. Log base 10 (log)")
             print("    9. Log base 2 (log₂)")
             print("    a. Log willekeurige base")
 
-            print(kleur("\n  Hyperbolisch:", "geel"))
+            print(kleur("\n  Hyperbolisch:", Kleur.GEEL))
             print("    e. Sinh (hyperbolische sinus)")
             print("    f. Cosh (hyperbolische cosinus)")
             print("    g. Tanh (hyperbolische tangens)")
 
-            print(kleur("\n  Combinatoriek:", "geel"))
+            print(kleur("\n  Combinatoriek:", Kleur.GEEL))
             print("    h. Permutaties (nPr)")
             print("    i. Combinaties (nCr)")
 
-            print(kleur("\n  Overig:", "geel"))
+            print(kleur("\n  Overig:", Kleur.GEEL))
             print("    b. Factoriaal (n!)")
             print("    c. Constanten bekijken")
             print("    d. Graden ↔ Radialen")
@@ -445,12 +445,12 @@ class RekenmachineApp:
         print()
         for key, (symbool, waarde, beschrijving) in self.CONSTANTEN.items():
             print(f"    {kleur(key, 'groen'):8} {symbool:3} = {waarde:<20} {kleur(beschrijving, 'grijs')}")
-        print(kleur("\n  Tip: Typ de naam (bijv. 'pi') als invoer!", "geel"))
+        print(kleur("\n  Tip: Typ de naam (bijv. 'pi') als invoer!", Kleur.GEEL))
 
     def _graden_radialen(self):
         """Converteert tussen graden en radialen."""
-        print(kleur("\n  1. Graden → Radialen", "geel"))
-        print(kleur("  2. Radialen → Graden", "geel"))
+        print(kleur("\n  1. Graden → Radialen", Kleur.GEEL))
+        print(kleur("  2. Radialen → Graden", Kleur.GEEL))
 
         keuze = input(kleur("\n  Keuze: ", "cyan")).strip()
 
@@ -465,7 +465,7 @@ class RekenmachineApp:
 
     def _afronden_menu(self):
         """Afrondingsfuncties menu."""
-        print(kleur("\n  Afronden:", "geel"))
+        print(kleur("\n  Afronden:", Kleur.GEEL))
         print("    1. Floor (naar beneden)")
         print("    2. Ceil (naar boven)")
         print("    3. Round (normaal afronden)")
@@ -496,7 +496,7 @@ class RekenmachineApp:
         while True:
             self._toon_header("📏 Eenheden Omrekenen")
 
-            print(kleur("\n  Categorieën:", "geel"))
+            print(kleur("\n  Categorieën:", Kleur.GEEL))
             print("    1. Lengte (mm, cm, m, km, inch, feet, mile)")
             print("    2. Gewicht (mg, g, kg, ton, oz, lb)")
             print("    3. Temperatuur (°C, °F, K)")
@@ -526,7 +526,7 @@ class RekenmachineApp:
 
     def _converteer_eenheid(self, categorie: str, eenheden: dict):
         """Generieke eenheden conversie."""
-        print(kleur(f"\n  Beschikbare {categorie.lower()} eenheden:", "geel"))
+        print(kleur(f"\n  Beschikbare {categorie.lower()} eenheden:", Kleur.GEEL))
         eenheid_lijst = list(eenheden.keys())
         for i, eenheid in enumerate(eenheid_lijst, 1):
             print(f"    {i}. {eenheid}")
@@ -544,14 +544,14 @@ class RekenmachineApp:
             resultaat = basis / eenheden[naar]
 
             self._toon_resultaat(f"{waarde} {van} → {naar}", resultaat)
-            print(kleur(f"    = {resultaat:.6g} {naar}", "groen"))
+            print(kleur(f"    = {resultaat:.6g} {naar}", Kleur.GROEN))
 
         except (ValueError, IndexError):
             fout("Ongeldige invoer.")
 
     def _converteer_temperatuur(self):
         """Temperatuur conversie."""
-        print(kleur("\n  Temperatuur eenheden:", "geel"))
+        print(kleur("\n  Temperatuur eenheden:", Kleur.GEEL))
         print("    1. Celsius (°C)")
         print("    2. Fahrenheit (°F)")
         print("    3. Kelvin (K)")
@@ -597,7 +597,7 @@ class RekenmachineApp:
         while True:
             self._toon_header("💰 Financiële Berekeningen")
 
-            print(kleur("\n  Berekeningen:", "geel"))
+            print(kleur("\n  Berekeningen:", Kleur.GEEL))
             print("    1. BTW berekenen")
             print("    2. Korting berekenen")
             print("    3. Percentage van bedrag")
@@ -644,7 +644,7 @@ class RekenmachineApp:
 
     def _btw_berekenen(self):
         """BTW berekeningen."""
-        print(kleur("\n  BTW berekening:", "geel"))
+        print(kleur("\n  BTW berekening:", Kleur.GEEL))
         print("    1. BTW toevoegen aan bedrag")
         print("    2. BTW uit bedrag halen")
         print("    3. BTW berekenen van bedrag")
@@ -656,23 +656,23 @@ class RekenmachineApp:
         if keuze == "1":
             btw = bedrag * (btw_pct / 100)
             totaal = bedrag + btw
-            print(kleur(f"\n  Excl. BTW: €{bedrag:.2f}", "wit"))
-            print(kleur(f"  BTW ({btw_pct}%): €{btw:.2f}", "wit"))
-            print(kleur(f"  Incl. BTW: €{totaal:.2f}", "groen"))
+            print(kleur(f"\n  Excl. BTW: €{bedrag:.2f}", Kleur.WIT))
+            print(kleur(f"  BTW ({btw_pct}%): €{btw:.2f}", Kleur.WIT))
+            print(kleur(f"  Incl. BTW: €{totaal:.2f}", Kleur.GROEN))
             self._voeg_geschiedenis_toe(f"€{bedrag} + {btw_pct}% BTW", totaal)
 
         elif keuze == "2":
             excl = bedrag / (1 + btw_pct/100)
             btw = bedrag - excl
-            print(kleur(f"\n  Incl. BTW: €{bedrag:.2f}", "wit"))
-            print(kleur(f"  BTW ({btw_pct}%): €{btw:.2f}", "wit"))
-            print(kleur(f"  Excl. BTW: €{excl:.2f}", "groen"))
+            print(kleur(f"\n  Incl. BTW: €{bedrag:.2f}", Kleur.WIT))
+            print(kleur(f"  BTW ({btw_pct}%): €{btw:.2f}", Kleur.WIT))
+            print(kleur(f"  Excl. BTW: €{excl:.2f}", Kleur.GROEN))
             self._voeg_geschiedenis_toe(f"€{bedrag} - {btw_pct}% BTW", excl)
 
         elif keuze == "3":
             btw = bedrag * (btw_pct / 100)
-            print(kleur(f"\n  Bedrag: €{bedrag:.2f}", "wit"))
-            print(kleur(f"  BTW ({btw_pct}%): €{btw:.2f}", "groen"))
+            print(kleur(f"\n  Bedrag: €{bedrag:.2f}", Kleur.WIT))
+            print(kleur(f"  BTW ({btw_pct}%): €{btw:.2f}", Kleur.GROEN))
             self._voeg_geschiedenis_toe(f"{btw_pct}% van €{bedrag}", btw)
 
     def _korting_berekenen(self):
@@ -683,10 +683,10 @@ class RekenmachineApp:
         korting = bedrag * (korting_pct / 100)
         nieuw = bedrag - korting
 
-        print(kleur(f"\n  Origineel: €{bedrag:.2f}", "wit"))
-        print(kleur(f"  Korting ({korting_pct}%): -€{korting:.2f}", "rood"))
-        print(kleur(f"  Nieuw bedrag: €{nieuw:.2f}", "groen"))
-        print(kleur(f"  Je bespaart: €{korting:.2f}", "geel"))
+        print(kleur(f"\n  Origineel: €{bedrag:.2f}", Kleur.WIT))
+        print(kleur(f"  Korting ({korting_pct}%): -€{korting:.2f}", Kleur.ROOD))
+        print(kleur(f"  Nieuw bedrag: €{nieuw:.2f}", Kleur.GROEN))
+        print(kleur(f"  Je bespaart: €{korting:.2f}", Kleur.GEEL))
 
         self._voeg_geschiedenis_toe(f"€{bedrag} - {korting_pct}%", nieuw)
 
@@ -707,9 +707,9 @@ class RekenmachineApp:
         rente_bedrag = hoofdsom * (rente/100) * jaren
         totaal = hoofdsom + rente_bedrag
 
-        print(kleur(f"\n  Hoofdsom: €{hoofdsom:.2f}", "wit"))
-        print(kleur(f"  Rente ({rente}% × {jaren} jaar): €{rente_bedrag:.2f}", "wit"))
-        print(kleur(f"  Totaal: €{totaal:.2f}", "groen"))
+        print(kleur(f"\n  Hoofdsom: €{hoofdsom:.2f}", Kleur.WIT))
+        print(kleur(f"  Rente ({rente}% × {jaren} jaar): €{rente_bedrag:.2f}", Kleur.WIT))
+        print(kleur(f"  Totaal: €{totaal:.2f}", Kleur.GROEN))
 
         self._voeg_geschiedenis_toe(f"Enkelvoudige rente: €{hoofdsom} @ {rente}%", totaal)
 
@@ -724,9 +724,9 @@ class RekenmachineApp:
         totaal = hoofdsom * (1 + rente/100/frequentie) ** (frequentie * jaren)
         rente_bedrag = totaal - hoofdsom
 
-        print(kleur(f"\n  Hoofdsom: €{hoofdsom:.2f}", "wit"))
-        print(kleur(f"  Rente verdiend: €{rente_bedrag:.2f}", "wit"))
-        print(kleur(f"  Totaal na {jaren} jaar: €{totaal:.2f}", "groen"))
+        print(kleur(f"\n  Hoofdsom: €{hoofdsom:.2f}", Kleur.WIT))
+        print(kleur(f"  Rente verdiend: €{rente_bedrag:.2f}", Kleur.WIT))
+        print(kleur(f"  Totaal na {jaren} jaar: €{totaal:.2f}", Kleur.GROEN))
 
         self._voeg_geschiedenis_toe(f"Samengestelde rente: €{hoofdsom} @ {rente}%", totaal)
 
@@ -748,18 +748,18 @@ class RekenmachineApp:
         totaal = maandlast * maanden
         totaal_rente = totaal - hoofdsom
 
-        print(kleur(f"\n  Leenbedrag: €{hoofdsom:.2f}", "wit"))
-        print(kleur(f"  Looptijd: {jaren} jaar ({maanden} maanden)", "wit"))
-        print(kleur(f"  Rente: {rente}% per jaar", "wit"))
-        print(kleur(f"\n  Maandlast: €{maandlast:.2f}", "groen"))
-        print(kleur(f"  Totaal te betalen: €{totaal:.2f}", "wit"))
-        print(kleur(f"  Totaal rente: €{totaal_rente:.2f}", "rood"))
+        print(kleur(f"\n  Leenbedrag: €{hoofdsom:.2f}", Kleur.WIT))
+        print(kleur(f"  Looptijd: {jaren} jaar ({maanden} maanden)", Kleur.WIT))
+        print(kleur(f"  Rente: {rente}% per jaar", Kleur.WIT))
+        print(kleur(f"\n  Maandlast: €{maandlast:.2f}", Kleur.GROEN))
+        print(kleur(f"  Totaal te betalen: €{totaal:.2f}", Kleur.WIT))
+        print(kleur(f"  Totaal rente: €{totaal_rente:.2f}", Kleur.ROOD))
 
         self._voeg_geschiedenis_toe(f"Lening €{hoofdsom}: maandlast", maandlast)
 
     def _valuta_omrekenen(self):
         """Valuta conversie."""
-        print(kleur("\n  Beschikbare valuta:", "geel"))
+        print(kleur("\n  Beschikbare valuta:", Kleur.GEEL))
         valuta_lijst = list(self.VALUTA_KOERSEN.keys())
         for i, valuta in enumerate(valuta_lijst, 1):
             koers = self.VALUTA_KOERSEN[valuta]
@@ -777,7 +777,7 @@ class RekenmachineApp:
             in_eur = bedrag / self.VALUTA_KOERSEN[van]
             resultaat = in_eur * self.VALUTA_KOERSEN[naar]
 
-            print(kleur(f"\n  {bedrag:.2f} {van} = {resultaat:.2f} {naar}", "groen"))
+            print(kleur(f"\n  {bedrag:.2f} {van} = {resultaat:.2f} {naar}", Kleur.GROEN))
             self._voeg_geschiedenis_toe(f"{bedrag} {van} → {naar}", resultaat)
 
         except (ValueError, IndexError):
@@ -792,11 +792,11 @@ class RekenmachineApp:
         marge_pct = (winst / verkoop) * 100 if verkoop > 0 else 0
         markup_pct = (winst / inkoop) * 100 if inkoop > 0 else 0
 
-        print(kleur(f"\n  Inkoopprijs: €{inkoop:.2f}", "wit"))
-        print(kleur(f"  Verkoopprijs: €{verkoop:.2f}", "wit"))
-        print(kleur(f"  Winst: €{winst:.2f}", "groen"))
-        print(kleur(f"  Winstmarge: {marge_pct:.1f}%", "geel"))
-        print(kleur(f"  Markup: {markup_pct:.1f}%", "geel"))
+        print(kleur(f"\n  Inkoopprijs: €{inkoop:.2f}", Kleur.WIT))
+        print(kleur(f"  Verkoopprijs: €{verkoop:.2f}", Kleur.WIT))
+        print(kleur(f"  Winst: €{winst:.2f}", Kleur.GROEN))
+        print(kleur(f"  Winstmarge: {marge_pct:.1f}%", Kleur.GEEL))
+        print(kleur(f"  Markup: {markup_pct:.1f}%", Kleur.GEEL))
 
     def _fooi_berekenen(self):
         """Fooi/tip berekening."""
@@ -809,11 +809,11 @@ class RekenmachineApp:
         totaal = rekening + fooi
         per_persoon = totaal / personen
 
-        print(kleur(f"\n  Rekening: €{rekening:.2f}", "wit"))
-        print(kleur(f"  Fooi ({fooi_pct}%): €{fooi:.2f}", "wit"))
-        print(kleur(f"  Totaal: €{totaal:.2f}", "groen"))
+        print(kleur(f"\n  Rekening: €{rekening:.2f}", Kleur.WIT))
+        print(kleur(f"  Fooi ({fooi_pct}%): €{fooi:.2f}", Kleur.WIT))
+        print(kleur(f"  Totaal: €{totaal:.2f}", Kleur.GROEN))
         if personen > 1:
-            print(kleur(f"  Per persoon: €{per_persoon:.2f}", "geel"))
+            print(kleur(f"  Per persoon: €{per_persoon:.2f}", Kleur.GEEL))
 
     # ==================== STATISTIEKEN ====================
 
@@ -822,7 +822,7 @@ class RekenmachineApp:
         while True:
             self._toon_header("📊 Statistieken")
 
-            print(kleur("\n  Berekeningen:", "geel"))
+            print(kleur("\n  Berekeningen:", Kleur.GEEL))
             print("    1. Gemiddelde")
             print("    2. Mediaan")
             print("    3. Modus")
@@ -840,7 +840,7 @@ class RekenmachineApp:
                 break
 
             # Vraag om getallen
-            print(kleur("\n  Voer getallen in (gescheiden door komma of spatie):", "geel"))
+            print(kleur("\n  Voer getallen in (gescheiden door komma of spatie):", Kleur.GEEL))
             invoer = input(kleur("  Getallen: ", "cyan")).strip()
 
             try:
@@ -870,7 +870,7 @@ class RekenmachineApp:
                     teller = Counter(getallen)
                     max_freq = max(teller.values())
                     modi = [k for k, v in teller.items() if v == max_freq]
-                    print(kleur(f"\n  Modus: {modi}", "groen"))
+                    print(kleur(f"\n  Modus: {modi}", Kleur.GROEN))
                     print(kleur(f"  (komt {max_freq}x voor)", "grijs"))
 
                 elif keuze == "4":
@@ -885,13 +885,13 @@ class RekenmachineApp:
                     self._toon_resultaat("Variantie", resultaat)
 
                 elif keuze == "6":
-                    print(kleur(f"\n  Som: {sum(getallen)}", "groen"))
-                    print(kleur(f"  Aantal: {len(getallen)}", "groen"))
+                    print(kleur(f"\n  Som: {sum(getallen)}", Kleur.GROEN))
+                    print(kleur(f"  Aantal: {len(getallen)}", Kleur.GROEN))
 
                 elif keuze == "7":
-                    print(kleur(f"\n  Minimum: {min(getallen)}", "groen"))
-                    print(kleur(f"  Maximum: {max(getallen)}", "groen"))
-                    print(kleur(f"  Bereik: {max(getallen) - min(getallen)}", "groen"))
+                    print(kleur(f"\n  Minimum: {min(getallen)}", Kleur.GROEN))
+                    print(kleur(f"  Maximum: {max(getallen)}", Kleur.GROEN))
+                    print(kleur(f"  Bereik: {max(getallen) - min(getallen)}", Kleur.GROEN))
 
                 elif keuze == "8":
                     self._alle_statistieken(getallen)
@@ -921,7 +921,7 @@ class RekenmachineApp:
         variantie = sum((x - gem)**2 for x in getallen) / n
         std = math.sqrt(variantie)
 
-        print(kleur("\n  ═══ Statistisch Overzicht ═══", "geel"))
+        print(kleur("\n  ═══ Statistisch Overzicht ═══", Kleur.GEEL))
         print(f"    Aantal: {n}")
         print(f"    Som: {som}")
         print(f"    Gemiddelde: {gem:.4f}")
@@ -939,7 +939,7 @@ class RekenmachineApp:
         while True:
             self._toon_header("❤️ Gezondheidsberekeningen")
 
-            print(kleur("\n  Berekeningen:", "geel"))
+            print(kleur("\n  Berekeningen:", Kleur.GEEL))
             print("    1. BMI (Body Mass Index)")
             print("    2. Ideaal gewicht")
             print("    3. Calorieën behoefte (BMR)")
@@ -983,18 +983,18 @@ class RekenmachineApp:
         # Classificatie
         if bmi < 18.5:
             categorie = "Ondergewicht"
-            kleur_cat = "geel"
+            kleur_cat = Kleur.GEEL
         elif bmi < 25:
             categorie = "Normaal gewicht"
-            kleur_cat = "groen"
+            kleur_cat = Kleur.GROEN
         elif bmi < 30:
             categorie = "Overgewicht"
-            kleur_cat = "geel"
+            kleur_cat = Kleur.GEEL
         else:
             categorie = "Obesitas"
-            kleur_cat = "rood"
+            kleur_cat = Kleur.ROOD
 
-        print(kleur(f"\n  BMI: {bmi:.1f}", "groen"))
+        print(kleur(f"\n  BMI: {bmi:.1f}", Kleur.GROEN))
         print(kleur(f"  Categorie: {categorie}", kleur_cat))
 
         print(kleur("\n  BMI Schaal:", "grijs"))
@@ -1006,7 +1006,7 @@ class RekenmachineApp:
     def _ideaal_gewicht(self):
         """Berekent ideaal gewicht."""
         lengte = self._get_getal("Lengte (cm): ")
-        print(kleur("\n  Geslacht:", "geel"))
+        print(kleur("\n  Geslacht:", Kleur.GEEL))
         print("    1. Man")
         print("    2. Vrouw")
         geslacht = input(kleur("  Keuze: ", "cyan")).strip()
@@ -1022,9 +1022,9 @@ class RekenmachineApp:
         # BMI methode (BMI 22)
         bmi_ideaal = 22 * (lengte_m ** 2)
 
-        print(kleur(f"\n  Ideaal gewicht (Devine): {ideaal:.1f} kg", "groen"))
-        print(kleur(f"  Ideaal gewicht (BMI 22): {bmi_ideaal:.1f} kg", "groen"))
-        print(kleur(f"  Gezond bereik: {18.5 * lengte_m**2:.1f} - {24.9 * lengte_m**2:.1f} kg", "geel"))
+        print(kleur(f"\n  Ideaal gewicht (Devine): {ideaal:.1f} kg", Kleur.GROEN))
+        print(kleur(f"  Ideaal gewicht (BMI 22): {bmi_ideaal:.1f} kg", Kleur.GROEN))
+        print(kleur(f"  Gezond bereik: {18.5 * lengte_m**2:.1f} - {24.9 * lengte_m**2:.1f} kg", Kleur.GEEL))
 
     def _calorieen_berekenen(self):
         """Berekent dagelijkse caloriebehoefte."""
@@ -1032,7 +1032,7 @@ class RekenmachineApp:
         lengte = self._get_getal("Lengte (cm): ")
         leeftijd = self._get_getal("Leeftijd (jaren): ")
 
-        print(kleur("\n  Geslacht:", "geel"))
+        print(kleur("\n  Geslacht:", Kleur.GEEL))
         print("    1. Man")
         print("    2. Vrouw")
         geslacht = input(kleur("  Keuze: ", "cyan")).strip()
@@ -1043,9 +1043,9 @@ class RekenmachineApp:
         else:
             bmr = 447.593 + (9.247 * gewicht) + (3.098 * lengte) - (4.330 * leeftijd)
 
-        print(kleur(f"\n  Basaal Metabolisme (BMR): {bmr:.0f} kcal/dag", "groen"))
+        print(kleur(f"\n  Basaal Metabolisme (BMR): {bmr:.0f} kcal/dag", Kleur.GROEN))
 
-        print(kleur("\n  Dagelijkse behoefte per activiteitsniveau:", "geel"))
+        print(kleur("\n  Dagelijkse behoefte per activiteitsniveau:", Kleur.GEEL))
         print(f"    Sedentair (weinig beweging):    {bmr * 1.2:.0f} kcal")
         print(f"    Licht actief (1-3x/week):       {bmr * 1.375:.0f} kcal")
         print(f"    Matig actief (3-5x/week):       {bmr * 1.55:.0f} kcal")
@@ -1058,8 +1058,8 @@ class RekenmachineApp:
 
         max_hr = 220 - leeftijd
 
-        print(kleur(f"\n  Maximale hartslag: {max_hr:.0f} bpm", "groen"))
-        print(kleur("\n  Trainingszones:", "geel"))
+        print(kleur(f"\n  Maximale hartslag: {max_hr:.0f} bpm", Kleur.GROEN))
+        print(kleur("\n  Trainingszones:", Kleur.GEEL))
         print(f"    Zone 1 (50-60%): {max_hr*0.5:.0f}-{max_hr*0.6:.0f} bpm - Herstel")
         print(f"    Zone 2 (60-70%): {max_hr*0.6:.0f}-{max_hr*0.7:.0f} bpm - Vetverbranding")
         print(f"    Zone 3 (70-80%): {max_hr*0.7:.0f}-{max_hr*0.8:.0f} bpm - Aerobe zone")
@@ -1074,9 +1074,9 @@ class RekenmachineApp:
         basis = gewicht * 0.033
         actief = gewicht * 0.04
 
-        print(kleur(f"\n  Aanbevolen waterinname:", "geel"))
-        print(kleur(f"    Basis: {basis:.1f} liter/dag", "groen"))
-        print(kleur(f"    Bij sport: {actief:.1f} liter/dag", "groen"))
+        print(kleur(f"\n  Aanbevolen waterinname:", Kleur.GEEL))
+        print(kleur(f"    Basis: {basis:.1f} liter/dag", Kleur.GROEN))
+        print(kleur(f"    Bij sport: {actief:.1f} liter/dag", Kleur.GROEN))
         print(kleur(f"    Aantal glazen (250ml): {basis*4:.0f}-{actief*4:.0f}", "grijs"))
 
     # ==================== MEETKUNDE ====================
@@ -1086,7 +1086,7 @@ class RekenmachineApp:
         while True:
             self._toon_header("📐 Meetkunde")
 
-            print(kleur("\n  2D Vormen:", "geel"))
+            print(kleur("\n  2D Vormen:", Kleur.GEEL))
             print("    1. Cirkel (omtrek & oppervlakte)")
             print("    2. Rechthoek (omtrek & oppervlakte)")
             print("    3. Driehoek (omtrek & oppervlakte)")
@@ -1094,14 +1094,14 @@ class RekenmachineApp:
             print("    5. Trapezium (oppervlakte)")
             print("    6. Parallellogram (oppervlakte)")
 
-            print(kleur("\n  3D Vormen:", "geel"))
+            print(kleur("\n  3D Vormen:", Kleur.GEEL))
             print("    7. Bol (oppervlakte & volume)")
             print("    8. Kubus (oppervlakte & volume)")
             print("    9. Cilinder (oppervlakte & volume)")
             print("    a. Kegel (oppervlakte & volume)")
             print("    b. Piramide (volume)")
 
-            print(kleur("\n  Overig:", "geel"))
+            print(kleur("\n  Overig:", Kleur.GEEL))
             print("    c. Pythagoras (zijden driehoek)")
             print("    d. Afstand tussen punten")
 
@@ -1157,10 +1157,10 @@ class RekenmachineApp:
         omtrek = 2 * math.pi * straal
         oppervlakte = math.pi * straal ** 2
 
-        print(kleur("\n  ═══ Cirkel ═══", "geel"))
+        print(kleur("\n  ═══ Cirkel ═══", Kleur.GEEL))
         print(f"    Straal (r): {straal}")
-        print(kleur(f"    Omtrek (2πr): {omtrek:.4f}", "groen"))
-        print(kleur(f"    Oppervlakte (πr²): {oppervlakte:.4f}", "groen"))
+        print(kleur(f"    Omtrek (2πr): {omtrek:.4f}", Kleur.GROEN))
+        print(kleur(f"    Oppervlakte (πr²): {oppervlakte:.4f}", Kleur.GROEN))
 
         self._voeg_geschiedenis_toe(f"Cirkel r={straal}", oppervlakte)
 
@@ -1175,17 +1175,17 @@ class RekenmachineApp:
         oppervlakte = lengte * breedte
         diagonaal = math.sqrt(lengte**2 + breedte**2)
 
-        print(kleur("\n  ═══ Rechthoek ═══", "geel"))
+        print(kleur("\n  ═══ Rechthoek ═══", Kleur.GEEL))
         print(f"    Lengte: {lengte} | Breedte: {breedte}")
-        print(kleur(f"    Omtrek: {omtrek:.4f}", "groen"))
-        print(kleur(f"    Oppervlakte: {oppervlakte:.4f}", "groen"))
-        print(kleur(f"    Diagonaal: {diagonaal:.4f}", "groen"))
+        print(kleur(f"    Omtrek: {omtrek:.4f}", Kleur.GROEN))
+        print(kleur(f"    Oppervlakte: {oppervlakte:.4f}", Kleur.GROEN))
+        print(kleur(f"    Diagonaal: {diagonaal:.4f}", Kleur.GROEN))
 
         self._voeg_geschiedenis_toe(f"Rechthoek {lengte}x{breedte}", oppervlakte)
 
     def _driehoek_berekening(self):
         """Berekent omtrek en oppervlakte van een driehoek."""
-        print(kleur("\n  Berekeningswijze:", "geel"))
+        print(kleur("\n  Berekeningswijze:", Kleur.GEEL))
         print("    1. Basis en hoogte")
         print("    2. Drie zijden (Heron)")
 
@@ -1199,9 +1199,9 @@ class RekenmachineApp:
 
             oppervlakte = 0.5 * basis * hoogte
 
-            print(kleur("\n  ═══ Driehoek ═══", "geel"))
+            print(kleur("\n  ═══ Driehoek ═══", Kleur.GEEL))
             print(f"    Basis: {basis} | Hoogte: {hoogte}")
-            print(kleur(f"    Oppervlakte (½bh): {oppervlakte:.4f}", "groen"))
+            print(kleur(f"    Oppervlakte (½bh): {oppervlakte:.4f}", Kleur.GROEN))
 
         elif methode == "2":
             a = self._get_getal("Zijde a: ")
@@ -1216,10 +1216,10 @@ class RekenmachineApp:
             s = omtrek / 2
             oppervlakte = math.sqrt(s * (s-a) * (s-b) * (s-c))
 
-            print(kleur("\n  ═══ Driehoek (Heron) ═══", "geel"))
+            print(kleur("\n  ═══ Driehoek (Heron) ═══", Kleur.GEEL))
             print(f"    Zijden: {a}, {b}, {c}")
-            print(kleur(f"    Omtrek: {omtrek:.4f}", "groen"))
-            print(kleur(f"    Oppervlakte: {oppervlakte:.4f}", "groen"))
+            print(kleur(f"    Omtrek: {omtrek:.4f}", Kleur.GROEN))
+            print(kleur(f"    Oppervlakte: {oppervlakte:.4f}", Kleur.GROEN))
 
             self._voeg_geschiedenis_toe(f"Driehoek {a},{b},{c}", oppervlakte)
 
@@ -1233,11 +1233,11 @@ class RekenmachineApp:
         oppervlakte = zijde ** 2
         diagonaal = zijde * math.sqrt(2)
 
-        print(kleur("\n  ═══ Vierkant ═══", "geel"))
+        print(kleur("\n  ═══ Vierkant ═══", Kleur.GEEL))
         print(f"    Zijde: {zijde}")
-        print(kleur(f"    Omtrek (4z): {omtrek:.4f}", "groen"))
-        print(kleur(f"    Oppervlakte (z²): {oppervlakte:.4f}", "groen"))
-        print(kleur(f"    Diagonaal (z√2): {diagonaal:.4f}", "groen"))
+        print(kleur(f"    Omtrek (4z): {omtrek:.4f}", Kleur.GROEN))
+        print(kleur(f"    Oppervlakte (z²): {oppervlakte:.4f}", Kleur.GROEN))
+        print(kleur(f"    Diagonaal (z√2): {diagonaal:.4f}", Kleur.GROEN))
 
         self._voeg_geschiedenis_toe(f"Vierkant z={zijde}", oppervlakte)
 
@@ -1251,9 +1251,9 @@ class RekenmachineApp:
 
         oppervlakte = 0.5 * (a + b) * h
 
-        print(kleur("\n  ═══ Trapezium ═══", "geel"))
+        print(kleur("\n  ═══ Trapezium ═══", Kleur.GEEL))
         print(f"    Zijden: {a} en {b} | Hoogte: {h}")
-        print(kleur(f"    Oppervlakte (½(a+b)h): {oppervlakte:.4f}", "groen"))
+        print(kleur(f"    Oppervlakte (½(a+b)h): {oppervlakte:.4f}", Kleur.GROEN))
 
         self._voeg_geschiedenis_toe(f"Trapezium", oppervlakte)
 
@@ -1266,9 +1266,9 @@ class RekenmachineApp:
 
         oppervlakte = basis * hoogte
 
-        print(kleur("\n  ═══ Parallellogram ═══", "geel"))
+        print(kleur("\n  ═══ Parallellogram ═══", Kleur.GEEL))
         print(f"    Basis: {basis} | Hoogte: {hoogte}")
-        print(kleur(f"    Oppervlakte (bh): {oppervlakte:.4f}", "groen"))
+        print(kleur(f"    Oppervlakte (bh): {oppervlakte:.4f}", Kleur.GROEN))
 
         self._voeg_geschiedenis_toe(f"Parallellogram", oppervlakte)
 
@@ -1281,10 +1281,10 @@ class RekenmachineApp:
         oppervlakte = 4 * math.pi * straal ** 2
         volume = (4/3) * math.pi * straal ** 3
 
-        print(kleur("\n  ═══ Bol ═══", "geel"))
+        print(kleur("\n  ═══ Bol ═══", Kleur.GEEL))
         print(f"    Straal (r): {straal}")
-        print(kleur(f"    Oppervlakte (4πr²): {oppervlakte:.4f}", "groen"))
-        print(kleur(f"    Volume (4/3πr³): {volume:.4f}", "groen"))
+        print(kleur(f"    Oppervlakte (4πr²): {oppervlakte:.4f}", Kleur.GROEN))
+        print(kleur(f"    Volume (4/3πr³): {volume:.4f}", Kleur.GROEN))
 
         self._voeg_geschiedenis_toe(f"Bol r={straal}", volume)
 
@@ -1298,11 +1298,11 @@ class RekenmachineApp:
         volume = zijde ** 3
         ruimte_diagonaal = zijde * math.sqrt(3)
 
-        print(kleur("\n  ═══ Kubus ═══", "geel"))
+        print(kleur("\n  ═══ Kubus ═══", Kleur.GEEL))
         print(f"    Zijde (z): {zijde}")
-        print(kleur(f"    Oppervlakte (6z²): {oppervlakte:.4f}", "groen"))
-        print(kleur(f"    Volume (z³): {volume:.4f}", "groen"))
-        print(kleur(f"    Ruimtediagonaal (z√3): {ruimte_diagonaal:.4f}", "groen"))
+        print(kleur(f"    Oppervlakte (6z²): {oppervlakte:.4f}", Kleur.GROEN))
+        print(kleur(f"    Volume (z³): {volume:.4f}", Kleur.GROEN))
+        print(kleur(f"    Ruimtediagonaal (z√3): {ruimte_diagonaal:.4f}", Kleur.GROEN))
 
         self._voeg_geschiedenis_toe(f"Kubus z={zijde}", volume)
 
@@ -1318,11 +1318,11 @@ class RekenmachineApp:
         oppervlakte = 2 * grondvlak + mantel
         volume = grondvlak * hoogte
 
-        print(kleur("\n  ═══ Cilinder ═══", "geel"))
+        print(kleur("\n  ═══ Cilinder ═══", Kleur.GEEL))
         print(f"    Straal: {straal} | Hoogte: {hoogte}")
-        print(kleur(f"    Manteloppervlakte: {mantel:.4f}", "groen"))
-        print(kleur(f"    Totaal oppervlakte: {oppervlakte:.4f}", "groen"))
-        print(kleur(f"    Volume (πr²h): {volume:.4f}", "groen"))
+        print(kleur(f"    Manteloppervlakte: {mantel:.4f}", Kleur.GROEN))
+        print(kleur(f"    Totaal oppervlakte: {oppervlakte:.4f}", Kleur.GROEN))
+        print(kleur(f"    Volume (πr²h): {volume:.4f}", Kleur.GROEN))
 
         self._voeg_geschiedenis_toe(f"Cilinder r={straal} h={hoogte}", volume)
 
@@ -1339,18 +1339,18 @@ class RekenmachineApp:
         oppervlakte = grondvlak + mantel
         volume = (1/3) * grondvlak * hoogte
 
-        print(kleur("\n  ═══ Kegel ═══", "geel"))
+        print(kleur("\n  ═══ Kegel ═══", Kleur.GEEL))
         print(f"    Straal: {straal} | Hoogte: {hoogte}")
-        print(kleur(f"    Schuine zijde: {schuin:.4f}", "groen"))
-        print(kleur(f"    Manteloppervlakte: {mantel:.4f}", "groen"))
-        print(kleur(f"    Totaal oppervlakte: {oppervlakte:.4f}", "groen"))
-        print(kleur(f"    Volume (1/3πr²h): {volume:.4f}", "groen"))
+        print(kleur(f"    Schuine zijde: {schuin:.4f}", Kleur.GROEN))
+        print(kleur(f"    Manteloppervlakte: {mantel:.4f}", Kleur.GROEN))
+        print(kleur(f"    Totaal oppervlakte: {oppervlakte:.4f}", Kleur.GROEN))
+        print(kleur(f"    Volume (1/3πr²h): {volume:.4f}", Kleur.GROEN))
 
         self._voeg_geschiedenis_toe(f"Kegel r={straal} h={hoogte}", volume)
 
     def _piramide_berekening(self):
         """Berekent volume van een piramide."""
-        print(kleur("\n  Grondvlak type:", "geel"))
+        print(kleur("\n  Grondvlak type:", Kleur.GEEL))
         print("    1. Rechthoekig grondvlak")
         print("    2. Vierkant grondvlak")
 
@@ -1372,15 +1372,15 @@ class RekenmachineApp:
 
         volume = (1/3) * grondvlak * hoogte
 
-        print(kleur("\n  ═══ Piramide ═══", "geel"))
+        print(kleur("\n  ═══ Piramide ═══", Kleur.GEEL))
         print(f"    Grondvlak: {grondvlak} | Hoogte: {hoogte}")
-        print(kleur(f"    Volume (1/3·G·h): {volume:.4f}", "groen"))
+        print(kleur(f"    Volume (1/3·G·h): {volume:.4f}", Kleur.GROEN))
 
         self._voeg_geschiedenis_toe(f"Piramide h={hoogte}", volume)
 
     def _pythagoras_berekening(self):
         """Berekent ontbrekende zijde met Pythagoras."""
-        print(kleur("\n  Wat wil je berekenen?", "geel"))
+        print(kleur("\n  Wat wil je berekenen?", Kleur.GEEL))
         print("    1. Schuine zijde (c)")
         print("    2. Rechthoekzijde (a of b)")
 
@@ -1391,9 +1391,9 @@ class RekenmachineApp:
             b = self._get_getal("Rechthoekzijde b: ")
             c = math.sqrt(a**2 + b**2)
 
-            print(kleur("\n  ═══ Pythagoras ═══", "geel"))
+            print(kleur("\n  ═══ Pythagoras ═══", Kleur.GEEL))
             print(f"    a = {a} | b = {b}")
-            print(kleur(f"    c = √(a² + b²) = {c:.4f}", "groen"))
+            print(kleur(f"    c = √(a² + b²) = {c:.4f}", Kleur.GROEN))
 
             self._voeg_geschiedenis_toe(f"Pythagoras a={a} b={b}", c)
 
@@ -1405,15 +1405,15 @@ class RekenmachineApp:
 
             andere = math.sqrt(c**2 - bekende**2)
 
-            print(kleur("\n  ═══ Pythagoras ═══", "geel"))
+            print(kleur("\n  ═══ Pythagoras ═══", Kleur.GEEL))
             print(f"    c = {c} | bekende zijde = {bekende}")
-            print(kleur(f"    Andere zijde = √(c² - a²) = {andere:.4f}", "groen"))
+            print(kleur(f"    Andere zijde = √(c² - a²) = {andere:.4f}", Kleur.GROEN))
 
             self._voeg_geschiedenis_toe(f"Pythagoras c={c}", andere)
 
     def _afstand_berekening(self):
         """Berekent afstand tussen twee punten."""
-        print(kleur("\n  Voer coördinaten in:", "geel"))
+        print(kleur("\n  Voer coördinaten in:", Kleur.GEEL))
         x1 = self._get_getal("Punt 1 - x: ")
         y1 = self._get_getal("Punt 1 - y: ")
         x2 = self._get_getal("Punt 2 - x: ")
@@ -1423,11 +1423,11 @@ class RekenmachineApp:
         midden_x = (x1 + x2) / 2
         midden_y = (y1 + y2) / 2
 
-        print(kleur("\n  ═══ Afstand tussen punten ═══", "geel"))
+        print(kleur("\n  ═══ Afstand tussen punten ═══", Kleur.GEEL))
         print(f"    Punt 1: ({x1}, {y1})")
         print(f"    Punt 2: ({x2}, {y2})")
-        print(kleur(f"    Afstand: {afstand:.4f}", "groen"))
-        print(kleur(f"    Middelpunt: ({midden_x:.2f}, {midden_y:.2f})", "groen"))
+        print(kleur(f"    Afstand: {afstand:.4f}", Kleur.GROEN))
+        print(kleur(f"    Middelpunt: ({midden_x:.2f}, {midden_y:.2f})", Kleur.GROEN))
 
         self._voeg_geschiedenis_toe(f"Afstand ({x1},{y1})-({x2},{y2})", afstand)
 
@@ -1437,7 +1437,7 @@ class RekenmachineApp:
         """Directe expressie invoer."""
         self._toon_header("⌨️ Expressie Calculator")
 
-        print(kleur("\n  Voer directe berekeningen in zoals:", "geel"))
+        print(kleur("\n  Voer directe berekeningen in zoals:", Kleur.GEEL))
         print("    2 + 3 * 4")
         print("    sqrt(16)")
         print("    sin(45)")
@@ -1477,7 +1477,7 @@ class RekenmachineApp:
                 }
                 resultaat = eval(expr, allowed)
 
-                print(kleur(f"  = {resultaat}", "groen"))
+                print(kleur(f"  = {resultaat}", Kleur.GROEN))
                 self._voeg_geschiedenis_toe(expressie, resultaat)
 
             except Exception as e:
@@ -1490,16 +1490,16 @@ class RekenmachineApp:
         while True:
             self._toon_header("💾 Geheugen & Geschiedenis")
 
-            print(kleur("\n  Geheugen slots:", "geel"))
+            print(kleur("\n  Geheugen slots:", Kleur.GEEL))
             if self.geheugen:
                 for slot, waarde in self.geheugen.items():
                     print(f"    M{slot}: {waarde}")
             else:
                 print(kleur("    (leeg)", "grijs"))
 
-            print(kleur(f"\n  Laatste resultaat (ans): {self.laatste_resultaat}", "geel"))
+            print(kleur(f"\n  Laatste resultaat (ans): {self.laatste_resultaat}", Kleur.GEEL))
 
-            print(kleur("\n  Opties:", "geel"))
+            print(kleur("\n  Opties:", Kleur.GEEL))
             print("    1. Opslaan in geheugen")
             print("    2. Geheugen wissen")
             print("    3. Geschiedenis bekijken")
@@ -1535,7 +1535,7 @@ class RekenmachineApp:
             waarschuwing("Geen geschiedenis.")
             return
 
-        print(kleur("\n  Laatste 20 berekeningen:", "geel"))
+        print(kleur("\n  Laatste 20 berekeningen:", Kleur.GEEL))
         for entry in geschiedenis[-20:]:
             datum = entry["datum"][:10]
             print(f"    {datum}: {entry['berekening']} = {entry['resultaat']}")
@@ -1544,7 +1544,7 @@ class RekenmachineApp:
         """Toont rekenmachine statistieken."""
         stats = self.data.get("statistieken", {})
 
-        print(kleur("\n  Statistieken:", "geel"))
+        print(kleur("\n  Statistieken:", Kleur.GEEL))
         print(f"    Totaal berekeningen: {stats.get('berekeningen', 0)}")
 
     # ==================== HULPFUNCTIES ====================
@@ -1552,10 +1552,10 @@ class RekenmachineApp:
     def _toon_resultaat(self, berekening: str, resultaat: float):
         """Toont het resultaat en slaat op."""
         print()
-        print(kleur("  ┌" + "─" * 40 + "┐", "groen"))
-        print(kleur("  │", "groen") + f" {berekening:^38} " + kleur("│", "groen"))
-        print(kleur("  │", "groen") + kleur(f" = {resultaat:^36} ", "geel") + kleur("│", "groen"))
-        print(kleur("  └" + "─" * 40 + "┘", "groen"))
+        print(kleur("  ┌" + "─" * 40 + "┐", Kleur.GROEN))
+        print(kleur("  │", Kleur.GROEN) + f" {berekening:^38} " + kleur("│", Kleur.GROEN))
+        print(kleur("  │", Kleur.GROEN) + kleur(f" = {resultaat:^36} ", Kleur.GEEL) + kleur("│", Kleur.GROEN))
+        print(kleur("  └" + "─" * 40 + "┘", Kleur.GROEN))
 
         self._voeg_geschiedenis_toe(berekening, resultaat)
 
@@ -1563,7 +1563,7 @@ class RekenmachineApp:
         """Toont het hoofdmenu."""
         print()
         print(kleur("┌" + "─" * 44 + "┐", "cyan"))
-        print(kleur("│", "cyan") + kleur("     🧮 SLIMME REKENMACHINE v2.0", "geel") +
+        print(kleur("│", "cyan") + kleur("     🧮 SLIMME REKENMACHINE v2.0", Kleur.GEEL) +
               kleur("          │", "cyan"))
         print(kleur("├" + "─" * 44 + "┤", "cyan"))
 

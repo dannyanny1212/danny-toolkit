@@ -10,7 +10,7 @@ from datetime import datetime
 from collections import Counter
 
 from ..core.config import Config
-from ..core.utils import clear_scherm, kleur
+from ..core.utils import clear_scherm, kleur, Kleur
 from ..core.embeddings import get_embedder
 from ..core.vector_store import VectorStore
 from ..core.document_processor import DocumentProcessor
@@ -25,12 +25,12 @@ class ProductionRAG:
         self.data_file = Config.DATA_DIR / "production_rag_data.json"
         self.data = self._laad_data()
 
-        print(kleur("\n[INIT] PRODUCTION RAG v2.0 INITIALISEREN...", "cyaan"))
+        print(kleur("\n[INIT] PRODUCTION RAG v2.0 INITIALISEREN...", Kleur.CYAAN))
         print("-" * 50)
 
         # Kies embedding provider
         self.embedder = get_embedder(gebruik_voyage)
-        print(kleur(f"   [OK] Embedder: {type(self.embedder).__name__}", "groen"))
+        print(kleur(f"   [OK] Embedder: {type(self.embedder).__name__}", Kleur.GROEN))
 
         # Initialiseer componenten
         self.vector_store = VectorStore(self.embedder)
@@ -44,11 +44,11 @@ class ProductionRAG:
             try:
                 self.generator = Generator()
                 self.generator_provider = self.generator.provider
-                print(kleur(f"   [OK] Generator: {self.generator_provider.upper()}", "groen"))
+                print(kleur(f"   [OK] Generator: {self.generator_provider.upper()}", Kleur.GROEN))
             except Exception as e:
-                print(kleur(f"   [!] Generator error: {e}", "rood"))
+                print(kleur(f"   [!] Generator error: {e}", Kleur.ROOD))
         else:
-            print(kleur("   [!] Geen API key - alleen retrieval", "geel"))
+            print(kleur("   [!] Geen API key - alleen retrieval", Kleur.GEEL))
             print("       Tip: set GROQ_API_KEY voor gratis AI")
 
         # Conversatie geheugen
@@ -59,7 +59,7 @@ class ProductionRAG:
         self.document_metadata = {}
 
         print("-" * 50)
-        print(kleur("[OK] RAG systeem klaar!", "groen"))
+        print(kleur("[OK] RAG systeem klaar!", Kleur.GROEN))
 
     def _laad_data(self) -> dict:
         """Laad opgeslagen data."""
@@ -150,7 +150,7 @@ class ProductionRAG:
 
     def indexeer(self, bron, tags: list = None):
         """Indexeer documenten uit bestand of map."""
-        print(kleur("\n[INDEXEREN] Documenten laden...", "cyaan"))
+        print(kleur("\n[INDEXEREN] Documenten laden...", Kleur.CYAAN))
 
         pad = Path(bron)
         chunks = []
@@ -158,7 +158,7 @@ class ProductionRAG:
         if pad.is_file():
             tekst = self.processor.laad_bestand(pad)
             chunks = self.processor.chunk_tekst(tekst, pad.stem)
-            print(kleur(f"   [OK] {pad.name} geladen", "groen"))
+            print(kleur(f"   [OK] {pad.name} geladen", Kleur.GROEN))
 
             # Sla metadata op
             self.document_metadata[pad.stem] = {
@@ -173,7 +173,7 @@ class ProductionRAG:
 
         elif pad.is_dir():
             chunks = self.processor.verwerk_map(pad)
-            print(kleur(f"   [OK] Map {pad.name} verwerkt", "groen"))
+            print(kleur(f"   [OK] Map {pad.name} verwerkt", Kleur.GROEN))
 
             # Metadata voor alle bestanden
             for bestand in pad.glob("*"):
@@ -203,7 +203,7 @@ class ProductionRAG:
 
         self._sla_data_op()
 
-        print(kleur(f"\n[OK] {len(chunks)} chunks geïndexeerd", "groen"))
+        print(kleur(f"\n[OK] {len(chunks)} chunks geïndexeerd", Kleur.GROEN))
         return len(chunks)
 
     def indexeer_tekst(self, tekst: str, doc_id: str = "document",
@@ -237,7 +237,7 @@ class ProductionRAG:
 
     def indexeer_url(self, url: str, tags: list = None) -> int:
         """Indexeer content van een URL."""
-        print(kleur(f"\n[URL] Fetching: {url[:50]}...", "cyaan"))
+        print(kleur(f"\n[URL] Fetching: {url[:50]}...", Kleur.CYAAN))
 
         try:
             import urllib.request
@@ -251,18 +251,18 @@ class ProductionRAG:
             tekst = re.sub(r'\s+', ' ', tekst).strip()
 
             if len(tekst) < 100:
-                print(kleur("   [!] Te weinig content gevonden", "rood"))
+                print(kleur("   [!] Te weinig content gevonden", Kleur.ROOD))
                 return 0
 
             # Gebruik URL als doc_id
             doc_id = url.split("/")[-1][:30] or "web_page"
             chunks = self.indexeer_tekst(tekst, doc_id, tags)
 
-            print(kleur(f"   [OK] {chunks} chunks van URL geïndexeerd", "groen"))
+            print(kleur(f"   [OK] {chunks} chunks van URL geïndexeerd", Kleur.GROEN))
             return chunks
 
         except Exception as e:
-            print(kleur(f"   [!] URL error: {e}", "rood"))
+            print(kleur(f"   [!] URL error: {e}", Kleur.ROOD))
             return 0
 
     def vraag(self, vraag: str, filter_tags: list = None,
@@ -272,12 +272,12 @@ class ProductionRAG:
             toon_bronnen = self.data["instellingen"]["show_sources"]
 
         vraag_kort = vraag[:50] + "..." if len(vraag) > 50 else vraag
-        print(kleur(f"\n[ZOEKEN] \"{vraag_kort}\"", "cyaan"))
+        print(kleur(f"\n[ZOEKEN] \"{vraag_kort}\"", Kleur.CYAAN))
 
         # Query expansion
         expanded_query = self._expand_query(vraag)
         if expanded_query != vraag:
-            print(kleur(f"   [+] Query expanded", "geel"))
+            print(kleur(f"   [+] Query expanded", Kleur.GEEL))
 
         # Retrieval
         resultaten = self.vector_store.zoek(expanded_query)
@@ -293,13 +293,13 @@ class ProductionRAG:
                         gefilterd.append(r)
             if gefilterd:
                 resultaten = gefilterd
-                print(kleur(f"   [*] Gefilterd op tags: {filter_tags}", "geel"))
+                print(kleur(f"   [*] Gefilterd op tags: {filter_tags}", Kleur.GEEL))
 
         if not resultaten:
             return "Geen relevante documenten gevonden."
 
         if toon_bronnen:
-            print(kleur(f"   [OK] {len(resultaten)} chunks gevonden:", "groen"))
+            print(kleur(f"   [OK] {len(resultaten)} chunks gevonden:", Kleur.GROEN))
             for r in resultaten[:3]:
                 bron = r["metadata"].get("bron", "?")
                 score = r.get("score", 0)
@@ -339,7 +339,7 @@ class ProductionRAG:
         """Genereer antwoord met of zonder AI."""
         if self.generator:
             provider = self.generator_provider.upper()
-            print(kleur(f"   [AI] {provider} genereert antwoord...", "magenta"))
+            print(kleur(f"   [AI] {provider} genereert antwoord...", Kleur.MAGENTA))
 
             try:
                 # Voeg conversatie context toe
@@ -353,27 +353,27 @@ class ProductionRAG:
                 return antwoord
 
             except Exception as e:
-                antwoord = kleur(f"[API Error] {e}\n\n", "rood")
-                antwoord += kleur("Relevante context:\n", "geel")
+                antwoord = kleur(f"[API Error] {e}\n\n", Kleur.ROOD)
+                antwoord += kleur("Relevante context:\n", Kleur.GEEL)
                 for r in resultaten[:2]:
                     antwoord += f"\n• {r['tekst'][:200]}..."
                 return antwoord
         else:
             # Geen generator - toon relevante chunks
-            antwoord = kleur("[INFO] Relevante informatie (geen API key):\n\n", "geel")
+            antwoord = kleur("[INFO] Relevante informatie (geen API key):\n\n", Kleur.GEEL)
             for r in resultaten[:3]:
                 bron = r["metadata"].get("bron", "Bron")
-                antwoord += kleur(f"[{bron}]:\n", "cyaan")
+                antwoord += kleur(f"[{bron}]:\n", Kleur.CYAAN)
                 antwoord += f"{r['tekst'][:300]}...\n\n"
             return antwoord
 
     def batch_vraag(self, vragen: list) -> list:
         """Beantwoord meerdere vragen in batch."""
-        print(kleur(f"\n[BATCH] {len(vragen)} vragen verwerken...", "cyaan"))
+        print(kleur(f"\n[BATCH] {len(vragen)} vragen verwerken...", Kleur.CYAAN))
 
         antwoorden = []
         for i, vraag in enumerate(vragen, 1):
-            print(kleur(f"\n--- Vraag {i}/{len(vragen)} ---", "geel"))
+            print(kleur(f"\n--- Vraag {i}/{len(vragen)} ---", Kleur.GEEL))
             antwoord = self.vraag(vraag, toon_bronnen=False)
             antwoorden.append({
                 "vraag": vraag,
@@ -411,16 +411,16 @@ class ProductionRAG:
         """Toon uitgebreide statistieken."""
         s = self.data["statistieken"]
 
-        print(kleur("\n╔════════════════════════════════════════════════════╗", "cyaan"))
-        print(kleur("║          PRODUCTION RAG STATISTIEKEN               ║", "cyaan"))
-        print(kleur("╠════════════════════════════════════════════════════╣", "cyaan"))
-        print(kleur("║  INDEX                                             ║", "cyaan"))
+        print(kleur("\n╔════════════════════════════════════════════════════╗", Kleur.CYAAN))
+        print(kleur("║          PRODUCTION RAG STATISTIEKEN               ║", Kleur.CYAAN))
+        print(kleur("╠════════════════════════════════════════════════════╣", Kleur.CYAAN))
+        print(kleur("║  INDEX                                             ║", Kleur.CYAAN))
         print(f"║  Documenten in DB:      {self.vector_store.count():>20}  ║")
         print(f"║  Totaal geïndexeerd:    {s['totaal_documenten']:>20}  ║")
         print(f"║  Totaal chunks:         {s['totaal_chunks']:>20}  ║")
         print(f"║  Embedding dimensies:   {self.embedder.dimensies:>20}  ║")
-        print(kleur("║                                                    ║", "cyaan"))
-        print(kleur("║  QUERIES                                           ║", "cyaan"))
+        print(kleur("║                                                    ║", Kleur.CYAAN))
+        print(kleur("║  QUERIES                                           ║", Kleur.CYAAN))
         print(f"║  Totaal queries:        {s['totaal_queries']:>20}  ║")
         print(f"║  Succesvolle antwoorden:{s['succesvolle_antwoorden']:>20}  ║")
 
@@ -428,8 +428,8 @@ class ProductionRAG:
             success_rate = (s['succesvolle_antwoorden'] / s['totaal_queries']) * 100
             print(f"║  Success rate:          {success_rate:>19.1f}%  ║")
 
-        print(kleur("║                                                    ║", "cyaan"))
-        print(kleur("║  CONFIGURATIE                                      ║", "cyaan"))
+        print(kleur("║                                                    ║", Kleur.CYAAN))
+        print(kleur("║  CONFIGURATIE                                      ║", Kleur.CYAAN))
         inst = self.data["instellingen"]
         print(f"║  Chunk grootte:         {inst['chunk_size']:>20}  ║")
         print(f"║  Top-K resultaten:      {inst['top_k']:>20}  ║")
@@ -437,15 +437,15 @@ class ProductionRAG:
         print(f"║  Conversatie geheugen:  {conv:>20}  ║")
         gen = self.generator_provider.upper() if self.generator else "Geen"
         print(f"║  Generator:             {gen:>20}  ║")
-        print(kleur("╚════════════════════════════════════════════════════╝", "cyaan"))
+        print(kleur("╚════════════════════════════════════════════════════╝", Kleur.CYAAN))
 
     def _toon_documenten(self):
         """Toon geïndexeerde documenten."""
         if not self.document_metadata:
-            print(kleur("[!] Geen documenten geïndexeerd.", "rood"))
+            print(kleur("[!] Geen documenten geïndexeerd.", Kleur.ROOD))
             return
 
-        print(kleur("\n=== GEÏNDEXEERDE DOCUMENTEN ===", "cyaan"))
+        print(kleur("\n=== GEÏNDEXEERDE DOCUMENTEN ===", Kleur.CYAAN))
 
         for i, (doc_id, meta) in enumerate(self.document_metadata.items(), 1):
             tags_str = ", ".join(meta.get("tags", [])) or "geen"
@@ -457,10 +457,10 @@ class ProductionRAG:
     def _toon_tags(self):
         """Toon alle tags."""
         if not self.data["tags"]:
-            print(kleur("[!] Geen tags gedefinieerd.", "rood"))
+            print(kleur("[!] Geen tags gedefinieerd.", Kleur.ROOD))
             return
 
-        print(kleur("\n=== DOCUMENT TAGS ===", "cyaan"))
+        print(kleur("\n=== DOCUMENT TAGS ===", Kleur.CYAAN))
 
         for tag, docs in self.data["tags"].items():
             print(f"\n  {kleur(tag, 'geel')}: {len(docs)} documenten")
@@ -474,10 +474,10 @@ class ProductionRAG:
         geschiedenis = self.data["query_geschiedenis"]
 
         if not geschiedenis:
-            print(kleur("[!] Geen query geschiedenis.", "rood"))
+            print(kleur("[!] Geen query geschiedenis.", Kleur.ROOD))
             return
 
-        print(kleur("\n=== RECENTE QUERIES ===", "cyaan"))
+        print(kleur("\n=== RECENTE QUERIES ===", Kleur.CYAAN))
 
         for i, item in enumerate(reversed(geschiedenis[-10:]), 1):
             datum = datetime.fromisoformat(item["datum"]).strftime("%d-%m %H:%M")
@@ -490,9 +490,9 @@ class ProductionRAG:
         while True:
             inst = self.data["instellingen"]
 
-            print(kleur("\n╔════════════════════════════════════════════════════╗", "geel"))
-            print(kleur("║              INSTELLINGEN                          ║", "geel"))
-            print(kleur("╠════════════════════════════════════════════════════╣", "geel"))
+            print(kleur("\n╔════════════════════════════════════════════════════╗", Kleur.GEEL))
+            print(kleur("║              INSTELLINGEN                          ║", Kleur.GEEL))
+            print(kleur("╠════════════════════════════════════════════════════╣", Kleur.GEEL))
             print(f"║  1. Top-K resultaten:   {inst['top_k']:>20}  ║")
             conv = "Aan" if inst['gebruik_conversatie'] else "Uit"
             print(f"║  2. Conversatie geheugen:{conv:>19}  ║")
@@ -500,9 +500,9 @@ class ProductionRAG:
             print(f"║  3. Query expansion:    {exp:>20}  ║")
             src = "Aan" if inst['show_sources'] else "Uit"
             print(f"║  4. Toon bronnen:       {src:>20}  ║")
-            print(kleur("║                                                    ║", "geel"))
+            print(kleur("║                                                    ║", Kleur.GEEL))
             print("║  0. Terug                                          ║")
-            print(kleur("╚════════════════════════════════════════════════════╝", "geel"))
+            print(kleur("╚════════════════════════════════════════════════════╝", Kleur.GEEL))
 
             keuze = input("\nKeuze: ").strip()
 
@@ -543,13 +543,13 @@ class ProductionRAG:
         with open(bestand, "w", encoding="utf-8") as f:
             f.write(content)
 
-        print(kleur(f"\n[OK] Geëxporteerd naar: {bestand}", "groen"))
+        print(kleur(f"\n[OK] Geëxporteerd naar: {bestand}", Kleur.GROEN))
 
     def _toon_help(self):
         """Toon help informatie."""
-        print(kleur("\n╔════════════════════════════════════════════════════╗", "cyaan"))
-        print(kleur("║           PRODUCTION RAG HELP                      ║", "cyaan"))
-        print(kleur("╠════════════════════════════════════════════════════╣", "cyaan"))
+        print(kleur("\n╔════════════════════════════════════════════════════╗", Kleur.CYAAN))
+        print(kleur("║           PRODUCTION RAG HELP                      ║", Kleur.CYAAN))
+        print(kleur("╠════════════════════════════════════════════════════╣", Kleur.CYAAN))
         print("║  COMMANDO'S                                        ║")
         print("║  /stats      - Toon statistieken                   ║")
         print("║  /docs       - Bekijk geïndexeerde documenten      ║")
@@ -562,12 +562,12 @@ class ProductionRAG:
         print("║  /reset      - Reset conversatie                   ║")
         print("║  /help       - Deze hulp                           ║")
         print("║  /stop       - Afsluiten                           ║")
-        print(kleur("║                                                    ║", "cyaan"))
+        print(kleur("║                                                    ║", Kleur.CYAAN))
         print("║  TIPS                                              ║")
         print("║  • Gebruik specifieke vragen voor betere results   ║")
         print("║  • Filter met [tag:naam] in je vraag               ║")
         print("║  • Conversatie geheugen onthoudt context           ║")
-        print(kleur("╚════════════════════════════════════════════════════╝", "cyaan"))
+        print(kleur("╚════════════════════════════════════════════════════╝", Kleur.CYAAN))
 
     def _laad_demo_data(self):
         """Laad demo documenten."""
@@ -649,7 +649,7 @@ Testing:
 
     def _voeg_document_toe(self):
         """Interactief document toevoegen."""
-        print(kleur("\n=== DOCUMENT TOEVOEGEN ===", "geel"))
+        print(kleur("\n=== DOCUMENT TOEVOEGEN ===", Kleur.GEEL))
         print("  1. Bestand/map pad")
         print("  2. URL")
         print("  3. Directe tekst")
@@ -669,7 +669,7 @@ Testing:
                 try:
                     self.indexeer(pad, tags)
                 except Exception as e:
-                    print(kleur(f"[!] Fout: {e}", "rood"))
+                    print(kleur(f"[!] Fout: {e}", Kleur.ROOD))
 
         elif keuze == "2":
             url = input("URL: ").strip()
@@ -693,14 +693,14 @@ Testing:
     def run(self):
         """Start de interactieve RAG modus."""
         clear_scherm()
-        print(kleur("\n╔════════════════════════════════════════════════════╗", "cyaan"))
-        print(kleur("║      PRODUCTION RAG v2.0 - Enterprise Ready        ║", "cyaan"))
-        print(kleur("║      Hash Embeddings + Vector DB + AI Generation   ║", "cyaan"))
-        print(kleur("╚════════════════════════════════════════════════════╝", "cyaan"))
+        print(kleur("\n╔════════════════════════════════════════════════════╗", Kleur.CYAAN))
+        print(kleur("║      PRODUCTION RAG v2.0 - Enterprise Ready        ║", Kleur.CYAAN))
+        print(kleur("║      Hash Embeddings + Vector DB + AI Generation   ║", Kleur.CYAAN))
+        print(kleur("╚════════════════════════════════════════════════════╝", Kleur.CYAAN))
 
         # Check voor bestaande data
         if self.vector_store.count() > 0:
-            print(kleur(f"\n[INFO] Database bevat {self.vector_store.count()} documenten", "geel"))
+            print(kleur(f"\n[INFO] Database bevat {self.vector_store.count()} documenten", Kleur.GEEL))
             herindex = input("Opnieuw indexeren? (j/n): ").lower().strip()
             if herindex == "j":
                 self.vector_store.wis()
@@ -708,24 +708,24 @@ Testing:
 
         # Demo data als database leeg is
         if self.vector_store.count() == 0:
-            print(kleur("\n[DEMO] Demo data laden...", "cyaan"))
+            print(kleur("\n[DEMO] Demo data laden...", Kleur.CYAAN))
             self._laad_demo_data()
 
         self.stats()
 
         # Interactieve loop
-        print(kleur("\n" + "=" * 50, "cyaan"))
-        print(kleur("VRAAG & ANTWOORD - Typ /help voor commando's", "cyaan"))
-        print(kleur("=" * 50, "cyaan"))
+        print(kleur("\n" + "=" * 50, Kleur.CYAAN))
+        print(kleur("VRAAG & ANTWOORD - Typ /help voor commando's", Kleur.CYAAN))
+        print(kleur("=" * 50, Kleur.CYAAN))
 
         laatste_antwoord = ""
         laatste_vraag = ""
 
         while True:
             try:
-                vraag = input(kleur("\nVraag: ", "geel")).strip()
+                vraag = input(kleur("\nVraag: ", Kleur.GEEL)).strip()
             except (EOFError, KeyboardInterrupt):
-                print(kleur("\n\nTot ziens!", "cyaan"))
+                print(kleur("\n\nTot ziens!", Kleur.CYAAN))
                 break
 
             if not vraag:
@@ -736,7 +736,7 @@ Testing:
                 cmd = vraag.lower().split()[0]
 
                 if cmd == "/stop":
-                    print(kleur("\nTot ziens!", "cyaan"))
+                    print(kleur("\nTot ziens!", Kleur.CYAAN))
                     break
                 elif cmd == "/stats":
                     self.stats()
@@ -756,19 +756,19 @@ Testing:
                         self.vector_store.wis()
                         self.document_metadata = {}
                         self.conversatie = []
-                        print(kleur("[OK] Database gewist", "groen"))
+                        print(kleur("[OK] Database gewist", Kleur.GROEN))
                 elif cmd == "/export":
                     if laatste_vraag and laatste_antwoord:
                         self._export_resultaten(laatste_vraag, laatste_antwoord)
                     else:
-                        print(kleur("[!] Geen antwoord om te exporteren", "rood"))
+                        print(kleur("[!] Geen antwoord om te exporteren", Kleur.ROOD))
                 elif cmd == "/reset":
                     self.conversatie = []
-                    print(kleur("[OK] Conversatie gereset", "groen"))
+                    print(kleur("[OK] Conversatie gereset", Kleur.GROEN))
                 elif cmd == "/help":
                     self._toon_help()
                 else:
-                    print(kleur(f"[!] Onbekend commando: {cmd}", "rood"))
+                    print(kleur(f"[!] Onbekend commando: {cmd}", Kleur.ROOD))
 
                 continue
 
@@ -784,12 +784,12 @@ Testing:
                 laatste_vraag = vraag
                 laatste_antwoord = antwoord
 
-                print(kleur(f"\n{'='*50}", "groen"))
-                print(kleur("ANTWOORD:", "groen"))
-                print(kleur("=" * 50, "groen"))
+                print(kleur(f"\n{'='*50}", Kleur.GROEN))
+                print(kleur("ANTWOORD:", Kleur.GROEN))
+                print(kleur("=" * 50, Kleur.GROEN))
                 print(antwoord)
 
             except Exception as e:
-                print(kleur(f"\n[FOUT] {e}", "rood"))
+                print(kleur(f"\n[FOUT] {e}", Kleur.ROOD))
 
         self._sla_data_op()

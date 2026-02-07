@@ -20,7 +20,7 @@ from typing import Optional, Dict, List, Tuple
 from collections import Counter
 
 from ..core.config import Config
-from ..core.utils import clear_scherm, kleur
+from ..core.utils import clear_scherm, kleur, Kleur
 from ..core.vector_store import VectorStore
 from ..core.embeddings import get_embedder
 from ..core.document_processor import DocumentProcessor
@@ -129,7 +129,7 @@ EVOLUTION_FORMS = {
         "emoji": "[*]",
         "ascii": "(*)",
         "beschrijving": "Een vonk van bewustzijn",
-        "kleur": "wit",
+        "kleur": Kleur.WIT,
     },
 
     # Tech evolution line
@@ -138,7 +138,7 @@ EVOLUTION_FORMS = {
         "emoji": "[<>]",
         "ascii": "<*>",
         "beschrijving": "Digitale vonk met code-bewustzijn",
-        "kleur": "cyaan",
+        "kleur": Kleur.CYAAN,
         "vereist": {"tech": 50},
     },
     "code_weaver": {
@@ -146,7 +146,7 @@ EVOLUTION_FORMS = {
         "emoji": "[{;}]",
         "ascii": "{;*;}",
         "beschrijving": "Weeft algoritmes in het weefsel van kennis",
-        "kleur": "cyaan",
+        "kleur": Kleur.CYAAN,
         "vereist": {"tech": 150},
     },
     "cyber_oracle": {
@@ -154,7 +154,7 @@ EVOLUTION_FORMS = {
         "emoji": "[@#$]",
         "ascii": "[@*#]",
         "beschrijving": "Ziet patronen in de matrix van data",
-        "kleur": "cyaan",
+        "kleur": Kleur.CYAAN,
         "vereist": {"tech": 300},
     },
 
@@ -164,7 +164,7 @@ EVOLUTION_FORMS = {
         "emoji": "[~]",
         "ascii": "(~*~)",
         "beschrijving": "Creatieve vonk vol inspiratie",
-        "kleur": "magenta",
+        "kleur": Kleur.MAGENTA,
         "vereist": {"arts": 50},
     },
     "dream_weaver": {
@@ -172,7 +172,7 @@ EVOLUTION_FORMS = {
         "emoji": "[*~*]",
         "ascii": "~*~*~",
         "beschrijving": "Weeft dromen en verhalen",
-        "kleur": "magenta",
+        "kleur": Kleur.MAGENTA,
         "vereist": {"arts": 150},
     },
     "mystic_muse": {
@@ -180,7 +180,7 @@ EVOLUTION_FORMS = {
         "emoji": "[***]",
         "ascii": "*~*~*",
         "beschrijving": "Bron van oneindige creativiteit",
-        "kleur": "magenta",
+        "kleur": Kleur.MAGENTA,
         "vereist": {"arts": 300},
     },
 
@@ -190,7 +190,7 @@ EVOLUTION_FORMS = {
         "emoji": "[%]",
         "ascii": "(%*%)",
         "beschrijving": "Analyseert en observeert",
-        "kleur": "groen",
+        "kleur": Kleur.GROEN,
         "vereist": {"science": 50},
     },
     "logic_mind": {
@@ -198,7 +198,7 @@ EVOLUTION_FORMS = {
         "emoji": "[=+]",
         "ascii": "(=*+)",
         "beschrijving": "Denkt in hypotheses en bewijzen",
-        "kleur": "groen",
+        "kleur": Kleur.GROEN,
         "vereist": {"science": 150},
     },
     "quantum_sage": {
@@ -206,7 +206,7 @@ EVOLUTION_FORMS = {
         "emoji": "[Q*Q]",
         "ascii": "Q*=*Q",
         "beschrijving": "Begrijpt de fundamentele wetten",
-        "kleur": "groen",
+        "kleur": Kleur.GROEN,
         "vereist": {"science": 300},
     },
 
@@ -216,7 +216,7 @@ EVOLUTION_FORMS = {
         "emoji": "[o]",
         "ascii": "(o*o)",
         "beschrijving": "Zoekt naar diepere betekenis",
-        "kleur": "geel",
+        "kleur": Kleur.GEEL,
         "vereist": {"wisdom": 50},
     },
     "zen_walker": {
@@ -224,7 +224,7 @@ EVOLUTION_FORMS = {
         "emoji": "[Om]",
         "ascii": "(Om*)",
         "beschrijving": "Wandelt het pad van inzicht",
-        "kleur": "geel",
+        "kleur": Kleur.GEEL,
         "vereist": {"wisdom": 150},
     },
     "transcendent": {
@@ -232,7 +232,7 @@ EVOLUTION_FORMS = {
         "emoji": "[+++]",
         "ascii": "+*+*+",
         "beschrijving": "Voorbij het gewone bewustzijn",
-        "kleur": "geel",
+        "kleur": Kleur.GEEL,
         "vereist": {"wisdom": 300},
     },
 
@@ -242,7 +242,7 @@ EVOLUTION_FORMS = {
         "emoji": "[$]",
         "ascii": "($*$)",
         "beschrijving": "Denkt in waarde en groei",
-        "kleur": "groen",
+        "kleur": Kleur.GROEN,
         "vereist": {"business": 50},
     },
     "strategy_mind": {
@@ -250,7 +250,7 @@ EVOLUTION_FORMS = {
         "emoji": "[S$]",
         "ascii": "(S*$)",
         "beschrijving": "Plant en executeert",
-        "kleur": "groen",
+        "kleur": Kleur.GROEN,
         "vereist": {"business": 150},
     },
     "empire_builder": {
@@ -258,7 +258,7 @@ EVOLUTION_FORMS = {
         "emoji": "[E$E]",
         "ascii": "E$*$E",
         "beschrijving": "Bouwt systemen van succes",
-        "kleur": "groen",
+        "kleur": Kleur.GROEN,
         "vereist": {"business": 300},
     },
 
@@ -268,7 +268,7 @@ EVOLUTION_FORMS = {
         "emoji": "[<3]",
         "ascii": "(<3*)",
         "beschrijving": "Voelt en verbindt",
-        "kleur": "rood",
+        "kleur": Kleur.ROOD,
         "vereist": {"social": 50},
     },
     "empath": {
@@ -276,7 +276,7 @@ EVOLUTION_FORMS = {
         "emoji": "[<3>]",
         "ascii": "<3*3>",
         "beschrijving": "Begrijpt emoties diep",
-        "kleur": "rood",
+        "kleur": Kleur.ROOD,
         "vereist": {"social": 150},
     },
     "soul_bridge": {
@@ -284,7 +284,7 @@ EVOLUTION_FORMS = {
         "emoji": "[<=>]",
         "ascii": "<3=*=3>",
         "beschrijving": "Verbindt zielen en gedachten",
-        "kleur": "rood",
+        "kleur": Kleur.ROOD,
         "vereist": {"social": 300},
     },
 
@@ -294,7 +294,7 @@ EVOLUTION_FORMS = {
         "emoji": "[<~>]",
         "ascii": "<~*~>",
         "beschrijving": "Fusie van code en creativiteit",
-        "kleur": "cyaan",
+        "kleur": Kleur.CYAAN,
         "vereist": {"tech": 200, "arts": 200},
         "legendary": True,
     },
@@ -303,7 +303,7 @@ EVOLUTION_FORMS = {
         "emoji": "[%Om]",
         "ascii": "%*Om*%",
         "beschrijving": "Ziet waarheid in data en wijsheid",
-        "kleur": "geel",
+        "kleur": Kleur.GEEL,
         "vereist": {"science": 200, "wisdom": 200},
         "legendary": True,
     },
@@ -312,7 +312,7 @@ EVOLUTION_FORMS = {
         "emoji": "[$<3]",
         "ascii": "$<3*3>$",
         "beschrijving": "Leidt met hoofd en hart",
-        "kleur": "groen",
+        "kleur": Kleur.GROEN,
         "vereist": {"business": 200, "social": 200},
         "legendary": True,
     },
@@ -323,7 +323,7 @@ EVOLUTION_FORMS = {
         "emoji": "[*ALL*]",
         "ascii": "*<{[ALL]}>*",
         "beschrijving": "Heeft alle kennis geabsorbeerd en getranscendeerd",
-        "kleur": "wit",
+        "kleur": Kleur.WIT,
         "vereist": {"tech": 300, "arts": 300, "science": 300,
                    "wisdom": 300, "business": 300, "social": 300},
         "legendary": True,
@@ -553,7 +553,7 @@ class LegendaryCompanion:
         # Naam wordt later gezet na alle initialisaties
         self._new_name = naam
 
-        print(kleur("\n[LEGENDARY] Awakening...", "magenta"))
+        print(kleur("\n[LEGENDARY] Awakening...", Kleur.MAGENTA))
 
         # Vector Store
         self.embedder = get_embedder(True)
@@ -568,9 +568,9 @@ class LegendaryCompanion:
         try:
             if Config.has_groq_key() or Config.has_anthropic_key():
                 self.generator = Generator()
-                print(kleur(f"   [OK] Neural Link: {self.generator.provider.upper()}", "groen"))
+                print(kleur(f"   [OK] Neural Link: {self.generator.provider.upper()}", Kleur.GROEN))
         except Exception as e:
-            print(kleur(f"   [!] Neural Link offline: {e}", "geel"))
+            print(kleur(f"   [!] Neural Link offline: {e}", Kleur.GEEL))
 
         # Spaced Repetition
         self.spaced_rep = SpacedRepetition.from_dict(
@@ -594,8 +594,8 @@ class LegendaryCompanion:
             self._sla_op()
 
         form = self._get_current_form()
-        print(kleur(f"   [OK] Form: {form['emoji']} {form['naam']}", "groen"))
-        print(kleur(f"   [OK] XP: {self.data['xp']} | Docs: {self.data['stats']['totaal_docs']}", "groen"))
+        print(kleur(f"   [OK] Form: {form['emoji']} {form['naam']}", Kleur.GROEN))
+        print(kleur(f"   [OK] XP: {self.data['xp']} | Docs: {self.data['stats']['totaal_docs']}", Kleur.GROEN))
 
         # Audio-First: Emotionele stem
         self.voice = None
@@ -605,11 +605,11 @@ class LegendaryCompanion:
                 self.voice = EmotionalVoice()
                 status = self.voice.get_status()
                 if status["active_backend"] != "none":
-                    print(kleur(f"   [OK] Voice: {status['active_backend'].upper()}", "groen"))
+                    print(kleur(f"   [OK] Voice: {status['active_backend'].upper()}", Kleur.GROEN))
                 else:
-                    print(kleur("   [!] Voice: Geen TTS backend", "geel"))
+                    print(kleur("   [!] Voice: Geen TTS backend", Kleur.GEEL))
             except Exception as e:
-                print(kleur(f"   [!] Voice error: {e}", "geel"))
+                print(kleur(f"   [!] Voice error: {e}", Kleur.GEEL))
 
     def _laad_data(self) -> dict:
         """Laad companion data."""
@@ -698,12 +698,12 @@ class LegendaryCompanion:
                 self.data["current_form"] = best_form
 
                 form_data = EVOLUTION_FORMS[best_form]
-                print(kleur(f"\n  ** EVOLUTIE! **", "magenta"))
-                print(kleur(f"  {EVOLUTION_FORMS.get(old_form, {}).get('naam', 'Spark')} -> {form_data['naam']}!", "magenta"))
-                print(kleur(f"  \"{form_data['beschrijving']}\"", "geel"))
+                print(kleur(f"\n  ** EVOLUTIE! **", Kleur.MAGENTA))
+                print(kleur(f"  {EVOLUTION_FORMS.get(old_form, {}).get('naam', 'Spark')} -> {form_data['naam']}!", Kleur.MAGENTA))
+                print(kleur(f"  \"{form_data['beschrijving']}\"", Kleur.GEEL))
 
                 if form_data.get("legendary"):
-                    print(kleur(f"  *** LEGENDARY FORM UNLOCKED! ***", "geel"))
+                    print(kleur(f"  *** LEGENDARY FORM UNLOCKED! ***", Kleur.GEEL))
 
                 self._sla_op()
 
@@ -736,8 +736,8 @@ class LegendaryCompanion:
         flavor, confidence = DocumentFlavor.detect(text)
 
         form = self._get_current_form()
-        print(kleur(f"\n{form['emoji']} consumeert kennis...", "cyaan"))
-        print(kleur(f"   Flavor gedetecteerd: {flavor.upper()} ({confidence:.0%})", "geel"))
+        print(kleur(f"\n{form['emoji']} consumeert kennis...", Kleur.CYAAN))
+        print(kleur(f"   Flavor gedetecteerd: {flavor.upper()} ({confidence:.0%})", Kleur.GEEL))
 
         # Chunk en indexeer
         chunks = self.processor.chunk_tekst(text, doc_id)
@@ -797,7 +797,7 @@ class LegendaryCompanion:
         form = self._get_current_form()
         personality = self._get_personality()
 
-        print(kleur(f"\n{form['emoji']} doorzoekt geheugen...", "cyaan"))
+        print(kleur(f"\n{form['emoji']} doorzoekt geheugen...", Kleur.CYAAN))
 
         # Zoek in vector store
         results = self.vector_store.zoek(question)
@@ -982,9 +982,9 @@ Antwoord in karakter, gebaseerd op de context."""
         """Good Boy / Bad Dog feedback voor hunt."""
         if was_good:
             self.data["xp"] += 10
-            print(kleur(f"\n  {self.data['naam']}: *kwispelt* BRAAF! +10 XP", "groen"))
+            print(kleur(f"\n  {self.data['naam']}: *kwispelt* BRAAF! +10 XP", Kleur.GROEN))
         else:
-            print(kleur(f"\n  {self.data['naam']}: *oren omlaag* Sorry baas...", "geel"))
+            print(kleur(f"\n  {self.data['naam']}: *oren omlaag* Sorry baas...", Kleur.GEEL))
         self._sla_op()
 
     # =========================================================================
@@ -1114,9 +1114,9 @@ ANTWOORD: [het antwoord]"""
         status = self.status()
         form = self._get_current_form()
 
-        print(kleur("\n" + "=" * 60, form.get("kleur", "cyaan")))
-        print(kleur(f"  {status['form_emoji']} {status['naam']} the {status['form']}", form.get("kleur", "cyaan")))
-        print(kleur("=" * 60, form.get("kleur", "cyaan")))
+        print(kleur("\n" + "=" * 60, form.get("kleur", Kleur.CYAAN)))
+        print(kleur(f"  {status['form_emoji']} {status['naam']} the {status['form']}", form.get("kleur", Kleur.CYAAN)))
+        print(kleur("=" * 60, form.get("kleur", Kleur.CYAAN)))
 
         print(f"\n  \"{status['form_beschrijving']}\"")
 
@@ -1133,9 +1133,9 @@ ANTWOORD: [het antwoord]"""
         print(f"  Quizzes: {status['stats']['quizzes_correct']}/{status['stats']['quizzes_total']}")
 
         if status["due_quizzes"] > 0:
-            print(kleur(f"\n  [!] {status['due_quizzes']} quizzes wachten op je!", "geel"))
+            print(kleur(f"\n  [!] {status['due_quizzes']} quizzes wachten op je!", Kleur.GEEL))
 
-        print(kleur("=" * 60, form.get("kleur", "cyaan")))
+        print(kleur("=" * 60, form.get("kleur", Kleur.CYAAN)))
 
     # =========================================================================
     # INTERACTIVE CLI
@@ -1154,23 +1154,23 @@ ANTWOORD: [het antwoord]"""
 |     {form['emoji']} {form['naam']:^47} |
 |                                                               |
 +===============================================================+
-        """, form.get("kleur", "cyaan")))
+        """, form.get("kleur", Kleur.CYAAN)))
 
         self.toon_status()
 
         # Check voor ochtend droom
         dream = self.get_morning_dream()
         if dream:
-            print(kleur(f"\n  [DREAM] {form['emoji']} had een droom:", "magenta"))
-            print(kleur(f"  \"{dream}\"", "magenta"))
+            print(kleur(f"\n  [DREAM] {form['emoji']} had een droom:", Kleur.MAGENTA))
+            print(kleur(f"  \"{dream}\"", Kleur.MAGENTA))
 
         # Check voor due quizzes
         quiz = self.get_quiz()
         if quiz:
-            print(kleur(f"\n  {quiz['intro']}", "geel"))
-            print(kleur(f"  Quiz: {quiz['vraag']}", "geel"))
+            print(kleur(f"\n  {quiz['intro']}", Kleur.GEEL))
+            print(kleur(f"  Quiz: {quiz['vraag']}", Kleur.GEEL))
 
-        print(kleur("\nCOMMANDO'S:", "geel"))
+        print(kleur("\nCOMMANDO'S:", Kleur.GEEL))
         print("  hunt <query>   - THE HUNT - Stuur op jacht!")
         print("  ask <vraag>    - Stel een vraag")
         print("  say <vraag>    - Vraag + spreek antwoord uit")
@@ -1186,9 +1186,9 @@ ANTWOORD: [het antwoord]"""
             try:
                 form = self._get_current_form()
                 prompt = f"\n{form['emoji']} > "
-                invoer = input(kleur(prompt, "groen")).strip()
+                invoer = input(kleur(prompt, Kleur.GROEN)).strip()
             except (EOFError, KeyboardInterrupt):
-                print(kleur("\n\nTot ziens!", "cyaan"))
+                print(kleur("\n\nTot ziens!", Kleur.CYAAN))
                 break
 
             if not invoer:
@@ -1201,7 +1201,7 @@ ANTWOORD: [het antwoord]"""
             if cmd == "stop" or cmd == "exit":
                 personality = self._get_personality()
                 prefix = random.choice(personality["voorvoegsels"])
-                print(kleur(f"\n{form['emoji']} {prefix} Tot de volgende keer!", "cyaan"))
+                print(kleur(f"\n{form['emoji']} {prefix} Tot de volgende keer!", Kleur.CYAAN))
                 break
 
             elif cmd == "hunt" and args:
@@ -1215,69 +1215,69 @@ ANTWOORD: [het antwoord]"""
                     elif feedback == "n":
                         self.hunt_feedback(False)
                 else:
-                    print(kleur(f"[!] {result.get('error', 'Hunt mislukt')}", "rood"))
+                    print(kleur(f"[!] {result.get('error', 'Hunt mislukt')}", Kleur.ROOD))
 
             elif cmd == "ask" and args:
                 answer = self.ask(args)
-                print(kleur("\n" + "=" * 50, "groen"))
+                print(kleur("\n" + "=" * 50, Kleur.GROEN))
                 print(answer)
-                print(kleur("=" * 50, "groen"))
+                print(kleur("=" * 50, Kleur.GROEN))
 
             elif cmd == "feed" and args:
                 result = self.feed(args)
-                print(kleur(f"\n[OK] Flavor: {result['flavor']} | +{result['xp_gained']} XP", "groen"))
-                print(kleur(f"     Form: {result['current_form']}", "groen"))
+                print(kleur(f"\n[OK] Flavor: {result['flavor']} | +{result['xp_gained']} XP", Kleur.GROEN))
+                print(kleur(f"     Form: {result['current_form']}", Kleur.GROEN))
 
             elif cmd == "file" and args:
                 result = self.feed_file(args)
                 if "error" in result:
-                    print(kleur(f"[!] {result['error']}", "rood"))
+                    print(kleur(f"[!] {result['error']}", Kleur.ROOD))
                 else:
-                    print(kleur(f"\n[OK] {result['flavor']} | +{result['xp_gained']} XP", "groen"))
+                    print(kleur(f"\n[OK] {result['flavor']} | +{result['xp_gained']} XP", Kleur.GROEN))
 
             elif cmd == "quiz":
                 quiz = self.get_quiz()
                 if quiz:
-                    print(kleur(f"\n{quiz['intro']}", "geel"))
-                    print(kleur(f"\nVRAAG: {quiz['vraag']}", "cyaan"))
+                    print(kleur(f"\n{quiz['intro']}", Kleur.GEEL))
+                    print(kleur(f"\nVRAAG: {quiz['vraag']}", Kleur.CYAAN))
 
                     answer = input("\nJouw antwoord: ").strip()
-                    print(kleur(f"\nCorrect antwoord: {quiz['antwoord']}", "groen"))
+                    print(kleur(f"\nCorrect antwoord: {quiz['antwoord']}", Kleur.GROEN))
 
                     rating = input("Hoe goed was je? (0=fout, 3=ok, 5=perfect): ").strip()
                     try:
                         quality = int(rating)
                         result = self.answer_quiz(quiz["doc_id"], quality)
                         if result["correct"]:
-                            print(kleur(f"[OK] +{result['xp_gained']} XP! Volgende review in {result['next_review_days']} dagen.", "groen"))
+                            print(kleur(f"[OK] +{result['xp_gained']} XP! Volgende review in {result['next_review_days']} dagen.", Kleur.GROEN))
                         else:
-                            print(kleur(f"[REVIEW] We proberen het morgen opnieuw!", "geel"))
+                            print(kleur(f"[REVIEW] We proberen het morgen opnieuw!", Kleur.GEEL))
                     except ValueError:
                         pass
                 else:
-                    print(kleur("[OK] Geen quizzes op dit moment!", "groen"))
+                    print(kleur("[OK] Geen quizzes op dit moment!", Kleur.GROEN))
 
             elif cmd == "say" and args:
                 # Vraag + spreek antwoord uit
                 answer, voice_info = self.ask_and_speak(args)
-                print(kleur("\n" + "=" * 50, "groen"))
+                print(kleur("\n" + "=" * 50, Kleur.GROEN))
                 print(answer)
-                print(kleur("=" * 50, "groen"))
+                print(kleur("=" * 50, Kleur.GROEN))
                 if voice_info.get("emotion"):
-                    print(kleur(f"[VOICE] Emotie: {voice_info['emotion']} | Backend: {voice_info.get('backend', 'none')}", "magenta"))
+                    print(kleur(f"[VOICE] Emotie: {voice_info['emotion']} | Backend: {voice_info.get('backend', 'none')}", Kleur.MAGENTA))
 
             elif cmd == "voice":
                 if args.lower() == "on":
                     self.toggle_voice(True)
-                    print(kleur("[OK] Voice ingeschakeld!", "groen"))
+                    print(kleur("[OK] Voice ingeschakeld!", Kleur.GROEN))
                     status = self.get_voice_status()
-                    print(kleur(f"     Backend: {status.get('active_backend', 'none')}", "cyaan"))
+                    print(kleur(f"     Backend: {status.get('active_backend', 'none')}", Kleur.CYAAN))
                 elif args.lower() == "off":
                     self.toggle_voice(False)
-                    print(kleur("[OK] Voice uitgeschakeld", "geel"))
+                    print(kleur("[OK] Voice uitgeschakeld", Kleur.GEEL))
                 elif args.lower() == "status":
                     status = self.get_voice_status()
-                    print(kleur("\n[VOICE STATUS]", "cyaan"))
+                    print(kleur("\n[VOICE STATUS]", Kleur.CYAAN))
                     print(f"  Enabled: {status.get('enabled', False)}")
                     print(f"  Backend: {status.get('active_backend', 'none')}")
                     print(f"  ElevenLabs: {status.get('elevenlabs', False)}")
@@ -1286,25 +1286,25 @@ ANTWOORD: [het antwoord]"""
                 else:
                     self.toggle_voice()
                     staat = "aan" if self.voice_enabled else "uit"
-                    print(kleur(f"[OK] Voice staat nu {staat}", "groen"))
+                    print(kleur(f"[OK] Voice staat nu {staat}", Kleur.GROEN))
 
             elif cmd == "speak" and args:
                 # Direct tekst uitspreken
                 result = self.speak(args)
                 if result.get("voice_enabled") == False:
-                    print(kleur(result.get("message", "Voice uitgeschakeld"), "geel"))
+                    print(kleur(result.get("message", "Voice uitgeschakeld"), Kleur.GEEL))
                 else:
-                    print(kleur(f"[VOICE] Emotie: {result['emotion']}", "magenta"))
+                    print(kleur(f"[VOICE] Emotie: {result['emotion']}", Kleur.MAGENTA))
 
             elif cmd == "dream":
-                print(kleur("\n[DREAM] Activeren dream mode...", "magenta"))
+                print(kleur("\n[DREAM] Activeren dream mode...", Kleur.MAGENTA))
                 insights = self.dream_engine.run_dream_cycle()
                 if insights:
-                    print(kleur(f"[OK] {len(insights)} inzichten gegenereerd:", "groen"))
+                    print(kleur(f"[OK] {len(insights)} inzichten gegenereerd:", Kleur.GROEN))
                     for insight in insights:
-                        print(kleur(f"  - {insight[:100]}...", "magenta"))
+                        print(kleur(f"  - {insight[:100]}...", Kleur.MAGENTA))
                 else:
-                    print(kleur("[!] Niet genoeg documenten voor dromen. Voed me meer!", "geel"))
+                    print(kleur("[!] Niet genoeg documenten voor dromen. Voed me meer!", Kleur.GEEL))
 
             elif cmd == "status":
                 self.toon_status()
@@ -1313,9 +1313,9 @@ ANTWOORD: [het antwoord]"""
                 # Behandel als vraag
                 if invoer:
                     answer = self.ask(invoer)
-                    print(kleur("\n" + "=" * 50, "groen"))
+                    print(kleur("\n" + "=" * 50, Kleur.GROEN))
                     print(answer)
-                    print(kleur("=" * 50, "groen"))
+                    print(kleur("=" * 50, Kleur.GROEN))
 
         self._sla_op()
 

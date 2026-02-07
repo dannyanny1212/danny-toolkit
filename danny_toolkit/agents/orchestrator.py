@@ -13,7 +13,7 @@ from enum import Enum
 
 from .base import Agent
 from ..core.config import Config
-from ..core.utils import kleur
+from ..core.utils import kleur, Kleur
 
 
 class TaskStatus(Enum):
@@ -159,13 +159,13 @@ class Orchestrator:
     def registreer(self, agent: Agent):
         """Registreer een agent."""
         self.agents[agent.naam] = agent
-        print(kleur(f"   [OK] Agent '{agent.naam}' geregistreerd", "groen"))
+        print(kleur(f"   [OK] Agent '{agent.naam}' geregistreerd", Kleur.GROEN))
 
     def verwijder_agent(self, agent_naam: str) -> bool:
         """Verwijder een agent."""
         if agent_naam in self.agents:
             del self.agents[agent_naam]
-            print(kleur(f"   [OK] Agent '{agent_naam}' verwijderd", "geel"))
+            print(kleur(f"   [OK] Agent '{agent_naam}' verwijderd", Kleur.GEEL))
             return True
         return False
 
@@ -214,7 +214,7 @@ class Orchestrator:
             self.task_queue.append(task)
 
         print(kleur(f"   [+] Taak {task.id[:8]}... toegevoegd "
-                   f"(priority: {priority.name})", "cyaan"))
+                   f"(priority: {priority.name})", Kleur.CYAAN))
         return task
 
     def get_queue_status(self) -> dict:
@@ -241,7 +241,7 @@ class Orchestrator:
             if task.id == task_id:
                 task.status = TaskStatus.CANCELLED
                 self.task_queue.remove(task)
-                print(kleur(f"   [X] Taak {task_id[:8]}... geannuleerd", "geel"))
+                print(kleur(f"   [X] Taak {task_id[:8]}... geannuleerd", Kleur.GEEL))
                 return True
         return False
 
@@ -268,7 +268,7 @@ class Orchestrator:
             try:
                 hook(task)
             except Exception as e:
-                print(kleur(f"   [!] Hook error: {e}", "rood"))
+                print(kleur(f"   [!] Hook error: {e}", Kleur.ROOD))
 
     # === Task Execution ===
 
@@ -285,7 +285,7 @@ class Orchestrator:
         self.active_tasks[task.id] = task
         self._trigger_hooks("task_start", task)
 
-        print(kleur(f"\n[RUN] {task.agent_naam}: {task.taak[:40]}...", "cyaan"))
+        print(kleur(f"\n[RUN] {task.agent_naam}: {task.taak[:40]}...", Kleur.CYAAN))
 
         while task.retry_count <= task.max_retries:
             try:
@@ -310,7 +310,7 @@ class Orchestrator:
                 self.data["statistieken"]["totale_uitvoertijd_sec"] += duration
 
                 self._trigger_hooks("task_complete", task)
-                print(kleur(f"   [OK] Voltooid in {duration:.2f}s", "groen"))
+                print(kleur(f"   [OK] Voltooid in {duration:.2f}s", Kleur.GROEN))
 
                 return result
 
@@ -318,7 +318,7 @@ class Orchestrator:
                 task.retry_count += 1
                 if task.retry_count <= task.max_retries:
                     print(kleur(f"   [!] Timeout - retry {task.retry_count}/"
-                               f"{task.max_retries}", "geel"))
+                               f"{task.max_retries}", Kleur.GEEL))
                 else:
                     task.status = TaskStatus.TIMEOUT
                     task.error = f"Timeout na {task.timeout}s"
@@ -327,7 +327,7 @@ class Orchestrator:
                 task.retry_count += 1
                 if task.retry_count <= task.max_retries:
                     print(kleur(f"   [!] Error - retry {task.retry_count}/"
-                               f"{task.max_retries}: {e}", "geel"))
+                               f"{task.max_retries}: {e}", Kleur.GEEL))
                 else:
                     task.status = TaskStatus.FAILED
                     task.error = str(e)
@@ -339,7 +339,7 @@ class Orchestrator:
         self.data["statistieken"]["gefaalde_taken"] += 1
 
         self._trigger_hooks("task_fail", task)
-        print(kleur(f"   [X] Gefaald: {task.error}", "rood"))
+        print(kleur(f"   [X] Gefaald: {task.error}", Kleur.ROOD))
 
         return None
 
@@ -365,11 +365,11 @@ class Orchestrator:
     async def process_queue(self, max_concurrent: int = 3) -> list[str]:
         """Verwerk alle taken in de queue."""
         if not self.task_queue:
-            print(kleur("[INFO] Queue is leeg", "geel"))
+            print(kleur("[INFO] Queue is leeg", Kleur.GEEL))
             return []
 
         print(kleur(f"\n[QUEUE] {len(self.task_queue)} taken verwerken "
-                   f"(max {max_concurrent} parallel)...", "cyaan"))
+                   f"(max {max_concurrent} parallel)...", Kleur.CYAAN))
 
         resultaten = []
         semaphore = asyncio.Semaphore(max_concurrent)
@@ -410,9 +410,9 @@ class Orchestrator:
         context = {}  # Deel resultaten tussen stappen
 
         for i, (agent_naam, taak) in enumerate(taken, 1):
-            print(kleur(f"\n{'='*50}", "cyaan"))
-            print(kleur(f"[STAP {i}/{len(taken)}] {agent_naam}", "cyaan"))
-            print(kleur("=" * 50, "cyaan"))
+            print(kleur(f"\n{'='*50}", Kleur.CYAAN))
+            print(kleur(f"[STAP {i}/{len(taken)}] {agent_naam}", Kleur.CYAAN))
+            print(kleur("=" * 50, Kleur.CYAAN))
 
             # Vervang placeholders met eerdere resultaten
             for key, value in context.items():
@@ -426,7 +426,7 @@ class Orchestrator:
             context["vorige"] = result
 
             if stop_on_error and result.startswith("[FAILED]"):
-                print(kleur(f"\n[!] Pipeline gestopt bij stap {i}", "rood"))
+                print(kleur(f"\n[!] Pipeline gestopt bij stap {i}", Kleur.ROOD))
                 break
 
         return resultaten
@@ -440,7 +440,7 @@ class Orchestrator:
             taken: List van (agent_naam, taak) tuples
             timeout: Totale timeout voor alle taken
         """
-        print(kleur(f"\n[PARALLEL] {len(taken)} taken starten...", "cyaan"))
+        print(kleur(f"\n[PARALLEL] {len(taken)} taken starten...", Kleur.CYAAN))
 
         async def run_task(agent_naam: str, taak: str):
             return await self.delegeer(agent_naam, taak)
@@ -457,7 +457,7 @@ class Orchestrator:
                 for r in resultaten
             ]
         except asyncio.TimeoutError:
-            print(kleur("[!] Parallel timeout bereikt", "rood"))
+            print(kleur("[!] Parallel timeout bereikt", Kleur.ROOD))
             return ["[TIMEOUT]" for _ in taken]
 
     # === Workflow Engine ===
@@ -475,11 +475,11 @@ class Orchestrator:
         if not workflow:
             return {"error": f"Workflow '{workflow_naam}' niet gevonden"}
 
-        print(kleur(f"\n{'='*50}", "magenta"))
-        print(kleur(f"[WORKFLOW] {workflow.naam}", "magenta"))
+        print(kleur(f"\n{'='*50}", Kleur.MAGENTA))
+        print(kleur(f"[WORKFLOW] {workflow.naam}", Kleur.MAGENTA))
         if workflow.beschrijving:
-            print(kleur(f"           {workflow.beschrijving}", "magenta"))
-        print(kleur("=" * 50, "magenta"))
+            print(kleur(f"           {workflow.beschrijving}", Kleur.MAGENTA))
+        print(kleur("=" * 50, Kleur.MAGENTA))
 
         # Zet variabelen
         if variabelen:
@@ -505,7 +505,7 @@ class Orchestrator:
                     taak = taak.replace(f"{{{var_naam}}}", str(var_waarde))
 
                 print(kleur(f"\n[STAP {stap['index'] + 1}] "
-                           f"{stap['agent_naam']}", "cyaan"))
+                           f"{stap['agent_naam']}", Kleur.CYAAN))
 
                 result = await self.delegeer(stap["agent_naam"], taak)
                 stap["result"] = result
@@ -539,22 +539,22 @@ class Orchestrator:
         """Toon orchestrator status."""
         queue_status = self.get_queue_status()
 
-        print(kleur("\n╔════════════════════════════════════════════════════╗", "cyaan"))
-        print(kleur("║           ORCHESTRATOR STATUS                      ║", "cyaan"))
-        print(kleur("╠════════════════════════════════════════════════════╣", "cyaan"))
-        print(kleur("║  AGENTS                                            ║", "cyaan"))
+        print(kleur("\n╔════════════════════════════════════════════════════╗", Kleur.CYAAN))
+        print(kleur("║           ORCHESTRATOR STATUS                      ║", Kleur.CYAAN))
+        print(kleur("╠════════════════════════════════════════════════════╣", Kleur.CYAAN))
+        print(kleur("║  AGENTS                                            ║", Kleur.CYAAN))
         print(f"║  Geregistreerd:         {len(self.agents):>20}  ║")
         for naam in list(self.agents.keys())[:5]:
             print(f"║    • {naam:<40}  ║")
         if len(self.agents) > 5:
             print(f"║    ... en {len(self.agents) - 5} meer{' '*28}║")
-        print(kleur("║                                                    ║", "cyaan"))
-        print(kleur("║  TASK QUEUE                                        ║", "cyaan"))
+        print(kleur("║                                                    ║", Kleur.CYAAN))
+        print(kleur("║  TASK QUEUE                                        ║", Kleur.CYAAN))
         print(f"║  Pending:               {queue_status['pending']:>20}  ║")
         print(f"║  Active:                {queue_status['active']:>20}  ║")
         print(f"║  Completed:             {queue_status['completed']:>20}  ║")
-        print(kleur("║                                                    ║", "cyaan"))
-        print(kleur("║  STATISTIEKEN                                      ║", "cyaan"))
+        print(kleur("║                                                    ║", Kleur.CYAAN))
+        print(kleur("║  STATISTIEKEN                                      ║", Kleur.CYAAN))
         s = self.data["statistieken"]
         print(f"║  Totaal taken:          {s['totaal_taken']:>20}  ║")
         print(f"║  Succesvol:             {s['succesvolle_taken']:>20}  ║")
@@ -564,20 +564,20 @@ class Orchestrator:
             print(f"║  Success rate:          {success_rate:>19.1f}%  ║")
             avg_time = s['totale_uitvoertijd_sec'] / s['totaal_taken']
             print(f"║  Gem. uitvoertijd:      {avg_time:>18.2f}s  ║")
-        print(kleur("╚════════════════════════════════════════════════════╝", "cyaan"))
+        print(kleur("╚════════════════════════════════════════════════════╝", Kleur.CYAAN))
 
     def toon_log(self, limit: int = 10):
         """Toon de taak log."""
         geschiedenis = self.data["taak_geschiedenis"]
 
         if not geschiedenis:
-            print(kleur("[INFO] Geen taak geschiedenis", "geel"))
+            print(kleur("[INFO] Geen taak geschiedenis", Kleur.GEEL))
             return
 
-        print(kleur("\n=== RECENTE TAKEN ===", "cyaan"))
+        print(kleur("\n=== RECENTE TAKEN ===", Kleur.CYAAN))
 
         for item in reversed(geschiedenis[-limit:]):
-            status_kleur = "groen" if item["status"] == "completed" else "rood"
+            status_kleur = Kleur.GROEN if item["status"] == "completed" else Kleur.ROOD
             datum = datetime.fromisoformat(item["created_at"]).strftime("%d-%m %H:%M")
             print(f"\n  [{datum}] {kleur(item['agent_naam'], 'geel')}")
             print(f"    Taak: {item['taak']}")
@@ -588,10 +588,10 @@ class Orchestrator:
     def toon_workflows(self):
         """Toon gedefinieerde workflows."""
         if not self.workflows:
-            print(kleur("[INFO] Geen workflows gedefinieerd", "geel"))
+            print(kleur("[INFO] Geen workflows gedefinieerd", Kleur.GEEL))
             return
 
-        print(kleur("\n=== WORKFLOWS ===", "magenta"))
+        print(kleur("\n=== WORKFLOWS ===", Kleur.MAGENTA))
 
         for naam, workflow in self.workflows.items():
             print(f"\n  {kleur(naam, 'geel')}")
@@ -617,13 +617,13 @@ class Orchestrator:
             "totale_uitvoertijd": 0.0,
         }
         self._sla_data_op()
-        print(kleur("[OK] Statistieken gereset", "groen"))
+        print(kleur("[OK] Statistieken gereset", Kleur.GROEN))
 
     def clear_queue(self):
         """Wis de task queue."""
         count = len(self.task_queue)
         self.task_queue.clear()
-        print(kleur(f"[OK] {count} taken uit queue verwijderd", "groen"))
+        print(kleur(f"[OK] {count} taken uit queue verwijderd", Kleur.GROEN))
 
     def export_stats(self) -> dict:
         """Exporteer statistieken."""

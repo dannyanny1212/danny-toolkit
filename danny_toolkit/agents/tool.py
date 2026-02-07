@@ -14,7 +14,7 @@ from enum import Enum
 from pathlib import Path
 
 from ..core.config import Config
-from ..core.utils import kleur
+from ..core.utils import kleur, Kleur
 
 
 class ToolCategory(Enum):
@@ -580,7 +580,7 @@ class ToolRegistry:
         if tool.status == ToolStatus.DISABLED:
             return f"Tool '{naam}' is uitgeschakeld"
         if tool.status == ToolStatus.DEPRECATED:
-            self._log(f"Waarschuwing: Tool '{naam}' is deprecated", "geel")
+            self._log(f"Waarschuwing: Tool '{naam}' is deprecated", Kleur.GEEL)
 
         # Trigger on_execute hooks
         self._trigger_hooks(self.on_execute, tool, params)
@@ -622,7 +622,7 @@ class ToolRegistry:
             try:
                 tool.pre_execute(tool, params)
             except Exception as e:
-                self._log(f"Pre-execute hook error: {e}", "rood")
+                self._log(f"Pre-execute hook error: {e}", Kleur.ROOD)
 
         # Execute met retry
         last_error = None
@@ -656,7 +656,7 @@ class ToolRegistry:
                     try:
                         tool.post_execute(tool, params, result)
                     except Exception as e:
-                        self._log(f"Post-execute hook error: {e}", "rood")
+                        self._log(f"Post-execute hook error: {e}", Kleur.ROOD)
 
                 # Trigger success hooks
                 self._trigger_hooks(self.on_success, tool, params, result)
@@ -666,11 +666,11 @@ class ToolRegistry:
 
             except asyncio.TimeoutError:
                 last_error = f"Timeout na {tool.timeout}s"
-                self._log(f"Tool '{naam}' timeout (poging {attempt + 1})", "geel")
+                self._log(f"Tool '{naam}' timeout (poging {attempt + 1})", Kleur.GEEL)
 
             except Exception as e:
                 last_error = str(e)
-                self._log(f"Tool '{naam}' error (poging {attempt + 1}): {e}", "rood")
+                self._log(f"Tool '{naam}' error (poging {attempt + 1}): {e}", Kleur.ROOD)
 
             if attempt < tool.retry_count:
                 await asyncio.sleep(0.5 * (attempt + 1))
@@ -722,9 +722,9 @@ class ToolRegistry:
             try:
                 hook(*args)
             except Exception as e:
-                self._log(f"Hook error: {e}", "rood")
+                self._log(f"Hook error: {e}", Kleur.ROOD)
 
-    def _log(self, bericht: str, kleur_naam: str = "cyaan"):
+    def _log(self, bericht: str, kleur_naam: str = Kleur.CYAAN):
         """Log een bericht."""
         timestamp = datetime.now().strftime("%H:%M:%S")
         print(f"{kleur(f'[{timestamp}] [ToolRegistry]', kleur_naam)} {bericht}")
@@ -784,29 +784,29 @@ class ToolRegistry:
 
     def toon_overzicht(self):
         """Toon een overzicht van alle tools."""
-        print(kleur("\n" + "=" * 60, "cyaan"))
-        print(kleur("TOOL REGISTRY OVERZICHT", "geel"))
-        print(kleur("=" * 60, "cyaan"))
+        print(kleur("\n" + "=" * 60, Kleur.CYAAN))
+        print(kleur("TOOL REGISTRY OVERZICHT", Kleur.GEEL))
+        print(kleur("=" * 60, Kleur.CYAAN))
 
         print(f"\nTotaal tools: {len(self.tools)}")
         print(f"Actieve tools: {sum(1 for t in self.tools.values() if t.status == ToolStatus.ACTIVE)}")
 
         # Per categorie
         per_cat = self.lijst_per_categorie()
-        print(kleur("\nPer categorie:", "geel"))
+        print(kleur("\nPer categorie:", Kleur.GEEL))
         for cat, tools in per_cat.items():
             print(f"  {cat}: {len(tools)} tools")
 
         # Cache stats
         if self.cache:
             cache_stats = self.cache.stats()
-            print(kleur("\nCache:", "geel"))
+            print(kleur("\nCache:", Kleur.GEEL))
             print(f"  Entries: {cache_stats['valid_entries']}/{cache_stats['max_size']}")
 
         # History stats
         if self.history:
             hist_stats = self.history.stats()
-            print(kleur("\nHistory:", "geel"))
+            print(kleur("\nHistory:", Kleur.GEEL))
             print(f"  Totaal calls: {hist_stats['totaal']}")
             if hist_stats['totaal'] > 0:
                 print(f"  Succes: {hist_stats['successes']}, Failures: {hist_stats['failures']}")
@@ -817,7 +817,7 @@ class ToolRegistry:
         if tool:
             print(tool.get_help())
         else:
-            print(kleur(f"Tool '{naam}' niet gevonden.", "rood"))
+            print(kleur(f"Tool '{naam}' niet gevonden.", Kleur.ROOD))
 
     def export_stats(self) -> dict:
         """Exporteer alle statistieken."""
@@ -837,7 +837,7 @@ class ToolRegistry:
                 json.dump(self.export_stats(), f, indent=2, ensure_ascii=False)
             self._log(f"Stats opgeslagen naar {stats_file.name}")
         except Exception as e:
-            self._log(f"Kon stats niet opslaan: {e}", "rood")
+            self._log(f"Kon stats niet opslaan: {e}", Kleur.ROOD)
 
 
 # Helper functies voor het maken van tools

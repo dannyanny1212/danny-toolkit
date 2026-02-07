@@ -24,7 +24,7 @@ from collections import Counter
 from typing import List, Dict, Any, Optional
 
 from ..core.config import Config
-from ..core.utils import clear_scherm, kleur
+from ..core.utils import clear_scherm, kleur, Kleur
 
 
 class VectorDatabase:
@@ -434,7 +434,7 @@ class WebZoeker:
 class Agent:
     """Basis agent class met kleurrijke output."""
 
-    def __init__(self, naam: str, emoji: str, kleur_naam: str = "wit"):
+    def __init__(self, naam: str, emoji: str, kleur_naam: str = Kleur.WIT):
         self.naam = naam
         self.emoji = emoji
         self.kleur_naam = kleur_naam
@@ -449,7 +449,7 @@ class ZoekerAgent(Agent):
     """Agent die informatie verzamelt."""
 
     def __init__(self):
-        super().__init__("ZOEKER", "[S]", "cyaan")
+        super().__init__("ZOEKER", "[S]", Kleur.CYAAN)
         self.web = WebZoeker()
         self.database = VectorDatabase()
 
@@ -493,7 +493,7 @@ class FeitencheckerAgent(Agent):
     ]
 
     def __init__(self):
-        super().__init__("CHECKER", "[C]", "groen")
+        super().__init__("CHECKER", "[C]", Kleur.GROEN)
         self.web = WebZoeker()
 
     def controleer(self, artikelen: list) -> list:
@@ -513,16 +513,16 @@ class FeitencheckerAgent(Agent):
             # Bepaal status
             if is_betrouwbaar and fake_score < 3 and clickbait_score < 2:
                 status = "BETROUWBAAR"
-                symbool = kleur("[OK]", "groen")
+                symbool = kleur("[OK]", Kleur.GROEN)
             elif fake_score >= 5 or clickbait_score >= 3:
                 status = "FAKE NEWS"
-                symbool = kleur("[!!]", "rood")
+                symbool = kleur("[!!]", Kleur.ROOD)
             elif not is_betrouwbaar:
                 status = "ONBETROUWBAAR"
                 symbool = kleur("[??]", "oranje")
             else:
                 status = "TWIJFELACHTIG"
-                symbool = kleur("[?]", "geel")
+                symbool = kleur("[?]", Kleur.GEEL)
 
             self.log(f"{symbool} {artikel['bron']}: {status}")
 
@@ -570,7 +570,7 @@ class BiasDetectorAgent(Agent):
     }
 
     def __init__(self):
-        super().__init__("BIAS", "[B]", "magenta")
+        super().__init__("BIAS", "[B]", Kleur.MAGENTA)
 
     def analyseer_bias(self, artikelen: list) -> list:
         """Analyseer bias in artikelen."""
@@ -629,7 +629,7 @@ class SentimentAgent(Agent):
     ]
 
     def __init__(self):
-        super().__init__("SENTIMENT", "[S]", "geel")
+        super().__init__("SENTIMENT", "[S]", Kleur.GEEL)
 
     def analyseer(self, artikelen: list) -> list:
         """Analyseert sentiment van artikelen."""
@@ -651,11 +651,11 @@ class SentimentAgent(Agent):
             elif positief_score > negatief_score:
                 sentiment = "POSITIEF"
                 sentiment_ratio = positief_score / totaal
-                icon = kleur("[+]", "groen")
+                icon = kleur("[+]", Kleur.GROEN)
             else:
                 sentiment = "NEGATIEF"
                 sentiment_ratio = negatief_score / totaal
-                icon = kleur("[-]", "rood")
+                icon = kleur("[-]", Kleur.ROOD)
 
             self.log(f"{icon} {artikel['bron']}: {sentiment} ({sentiment_ratio:.0%})")
 
@@ -674,7 +674,7 @@ class SamenvatterAgent(Agent):
     """Agent die samenvattingen genereert."""
 
     def __init__(self):
-        super().__init__("SAMENVATTER", "[Z]", "cyaan")
+        super().__init__("SAMENVATTER", "[Z]", Kleur.CYAAN)
 
     def vat_samen(self, artikelen: list, onderwerp: str) -> str:
         """Genereert een samenvatting van alle artikelen."""
@@ -746,7 +746,7 @@ class SchrijverAgent(Agent):
     """Agent die het rapport schrijft."""
 
     def __init__(self):
-        super().__init__("SCHRIJVER", "[W]", "wit")
+        super().__init__("SCHRIJVER", "[W]", Kleur.WIT)
 
     def schrijf_rapport(self, onderwerp: str, artikelen: list, samenvatting: str) -> dict:
         """Schrijft een compleet rapport."""
@@ -795,7 +795,7 @@ class RapportGeneratorAgent(Agent):
     """Agent die rapporten genereert in verschillende formaten."""
 
     def __init__(self):
-        super().__init__("GENERATOR", "[G]", "magenta")
+        super().__init__("GENERATOR", "[G]", Kleur.MAGENTA)
         Config.ensure_dirs()
         self.output_map = Config.RAPPORTEN_DIR
 
@@ -1104,18 +1104,18 @@ class NieuwsAgentApp:
 
     def toon_trending(self):
         """Toont trending topics met kleur."""
-        print("\n" + kleur("=" * 55, "cyaan"))
-        print(kleur("  TRENDING TOPICS", "geel"))
-        print(kleur("=" * 55, "cyaan"))
+        print("\n" + kleur("=" * 55, Kleur.CYAAN))
+        print(kleur("  TRENDING TOPICS", Kleur.GEEL))
+        print(kleur("=" * 55, Kleur.CYAAN))
 
         trending = self.zoeker.get_trending()
         for i, topic in enumerate(trending, 1):
             if topic["trend"] == "up":
-                trend_icon = kleur("[^]", "groen")
-                change = kleur(topic["change"], "groen")
+                trend_icon = kleur("[^]", Kleur.GROEN)
+                change = kleur(topic["change"], Kleur.GROEN)
             elif topic["trend"] == "down":
-                trend_icon = kleur("[v]", "rood")
-                change = kleur(topic["change"], "rood")
+                trend_icon = kleur("[v]", Kleur.ROOD)
+                change = kleur(topic["change"], Kleur.ROOD)
             else:
                 trend_icon = kleur("[-]", "grijs")
                 change = kleur(topic["change"], "grijs")
@@ -1125,29 +1125,29 @@ class NieuwsAgentApp:
     def toon_menu(self):
         """Toon het hoofdmenu."""
         print()
-        print(kleur("+" + "=" * 55 + "+", "cyaan"))
-        print(kleur("|       NIEUWS AGENT v2.0                              |", "cyaan"))
-        print(kleur("+" + "=" * 55 + "+", "cyaan"))
-        print(kleur("| ANALYSE                                              |", "wit"))
+        print(kleur("+" + "=" * 55 + "+", Kleur.CYAAN))
+        print(kleur("|       NIEUWS AGENT v2.0                              |", Kleur.CYAAN))
+        print(kleur("+" + "=" * 55 + "+", Kleur.CYAAN))
+        print(kleur("| ANALYSE                                              |", Kleur.WIT))
         print("|  1. Analyseer onderwerp                              |")
         print("|  2. Dagelijkse digest (alle categorieen)             |")
         print("|  3. Vergelijk categorieen                            |")
         print(kleur("+" + "-" * 55 + "+", "grijs"))
-        print(kleur("| TOOLS                                                |", "wit"))
+        print(kleur("| TOOLS                                                |", Kleur.WIT))
         print("|  4. Bekijk trending topics                           |")
         print("|  5. Bookmark beheer                                  |")
         print("|  6. Configureer alerts                               |")
         print(kleur("+" + "-" * 55 + "+", "grijs"))
-        print(kleur("| STATISTIEKEN                                         |", "wit"))
+        print(kleur("| STATISTIEKEN                                         |", Kleur.WIT))
         print("|  7. Analyse geschiedenis                             |")
         print("|  8. Bron statistieken                                |")
         print(kleur("+" + "-" * 55 + "+", "grijs"))
         print("|  0. Terug naar hoofdmenu                             |")
-        print(kleur("+" + "=" * 55 + "+", "cyaan"))
+        print(kleur("+" + "=" * 55 + "+", Kleur.CYAAN))
 
     def kies_onderwerp(self) -> str:
         """Laat gebruiker een onderwerp kiezen."""
-        print("\n" + kleur("Kies een onderwerp:", "geel"))
+        print("\n" + kleur("Kies een onderwerp:", Kleur.GEEL))
         for num, naam in self.ONDERWERPEN.items():
             print(f"  {num:2}. {naam}")
         print("  11. Eigen onderwerp")
@@ -1163,7 +1163,7 @@ class NieuwsAgentApp:
 
     def kies_export_formaat(self) -> str:
         """Laat gebruiker export formaat kiezen."""
-        print("\n" + kleur("Kies export formaat:", "geel"))
+        print("\n" + kleur("Kies export formaat:", Kleur.GEEL))
         print("  1. HTML (aanbevolen)")
         print("  2. JSON")
         print("  3. Markdown")
@@ -1174,51 +1174,51 @@ class NieuwsAgentApp:
 
     def analyseer(self, onderwerp: str) -> str:
         """Voert de complete nieuws-analyse uit met alle agents."""
-        print("\n" + kleur("=" * 60, "cyaan"))
-        print(kleur("  NIEUWS-AGENT v2.0 - Multi-Agent Analyse", "geel"))
-        print(kleur("=" * 60, "cyaan"))
+        print("\n" + kleur("=" * 60, Kleur.CYAAN))
+        print(kleur("  NIEUWS-AGENT v2.0 - Multi-Agent Analyse", Kleur.GEEL))
+        print(kleur("=" * 60, Kleur.CYAAN))
         print(f"\nOnderwerp: {kleur(onderwerp, 'groen')}")
         print(f"Datum: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
         # Stap 1: Verzamelen
         print("\n" + kleur("-" * 45, "grijs"))
-        print(kleur("STAP 1: INFORMATIE VERZAMELEN", "geel"))
+        print(kleur("STAP 1: INFORMATIE VERZAMELEN", Kleur.GEEL))
         print(kleur("-" * 45, "grijs"))
         artikelen = self.zoeker.verzamel(onderwerp)
 
         # Stap 2: Feiten checken
         print("\n" + kleur("-" * 45, "grijs"))
-        print(kleur("STAP 2: FEITEN CONTROLEREN", "geel"))
+        print(kleur("STAP 2: FEITEN CONTROLEREN", Kleur.GEEL))
         print(kleur("-" * 45, "grijs"))
         artikelen = self.feitenchecker.controleer(artikelen)
 
         # Stap 3: Bias detectie
         print("\n" + kleur("-" * 45, "grijs"))
-        print(kleur("STAP 3: BIAS DETECTIE", "geel"))
+        print(kleur("STAP 3: BIAS DETECTIE", Kleur.GEEL))
         print(kleur("-" * 45, "grijs"))
         artikelen = self.bias_detector.analyseer_bias(artikelen)
 
         # Stap 4: Sentiment analyse
         print("\n" + kleur("-" * 45, "grijs"))
-        print(kleur("STAP 4: SENTIMENT ANALYSE", "geel"))
+        print(kleur("STAP 4: SENTIMENT ANALYSE", Kleur.GEEL))
         print(kleur("-" * 45, "grijs"))
         artikelen = self.sentiment_agent.analyseer(artikelen)
 
         # Stap 5: Samenvatting
         print("\n" + kleur("-" * 45, "grijs"))
-        print(kleur("STAP 5: SAMENVATTING GENEREREN", "geel"))
+        print(kleur("STAP 5: SAMENVATTING GENEREREN", Kleur.GEEL))
         print(kleur("-" * 45, "grijs"))
         samenvatting = self.samenvatter.vat_samen(artikelen, onderwerp)
 
         # Stap 6: Rapport schrijven
         print("\n" + kleur("-" * 45, "grijs"))
-        print(kleur("STAP 6: RAPPORT SCHRIJVEN", "geel"))
+        print(kleur("STAP 6: RAPPORT SCHRIJVEN", Kleur.GEEL))
         print(kleur("-" * 45, "grijs"))
         rapport = self.schrijver.schrijf_rapport(onderwerp, artikelen, samenvatting)
 
         # Stap 7: Export
         print("\n" + kleur("-" * 45, "grijs"))
-        print(kleur("STAP 7: RAPPORT EXPORTEREN", "geel"))
+        print(kleur("STAP 7: RAPPORT EXPORTEREN", Kleur.GEEL))
         print(kleur("-" * 45, "grijs"))
 
         formaat = self.kies_export_formaat()
@@ -1243,9 +1243,9 @@ class NieuwsAgentApp:
         self._sla_data_op()
 
         # Resultaten
-        print("\n" + kleur("=" * 60, "groen"))
-        print(kleur("  NIEUWS-AGENT ANALYSE COMPLEET!", "groen"))
-        print(kleur("=" * 60, "groen"))
+        print("\n" + kleur("=" * 60, Kleur.GROEN))
+        print(kleur("  NIEUWS-AGENT ANALYSE COMPLEET!", Kleur.GROEN))
+        print(kleur("=" * 60, Kleur.GROEN))
 
         stats = rapport["statistieken"]
         print(f"\n{kleur('Resultaten:', 'geel')}")
@@ -1266,18 +1266,18 @@ class NieuwsAgentApp:
 
     def dagelijkse_digest(self):
         """Genereer een dagelijkse digest van alle categorieen."""
-        print("\n" + kleur("Dagelijkse digest genereren...", "geel"))
+        print("\n" + kleur("Dagelijkse digest genereren...", Kleur.GEEL))
 
         alle_nieuws = self.zoeker.zoek_alle()
         digest = self.samenvatter.genereer_digest(alle_nieuws)
 
-        print("\n" + kleur(digest, "cyaan"))
+        print("\n" + kleur(digest, Kleur.CYAAN))
 
     def vergelijk_categorieen(self):
         """Vergelijk sentiment tussen categorieen."""
-        print("\n" + kleur("=" * 55, "cyaan"))
-        print(kleur("  CATEGORIE VERGELIJKING", "geel"))
-        print(kleur("=" * 55, "cyaan"))
+        print("\n" + kleur("=" * 55, Kleur.CYAAN))
+        print(kleur("  CATEGORIE VERGELIJKING", Kleur.GEEL))
+        print(kleur("=" * 55, Kleur.CYAAN))
 
         alle_nieuws = self.zoeker.zoek_alle()
 
@@ -1290,15 +1290,15 @@ class NieuwsAgentApp:
             neg = sum(1 for a in artikelen if a.get("sentiment") == "NEGATIEF")
             neu = sum(1 for a in artikelen if a.get("sentiment") == "NEUTRAAL")
 
-            pos_str = kleur(str(pos), "groen")
-            neg_str = kleur(str(neg), "rood")
+            pos_str = kleur(str(pos), Kleur.GROEN)
+            neg_str = kleur(str(neg), Kleur.ROOD)
             neu_str = kleur(str(neu), "grijs")
 
             print(f"{categorie.title():<15} {pos_str:>18} {neg_str:>18} {neu_str:>18}")
 
     def beheer_bookmarks(self):
         """Beheer bookmarks."""
-        print("\n" + kleur("BOOKMARK BEHEER", "cyaan"))
+        print("\n" + kleur("BOOKMARK BEHEER", Kleur.CYAAN))
         print("-" * 40)
 
         if not self.data["bookmarks"]:
@@ -1313,7 +1313,7 @@ class NieuwsAgentApp:
 
     def toon_geschiedenis(self):
         """Toon analyse geschiedenis."""
-        print("\n" + kleur("ANALYSE GESCHIEDENIS", "cyaan"))
+        print("\n" + kleur("ANALYSE GESCHIEDENIS", Kleur.CYAAN))
         print("=" * 50)
 
         if not self.data["geschiedenis"]:
@@ -1328,7 +1328,7 @@ class NieuwsAgentApp:
 
     def toon_bron_statistieken(self):
         """Toon statistieken per bron."""
-        print("\n" + kleur("BRON STATISTIEKEN", "cyaan"))
+        print("\n" + kleur("BRON STATISTIEKEN", Kleur.CYAAN))
         print("=" * 50)
 
         alle_nieuws = self.zoeker.zoek_alle()
@@ -1345,20 +1345,20 @@ class NieuwsAgentApp:
         print("-" * 55)
 
         for bron, stats in sorted(bron_stats.items(), key=lambda x: x[1]["artikelen"], reverse=True)[:15]:
-            status = kleur("Betrouwbaar", "groen") if stats["betrouwbaar"] else kleur("Onbekend", "geel")
+            status = kleur("Betrouwbaar", Kleur.GROEN) if stats["betrouwbaar"] else kleur("Onbekend", Kleur.GEEL)
             print(f"{bron:<25} {stats['artikelen']:>10} {status:>23}")
 
     def run(self):
         """Start de interactieve nieuws agent."""
         clear_scherm()
-        print(kleur("+" + "=" * 58 + "+", "cyaan"))
-        print(kleur("|    NIEUWS-AGENT v2.0: Multi-Agent Nieuws Analyse         |", "cyaan"))
-        print(kleur("|                                                          |", "cyaan"))
+        print(kleur("+" + "=" * 58 + "+", Kleur.CYAAN))
+        print(kleur("|    NIEUWS-AGENT v2.0: Multi-Agent Nieuws Analyse         |", Kleur.CYAAN))
+        print(kleur("|                                                          |", Kleur.CYAAN))
         print(kleur("|    Features:                                             |", "grijs"))
         print(kleur("|    - Fake news detectie    - Bias analyse                |", "grijs"))
         print(kleur("|    - Sentiment analyse     - Social media trends         |", "grijs"))
         print(kleur("|    - Multi-format export   - Categorie vergelijking      |", "grijs"))
-        print(kleur("+" + "=" * 58 + "+", "cyaan"))
+        print(kleur("+" + "=" * 58 + "+", Kleur.CYAAN))
 
         # Toon trending
         self.toon_trending()
@@ -1379,7 +1379,7 @@ class NieuwsAgentApp:
                         import webbrowser
                         import os
                         webbrowser.open(f"file://{os.path.abspath(rapport_pad)}")
-                        print(kleur("Rapport geopend in browser!", "groen"))
+                        print(kleur("Rapport geopend in browser!", Kleur.GROEN))
 
             elif keuze == "2":
                 self.dagelijkse_digest()
@@ -1390,12 +1390,12 @@ class NieuwsAgentApp:
             elif keuze == "5":
                 self.beheer_bookmarks()
             elif keuze == "6":
-                print(kleur("\nAlerts configuratie komt in volgende update!", "geel"))
+                print(kleur("\nAlerts configuratie komt in volgende update!", Kleur.GEEL))
             elif keuze == "7":
                 self.toon_geschiedenis()
             elif keuze == "8":
                 self.toon_bron_statistieken()
             else:
-                print(kleur("Ongeldige keuze.", "rood"))
+                print(kleur("Ongeldige keuze.", Kleur.ROOD))
 
             input(kleur("\nDruk op Enter om verder te gaan...", "grijs"))

@@ -27,7 +27,7 @@ from collections import Counter
 from statistics import mean, median, stdev
 from typing import List, Dict, Any, Optional, Set, Tuple
 
-from ..core.utils import clear_scherm, kleur
+from ..core.utils import clear_scherm, kleur, Kleur
 
 
 class CodeAnalyseApp:
@@ -340,13 +340,13 @@ class CodeAnalyseApp:
 
         # Rating
         if complexity <= 5:
-            rating = ("Eenvoudig", "groen")
+            rating = ("Eenvoudig", Kleur.GROEN)
         elif complexity <= 10:
-            rating = ("Matig", "geel")
+            rating = ("Matig", Kleur.GEEL)
         elif complexity <= 20:
             rating = ("Complex", "oranje")
         else:
-            rating = ("Zeer Complex", "rood")
+            rating = ("Zeer Complex", Kleur.ROOD)
 
         # Maintainability index (vereenvoudigd)
         # MI = 171 - 5.2 * ln(V) - 0.23 * G - 16.2 * ln(LOC)
@@ -1192,65 +1192,65 @@ class CodeAnalyseApp:
     def _toon_menu(self):
         """Toont het hoofdmenu met kleuren."""
         print()
-        print(kleur("+" + "=" * 50 + "+", "cyaan"))
-        print(kleur("|       CODE ANALYSE TOOL v2.0                     |", "cyaan"))
-        print(kleur("+" + "=" * 50 + "+", "cyaan"))
-        print(kleur("| ANALYSE                                          |", "wit"))
+        print(kleur("+" + "=" * 50 + "+", Kleur.CYAAN))
+        print(kleur("|       CODE ANALYSE TOOL v2.0                     |", Kleur.CYAAN))
+        print(kleur("+" + "=" * 50 + "+", Kleur.CYAAN))
+        print(kleur("| ANALYSE                                          |", Kleur.WIT))
         print("|  1. Analyseer Python bestand                     |")
         print("|  2. Analyseer project (meerdere bestanden)       |")
         print("|  3. Volledige analyse (huidig bestand)           |")
         print(kleur("+" + "-" * 50 + "+", "grijs"))
-        print(kleur("| KWALITEIT                                        |", "wit"))
+        print(kleur("| KWALITEIT                                        |", Kleur.WIT))
         print("|  4. Security scan                                |")
         print("|  5. Code smell detector                          |")
         print("|  6. Complexity analyse                           |")
         print("|  7. Performance check                            |")
         print("|  8. Duplicate code detector                      |")
         print(kleur("+" + "-" * 50 + "+", "grijs"))
-        print(kleur("| STIJL                                            |", "wit"))
+        print(kleur("| STIJL                                            |", Kleur.WIT))
         print("|  9. Formatting check/fix                         |")
         print("| 10. Naming conventions                           |")
         print("| 11. Documentatie coverage                        |")
         print("| 12. Type hint coverage                           |")
         print("| 13. Import analyse                               |")
         print(kleur("+" + "-" * 50 + "+", "grijs"))
-        print(kleur("| RAPPORT                                          |", "wit"))
+        print(kleur("| RAPPORT                                          |", Kleur.WIT))
         print("| 14. Genereer rapport (TXT/JSON/HTML)             |")
         print("| 15. Bekijk analyse geschiedenis                  |")
         print("| 16. Statistieken                                 |")
         print(kleur("+" + "-" * 50 + "+", "grijs"))
-        print(kleur("| TOOLS                                            |", "wit"))
+        print(kleur("| TOOLS                                            |", Kleur.WIT))
         print("| 17. Woordtelling                                 |")
         print("| 18. Getallen statistieken                        |")
         print(kleur("+" + "-" * 50 + "+", "grijs"))
         print("|  0. Terug naar hoofdmenu                         |")
-        print(kleur("+" + "=" * 50 + "+", "cyaan"))
+        print(kleur("+" + "=" * 50 + "+", Kleur.CYAAN))
 
         if self.huidig_bestand:
-            print(kleur(f"  Geladen: {Path(self.huidig_bestand).name}", "groen"))
+            print(kleur(f"  Geladen: {Path(self.huidig_bestand).name}", Kleur.GROEN))
 
     def _laad_bestand_interactief(self):
         """Vraag gebruiker om bestand te laden."""
-        print("\n" + kleur("BESTAND LADEN", "cyaan"))
+        print("\n" + kleur("BESTAND LADEN", Kleur.CYAAN))
         print("-" * 40)
         print("Voer het pad naar een Python bestand in:")
         print(kleur("(Tip: gebruik relatief pad zoals 'main.py')", "grijs"))
 
         pad = input("\nPad: ").strip()
         if not pad:
-            print(kleur("Geen pad ingevoerd.", "rood"))
+            print(kleur("Geen pad ingevoerd.", Kleur.ROOD))
             return
 
         resultaat = self.laad_bestand(pad)
 
         if "fout" in resultaat:
-            print(kleur(f"\nFout: {resultaat['fout']}", "rood"))
+            print(kleur(f"\nFout: {resultaat['fout']}", Kleur.ROOD))
             return
 
         # Toon basis analyse
         analyse = self.analyseer_bestand()
 
-        print("\n" + kleur("BESTANDSANALYSE", "groen"))
+        print("\n" + kleur("BESTANDSANALYSE", Kleur.GROEN))
         print("=" * 50)
         print(f"\nBestand: {kleur(analyse['bestand'], 'cyaan')}")
         print(f"Grootte: {analyse['grootte_bytes']:,} bytes")
@@ -1277,21 +1277,21 @@ class CodeAnalyseApp:
 
     def _toon_project_analyse(self):
         """Analyseer een project."""
-        print("\n" + kleur("PROJECT ANALYSE", "cyaan"))
+        print("\n" + kleur("PROJECT ANALYSE", Kleur.CYAAN))
         print("-" * 40)
         print("Voer het pad naar een project map in:")
         print(kleur("(Laat leeg voor huidige map)", "grijs"))
 
         pad = input("\nPad: ").strip() or "."
 
-        print(kleur("\nProject wordt geanalyseerd...", "geel"))
+        print(kleur("\nProject wordt geanalyseerd...", Kleur.GEEL))
         resultaat = self.analyseer_project(pad)
 
         if "fout" in resultaat:
-            print(kleur(f"\nFout: {resultaat['fout']}", "rood"))
+            print(kleur(f"\nFout: {resultaat['fout']}", Kleur.ROOD))
             return
 
-        print("\n" + kleur("PROJECT OVERZICHT", "groen"))
+        print("\n" + kleur("PROJECT OVERZICHT", Kleur.GROEN))
         print("=" * 50)
         print(f"\nProject: {kleur(resultaat['project'], 'cyaan')}")
         print(f"\n{kleur('Statistieken:', 'geel')}")
@@ -1311,10 +1311,10 @@ class CodeAnalyseApp:
     def _toon_volledige_analyse(self):
         """Voer volledige analyse uit."""
         if not self.huidige_code:
-            print(kleur("\nLaad eerst een bestand (optie 1)!", "rood"))
+            print(kleur("\nLaad eerst een bestand (optie 1)!", Kleur.ROOD))
             return
 
-        print("\n" + kleur("VOLLEDIGE CODE ANALYSE", "cyaan"))
+        print("\n" + kleur("VOLLEDIGE CODE ANALYSE", Kleur.CYAAN))
         print("=" * 60)
 
         # Basis info
@@ -1325,9 +1325,9 @@ class CodeAnalyseApp:
         # Complexity
         complexity = self.bereken_complexity()
         rating_kleur = {
-            "Eenvoudig": "groen", "Matig": "geel",
-            "Complex": "oranje", "Zeer Complex": "rood"
-        }.get(complexity['complexity_rating'], "wit")
+            "Eenvoudig": Kleur.GROEN, "Matig": Kleur.GEEL,
+            "Complex": "oranje", "Zeer Complex": Kleur.ROOD
+        }.get(complexity['complexity_rating'], Kleur.WIT)
         print(f"\n{kleur('[COMPLEXITY]', 'geel')}")
         print(f"  Cyclomatic: {complexity['cyclomatic_complexity']} ({kleur(complexity['complexity_rating'], rating_kleur)})")
         print(f"  Max Nesting: {complexity['max_nesting_depth']}")
@@ -1335,7 +1335,7 @@ class CodeAnalyseApp:
 
         # Security
         security = self.scan_security()
-        sec_kleur = "groen" if security['security_score'] >= 80 else "rood"
+        sec_kleur = Kleur.GROEN if security['security_score'] >= 80 else Kleur.ROOD
         print(f"\n{kleur('[SECURITY]', 'geel')}")
         print(f"  Score: {kleur(str(security['security_score']) + '/100', sec_kleur)}")
         print(f"  Issues: {security['totaal_issues']}")
@@ -1347,7 +1347,7 @@ class CodeAnalyseApp:
 
         # Documentation
         docs = self.check_documentatie()
-        doc_kleur = "groen" if docs['documentatie_percentage'] >= 80 else "geel"
+        doc_kleur = Kleur.GROEN if docs['documentatie_percentage'] >= 80 else Kleur.GEEL
         print(f"\n{kleur('[DOCUMENTATIE]', 'geel')}")
         print(f"  Coverage: {kleur(str(docs['documentatie_percentage']) + '%', doc_kleur)}")
 
@@ -1358,7 +1358,7 @@ class CodeAnalyseApp:
 
         # Formatting
         formatting = self.check_formatting()
-        fmt_kleur = "groen" if formatting['score'] >= 80 else "geel"
+        fmt_kleur = Kleur.GROEN if formatting['score'] >= 80 else Kleur.GEEL
         print(f"\n{kleur('[FORMATTING]', 'geel')}")
         print(f"  Score: {kleur(str(formatting['score']) + '/100', fmt_kleur)} ({formatting['totaal_problemen']} problemen)")
 
@@ -1372,15 +1372,15 @@ class CodeAnalyseApp:
     def _toon_security_scan(self):
         """Toon security scan resultaten."""
         if not self.huidige_code:
-            print(kleur("\nLaad eerst een bestand (optie 1)!", "rood"))
+            print(kleur("\nLaad eerst een bestand (optie 1)!", Kleur.ROOD))
             return
 
         result = self.scan_security()
 
-        print("\n" + kleur("SECURITY SCAN", "cyaan"))
+        print("\n" + kleur("SECURITY SCAN", Kleur.CYAAN))
         print("=" * 50)
 
-        score_kleur = "groen" if result['security_score'] >= 80 else "rood"
+        score_kleur = Kleur.GROEN if result['security_score'] >= 80 else Kleur.ROOD
         print(f"\nSecurity Score: {kleur(str(result['security_score']) + '/100', score_kleur)}")
         print(f"Issues gevonden: {result['totaal_issues']}")
 
@@ -1392,7 +1392,7 @@ class CodeAnalyseApp:
         if result['issues']:
             print(f"\n{kleur('Details:', 'geel')}")
             for issue in result['issues'][:10]:
-                ernst_kleur = "rood" if issue['ernst'] == "hoog" else "oranje"
+                ernst_kleur = Kleur.ROOD if issue['ernst'] == "hoog" else "oranje"
                 print(f"  Regel {issue['regel']}: {kleur(issue['beschrijving'], ernst_kleur)}")
                 print(f"    {kleur(issue['code'], 'grijs')}")
 
@@ -1404,12 +1404,12 @@ class CodeAnalyseApp:
     def _toon_code_smells(self):
         """Toon code smell detectie."""
         if not self.huidige_code:
-            print(kleur("\nLaad eerst een bestand (optie 1)!", "rood"))
+            print(kleur("\nLaad eerst een bestand (optie 1)!", Kleur.ROOD))
             return
 
         result = self.detect_code_smells()
 
-        print("\n" + kleur("CODE SMELL DETECTOR", "cyaan"))
+        print("\n" + kleur("CODE SMELL DETECTOR", Kleur.CYAAN))
         print("=" * 50)
         print(f"\nCode smells gevonden: {result['totaal_smells']}")
 
@@ -1427,12 +1427,12 @@ class CodeAnalyseApp:
     def _toon_complexity(self):
         """Toon complexity analyse."""
         if not self.huidige_code:
-            print(kleur("\nLaad eerst een bestand (optie 1)!", "rood"))
+            print(kleur("\nLaad eerst een bestand (optie 1)!", Kleur.ROOD))
             return
 
         result = self.bereken_complexity()
 
-        print("\n" + kleur("COMPLEXITY ANALYSE", "cyaan"))
+        print("\n" + kleur("COMPLEXITY ANALYSE", Kleur.CYAAN))
         print("=" * 50)
 
         rating_kleur = result.get('rating_kleur', 'wit')
@@ -1455,12 +1455,12 @@ class CodeAnalyseApp:
     def _toon_performance(self):
         """Toon performance check."""
         if not self.huidige_code:
-            print(kleur("\nLaad eerst een bestand (optie 1)!", "rood"))
+            print(kleur("\nLaad eerst een bestand (optie 1)!", Kleur.ROOD))
             return
 
         result = self.check_performance()
 
-        print("\n" + kleur("PERFORMANCE CHECK", "cyaan"))
+        print("\n" + kleur("PERFORMANCE CHECK", Kleur.CYAAN))
         print("=" * 50)
         print(f"\nPerformance issues: {result['totaal_issues']}")
 
@@ -1536,21 +1536,21 @@ class CodeAnalyseApp:
     def _toon_duplicate_code(self):
         """Toon duplicate code detectie."""
         if not self.huidige_code:
-            print(kleur("\nLaad eerst een bestand (optie 1)!", "rood"))
+            print(kleur("\nLaad eerst een bestand (optie 1)!", Kleur.ROOD))
             return
 
-        print("\n" + kleur("DUPLICATE CODE DETECTOR", "cyaan"))
+        print("\n" + kleur("DUPLICATE CODE DETECTOR", Kleur.CYAAN))
         print("=" * 50)
 
         min_regels_str = input(kleur(
-            "\nMinimum blokgrootte (aantal regels) [4]: ", "cyaan"
+            "\nMinimum blokgrootte (aantal regels) [4]: ", Kleur.CYAAN
         )).strip()
         min_regels = int(min_regels_str) if min_regels_str.isdigit() else 4
 
         result = self.detect_duplicate_code(min_regels=min_regels)
 
         if "fout" in result:
-            print(kleur(f"\nFout: {result['fout']}", "rood"))
+            print(kleur(f"\nFout: {result['fout']}", Kleur.ROOD))
             return
 
         print(f"\nDuplicate blokken gevonden: {result['totaal_duplicaten']}")
@@ -1703,16 +1703,16 @@ class CodeAnalyseApp:
     def _toon_import_analyse(self):
         """Toon import analyse resultaten."""
         if not self.huidige_code:
-            print(kleur("\nLaad eerst een bestand (optie 1)!", "rood"))
+            print(kleur("\nLaad eerst een bestand (optie 1)!", Kleur.ROOD))
             return
 
-        print("\n" + kleur("IMPORT ANALYZER", "cyaan"))
+        print("\n" + kleur("IMPORT ANALYZER", Kleur.CYAAN))
         print("=" * 50)
 
         result = self.analyze_imports()
 
         if "fout" in result:
-            print(kleur(f"\nFout: {result['fout']}", "rood"))
+            print(kleur(f"\nFout: {result['fout']}", Kleur.ROOD))
             return
 
         print(f"\nTotaal imports: {result['totaal_imports']}")
@@ -1750,15 +1750,15 @@ class CodeAnalyseApp:
     def _toon_formatting(self):
         """Toon formatting check en bied fix aan."""
         if not self.huidige_code:
-            print(kleur("\nLaad eerst een bestand (optie 1)!", "rood"))
+            print(kleur("\nLaad eerst een bestand (optie 1)!", Kleur.ROOD))
             return
 
         result = self.check_formatting()
 
-        print("\n" + kleur("FORMATTING CHECK", "cyaan"))
+        print("\n" + kleur("FORMATTING CHECK", Kleur.CYAAN))
         print("=" * 50)
 
-        score_kleur = "groen" if result['score'] >= 80 else "geel"
+        score_kleur = Kleur.GROEN if result['score'] >= 80 else Kleur.GEEL
         print(f"\nFormatting Score: {kleur(str(result['score']) + '/100', score_kleur)}")
         print(f"Problemen gevonden: {result['totaal_problemen']}")
 
@@ -1776,7 +1776,7 @@ class CodeAnalyseApp:
 
                 print(f"\nProblemen voor fix: {result['totaal_problemen']}")
                 print(f"Problemen na fix:   {nieuw_result['totaal_problemen']}")
-                print(kleur(f"Opgelost: {result['totaal_problemen'] - nieuw_result['totaal_problemen']}", "groen"))
+                print(kleur(f"Opgelost: {result['totaal_problemen'] - nieuw_result['totaal_problemen']}", Kleur.GROEN))
 
                 if self.huidig_bestand:
                     print(f"\n{kleur('Wil je de gefixte code opslaan? (j/n)', 'cyaan')}")
@@ -1786,20 +1786,20 @@ class CodeAnalyseApp:
                         with open(self.huidig_bestand, "w", encoding="utf-8") as f:
                             f.write(gefixte_code)
                         self.huidige_code = gefixte_code
-                        print(kleur(f"Opgeslagen naar {Path(self.huidig_bestand).name}!", "groen"))
+                        print(kleur(f"Opgeslagen naar {Path(self.huidig_bestand).name}!", Kleur.GROEN))
 
     def _toon_naming(self):
         """Toon naming conventions check."""
         if not self.huidige_code:
-            print(kleur("\nLaad eerst een bestand (optie 1)!", "rood"))
+            print(kleur("\nLaad eerst een bestand (optie 1)!", Kleur.ROOD))
             return
 
         result = self.check_naming()
 
-        print("\n" + kleur("NAMING CONVENTIONS", "cyaan"))
+        print("\n" + kleur("NAMING CONVENTIONS", Kleur.CYAAN))
         print("=" * 50)
 
-        score_kleur = "groen" if result['naming_score'] >= 80 else "geel"
+        score_kleur = Kleur.GROEN if result['naming_score'] >= 80 else Kleur.GEEL
         print(f"\nNaming Score: {kleur(str(result['naming_score']) + '/100', score_kleur)}")
         print(f"Problemen gevonden: {result['totaal_problemen']}")
 
@@ -1811,19 +1811,19 @@ class CodeAnalyseApp:
     def _toon_documentatie(self):
         """Toon documentatie coverage."""
         if not self.huidige_code:
-            print(kleur("\nLaad eerst een bestand (optie 1)!", "rood"))
+            print(kleur("\nLaad eerst een bestand (optie 1)!", Kleur.ROOD))
             return
 
         result = self.check_documentatie()
 
         if "fout" in result:
-            print(kleur(f"\nFout: {result['fout']}", "rood"))
+            print(kleur(f"\nFout: {result['fout']}", Kleur.ROOD))
             return
 
-        print("\n" + kleur("DOCUMENTATIE CHECK", "cyaan"))
+        print("\n" + kleur("DOCUMENTATIE CHECK", Kleur.CYAAN))
         print("=" * 50)
 
-        doc_kleur = "groen" if result['documentatie_percentage'] >= 80 else "geel"
+        doc_kleur = Kleur.GROEN if result['documentatie_percentage'] >= 80 else Kleur.GEEL
         print(f"\nDocumentatie Score: {kleur(str(result['documentatie_percentage']) + '%', doc_kleur)}")
         print(f"Module docstring: {'✓' if result['module_docstring'] else '✗'}")
 
@@ -1844,15 +1844,15 @@ class CodeAnalyseApp:
     def _toon_type_hints(self):
         """Toon type hint coverage."""
         if not self.huidige_code:
-            print(kleur("\nLaad eerst een bestand (optie 1)!", "rood"))
+            print(kleur("\nLaad eerst een bestand (optie 1)!", Kleur.ROOD))
             return
 
         result = self.check_type_hints()
 
-        print("\n" + kleur("TYPE HINT COVERAGE", "cyaan"))
+        print("\n" + kleur("TYPE HINT COVERAGE", Kleur.CYAAN))
         print("=" * 50)
 
-        coverage_kleur = "groen" if result['type_coverage'] >= 80 else "geel"
+        coverage_kleur = Kleur.GROEN if result['type_coverage'] >= 80 else Kleur.GEEL
         print(f"\nType Coverage: {kleur(str(result['type_coverage']) + '%', coverage_kleur)}")
         print(f"Volledig getypt: {result['volledig_getypt']}/{result['functies_totaal']} functies")
 
@@ -1869,12 +1869,12 @@ class CodeAnalyseApp:
     def _toon_import_analyse(self):
         """Toon import analyse."""
         if not self.huidige_code:
-            print(kleur("\nLaad eerst een bestand (optie 1)!", "rood"))
+            print(kleur("\nLaad eerst een bestand (optie 1)!", Kleur.ROOD))
             return
 
         result = self.analyseer_imports()
 
-        print("\n" + kleur("IMPORT ANALYSE", "cyaan"))
+        print("\n" + kleur("IMPORT ANALYSE", Kleur.CYAAN))
         print("=" * 50)
         print(f"\nTotaal imports: {result['totaal_imports']}")
         print(f"Import volgorde OK: {'✓' if result['import_volgorde_ok'] else '✗'}")
@@ -1892,10 +1892,10 @@ class CodeAnalyseApp:
     def _genereer_rapport_menu(self):
         """Menu voor rapport generatie."""
         if not self.huidige_code:
-            print(kleur("\nLaad eerst een bestand (optie 1)!", "rood"))
+            print(kleur("\nLaad eerst een bestand (optie 1)!", Kleur.ROOD))
             return
 
-        print("\n" + kleur("RAPPORT GENEREREN", "cyaan"))
+        print("\n" + kleur("RAPPORT GENEREREN", Kleur.CYAAN))
         print("-" * 40)
         print("Kies een formaat:")
         print("  1. Tekst (TXT)")
@@ -1919,7 +1919,7 @@ class CodeAnalyseApp:
         if opslaan == "j":
             with open(output_naam, "w", encoding="utf-8") as f:
                 f.write(rapport)
-            print(kleur(f"\nRapport opgeslagen: {output_naam}", "groen"))
+            print(kleur(f"\nRapport opgeslagen: {output_naam}", Kleur.GROEN))
         else:
             print("\n" + rapport[:2000])
             if len(rapport) > 2000:
@@ -1927,7 +1927,7 @@ class CodeAnalyseApp:
 
     def _toon_geschiedenis(self):
         """Toon analyse geschiedenis."""
-        print("\n" + kleur("ANALYSE GESCHIEDENIS", "cyaan"))
+        print("\n" + kleur("ANALYSE GESCHIEDENIS", Kleur.CYAAN))
         print("=" * 50)
 
         if not self.data["analyse_geschiedenis"]:
@@ -1942,7 +1942,7 @@ class CodeAnalyseApp:
 
     def _toon_statistieken(self):
         """Toon globale statistieken."""
-        print("\n" + kleur("STATISTIEKEN", "cyaan"))
+        print("\n" + kleur("STATISTIEKEN", Kleur.CYAAN))
         print("=" * 50)
 
         stats = self.data["statistieken"]
@@ -1956,16 +1956,16 @@ class CodeAnalyseApp:
     def run(self):
         """Start de interactieve app."""
         clear_scherm()
-        print(kleur("+" + "=" * 50 + "+", "cyaan"))
-        print(kleur("|        CODE ANALYSE TOOL v2.0                    |", "cyaan"))
-        print(kleur("|  Professionele Python Code Analyzer              |", "wit"))
-        print(kleur("|                                                  |", "wit"))
+        print(kleur("+" + "=" * 50 + "+", Kleur.CYAAN))
+        print(kleur("|        CODE ANALYSE TOOL v2.0                    |", Kleur.CYAAN))
+        print(kleur("|  Professionele Python Code Analyzer              |", Kleur.WIT))
+        print(kleur("|                                                  |", Kleur.WIT))
         print(kleur("|  Features:                                       |", "grijs"))
         print(kleur("|  • Security scanning    • Code smells            |", "grijs"))
         print(kleur("|  • Complexity metrics   • Performance check      |", "grijs"))
         print(kleur("|  • Type hint coverage   • Documentation check    |", "grijs"))
         print(kleur("|  • Project analyse      • Rapport generatie      |", "grijs"))
-        print(kleur("+" + "=" * 50 + "+", "cyaan"))
+        print(kleur("+" + "=" * 50 + "+", Kleur.CYAAN))
 
         while True:
             self._toon_menu()
@@ -2025,8 +2025,8 @@ class CodeAnalyseApp:
                             else:
                                 print(f"  {k}: {v}")
                 except ValueError:
-                    print(kleur("Fout: voer geldige getallen in.", "rood"))
+                    print(kleur("Fout: voer geldige getallen in.", Kleur.ROOD))
             else:
-                print(kleur("Ongeldige keuze.", "rood"))
+                print(kleur("Ongeldige keuze.", Kleur.ROOD))
 
             input(kleur("\nDruk op Enter om verder te gaan...", "grijs"))

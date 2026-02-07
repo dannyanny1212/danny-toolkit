@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Optional
 
 from ..core.config import Config
-from ..core.utils import clear_scherm, kleur
+from ..core.utils import clear_scherm, kleur, Kleur
 from ..core.vector_store import VectorStore
 from ..core.embeddings import get_embedder
 from ..core.document_processor import DocumentProcessor
@@ -108,7 +108,7 @@ class KnowledgeCompanion:
             self.data["naam"] = naam
             self._sla_op()
 
-        print(kleur("\n[INIT] Knowledge Companion laden...", "cyaan"))
+        print(kleur("\n[INIT] Knowledge Companion laden...", Kleur.CYAAN))
 
         # Vector Store (eigen database voor companion)
         self.embedder = get_embedder(True)
@@ -123,16 +123,16 @@ class KnowledgeCompanion:
         try:
             if Config.has_groq_key() or Config.has_anthropic_key():
                 self.generator = Generator()
-                print(kleur(f"   [OK] Generator: {self.generator.provider.upper()}", "groen"))
+                print(kleur(f"   [OK] Generator: {self.generator.provider.upper()}", Kleur.GROEN))
         except Exception as e:
-            print(kleur(f"   [!] Generator error: {e}", "geel"))
+            print(kleur(f"   [!] Generator error: {e}", Kleur.GEEL))
 
         # Sync stats met vector store
         self.data["stats"]["totaal_docs"] = self.vector_store.count()
 
-        print(kleur(f"   [OK] Companion: {self._get_companion_naam()}", "groen"))
-        print(kleur(f"   [OK] Level: {self._get_level()}", "groen"))
-        print(kleur(f"   [OK] Documenten: {self.data['stats']['totaal_docs']}", "groen"))
+        print(kleur(f"   [OK] Companion: {self._get_companion_naam()}", Kleur.GROEN))
+        print(kleur(f"   [OK] Level: {self._get_level()}", Kleur.GROEN))
+        print(kleur(f"   [OK] Documenten: {self.data['stats']['totaal_docs']}", Kleur.GROEN))
 
     def _laad_data(self) -> dict:
         """Laad companion data."""
@@ -200,8 +200,8 @@ class KnowledgeCompanion:
         if nieuw_level > oud_level:
             self.data["level"] = nieuw_level
             self._update_persona()
-            print(kleur(f"\n  *** LEVEL UP! ***", "geel"))
-            print(kleur(f"  {self._get_companion_naam()} is nu level {nieuw_level}!", "geel"))
+            print(kleur(f"\n  *** LEVEL UP! ***", Kleur.GEEL))
+            print(kleur(f"  {self._get_companion_naam()} is nu level {nieuw_level}!", Kleur.GEEL))
 
             # Achievement check
             if nieuw_level >= 5:
@@ -232,8 +232,8 @@ class KnowledgeCompanion:
 
         if beste_persona != self.data["persona"]:
             self.data["persona"] = beste_persona
-            print(kleur(f"\n  ** EVOLUTIE! **", "magenta"))
-            print(kleur(f"  Je companion is nu: {COMPANION_PERSONAS[beste_persona]['naam']}!", "magenta"))
+            print(kleur(f"\n  ** EVOLUTIE! **", Kleur.MAGENTA))
+            print(kleur(f"  Je companion is nu: {COMPANION_PERSONAS[beste_persona]['naam']}!", Kleur.MAGENTA))
             self._sla_op()
 
     def _get_persona(self) -> dict:
@@ -260,7 +260,7 @@ class KnowledgeCompanion:
         Returns:
             dict met resultaten (chunks, xp, etc.)
         """
-        print(kleur(f"\n[VOEDEN] {self._get_companion_naam()} consumeert kennis...", "cyaan"))
+        print(kleur(f"\n[VOEDEN] {self._get_companion_naam()} consumeert kennis...", Kleur.CYAAN))
 
         pad = Path(bron) if isinstance(bron, str) else bron
         chunks = []
@@ -268,11 +268,11 @@ class KnowledgeCompanion:
         if pad.is_file():
             tekst = self.processor.laad_bestand(pad)
             chunks = self.processor.chunk_tekst(tekst, pad.stem)
-            print(kleur(f"   [OK] {pad.name} verteerd", "groen"))
+            print(kleur(f"   [OK] {pad.name} verteerd", Kleur.GROEN))
 
         elif pad.is_dir():
             chunks = self.processor.verwerk_map(pad)
-            print(kleur(f"   [OK] Map {pad.name} verteerd", "groen"))
+            print(kleur(f"   [OK] Map {pad.name} verteerd", Kleur.GROEN))
 
         if not chunks:
             return {"error": "Geen content gevonden", "xp": 0}
@@ -293,7 +293,7 @@ class KnowledgeCompanion:
         # Companion reactie
         persona = self._get_persona()
         reactie = random.choice(persona["voorvoegsel"])
-        print(kleur(f"\n  {persona['emoji']} \"{reactie} Mmm, heerlijke kennis!\"", "magenta"))
+        print(kleur(f"\n  {persona['emoji']} \"{reactie} Mmm, heerlijke kennis!\"", Kleur.MAGENTA))
 
         self._sla_op()
 
@@ -318,7 +318,7 @@ class KnowledgeCompanion:
 
     def voed_url(self, url: str, tags: list = None) -> dict:
         """Voed met URL content."""
-        print(kleur(f"\n[URL] {self._get_companion_naam()} verkent het web...", "cyaan"))
+        print(kleur(f"\n[URL] {self._get_companion_naam()} verkent het web...", Kleur.CYAAN))
 
         try:
             import urllib.request
@@ -361,7 +361,7 @@ class KnowledgeCompanion:
         persona = self._get_persona()
         naam = self.data["naam"]
 
-        print(kleur(f"\n[ZOEKEN] {persona['emoji']} doorzoekt geheugen...", "cyaan"))
+        print(kleur(f"\n[ZOEKEN] {persona['emoji']} doorzoekt geheugen...", Kleur.CYAAN))
 
         # Zoek in vector store
         resultaten = self.vector_store.zoek(vraag)
@@ -452,7 +452,7 @@ CONTEXT UIT KENNISBANK:
         """
         persona = self._get_persona()
 
-        print(kleur(f"\n[SYNTHESE] {persona['emoji']} synthetiseert kennis...", "magenta"))
+        print(kleur(f"\n[SYNTHESE] {persona['emoji']} synthetiseert kennis...", Kleur.MAGENTA))
 
         # Zoek meerdere relevante chunks
         resultaten = self.vector_store.zoek(onderwerp, top_k=10)
@@ -508,7 +508,7 @@ BRONNEN OM TE SYNTHETISEREN:
         """Unlock een achievement."""
         if key not in self.data["achievements"]:
             self.data["achievements"].append(key)
-            print(kleur(f"\n  [ACHIEVEMENT] UNLOCKED: {key}!", "geel"))
+            print(kleur(f"\n  [ACHIEVEMENT] UNLOCKED: {key}!", Kleur.GEEL))
             self._sla_op()
 
     # ========================================================================
@@ -536,9 +536,9 @@ BRONNEN OM TE SYNTHETISEREN:
         status = self.status()
         persona = self._get_persona()
 
-        print(kleur("\n" + "=" * 50, "cyaan"))
-        print(kleur(f"  {status['naam']}", "cyaan"))
-        print(kleur("=" * 50, "cyaan"))
+        print(kleur("\n" + "=" * 50, Kleur.CYAAN))
+        print(kleur(f"  {status['naam']}", Kleur.CYAAN))
+        print(kleur("=" * 50, Kleur.CYAAN))
 
         print(f"\n  Persona:     {persona['emoji']} {persona['naam']}")
         print(f"  Stijl:       {persona['stijl']}")
@@ -557,7 +557,7 @@ BRONNEN OM TE SYNTHETISEREN:
         print(f"  Syntheses:   {status['syntheses']}")
         print(f"  Achievements:{status['achievements']}")
 
-        print(kleur("\n" + "=" * 50, "cyaan"))
+        print(kleur("\n" + "=" * 50, Kleur.CYAAN))
 
     # ========================================================================
     # INTERACTIEVE CLI
@@ -575,11 +575,11 @@ BRONNEN OM TE SYNTHETISEREN:
 |     Je AI die groeit door kennis te consumeren                |
 |                                                               |
 +===============================================================+
-        """, "cyaan"))
+        """, Kleur.CYAAN))
 
         self.toon_status()
 
-        print(kleur("\nCOMMANDO'S:", "geel"))
+        print(kleur("\nCOMMANDO'S:", Kleur.GEEL))
         print("  vraag <tekst>     - Stel een vraag")
         print("  voed <pad>        - Voed met document/map")
         print("  url <url>         - Voed met webpagina")
@@ -593,9 +593,9 @@ BRONNEN OM TE SYNTHETISEREN:
             try:
                 persona = self._get_persona()
                 prompt = f"\n{persona['emoji']} > "
-                invoer = input(kleur(prompt, "groen")).strip()
+                invoer = input(kleur(prompt, Kleur.GROEN)).strip()
             except (EOFError, KeyboardInterrupt):
-                print(kleur("\n\nTot ziens!", "cyaan"))
+                print(kleur("\n\nTot ziens!", Kleur.CYAAN))
                 break
 
             if not invoer:
@@ -606,28 +606,28 @@ BRONNEN OM TE SYNTHETISEREN:
             args = delen[1] if len(delen) > 1 else ""
 
             if cmd == "stop" or cmd == "exit":
-                print(kleur(f"\n{persona['emoji']} Tot ziens! Kom snel terug met meer kennis!", "cyaan"))
+                print(kleur(f"\n{persona['emoji']} Tot ziens! Kom snel terug met meer kennis!", Kleur.CYAAN))
                 break
 
             elif cmd == "vraag" and args:
                 antwoord = self.vraag(args)
-                print(kleur("\n" + "=" * 50, "groen"))
+                print(kleur("\n" + "=" * 50, Kleur.GROEN))
                 print(antwoord)
-                print(kleur("=" * 50, "groen"))
+                print(kleur("=" * 50, Kleur.GROEN))
 
             elif cmd == "voed" and args:
                 result = self.voed(args)
                 if "error" in result:
-                    print(kleur(f"[!] {result['error']}", "rood"))
+                    print(kleur(f"[!] {result['error']}", Kleur.ROOD))
                 else:
-                    print(kleur(f"\n[OK] {result['chunks']} chunks toegevoegd (+{result['xp']} XP)", "groen"))
+                    print(kleur(f"\n[OK] {result['chunks']} chunks toegevoegd (+{result['xp']} XP)", Kleur.GROEN))
 
             elif cmd == "url" and args:
                 result = self.voed_url(args)
                 if "error" in result:
-                    print(kleur(f"[!] {result['error']}", "rood"))
+                    print(kleur(f"[!] {result['error']}", Kleur.ROOD))
                 else:
-                    print(kleur(f"\n[OK] URL geindexeerd (+{result['xp']} XP)", "groen"))
+                    print(kleur(f"\n[OK] URL geindexeerd (+{result['xp']} XP)", Kleur.GROEN))
 
             elif cmd == "tekst":
                 print("Voer tekst in (lege regel om te stoppen):")
@@ -642,20 +642,20 @@ BRONNEN OM TE SYNTHETISEREN:
                     tekst = "\n".join(lijnen)
                     doc_id = input("Document ID: ").strip() or "document"
                     result = self.voed_tekst(tekst, doc_id)
-                    print(kleur(f"\n[OK] Tekst toegevoegd (+{result['xp']} XP)", "groen"))
+                    print(kleur(f"\n[OK] Tekst toegevoegd (+{result['xp']} XP)", Kleur.GROEN))
 
             elif cmd == "synthese" and args:
                 synthese = self.synthetiseer(args)
-                print(kleur("\n" + "=" * 50, "magenta"))
-                print(kleur("SYNTHESE:", "magenta"))
+                print(kleur("\n" + "=" * 50, Kleur.MAGENTA))
+                print(kleur("SYNTHESE:", Kleur.MAGENTA))
                 print(synthese)
-                print(kleur("=" * 50, "magenta"))
+                print(kleur("=" * 50, Kleur.MAGENTA))
 
             elif cmd == "status":
                 self.toon_status()
 
             elif cmd == "help":
-                print(kleur("\n=== KNOWLEDGE COMPANION HELP ===", "cyaan"))
+                print(kleur("\n=== KNOWLEDGE COMPANION HELP ===", Kleur.CYAAN))
                 print("\nBASIS COMMANDO'S:")
                 print("  vraag <tekst>     - Stel een vraag aan je companion")
                 print("  voed <pad>        - Voed met bestand of map")
@@ -665,13 +665,13 @@ BRONNEN OM TE SYNTHETISEREN:
                 print("  status            - Bekijk level, XP, stats")
                 print("  stop              - Afsluiten")
 
-                print(kleur("\nXP SYSTEEM:", "geel"))
+                print(kleur("\nXP SYSTEEM:", Kleur.GEEL))
                 print("  Document uploaden:  +50 XP")
                 print("  Vraag stellen:      +10 XP")
                 print("  URL indexeren:      +40 XP")
                 print("  Synthese maken:     +75 XP")
 
-                print(kleur("\nPERSONA'S:", "magenta"))
+                print(kleur("\nPERSONA'S:", Kleur.MAGENTA))
                 for key, info in COMPANION_PERSONAS.items():
                     print(f"  {info['emoji']} {info['naam']}")
                     print(f"     Vereist: {info['min_docs']} docs, {info['min_xp']} XP")
@@ -680,9 +680,9 @@ BRONNEN OM TE SYNTHETISEREN:
                 # Behandel als vraag als geen commando
                 if invoer:
                     antwoord = self.vraag(invoer)
-                    print(kleur("\n" + "=" * 50, "groen"))
+                    print(kleur("\n" + "=" * 50, Kleur.GROEN))
                     print(antwoord)
-                    print(kleur("=" * 50, "groen"))
+                    print(kleur("=" * 50, Kleur.GROEN))
 
         self._sla_op()
 

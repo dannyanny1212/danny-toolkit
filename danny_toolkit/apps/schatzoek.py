@@ -22,7 +22,7 @@ import time
 from datetime import datetime, date
 from pathlib import Path
 from ..core.config import Config
-from ..core.utils import clear_scherm, kleur, succes, fout, waarschuwing, info
+from ..core.utils import clear_scherm, kleur, Kleur, succes, fout, waarschuwing, info
 
 
 class SchatzoekApp:
@@ -104,7 +104,7 @@ class SchatzoekApp:
             "emoji": "🌲",
             "muur": "🌳",
             "vloer": "🌿",
-            "kleur": "groen"
+            "kleur": Kleur.GROEN
         },
         "grot": {
             "naam": "Donkere Grot",
@@ -118,21 +118,21 @@ class SchatzoekApp:
             "emoji": "🏜️",
             "muur": "🏔️",
             "vloer": "🟨",
-            "kleur": "geel"
+            "kleur": Kleur.GEEL
         },
         "kasteel": {
             "naam": "Verlaten Kasteel",
             "emoji": "🏰",
             "muur": "🧱",
             "vloer": "⬜",
-            "kleur": "wit"
+            "kleur": Kleur.WIT
         },
         "vulkaan": {
             "naam": "Vuurberg",
             "emoji": "🌋",
             "muur": "🔥",
             "vloer": "🟥",
-            "kleur": "rood"
+            "kleur": Kleur.ROOD
         },
         "ijsgrot": {
             "naam": "Bevroren IJsgrot",
@@ -146,28 +146,28 @@ class SchatzoekApp:
             "emoji": "🌿",
             "muur": "🌾",
             "vloer": "🟩",
-            "kleur": "groen"
+            "kleur": Kleur.GROEN
         },
         "jungle": {
             "naam": "Tropische Jungle",
             "emoji": "🌴",
             "muur": "🌳",
             "vloer": "🟢",
-            "kleur": "groen"
+            "kleur": Kleur.GROEN
         },
         "oceaan": {
             "naam": "Verzonken Stad",
             "emoji": "🌊",
             "muur": "🪸",
             "vloer": "🔷",
-            "kleur": "blauw"
+            "kleur": Kleur.BLAUW
         },
         "schaduw": {
             "naam": "Schaduwrijk",
             "emoji": "🌙",
             "muur": "👁️",
             "vloer": "⬛",
-            "kleur": "magenta"
+            "kleur": Kleur.MAGENTA
         }
     }
 
@@ -460,7 +460,7 @@ class SchatzoekApp:
         s = self.data["statistieken"]
         char_class = self.CLASSES.get(p["class"], self.CLASSES["ontdekker"])
 
-        print(kleur(f"\n  {char_class['emoji']} {p['naam']} - {char_class['naam']}", "geel"))
+        print(kleur(f"\n  {char_class['emoji']} {p['naam']} - {char_class['naam']}", Kleur.GEEL))
         print(f"    Level {p['level']} | XP: {p['xp']}/{p['xp_nodig']}")
         print(f"    💰 {p['muntjes']} muntjes")
         print(f"    📊 {s['schatten_gevonden']} schatten | {s['monsters_verslagen']} monsters")
@@ -529,17 +529,17 @@ class SchatzoekApp:
         # HP balk
         hp_pct = self.speler_hp / self.max_hp
         hp_bars = int(hp_pct * 10)
-        hp_color = "groen" if hp_pct > 0.5 else ("geel" if hp_pct > 0.25 else "rood")
+        hp_color = Kleur.GROEN if hp_pct > 0.5 else (Kleur.GEEL if hp_pct > 0.25 else Kleur.ROOD)
         hp_bar = kleur("█" * hp_bars, hp_color) + kleur("░" * (10 - hp_bars), "grijs")
 
-        print(kleur(f"\n  ❤️ HP: [{hp_bar}] {self.speler_hp}/{self.max_hp}", "wit"))
+        print(kleur(f"\n  ❤️ HP: [{hp_bar}] {self.speler_hp}/{self.max_hp}", Kleur.WIT))
         print(f"  📍 Positie: {self.speler_positie} | 👣 Stappen: {self.stappen}")
         print(f"  💎 Schatten: {len(self.gevonden_schatten)}/{len(self.schatten)}")
         print(f"  💰 Muntjes: {self.data['profiel']['muntjes']}")
 
         if self.actieve_effecten:
             effecten = ", ".join(self.actieve_effecten)
-            print(kleur(f"  ✨ Actief: {effecten}", "magenta"))
+            print(kleur(f"  ✨ Actief: {effecten}", Kleur.MAGENTA))
 
         if self.data["inventory"]:
             inv = ", ".join([self.POWERUPS.get(i, {}).get("emoji", i)
@@ -814,7 +814,7 @@ class SchatzoekApp:
             print(f"\n  {monster['emoji']} {monster['type'].title()}: {monster['hp']} HP")
             print(f"  Je HP: {self.speler_hp}")
 
-            print(kleur("\n  [a]anvallen | [v]luchten | [i]tem gebruiken", "geel"))
+            print(kleur("\n  [a]anvallen | [v]luchten | [i]tem gebruiken", Kleur.GEEL))
             keuze = input(kleur("  Actie: ", "cyan")).strip().lower()
 
             if keuze == "a":
@@ -825,21 +825,21 @@ class SchatzoekApp:
                 # Magiër: dubbele schade
                 if player_class == "magier":
                     schade *= 2
-                    print(kleur("\n  🧙 Magische kracht verdubbelt je aanval!", "magenta"))
+                    print(kleur("\n  🧙 Magische kracht verdubbelt je aanval!", Kleur.MAGENTA))
 
                 # Jager: eerste aanval bonus (altijd max schade)
                 if player_class == "jager" and monster["hp"] == self.MONSTERS[monster["type"]]["hp"]:
                     schade = 35  # Gegarandeerde hoge schade
-                    print(kleur("\n  🏹 Perfecte eerste schot!", "geel"))
+                    print(kleur("\n  🏹 Perfecte eerste schot!", Kleur.GEEL))
 
                 monster["hp"] -= schade
-                print(kleur(f"\n  Je doet {schade} schade!", "groen"))
+                print(kleur(f"\n  Je doet {schade} schade!", Kleur.GROEN))
 
                 # Vampier: steel HP
                 if player_class == "vampier":
                     gestolen = schade // 4
                     self.speler_hp = min(self.max_hp, self.speler_hp + gestolen)
-                    print(kleur(f"  🧛 Je steelt {gestolen} HP!", "rood"))
+                    print(kleur(f"  🧛 Je steelt {gestolen} HP!", Kleur.ROOD))
 
                 # Monster aanval (als nog leeft)
                 if monster["hp"] > 0:
@@ -849,10 +849,10 @@ class SchatzoekApp:
                     # Speciale aanvallen per type
                     if speciaal == "brand":
                         if "vuurschild" in self.actieve_effecten:
-                            print(kleur("  🔶 Je vuurschild blokkeert de vlammen!", "geel"))
+                            print(kleur("  🔶 Je vuurschild blokkeert de vlammen!", Kleur.GEEL))
                             monster_schade = 0
                         else:
-                            print(kleur("  🔥 Je brandt!", "rood"))
+                            print(kleur("  🔥 Je brandt!", Kleur.ROOD))
                     elif speciaal == "bevriezing":
                         if "ijsschild" in self.actieve_effecten or player_class == "ijsmeester":
                             if player_class == "ijsmeester":
@@ -864,34 +864,34 @@ class SchatzoekApp:
                             print(kleur("  ❄️ Je bevriest! Volgende beurt gemist!", "cyan"))
                     elif speciaal == "vergif":
                         if "tegengif" in self.actieve_effecten:
-                            print(kleur("  💚 Je tegengif neutraliseert het!", "groen"))
+                            print(kleur("  💚 Je tegengif neutraliseert het!", Kleur.GROEN))
                         else:
                             extra = 10
                             monster_schade += extra
-                            print(kleur(f"  🤢 Vergiftigd! +{extra} extra schade!", "groen"))
+                            print(kleur(f"  🤢 Vergiftigd! +{extra} extra schade!", Kleur.GROEN))
                     elif speciaal == "wurging":
-                        print(kleur("  🐍 Je wordt gewurgd! Moeilijk te ontsnappen!", "geel"))
+                        print(kleur("  🐍 Je wordt gewurgd! Moeilijk te ontsnappen!", Kleur.GEEL))
                         monster_schade = int(monster_schade * 1.2)
                     elif speciaal == "verlamming":
-                        print(kleur("  ⚡ Je bent verlamd! Beweging vertraagd!", "geel"))
+                        print(kleur("  ⚡ Je bent verlamd! Beweging vertraagd!", Kleur.GEEL))
                     elif speciaal == "levensroof":
                         if "schaduwmantel" in self.actieve_effecten:
-                            print(kleur("  🌑 Je schaduwmantel beschermt je!", "magenta"))
+                            print(kleur("  🌑 Je schaduwmantel beschermt je!", Kleur.MAGENTA))
                             monster_schade = 0
                         else:
                             heal = monster_schade // 2
                             monster["hp"] = min(monster["hp"] + heal,
                                               self.MONSTERS[monster["type"]]["hp"])
-                            print(kleur(f"  💀 Levenskracht gestolen! Vijand +{heal} HP!", "magenta"))
+                            print(kleur(f"  💀 Levenskracht gestolen! Vijand +{heal} HP!", Kleur.MAGENTA))
                     elif speciaal == "angst":
-                        print(kleur("  😱 Angstaanval! Je vecht minder effectief!", "magenta"))
+                        print(kleur("  😱 Angstaanval! Je vecht minder effectief!", Kleur.MAGENTA))
                     elif speciaal == "vloek":
-                        print(kleur("  ☠️ Vervloekt! Dubbele schade genomen!", "rood"))
+                        print(kleur("  ☠️ Vervloekt! Dubbele schade genomen!", Kleur.ROOD))
                         monster_schade *= 2
 
                     if monster_schade > 0:
                         self._neem_schade(monster_schade)
-                        print(kleur(f"  {monster['type'].title()} doet {monster_schade} schade!", "rood"))
+                        print(kleur(f"  {monster['type'].title()} doet {monster_schade} schade!", Kleur.ROOD))
 
             elif keuze == "v":
                 # Vluchten
@@ -917,41 +917,41 @@ class SchatzoekApp:
         """Gevecht met een boss."""
         self._toon_header(f"👑 BOSS FIGHT: {self.boss['naam']}!")
 
-        print(kleur(f"\n  {self.boss['emoji']} {self.boss['naam']} verschijnt!", "rood"))
+        print(kleur(f"\n  {self.boss['emoji']} {self.boss['naam']} verschijnt!", Kleur.ROOD))
         input(kleur("\n  Druk op Enter om te beginnen...", "grijs"))
 
         while self.boss["hp"] > 0 and self.speler_hp > 0:
             clear_scherm()
-            print(kleur(f"\n  === BOSS: {self.boss['naam']} ===", "rood"))
+            print(kleur(f"\n  === BOSS: {self.boss['naam']} ===", Kleur.ROOD))
 
             # Boss HP balk
             boss_pct = self.boss["hp"] / self.boss["max_hp"]
             boss_bars = int(boss_pct * 20)
-            boss_bar = kleur("█" * boss_bars, "rood") + "░" * (20 - boss_bars)
+            boss_bar = kleur("█" * boss_bars, Kleur.ROOD) + "░" * (20 - boss_bars)
             print(f"  {self.boss['emoji']} [{boss_bar}] {self.boss['hp']}/{self.boss['max_hp']}")
 
             # Speler HP balk
             hp_pct = self.speler_hp / self.max_hp
             hp_bars = int(hp_pct * 20)
-            hp_bar = kleur("█" * hp_bars, "groen") + "░" * (20 - hp_bars)
+            hp_bar = kleur("█" * hp_bars, Kleur.GROEN) + "░" * (20 - hp_bars)
             print(f"  ❤️ [{hp_bar}] {self.speler_hp}/{self.max_hp}")
 
-            print(kleur("\n  [a]anvallen | [s]peciale aanval | [i]tem", "geel"))
+            print(kleur("\n  [a]anvallen | [s]peciale aanval | [i]tem", Kleur.GEEL))
             keuze = input(kleur("  Actie: ", "cyan")).strip().lower()
 
             if keuze == "a":
                 schade = random.randint(20, 35)
                 self.boss["hp"] -= schade
-                print(kleur(f"\n  Je doet {schade} schade!", "groen"))
+                print(kleur(f"\n  Je doet {schade} schade!", Kleur.GROEN))
 
             elif keuze == "s":
                 # Speciale aanval (kost meer maar doet meer schade)
                 if random.random() < 0.7:
                     schade = random.randint(40, 60)
                     self.boss["hp"] -= schade
-                    print(kleur(f"\n  💥 KRITIEKE TREFFER! {schade} schade!", "geel"))
+                    print(kleur(f"\n  💥 KRITIEKE TREFFER! {schade} schade!", Kleur.GEEL))
                 else:
-                    print(kleur("\n  Speciale aanval mist!", "rood"))
+                    print(kleur("\n  Speciale aanval mist!", Kleur.ROOD))
 
             elif keuze == "i":
                 self._toon_inventory_gevecht()
@@ -962,11 +962,11 @@ class SchatzoekApp:
                 # Boss heeft speciale aanvallen
                 if random.random() < 0.3:
                     schade = self.boss["schade"] * 2
-                    print(kleur(f"\n  💀 {self.boss['naam']} gebruikt MEGA AANVAL!", "rood"))
+                    print(kleur(f"\n  💀 {self.boss['naam']} gebruikt MEGA AANVAL!", Kleur.ROOD))
                 else:
                     schade = self.boss["schade"]
                 self._neem_schade(schade)
-                print(kleur(f"  Je neemt {schade} schade!", "rood"))
+                print(kleur(f"  Je neemt {schade} schade!", Kleur.ROOD))
 
             input(kleur("\n  Druk op Enter...", "grijs"))
 
@@ -985,7 +985,7 @@ class SchatzoekApp:
             waarschuwing("Je inventory is leeg!")
             return
 
-        print(kleur("\n  Inventory:", "geel"))
+        print(kleur("\n  Inventory:", Kleur.GEEL))
         for i, item in enumerate(inv[:5], 1):
             pu_info = self.POWERUPS.get(item, {})
             print(f"    {i}. {pu_info.get('emoji', '?')} {item}")
@@ -1148,7 +1148,7 @@ class SchatzoekApp:
         dichtstbij = min(niet_gevonden,
                         key=lambda s: self._bereken_afstand(self.speler_positie, s))
         richting = self._krijg_richting(dichtstbij)
-        print(kleur(f"\n  🧭 De schat ligt richting: {richting}", "geel"))
+        print(kleur(f"\n  🧭 De schat ligt richting: {richting}", Kleur.GEEL))
 
     def _gebruik_radar(self):
         """Radar: toont afstand tot alle schatten."""
@@ -1157,7 +1157,7 @@ class SchatzoekApp:
             info("Alle schatten al gevonden!")
             return
 
-        print(kleur("\n  📡 Afstanden tot schatten:", "geel"))
+        print(kleur("\n  📡 Afstanden tot schatten:", Kleur.GEEL))
         for i, schat in enumerate(niet_gevonden, 1):
             afstand = self._bereken_afstand(self.speler_positie, schat)
             print(f"    Schat {i}: {afstand} stappen")
@@ -1263,7 +1263,7 @@ class SchatzoekApp:
         if voorwaarde and achievement_id not in self.data["achievements"]:
             self.data["achievements"].append(achievement_id)
             ach = self.ACHIEVEMENTS.get(achievement_id, {})
-            print(kleur(f"\n  🏆 ACHIEVEMENT UNLOCKED: {ach.get('naam', achievement_id)}!", "geel"))
+            print(kleur(f"\n  🏆 ACHIEVEMENT UNLOCKED: {ach.get('naam', achievement_id)}!", Kleur.GEEL))
             self._geef_xp(ach.get("xp", 0))
 
     def _toon_achievements(self):
@@ -1276,7 +1276,7 @@ class SchatzoekApp:
 
         for ach_id, ach in self.ACHIEVEMENTS.items():
             if ach_id in self.data["achievements"]:
-                status = kleur("✓", "groen")
+                status = kleur("✓", Kleur.GROEN)
             else:
                 status = kleur("✗", "grijs")
             print(f"    {status} {ach['naam']}: {ach['beschrijving']}")
@@ -1289,7 +1289,7 @@ class SchatzoekApp:
             self._toon_header("🏪 Shop")
             print(f"\n  💰 Je hebt {self.data['profiel']['muntjes']} muntjes")
 
-            print(kleur("\n  Items te koop:", "geel"))
+            print(kleur("\n  Items te koop:", Kleur.GEEL))
             items = list(self.SHOP_ITEMS.items())
             for i, (item, info) in enumerate(items, 1):
                 pu_emoji = self.POWERUPS.get(item, {}).get("emoji", "📦")
@@ -1328,19 +1328,19 @@ class SchatzoekApp:
             huidig = self.data["campagne"]["huidig_level"]
             print(f"\n  Voortgang: Level {huidig + 1}/20")
 
-            print(kleur("\n  Levels:", "geel"))
+            print(kleur("\n  Levels:", Kleur.GEEL))
             for i, level in enumerate(self.CAMPAGNE_LEVELS):
                 if i < huidig:
-                    status = kleur("✓", "groen")
+                    status = kleur("✓", Kleur.GROEN)
                 elif i == huidig:
-                    status = kleur("►", "geel")
+                    status = kleur("►", Kleur.GEEL)
                 else:
                     status = kleur("🔒", "grijs")
                 biome_emoji = self.BIOMES[level["biome"]]["emoji"]
                 boss_ind = " 👑" if level["boss"] else ""
                 print(f"    {status} {i+1}. {biome_emoji} {level['naam']}{boss_ind}")
 
-            print(kleur("\n  [s]tart level | [0] terug", "geel"))
+            print(kleur("\n  [s]tart level | [0] terug", Kleur.GEEL))
 
             keuze = input(kleur("\n  Keuze: ", "cyan")).strip().lower()
 
@@ -1360,7 +1360,7 @@ class SchatzoekApp:
         # Verhaal
         clear_scherm()
         self._toon_header(f"📖 {level['naam']}")
-        print(kleur(f"\n  {level['verhaal']}", "geel"))
+        print(kleur(f"\n  {level['verhaal']}", Kleur.GEEL))
         input(kleur("\n  Druk op Enter om te beginnen...", "grijs"))
 
         # Genereer level
@@ -1414,13 +1414,13 @@ class SchatzoekApp:
     ║   Je bent een ware HELD!                         ║
     ║                                                   ║
     ╚═══════════════════════════════════════════════════╝
-        """, "geel"))
+        """, Kleur.GEEL))
 
     def _vrij_spel_menu(self):
         """Vrij spel menu."""
         self._toon_header("🎮 Vrij Spel")
 
-        print(kleur("\n  Kies moeilijkheid:", "geel"))
+        print(kleur("\n  Kies moeilijkheid:", Kleur.GEEL))
         print("    1. Makkelijk (5x5, 2 schatten)")
         print("    2. Normaal (7x7, 3 schatten)")
         print("    3. Moeilijk (9x9, 5 schatten)")
@@ -1430,7 +1430,7 @@ class SchatzoekApp:
         moeilijkheid = {"1": "makkelijk", "2": "normaal", "3": "moeilijk", "4": "extreem"}.get(keuze, "normaal")
 
         # Kies biome
-        print(kleur("\n  Kies biome:", "geel"))
+        print(kleur("\n  Kies biome:", Kleur.GEEL))
         biomes = list(self.BIOMES.items())
         for i, (key, biome) in enumerate(biomes, 1):
             print(f"    {i}. {biome['emoji']} {biome['naam']}")
@@ -1469,7 +1469,7 @@ class SchatzoekApp:
         random.seed(self.data["dagelijkse"]["seed"])
 
         self._toon_header("📅 Dagelijkse Uitdaging")
-        print(kleur(f"\n  Datum: {vandaag}", "geel"))
+        print(kleur(f"\n  Datum: {vandaag}", Kleur.GEEL))
         print("  Voltooi de uitdaging voor bonus XP!")
         input(kleur("\n  Druk op Enter om te beginnen...", "grijs"))
 
@@ -1524,7 +1524,7 @@ class SchatzoekApp:
 
             # Hint
             hint = self._krijg_hint()
-            print(kleur(f"\n  Hint: {hint}", "magenta"))
+            print(kleur(f"\n  Hint: {hint}", Kleur.MAGENTA))
 
             # Controls
             print(kleur("\n  [n/z/o/w] bewegen | [i]nventory | [q]uit", "grijs"))
@@ -1552,7 +1552,7 @@ class SchatzoekApp:
     ║   🎊  LEVEL VOLTOOID!  🎊                        ║
     ║                                                   ║
     ╚═══════════════════════════════════════════════════╝
-        """, "groen"))
+        """, Kleur.GROEN))
 
         print(f"  💎 Schatten: {len(self.gevonden_schatten)}")
         print(f"  👣 Stappen: {self.stappen}")
@@ -1561,7 +1561,7 @@ class SchatzoekApp:
         # Bonus voor geen schade
         if self.schade_genomen == 0:
             self._geef_xp(50)
-            print(kleur("  🛡️ Geen schade bonus: +50 XP!", "geel"))
+            print(kleur("  🛡️ Geen schade bonus: +50 XP!", Kleur.GEEL))
 
         input(kleur("\n  Druk op Enter...", "grijs"))
         return "gewonnen"
@@ -1577,7 +1577,7 @@ class SchatzoekApp:
     ║   💀  GAME OVER  💀                              ║
     ║                                                   ║
     ╚═══════════════════════════════════════════════════╝
-        """, "rood"))
+        """, Kleur.ROOD))
 
         print(f"  💎 Schatten gevonden: {len(self.gevonden_schatten)}/{len(self.schatten)}")
         print(f"  👣 Stappen: {self.stappen}")
@@ -1593,7 +1593,7 @@ class SchatzoekApp:
             input(kleur("\n  Druk op Enter...", "grijs"))
             return
 
-        print(kleur("\n  🎒 Inventory:", "geel"))
+        print(kleur("\n  🎒 Inventory:", Kleur.GEEL))
         for i, item in enumerate(inv, 1):
             pu_info = self.POWERUPS.get(item, {})
             print(f"    {i}. {pu_info.get('emoji', '?')} {item} - {pu_info.get('beschrijving', '')}")
@@ -1620,7 +1620,7 @@ class SchatzoekApp:
         is_highscore = len(scores) < 5 or (scores and stappen < scores[-1]["stappen"])
 
         if is_highscore:
-            print(kleur("\n  🏆 NIEUWE HIGHSCORE!", "geel"))
+            print(kleur("\n  🏆 NIEUWE HIGHSCORE!", Kleur.GEEL))
             naam = input(kleur("  Voer je naam in: ", "cyan")).strip() or "Anoniem"
 
             scores.append({"naam": naam, "stappen": stappen})
@@ -1633,7 +1633,7 @@ class SchatzoekApp:
 
         for niveau in ["makkelijk", "normaal", "moeilijk", "extreem"]:
             scores = self.data["highscores"].get(niveau, [])
-            print(kleur(f"\n  [{niveau.upper()}]", "geel"))
+            print(kleur(f"\n  [{niveau.upper()}]", Kleur.GEEL))
             if scores:
                 for i, score in enumerate(scores[:5], 1):
                     print(f"    {i}. {score['naam']}: {score['stappen']} stappen")
@@ -1665,7 +1665,7 @@ class SchatzoekApp:
         """Toont het hoofdmenu."""
         print()
         print(kleur("┌" + "─" * 44 + "┐", "cyan"))
-        print(kleur("│", "cyan") + kleur("     🗺️ SCHATZOEK GAME v2.0", "geel") +
+        print(kleur("│", "cyan") + kleur("     🗺️ SCHATZOEK GAME v2.0", Kleur.GEEL) +
               kleur("              │", "cyan"))
         print(kleur("├" + "─" * 44 + "┤", "cyan"))
 

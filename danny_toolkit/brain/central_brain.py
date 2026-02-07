@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional, Callable
 
 from ..core.config import Config
-from ..core.utils import kleur
+from ..core.utils import kleur, Kleur
 
 from .app_tools import (
     APP_TOOLS,
@@ -78,13 +78,13 @@ class CentralBrain:
         if GROQ_BESCHIKBAAR and Config.has_groq_key():
             self.client = Groq()
             self.ai_provider = "groq"
-            print(kleur("   [OK] Central Brain AI actief (GROQ)", "groen"))
+            print(kleur("   [OK] Central Brain AI actief (GROQ)", Kleur.GROEN))
         elif ANTHROPIC_BESCHIKBAAR and Config.has_anthropic_key():
             self.client = Anthropic()
             self.ai_provider = "anthropic"
-            print(kleur("   [OK] Central Brain AI actief (Anthropic)", "groen"))
+            print(kleur("   [OK] Central Brain AI actief (Anthropic)", Kleur.GROEN))
         else:
-            print(kleur("   [!] Central Brain in offline modus", "geel"))
+            print(kleur("   [!] Central Brain in offline modus", Kleur.GEEL))
 
         # App Registry
         self.app_registry: Dict[str, Any] = {}
@@ -97,7 +97,7 @@ class CentralBrain:
             try:
                 self.unified_memory = UnifiedMemory()
             except Exception as e:
-                print(kleur(f"   [!] Memory init failed: {e}", "geel"))
+                print(kleur(f"   [!] Memory init failed: {e}", Kleur.GEEL))
 
         # Workflow Engine
         self.workflow_engine = WorkflowEngine(
@@ -113,7 +113,7 @@ class CentralBrain:
         # Statistieken
         self.stats = self._laad_stats()
 
-        print(kleur(f"   [OK] {len(self.app_registry)} apps geregistreerd", "groen"))
+        print(kleur(f"   [OK] {len(self.app_registry)} apps geregistreerd", Kleur.GROEN))
 
     def _laad_stats(self) -> dict:
         """Laad statistieken."""
@@ -161,7 +161,7 @@ class CentralBrain:
             self.app_instances[app_naam] = instance
             return instance
         except Exception as e:
-            print(kleur(f"   [!] Kon {app_naam} niet laden: {e}", "rood"))
+            print(kleur(f"   [!] Kon {app_naam} niet laden: {e}", Kleur.ROOD))
             return None
 
     async def _execute_app_action(
@@ -404,7 +404,7 @@ Belangrijke regels:
                         if app_naam and actie_naam:
                             print(kleur(
                                 f"   [TOOL] {app_naam}.{actie_naam}",
-                                "cyaan"
+                                Kleur.CYAAN
                             ))
 
                             result = asyncio.run(
@@ -476,7 +476,7 @@ Belangrijke regels:
                             if app_naam and actie_naam:
                                 print(kleur(
                                     f"   [TOOL] {app_naam}.{actie_naam}",
-                                    "cyaan"
+                                    Kleur.CYAAN
                                 ))
 
                                 result = asyncio.run(
@@ -586,7 +586,7 @@ Belangrijke regels:
         Returns:
             Workflow resultaten
         """
-        print(kleur(f"\n[BRAIN] Starting workflow: {workflow_naam}", "magenta"))
+        print(kleur(f"\n[BRAIN] Starting workflow: {workflow_naam}", Kleur.MAGENTA))
 
         result = asyncio.run(
             self.workflow_engine.run_workflow(workflow_naam, context)
@@ -680,7 +680,7 @@ Belangrijke regels:
     def clear_conversation(self):
         """Wis conversation history."""
         self.conversation_history = []
-        print(kleur("   [OK] Conversatie gewist", "groen"))
+        print(kleur("   [OK] Conversatie gewist", Kleur.GROEN))
 
     def memory_stats(self) -> dict:
         """Haal memory statistieken op."""

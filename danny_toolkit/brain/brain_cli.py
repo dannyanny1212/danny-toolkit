@@ -7,7 +7,7 @@ Interactieve interface om met het AI ecosysteem te communiceren.
 import json
 from datetime import datetime
 
-from ..core.utils import clear_scherm, kleur, fix_encoding
+from ..core.utils import clear_scherm, kleur, Kleur, fix_encoding
 from ..core.config import Config
 
 from .central_brain import CentralBrain
@@ -21,7 +21,7 @@ class BrainCLI:
 
     def __init__(self):
         fix_encoding()
-        print(kleur("\n   Laden van Central Brain...\n", "cyaan"))
+        print(kleur("\n   Laden van Central Brain...\n", Kleur.CYAAN))
         self.brain = CentralBrain()
 
     def _print_header(self, titel: str):
@@ -40,13 +40,13 @@ class BrainCLI:
 ║              C E N T R A L   B R A I N   v1.0                 ║
 ║                                                               ║
 ╚═══════════════════════════════════════════════════════════════╝
-""", "cyaan"))
-        print(kleur(f"  {titel}", "geel"))
+""", Kleur.CYAAN))
+        print(kleur(f"  {titel}", Kleur.GEEL))
         print()
 
     def _print_divider(self):
         """Print scheidingslijn."""
-        print(kleur("  " + "─" * 55, "cyaan"))
+        print(kleur("  " + "─" * 55, Kleur.CYAAN))
 
     def run(self):
         """Start de Brain CLI."""
@@ -55,8 +55,8 @@ class BrainCLI:
 
             # Status
             status = self.brain.get_status()
-            ai_status = kleur("[AI ACTIEF]", "groen") if status["ai_actief"] else kleur("[OFFLINE]", "geel")
-            memory_status = kleur("[MEMORY OK]", "groen") if status["memory_actief"] else kleur("[NO MEM]", "geel")
+            ai_status = kleur("[AI ACTIEF]", Kleur.GROEN) if status["ai_actief"] else kleur("[OFFLINE]", Kleur.GEEL)
+            memory_status = kleur("[MEMORY OK]", Kleur.GROEN) if status["memory_actief"] else kleur("[NO MEM]", Kleur.GEEL)
 
             print(f"  Status: {ai_status} {memory_status}")
             print(f"  Apps: {status['apps_geregistreerd']} | Tools: {status['tools_beschikbaar']} | Workflows: {status['workflows_beschikbaar']}")
@@ -65,7 +65,7 @@ class BrainCLI:
             # Proactieve suggesties
             suggesties = self.brain.get_proactive_suggestions()
             if suggesties:
-                print(kleur("  ★ AANDACHTSPUNTEN", "geel"))
+                print(kleur("  ★ AANDACHTSPUNTEN", Kleur.GEEL))
                 for s in suggesties[:3]:
                     print(f"     • {s}")
                 print()
@@ -73,13 +73,13 @@ class BrainCLI:
             self._print_divider()
 
             # Menu opties
-            print(kleur("  HOOFD FUNCTIES", "geel"))
+            print(kleur("  HOOFD FUNCTIES", Kleur.GEEL))
             print(f"     {kleur('1', 'groen')}. Chat met Brain (Function Calling)")
             print(f"     {kleur('2', 'groen')}. Start Workflow")
             print(f"     {kleur('3', 'groen')}. Quick Actions")
             print()
 
-            print(kleur("  WORKFLOWS", "magenta"))
+            print(kleur("  WORKFLOWS", Kleur.MAGENTA))
             print(f"     {kleur('h', 'groen')}. Health & Life Loop")
             print(f"     {kleur('d', 'groen')}. Deep Work Loop")
             print(f"     {kleur('s', 'groen')}. Second Brain Loop")
@@ -87,7 +87,7 @@ class BrainCLI:
             print(f"     {kleur('e', 'groen')}. Evening Review")
             print()
 
-            print(kleur("  INFO & STATUS", "cyaan"))
+            print(kleur("  INFO & STATUS", Kleur.CYAAN))
             print(f"     {kleur('4', 'groen')}. Bekijk Apps")
             print(f"     {kleur('5', 'groen')}. Memory Status")
             print(f"     {kleur('6', 'groen')}. Brain Statistieken")
@@ -127,13 +127,13 @@ class BrainCLI:
         """Interactieve chat met Central Brain."""
         self._print_header("Chat met Central Brain")
 
-        print(kleur("  Je kunt nu chatten met Central Brain.", "cyaan"))
-        print(kleur("  Brain kan alle apps aansturen via function calling.", "cyaan"))
-        print(kleur("  Typ 'stop' om terug te gaan.\n", "geel"))
+        print(kleur("  Je kunt nu chatten met Central Brain.", Kleur.CYAAN))
+        print(kleur("  Brain kan alle apps aansturen via function calling.", Kleur.CYAAN))
+        print(kleur("  Typ 'stop' om terug te gaan.\n", Kleur.GEEL))
 
         while True:
             try:
-                user_input = input(kleur("  Jij: ", "groen")).strip()
+                user_input = input(kleur("  Jij: ", Kleur.GROEN)).strip()
 
                 if not user_input:
                     continue
@@ -145,11 +145,11 @@ class BrainCLI:
                     self.brain.clear_conversation()
                     continue
 
-                print(kleur("\n  Brain denkt na...\n", "cyaan"))
+                print(kleur("\n  Brain denkt na...\n", Kleur.CYAAN))
 
                 response = self.brain.process_request(user_input)
 
-                print(kleur("  Brain:", "magenta"))
+                print(kleur("  Brain:", Kleur.MAGENTA))
                 # Wrap response
                 for line in response.split("\n"):
                     print(f"    {line}")
@@ -167,7 +167,7 @@ class BrainCLI:
 
         workflows = self.brain.list_workflows()
 
-        print(kleur("  Beschikbare Workflows:\n", "geel"))
+        print(kleur("  Beschikbare Workflows:\n", Kleur.GEEL))
 
         for i, wf in enumerate(workflows, 1):
             print(f"     {kleur(str(i), 'groen')}. {wf['naam']}")
@@ -201,11 +201,11 @@ class BrainCLI:
 
         workflow = SUPER_WORKFLOWS.get(workflow_naam)
         if not workflow:
-            print(kleur(f"  Workflow '{workflow_naam}' niet gevonden.", "rood"))
+            print(kleur(f"  Workflow '{workflow_naam}' niet gevonden.", Kleur.ROOD))
             input("\n  Druk op Enter...")
             return
 
-        print(kleur(f"  {workflow.beschrijving}\n", "cyaan"))
+        print(kleur(f"  {workflow.beschrijving}\n", Kleur.CYAAN))
         print(f"  Apps: {', '.join(workflow.get_required_apps())}")
         print(f"  Stappen: {len(workflow.stappen)}")
         print()
@@ -219,7 +219,7 @@ class BrainCLI:
 
         # Vraag optioneel om context
         context = {}
-        print(kleur("  Optionele context (leeg = skip):", "geel"))
+        print(kleur("  Optionele context (leeg = skip):", Kleur.GEEL))
 
         if workflow_naam == "health_life_loop":
             cals = input("    Verbrande calorieën [auto]: ").strip()
@@ -248,14 +248,14 @@ class BrainCLI:
         self._print_divider()
 
         if result.get("error"):
-            print(kleur(f"  [ERROR] {result['error']}", "rood"))
+            print(kleur(f"  [ERROR] {result['error']}", Kleur.ROOD))
         else:
-            print(kleur("  [OK] Workflow voltooid!", "groen"))
+            print(kleur("  [OK] Workflow voltooid!", Kleur.GROEN))
             print()
 
             # Toon resultaten
             if "results" in result:
-                print(kleur("  Resultaten:", "geel"))
+                print(kleur("  Resultaten:", Kleur.GEEL))
                 for key, value in result["results"].items():
                     if isinstance(value, dict):
                         print(f"    {key}: {json.dumps(value, ensure_ascii=False)[:100]}...")
@@ -268,7 +268,7 @@ class BrainCLI:
         """Snelle acties menu."""
         self._print_header("Quick Actions")
 
-        print(kleur("  Snelle vragen aan Brain:\n", "geel"))
+        print(kleur("  Snelle vragen aan Brain:\n", Kleur.GEEL))
 
         actions = [
             ("Hoe gaat het met mijn fitness?", "fitness_tracker"),
@@ -294,12 +294,12 @@ class BrainCLI:
             idx = int(keuze) - 1
             if 0 <= idx < len(actions):
                 vraag, _ = actions[idx]
-                print(kleur(f"\n  Vraag: {vraag}\n", "cyaan"))
-                print(kleur("  Brain denkt na...\n", "geel"))
+                print(kleur(f"\n  Vraag: {vraag}\n", Kleur.CYAAN))
+                print(kleur("  Brain denkt na...\n", Kleur.GEEL))
 
                 response = self.brain.process_request(vraag)
 
-                print(kleur("  Antwoord:", "magenta"))
+                print(kleur("  Antwoord:", Kleur.MAGENTA))
                 for line in response.split("\n"):
                     print(f"    {line}")
 
@@ -323,7 +323,7 @@ class BrainCLI:
             by_cat[cat].append(app)
 
         for cat, cat_apps in sorted(by_cat.items()):
-            print(kleur(f"  ═══ {cat.upper()} ═══", "geel"))
+            print(kleur(f"  ═══ {cat.upper()} ═══", Kleur.GEEL))
             for app in sorted(cat_apps, key=lambda x: -x["prioriteit"]):
                 prio = "★" * min(app["prioriteit"], 5)
                 print(f"    {app['naam']} {kleur(prio, 'geel')}")
@@ -340,16 +340,16 @@ class BrainCLI:
         stats = self.brain.memory_stats()
 
         if stats.get("status") == "niet_actief":
-            print(kleur("  Memory is niet actief.", "geel"))
+            print(kleur("  Memory is niet actief.", Kleur.GEEL))
         else:
-            print(kleur("  Memory Statistieken:\n", "cyaan"))
+            print(kleur("  Memory Statistieken:\n", Kleur.CYAAN))
             print(f"    Totaal events:    {stats.get('totaal_events', 0)}")
             print(f"    Vector documents: {stats.get('vector_docs', 0)}")
             print(f"    Actieve apps:     {stats.get('apps_actief', 0)}")
 
             per_app = stats.get("per_app", {})
             if per_app:
-                print(kleur("\n  Events per app:", "geel"))
+                print(kleur("\n  Events per app:", Kleur.GEEL))
                 for app, count in sorted(per_app.items(),
                                          key=lambda x: -x[1])[:10]:
                     print(f"    {app}: {count}")
@@ -359,7 +359,7 @@ class BrainCLI:
 
         # Context preview
         if self.brain.unified_memory:
-            print(kleur("\n  Huidige Context:", "magenta"))
+            print(kleur("\n  Huidige Context:", Kleur.MAGENTA))
             context = self.brain.unified_memory.get_user_context()
 
             for key, value in context.items():
@@ -380,7 +380,7 @@ class BrainCLI:
         status = self.brain.get_status()
         stats = status.get("statistieken", {})
 
-        print(kleur("  Systeem Status:\n", "cyaan"))
+        print(kleur("  Systeem Status:\n", Kleur.CYAAN))
         print(f"    Versie:              {status['versie']}")
         print(f"    AI Actief:           {'Ja' if status['ai_actief'] else 'Nee'}")
         print(f"    Memory Actief:       {'Ja' if status['memory_actief'] else 'Nee'}")
@@ -388,7 +388,7 @@ class BrainCLI:
         print(f"    Apps Geladen:        {status['apps_geladen']}")
         print(f"    Tools Beschikbaar:   {status['tools_beschikbaar']}")
 
-        print(kleur("\n  Gebruik Statistieken:\n", "geel"))
+        print(kleur("\n  Gebruik Statistieken:\n", Kleur.GEEL))
         print(f"    Requests Verwerkt:   {stats.get('requests_verwerkt', 0)}")
         print(f"    Tool Calls:          {stats.get('tool_calls', 0)}")
         print(f"    Workflows Uitgevoerd: {stats.get('workflows_uitgevoerd', 0)}")
