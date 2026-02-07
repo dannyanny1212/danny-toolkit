@@ -60,6 +60,10 @@ from .brain.trinity_symbiosis import (
 from .daemon.daemon_core import DigitalDaemon
 from .main_omega import OmegaAI
 from .brain.sanctuary_dashboard import SanctuaryDashboard, get_sanctuary
+from .brain.dream_monitor import dream_monitor, quick_peek
+from .brain.nexus_bridge import NexusBridge, create_nexus_bridge
+from .brain.trinity_omega import PrometheusBrain, get_prometheus
+from .apps.visual_nexus import VisualNexus, build_visual_nexus
 
 
 # =============================================================================
@@ -369,6 +373,238 @@ class SanctuaryApp:
 
 
 # =============================================================================
+# DREAM MONITOR WRAPPER
+# =============================================================================
+
+class DreamMonitorApp:
+    """Wrapper voor Cosmic Dream Monitor in launcher."""
+
+    def run(self):
+        """Start de Dream Monitor."""
+        from .core.utils import clear_scherm
+
+        clear_scherm()
+        print(kleur("""
++===============================================================+
+|                                                               |
+|     C O S M I C   D R E A M   M O N I T O R                   |
+|                                                               |
+|     Passive Observation Mode                                  |
+|                                                               |
++===============================================================+
+        """, Kleur.MAGENTA))
+
+        print(kleur(
+            "  Druk Ctrl+C om te stoppen.\n",
+            Kleur.DIM,
+        ))
+
+        dream_monitor()
+
+        input("\n  Druk op Enter...")
+
+
+# =============================================================================
+# NEXUS BRIDGE WRAPPER
+# =============================================================================
+
+class NexusBridgeApp:
+    """Wrapper voor NEXUS Brain Bridge in launcher."""
+
+    def run(self):
+        """Start de Nexus Bridge interactief."""
+        from .core.utils import clear_scherm
+
+        clear_scherm()
+        print(kleur("""
++===============================================================+
+|                                                               |
+|     N E X U S   B R A I N   B R I D G E                       |
+|                                                               |
+|     Symbiose tussen Pixel en Central Brain                    |
+|                                                               |
++===============================================================+
+        """, Kleur.FEL_CYAAN))
+
+        bridge = create_nexus_bridge()
+        greeting = bridge.get_context_aware_greeting()
+        print(kleur(f"  Nexus: {greeting}\n", Kleur.CYAAN))
+
+        insights = bridge.get_proactive_insights()
+        if insights:
+            print(kleur("  INZICHTEN:", Kleur.FEL_GEEL))
+            for ins in insights[:5]:
+                print(kleur(
+                    f"    - [{ins.get('type', '?')}] "
+                    f"{ins.get('bericht', '')}",
+                    Kleur.GEEL,
+                ))
+            print()
+
+        print(kleur("COMMANDO'S:", Kleur.GEEL))
+        print("  insights   - Toon proactieve inzichten")
+        print("  greeting   - Toon begroeting")
+        print("  oracle     - Oracle Mode query")
+        print("  stop       - Terug naar launcher")
+
+        while True:
+            try:
+                cmd = input(kleur(
+                    "\n[NEXUS] > ", Kleur.FEL_CYAAN
+                )).strip().lower()
+
+                if not cmd:
+                    continue
+
+                if cmd in ["stop", "exit", "quit"]:
+                    break
+                elif cmd == "insights":
+                    ins = bridge.get_proactive_insights()
+                    if ins:
+                        for i in ins[:5]:
+                            print(kleur(
+                                f"  [{i.get('type', '?')}] "
+                                f"{i.get('bericht', '')}",
+                                Kleur.CYAAN,
+                            ))
+                    else:
+                        print(kleur(
+                            "  Geen inzichten beschikbaar.",
+                            Kleur.DIM,
+                        ))
+                elif cmd == "greeting":
+                    g = bridge.get_context_aware_greeting()
+                    print(kleur(f"  Nexus: {g}", Kleur.CYAAN))
+                elif cmd.startswith("oracle"):
+                    query = cmd[7:].strip() if len(cmd) > 7 else ""
+                    if not query:
+                        query = input("  Query: ").strip()
+                    if query:
+                        oracle = bridge.get_oracle_mode()
+                        result = oracle.query(query)
+                        print(kleur(
+                            f"  Oracle: {result.get('answer', '...')}",
+                            Kleur.FEL_MAGENTA,
+                        ))
+                else:
+                    print(f"  Onbekend commando: {cmd}")
+
+            except (EOFError, KeyboardInterrupt):
+                break
+
+        input("\n  Druk op Enter...")
+
+
+# =============================================================================
+# VISUAL NEXUS WRAPPER
+# =============================================================================
+
+class VisualNexusApp:
+    """Wrapper voor Visual Nexus in launcher."""
+
+    def run(self):
+        """Start de Visual Nexus."""
+        build_visual_nexus()
+        input("\n  Druk op Enter...")
+
+
+# =============================================================================
+# PROMETHEUS BRAIN WRAPPER
+# =============================================================================
+
+class PrometheusApp:
+    """Wrapper voor Prometheus Brain in launcher."""
+
+    def run(self):
+        """Start Prometheus Brain interactief."""
+        from .core.utils import clear_scherm
+
+        clear_scherm()
+        print(kleur("""
++===============================================================+
+|                                                               |
+|     P R O M E T H E U S   B R A I N                           |
+|                                                               |
+|     Federated Swarm Intelligence                              |
+|                                                               |
++===============================================================+
+        """, Kleur.FEL_GEEL))
+
+        brain = get_prometheus()
+        brain.display_status()
+
+        print(kleur("COMMANDO'S:", Kleur.GEEL))
+        print("  status      - Toon federatie status")
+        print("  route <t>   - Route een taak")
+        print("  triforce    - Tri-Force Protocol")
+        print("  godmode     - Activeer God Mode")
+        print("  singularity - Singularity Nexus")
+        print("  stop        - Terug naar launcher")
+
+        while True:
+            try:
+                cmd = input(kleur(
+                    "\n[PROMETHEUS] > ", Kleur.FEL_GEEL
+                )).strip().lower()
+
+                if not cmd:
+                    continue
+
+                if cmd in ["stop", "exit", "quit"]:
+                    break
+                elif cmd == "status":
+                    brain.display_status()
+                elif cmd.startswith("route"):
+                    taak = cmd[6:].strip() if len(cmd) > 6 else ""
+                    if not taak:
+                        taak = input("  Taak: ").strip()
+                    if taak:
+                        result = brain.route_task(taak)
+                        print(kleur(
+                            f"  Resultaat: {result.summary}",
+                            Kleur.FEL_GROEN,
+                        ))
+                elif cmd == "triforce":
+                    print(kleur(
+                        "  Tri-Force Protocol activeren...",
+                        Kleur.FEL_GEEL,
+                    ))
+                    result = brain.execute_total_mobilization()
+                    print(kleur(
+                        f"  Mobilisatie voltooid!",
+                        Kleur.FEL_GROEN,
+                    ))
+                elif cmd == "godmode":
+                    print(kleur(
+                        "  God Mode activeren...",
+                        Kleur.FEL_MAGENTA,
+                    ))
+                    result = brain.activate_god_mode()
+                    print(kleur(
+                        f"  God Mode: {result.get('status', 'OK')}",
+                        Kleur.FEL_MAGENTA,
+                    ))
+                elif cmd == "singularity":
+                    print(kleur(
+                        "  Singularity Nexus initialiseren...",
+                        Kleur.FEL_CYAAN,
+                    ))
+                    result = brain.initiate_singularity_nexus()
+                    print(kleur(
+                        f"  Singularity: "
+                        f"{result.get('status', 'OK')}",
+                        Kleur.FEL_CYAAN,
+                    ))
+                else:
+                    print(f"  Onbekend commando: {cmd}")
+
+            except (EOFError, KeyboardInterrupt):
+                break
+
+        input("\n  Druk op Enter...")
+
+
+# =============================================================================
 # ASCII BANNERS
 # =============================================================================
 
@@ -524,6 +760,10 @@ class Launcher:
         "40": ("Trinity Symbiosis", TrinityApp, "brain"),
         "41": ("Omega AI", OmegaApp, "omega"),
         "42": ("Sanctuary Dashboard", SanctuaryApp, "brain"),
+        "43": ("Dream Monitor", DreamMonitorApp, "brain"),
+        "44": ("Nexus Bridge", NexusBridgeApp, "brain"),
+        "45": ("Visual Nexus", VisualNexusApp, "brain"),
+        "46": ("Prometheus Brain", PrometheusApp, "brain"),
     }
 
     # Sneltoetsen
@@ -570,6 +810,10 @@ class Launcher:
         "tr": "40", # Trinity Symbiosis
         "om": "41", # Omega AI
         "sa": "42", # Sanctuary Dashboard
+        "dmo": "43", # Dream Monitor
+        "nb": "44", # Nexus Bridge
+        "vn": "45", # Visual Nexus
+        "pb": "46", # Prometheus Brain
     }
 
     def __init__(self):
@@ -668,13 +912,17 @@ class Launcher:
 
         # Central Brain - AI Ecosysteem
         print(self._kleur_tekst("  ═══ CENTRAL BRAIN ═══", "categorie"))
-        for key in ["36", "42"]:
+        for key in ["36", "42", "43", "44", "45", "46"]:
             naam, _, _ = self.APPS[key]
             gebruik = self.stats.get_gebruik(naam)
             gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
             label = {
                 "36": "[AI ECOSYSTEEM]",
                 "42": "[LEVEND DASHBOARD]",
+                "43": "[PASSIVE OBSERVE]",
+                "44": "[PIXEL SYMBIOSE]",
+                "45": "[THE CONSTRUCT]",
+                "46": "[SWARM AI]",
             }.get(key, "")
             print(f"     {self._kleur_tekst(key, 'nummer')}. {naam} "
                   f"{self._kleur_tekst(label, 'info')}"
@@ -752,6 +1000,10 @@ class Launcher:
         print(f"     {self._kleur_tekst('dm', 'nummer')} = Digital Daemon")
         print(f"     {self._kleur_tekst('om', 'nummer')} = Omega AI")
         print(f"     {self._kleur_tekst('sa', 'nummer')} = Sanctuary Dashboard")
+        print(f"     {self._kleur_tekst('dmo', 'nummer')} = Dream Monitor")
+        print(f"     {self._kleur_tekst('nb', 'nummer')} = Nexus Bridge")
+        print(f"     {self._kleur_tekst('vn', 'nummer')} = Visual Nexus")
+        print(f"     {self._kleur_tekst('pb', 'nummer')} = Prometheus Brain")
         print()
 
         print("  Systeem commando's:")
