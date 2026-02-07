@@ -91,11 +91,11 @@ class DaemonApp:
 |     De Levende Interface - Always-On Symbiotische Entiteit    |
 |                                                               |
 +===============================================================+
-        """, "magenta"))
+        """, Kleur.MAGENTA))
 
         self.daemon.display_status()
 
-        print(kleur("\nCOMMANDO'S:", "geel"))
+        print(kleur("\nCOMMANDO'S:", Kleur.GEEL))
         print("  status      - Toon volledige status")
         print("  feed <n> <x> - Voed nutrient (protein/carbs/vitamins/water/fiber)")
         print("  form <naam> - Forceer avatar vorm")
@@ -104,7 +104,7 @@ class DaemonApp:
 
         while self.daemon.is_alive:
             try:
-                cmd = input(kleur("\n[DAEMON] > ", "magenta")).strip().lower()
+                cmd = input(kleur("\n[DAEMON] > ", Kleur.MAGENTA)).strip().lower()
 
                 if not cmd:
                     continue
@@ -138,12 +138,12 @@ class DaemonApp:
                 elif cmd == "interact" or cmd.startswith("say "):
                     msg = cmd[4:] if cmd.startswith("say ") else input("  Jij: ")
                     response = self.daemon.interact(msg)
-                    print(kleur(f"  {self.daemon.naam}: {response}", "cyaan"))
+                    print(kleur(f"  {self.daemon.naam}: {response}", Kleur.CYAAN))
 
                 else:
                     # Behandel als interactie
                     response = self.daemon.interact(cmd)
-                    print(kleur(f"  {self.daemon.naam}: {response}", "cyaan"))
+                    print(kleur(f"  {self.daemon.naam}: {response}", Kleur.CYAAN))
 
             except (EOFError, KeyboardInterrupt):
                 break
@@ -181,19 +181,19 @@ class TrinityApp:
 
         # Auto-connect als nog niet verbonden
         if TrinityRole.MIND not in self.trinity.members:
-            print(kleur("  Verbinden van Iolaax (MIND)...", "geel"))
+            print(kleur("  Verbinden van Iolaax (MIND)...", Kleur.GEEL))
             connect_iolaax("Iolaax")
         if TrinityRole.SOUL not in self.trinity.members:
-            print(kleur("  Verbinden van Pixel (SOUL)...", "geel"))
+            print(kleur("  Verbinden van Pixel (SOUL)...", Kleur.GEEL))
             connect_pixel("Pixel")
         if TrinityRole.BODY not in self.trinity.members:
-            print(kleur("  Verbinden van Nexus (BODY)...", "geel"))
+            print(kleur("  Verbinden van Nexus (BODY)...", Kleur.GEEL))
             connect_daemon("Nexus")
 
         self.trinity.activate()
         self.trinity.display_status()
 
-        print(kleur("\nCOMMANDO'S:", "geel"))
+        print(kleur("\nCOMMANDO'S:", Kleur.GEEL))
         print("  status      - Toon Trinity status")
         print("  emit <type> - Emit een event (productivity/knowledge/rest)")
         print("  sync        - Forceer synchronisatie")
@@ -202,7 +202,7 @@ class TrinityApp:
 
         while self.trinity.is_active:
             try:
-                cmd = input(kleur("\n[TRINITY] > ", "cyaan")).strip().lower()
+                cmd = input(kleur("\n[TRINITY] > ", Kleur.CYAAN)).strip().lower()
 
                 if not cmd:
                     continue
@@ -223,15 +223,15 @@ class TrinityApp:
                     }
                     if event_type in event_map:
                         emit_trinity_event("daemon", event_map[event_type])
-                        print(kleur(f"  Event '{event_type}' uitgezonden!", "groen"))
+                        print(kleur(f"  Event '{event_type}' uitgezonden!", Kleur.GROEN))
                         self.trinity.display_status()
                     else:
                         print(f"  Kies uit: {list(event_map.keys())}")
 
                 elif cmd == "sync":
-                    print(kleur("  Forceer synchronisatie...", "geel"))
+                    print(kleur("  Forceer synchronisatie...", Kleur.GEEL))
                     self.trinity._sync_member_stats()
-                    print(kleur("  Sync voltooid!", "groen"))
+                    print(kleur("  Sync voltooid!", Kleur.GROEN))
                     self.trinity.display_status()
 
                 elif cmd == "test":
@@ -244,7 +244,7 @@ class TrinityApp:
                 break
 
         self.trinity.deactivate()
-        print(kleur("\n  Trinity gedeactiveerd.", "cyaan"))
+        print(kleur("\n  Trinity gedeactiveerd.", Kleur.CYAAN))
         input("\n  Druk op Enter...")
 
     def _run_test(self):
@@ -252,26 +252,26 @@ class TrinityApp:
         from .core.utils import kleur
         import time
 
-        print(kleur("\n  TRINITY SYMBIOSE TEST", "magenta"))
+        print(kleur("\n  TRINITY SYMBIOSE TEST", Kleur.MAGENTA))
         print("  " + "=" * 40)
 
         print("\n  [1/4] Test Neural Mesh...")
         emit_trinity_event("iolaax", "thought_generated", {"topic": "test"})
-        print(kleur("        OK - Iolaax dacht na", "groen"))
+        print(kleur("        OK - Iolaax dacht na", Kleur.GROEN))
 
         print("  [2/4] Test Emotie Bridge...")
         emit_trinity_event("pixel", "trick_performed", {"trick": "dans"})
-        print(kleur("        OK - Pixel deed een trick", "groen"))
+        print(kleur("        OK - Pixel deed een trick", Kleur.GROEN))
 
         print("  [3/4] Test Energie Pool...")
         emit_trinity_event("daemon", "productivity_boost", {"amount": 5})
-        print(kleur("        OK - Daemon boost energie", "groen"))
+        print(kleur("        OK - Daemon boost energie", Kleur.GROEN))
 
         print("  [4/4] Test Sync...")
         self.trinity._sync_member_stats()
-        print(kleur("        OK - Stats gesynchroniseerd", "groen"))
+        print(kleur("        OK - Stats gesynchroniseerd", Kleur.GROEN))
 
-        print(kleur("\n  Alle tests geslaagd!", "groen"))
+        print(kleur("\n  Alle tests geslaagd!", Kleur.GROEN))
         print(f"  Bond Sterkte: {self.trinity.bond_strength}%")
 
 
