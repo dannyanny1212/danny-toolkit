@@ -11,12 +11,21 @@ Componenten:
 - BrainCLI: Command-line interface
 - TrinitySymbiosis: Verbinding tussen Mind, Soul en Body
 - PrometheusBrain: Federated Swarm Intelligence (17 Nodes)
+- NexusBridge: Verbinding tussen NEXUS (Pixel) en Central Brain
 """
 
 from .central_brain import CentralBrain
 from .unified_memory import UnifiedMemory
 from .workflows import WorkflowEngine, SUPER_WORKFLOWS
 from .brain_cli import BrainCLI
+
+# NEXUS Brain Integration
+from .nexus_bridge import (
+    NexusBridge,
+    NexusOracleMode,
+    create_nexus_bridge,
+    get_nexus_greeting,
+)
 
 # Prometheus Protocol - Federated Swarm Intelligence
 from .trinity_omega import (
@@ -57,6 +66,11 @@ __all__ = [
     "WorkflowEngine",
     "SUPER_WORKFLOWS",
     "BrainCLI",
+    # NEXUS Brain Integration
+    "NexusBridge",
+    "NexusOracleMode",
+    "create_nexus_bridge",
+    "get_nexus_greeting",
     # Legacy Trinity Symbiosis
     "TrinitySymbiosis",
     "TrinityRole",
