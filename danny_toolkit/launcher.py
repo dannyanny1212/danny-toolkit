@@ -58,6 +58,7 @@ from .brain.trinity_symbiosis import (
     connect_iolaax, connect_pixel, connect_daemon, emit_trinity_event
 )
 from .daemon.daemon_core import DigitalDaemon
+from .main_omega import OmegaAI
 
 
 # =============================================================================
@@ -274,6 +275,19 @@ class TrinityApp:
 
 
 # =============================================================================
+# OMEGA AI WRAPPER
+# =============================================================================
+
+class OmegaApp:
+    """Wrapper voor Omega AI in launcher."""
+
+    def run(self):
+        """Start Omega AI."""
+        omega = OmegaAI()
+        omega.start()
+
+
+# =============================================================================
 # ASCII BANNERS
 # =============================================================================
 
@@ -427,6 +441,7 @@ class Launcher:
         "38": ("Legendary Companion", LegendaryCompanionApp, "ai"),
         "39": ("Digital Daemon", DaemonApp, "daemon"),
         "40": ("Trinity Symbiosis", TrinityApp, "brain"),
+        "41": ("Omega AI", OmegaApp, "omega"),
     }
 
     # Sneltoetsen
@@ -468,6 +483,7 @@ class Launcher:
         "lc": "38", # Legendary Companion
         "dm": "39", # Digital Daemon
         "tr": "40", # Trinity Symbiosis
+        "om": "41", # Omega AI
     }
 
     def __init__(self):
@@ -584,6 +600,16 @@ class Launcher:
               f"{self._kleur_tekst(gebruik_str, 'info')}")
         print()
 
+        # Omega AI - Lichaam + Geest
+        print(self._kleur_tekst("  ═══ OMEGA AI ═══", "categorie"))
+        naam, _, _ = self.APPS["41"]
+        gebruik = self.stats.get_gebruik(naam)
+        gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
+        print(f"     {self._kleur_tekst('41', 'nummer')}. {naam} "
+              f"{self._kleur_tekst('[LICHAAM+GEEST]', 'info')}"
+              f"{self._kleur_tekst(gebruik_str, 'info')}")
+        print()
+
         # Systeem opties
         print(self._kleur_tekst("  ═══ SYSTEEM ═══", "categorie"))
         print(f"     {self._kleur_tekst('z', 'nummer')}. Zoeken")
@@ -633,6 +659,7 @@ class Launcher:
         print(f"     {self._kleur_tekst('al', 'nummer')} = Artificial Life")
         print(f"     {self._kleur_tekst('nl', 'nummer')} = NLP Studio")
         print(f"     {self._kleur_tekst('dm', 'nummer')} = Digital Daemon")
+        print(f"     {self._kleur_tekst('om', 'nummer')} = Omega AI")
         print()
 
         print("  Systeem commando's:")
