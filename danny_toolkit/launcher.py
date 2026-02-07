@@ -53,6 +53,97 @@ from .ai.nieuws_agent import NieuwsAgentApp
 from .ai.weer_agent import WeerAgentApp
 from .ai.claude_chat import ClaudeChatApp
 from .brain.brain_cli import BrainCLI
+from .daemon.daemon_core import DigitalDaemon
+
+
+# =============================================================================
+# DAEMON WRAPPER
+# =============================================================================
+
+class DaemonApp:
+    """Wrapper voor Digital Daemon in launcher."""
+
+    def __init__(self):
+        self.daemon = None
+
+    def run(self):
+        """Start de daemon interactief."""
+        from .core.utils import clear_scherm, kleur
+
+        self.daemon = DigitalDaemon("Nexus")
+        self.daemon.awaken()
+
+        import time
+        time.sleep(1)
+
+        clear_scherm()
+        print(kleur("""
++===============================================================+
+|                                                               |
+|     D I G I T A L   D A E M O N                               |
+|                                                               |
+|     De Levende Interface - Always-On Symbiotische Entiteit    |
+|                                                               |
++===============================================================+
+        """, "magenta"))
+
+        self.daemon.display_status()
+
+        print(kleur("\nCOMMANDO'S:", "geel"))
+        print("  status      - Toon volledige status")
+        print("  feed <n> <x> - Voed nutrient (protein/carbs/vitamins/water/fiber)")
+        print("  form <naam> - Forceer avatar vorm")
+        print("  interact    - Praat met daemon")
+        print("  stop        - Daemon laten slapen")
+
+        while self.daemon.is_alive:
+            try:
+                cmd = input(kleur("\n[DAEMON] > ", "magenta")).strip().lower()
+
+                if not cmd:
+                    continue
+
+                if cmd in ["stop", "exit", "quit"]:
+                    break
+
+                elif cmd == "status":
+                    self.daemon.display_status()
+
+                elif cmd.startswith("feed "):
+                    parts = cmd.split()
+                    if len(parts) >= 3:
+                        nutrient = parts[1]
+                        try:
+                            amount = float(parts[2])
+                            self.daemon.feed(nutrient, amount)
+                        except ValueError:
+                            print("Gebruik: feed <nutrient> <amount>")
+
+                elif cmd.startswith("form "):
+                    form_name = cmd.split()[1] if len(cmd.split()) > 1 else ""
+                    from .daemon.limbic_system import AvatarForm
+                    try:
+                        form = AvatarForm(form_name)
+                        self.daemon.force_form(form)
+                        self.daemon.display_status()
+                    except ValueError:
+                        print(f"Onbekende vorm. Kies uit: {[f.value for f in AvatarForm]}")
+
+                elif cmd == "interact" or cmd.startswith("say "):
+                    msg = cmd[4:] if cmd.startswith("say ") else input("  Jij: ")
+                    response = self.daemon.interact(msg)
+                    print(kleur(f"  {self.daemon.naam}: {response}", "cyaan"))
+
+                else:
+                    # Behandel als interactie
+                    response = self.daemon.interact(cmd)
+                    print(kleur(f"  {self.daemon.naam}: {response}", "cyaan"))
+
+            except (EOFError, KeyboardInterrupt):
+                break
+
+        self.daemon.sleep()
+        input("\n  Druk op Enter...")
 
 
 # =============================================================================
@@ -207,6 +298,7 @@ class Launcher:
         "36": ("Central Brain", BrainCLI, "brain"),
         "37": ("Knowledge Companion", KnowledgeCompanionApp, "ai"),
         "38": ("Legendary Companion", LegendaryCompanionApp, "ai"),
+        "39": ("Digital Daemon", DaemonApp, "daemon"),
     }
 
     # Sneltoetsen
@@ -246,6 +338,7 @@ class Launcher:
         "br": "36", # Central Brain
         "kc": "37", # Knowledge Companion
         "lc": "38", # Legendary Companion
+        "dm": "39", # Digital Daemon
     }
 
     def __init__(self):
@@ -352,6 +445,16 @@ class Launcher:
               f"{self._kleur_tekst(gebruik_str, 'info')}")
         print()
 
+        # Digital Daemon - Levende Interface
+        print(self._kleur_tekst("  ═══ DIGITAL DAEMON ═══", "categorie"))
+        naam, _, _ = self.APPS["39"]
+        gebruik = self.stats.get_gebruik(naam)
+        gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
+        print(f"     {self._kleur_tekst('39', 'nummer')}. {naam} "
+              f"{self._kleur_tekst('[ALWAYS-ON]', 'info')}"
+              f"{self._kleur_tekst(gebruik_str, 'info')}")
+        print()
+
         # Systeem opties
         print(self._kleur_tekst("  ═══ SYSTEEM ═══", "categorie"))
         print(f"     {self._kleur_tekst('z', 'nummer')}. Zoeken")
@@ -400,6 +503,7 @@ class Launcher:
         print(f"     {self._kleur_tekst('ro', 'nummer')} = Room Planner")
         print(f"     {self._kleur_tekst('al', 'nummer')} = Artificial Life")
         print(f"     {self._kleur_tekst('nl', 'nummer')} = NLP Studio")
+        print(f"     {self._kleur_tekst('dm', 'nummer')} = Digital Daemon")
         print()
 
         print("  Systeem commando's:")
