@@ -600,7 +600,7 @@ class PrometheusBrain:
         # Geheugen/RAG -> Archivist
         elif any(kw in task_lower for kw in [
             "zoek kennis", "herinner", "rag", "vector",
-            "semantic", "geheugen"
+            "semantic", "geheugen", "knowledge"
         ]):
             return self._assign(
                 CosmicRole.ARCHIVIST, task, priority
