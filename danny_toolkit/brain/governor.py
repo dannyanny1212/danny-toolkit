@@ -199,8 +199,17 @@ class OmegaGovernor:
 
             backup_name = f"{file_path.stem}.1.json"
             backup_path = self._backup_dir / backup_name
-            shutil.copy2(file_path, backup_path)
-            return True
+
+            # Retry bij Windows file lock (WinError 32)
+            for poging in range(3):
+                try:
+                    shutil.copy2(file_path, backup_path)
+                    return True
+                except PermissionError:
+                    if poging < 2:
+                        time.sleep(0.1)
+                    else:
+                        raise
         except Exception as e:
             print(f"  [GOVERNOR] Backup mislukt voor "
                   f"{file_path.name}: {e}")
@@ -323,10 +332,15 @@ class OmegaGovernor:
             old_path = self._backup_dir / old_name
             new_path = self._backup_dir / new_name
 
-            if old_path.exists():
+            if not old_path.exists():
+                continue
+
+            try:
                 if new_path.exists():
                     new_path.unlink()
-                old_path.rename(new_path)
+                shutil.move(str(old_path), str(new_path))
+            except OSError:
+                pass
 
     # =================================================================
     # B. EntityGuard - Iolaax Bescherming
