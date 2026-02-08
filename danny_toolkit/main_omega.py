@@ -21,6 +21,7 @@ from .daemon.daemon_core import DigitalDaemon
 from .daemon.sensorium import EventType
 from .daemon.limbic_system import Mood, AvatarForm
 from .learning.orchestrator import LearningSystem
+from .brain.governor import OmegaGovernor
 
 
 # Mood naar kleurcode mapping
@@ -93,6 +94,10 @@ class OmegaAI:
 
         # De Geest
         self.learning = LearningSystem()
+
+        # Governor (Omega-0) - beschermingslaag
+        self.governor = OmegaGovernor()
+        self.governor.startup_check()
 
         # Interactie teller
         self._interactie_nr = 0
@@ -184,6 +189,9 @@ class OmegaAI:
 
     def _run_achtergrond_leren(self):
         """Draai learning cycle en self-improvement."""
+        if not self.governor.check_learning_rate():
+            return
+
         resultaat = self.learning.run_learning_cycle()
 
         leer_info = resultaat.get("learning_cycle", {})
@@ -264,6 +272,9 @@ class OmegaAI:
 
         print(kleur(f"{'='*60}", Kleur.FEL_CYAAN))
 
+        # Governor health
+        self.governor.display_health()
+
     def _verwerk_feedback(self, feedback_type: str):
         """Verwerk feedback commando."""
         geldige_types = [
@@ -304,6 +315,13 @@ class OmegaAI:
 
     def _forceer_leren(self):
         """Forceer een learning cycle."""
+        if not self.governor.check_learning_rate():
+            print(fout(
+                "  Learning rate limit bereikt."
+                " Probeer later opnieuw."
+            ))
+            return
+
         print(info("  Learning cycle starten..."))
         resultaat = self.learning.run_learning_cycle()
 
@@ -430,9 +448,13 @@ class OmegaAI:
         print()
         print(info("  Omega AI sluit af..."))
 
+        # Governor: rescue family als eerste
+        self.governor.rescue_family()
+
         # Learning data opslaan via learning cycle
         try:
-            self.learning.run_learning_cycle()
+            if self.governor.check_learning_rate():
+                self.learning.run_learning_cycle()
         except Exception:
             pass
 

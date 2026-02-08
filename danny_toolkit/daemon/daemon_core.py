@@ -20,6 +20,7 @@ from ..core.utils import kleur, Kleur
 from .sensorium import Sensorium, EventType, SensoryEvent
 from .limbic_system import LimbicSystem, Mood, EnergyState, AvatarForm
 from .metabolisme import Metabolisme, MetabolicState
+from ..brain.governor import OmegaGovernor
 
 
 @dataclass
@@ -159,6 +160,9 @@ class DigitalDaemon:
         self._last_shadow_check = datetime.now()
         self._shadow_interval = timedelta(minutes=5)
 
+        # Governor (Omega-0) - beschermingslaag
+        self.governor = OmegaGovernor()
+
         # Data file
         self._data_file = Config.APPS_DATA_DIR / "digital_daemon.json"
         self._load_data()
@@ -173,8 +177,16 @@ class DigitalDaemon:
                 with open(self._data_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     self.naam = data.get("naam", self.naam)
-            except:
-                pass
+            except Exception:
+                self.governor.restore_state(self._data_file)
+                try:
+                    with open(
+                        self._data_file, "r", encoding="utf-8"
+                    ) as f:
+                        data = json.load(f)
+                        self.naam = data.get("naam", self.naam)
+                except Exception:
+                    pass
 
     def _save_data(self):
         """Sla daemon data op."""
@@ -219,6 +231,7 @@ class DigitalDaemon:
         if self._main_thread:
             self._main_thread.join(timeout=5)
 
+        self.governor.backup_state(self._data_file)
         self._save_data()
         print(kleur(f"[DAEMON] {self.naam} gaat slapen...", Kleur.CYAAN))
 
