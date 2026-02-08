@@ -179,6 +179,61 @@ class PrometheusBrain:
     SYSTEM_NAME = "COSMIC_OMEGA_V4"
     VERSION = "4.0.0"
 
+    # Domein-keywords voor chain_of_command() multi-domein
+    # detectie. route_task() blijft ongewijzigd.
+    DOMAIN_KEYWORDS = {
+        CosmicRole.CIPHER: [
+            "blockchain", "crypto", "bitcoin", "encrypt",
+            "decrypt", "smart contract", "wallet", "token",
+            "mining", "ethereum", "prijs",
+        ],
+        CosmicRole.VITA: [
+            "health", "hrv", "biohack", "biodata",
+            "biometr", "peptide", "gezondheid", "slaap",
+            "eiwit", "dna", "stress", "hartslag",
+        ],
+        CosmicRole.ECHO: [
+            "wat gebeurde", "historie", "history",
+            "vorige keer", "context", "timeline",
+            "patroon", "trend",
+        ],
+        CosmicRole.SPARK: [
+            "creatief", "idee", "brainstorm", "ascii",
+            "kunst", "innovate", "design",
+        ],
+        CosmicRole.ORACLE: [
+            "zoek op", "search", "fetch", "scrape",
+            "api call", "web",
+        ],
+        CosmicRole.SENTINEL: [
+            "beveilig", "security", "firewall", "audit",
+            "threat",
+        ],
+        CosmicRole.ARCHIVIST: [
+            "zoek kennis", "herinner", "rag", "vector",
+            "semantic", "geheugen", "knowledge",
+        ],
+        CosmicRole.CHRONOS: [
+            "schedule", "cronjob", "timer", "ritme",
+            "planning", "agenda",
+        ],
+        CosmicRole.WEAVER: [
+            "code", "debug", "refactor", "git",
+            "functie", "class", "programmeer",
+        ],
+        CosmicRole.NAVIGATOR: [
+            "strategie", "doel", "manifesto", "roadmap",
+            "lange termijn",
+        ],
+        CosmicRole.ALCHEMIST: [
+            "convert", "transform", "etl", "data",
+        ],
+        CosmicRole.VOID: [
+            "cleanup", "delete", "opruim", "cache",
+            "garbage",
+        ],
+    }
+
     def __init__(self, auto_init: bool = True):
         self.nodes: Dict[CosmicRole, AgentNode] = {}
         self.swarm_metrics = SwarmMetrics()
@@ -1245,6 +1300,200 @@ class PrometheusBrain:
             "cross_domain_sync": True
         }
 
+    # --- CHAIN OF COMMAND ---
+
+    def _detect_domains(self, query: str) -> Dict[CosmicRole, str]:
+        """Detecteer alle relevante domeinen in een query.
+
+        Returns:
+            Dict van CosmicRole -> matched keyword.
+        """
+        query_lower = query.lower()
+        matches = {}
+        for role, keywords in self.DOMAIN_KEYWORDS.items():
+            for kw in keywords:
+                if kw in query_lower:
+                    matches[role] = kw
+                    break
+        return matches
+
+    def chain_of_command(self, query: str) -> dict:
+        """
+        Chain of Command: Multi-Node Orchestratie.
+
+        Laat een complexe vraag door de hele hierarchie vloeien:
+        1. Pixel (Tier 1) ontvangt de vraag
+        2. Iolaax (Tier 1) analyseert en splitst in sub-taken
+        3. Specialists voeren sub-taken uit
+        4. Iolaax aggregeert de resultaten
+        5. Pixel formuleert het eindantwoord
+
+        Args:
+            query: De multi-domein vraag
+
+        Returns:
+            dict met volledige chain of command resultaten
+        """
+        start_time = time.time()
+
+        print()
+        print("=" * 60)
+        print("  CHAIN OF COMMAND - Multi-Node Orchestratie")
+        print("=" * 60)
+        print()
+
+        # --- STAP 1: Pixel ontvangt ---
+        pixel = self.nodes[CosmicRole.PIXEL]
+        print(f"  [STAP 1] {pixel.name} (TRINITY)"
+              f" ontvangt de vraag")
+        print(f"  >>> \"{query}\"")
+        print()
+
+        # --- STAP 2: Iolaax analyseert ---
+        iolaax = self.nodes[CosmicRole.IOLAAX]
+        print(f"  [STAP 2] {iolaax.name} (TRINITY)"
+              f" analyseert en splitst")
+
+        # Probeer AI-analyse, val terug op keywords
+        analyse_prompt = (
+            f"Splits deze vraag in sub-taken per domein. "
+            f"Vraag: {query}"
+        )
+        ai_analyse, _, analyse_status = (
+            self._execute_with_brain(analyse_prompt)
+        )
+
+        # Detecteer domeinen via keywords (altijd, als
+        # fallback of als aanvulling op AI)
+        domains = self._detect_domains(query)
+
+        if analyse_status == "OK" and ai_analyse:
+            print(f"  >>> {iolaax.name} (AI): "
+                  f"{str(ai_analyse)[:80]}...")
+        else:
+            print(f"  >>> {iolaax.name} (keyword-analyse): "
+                  f"{len(domains)} domeinen gedetecteerd")
+
+        if not domains:
+            # Geen domeinen gevonden, stuur naar Weaver
+            domains = {CosmicRole.WEAVER: "default"}
+            print(f"  >>> Geen specifieke domeinen, "
+                  f"fallback naar Weaver")
+
+        for role, keyword in domains.items():
+            node = self.nodes[role]
+            print(f"    - {node.name} ({role.name})"
+                  f" [match: \"{keyword}\"]")
+        print()
+
+        # --- STAP 3: Delegeer sub-taken ---
+        print(f"  [STAP 3] Orchestrator delegeert"
+              f" naar {len(domains)} specialist(en)")
+        print(f"  {'-'*50}")
+
+        sub_taken = []
+        nodes_betrokken = [pixel.name, iolaax.name]
+
+        for role, keyword in domains.items():
+            node = self.nodes[role]
+            sub_taak = (
+                f"[{node.name}] Beantwoord het deel "
+                f"over '{keyword}' van: {query}"
+            )
+            print(f"\n  >>> Delegeer naar {node.name}...")
+            result = self._assign(role, sub_taak,
+                                  TaskPriority.HIGH)
+
+            sub_taken.append({
+                "node": node.name,
+                "role": role.name,
+                "taak": sub_taak,
+                "result": str(result.result)[:200]
+                if result.result else None,
+                "status": result.status,
+                "execution_time": result.execution_time,
+            })
+
+            if node.name not in nodes_betrokken:
+                nodes_betrokken.append(node.name)
+
+        print()
+
+        # --- STAP 4: Iolaax aggregeert ---
+        print(f"  [STAP 4] {iolaax.name} (TRINITY)"
+              f" aggregeert resultaten")
+
+        # Bouw synthese-prompt
+        resultaten_tekst = "\n".join(
+            f"- {st['node']}: {st['result'] or st['status']}"
+            for st in sub_taken
+        )
+        synthese_prompt = (
+            f"Combineer deze resultaten tot een "
+            f"samenhangend antwoord:\n{resultaten_tekst}"
+        )
+
+        synthese, _, synthese_status = (
+            self._execute_with_brain(synthese_prompt)
+        )
+
+        if synthese_status == "OK" and synthese:
+            print(f"  >>> {iolaax.name} synthese: "
+                  f"{str(synthese)[:80]}...")
+        else:
+            # Fallback: voeg resultaten samen
+            synthese = " | ".join(
+                f"{st['node']}: {st['result'] or st['status']}"
+                for st in sub_taken
+            )
+            print(f"  >>> {iolaax.name} synthese"
+                  f" (fallback): {str(synthese)[:80]}...")
+        print()
+
+        # --- STAP 5: Pixel presenteert ---
+        print(f"  [STAP 5] {pixel.name} (TRINITY)"
+              f" formuleert eindantwoord")
+
+        antwoord_prompt = (
+            f"Formuleer een helder eindantwoord "
+            f"op basis van: {synthese}"
+        )
+        antwoord, _, antwoord_status = (
+            self._execute_with_brain(antwoord_prompt)
+        )
+
+        if antwoord_status == "OK" and antwoord:
+            print(f"  >>> {pixel.name}: "
+                  f"{str(antwoord)[:80]}...")
+        else:
+            antwoord = str(synthese)
+            print(f"  >>> {pixel.name} (fallback): "
+                  f"{str(antwoord)[:80]}...")
+
+        execution_time = time.time() - start_time
+
+        # --- SAMENVATTING ---
+        print()
+        print("=" * 60)
+        print("  CHAIN OF COMMAND - VOLTOOID")
+        print("=" * 60)
+        print(f"  Flow: {' -> '.join(nodes_betrokken)}")
+        print(f"  Sub-taken: {len(sub_taken)}")
+        print(f"  Totale tijd: {execution_time:.2f}s")
+        print("=" * 60)
+        print()
+
+        return {
+            "query": query,
+            "ontvanger": pixel.name,
+            "analyse": iolaax.name,
+            "sub_taken": sub_taken,
+            "synthese": str(synthese),
+            "antwoord": str(antwoord),
+            "nodes_betrokken": nodes_betrokken,
+            "execution_time": execution_time,
+        }
+
     # --- PERSISTENCE ---
 
     def _save_state(self):
@@ -1365,6 +1614,15 @@ def main():
     # Test 6: Weaver (Default Code)
     print("\n[TEST 6] Code Task -> Weaver (default)")
     brain.route_task("Schrijf een functie die getallen sorteert")
+
+    # Test 7: Chain of Command - Multi-Domain Query
+    print("\n[TEST 7] Chain of Command - Multi-Domain Query")
+    coc_result = brain.chain_of_command(
+        "Wat is de huidige Bitcoin prijs en wat betekent "
+        "dat voor mijn stress-niveau?"
+    )
+    print(f"  Nodes betrokken: {coc_result['nodes_betrokken']}")
+    print(f"  Sub-taken: {len(coc_result['sub_taken'])}")
 
     # Toon status
     brain.display_status()
