@@ -21,6 +21,8 @@ import json
 import time
 from pathlib import Path
 
+from .governor import OmegaGovernor
+
 
 # --- STAP 1: HET NIEUWE DNA (17 NODES) ---
 
@@ -174,6 +176,22 @@ class PrometheusBrain:
         self.learning = None
         self._task_counter = 0
 
+        # Governor (Omega-0) - Autonome Bewaker
+        self.governor = OmegaGovernor()
+
+        # Batch state persistence (1.2)
+        self._dirty = False
+
+        # O(1) status counters (1.5)
+        self._status_counts = {
+            "TASK_COMPLETED": 0,
+            "TASK_QUEUED": 0,
+            "TASK_FAILED": 0,
+            "SWARM_EXECUTION_COMPLETE": 0,
+            "SWARM_EXECUTION_STARTED": 0,
+            "SWARM_EXECUTION_FAILED": 0,
+        }
+
         if auto_init:
             self._boot_sequence()
 
@@ -183,6 +201,9 @@ class PrometheusBrain:
         print(f"  [{self.SYSTEM_NAME}] INITIATING PROMETHEUS PROTOCOL...")
         print(f"  Version: {self.VERSION}")
         print(f"{'='*60}\n")
+
+        # Governor startup check als eerste stap
+        self.governor.startup_check()
 
         self._awaken_federation()
         self._init_brain()
@@ -386,6 +407,51 @@ class PrometheusBrain:
 
         print(f"    {tier_symbol} [{node.role.name:<12}] {node.name:<15} | Tier: {node.tier.value}")
 
+    # --- BATCH STATE PERSISTENCE (1.2) ---
+
+    def _mark_dirty(self):
+        """Markeer state als gewijzigd, save elke 5 taken."""
+        self._dirty = True
+        if self._task_counter % 5 == 0:
+            self._save_state()
+            self._dirty = False
+
+    def flush(self):
+        """Forceer opslaan als er ongesavede wijzigingen zijn."""
+        if self._dirty:
+            self._save_state()
+            self._dirty = False
+
+    # --- SHARED BRAIN EXECUTION (1.1) ---
+
+    def _execute_with_brain(self, task: str) -> tuple:
+        """Voer taak uit via CentralBrain.
+
+        Governor circuit breaker beschermt tegen API overbelasting.
+
+        Returns:
+            (result, execution_time, status) tuple.
+        """
+        if not self.brain:
+            return None, 0.0, None
+
+        # Governor: circuit breaker check
+        if not self.governor.check_api_health():
+            return (
+                "API tijdelijk geblokkeerd (circuit breaker)",
+                0.0,
+                "FAIL",
+            )
+
+        start = time.time()
+        try:
+            result = self.brain.process_request(task)
+            self.governor.record_api_success()
+            return result, time.time() - start, "OK"
+        except Exception as e:
+            self.governor.record_api_failure()
+            return f"Fout: {e}", time.time() - start, "FAIL"
+
     # --- STAP 3: FEDERATED ROUTING LOGICA ---
 
     def route_task(self, task: str, priority: TaskPriority = TaskPriority.MEDIUM) -> TaskResult:
@@ -465,43 +531,52 @@ class PrometheusBrain:
         print(f"   >>> {governor.name}: 'Releasing The Legion ({self.swarm_metrics.total_agents} agents)'")
         print(f"   >>> Target: {task[:50]}...")
 
-        # Update metrics
-        self.swarm_metrics.active_tasks += 1
         governor.current_task = f"Coordinating: {task[:30]}..."
         legion.current_task = f"Executing: {task[:30]}..."
+        self._task_counter += 1  # Fix 1.3: was missing
 
-        # Echte uitvoering via CentralBrain
-        ai_result = None
-        exec_time = 0.0
-        status = "SWARM_EXECUTION_STARTED"
+        # Try/finally voor swarm metrics (1.4)
+        self.swarm_metrics.active_tasks += 1
+        try:
+            # Gedeelde brain executie (1.1)
+            ai_result, exec_time, brain_status = (
+                self._execute_with_brain(task)
+            )
 
-        if self.brain:
-            start = time.time()
-            try:
-                ai_result = self.brain.process_request(task)
-                exec_time = time.time() - start
+            if brain_status == "OK":
                 status = "SWARM_EXECUTION_COMPLETE"
                 self.swarm_metrics.completed_tasks += 1
                 print(f"   >>> Swarm result ({exec_time:.1f}s): {str(ai_result)[:80]}...")
-            except Exception as e:
-                exec_time = time.time() - start
-                ai_result = f"Fout: {e}"
+            elif brain_status == "FAIL":
                 status = "SWARM_EXECUTION_FAILED"
-                print(f"   >>> Swarm fout: {e}")
+                print(f"   >>> Swarm fout: {ai_result}")
+            else:
+                status = "SWARM_EXECUTION_STARTED"
+        finally:
+            self.swarm_metrics.active_tasks = max(
+                0, self.swarm_metrics.active_tasks - 1
+            )
 
-        self.swarm_metrics.active_tasks = max(0, self.swarm_metrics.active_tasks - 1)
+        governor.current_task = None
+        legion.current_task = None
 
         result = TaskResult(
             task=task,
             assigned_to=f"{governor.name} -> {legion.name}",
             status=status,
-            result=ai_result or {"swarm_size": self.swarm_metrics.total_agents, "protocol": 5},
+            result=ai_result or {
+                "swarm_size": self.swarm_metrics.total_agents,
+                "protocol": 5,
+            },
             execution_time=exec_time,
         )
 
         self.task_history.append(result)
+        self._status_counts[status] = (
+            self._status_counts.get(status, 0) + 1
+        )
         self._track_learning(task, str(ai_result or ""))
-        self._save_state()
+        self._mark_dirty()
 
         return result
 
@@ -516,23 +591,19 @@ class PrometheusBrain:
         agent.tasks_completed += 1
         self._task_counter += 1
 
-        # Echte uitvoering via CentralBrain
-        ai_result = None
-        exec_time = 0.0
-        status = "TASK_QUEUED"
+        # Gedeelde brain executie (1.1)
+        ai_result, exec_time, brain_status = (
+            self._execute_with_brain(task)
+        )
 
-        if self.brain:
-            start = time.time()
-            try:
-                ai_result = self.brain.process_request(task)
-                exec_time = time.time() - start
-                status = "TASK_COMPLETED"
-                print(f"   >>> {agent.name} result ({exec_time:.1f}s): {str(ai_result)[:80]}...")
-            except Exception as e:
-                exec_time = time.time() - start
-                ai_result = f"Fout: {e}"
-                status = "TASK_FAILED"
-                print(f"   >>> {agent.name} fout: {e}")
+        if brain_status == "OK":
+            status = "TASK_COMPLETED"
+            print(f"   >>> {agent.name} result ({exec_time:.1f}s): {str(ai_result)[:80]}...")
+        elif brain_status == "FAIL":
+            status = "TASK_FAILED"
+            print(f"   >>> {agent.name} fout: {ai_result}")
+        else:
+            status = "TASK_QUEUED"
 
         agent.current_task = None
 
@@ -540,18 +611,29 @@ class PrometheusBrain:
             task=task,
             assigned_to=agent.name,
             status=status,
-            result=ai_result or {"agent": agent.name, "role": role.name, "tier": agent.tier.value},
+            result=ai_result or {
+                "agent": agent.name,
+                "role": role.name,
+                "tier": agent.tier.value,
+            },
             execution_time=exec_time,
         )
 
         self.task_history.append(result)
+        self._status_counts[status] = (
+            self._status_counts.get(status, 0) + 1
+        )
         self._track_learning(task, str(ai_result or ""))
-        self._save_state()
+        self._mark_dirty()
 
         return result
 
     def _track_learning(self, task: str, response: str):
-        """Log interactie naar LearningSystem."""
+        """Log interactie naar LearningSystem.
+
+        Governor bewaakt de learning cycle met
+        snapshot/rollback en rate limiting.
+        """
         if not self.learning:
             return
         try:
@@ -559,11 +641,13 @@ class PrometheusBrain:
                 "bron": "prometheus",
                 "systeem": self.SYSTEM_NAME,
             })
-            # Elke 5 taken: run learning cycle
+            # Elke 5 taken: run learning cycle via Governor
             if self._task_counter % 5 == 0:
-                self.learning.improvement.learn()
-        except Exception:
-            pass
+                self.governor.guard_learning_cycle(
+                    self.learning.improvement
+                )
+        except Exception as e:
+            print(f"  [LEARNING] Waarschuwing: {e}")
 
     # --- STAP 4: FEDERATIE STATUS & MANAGEMENT ---
 
@@ -612,10 +696,10 @@ class PrometheusBrain:
                     status_icon = "[X]" if node.status == "ACTIVE" else "[O]" if node.status == "ORACLE_AVATAR" else "[ ]"
                     print(f"  {status_icon} {node.name:<15} | Tasks: {node.tasks_completed}")
 
-        # Task stats
-        completed = sum(1 for t in self.task_history if t.status == "TASK_COMPLETED")
-        queued = sum(1 for t in self.task_history if t.status == "TASK_QUEUED")
-        failed = sum(1 for t in self.task_history if t.status == "TASK_FAILED")
+        # Task stats (O(1) via _status_counts)
+        completed = self._status_counts.get("TASK_COMPLETED", 0)
+        queued = self._status_counts.get("TASK_QUEUED", 0)
+        failed = self._status_counts.get("TASK_FAILED", 0)
         print(f"\n  [TASK HISTORY]")
         print(f"  {'-'*40}")
         print(f"  Voltooid: {completed}")
@@ -631,6 +715,28 @@ class PrometheusBrain:
         print(f"  Indexers: {self.swarm_metrics.indexers}")
         print(f"  TOTAL:    {self.swarm_metrics.total_agents} Micro-Agents")
         print(f"  Completed:{self.swarm_metrics.completed_tasks}")
+
+        # Governor health
+        health = self.governor.get_health_report()
+        cb = health["circuit_breaker"]
+        lr = health["learning"]
+        cb_icon = "[OK]" if cb["status"] == "CLOSED" else "[!!]"
+        lr_icon = (
+            "[OK]" if lr["cycles_this_hour"]
+            < lr["max_per_hour"] else "[!!]"
+        )
+        print(f"\n  [GOVERNOR HEALTH]")
+        print(f"  {'-'*40}")
+        print(f"  {cb_icon} Circuit Breaker: {cb['status']} "
+              f"({cb['failures']}/{cb['max']})")
+        print(f"  {lr_icon} Learning Guard: "
+              f"{lr['cycles_this_hour']}/{lr['max_per_hour']}")
+        state_ok = sum(
+            1 for v in health["state_files"].values() if v
+        )
+        state_total = len(health["state_files"])
+        print(f"  [OK] State Files: "
+              f"{state_ok}/{state_total} geldig")
 
         print(f"\n{'='*60}\n")
 
@@ -725,6 +831,8 @@ class PrometheusBrain:
         print("  >>> GODSPEED <<<")
         print("=" * 70)
 
+        self.flush()
+
         return {
             "status": "ALL FRONTS ENGAGED. GODSPEED.",
             "forces": results,
@@ -810,20 +918,8 @@ class PrometheusBrain:
         print("  >>> DE TOEKOMST WORDT NU GEDOWNLOAD <<<")
         print("=" * 70)
 
-        # Log naar learning
-        if self.learning:
-            try:
-                samenvatting = "; ".join(
-                    f"{r['directive'][:40]}: {r['status']}"
-                    for r in results
-                )
-                self.learning.log_chat(
-                    "SINGULARITY NEXUS: Multi-Dimensional Acquisition",
-                    samenvatting,
-                    {"bron": "prometheus_singularity"},
-                )
-            except Exception:
-                pass
+        # Learning wordt al gelogd via route_task -> _track_learning
+        self.flush()
 
         return {
             "status": "De toekomst wordt nu gedownload.",
@@ -970,20 +1066,13 @@ class PrometheusBrain:
         print("  >>> GEEN WEG TERUG <<<")
         print("=" * 70)
 
-        # Log alles naar learning
-        if self.learning:
-            try:
-                samenvatting = "; ".join(
-                    f"{r['kruispunt']}: {r.get('antwoord', '')[:50]}"
-                    for r in results
-                )
-                self.learning.log_chat(
-                    "GOD MODE: Convergence Matrix",
-                    samenvatting,
-                    {"bron": "prometheus_god_mode"},
-                )
-            except Exception:
-                pass
+        # Learning wordt al gelogd via route_task -> _track_learning
+
+        # Reset Pixel status na God Mode (1.6)
+        if pixel:
+            pixel.status = "ACTIVE"
+
+        self.flush()
 
         return {
             "status": "GOD MODE ACTIVE. SINGULARITY NEXUS OPEN.",
@@ -997,9 +1086,14 @@ class PrometheusBrain:
     # --- PERSISTENCE ---
 
     def _save_state(self):
-        """Sla de huidige staat op."""
+        """Sla de huidige staat op.
+
+        Governor maakt backup VOORDAT er geschreven wordt.
+        """
         try:
             self._data_dir.mkdir(parents=True, exist_ok=True)
+            # Governor: backup voor schrijven
+            self.governor.backup_state(self._state_file)
             state = {
                 "system": self.SYSTEM_NAME,
                 "version": self.VERSION,
@@ -1014,7 +1108,10 @@ class PrometheusBrain:
             print(f"  [WARNING] Could not save state: {e}")
 
     def _load_state(self):
-        """Laad de vorige staat."""
+        """Laad de vorige staat.
+
+        Bij falen probeert Governor te herstellen van backup.
+        """
         try:
             if self._state_file.exists():
                 with open(self._state_file, "r", encoding="utf-8") as f:
@@ -1031,8 +1128,21 @@ class PrometheusBrain:
                     swarm = state.get("swarm", {})
                     self.swarm_metrics.completed_tasks = swarm.get("completed_tasks", 0)
                     print(f"  [RESTORED] Previous state loaded ({state.get('task_count', 0)} historical tasks)")
-        except Exception as e:
-            print(f"  [INFO] Starting fresh (no previous state)")
+        except Exception:
+            # Governor: probeer herstel van backup
+            if self._state_file.exists():
+                print(
+                    "  [WARNING] State corrupt, "
+                    "Governor probeert herstel..."
+                )
+                self.governor.restore_state(
+                    self._state_file
+                )
+            else:
+                print(
+                    "  [INFO] Starting fresh "
+                    "(no previous state)"
+                )
 
 
 # --- SINGLETON ACCESS ---

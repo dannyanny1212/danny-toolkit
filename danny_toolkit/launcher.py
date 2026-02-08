@@ -534,8 +534,21 @@ class PrometheusApp:
 +===============================================================+
         """, Kleur.FEL_GEEL))
 
-        brain = get_prometheus()
+        try:
+            brain = get_prometheus()
+        except Exception as e:
+            print(kleur(
+                f"\n  [FOUT] Prometheus Brain kan niet starten: {e}",
+                Kleur.FEL_ROOD,
+            ))
+            input("\n  Druk op Enter om terug te gaan...")
+            return
+
         brain.display_status()
+
+        # Governor health rapport
+        if hasattr(brain, "governor"):
+            brain.governor.display_health()
 
         print(kleur("COMMANDO'S:", Kleur.GEEL))
         print("  status      - Toon federatie status")
@@ -573,32 +586,50 @@ class PrometheusApp:
                         "  Tri-Force Protocol activeren...",
                         Kleur.FEL_GEEL,
                     ))
-                    result = brain.execute_total_mobilization()
-                    print(kleur(
-                        f"  Mobilisatie voltooid!",
-                        Kleur.FEL_GROEN,
-                    ))
+                    try:
+                        result = brain.execute_total_mobilization()
+                        print(kleur(
+                            f"  Mobilisatie voltooid!",
+                            Kleur.FEL_GROEN,
+                        ))
+                    except Exception as e:
+                        print(kleur(
+                            f"  [FOUT] Tri-Force: {e}",
+                            Kleur.FEL_ROOD,
+                        ))
                 elif cmd == "godmode":
                     print(kleur(
                         "  God Mode activeren...",
                         Kleur.FEL_MAGENTA,
                     ))
-                    result = brain.activate_god_mode()
-                    print(kleur(
-                        f"  God Mode: {result.get('status', 'OK')}",
-                        Kleur.FEL_MAGENTA,
-                    ))
+                    try:
+                        result = brain.activate_god_mode()
+                        print(kleur(
+                            f"  God Mode: {result.get('status', 'OK')}",
+                            Kleur.FEL_MAGENTA,
+                        ))
+                    except Exception as e:
+                        print(kleur(
+                            f"  [FOUT] God Mode: {e}",
+                            Kleur.FEL_ROOD,
+                        ))
                 elif cmd == "singularity":
                     print(kleur(
                         "  Singularity Nexus initialiseren...",
                         Kleur.FEL_CYAAN,
                     ))
-                    result = brain.initiate_singularity_nexus()
-                    print(kleur(
-                        f"  Singularity: "
-                        f"{result.get('status', 'OK')}",
-                        Kleur.FEL_CYAAN,
-                    ))
+                    try:
+                        result = brain.initiate_singularity_nexus()
+                        print(kleur(
+                            f"  Singularity: "
+                            f"{result.get('status', 'OK')}",
+                            Kleur.FEL_CYAAN,
+                        ))
+                    except Exception as e:
+                        print(kleur(
+                            f"  [FOUT] Singularity: {e}",
+                            Kleur.FEL_ROOD,
+                        ))
                 else:
                     print(f"  Onbekend commando: {cmd}")
 
