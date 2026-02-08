@@ -419,8 +419,10 @@ class OmegaGovernor:
         return False
 
     def record_api_failure(self):
-        """Registreer een API failure."""
-        self._api_failures += 1
+        """Registreer een API failure (max MAX_API_FAILURES)."""
+        self._api_failures = min(
+            self._api_failures + 1, self.MAX_API_FAILURES
+        )
         self._last_failure_time = time.time()
         if self._api_failures >= self.MAX_API_FAILURES:
             print(
