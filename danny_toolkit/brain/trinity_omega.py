@@ -969,8 +969,16 @@ class PrometheusBrain:
         )
         print(f"\n  [GOVERNOR HEALTH]")
         print(f"  {'-'*40}")
+        cd = cb.get("countdown", 0)
+        if cd > 0:
+            m = cd // 60
+            s = cd % 60
+            timer = f"{m}m{s:02d}s" if m > 0 else f"{s}s"
+            cb_timer = f" - reset over {timer}"
+        else:
+            cb_timer = ""
         print(f"  {cb_icon} Circuit Breaker: {cb['status']} "
-              f"({cb['failures']}/{cb['max']})")
+              f"({cb['failures']}/{cb['max']}){cb_timer}")
         print(f"  {lr_icon} Learning Guard: "
               f"{lr['cycles_this_hour']}/{lr['max_per_hour']}")
         state_ok = sum(

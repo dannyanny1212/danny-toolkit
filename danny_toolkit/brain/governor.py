@@ -498,6 +498,18 @@ class OmegaGovernor:
     # C. NavigatorGuard - Pixel API Bescherming
     # =================================================================
 
+    def get_breaker_countdown(self) -> int:
+        """Resterende seconden tot circuit breaker reset.
+
+        Returns:
+            0 als breaker dicht is, anders seconden tot reset.
+        """
+        if self._api_failures < self.MAX_API_FAILURES:
+            return 0
+        elapsed = time.time() - self._last_failure_time
+        rest = self.API_COOLDOWN_SECONDS - elapsed
+        return max(0, int(rest))
+
     def check_api_health(self) -> bool:
         """Check of API calls toegestaan zijn (circuit breaker).
 
@@ -517,10 +529,17 @@ class OmegaGovernor:
             # Half-open: laat 1 poging toe
             return True
 
+        rest = int(self.API_COOLDOWN_SECONDS - elapsed)
+        minuten = rest // 60
+        seconden = rest % 60
+        if minuten > 0:
+            timer = f"{minuten}m{seconden:02d}s"
+        else:
+            timer = f"{seconden}s"
+
         print(
-            f"  [GOVERNOR] API circuit breaker ACTIEF "
-            f"({self._api_failures} failures, "
-            f"wacht {self.API_COOLDOWN_SECONDS - elapsed:.0f}s)"
+            f"  [GOVERNOR] Circuit breaker ACTIEF "
+            f"- reset over {timer}"
         )
         return False
 
@@ -686,6 +705,7 @@ class OmegaGovernor:
             "circuit_breaker": {
                 "failures": self._api_failures,
                 "max": self.MAX_API_FAILURES,
+                "countdown": self.get_breaker_countdown(),
                 "status": (
                     "OPEN"
                     if self._api_failures >= self.MAX_API_FAILURES
@@ -730,6 +750,14 @@ class OmegaGovernor:
         print(
             f"      Failures: {cb['failures']}/{cb['max']}"
         )
+        if cb["countdown"] > 0:
+            m = cb["countdown"] // 60
+            s = cb["countdown"] % 60
+            if m > 0:
+                timer = f"{m}m{s:02d}s"
+            else:
+                timer = f"{s}s"
+            print(f"      Reset over: {timer}")
 
         # Learning
         lr = rapport["learning"]
