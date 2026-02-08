@@ -58,6 +58,33 @@ class OmegaGovernor:
         self._learning_cycles_this_hour = 0
         self._hour_start = time.time()
 
+    def to_dict(self) -> dict:
+        """Serialiseer Governor state voor persistence."""
+        return {
+            "api_failures": self._api_failures,
+            "last_failure_time": self._last_failure_time,
+            "learning_cycles_this_hour":
+                self._learning_cycles_this_hour,
+            "hour_start": self._hour_start,
+        }
+
+    def from_dict(self, data: dict):
+        """Herstel Governor state van opgeslagen data."""
+        self._api_failures = data.get("api_failures", 0)
+        self._last_failure_time = data.get(
+            "last_failure_time", 0.0
+        )
+        self._learning_cycles_this_hour = data.get(
+            "learning_cycles_this_hour", 0
+        )
+        saved_hour = data.get("hour_start", 0.0)
+        # Reset als het langer dan een uur geleden is
+        if time.time() - saved_hour > 3600:
+            self._learning_cycles_this_hour = 0
+            self._hour_start = time.time()
+        else:
+            self._hour_start = saved_hour
+
     # =================================================================
     # A. StateGuard - Data Rescue Protocol
     # =================================================================

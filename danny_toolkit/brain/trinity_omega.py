@@ -509,8 +509,14 @@ class PrometheusBrain:
         start = time.time()
         try:
             result = self.brain.process_request(task)
+            elapsed = time.time() - start
+            # Check of resultaat een foutmelding bevat
+            if (isinstance(result, str)
+                    and "fout opgetreden" in result.lower()):
+                self.governor.record_api_failure()
+                return result, elapsed, "FAIL"
             self.governor.record_api_success()
-            return result, time.time() - start, "OK"
+            return result, elapsed, "OK"
         except Exception as e:
             self.governor.record_api_failure()
             return f"Fout: {e}", time.time() - start, "FAIL"
@@ -1253,7 +1259,8 @@ class PrometheusBrain:
                 "last_update": datetime.now().isoformat(),
                 "nodes": {role.name: node.to_dict() for role, node in self.nodes.items()},
                 "swarm": self.swarm_metrics.to_dict(),
-                "task_count": len(self.task_history)
+                "task_count": len(self.task_history),
+                "governor": self.governor.to_dict(),
             }
             with open(self._state_file, "w", encoding="utf-8") as f:
                 json.dump(state, f, indent=2, ensure_ascii=False)
@@ -1280,6 +1287,10 @@ class PrometheusBrain:
                     # Restore swarm metrics
                     swarm = state.get("swarm", {})
                     self.swarm_metrics.completed_tasks = swarm.get("completed_tasks", 0)
+                    # Restore Governor state
+                    governor_data = state.get("governor", {})
+                    if governor_data:
+                        self.governor.from_dict(governor_data)
                     print(f"  [RESTORED] Previous state loaded ({state.get('task_count', 0)} historical tasks)")
         except Exception:
             # Governor: probeer herstel van backup
