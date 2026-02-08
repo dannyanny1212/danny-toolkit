@@ -640,6 +640,33 @@ class PrometheusApp:
 
 
 # =============================================================================
+# PULSE PROTOCOL WRAPPER
+# =============================================================================
+
+class PulseProtocolApp:
+    """Wrapper voor Pulse Protocol in launcher."""
+
+    def run(self):
+        """Start Pulse Protocol simulatie."""
+        from .quests.pulse_protocol import PulseProtocol
+
+        print(kleur(
+            "\n  QUEST IX: THE PULSE PROTOCOL\n"
+            "  Bio-Digital Bridge: Hart -> Crypto\n",
+            Kleur.FEL_GROEN,
+        ))
+        try:
+            protocol = PulseProtocol()
+            protocol.run_simulation()
+        except Exception as e:
+            print(kleur(
+                f"\n  [FOUT] Pulse Protocol: {e}",
+                Kleur.FEL_ROOD,
+            ))
+        input("\n  Druk op Enter om terug te gaan...")
+
+
+# =============================================================================
 # ASCII BANNERS
 # =============================================================================
 
@@ -799,6 +826,7 @@ class Launcher:
         "44": ("Nexus Bridge", NexusBridgeApp, "brain"),
         "45": ("Visual Nexus", VisualNexusApp, "brain"),
         "46": ("Prometheus Brain", PrometheusApp, "brain"),
+        "47": ("Pulse Protocol", PulseProtocolApp, "omega"),
     }
 
     # Sneltoetsen
@@ -849,6 +877,7 @@ class Launcher:
         "nb": "44", # Nexus Bridge
         "vn": "45", # Visual Nexus
         "pb": "46", # Prometheus Brain
+        "pp": "47", # Pulse Protocol
     }
 
     def __init__(self):
@@ -982,6 +1011,12 @@ class Launcher:
         print(f"     {self._kleur_tekst('41', 'nummer')}. {naam} "
               f"{self._kleur_tekst('[LICHAAM+GEEST]', 'info')}"
               f"{self._kleur_tekst(gebruik_str, 'info')}")
+        naam, _, _ = self.APPS["47"]
+        gebruik = self.stats.get_gebruik(naam)
+        gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
+        print(f"     {self._kleur_tekst('47', 'nummer')}. {naam} "
+              f"{self._kleur_tekst('[BIO-WALLET]', 'info')}"
+              f"{self._kleur_tekst(gebruik_str, 'info')}")
         print()
 
         # Systeem opties
@@ -1039,6 +1074,7 @@ class Launcher:
         print(f"     {self._kleur_tekst('nb', 'nummer')} = Nexus Bridge")
         print(f"     {self._kleur_tekst('vn', 'nummer')} = Visual Nexus")
         print(f"     {self._kleur_tekst('pb', 'nummer')} = Prometheus Brain")
+        print(f"     {self._kleur_tekst('pp', 'nummer')} = Pulse Protocol")
         print()
 
         print("  Systeem commando's:")

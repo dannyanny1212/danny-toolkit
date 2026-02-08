@@ -56,6 +56,7 @@ Commando's:
   leer      - Forceer een learning cycle
   feedback  - Geef feedback (excellent/good/ok/bad/wrong)
   avatar    - Toon ASCII avatar
+  pulse     - Activeer Bio-Wallet (Quest IX)
   help      - Toon dit menu
   slaap     - Opslaan en afsluiten
   exit      - Opslaan en afsluiten
@@ -349,6 +350,18 @@ class OmegaAI:
             importance=0.5,
         )
 
+    def _run_pulse_protocol(self):
+        """Activeer Quest IX: The Pulse Protocol."""
+        from .quests.pulse_protocol import PulseProtocol
+
+        print(kleur(
+            "\n  [VITA] Bio-Wallet activeren...\n",
+            Kleur.FEL_GROEN,
+        ))
+        protocol = PulseProtocol()
+        protocol.run_simulation()
+        print()
+
     def start(self):
         """Start de Omega interactieve loop."""
         fix_encoding()
@@ -425,6 +438,9 @@ class OmegaAI:
                         mood, Kleur.WIT
                     )
                     print(kleur(avatar, kleur_code))
+
+                elif commando == "pulse":
+                    self._run_pulse_protocol()
 
                 elif commando == "help":
                     print(info(HELP_TEKST))
