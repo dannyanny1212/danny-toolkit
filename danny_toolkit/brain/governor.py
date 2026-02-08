@@ -431,10 +431,17 @@ class OmegaGovernor:
             )
 
     def record_api_success(self):
-        """Registreer een API succes (reset circuit breaker)."""
-        if self._api_failures >= self.MAX_API_FAILURES:
-            print("  [GOVERNOR] Circuit breaker gereset")
-        self._api_failures = 0
+        """Registreer een API succes (geleidelijke reset)."""
+        if self._api_failures > 0:
+            self._api_failures -= 1
+            if self._api_failures == 0:
+                print("  [GOVERNOR] Circuit breaker gereset")
+            else:
+                print(
+                    f"  [GOVERNOR] Circuit breaker herstel "
+                    f"({self._api_failures}/"
+                    f"{self.MAX_API_FAILURES})"
+                )
 
     def trim_conversation(
         self, history: list
