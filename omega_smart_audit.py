@@ -3,13 +3,18 @@ import sys
 import time
 from pathlib import Path
 
+# Windows encoding fix
+if os.name == "nt":
+    os.system("")  # Enable ANSI on Windows
+    sys.stdout.reconfigure(encoding="utf-8")
+
 # Probeer rich te laden
 try:
     from rich.console import Console
     from rich.table import Table
     from rich.progress import track
     from rich.panel import Panel
-    console = Console()
+    console = Console(force_terminal=True)
     RICH_AVAILABLE = True
 except ImportError:
     print("TIP: Installeer 'rich' (pip install rich)")
