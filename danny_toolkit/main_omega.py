@@ -57,6 +57,8 @@ Commando's:
   feedback  - Geef feedback (excellent/good/ok/bad/wrong)
   avatar    - Toon ASCII avatar
   pulse     - Activeer Bio-Wallet (Quest IX)
+  spreek    - Laat Pixel spreken (Quest X)
+  voice     - Voice status/on/off/demo
   help      - Toon dit menu
   slaap     - Opslaan en afsluiten
   exit      - Opslaan en afsluiten
@@ -103,6 +105,10 @@ class OmegaAI:
         # Interactie teller
         self._interactie_nr = 0
 
+        # Quest X: Voice Protocol
+        self._voice = None       # Lazy init
+        self._voice_aan = False  # Voice toggle
+
         # Daemon berichten opvangen
         self.daemon.register_message_callback(
             self._on_daemon_bericht
@@ -115,6 +121,13 @@ class OmegaAI:
             ai_response=bericht.text,
             context={"bron": "daemon", "prioriteit": bericht.priority},
         )
+
+    def _get_voice(self):
+        """Lazy-init voice protocol."""
+        if self._voice is None:
+            from .quests.voice_protocol import VoiceProtocol
+            self._voice = VoiceProtocol()
+        return self._voice
 
     def _get_mood(self) -> Mood:
         """Haal huidige mood op uit het limbic system."""
@@ -442,6 +455,65 @@ class OmegaAI:
                 elif commando == "pulse":
                     self._run_pulse_protocol()
 
+                elif commando.startswith("spreek"):
+                    tekst = commando[7:].strip()
+                    if not tekst:
+                        try:
+                            tekst = input("  Tekst: ").strip()
+                        except EOFError:
+                            tekst = ""
+                    if tekst:
+                        voice = self._get_voice()
+                        mood = self._get_mood()
+                        voice.speak(tekst, mood)
+                    else:
+                        print(info(
+                            "  Gebruik: spreek <tekst>"
+                        ))
+
+                elif commando.startswith("voice"):
+                    arg = commando[6:].strip()
+                    if arg == "on":
+                        self._voice_aan = True
+                        print(succes(
+                            "  Voice ingeschakeld!"
+                        ))
+                    elif arg == "off":
+                        self._voice_aan = False
+                        print(info(
+                            "  Voice uitgeschakeld."
+                        ))
+                    elif arg == "demo":
+                        self._get_voice().run_simulation()
+                    else:
+                        voice = self._get_voice()
+                        status = voice.get_status()
+                        print(kleur(
+                            "\n  QUEST X: THE VOICE",
+                            Kleur.FEL_MAGENTA,
+                        ))
+                        print(kleur(
+                            f"  Backend:  "
+                            f"{status['active_backend']}",
+                            Kleur.CYAAN,
+                        ))
+                        print(kleur(
+                            f"  Voice:    "
+                            f"{'AAN' if self._voice_aan else 'UIT'}",
+                            Kleur.CYAAN,
+                        ))
+                        print(kleur(
+                            f"  Taal:     "
+                            f"{status['preferred_voice']}",
+                            Kleur.CYAAN,
+                        ))
+                        print(info(
+                            "\n  voice on   - Zet voice aan"
+                            "\n  voice off  - Zet voice uit"
+                            "\n  voice demo - Draai simulatie"
+                        ))
+                        print()
+
                 elif commando == "help":
                     print(info(HELP_TEKST))
 
@@ -455,6 +527,10 @@ class OmegaAI:
                         f"\n  {naam}: {response}\n",
                         Kleur.FEL_CYAAN,
                     ))
+                    if self._voice_aan:
+                        self._get_voice().speak(
+                            response, self._get_mood()
+                        )
 
         except KeyboardInterrupt:
             self.stop()

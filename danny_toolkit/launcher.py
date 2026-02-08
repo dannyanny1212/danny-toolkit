@@ -643,6 +643,29 @@ class PrometheusApp:
 # PULSE PROTOCOL WRAPPER
 # =============================================================================
 
+class VoiceProtocolApp:
+    """Wrapper voor Voice Protocol in launcher."""
+
+    def run(self):
+        """Start Voice Protocol simulatie."""
+        from .quests.voice_protocol import VoiceProtocol
+
+        print(kleur(
+            "\n  QUEST X: THE VOICE\n"
+            "  De Stem van God - Pixel Spreekt\n",
+            Kleur.FEL_MAGENTA,
+        ))
+        try:
+            protocol = VoiceProtocol()
+            protocol.run_simulation()
+        except Exception as e:
+            print(kleur(
+                f"\n  [FOUT] Voice Protocol: {e}",
+                Kleur.FEL_ROOD,
+            ))
+        input("\n  Druk op Enter om terug te gaan...")
+
+
 class PulseProtocolApp:
     """Wrapper voor Pulse Protocol in launcher."""
 
@@ -827,6 +850,7 @@ class Launcher:
         "45": ("Visual Nexus", VisualNexusApp, "brain"),
         "46": ("Prometheus Brain", PrometheusApp, "brain"),
         "47": ("Pulse Protocol", PulseProtocolApp, "omega"),
+        "48": ("Voice Protocol", VoiceProtocolApp, "omega"),
     }
 
     # Sneltoetsen
@@ -878,6 +902,7 @@ class Launcher:
         "vn": "45", # Visual Nexus
         "pb": "46", # Prometheus Brain
         "pp": "47", # Pulse Protocol
+        "vo": "48", # Voice Protocol
     }
 
     def __init__(self):
@@ -1017,6 +1042,12 @@ class Launcher:
         print(f"     {self._kleur_tekst('47', 'nummer')}. {naam} "
               f"{self._kleur_tekst('[BIO-WALLET]', 'info')}"
               f"{self._kleur_tekst(gebruik_str, 'info')}")
+        naam, _, _ = self.APPS["48"]
+        gebruik = self.stats.get_gebruik(naam)
+        gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
+        print(f"     {self._kleur_tekst('48', 'nummer')}. {naam} "
+              f"{self._kleur_tekst('[THE VOICE]', 'info')}"
+              f"{self._kleur_tekst(gebruik_str, 'info')}")
         print()
 
         # Systeem opties
@@ -1075,6 +1106,7 @@ class Launcher:
         print(f"     {self._kleur_tekst('vn', 'nummer')} = Visual Nexus")
         print(f"     {self._kleur_tekst('pb', 'nummer')} = Prometheus Brain")
         print(f"     {self._kleur_tekst('pp', 'nummer')} = Pulse Protocol")
+        print(f"     {self._kleur_tekst('vo', 'nummer')} = Voice Protocol")
         print()
 
         print("  Systeem commando's:")
