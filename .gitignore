@@ -37,6 +37,12 @@ data/brain/
 data/brain_memory/
 data/*_vectors.json
 
+# Claude Code
+.claude/
+
+# Governor backups (runtime data)
+data/backups/
+
 # Misc
 nul
 
