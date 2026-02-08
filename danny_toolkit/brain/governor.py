@@ -293,6 +293,31 @@ class OmegaGovernor:
         self._learning_cycles_this_hour += 1
         return True
 
+    def check_learning_rate(self) -> bool:
+        """Check of een learning cycle toegestaan is.
+
+        Gebruik dit als de caller zelf learn() aanroept.
+        Doet ALLEEN de rate check + teller update.
+
+        Returns:
+            True als cycle toegestaan is.
+        """
+        now = time.time()
+        if now - self._hour_start > 3600:
+            self._learning_cycles_this_hour = 0
+            self._hour_start = now
+
+        if (self._learning_cycles_this_hour
+                >= self.MAX_LEARNING_CYCLES_PER_HOUR):
+            print(
+                "  [GOVERNOR] Learning rate limit bereikt "
+                f"({self.MAX_LEARNING_CYCLES_PER_HOUR}/uur)"
+            )
+            return False
+
+        self._learning_cycles_this_hour += 1
+        return True
+
     def check_memory_size(self, memory) -> bool:
         """Controleer geheugengebruik.
 
@@ -330,7 +355,7 @@ class OmegaGovernor:
         if hasattr(node, "status") and node.status == "DISABLED":
             node.status = "ACTIVE"
             print(
-                "  [GOVERNOR] ENTITY beschermd: "
+                "  [GOVERNOR] IOLAAX beschermd: "
                 "status hersteld naar ACTIVE"
             )
             return True
@@ -520,7 +545,10 @@ class OmegaGovernor:
                 "failures": self._api_failures,
                 "max": self.MAX_API_FAILURES,
                 "status": (
-                    "OPEN" if not self.check_api_health()
+                    "OPEN"
+                    if self._api_failures >= self.MAX_API_FAILURES
+                    and time.time() - self._last_failure_time
+                    < self.API_COOLDOWN_SECONDS
                     else "CLOSED"
                 ),
             },
