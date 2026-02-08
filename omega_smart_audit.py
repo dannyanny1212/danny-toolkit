@@ -105,6 +105,12 @@ PILLARS = [
         "target": "dialogue_protocol.py",
         "desc": "Pixel Converseert - Spraakdialoog"
     },
+    {
+        "id": "XIII",
+        "name": "THE WILL",
+        "target": "will_protocol.py",
+        "desc": "Autonome Beslissingen"
+    },
 ]
 
 def run_smart_audit():

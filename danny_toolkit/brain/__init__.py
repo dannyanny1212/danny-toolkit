@@ -83,7 +83,13 @@ from .trinity_symbiosis import (
     emit_trinity_event,
 )
 
+# Visual Nexus
+from .visual_nexus import VisualNexus, build_visual_nexus
+
 __all__ = [
+    # Visual Nexus
+    "VisualNexus",
+    "build_visual_nexus",
     # Central Brain
     "CentralBrain",
     "UnifiedMemory",

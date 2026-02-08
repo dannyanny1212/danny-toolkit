@@ -29,11 +29,11 @@ from .apps.unit_converter import UnitConverterApp
 from .apps.agenda_planner import AgendaPlannerApp
 from .apps.mood_tracker import MoodTrackerApp
 from .apps.citaten_generator import CitatenGeneratorApp
-from .apps.vector_studio import VectorStudioApp
+from .ai.vector_studio import VectorStudioApp
 from .apps.goals_tracker import GoalsTrackerApp
 from .apps.room_planner import RoomPlannerApp
-from .apps.artificial_life import ArtificialLifeApp
-from .apps.nlp_studio import NLPStudioApp
+from .ai.artificial_life import ArtificialLifeApp
+from .ai.nlp_studio import NLPStudioApp
 from .apps.music_composer import MusicComposerApp
 from .apps.recipe_generator import RecipeGeneratorApp
 from .apps.fitness_tracker import FitnessTrackerApp
@@ -42,10 +42,10 @@ from .apps.code_snippets import CodeSnippetsApp
 from .apps.language_tutor import LanguageTutorApp
 from .apps.decision_maker import DecisionMakerApp
 from .apps.time_capsule import TimeCapsuleApp
-from .apps.advanced_questions import AdvancedQuestionsApp
-from .apps.ml_studio import MLStudioApp
-from .apps.knowledge_companion import KnowledgeCompanionApp
-from .apps.legendary_companion import LegendaryCompanionApp
+from .ai.advanced_questions import AdvancedQuestionsApp
+from .ai.ml_studio import MLStudioApp
+from .ai.knowledge_companion import KnowledgeCompanionApp
+from .ai.legendary_companion import LegendaryCompanionApp
 
 from .ai.mini_rag import MiniRAG
 from .ai.production_rag import ProductionRAG
@@ -66,7 +66,7 @@ from .brain.nexus_bridge import (
     get_nexus_greeting, NexusOracleMode,
 )
 from .brain.trinity_omega import PrometheusBrain, get_prometheus
-from .apps.visual_nexus import VisualNexus, build_visual_nexus
+from .brain.visual_nexus import VisualNexus, build_visual_nexus
 
 
 # =============================================================================
@@ -709,6 +709,28 @@ class DialogueProtocolApp:
         input("\n  Druk op Enter om terug te gaan...")
 
 
+class WillProtocolApp:
+    """Wrapper voor Will Protocol in launcher."""
+
+    def run(self):
+        from .quests.will_protocol import WillProtocol
+
+        print(kleur(
+            "\n  QUEST XIII: THE WILL\n"
+            "  Pixel Handelt - Autonome Beslissingen\n",
+            Kleur.FEL_MAGENTA,
+        ))
+        try:
+            protocol = WillProtocol()
+            protocol.run_simulation()
+        except Exception as e:
+            print(kleur(
+                f"\n  [FOUT] Will Protocol: {e}",
+                Kleur.FEL_ROOD,
+            ))
+        input("\n  Druk op Enter om terug te gaan...")
+
+
 class PulseProtocolApp:
     """Wrapper voor Pulse Protocol in launcher."""
 
@@ -896,6 +918,7 @@ class Launcher:
         "48": ("Voice Protocol", VoiceProtocolApp, "omega"),
         "49": ("Listener Protocol", ListenerProtocolApp, "omega"),
         "50": ("Dialogue Protocol", DialogueProtocolApp, "omega"),
+        "51": ("Will Protocol", WillProtocolApp, "omega"),
     }
 
     # Sneltoetsen
@@ -950,6 +973,7 @@ class Launcher:
         "vo": "48", # Voice Protocol
         "li": "49", # Listener Protocol
         "di": "50", # Dialogue Protocol
+        "wi": "51", # Will Protocol
     }
 
     def __init__(self):
@@ -1107,6 +1131,12 @@ class Launcher:
         print(f"     {self._kleur_tekst('50', 'nummer')}. {naam} "
               f"{self._kleur_tekst('[THE DIALOGUE]', 'info')}"
               f"{self._kleur_tekst(gebruik_str, 'info')}")
+        naam, _, _ = self.APPS["51"]
+        gebruik = self.stats.get_gebruik(naam)
+        gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
+        print(f"     {self._kleur_tekst('51', 'nummer')}. {naam} "
+              f"{self._kleur_tekst('[THE WILL]', 'info')}"
+              f"{self._kleur_tekst(gebruik_str, 'info')}")
         print()
 
         # Systeem opties
@@ -1168,6 +1198,7 @@ class Launcher:
         print(f"     {self._kleur_tekst('vo', 'nummer')} = Voice Protocol")
         print(f"     {self._kleur_tekst('li', 'nummer')} = Listener Protocol")
         print(f"     {self._kleur_tekst('di', 'nummer')} = Dialogue Protocol")
+        print(f"     {self._kleur_tekst('wi', 'nummer')} = Will Protocol")
         print()
 
         print("  Systeem commando's:")

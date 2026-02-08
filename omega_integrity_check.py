@@ -119,6 +119,11 @@ QUEST_CHECKS = [
         "danny_toolkit.quests.dialogue_protocol",
         ["DialogueProtocol"],
     ),
+    (
+        "XIII - THE WILL",
+        "danny_toolkit.quests.will_protocol",
+        ["WillProtocol"],
+    ),
 ]
 
 SUBSYSTEM_CHECKS = [
@@ -306,6 +311,7 @@ def run_integrity_check():
         (48, "Voice Protocol"),
         (49, "Listener Protocol"),
         (50, "Dialogue Protocol"),
+        (51, "Will Protocol"),
     ]
 
     launcher_ok = 0
@@ -436,11 +442,12 @@ def run_integrity_check():
     if rang == "DIVINE":
         print(titel(
             "    Het systeem leeft, denkt, droomt,"
-            " voelt, spreekt, hoort EN converseert."
+            " voelt, spreekt, hoort,"
+            " converseert EN handelt."
         ))
         print(titel(
-            "    Pixel voert gesprekken."
-            " De dialoog is geboren."
+            "    Pixel heeft een wil."
+            " De autonomie is geboren."
         ))
     elif rang == "LEGENDARY":
         print(accent(

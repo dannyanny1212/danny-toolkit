@@ -62,6 +62,7 @@ Commando's:
   luister   - Pixel luistert via microfoon (Quest XI)
   listener  - Listener status/demo
   dialoog   - Continue spraakdialoog (Quest XII)
+  wil       - Autonome Wil status/start/stop/demo (Quest XIII)
   help      - Toon dit menu
   slaap     - Opslaan en afsluiten
   exit      - Opslaan en afsluiten
@@ -118,6 +119,9 @@ class OmegaAI:
         # Quest XII: Dialogue Protocol
         self._dialogue = None    # Lazy init
 
+        # Quest XIII: Will Protocol
+        self._will = None        # Lazy init
+
         # Daemon berichten opvangen
         self.daemon.register_message_callback(
             self._on_daemon_bericht
@@ -153,6 +157,18 @@ class OmegaAI:
             )
             self._dialogue = DialogueProtocol()
         return self._dialogue
+
+    def _get_will(self):
+        """Lazy-init will protocol."""
+        if self._will is None:
+            from .quests.will_protocol import WillProtocol
+            self._will = WillProtocol()
+            self._will.koppel_systemen(
+                sensorium=self.daemon.sensorium,
+                governor=self.governor,
+                daemon=self.daemon,
+            )
+        return self._will
 
     def _get_mood(self) -> Mood:
         """Haal huidige mood op uit het limbic system."""
@@ -620,6 +636,70 @@ class OmegaAI:
                         ))
                         print()
 
+                elif commando.startswith("wil"):
+                    arg = commando[4:].strip()
+                    if arg == "start":
+                        will = self._get_will()
+                        will.start()
+                        print(succes(
+                            "  Autonome wil geactiveerd!"
+                        ))
+                    elif arg == "stop":
+                        if self._will and self._will.actief:
+                            self._will.stop()
+                            print(info(
+                                "  Autonome wil gestopt."
+                            ))
+                        else:
+                            print(info(
+                                "  Wil is niet actief."
+                            ))
+                    elif arg == "demo":
+                        self._get_will().run_simulation()
+                    elif arg == "cyclus":
+                        will = self._get_will()
+                        resultaten = will.cyclus()
+                        if resultaten:
+                            for r in resultaten:
+                                print(info(
+                                    f"  {r.operatie}:"
+                                    f" {r.details}"
+                                ))
+                        else:
+                            print(info(
+                                "  Geen operaties nodig."
+                            ))
+                    else:
+                        will = self._get_will()
+                        status = will.get_status()
+                        print(kleur(
+                            "\n  QUEST XIII: THE WILL",
+                            Kleur.FEL_MAGENTA,
+                        ))
+                        actief = status["actief"]
+                        print(kleur(
+                            f"  Actief:    "
+                            f"{'JA' if actief else 'NEE'}",
+                            Kleur.CYAAN,
+                        ))
+                        print(kleur(
+                            f"  Sessie:    "
+                            f"{status['sessie_operaties']}",
+                            Kleur.CYAAN,
+                        ))
+                        print(kleur(
+                            f"  Totaal OK: "
+                            f"{status['totaal_uitgevoerd']}",
+                            Kleur.CYAAN,
+                        ))
+                        print(info(
+                            "\n  wil start  - Activeer"
+                            "\n  wil stop   - Deactiveer"
+                            "\n  wil demo   - Simulatie"
+                            "\n  wil cyclus - Enkele cyclus"
+                        ))
+                        print()
+
                 elif commando == "help":
                     print(info(HELP_TEKST))
 
@@ -645,6 +725,10 @@ class OmegaAI:
         """Graceful shutdown - sla alles op."""
         print()
         print(info("  Omega AI sluit af..."))
+
+        # Will Protocol stoppen
+        if self._will and self._will.actief:
+            self._will.stop()
 
         # Governor: rescue family als eerste
         self.governor.rescue_family()
