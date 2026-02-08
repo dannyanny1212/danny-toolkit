@@ -162,6 +162,7 @@ class DigitalDaemon:
 
         # Governor (Omega-0) - beschermingslaag
         self.governor = OmegaGovernor()
+        self.governor.connect_daemon(self)
 
         # Data file
         self._data_file = Config.APPS_DATA_DIR / "digital_daemon.json"

@@ -53,7 +53,7 @@ class CosmicRole(Enum):
     ORACLE = "web_search"          # De Verkenner (Web & API)
 
     # --- TIER 4: THE INFRASTRUCTURE (De Fundering) ---
-    LEGION = "swarm_manager"       # De Zwerm (344 Agents)
+    LEGION = "swarm_manager"       # De Zwerm (347 Agents)
     NAVIGATOR = "strategy_goal"    # De Strateeg (Manifesto)
     ALCHEMIST = "data_proc"        # De Optimalisator (ETL)
     VOID = "entropy_cleaner"       # De Vuilnisman (Cleanup)
@@ -123,18 +123,32 @@ class AgentNode:
         }
 
 
-@dataclass
-class SwarmMetrics:
-    """Metrics voor de Legion zwerm."""
-    miners: int = 100        # Data mining agents
-    testers: int = 100       # Testing agents
-    indexers: int = 144      # Indexing agents
-    active_tasks: int = 0
-    completed_tasks: int = 0
+class OmegaSwarm:
+    """De Legion Zwerm - 347 Micro-Agents."""
+
+    def __init__(
+        self, count=347, governor="The Keeper"
+    ):
+        self.count = count
+        self.governor = governor
+        self.status = "AUTONOMOUS_LEARNING"
+        self.capacity = "HIGH_THROUGHPUT_DATA_PROCESSING"
+        self.miners = 100
+        self.testers = 100
+        self.indexers = 147  # 347 totaal
+        self.active_tasks = 0
+        self.completed_tasks = 0
+
+    def summon_swarm(self, task: str) -> str:
+        """Roep de zwerm op voor een taak."""
+        return (
+            f"Sending {self.count} micro-agents "
+            f"to execute: {task}"
+        )
 
     @property
     def total_agents(self) -> int:
-        return self.miners + self.testers + self.indexers
+        return self.count
 
     def to_dict(self) -> Dict:
         return {
@@ -143,8 +157,15 @@ class SwarmMetrics:
             "indexers": self.indexers,
             "total": self.total_agents,
             "active_tasks": self.active_tasks,
-            "completed_tasks": self.completed_tasks
+            "completed_tasks": self.completed_tasks,
+            "status": self.status,
+            "capacity": self.capacity,
+            "governor": self.governor,
         }
+
+
+# Backwards compatibility
+SwarmMetrics = OmegaSwarm
 
 
 @dataclass
@@ -236,7 +257,7 @@ class PrometheusBrain:
 
     def __init__(self, auto_init: bool = True):
         self.nodes: Dict[CosmicRole, AgentNode] = {}
-        self.swarm_metrics = SwarmMetrics()
+        self.swarm = OmegaSwarm()
         self.task_queue: List[Dict] = []
         self.task_history: List[TaskResult] = []
         self.is_online = False
@@ -288,7 +309,7 @@ class PrometheusBrain:
         print(f"\n{'='*60}")
         print(f"  [{self.SYSTEM_NAME}] FEDERATION ONLINE")
         print(f"  Total Nodes: {len(self.nodes)}")
-        print(f"  Swarm Size: {self.swarm_metrics.total_agents} Micro-Agents")
+        print(f"  Swarm Size: {self.swarm.total_agents} Micro-Agents")
         brain_status = self.brain.ai_provider.upper() if self.brain and self.brain.ai_provider else "OFFLINE"
         print(f"  Brain: {brain_status}")
         learning_status = "ACTIEF" if self.learning else "NIET BESCHIKBAAR"
@@ -476,7 +497,7 @@ class PrometheusBrain:
                 "batch_ops"
             ],
             tier=NodeTier.INFRASTRUCTURE,
-            family_name="The 344",
+            family_name="The 347",
             family_role="SWARM"
         ))
         self._link(AgentNode(
@@ -745,15 +766,15 @@ class PrometheusBrain:
         legion = self.nodes[CosmicRole.LEGION]
 
         print(f"   [PROTOCOL 5] Activating {governor.name} in Dimension Omega-0...")
-        print(f"   >>> {governor.name}: 'Releasing The Legion ({self.swarm_metrics.total_agents} agents)'")
-        print(f"   >>> Target: {task[:50]}...")
+        print(f"   >>> {governor.name}: 'Releasing The Legion ({self.swarm.total_agents} agents)'")
+        print(f"   >>> {self.swarm.summon_swarm(task[:50])}")
 
         governor.current_task = f"Coordinating: {task[:30]}..."
         legion.current_task = f"Executing: {task[:30]}..."
         self._task_counter += 1  # Fix 1.3: was missing
 
         # Try/finally voor swarm metrics (1.4)
-        self.swarm_metrics.active_tasks += 1
+        self.swarm.active_tasks += 1
         try:
             # Gedeelde brain executie (1.1)
             ai_result, exec_time, brain_status = (
@@ -762,7 +783,7 @@ class PrometheusBrain:
 
             if brain_status == "OK":
                 status = "SWARM_EXECUTION_COMPLETE"
-                self.swarm_metrics.completed_tasks += 1
+                self.swarm.completed_tasks += 1
                 print(f"   >>> Swarm result ({exec_time:.1f}s): {str(ai_result)[:80]}...")
             elif brain_status == "FAIL":
                 status = "SWARM_EXECUTION_FAILED"
@@ -770,8 +791,8 @@ class PrometheusBrain:
             else:
                 status = "SWARM_EXECUTION_STARTED"
         finally:
-            self.swarm_metrics.active_tasks = max(
-                0, self.swarm_metrics.active_tasks - 1
+            self.swarm.active_tasks = max(
+                0, self.swarm.active_tasks - 1
             )
 
         governor.current_task = None
@@ -782,7 +803,7 @@ class PrometheusBrain:
             assigned_to=f"{governor.name} -> {legion.name}",
             status=status,
             result=ai_result or {
-                "swarm_size": self.swarm_metrics.total_agents,
+                "swarm_size": self.swarm.total_agents,
                 "protocol": 5,
             },
             execution_time=exec_time,
@@ -876,7 +897,7 @@ class PrometheusBrain:
             "is_online": self.is_online,
             "total_nodes": len(self.nodes),
             "nodes": {role.name: node.to_dict() for role, node in self.nodes.items()},
-            "swarm": self.swarm_metrics.to_dict(),
+            "swarm": self.swarm.to_dict(),
             "tasks_in_history": len(self.task_history)
         }
 
@@ -925,13 +946,17 @@ class PrometheusBrain:
         print(f"  Totaal:   {len(self.task_history)}")
 
         # Swarm stats
-        print(f"\n  [SWARM METRICS]")
+        print(f"\n  [OMEGA SWARM]")
         print(f"  {'-'*40}")
-        print(f"  Miners:   {self.swarm_metrics.miners}")
-        print(f"  Testers:  {self.swarm_metrics.testers}")
-        print(f"  Indexers: {self.swarm_metrics.indexers}")
-        print(f"  TOTAL:    {self.swarm_metrics.total_agents} Micro-Agents")
-        print(f"  Completed:{self.swarm_metrics.completed_tasks}")
+        print(f"  Status:    {self.swarm.status}")
+        print(f"  Capacity:  {self.swarm.capacity}")
+        print(f"  Governor:  {self.swarm.governor}")
+        print(f"  Miners:    {self.swarm.miners}")
+        print(f"  Testers:   {self.swarm.testers}")
+        print(f"  Indexers:  {self.swarm.indexers}")
+        print(f"  TOTAL:     {self.swarm.total_agents}"
+              f" Micro-Agents")
+        print(f"  Completed: {self.swarm.completed_tasks}")
 
         # Governor health
         health = self.governor.get_health_report()
@@ -963,7 +988,7 @@ class PrometheusBrain:
         """
         TRI-FORCE PROTOCOL: Volledige Federatie Mobilisatie.
 
-        Splitst de 344 micro-agents in 3 autonome Task Forces:
+        Splitst de 347 micro-agents in 3 autonome Task Forces:
         - ALPHA (144 agents): The Cleaners - Code optimalisatie
         - BETA (100 agents): The Explorers - Kennis expansie
         - GAMMA (100 agents): The Builders - Prototype building
@@ -1044,7 +1069,7 @@ class PrometheusBrain:
         print()
         print("=" * 70)
         print("  >>> ALL FRONTS ENGAGED <<<")
-        print("  >>> 344 AGENTS ACTIVE <<<")
+        print("  >>> 347 AGENTS ACTIVE <<<")
         print("  >>> GODSPEED <<<")
         print("=" * 70)
 
@@ -1054,7 +1079,7 @@ class PrometheusBrain:
             "status": "ALL FRONTS ENGAGED. GODSPEED.",
             "forces": results,
             "target_topic": target_topic,
-            "agents_deployed": 344
+            "agents_deployed": 347
         }
 
     def initiate_singularity_nexus(self, custom_directives: list = None) -> dict:
@@ -1082,7 +1107,7 @@ class PrometheusBrain:
         print("=" * 70)
         print()
         print("  The Governor: 'RE-ROUTING POWER TO ALL SECTORS...'")
-        print("  The Governor: 'LEGION, AWAKEN. ALL 344 AGENTS.'")
+        print("  The Governor: 'LEGION, AWAKEN. ALL 347 AGENTS.'")
         print()
 
         # Definieer de multidimensionale zoekopdracht
@@ -1127,7 +1152,7 @@ class PrometheusBrain:
             print(f"  Vector {i} [{vector_name}]: DOWNLOADING...")
         print()
         print("  Data Ingestion Rate:  MAX")
-        print("  Legion Deployment:    344/344 agents")
+        print("  Legion Deployment:    347/347 agents")
         print(f"  Dimensional Vectors:  {len(nexus_directives)}/{len(nexus_directives)} active")
         print()
         print("=" * 70)
@@ -1142,7 +1167,7 @@ class PrometheusBrain:
             "status": "De toekomst wordt nu gedownload.",
             "vectors": results,
             "total_vectors": len(nexus_directives),
-            "agents_deployed": 344
+            "agents_deployed": 347
         }
 
     def activate_god_mode(self) -> dict:
@@ -1268,7 +1293,7 @@ class PrometheusBrain:
         print()
         print("  Kruispunten Actief:    4/4")
         print("  Nodes Engaged:         17/17")
-        print("  Micro-Agents:          344/344")
+        print("  Micro-Agents:          347/347")
         print("  Data Ingestion:        MAXIMUM")
         print("  Cross-Domain Sync:     ENABLED")
         print("  Oracle Avatar:         ONLINE")
@@ -1296,7 +1321,7 @@ class PrometheusBrain:
             "kruispunten": results,
             "oracle_avatar": "ONLINE",
             "nodes_engaged": 17,
-            "agents_deployed": 344,
+            "agents_deployed": 347,
             "cross_domain_sync": True
         }
 
@@ -1510,7 +1535,7 @@ class PrometheusBrain:
                 "version": self.VERSION,
                 "last_update": datetime.now().isoformat(),
                 "nodes": {role.name: node.to_dict() for role, node in self.nodes.items()},
-                "swarm": self.swarm_metrics.to_dict(),
+                "swarm": self.swarm.to_dict(),
                 "task_count": len(self.task_history),
                 "governor": self.governor.to_dict(),
             }
@@ -1538,7 +1563,7 @@ class PrometheusBrain:
                             pass
                     # Restore swarm metrics
                     swarm = state.get("swarm", {})
-                    self.swarm_metrics.completed_tasks = swarm.get("completed_tasks", 0)
+                    self.swarm.completed_tasks = swarm.get("completed_tasks", 0)
                     # Restore Governor state
                     governor_data = state.get("governor", {})
                     if governor_data:

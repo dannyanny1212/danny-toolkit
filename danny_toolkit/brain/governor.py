@@ -58,6 +58,9 @@ class OmegaGovernor:
         self._learning_cycles_this_hour = 0
         self._hour_start = time.time()
 
+        # Daemon referentie (bi-directionele link)
+        self._daemon = None
+
     def to_dict(self) -> dict:
         """Serialiseer Governor state voor persistence."""
         return {
@@ -84,6 +87,95 @@ class OmegaGovernor:
             self._hour_start = time.time()
         else:
             self._hour_start = saved_hour
+
+    # =================================================================
+    # Daemon Koppeling
+    # =================================================================
+
+    def connect_daemon(self, daemon):
+        """Koppel de Governor aan de Digital Daemon (Familie)."""
+        self._daemon = daemon
+
+    def report_to_family(self) -> Dict[str, Any]:
+        """Feedback-loop naar de Familie.
+
+        Genereert een compleet statusrapport voor de Daemon.
+
+        Returns:
+            Dict met keeper info, status, en diagnostiek.
+        """
+        # Circuit breaker status
+        cb_open = (
+            self._api_failures >= self.MAX_API_FAILURES
+            and time.time() - self._last_failure_time
+            < self.API_COOLDOWN_SECONDS
+        )
+
+        # State files check
+        state_files = {}
+        gezond_count = 0
+        for filename in self.KRITIEKE_STATE_FILES:
+            file_path = self._data_dir / filename
+            geldig = self.validate_state(file_path)
+            state_files[filename] = geldig
+            if geldig:
+                gezond_count += 1
+
+        state_issues = len(self.KRITIEKE_STATE_FILES) - gezond_count
+
+        # Status bepaling
+        if cb_open:
+            status = "RED_ALERT"
+        elif self._api_failures > 0 or state_issues > 0:
+            status = "YELLOW_ALERT"
+        else:
+            status = "GREEN_ZONE"
+
+        # Menselijk leesbaar bericht
+        if status == "GREEN_ZONE":
+            bericht = (
+                "Alle systemen operationeel. "
+                "Geen dreigingen gedetecteerd."
+            )
+        elif status == "YELLOW_ALERT":
+            delen = []
+            if self._api_failures > 0:
+                delen.append(
+                    f"{self._api_failures} API failure(s)"
+                )
+            if state_issues > 0:
+                delen.append(
+                    f"{state_issues} state file(s) "
+                    f"niet gezond"
+                )
+            bericht = (
+                f"Waarschuwing: {', '.join(delen)}. "
+                f"Monitoring actief."
+            )
+        else:
+            bericht = (
+                "KRITIEK: Circuit breaker OPEN. "
+                "API calls geblokkeerd. "
+                f"Wacht {self.API_COOLDOWN_SECONDS}s "
+                f"voor half-open poging."
+            )
+
+        return {
+            "keeper": "The Governor (Omega-0)",
+            "niveau": 2,
+            "status": status,
+            "daemon_connected": self._daemon is not None,
+            "circuit_breaker": {
+                "status": "OPEN" if cb_open else "CLOSED",
+                "failures": self._api_failures,
+            },
+            "learning": {
+                "cycles": self._learning_cycles_this_hour,
+                "max": self.MAX_LEARNING_CYCLES_PER_HOUR,
+            },
+            "state_files": state_files,
+            "bericht": bericht,
+        }
 
     # =================================================================
     # A. StateGuard - Data Rescue Protocol
