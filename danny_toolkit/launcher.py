@@ -688,6 +688,27 @@ class ListenerProtocolApp:
         input("\n  Druk op Enter om terug te gaan...")
 
 
+class DialogueProtocolApp:
+    """Wrapper voor Dialogue Protocol in launcher."""
+
+    def run(self):
+        from .quests.dialogue_protocol import DialogueProtocol
+        print(kleur(
+            "\n  QUEST XII: THE DIALOGUE\n"
+            "  Pixel Converseert - Spraakdialoog\n",
+            Kleur.FEL_MAGENTA,
+        ))
+        try:
+            protocol = DialogueProtocol()
+            protocol.run_simulation()
+        except Exception as e:
+            print(kleur(
+                f"\n  [FOUT] Dialogue Protocol: {e}",
+                Kleur.FEL_ROOD,
+            ))
+        input("\n  Druk op Enter om terug te gaan...")
+
+
 class PulseProtocolApp:
     """Wrapper voor Pulse Protocol in launcher."""
 
@@ -874,6 +895,7 @@ class Launcher:
         "47": ("Pulse Protocol", PulseProtocolApp, "omega"),
         "48": ("Voice Protocol", VoiceProtocolApp, "omega"),
         "49": ("Listener Protocol", ListenerProtocolApp, "omega"),
+        "50": ("Dialogue Protocol", DialogueProtocolApp, "omega"),
     }
 
     # Sneltoetsen
@@ -927,6 +949,7 @@ class Launcher:
         "pp": "47", # Pulse Protocol
         "vo": "48", # Voice Protocol
         "li": "49", # Listener Protocol
+        "di": "50", # Dialogue Protocol
     }
 
     def __init__(self):
@@ -1078,6 +1101,12 @@ class Launcher:
         print(f"     {self._kleur_tekst('49', 'nummer')}. {naam} "
               f"{self._kleur_tekst('[THE LISTENER]', 'info')}"
               f"{self._kleur_tekst(gebruik_str, 'info')}")
+        naam, _, _ = self.APPS["50"]
+        gebruik = self.stats.get_gebruik(naam)
+        gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
+        print(f"     {self._kleur_tekst('50', 'nummer')}. {naam} "
+              f"{self._kleur_tekst('[THE DIALOGUE]', 'info')}"
+              f"{self._kleur_tekst(gebruik_str, 'info')}")
         print()
 
         # Systeem opties
@@ -1138,6 +1167,7 @@ class Launcher:
         print(f"     {self._kleur_tekst('pp', 'nummer')} = Pulse Protocol")
         print(f"     {self._kleur_tekst('vo', 'nummer')} = Voice Protocol")
         print(f"     {self._kleur_tekst('li', 'nummer')} = Listener Protocol")
+        print(f"     {self._kleur_tekst('di', 'nummer')} = Dialogue Protocol")
         print()
 
         print("  Systeem commando's:")

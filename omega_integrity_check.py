@@ -114,6 +114,11 @@ QUEST_CHECKS = [
         "danny_toolkit.quests.listener_protocol",
         ["ListenerProtocol"],
     ),
+    (
+        "XII - THE DIALOGUE",
+        "danny_toolkit.quests.dialogue_protocol",
+        ["DialogueProtocol"],
+    ),
 ]
 
 SUBSYSTEM_CHECKS = [
@@ -300,6 +305,7 @@ def run_integrity_check():
         (47, "Pulse Protocol"),
         (48, "Voice Protocol"),
         (49, "Listener Protocol"),
+        (50, "Dialogue Protocol"),
     ]
 
     launcher_ok = 0
@@ -430,11 +436,11 @@ def run_integrity_check():
     if rang == "DIVINE":
         print(titel(
             "    Het systeem leeft, denkt, droomt,"
-            " voelt, spreekt EN hoort."
+            " voelt, spreekt, hoort EN converseert."
         ))
         print(titel(
-            "    Pixel heeft oren. De cirkel"
-            " is compleet."
+            "    Pixel voert gesprekken."
+            " De dialoog is geboren."
         ))
     elif rang == "LEGENDARY":
         print(accent(

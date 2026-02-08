@@ -61,6 +61,7 @@ Commando's:
   voice     - Voice status/on/off/demo
   luister   - Pixel luistert via microfoon (Quest XI)
   listener  - Listener status/demo
+  dialoog   - Continue spraakdialoog (Quest XII)
   help      - Toon dit menu
   slaap     - Opslaan en afsluiten
   exit      - Opslaan en afsluiten
@@ -114,6 +115,9 @@ class OmegaAI:
         # Quest XI: Listener Protocol
         self._listener = None    # Lazy init
 
+        # Quest XII: Dialogue Protocol
+        self._dialogue = None    # Lazy init
+
         # Daemon berichten opvangen
         self.daemon.register_message_callback(
             self._on_daemon_bericht
@@ -140,6 +144,15 @@ class OmegaAI:
             from .quests.listener_protocol import ListenerProtocol
             self._listener = ListenerProtocol()
         return self._listener
+
+    def _get_dialogue(self):
+        """Lazy-init dialogue protocol."""
+        if self._dialogue is None:
+            from .quests.dialogue_protocol import (
+                DialogueProtocol,
+            )
+            self._dialogue = DialogueProtocol()
+        return self._dialogue
 
     def _get_mood(self) -> Mood:
         """Haal huidige mood op uit het limbic system."""
@@ -559,6 +572,17 @@ class OmegaAI:
                             print(info(
                                 "  Niets gehoord."
                             ))
+
+                elif commando == "dialoog":
+                    dialogue = self._get_dialogue()
+                    kan, reden = dialogue.can_start()
+                    if not kan:
+                        print(fout(f"  {reden}"))
+                    else:
+                        dialogue.start(
+                            verwerk_fn=self._verwerk_input,
+                            mood_fn=self._get_mood,
+                        )
 
                 elif commando.startswith("listener"):
                     arg = commando[9:].strip()
