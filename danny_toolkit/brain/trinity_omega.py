@@ -521,58 +521,74 @@ class PrometheusBrain:
         """
         Route een taak naar de juiste agent of zwerm.
 
-        Routing Logic (4 Tiers):
-        1. Massa verwerking -> Governor -> Legion (Swarm)
-        2. Interface/Emotie -> Pixel (Trinity)
-        3. Redenering/Logica -> Iolaax (Trinity)
-        4. Verbinding/Bridge -> Nexus (Trinity)
-        5. Beveiliging -> Sentinel (Guardian)
-        6. Geheugen/RAG -> Archivist (Guardian)
-        7. Tijd/Planning -> Chronos (Guardian)
-        8. Crypto/Blockchain -> Cipher (Specialist)
-        9. Bio/Health -> Vita (Specialist)
-        10. Historisch -> Echo (Specialist)
-        11. Creatief -> Spark (Specialist)
-        12. Web/Search -> Oracle (Specialist)
-        13. Data Transformatie -> Alchemist (Infra)
-        14. Strategie -> Navigator (Infra)
-        15. Cleanup -> Void (Infra)
-        16. Standaard -> Weaver (Specialist)
+        Routing volgorde (specifiek -> generiek):
+        FASE 1 - SWARM: Massa verwerking -> Legion
+        FASE 2 - SPECIALISTS (domein-specifiek eerst):
+            Cipher, Vita, Echo, Spark, Oracle
+        FASE 3 - GUARDIANS:
+            Sentinel, Archivist, Chronos
+        FASE 4 - TRINITY (generiek):
+            Pixel, Iolaax, Nexus
+        FASE 5 - INFRASTRUCTURE:
+            Alchemist, Navigator, Void
+        DEFAULT: Weaver
         """
         print(f"\n>> ANALYZING TASK: '{task[:50]}...' "
               f"[Priority: {priority.name}]")
 
         task_lower = task.lower()
 
-        # SWARM: Massa verwerking -> Governor -> Legion
+        # === FASE 1: SWARM (massa verwerking) ===
         if any(kw in task_lower for kw in [
             "verwerk data", "indexeer alles", "test alle",
             "batch", "bulk", "parallel", "10000", "1000"
         ]):
             return self._deploy_swarm(task, priority)
 
-        # TRINITY: Interface/Emotie -> Pixel
-        elif any(kw in task_lower for kw in [
-            "help", "uitleg", "interface", "praat",
-            "emotie", "gevoel", "ui"
-        ]):
-            return self._assign(CosmicRole.PIXEL, task, priority)
+        # === FASE 2: SPECIALISTS (domein-specifiek, eerst) ===
+        # Meest specifieke keywords eerst om misrouting
+        # te voorkomen.
 
-        # TRINITY: Redenering/Logica -> Iolaax
+        # Crypto/Blockchain -> Cipher
         elif any(kw in task_lower for kw in [
-            "denk na", "analyseer", "logica", "redeneer",
-            "droom", "bewustzijn", "evolve"
+            "blockchain", "crypto", "encrypt", "decrypt",
+            "smart contract", "patroon", "pattern"
         ]):
-            return self._assign(CosmicRole.IOLAAX, task, priority)
+            return self._assign(CosmicRole.CIPHER, task, priority)
 
-        # TRINITY: Verbinding/Bridge -> Nexus
+        # Bio/Health -> Vita
         elif any(kw in task_lower for kw in [
-            "verbind", "bridge", "sync", "koppel",
-            "integreer"
+            "health", "hrv", "bio", "peptide",
+            "gezondheid", "slaap", "eiwit", "dna"
         ]):
-            return self._assign(CosmicRole.NEXUS, task, priority)
+            return self._assign(CosmicRole.VITA, task, priority)
 
-        # GUARDIAN: Beveiliging -> Sentinel
+        # Historisch -> Echo
+        elif any(kw in task_lower for kw in [
+            "wat gebeurde", "historie", "history",
+            "vorige keer", "context", "timeline"
+        ]):
+            return self._assign(CosmicRole.ECHO, task, priority)
+
+        # Creatief -> Spark
+        elif any(kw in task_lower for kw in [
+            "creatief", "idee", "brainstorm", "ascii",
+            "kunst", "innovate", "design"
+        ]):
+            return self._assign(CosmicRole.SPARK, task, priority)
+
+        # Web/Search -> Oracle
+        elif any(kw in task_lower for kw in [
+            "zoek op", "search", "fetch", "scrape",
+            "api call"
+        ]):
+            return self._assign(
+                CosmicRole.ORACLE, task, priority
+            )
+
+        # === FASE 3: GUARDIANS ===
+
+        # Beveiliging -> Sentinel
         elif any(kw in task_lower for kw in [
             "beveilig", "security", "firewall", "audit",
             "threat", "wallet"
@@ -581,7 +597,7 @@ class PrometheusBrain:
                 CosmicRole.SENTINEL, task, priority
             )
 
-        # GUARDIAN: Geheugen/RAG -> Archivist
+        # Geheugen/RAG -> Archivist
         elif any(kw in task_lower for kw in [
             "zoek kennis", "herinner", "rag", "vector",
             "semantic", "geheugen"
@@ -590,7 +606,7 @@ class PrometheusBrain:
                 CosmicRole.ARCHIVIST, task, priority
             )
 
-        # GUARDIAN: Tijd/Planning -> Chronos
+        # Tijd/Planning -> Chronos
         elif any(kw in task_lower for kw in [
             "schedule", "cronjob", "timer", "ritme",
             "planning", "agenda"
@@ -599,44 +615,46 @@ class PrometheusBrain:
                 CosmicRole.CHRONOS, task, priority
             )
 
-        # SPECIALIST: Crypto/Blockchain -> Cipher
-        elif any(kw in task_lower for kw in [
-            "blockchain", "crypto", "encrypt", "decrypt",
-            "smart contract", "patroon", "pattern"
-        ]):
-            return self._assign(CosmicRole.CIPHER, task, priority)
+        # === FASE 4: TRINITY (generiek, later) ===
 
-        # SPECIALIST: Bio/Health -> Vita
+        # Interface/Emotie -> Pixel
+        # LET OP: "user interface" ipv "ui" (voorkomt
+        # match in "kruispunt", "gebruiken" etc.)
         elif any(kw in task_lower for kw in [
-            "health", "hrv", "bio", "peptide",
-            "gezondheid", "slaap"
+            "help", "uitleg", "interface", "praat",
+            "emotie", "gevoel", "user interface",
+            "dashboard", "menu"
         ]):
-            return self._assign(CosmicRole.VITA, task, priority)
+            return self._assign(CosmicRole.PIXEL, task, priority)
 
-        # SPECIALIST: Historisch -> Echo
+        # Redenering/Logica -> Iolaax
+        # LET OP: "analyseer" verwijderd (te generiek,
+        # conflicteert met domein-specifieke taken)
         elif any(kw in task_lower for kw in [
-            "wat gebeurde", "historie", "history",
-            "vorige keer", "context", "timeline"
+            "denk na", "logica", "redeneer",
+            "droom", "bewustzijn", "evolve",
+            "filosofie", "ethiek"
         ]):
-            return self._assign(CosmicRole.ECHO, task, priority)
+            return self._assign(CosmicRole.IOLAAX, task, priority)
 
-        # SPECIALIST: Creatief -> Spark
+        # Verbinding/Bridge -> Nexus
         elif any(kw in task_lower for kw in [
-            "creatief", "idee", "brainstorm", "ascii",
-            "kunst", "innovate", "design"
+            "verbind", "bridge", "sync", "koppel",
+            "integreer"
         ]):
-            return self._assign(CosmicRole.SPARK, task, priority)
+            return self._assign(CosmicRole.NEXUS, task, priority)
 
-        # SPECIALIST: Web/Search -> Oracle
+        # === FASE 5: INFRASTRUCTURE ===
+
+        # Cleanup -> Void (VOOR Alchemist, want "clean"
+        # is substring van "cleanup")
         elif any(kw in task_lower for kw in [
-            "zoek op", "search", "fetch", "scrape",
-            "api call", "web"
+            "cleanup", "delete", "opruim", "cache",
+            "garbage"
         ]):
-            return self._assign(
-                CosmicRole.ORACLE, task, priority
-            )
+            return self._assign(CosmicRole.VOID, task, priority)
 
-        # INFRA: Data Transformatie -> Alchemist
+        # Data Transformatie -> Alchemist
         elif any(kw in task_lower for kw in [
             "convert", "transform", "clean", "etl"
         ]):
@@ -644,7 +662,7 @@ class PrometheusBrain:
                 CosmicRole.ALCHEMIST, task, priority
             )
 
-        # INFRA: Strategie -> Navigator
+        # Strategie -> Navigator
         elif any(kw in task_lower for kw in [
             "strategie", "doel", "manifesto", "roadmap",
             "lange termijn"
@@ -653,14 +671,7 @@ class PrometheusBrain:
                 CosmicRole.NAVIGATOR, task, priority
             )
 
-        # INFRA: Cleanup -> Void
-        elif any(kw in task_lower for kw in [
-            "cleanup", "delete", "opruim", "cache",
-            "garbage"
-        ]):
-            return self._assign(CosmicRole.VOID, task, priority)
-
-        # SPECIALIST: Schrijven/Code -> Weaver (default)
+        # === DEFAULT: Weaver ===
         else:
             return self._assign(CosmicRole.WEAVER, task, priority)
 
