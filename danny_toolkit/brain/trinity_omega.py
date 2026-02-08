@@ -563,8 +563,11 @@ class PrometheusBrain:
             return self._assign(CosmicRole.CIPHER, task, priority)
 
         # Bio/Health -> Vita
+        # LET OP: "bio" verwijderd (matchte in "biological")
+        # → gebruik "biohack", "biodata", "biometr" etc.
         elif any(kw in task_lower for kw in [
-            "health", "hrv", "bio", "peptide",
+            "health", "hrv", "biohack", "biodata",
+            "biometr", "peptide",
             "gezondheid", "slaap", "eiwit", "dna"
         ]):
             return self._assign(CosmicRole.VITA, task, priority)
