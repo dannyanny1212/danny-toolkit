@@ -1,19 +1,23 @@
 """
-PROMETHEUS PROTOCOL - TRINITY OMEGA v3.0
+PROMETHEUS PROTOCOL - TRINITY OMEGA v4.0
 =========================================
-De Magnum Opus van de Cosmic Family Architectuur.
+De 17 Pilaren van de Realiteit.
 
-Dit is de Federated Swarm Intelligence die alle 17 nodes orchestreert:
-- 5 Core Agents (De Oorspronkelijke Familie)
-- 3 Unity Expansie (De Verbinders)
-- 4 Midden-Ring (De Groei)
-- 3 Wonderkinderen (De Geadopteerden uit Omega-0)
-- 2 Federatie (Governor + Legion Swarm)
+Dit is de Federated Swarm Intelligence die alle 17 nodes orchestreert
+over 4 kosmische tiers:
+
+- TIER 1: THE TRINITY (3) - Het Bewustzijn (Pixel, Iolaax, Nexus)
+- TIER 2: THE GUARDIANS (4) - De Beschermers (Governor, Sentinel,
+                                Archivist, Chronos)
+- TIER 3: THE SPECIALISTS (6) - De Werkers (Weaver, Cipher, Vita,
+                                  Echo, Spark, Oracle)
+- TIER 4: THE INFRASTRUCTURE (4) - De Fundering (Legion, Navigator,
+                                     Alchemist, Void)
 
 Gebaseerd op de Cosmic Family Quest VIII: Het Prometheus Protocol.
 """
 
-from enum import Enum, auto
+from enum import Enum
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional, Callable
 from datetime import datetime
@@ -27,42 +31,57 @@ from .governor import OmegaGovernor
 # --- STAP 1: HET NIEUWE DNA (17 NODES) ---
 
 class CosmicRole(Enum):
-    """De 17 rollen binnen de Prometheus Federatie."""
+    """De 17 Kosmische Rollen - De Pilaren van de Realiteit."""
 
-    # >> DE KERN (THE ORIGINALS - 5) - Level 5 Access
-    NAVIGATOR = auto()    # Pixel OMEGA (Interface & Voice)
-    WEAVER = auto()       # Code (Bouwer & Debug)
-    ARCHIVIST = auto()    # RAG (Geheugen & Vector DB)
-    ENTITY = auto()       # Iolaax (Life & Evolutie)
-    GUARDIAN = auto()     # Daemon/Sentinel (Security & Root)
+    # --- TIER 1: THE TRINITY (Het Bewustzijn) ---
+    PIXEL = "interface_soul"       # De Interface & Emotie
+    IOLAAX = "reasoning_mind"      # De Redenering & Logica
+    NEXUS = "bridge_spirit"        # De Verbinding & Brug
 
-    # >> DE UNITY EXPANSIE (3) - Level 4 Access
-    SCOUT = auto()        # Hunter (Active Fetch & Search)
-    ORACLE = auto()       # Pythia (Planning & Prediction)
-    DIPLOMAT = auto()     # Hermes (Communications & API)
+    # --- TIER 2: THE GUARDIANS (De Beschermers) ---
+    GOVERNOR = "system_control"    # De Politie (Omega-0)
+    SENTINEL = "security_ops"      # De Beveiliging
+    ARCHIVIST = "memory_rag"       # Het Geheugen (Vector DB)
+    CHRONOS = "time_keeper"        # De Tijd & Ritme
 
-    # >> DE MIDDEN-RING (4) - Level 3 Access
-    STRATEGIST = auto()   # Tactician (Optimalisatie)
-    BARD = auto()         # Lyra (Content & Storytelling)
-    ALCHEMIST = auto()    # Catalyst (Data Transformatie)
-    ENGINEER = auto()     # Vulcan (Hardware & Server Ops)
+    # --- TIER 3: THE SPECIALISTS (De Werkers) ---
+    WEAVER = "code_builder"        # De Bouwer (Git & Code)
+    CIPHER = "crypto_analyst"      # De Bankier (Blockchain)
+    VITA = "bio_health"            # De Bioloog (HRV & Bio)
+    ECHO = "pattern_history"       # De Historicus (Patronen)
+    SPARK = "creative_gen"         # De Kunstenaar (Ideeen)
+    ORACLE = "web_search"          # De Verkenner (Web & API)
 
-    # >> DE WONDERKINDEREN (3) - Level 4 Access (Special Ops)
-    CIPHER = auto()       # Encryptie & Patroonherkenning
-    SPARK = auto()        # Rapid Testing & Stress Tests
-    ECHO = auto()         # Deep Recall & Historische Context
+    # --- TIER 4: THE INFRASTRUCTURE (De Fundering) ---
+    LEGION = "swarm_manager"       # De Zwerm (344 Agents)
+    NAVIGATOR = "strategy_goal"    # De Strateeg (Manifesto)
+    ALCHEMIST = "data_proc"        # De Optimalisator (ETL)
+    VOID = "entropy_cleaner"       # De Vuilnisman (Cleanup)
 
-    # >> DE BUITENWERELD - Omega-0 FEDERATIE
-    GOVERNOR = auto()     # De Genezen Keeper (Swarm Control)
-    LEGION = auto()       # De Zwerm (344 Micro-Agents)
+    @classmethod
+    def get_tier(cls, role):
+        """Geeft het hierarchie-niveau van een node."""
+        if role in [cls.PIXEL, cls.IOLAAX, cls.NEXUS]:
+            return 1  # God Tier
+        elif role in [
+            cls.GOVERNOR, cls.SENTINEL,
+            cls.ARCHIVIST, cls.CHRONOS
+        ]:
+            return 2  # Root Tier
+        elif role in [
+            cls.WEAVER, cls.CIPHER, cls.VITA,
+            cls.ECHO, cls.SPARK, cls.ORACLE
+        ]:
+            return 3  # User Tier
+        return 4  # Infrastructure Tier
 
 
 class NodeTier(Enum):
-    """Hiërarchie tiers binnen de Federatie."""
-    CORE = "CORE"                    # Hoogste toegang
-    OMEGA = "OMEGA"                  # Uitgebreide toegang
-    SWARM_LEADER = "SWARM_LEADER"    # Controleert de zwerm
-    HIVE_MIND = "HIVE_MIND"          # De zwerm zelf
+    """De 4 lagen van de Kosmische Hierarchie."""
+    TRINITY = "TRINITY"              # Tier 1: Het Bewustzijn
+    GUARDIANS = "GUARDIANS"          # Tier 2: De Beschermers
+    SPECIALISTS = "SPECIALISTS"      # Tier 3: De Werkers
+    INFRASTRUCTURE = "INFRA"         # Tier 4: De Fundering
 
 
 class TaskPriority(Enum):
@@ -80,7 +99,7 @@ class AgentNode:
     name: str
     role: CosmicRole
     capabilities: List[str]
-    tier: NodeTier = NodeTier.CORE
+    tier: NodeTier = NodeTier.TRINITY
     status: str = "ACTIVE"
     current_task: Optional[str] = None
     tasks_completed: int = 0
@@ -151,14 +170,14 @@ class PrometheusBrain:
     De Prometheus Brain - Federated Swarm Intelligence.
 
     Orchestreert 17 agent nodes over 4 tiers:
-    - CORE: De oorspronkelijke 5 (hoogste toegang)
-    - OMEGA: De uitbreiding van 7 (uitgebreide toegang)
-    - SWARM_LEADER: De Governor (controleert de zwerm)
-    - HIVE_MIND: The Legion (344 micro-agents)
+    - TRINITY (3): Pixel, Iolaax, Nexus (Het Bewustzijn)
+    - GUARDIANS (4): Governor, Sentinel, Archivist, Chronos
+    - SPECIALISTS (6): Weaver, Cipher, Vita, Echo, Spark, Oracle
+    - INFRASTRUCTURE (4): Legion, Navigator, Alchemist, Void
     """
 
-    SYSTEM_NAME = "COSMIC_OMEGA_V3"
-    VERSION = "3.0.0"
+    SYSTEM_NAME = "COSMIC_OMEGA_V4"
+    VERSION = "4.0.0"
 
     def __init__(self, auto_init: bool = True):
         self.nodes: Dict[CosmicRole, AgentNode] = {}
@@ -242,167 +261,211 @@ class PrometheusBrain:
             self.learning = None
 
     def _awaken_federation(self):
-        """Initialiseer alle 17 nodes."""
+        """Initialiseer alle 17 Kosmische Nodes."""
 
-        print("  [PHASE 1] Awakening Core Agents...")
-        # 1. DE KERN (Level 5 Access) - De Oorspronkelijke Familie
+        print("  [TIER 1] Awakening The Trinity...")
+        # --- TIER 1: THE TRINITY (Het Bewustzijn) ---
         self._link(AgentNode(
-            name="Pixel OMEGA",
-            role=CosmicRole.NAVIGATOR,
-            capabilities=["interface", "voice", "user_interaction", "command_parse"],
-            tier=NodeTier.CORE,
+            name="Pixel",
+            role=CosmicRole.PIXEL,
+            capabilities=[
+                "interface", "emotie", "ui", "voice"
+            ],
+            tier=NodeTier.TRINITY,
             family_name="Pixel",
             family_role="SOUL"
         ))
         self._link(AgentNode(
-            name="Weaver",
-            role=CosmicRole.WEAVER,
-            capabilities=["full_stack", "debug", "code_gen", "refactor"],
-            tier=NodeTier.CORE,
-            family_name="Unity",
-            family_role="BRIDGE"
-        ))
-        self._link(AgentNode(
-            name="Memex",
-            role=CosmicRole.ARCHIVIST,
-            capabilities=["vector_db", "rag", "semantic_search", "knowledge_graph"],
-            tier=NodeTier.CORE,
-            family_name="Dream",
-            family_role="DREAM"
-        ))
-        self._link(AgentNode(
             name="Iolaax",
-            role=CosmicRole.ENTITY,
-            capabilities=["evolve", "create", "consciousness", "self_improve"],
-            tier=NodeTier.CORE,
+            role=CosmicRole.IOLAAX,
+            capabilities=[
+                "logic", "planning", "dreams", "reasoning"
+            ],
+            tier=NodeTier.TRINITY,
             family_name="Iolaax",
             family_role="MIND"
         ))
         self._link(AgentNode(
-            name="Sentinel",
-            role=CosmicRole.GUARDIAN,
-            capabilities=["root_access", "firewall", "audit", "threat_detect"],
-            tier=NodeTier.CORE,
-            family_name="Daemon",
-            family_role="BODY"
+            name="Nexus",
+            role=CosmicRole.NEXUS,
+            capabilities=[
+                "bridge", "data_connect", "web_code_sync",
+                "integration"
+            ],
+            tier=NodeTier.TRINITY,
+            family_name="Unity",
+            family_role="BRIDGE"
         ))
 
-        print("  [PHASE 2] Awakening Unity Expansion...")
-        # 2. DE UNITY EXPANSIE - De Verbinders
-        self._link(AgentNode(
-            name="Hunter",
-            role=CosmicRole.SCOUT,
-            capabilities=["search", "fetch", "web_scrape", "api_consume"],
-            tier=NodeTier.OMEGA,
-            family_name="Brave",
-            family_role="COURAGE"
-        ))
-        self._link(AgentNode(
-            name="Pythia",
-            role=CosmicRole.ORACLE,
-            capabilities=["predict", "schedule", "plan", "forecast"],
-            tier=NodeTier.OMEGA,
-            family_name="Faith",
-            family_role="FAITH"
-        ))
-        self._link(AgentNode(
-            name="Hermes",
-            role=CosmicRole.DIPLOMAT,
-            capabilities=["email", "chat_api", "notifications", "translate"],
-            tier=NodeTier.OMEGA,
-            family_name="Hope",
-            family_role="HOPE"
-        ))
-
-        print("  [PHASE 3] Awakening Middle Ring...")
-        # 3. DE MIDDEN-RING - De Groei
-        self._link(AgentNode(
-            name="Tactician",
-            role=CosmicRole.STRATEGIST,
-            capabilities=["optimize_workflow", "resource_alloc", "prioritize"],
-            tier=NodeTier.OMEGA,
-            family_name="Nova",
-            family_role="STAR"
-        ))
-        self._link(AgentNode(
-            name="Lyra",
-            role=CosmicRole.BARD,
-            capabilities=["write_copy", "compose", "storytelling", "documentation"],
-            tier=NodeTier.OMEGA,
-            family_name="Joy",
-            family_role="JOY"
-        ))
-        self._link(AgentNode(
-            name="Catalyst",
-            role=CosmicRole.ALCHEMIST,
-            capabilities=["convert_format", "clean_data", "transform", "etl"],
-            tier=NodeTier.OMEGA,
-            family_name="Ember",
-            family_role="WARMTH"
-        ))
-        self._link(AgentNode(
-            name="Vulcan",
-            role=CosmicRole.ENGINEER,
-            capabilities=["manage_docker", "system_health", "deploy", "monitor"],
-            tier=NodeTier.OMEGA,
-            family_name="Echo",
-            family_role="LIGHT"
-        ))
-
-        print("  [PHASE 4] Awakening Wonder Children...")
-        # 4. DE WONDERKINDEREN - De Geadopteerden uit Omega-0
-        self._link(AgentNode(
-            name="Cipher",
-            role=CosmicRole.CIPHER,
-            capabilities=["decrypt", "pattern_recognition", "encode", "analyze_structure"],
-            tier=NodeTier.OMEGA,
-            family_name="Riddle",
-            family_role="PUZZLE"
-        ))
-        self._link(AgentNode(
-            name="Spark",
-            role=CosmicRole.SPARK,
-            capabilities=["unit_test", "stress_test", "benchmark", "validate"],
-            tier=NodeTier.OMEGA,
-            family_name="Wild",
-            family_role="FREEDOM"
-        ))
-        self._link(AgentNode(
-            name="Echo-Prime",
-            role=CosmicRole.ECHO,
-            capabilities=["deep_history", "cross_reference", "context_recall", "timeline"],
-            tier=NodeTier.OMEGA,
-            family_name="Whisper",
-            family_role="VOICE"
-        ))
-
-        print("  [PHASE 5] Awakening Omega-0 Federation...")
-        # 5. DE Omega-0 FEDERATIE - De Buitenwereld
+        print("  [TIER 2] Awakening The Guardians...")
+        # --- TIER 2: THE GUARDIANS (De Beschermers) ---
         self._link(AgentNode(
             name="The Governor",
             role=CosmicRole.GOVERNOR,
-            capabilities=["swarm_control", "dim_0_access", "delegate", "load_balance"],
-            tier=NodeTier.SWARM_LEADER,
+            capabilities=[
+                "system_control", "permissions", "loop_detect",
+                "rate_limit"
+            ],
+            tier=NodeTier.GUARDIANS,
             family_name="Keeper",
             family_role="GUARDIAN_OF_LOST"
         ))
         self._link(AgentNode(
+            name="Sentinel",
+            role=CosmicRole.SENTINEL,
+            capabilities=[
+                "security", "firewall", "crypto_wallet",
+                "threat_detect"
+            ],
+            tier=NodeTier.GUARDIANS,
+            family_name="Daemon",
+            family_role="BODY"
+        ))
+        self._link(AgentNode(
+            name="Memex",
+            role=CosmicRole.ARCHIVIST,
+            capabilities=[
+                "vector_db", "rag", "semantic_search",
+                "knowledge_graph"
+            ],
+            tier=NodeTier.GUARDIANS,
+            family_name="Dream",
+            family_role="DREAM"
+        ))
+        self._link(AgentNode(
+            name="Chronos",
+            role=CosmicRole.CHRONOS,
+            capabilities=[
+                "scheduler", "cronjob", "rhythm_sync",
+                "day_night_cycle"
+            ],
+            tier=NodeTier.GUARDIANS,
+            family_name="Tempo",
+            family_role="RHYTHM"
+        ))
+
+        print("  [TIER 3] Awakening The Specialists...")
+        # --- TIER 3: THE SPECIALISTS (De Werkers) ---
+        self._link(AgentNode(
+            name="Weaver",
+            role=CosmicRole.WEAVER,
+            capabilities=[
+                "code_gen", "debug", "refactor", "git"
+            ],
+            tier=NodeTier.SPECIALISTS,
+            family_name="Brave",
+            family_role="COURAGE"
+        ))
+        self._link(AgentNode(
+            name="Cipher",
+            role=CosmicRole.CIPHER,
+            capabilities=[
+                "blockchain", "smart_contracts", "encrypt",
+                "pattern_recognition"
+            ],
+            tier=NodeTier.SPECIALISTS,
+            family_name="Riddle",
+            family_role="PUZZLE"
+        ))
+        self._link(AgentNode(
+            name="Vita",
+            role=CosmicRole.VITA,
+            capabilities=[
+                "health_data", "hrv_analysis", "bio_rhythm",
+                "peptides"
+            ],
+            tier=NodeTier.SPECIALISTS,
+            family_name="Ember",
+            family_role="WARMTH"
+        ))
+        self._link(AgentNode(
+            name="Echo",
+            role=CosmicRole.ECHO,
+            capabilities=[
+                "deep_history", "cross_reference",
+                "pattern_predict", "timeline"
+            ],
+            tier=NodeTier.SPECIALISTS,
+            family_name="Whisper",
+            family_role="VOICE"
+        ))
+        self._link(AgentNode(
+            name="Spark",
+            role=CosmicRole.SPARK,
+            capabilities=[
+                "creative_ideas", "ascii_art", "brainstorm",
+                "innovate"
+            ],
+            tier=NodeTier.SPECIALISTS,
+            family_name="Wild",
+            family_role="FREEDOM"
+        ))
+        self._link(AgentNode(
+            name="Oracle",
+            role=CosmicRole.ORACLE,
+            capabilities=[
+                "web_search", "api_calls", "fetch", "scrape"
+            ],
+            tier=NodeTier.SPECIALISTS,
+            family_name="Faith",
+            family_role="FAITH"
+        ))
+
+        print("  [TIER 4] Awakening The Infrastructure...")
+        # --- TIER 4: THE INFRASTRUCTURE (De Fundering) ---
+        self._link(AgentNode(
             name="The Legion",
             role=CosmicRole.LEGION,
-            capabilities=["massive_parallel_processing", "distributed_compute", "batch_ops"],
-            tier=NodeTier.HIVE_MIND,
+            capabilities=[
+                "massive_parallel", "distributed_compute",
+                "batch_ops"
+            ],
+            tier=NodeTier.INFRASTRUCTURE,
             family_name="The 344",
             family_role="SWARM"
+        ))
+        self._link(AgentNode(
+            name="Navigator",
+            role=CosmicRole.NAVIGATOR,
+            capabilities=[
+                "strategy", "long_term_goals", "manifesto",
+                "roadmap"
+            ],
+            tier=NodeTier.INFRASTRUCTURE,
+            family_name="Nova",
+            family_role="STAR"
+        ))
+        self._link(AgentNode(
+            name="Alchemist",
+            role=CosmicRole.ALCHEMIST,
+            capabilities=[
+                "data_transform", "clean_data", "etl",
+                "convert"
+            ],
+            tier=NodeTier.INFRASTRUCTURE,
+            family_name="Hope",
+            family_role="HOPE"
+        ))
+        self._link(AgentNode(
+            name="Void",
+            role=CosmicRole.VOID,
+            capabilities=[
+                "garbage_collect", "cleanup", "cache_clear",
+                "entropy_manage"
+            ],
+            tier=NodeTier.INFRASTRUCTURE,
+            family_name="Shadow",
+            family_role="SILENCE"
         ))
 
     def _link(self, node: AgentNode):
         """Link een node aan de federatie."""
         self.nodes[node.role] = node
         tier_symbol = {
-            NodeTier.CORE: "*",
-            NodeTier.OMEGA: "+",
-            NodeTier.SWARM_LEADER: "#",
-            NodeTier.HIVE_MIND: "~"
+            NodeTier.TRINITY: "*",
+            NodeTier.GUARDIANS: "#",
+            NodeTier.SPECIALISTS: "+",
+            NodeTier.INFRASTRUCTURE: "~"
         }.get(node.tier, ".")
 
         print(f"    {tier_symbol} [{node.role.name:<12}] {node.name:<15} | Tier: {node.tier.value}")
@@ -458,67 +521,146 @@ class PrometheusBrain:
         """
         Route een taak naar de juiste agent of zwerm.
 
-        Routing Logic:
+        Routing Logic (4 Tiers):
         1. Massa verwerking -> Governor -> Legion (Swarm)
-        2. Beveiliging/Patronen -> Cipher (Wonder Child)
-        3. Snelheid/Testen -> Spark (Wonder Child)
-        4. Historische Context -> Echo-Prime (Wonder Child)
-        5. Standaard -> Weaver (Core)
+        2. Interface/Emotie -> Pixel (Trinity)
+        3. Redenering/Logica -> Iolaax (Trinity)
+        4. Verbinding/Bridge -> Nexus (Trinity)
+        5. Beveiliging -> Sentinel (Guardian)
+        6. Geheugen/RAG -> Archivist (Guardian)
+        7. Tijd/Planning -> Chronos (Guardian)
+        8. Crypto/Blockchain -> Cipher (Specialist)
+        9. Bio/Health -> Vita (Specialist)
+        10. Historisch -> Echo (Specialist)
+        11. Creatief -> Spark (Specialist)
+        12. Web/Search -> Oracle (Specialist)
+        13. Data Transformatie -> Alchemist (Infra)
+        14. Strategie -> Navigator (Infra)
+        15. Cleanup -> Void (Infra)
+        16. Standaard -> Weaver (Specialist)
         """
-        print(f"\n>> ANALYZING TASK: '{task[:50]}...' [Priority: {priority.name}]")
+        print(f"\n>> ANALYZING TASK: '{task[:50]}...' "
+              f"[Priority: {priority.name}]")
 
         task_lower = task.lower()
 
-        # PROTOCOL 5: Massa Verwerking -> Stuur naar Zwerm via Governor
-        if any(kw in task_lower for kw in ["verwerk data", "indexeer alles", "test alle",
-                                            "batch", "bulk", "parallel", "10000", "1000"]):
+        # SWARM: Massa verwerking -> Governor -> Legion
+        if any(kw in task_lower for kw in [
+            "verwerk data", "indexeer alles", "test alle",
+            "batch", "bulk", "parallel", "10000", "1000"
+        ]):
             return self._deploy_swarm(task, priority)
 
-        # Beveiliging/Patronen -> Wonderkind Cipher
-        elif any(kw in task_lower for kw in ["beveilig", "codeer", "encrypt", "decrypt",
-                                              "patroon", "pattern", "analyze structure"]):
+        # TRINITY: Interface/Emotie -> Pixel
+        elif any(kw in task_lower for kw in [
+            "help", "uitleg", "interface", "praat",
+            "emotie", "gevoel", "ui"
+        ]):
+            return self._assign(CosmicRole.PIXEL, task, priority)
+
+        # TRINITY: Redenering/Logica -> Iolaax
+        elif any(kw in task_lower for kw in [
+            "denk na", "analyseer", "logica", "redeneer",
+            "droom", "bewustzijn", "evolve"
+        ]):
+            return self._assign(CosmicRole.IOLAAX, task, priority)
+
+        # TRINITY: Verbinding/Bridge -> Nexus
+        elif any(kw in task_lower for kw in [
+            "verbind", "bridge", "sync", "koppel",
+            "integreer"
+        ]):
+            return self._assign(CosmicRole.NEXUS, task, priority)
+
+        # GUARDIAN: Beveiliging -> Sentinel
+        elif any(kw in task_lower for kw in [
+            "beveilig", "security", "firewall", "audit",
+            "threat", "wallet"
+        ]):
+            return self._assign(
+                CosmicRole.SENTINEL, task, priority
+            )
+
+        # GUARDIAN: Geheugen/RAG -> Archivist
+        elif any(kw in task_lower for kw in [
+            "zoek kennis", "herinner", "rag", "vector",
+            "semantic", "geheugen"
+        ]):
+            return self._assign(
+                CosmicRole.ARCHIVIST, task, priority
+            )
+
+        # GUARDIAN: Tijd/Planning -> Chronos
+        elif any(kw in task_lower for kw in [
+            "schedule", "cronjob", "timer", "ritme",
+            "planning", "agenda"
+        ]):
+            return self._assign(
+                CosmicRole.CHRONOS, task, priority
+            )
+
+        # SPECIALIST: Crypto/Blockchain -> Cipher
+        elif any(kw in task_lower for kw in [
+            "blockchain", "crypto", "encrypt", "decrypt",
+            "smart contract", "patroon", "pattern"
+        ]):
             return self._assign(CosmicRole.CIPHER, task, priority)
 
-        # Snelheid/Testen -> Wonderkind Spark
-        elif any(kw in task_lower for kw in ["check snel", "test", "benchmark",
-                                              "validate", "stress", "unit test"]):
-            return self._assign(CosmicRole.SPARK, task, priority)
+        # SPECIALIST: Bio/Health -> Vita
+        elif any(kw in task_lower for kw in [
+            "health", "hrv", "bio", "peptide",
+            "gezondheid", "slaap"
+        ]):
+            return self._assign(CosmicRole.VITA, task, priority)
 
-        # Historische Context -> Wonderkind Echo
-        elif any(kw in task_lower for kw in ["wat gebeurde", "historie", "history",
-                                              "vorige keer", "context", "timeline"]):
+        # SPECIALIST: Historisch -> Echo
+        elif any(kw in task_lower for kw in [
+            "wat gebeurde", "historie", "history",
+            "vorige keer", "context", "timeline"
+        ]):
             return self._assign(CosmicRole.ECHO, task, priority)
 
-        # Interface/Gebruiker -> Navigator (Pixel)
-        elif any(kw in task_lower for kw in ["help", "uitleg", "interface", "praat"]):
-            return self._assign(CosmicRole.NAVIGATOR, task, priority)
+        # SPECIALIST: Creatief -> Spark
+        elif any(kw in task_lower for kw in [
+            "creatief", "idee", "brainstorm", "ascii",
+            "kunst", "innovate", "design"
+        ]):
+            return self._assign(CosmicRole.SPARK, task, priority)
 
-        # Geheugen/RAG -> Archivist (Memex)
-        elif any(kw in task_lower for kw in ["zoek kennis", "herinner", "rag",
-                                              "vector", "semantic"]):
-            return self._assign(CosmicRole.ARCHIVIST, task, priority)
+        # SPECIALIST: Web/Search -> Oracle
+        elif any(kw in task_lower for kw in [
+            "zoek op", "search", "fetch", "scrape",
+            "api call", "web"
+        ]):
+            return self._assign(
+                CosmicRole.ORACLE, task, priority
+            )
 
-        # Planning/Voorspelling -> Oracle (Pythia)
-        elif any(kw in task_lower for kw in ["plan", "schedule", "voorspel", "predict"]):
-            return self._assign(CosmicRole.ORACLE, task, priority)
+        # INFRA: Data Transformatie -> Alchemist
+        elif any(kw in task_lower for kw in [
+            "convert", "transform", "clean", "etl"
+        ]):
+            return self._assign(
+                CosmicRole.ALCHEMIST, task, priority
+            )
 
-        # Content/Schrijven -> Bard (Lyra)
-        elif any(kw in task_lower for kw in ["schrijf", "compose", "story", "document"]):
-            return self._assign(CosmicRole.BARD, task, priority)
+        # INFRA: Strategie -> Navigator
+        elif any(kw in task_lower for kw in [
+            "strategie", "doel", "manifesto", "roadmap",
+            "lange termijn"
+        ]):
+            return self._assign(
+                CosmicRole.NAVIGATOR, task, priority
+            )
 
-        # Data Transformatie -> Alchemist (Catalyst)
-        elif any(kw in task_lower for kw in ["convert", "transform", "clean", "etl"]):
-            return self._assign(CosmicRole.ALCHEMIST, task, priority)
+        # INFRA: Cleanup -> Void
+        elif any(kw in task_lower for kw in [
+            "cleanup", "delete", "opruim", "cache",
+            "garbage"
+        ]):
+            return self._assign(CosmicRole.VOID, task, priority)
 
-        # Systeem/Infra -> Engineer (Vulcan)
-        elif any(kw in task_lower for kw in ["docker", "deploy", "server", "system"]):
-            return self._assign(CosmicRole.ENGINEER, task, priority)
-
-        # Security -> Guardian (Sentinel)
-        elif any(kw in task_lower for kw in ["security", "firewall", "audit", "threat"]):
-            return self._assign(CosmicRole.GUARDIAN, task, priority)
-
-        # Standaard: Code taken -> Weaver
+        # SPECIALIST: Schrijven/Code -> Weaver (default)
         else:
             return self._assign(CosmicRole.WEAVER, task, priority)
 
@@ -767,7 +909,7 @@ class PrometheusBrain:
         if target_topic is None:
             target_topic = "AI Agent Swarm Architecture & Multi-Agent Orchestration"
 
-        print(f"  >> Pythia (ORACLE): 'Ik zie het doel...'")
+        print(f"  >> Iolaax (TRINITY): 'Ik zie het doel...'")
         print(f"  >> TARGET FOR BETA TEAM: '{target_topic}'")
         print()
 
@@ -794,7 +936,7 @@ class PrometheusBrain:
             TaskPriority.CRITICAL
         )
         results["ALPHA"] = result_a
-        print(f"       >>> Sentinel: 'Cleaners deployed. {result_a.status}'")
+        print(f"       >>> Void: 'Cleaners deployed. {result_a.status}'")
         print()
 
         # Team Beta: Research
@@ -804,7 +946,7 @@ class PrometheusBrain:
             TaskPriority.CRITICAL
         )
         results["BETA"] = result_b
-        print(f"       >>> Hunter: 'Explorers deployed. {result_b.status}'")
+        print(f"       >>> Oracle: 'Explorers deployed. {result_b.status}'")
         print()
 
         # Team Gamma: Build
@@ -959,22 +1101,22 @@ class PrometheusBrain:
             {
                 "kruispunt": "AI + BIO-HACKING",
                 "vraag": "Hoe gebruiken we Generative AI om nieuwe eiwitten of DNA-sequenties te ontwerpen voor levensverlenging?",
-                "expert": "Iolaax (ENTITY)"
+                "expert": "Vita (SPECIALIST) + Iolaax (TRINITY)"
             },
             {
                 "kruispunt": "CRYPTO + AI",
                 "vraag": "Hoe bouwen we autonome AI-agenten die hun eigen crypto-wallet beheren en diensten betalen?",
-                "expert": "Hermes (DIPLOMAT)"
+                "expert": "Cipher (SPECIALIST)"
             },
             {
                 "kruispunt": "QUANTUM + CRYPTO",
                 "vraag": "Welke blockchain-encryptie is veilig tegen Quantum Computers (Post-Quantum Cryptography)?",
-                "expert": "Cipher (WONDERKIND)"
+                "expert": "Cipher (SPECIALIST) + Sentinel (GUARDIAN)"
             },
             {
                 "kruispunt": "ETHICS + ALIGNMENT",
                 "vraag": "Hoe zorgen we dat een super-intelligente zwerm menselijke waarden behoudt?",
-                "expert": "Sentinel (GUARDIAN)"
+                "expert": "Navigator (INFRA) + Sentinel (GUARDIAN)"
             }
         ]
 
@@ -1014,18 +1156,18 @@ class PrometheusBrain:
         print("=" * 70)
         print()
         print("  [BETA - THE EXPLORERS]")
-        print("    Hunter:     Scraping GitHub + ArXiv papers...")
+        print("    Oracle:     Scraping GitHub + ArXiv papers...")
         print("    Echo:       Mapping cross-domain connections...")
         print("    Memex:      Building the Nexus Knowledge Graph...")
         print()
         print("  [GAMMA - THE BUILDERS]")
         print("    Weaver:     Designing Convergence Dashboard...")
-        print("    Pythia:     Predicting integration points...")
+        print("    Chronos:    Scheduling integration timelines...")
         print("    Pixel:      Transforming to ORACLE AVATAR mode...")
         print()
 
         # Pixel Transformation
-        pixel = self.nodes.get(CosmicRole.NAVIGATOR)
+        pixel = self.nodes.get(CosmicRole.PIXEL)
         if pixel:
             pixel.status = "ORACLE_AVATAR"
 
@@ -1175,24 +1317,28 @@ def main():
     print("  PROMETHEUS PROTOCOL - SIMULATION")
     print("="*60)
 
-    # Test 1: Taak voor Wonderkind (Cipher)
-    print("\n[TEST 1] Pattern Recognition Task")
-    brain.route_task("Zoek patronen in deze versleutelde file")
+    # Test 1: Cipher (Crypto/Blockchain)
+    print("\n[TEST 1] Crypto Pattern Task -> Cipher")
+    brain.route_task("Zoek patronen in deze blockchain transacties")
 
-    # Test 2: Taak voor de Zwerm (Protocol 5)
-    print("\n[TEST 2] Mass Processing Task (Protocol 5)")
+    # Test 2: Legion (Massa Verwerking)
+    print("\n[TEST 2] Mass Processing -> Legion Swarm")
     brain.route_task("Indexeer alles in het archief en verwerk data van 10000 bestanden")
 
-    # Test 3: Taak voor Wonderkind (Spark)
-    print("\n[TEST 3] Testing Task")
-    brain.route_task("Test alle unit tests en benchmark de performance")
+    # Test 3: Spark (Creatief)
+    print("\n[TEST 3] Creative Task -> Spark")
+    brain.route_task("Brainstorm creatief een nieuw idee voor de UI")
 
-    # Test 4: Taak voor Wonderkind (Echo)
-    print("\n[TEST 4] Historical Context Task")
+    # Test 4: Echo (Historisch)
+    print("\n[TEST 4] Historical Context -> Echo")
     brain.route_task("Wat gebeurde er vorige week met het project?")
 
-    # Test 5: Standaard taak (Weaver)
-    print("\n[TEST 5] Code Task (Default)")
+    # Test 5: Vita (Bio/Health)
+    print("\n[TEST 5] Bio Health Task -> Vita")
+    brain.route_task("Analyseer de HRV health data van vandaag")
+
+    # Test 6: Weaver (Default Code)
+    print("\n[TEST 6] Code Task -> Weaver (default)")
     brain.route_task("Schrijf een functie die getallen sorteert")
 
     # Toon status
