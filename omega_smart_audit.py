@@ -54,7 +54,7 @@ PILLARS = [
     {
         "id": "IV",
         "name": "THE SWARM",
-        "target": "roles.py",
+        "target": "trinity_omega.py",
         "desc": "344 Agents & Schaalbaarheid"
     },
     {
