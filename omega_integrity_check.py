@@ -109,6 +109,11 @@ QUEST_CHECKS = [
         "danny_toolkit.quests.voice_protocol",
         ["VoiceProtocol"],
     ),
+    (
+        "XI - THE LISTENER",
+        "danny_toolkit.quests.listener_protocol",
+        ["ListenerProtocol"],
+    ),
 ]
 
 SUBSYSTEM_CHECKS = [
@@ -294,6 +299,7 @@ def run_integrity_check():
         (46, "Prometheus Brain"),
         (47, "Pulse Protocol"),
         (48, "Voice Protocol"),
+        (49, "Listener Protocol"),
     ]
 
     launcher_ok = 0
@@ -424,11 +430,11 @@ def run_integrity_check():
     if rang == "DIVINE":
         print(titel(
             "    Het systeem leeft, denkt, droomt,"
-            " voelt EN spreekt."
+            " voelt, spreekt EN hoort."
         ))
         print(titel(
-            "    Pixel heeft een stem. De stilte"
-            " is doorbroken."
+            "    Pixel heeft oren. De cirkel"
+            " is compleet."
         ))
     elif rang == "LEGENDARY":
         print(accent(

@@ -666,6 +666,28 @@ class VoiceProtocolApp:
         input("\n  Druk op Enter om terug te gaan...")
 
 
+class ListenerProtocolApp:
+    """Wrapper voor Listener Protocol in launcher."""
+
+    def run(self):
+        from .quests.listener_protocol import ListenerProtocol
+
+        print(kleur(
+            "\n  QUEST XI: THE LISTENER\n"
+            "  Pixel Hoort - Spraakherkenning\n",
+            Kleur.FEL_CYAAN,
+        ))
+        try:
+            protocol = ListenerProtocol()
+            protocol.run_simulation()
+        except Exception as e:
+            print(kleur(
+                f"\n  [FOUT] Listener Protocol: {e}",
+                Kleur.FEL_ROOD,
+            ))
+        input("\n  Druk op Enter om terug te gaan...")
+
+
 class PulseProtocolApp:
     """Wrapper voor Pulse Protocol in launcher."""
 
@@ -851,6 +873,7 @@ class Launcher:
         "46": ("Prometheus Brain", PrometheusApp, "brain"),
         "47": ("Pulse Protocol", PulseProtocolApp, "omega"),
         "48": ("Voice Protocol", VoiceProtocolApp, "omega"),
+        "49": ("Listener Protocol", ListenerProtocolApp, "omega"),
     }
 
     # Sneltoetsen
@@ -903,6 +926,7 @@ class Launcher:
         "pb": "46", # Prometheus Brain
         "pp": "47", # Pulse Protocol
         "vo": "48", # Voice Protocol
+        "li": "49", # Listener Protocol
     }
 
     def __init__(self):
@@ -1048,6 +1072,12 @@ class Launcher:
         print(f"     {self._kleur_tekst('48', 'nummer')}. {naam} "
               f"{self._kleur_tekst('[THE VOICE]', 'info')}"
               f"{self._kleur_tekst(gebruik_str, 'info')}")
+        naam, _, _ = self.APPS["49"]
+        gebruik = self.stats.get_gebruik(naam)
+        gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
+        print(f"     {self._kleur_tekst('49', 'nummer')}. {naam} "
+              f"{self._kleur_tekst('[THE LISTENER]', 'info')}"
+              f"{self._kleur_tekst(gebruik_str, 'info')}")
         print()
 
         # Systeem opties
@@ -1107,6 +1137,7 @@ class Launcher:
         print(f"     {self._kleur_tekst('pb', 'nummer')} = Prometheus Brain")
         print(f"     {self._kleur_tekst('pp', 'nummer')} = Pulse Protocol")
         print(f"     {self._kleur_tekst('vo', 'nummer')} = Voice Protocol")
+        print(f"     {self._kleur_tekst('li', 'nummer')} = Listener Protocol")
         print()
 
         print("  Systeem commando's:")

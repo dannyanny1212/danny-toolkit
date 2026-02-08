@@ -59,6 +59,8 @@ Commando's:
   pulse     - Activeer Bio-Wallet (Quest IX)
   spreek    - Laat Pixel spreken (Quest X)
   voice     - Voice status/on/off/demo
+  luister   - Pixel luistert via microfoon (Quest XI)
+  listener  - Listener status/demo
   help      - Toon dit menu
   slaap     - Opslaan en afsluiten
   exit      - Opslaan en afsluiten
@@ -109,6 +111,9 @@ class OmegaAI:
         self._voice = None       # Lazy init
         self._voice_aan = False  # Voice toggle
 
+        # Quest XI: Listener Protocol
+        self._listener = None    # Lazy init
+
         # Daemon berichten opvangen
         self.daemon.register_message_callback(
             self._on_daemon_bericht
@@ -128,6 +133,13 @@ class OmegaAI:
             from .quests.voice_protocol import VoiceProtocol
             self._voice = VoiceProtocol()
         return self._voice
+
+    def _get_listener(self):
+        """Lazy-init listener protocol."""
+        if self._listener is None:
+            from .quests.listener_protocol import ListenerProtocol
+            self._listener = ListenerProtocol()
+        return self._listener
 
     def _get_mood(self) -> Mood:
         """Haal huidige mood op uit het limbic system."""
@@ -511,6 +523,76 @@ class OmegaAI:
                             "\n  voice on   - Zet voice aan"
                             "\n  voice off  - Zet voice uit"
                             "\n  voice demo - Draai simulatie"
+                        ))
+                        print()
+
+                elif commando == "luister":
+                    listener = self._get_listener()
+                    if listener.active_backend == "none":
+                        print(fout(
+                            "  Geen listener backend!"
+                            "\n  pip install"
+                            " SpeechRecognition pyaudio"
+                        ))
+                    else:
+                        print(info("  Spreek nu..."))
+                        tekst = listener.listen()
+                        if tekst:
+                            print(succes(
+                                f"  Gehoord: \"{tekst}\""
+                            ))
+                            # Verwerk als gewone input
+                            response = self._verwerk_input(
+                                tekst
+                            )
+                            naam = self.daemon.naam
+                            print(kleur(
+                                f"\n  {naam}: {response}\n",
+                                Kleur.FEL_CYAAN,
+                            ))
+                            if self._voice_aan:
+                                self._get_voice().speak(
+                                    response,
+                                    self._get_mood(),
+                                )
+                        else:
+                            print(info(
+                                "  Niets gehoord."
+                            ))
+
+                elif commando.startswith("listener"):
+                    arg = commando[9:].strip()
+                    if arg == "demo":
+                        self._get_listener().run_simulation()
+                    else:
+                        listener = self._get_listener()
+                        status = listener.get_status()
+                        print(kleur(
+                            "\n  QUEST XI: THE LISTENER",
+                            Kleur.FEL_CYAAN,
+                        ))
+                        print(kleur(
+                            f"  Backend:  "
+                            f"{status['active_backend']}",
+                            Kleur.CYAAN,
+                        ))
+                        sr = status["speech_recognition"]
+                        vk = status["vosk"]
+                        print(kleur(
+                            f"  SR:       "
+                            f"{'JA' if sr else 'NEE'}",
+                            Kleur.CYAAN,
+                        ))
+                        print(kleur(
+                            f"  Vosk:     "
+                            f"{'JA' if vk else 'NEE'}",
+                            Kleur.CYAAN,
+                        ))
+                        print(info(
+                            "\n  luister"
+                            "       - Luister via microfoon"
+                            "\n  listener demo"
+                            " - Draai simulatie"
                         ))
                         print()
 
