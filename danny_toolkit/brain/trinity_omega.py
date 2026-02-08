@@ -943,7 +943,7 @@ class PrometheusBrain:
         print(f"  Voltooid: {completed}")
         print(f"  Wachtend: {queued}")
         print(f"  Mislukt:  {failed}")
-        print(f"  Totaal:   {len(self.task_history)}")
+        print(f"  Totaal:   {self._task_counter}")
 
         # Swarm stats
         print(f"\n  [OMEGA SWARM]")
@@ -956,13 +956,18 @@ class PrometheusBrain:
         print(f"  Indexers:  {self.swarm.indexers}")
         print(f"  TOTAL:     {self.swarm.total_agents}"
               f" Micro-Agents")
-        print(f"  Completed: {self.swarm.completed_tasks}")
+        print(f"  Swarm Ops: {self.swarm.completed_tasks}")
 
         # Governor health
         health = self.governor.get_health_report()
         cb = health["circuit_breaker"]
         lr = health["learning"]
-        cb_icon = "[OK]" if cb["status"] == "CLOSED" else "[!!]"
+        if cb["status"] == "CLOSED":
+            cb_icon = "[OK]"
+        elif cb["status"] == "HALF_OPEN":
+            cb_icon = "[??]"
+        else:
+            cb_icon = "[!!]"
         lr_icon = (
             "[OK]" if lr["cycles_this_hour"]
             < lr["max_per_hour"] else "[!!]"
@@ -1544,7 +1549,8 @@ class PrometheusBrain:
                 "last_update": datetime.now().isoformat(),
                 "nodes": {role.name: node.to_dict() for role, node in self.nodes.items()},
                 "swarm": self.swarm.to_dict(),
-                "task_count": len(self.task_history),
+                "task_count": self._task_counter,
+                "status_counts": dict(self._status_counts),
                 "governor": self.governor.to_dict(),
             }
             with open(self._state_file, "w", encoding="utf-8") as f:
@@ -1571,12 +1577,27 @@ class PrometheusBrain:
                             pass
                     # Restore swarm metrics
                     swarm = state.get("swarm", {})
-                    self.swarm.completed_tasks = swarm.get("completed_tasks", 0)
+                    self.swarm.completed_tasks = swarm.get(
+                        "completed_tasks", 0
+                    )
+                    # Restore task counter + status counts
+                    self._task_counter = state.get(
+                        "task_count", 0
+                    )
+                    saved_counts = state.get(
+                        "status_counts", {}
+                    )
+                    for key, val in saved_counts.items():
+                        self._status_counts[key] = val
                     # Restore Governor state
                     governor_data = state.get("governor", {})
                     if governor_data:
                         self.governor.from_dict(governor_data)
-                    print(f"  [RESTORED] Previous state loaded ({state.get('task_count', 0)} historical tasks)")
+                    print(
+                        f"  [RESTORED] Previous state loaded"
+                        f" ({self._task_counter}"
+                        f" historical tasks)"
+                    )
         except Exception:
             # Governor: probeer herstel van backup
             if self._state_file.exists():

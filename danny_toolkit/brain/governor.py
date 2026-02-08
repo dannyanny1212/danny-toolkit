@@ -560,6 +560,7 @@ class OmegaGovernor:
         if self._api_failures > 0:
             self._api_failures -= 1
             if self._api_failures == 0:
+                self._last_failure_time = 0.0
                 print("  [GOVERNOR] Circuit breaker gereset")
             else:
                 print(
@@ -708,9 +709,14 @@ class OmegaGovernor:
                 "countdown": self.get_breaker_countdown(),
                 "status": (
                     "OPEN"
-                    if self._api_failures >= self.MAX_API_FAILURES
-                    and time.time() - self._last_failure_time
+                    if self._api_failures
+                    >= self.MAX_API_FAILURES
+                    and time.time()
+                    - self._last_failure_time
                     < self.API_COOLDOWN_SECONDS
+                    else "HALF_OPEN"
+                    if self._api_failures
+                    >= self.MAX_API_FAILURES
                     else "CLOSED"
                 ),
             },
@@ -745,7 +751,12 @@ class OmegaGovernor:
 
         # Circuit Breaker
         cb = rapport["circuit_breaker"]
-        cb_icon = "[OK]" if cb["status"] == "CLOSED" else "[!!]"
+        if cb["status"] == "CLOSED":
+            cb_icon = "[OK]"
+        elif cb["status"] == "HALF_OPEN":
+            cb_icon = "[??]"
+        else:
+            cb_icon = "[!!]"
         print(f"\n  {cb_icon} Circuit Breaker: {cb['status']}")
         print(
             f"      Failures: {cb['failures']}/{cb['max']}"
