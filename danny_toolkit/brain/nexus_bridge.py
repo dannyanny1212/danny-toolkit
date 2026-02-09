@@ -416,7 +416,9 @@ class NexusOracleMode:
             else:
                 vraag = f"Geef een diep, wijselijk inzicht gebaseerd op deze context: {context}"
 
-            response = self.bridge.brain.process_request(vraag)
+            response = self.bridge.brain.process_request(
+                vraag, use_tools=False
+            )
             return f"[ORACLE ZIET]\n\n{response}"
 
         except Exception as e:
@@ -433,14 +435,18 @@ class NexusOracleMode:
             return "Oracle Mode niet beschikbaar."
 
         try:
-            vraag = """Analyseer de patronen in de gebruikersdata en geef:
-1. Een waargenomen patroon
-2. Een mogelijke toekomstige trend
-3. Een suggestie voor verbetering
+            vraag = (
+                "Analyseer de patronen in de"
+                " gebruikersdata en geef:\n"
+                "1. Een waargenomen patroon\n"
+                "2. Een mogelijke toekomstige trend\n"
+                "3. Een suggestie voor verbetering\n\n"
+                "Wees beknopt maar inzichtelijk."
+            )
 
-Wees beknopt maar inzichtelijk."""
-
-            return self.bridge.brain.process_request(vraag)
+            return self.bridge.brain.process_request(
+                vraag, use_tools=False
+            )
 
         except Exception:
             return "Kon geen patronen detecteren."

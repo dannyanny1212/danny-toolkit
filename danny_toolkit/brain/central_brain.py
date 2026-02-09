@@ -74,17 +74,36 @@ class CentralBrain:
         # AI Client - probeer GROQ eerst (gratis), dan Anthropic
         self.client = None
         self.ai_provider = None
+        self._fallback_client = None
+        self._fallback_provider = None
 
         if GROQ_BESCHIKBAAR and Config.has_groq_key():
             self.client = Groq()
             self.ai_provider = "groq"
-            print(kleur("   [OK] Central Brain AI actief (GROQ)", Kleur.GROEN))
+            print(kleur(
+                "   [OK] Central Brain AI actief (GROQ)",
+                Kleur.GROEN,
+            ))
+            # Anthropic als fallback bij rate limit
+            if ANTHROPIC_BESCHIKBAAR and Config.has_anthropic_key():
+                self._fallback_client = Anthropic()
+                self._fallback_provider = "anthropic"
+                print(kleur(
+                    "   [OK] Fallback: Anthropic beschikbaar",
+                    Kleur.GROEN,
+                ))
         elif ANTHROPIC_BESCHIKBAAR and Config.has_anthropic_key():
             self.client = Anthropic()
             self.ai_provider = "anthropic"
-            print(kleur("   [OK] Central Brain AI actief (Anthropic)", Kleur.GROEN))
+            print(kleur(
+                "   [OK] Central Brain AI actief (Anthropic)",
+                Kleur.GROEN,
+            ))
         else:
-            print(kleur("   [!] Central Brain in offline modus", Kleur.GEEL))
+            print(kleur(
+                "   [!] Central Brain in offline modus",
+                Kleur.GEEL,
+            ))
 
         # App Registry
         self.app_registry: Dict[str, Any] = {}
@@ -319,13 +338,19 @@ Belangrijke regels:
         else:
             return self._process_anthropic(system_message, use_tools, max_turns)
 
+    # Groq modellen: primair (groot) en fallback (klein)
+    GROQ_MODEL_PRIMARY = "llama-3.3-70b-versatile"
+    GROQ_MODEL_FALLBACK = "llama-3.1-8b-instant"
+
     def _process_groq(
         self,
         system_message: str,
         use_tools: bool,
-        max_turns: int
+        max_turns: int,
+        _model: str = None,
     ) -> str:
         """Verwerk request via GROQ API."""
+        model = _model or self.GROQ_MODEL_PRIMARY
         messages = [{"role": "system", "content": system_message}]
         messages.extend(self.conversation_history)
 
@@ -360,12 +385,18 @@ Belangrijke regels:
 
         for turn in range(max_turns):
             try:
-                response = self.client.chat.completions.create(
-                    model="llama-3.3-70b-versatile",
-                    messages=messages,
-                    tools=tools,
-                    tool_choice="auto" if tools else None,
-                    max_tokens=2000
+                kwargs = {
+                    "model": model,
+                    "messages": messages,
+                    "max_tokens": 2000,
+                }
+                if tools:
+                    kwargs["tools"] = tools
+                    kwargs["tool_choice"] = "auto"
+                response = (
+                    self.client.chat.completions.create(
+                        **kwargs
+                    )
                 )
 
                 choice = response.choices[0]
@@ -437,6 +468,39 @@ Belangrijke regels:
                     return final_response
 
             except Exception as e:
+                # Fallback bij rate limit (429)
+                if "429" in str(e) or "rate_limit" in str(e):
+                    # Stap 1: probeer kleiner Groq model
+                    if model == self.GROQ_MODEL_PRIMARY:
+                        print(kleur(
+                            "   [FALLBACK] Groq 70b rate"
+                            " limit -> 8b model",
+                            Kleur.GEEL,
+                        ))
+                        return self._process_groq(
+                            system_message,
+                            use_tools,
+                            max_turns,
+                            _model=self.GROQ_MODEL_FALLBACK,
+                        )
+                    # Stap 2: probeer Anthropic
+                    if self._fallback_client:
+                        print(kleur(
+                            "   [FALLBACK] Groq rate limit"
+                            " -> Anthropic",
+                            Kleur.GEEL,
+                        ))
+                        self.client = self._fallback_client
+                        self.ai_provider = (
+                            self._fallback_provider
+                        )
+                        self._fallback_client = None
+                        self._fallback_provider = None
+                        return self._process_anthropic(
+                            system_message,
+                            use_tools,
+                            max_turns,
+                        )
                 self._sla_stats_op()
                 return f"Er is een fout opgetreden: {e}"
 
