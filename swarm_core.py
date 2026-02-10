@@ -475,3 +475,52 @@ def run_chain_pipeline(prompt, brain, callback=None):
     _log_to_cortical("swarm", "chain_response", {})
 
     return result
+
+
+# ── V5.0 BRIDGE ──
+
+from swarm_engine import run_swarm_sync
+
+
+def run_hub_spoke_v5(prompt, brain, callback=None):
+    """Bridge: Swarm Engine v5.0 → oud UI-formaat.
+
+    Delegeert naar de nieuwe async SwarmEngine en
+    vertaalt de List[SwarmPayload] naar een dict
+    dat compatible is met bestaande frontends.
+
+    Args:
+        prompt: User input string.
+        brain: PrometheusBrain instantie.
+        callback: Functie(str) voor live updates.
+
+    Returns:
+        dict met keys:
+        - text: Samengesteld antwoord (alle agents).
+        - type: Payload type van het rijkste resultaat.
+        - data: Ruwe content van het rijkste resultaat.
+        - payloads: Volledige List[SwarmPayload].
+    """
+    payloads = run_swarm_sync(
+        prompt, brain, callback=callback,
+    )
+
+    # Bouw samengesteld antwoord
+    full_text = ""
+    primary = payloads[0]
+
+    for p in payloads:
+        full_text += (
+            f"\n\n**[{p.agent}] Rapport:**\n"
+            f"{p.display_text}"
+        )
+        # Gebruik rijkste payload als primair
+        if p.type != "text":
+            primary = p
+
+    return {
+        "text": full_text.strip(),
+        "type": primary.type,
+        "data": primary.content,
+        "payloads": payloads,
+    }
