@@ -18,6 +18,8 @@ Gebruik: streamlit run sanctuary_ui.py
 
 import streamlit as st
 import io
+import os
+from pathlib import Path
 from datetime import datetime
 from contextlib import redirect_stdout
 
@@ -225,6 +227,66 @@ with st.sidebar:
     st.divider()
     with st.expander("Boot Log", expanded=False):
         st.code(boot_log[-2000:], language="text")
+
+    # --- FEED THE MIND ---
+    st.divider()
+    st.header("\U0001f4c2 FEED THE MIND")
+
+    uploaded_files = st.file_uploader(
+        "Upload Kennis (PDF/TXT/MD/PY)",
+        accept_multiple_files=True,
+        type=["pdf", "txt", "md", "py"],
+    )
+
+    if uploaded_files:
+        if st.button(
+            f"\U0001f4e5 Verwerk"
+            f" {len(uploaded_files)} bestanden"
+        ):
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+
+            # 1. Bestanden opslaan
+            save_dir = str(
+                Path(__file__).parent
+                / "data" / "rag" / "documenten"
+            )
+            os.makedirs(save_dir, exist_ok=True)
+
+            for i, uf in enumerate(uploaded_files):
+                file_path = os.path.join(
+                    save_dir, uf.name
+                )
+                with open(file_path, "wb") as f:
+                    f.write(uf.getbuffer())
+                status_text.text(
+                    f"Opgeslagen: {uf.name}"
+                )
+                progress_bar.progress(
+                    (i + 1)
+                    / len(uploaded_files)
+                    * 0.5
+                )
+
+            # 2. Ingesteren via TheLibrarian
+            status_text.text(
+                "The Librarian: Indexing Vectors..."
+            )
+            try:
+                from ingest import TheLibrarian
+                lib = TheLibrarian()
+                lib.ingest(pad=save_dir)
+                progress_bar.progress(1.0)
+                count = lib.collection.count()
+                status_text.success(
+                    f"Kennis geabsorbeerd!"
+                    f" ({count} chunks in DB)"
+                )
+                st.balloons()
+            except Exception as e:
+                status_text.error(
+                    f"Fout bij ingest: {e}"
+                )
 
 
 # --- HOOFDSCHERM ---
