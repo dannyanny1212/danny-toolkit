@@ -56,7 +56,7 @@ class MindProtocol:
                 "error": getattr(self, "_init_error", ""),
             }
 
-        state = self.limbic.get_current_state()
+        state = self.limbic.state
         return {
             "quest": "III - THE MIND",
             "mood": state.mood.value,
@@ -88,7 +88,7 @@ class MindProtocol:
             return
 
         # Huidige staat
-        state = self.limbic.get_current_state()
+        state = self.limbic.state
         print(kleur(
             "\n  --- Huidige Emotionele Staat ---",
             Kleur.FEL_MAGENTA,

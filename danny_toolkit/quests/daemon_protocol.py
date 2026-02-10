@@ -44,10 +44,8 @@ class DaemonProtocol:
         return {
             "quest": "II - THE DAEMON",
             "versie": self.daemon.VERSIE,
-            "mood": self.daemon.limbic.get_current_state(
-            ).mood.value if self.daemon.limbic else "onbekend",
-            "energie": self.daemon.limbic.get_current_state(
-            ).energy.value if self.daemon.limbic else "onbekend",
+            "mood": self.daemon.limbic.state.mood.value if self.daemon.limbic else "onbekend",
+            "energie": self.daemon.limbic.state.energy.value if self.daemon.limbic else "onbekend",
             "status": "operationeel",
         }
 
@@ -76,7 +74,7 @@ class DaemonProtocol:
         ))
 
         # Emotionele staat
-        state = self.daemon.limbic.get_current_state()
+        state = self.daemon.limbic.state
         print(kleur(
             "\n  --- Emotionele Staat ---",
             Kleur.FEL_ROOD,
@@ -95,7 +93,7 @@ class DaemonProtocol:
         ))
 
         # Metabolisme
-        meta_state = self.daemon.metabolisme.get_state()
+        meta_state = self.daemon.metabolisme.state
         print(kleur(
             "\n  --- Metabolisme ---",
             Kleur.FEL_ROOD,
@@ -105,7 +103,7 @@ class DaemonProtocol:
             Kleur.WIT,
         ))
 
-        levels = self.daemon.metabolisme.levels
+        levels = self.daemon.metabolisme.nutrients
         print(kleur(
             f"    Protein:  {levels.protein:.0f}/100",
             Kleur.WIT,
@@ -120,7 +118,7 @@ class DaemonProtocol:
         ))
 
         # Sensorium
-        event_count = len(self.daemon.sensorium.event_log)
+        event_count = len(self.daemon.sensorium.events)
         print(kleur(
             "\n  --- Sensorium ---",
             Kleur.FEL_ROOD,

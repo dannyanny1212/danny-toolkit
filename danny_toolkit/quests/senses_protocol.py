@@ -44,7 +44,7 @@ class SensesProtocol:
             "quest": "IV - THE SENSES",
             "event_types": len(EventType),
             "events_gelogd": len(
-                self.sensorium.event_log
+                self.sensorium.events
             ),
             "nutrition_mappings": len(
                 Sensorium.EVENT_NUTRITION
@@ -122,7 +122,7 @@ class SensesProtocol:
                 ))
 
         # Event log
-        event_count = len(self.sensorium.event_log)
+        event_count = len(self.sensorium.events)
         print(kleur(
             f"\n  --- Event Log ---",
             Kleur.FEL_GEEL,

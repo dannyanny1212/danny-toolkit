@@ -42,8 +42,8 @@ class BodyProtocol:
                 "error": getattr(self, "_init_error", ""),
             }
 
-        levels = self.metabolisme.levels
-        state = self.metabolisme.get_state()
+        levels = self.metabolisme.nutrients
+        state = self.metabolisme.state
         return {
             "quest": "V - THE BODY",
             "state": state.value,
@@ -72,7 +72,7 @@ class BodyProtocol:
             return
 
         # Metabolische staat
-        state = self.metabolisme.get_state()
+        state = self.metabolisme.state
         state_kleuren = {
             MetabolicState.THRIVING: Kleur.FEL_MAGENTA,
             MetabolicState.GROWING: Kleur.FEL_GROEN,
@@ -89,7 +89,7 @@ class BodyProtocol:
         ))
 
         # Nutriënt levels
-        levels = self.metabolisme.levels
+        levels = self.metabolisme.nutrients
         print(kleur(
             "\n  --- Voedingsstoffen ---",
             Kleur.FEL_GROEN,
