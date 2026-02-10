@@ -999,6 +999,12 @@ class SwarmEngine:
             "knowledge", "zoek in", "archief",
             "wat weten we over", "recall",
             "opzoeken", "doorzoek",
+            # Kennisgerichte vragen → RAG
+            "wat doet", "wat is", "hoe werkt",
+            "leg uit", "vertel over", "beschrijf",
+            "uitleg", "waarvoor", "wie is",
+            "wat betekent", "doel van", "rol van",
+            "informatie over", "meer over",
         ],
         "ALCHEMIST": [
             "convert", "transform", "data_clean",
