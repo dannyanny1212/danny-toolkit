@@ -19,6 +19,7 @@ Gebruik:
 """
 
 import asyncio
+import json
 import re
 import random
 from typing import List, Dict, Any, Optional
@@ -343,6 +344,173 @@ class IolaaxAgent(BrainAgent):
         return payload
 
 
+class MemexAgent(BrainAgent):
+    """Agentic RAG: plan → zoek → synthetiseer.
+
+    Stap 1: LLM genereert zoektermen (plan).
+    Stap 2: CorticalStack doorzoeken (execute).
+    Stap 3: LLM schrijft rapport met bronnen.
+    """
+
+    def _get_cortical_stack(self):
+        """Haal CorticalStack op (lazy)."""
+        try:
+            from danny_toolkit.brain.cortical_stack import (
+                get_cortical_stack,
+            )
+            return get_cortical_stack()
+        except Exception:
+            return None
+
+    def _search_cortical(self, query):
+        """Doorzoek CorticalStack events + feiten."""
+        stack = self._get_cortical_stack()
+        if not stack:
+            return []
+
+        results = []
+        try:
+            events = stack.search_events(
+                query, limit=5
+            )
+            for e in events:
+                actor = e.get("actor", "?")
+                action = e.get("action", "?")
+                details = str(
+                    e.get("details", "")
+                )[:200]
+                results.append(
+                    f"[Event] {actor}/{action}:"
+                    f" {details}"
+                )
+        except Exception:
+            pass
+
+        try:
+            facts = stack.recall_all(
+                min_confidence=0.3
+            )
+            lower = query.lower()
+            for f in facts:
+                val = str(f.get("value", ""))
+                if (
+                    lower in val.lower()
+                    or any(
+                        w in val.lower()
+                        for w in lower.split()
+                        if len(w) > 3
+                    )
+                ):
+                    results.append(
+                        f"[Feit] {f.get('key', '?')}:"
+                        f" {val}"
+                    )
+        except Exception:
+            pass
+
+        return results
+
+    async def process(self, task, brain=None):
+        if not brain:
+            return SwarmPayload(
+                agent=self.name, type="text",
+                content="Brain offline",
+                display_text="Brain offline",
+            )
+
+        # Stap 1: PLAN — genereer zoektermen
+        plan_prompt = (
+            "Jij bent een Expert Onderzoeker."
+            f" De gebruiker vraagt: '{task}'."
+            " Genereer 3 specifieke zoektermen"
+            " voor de database."
+            ' Antwoord ALLEEN als JSON lijst:'
+            ' ["term1", "term2", "term3"]'
+        )
+        plan_raw, _, _ = await asyncio.to_thread(
+            brain._execute_with_role,
+            self.cosmic_role, plan_prompt,
+        )
+
+        try:
+            # Zoek JSON array in output
+            match = re.search(
+                r"\[.*?\]", str(plan_raw)
+            )
+            if match:
+                queries = json.loads(match.group())
+            else:
+                queries = [task]
+        except (json.JSONDecodeError, ValueError):
+            queries = [task]
+
+        # Stap 2: EXECUTE — doorzoek CorticalStack
+        all_docs = []
+        for q in queries[:3]:
+            docs = await asyncio.to_thread(
+                self._search_cortical, q
+            )
+            all_docs.extend(docs)
+
+        # Deduplicate
+        seen = set()
+        unique_docs = []
+        for d in all_docs:
+            if d not in seen:
+                seen.add(d)
+                unique_docs.append(d)
+
+        sources_count = len(unique_docs)
+        if unique_docs:
+            context = "\n".join(unique_docs[:15])
+        else:
+            context = (
+                "Geen relevante bronnen gevonden"
+                " in de database."
+            )
+
+        # Stap 3: SYNTHESIZE — rapport met bronnen
+        synth_prompt = (
+            "Gebruik UITSLUITEND deze context om"
+            " de vraag te beantwoorden.\n"
+            f"Vraag: {task}\n\n"
+            f"Context:\n{context}\n\n"
+            "Regels:\n"
+            "1. Wees accuraat.\n"
+            "2. Gebruik [Bron: X] waar mogelijk.\n"
+            "3. Als het antwoord niet in de context"
+            " staat, zeg dat eerlijk."
+        )
+        answer, exec_time, status = (
+            await asyncio.to_thread(
+                brain._execute_with_role,
+                self.cosmic_role, synth_prompt,
+            )
+        )
+
+        display = (
+            str(answer) if answer
+            else "Geen antwoord gegenereerd"
+        )
+
+        return SwarmPayload(
+            agent=self.name,
+            type="research",
+            content={
+                "queries": queries[:3],
+                "sources_count": sources_count,
+                "raw_text": display,
+            },
+            display_text=display,
+            metadata={
+                "execution_time": exec_time,
+                "status": status,
+                "queries": queries[:3],
+                "sources": sources_count,
+            },
+        )
+
+
 # ── FAST-TRACK ──
 
 _GREETING_PATTERNS = [
@@ -478,7 +646,7 @@ class SwarmEngine:
                 "Sentinel", "Security",
                 CosmicRole.SENTINEL,
             ),
-            "ARCHIVIST": BrainAgent(
+            "ARCHIVIST": MemexAgent(
                 "Memex", "Memory",
                 CosmicRole.ARCHIVIST,
             ),

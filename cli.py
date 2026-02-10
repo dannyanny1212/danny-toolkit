@@ -422,6 +422,31 @@ def main():
                         render_media(
                             p.metadata["media"]
                         )
+                elif p.type == "research":
+                    queries = p.metadata.get(
+                        "queries", []
+                    )
+                    q_text = ""
+                    if queries:
+                        q_text = (
+                            "**Zoekopdrachten:** "
+                            + ", ".join(
+                                f"`{q}`"
+                                for q in queries
+                            )
+                            + "\n\n"
+                        )
+                    console.print(Panel(
+                        Markdown(
+                            q_text
+                            + str(p.display_text)
+                        ),
+                        title=(
+                            f"\U0001f50d {p.agent}"
+                            " Research"
+                        ),
+                        border_style="yellow",
+                    ))
                 else:
                     console.print(Panel(
                         Markdown(

@@ -299,6 +299,25 @@ with feed_col:
                             "media"
                         )
                         render_media(st, media)
+                    elif p.type == "research":
+                        st.caption(
+                            f"\U0001f50d {p.agent}"
+                            " Research"
+                        )
+                        queries = p.metadata.get(
+                            "queries", []
+                        )
+                        if queries:
+                            st.markdown(
+                                "**Zoekopdrachten:** "
+                                + ", ".join(
+                                    f"`{q}`"
+                                    for q in queries
+                                )
+                            )
+                        st.markdown(
+                            str(p.display_text)
+                        )
                     else:
                         st.markdown(
                             f"**[{p.agent}]**\n"
@@ -506,6 +525,25 @@ if prompt := st.chat_input(
                             "media"
                         )
                         render_media(st, media)
+                    elif p.type == "research":
+                        st.caption(
+                            f"\U0001f50d {p.agent}"
+                            " Research"
+                        )
+                        queries = p.metadata.get(
+                            "queries", []
+                        )
+                        if queries:
+                            st.markdown(
+                                "**Zoekopdrachten:** "
+                                + ", ".join(
+                                    f"`{q}`"
+                                    for q in queries
+                                )
+                            )
+                        st.markdown(
+                            str(p.display_text)
+                        )
                     else:
                         st.markdown(
                             f"**[{p.agent}]**\n"
