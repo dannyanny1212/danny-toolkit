@@ -299,25 +299,43 @@ with feed_col:
                             "media"
                         )
                         render_media(st, media)
-                    elif p.type == "research":
+                    elif p.type == "research_report":
                         st.caption(
-                            f"\U0001f50d {p.agent}"
-                            " Research"
+                            f"\U0001f4da {p.agent}"
+                            " | The Archivist"
                         )
-                        queries = p.metadata.get(
-                            "queries", []
-                        )
-                        if queries:
-                            st.markdown(
-                                "**Zoekopdrachten:** "
-                                + ", ".join(
-                                    f"`{q}`"
-                                    for q in queries
-                                )
-                            )
                         st.markdown(
                             str(p.display_text)
                         )
+                        data = p.content
+                        if isinstance(data, dict):
+                            with st.expander(
+                                "\U0001f50d Onderzoeksdata"
+                                " bekijken"
+                            ):
+                                st.write(
+                                    "**Gebruikte"
+                                    " Zoekstrategie:**"
+                                )
+                                for q in data.get(
+                                    "queries", []
+                                ):
+                                    st.code(
+                                        f"\U0001f50d"
+                                        f" {q}",
+                                        language="text",
+                                    )
+                                st.write(
+                                    "**Geraadpleegde"
+                                    " bronnen:** "
+                                    f"{data.get('sources_count', 0)}"
+                                    " documenten"
+                                )
+                                st.info(
+                                    "Bronnen zijn"
+                                    " geverifieerd via"
+                                    " CorticalStack."
+                                )
                     else:
                         st.markdown(
                             f"**[{p.agent}]**\n"
@@ -525,25 +543,43 @@ if prompt := st.chat_input(
                             "media"
                         )
                         render_media(st, media)
-                    elif p.type == "research":
+                    elif p.type == "research_report":
                         st.caption(
-                            f"\U0001f50d {p.agent}"
-                            " Research"
+                            f"\U0001f4da {p.agent}"
+                            " | The Archivist"
                         )
-                        queries = p.metadata.get(
-                            "queries", []
-                        )
-                        if queries:
-                            st.markdown(
-                                "**Zoekopdrachten:** "
-                                + ", ".join(
-                                    f"`{q}`"
-                                    for q in queries
-                                )
-                            )
                         st.markdown(
                             str(p.display_text)
                         )
+                        data = p.content
+                        if isinstance(data, dict):
+                            with st.expander(
+                                "\U0001f50d Onderzoeksdata"
+                                " bekijken"
+                            ):
+                                st.write(
+                                    "**Gebruikte"
+                                    " Zoekstrategie:**"
+                                )
+                                for q in data.get(
+                                    "queries", []
+                                ):
+                                    st.code(
+                                        f"\U0001f50d"
+                                        f" {q}",
+                                        language="text",
+                                    )
+                                st.write(
+                                    "**Geraadpleegde"
+                                    " bronnen:** "
+                                    f"{data.get('sources_count', 0)}"
+                                    " documenten"
+                                )
+                                st.info(
+                                    "Bronnen zijn"
+                                    " geverifieerd via"
+                                    " CorticalStack."
+                                )
                     else:
                         st.markdown(
                             f"**[{p.agent}]**\n"

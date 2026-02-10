@@ -495,7 +495,7 @@ class MemexAgent(BrainAgent):
 
         return SwarmPayload(
             agent=self.name,
-            type="research",
+            type="research_report",
             content={
                 "queries": queries[:3],
                 "sources_count": sources_count,

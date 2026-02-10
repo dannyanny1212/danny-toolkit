@@ -422,31 +422,47 @@ def main():
                         render_media(
                             p.metadata["media"]
                         )
-                elif p.type == "research":
-                    queries = p.metadata.get(
-                        "queries", []
-                    )
-                    q_text = ""
-                    if queries:
-                        q_text = (
-                            "**Zoekopdrachten:** "
-                            + ", ".join(
-                                f"`{q}`"
-                                for q in queries
-                            )
-                            + "\n\n"
-                        )
+                elif p.type == "research_report":
                     console.print(Panel(
                         Markdown(
-                            q_text
-                            + str(p.display_text)
+                            str(p.display_text)
                         ),
                         title=(
-                            f"\U0001f50d {p.agent}"
-                            " Research"
+                            f"\U0001f4da {p.agent}"
+                            " | The Archivist"
                         ),
                         border_style="yellow",
                     ))
+                    data = p.content
+                    if isinstance(data, dict):
+                        queries = data.get(
+                            "queries", []
+                        )
+                        src = data.get(
+                            "sources_count", 0
+                        )
+                        q_lines = "\n".join(
+                            f"  \U0001f50d {q}"
+                            for q in queries
+                        )
+                        console.print(Panel(
+                            (
+                                "[bold]Zoekstrategie"
+                                ":[/bold]\n"
+                                f"{q_lines}\n\n"
+                                "[bold]Bronnen:"
+                                f"[/bold] {src}"
+                                " documenten\n"
+                                "[dim]Geverifieerd"
+                                " via CorticalStack"
+                                "[/dim]"
+                            ),
+                            title=(
+                                "\U0001f50d"
+                                " Onderzoeksdata"
+                            ),
+                            border_style="dim yellow",
+                        ))
                 else:
                     console.print(Panel(
                         Markdown(
