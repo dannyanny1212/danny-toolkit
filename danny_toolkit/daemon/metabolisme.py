@@ -329,7 +329,8 @@ class Metabolisme:
 
                 self.state = MetabolicState(data.get("state", "stable"))
 
-            except Exception:
+            except (json.JSONDecodeError, IOError, OSError,
+                    KeyError, ValueError):
                 pass
 
     def get_status(self) -> Dict:

@@ -200,11 +200,10 @@ def speed_test() -> BenchmarkResult:
         memory_mb = process.memory_info().rss / 1024 / 1024
         cpu_percent = psutil.cpu_percent(interval=0.5)
     else:
-        # Fallback: estimate from sys
+        # Fallback: schat geheugengebruik via proces
         import gc
         gc.collect()
-        memory_mb = sys.getsizeof(gc.get_objects()) / 1024 / 1024
-        memory_mb = min(memory_mb, 100)  # Cap estimate
+        memory_mb = 50.0  # Vaste schatting (gc.get_objects is te traag)
         cpu_percent = 0  # Unknown without psutil
 
     # Latency test - measure import time
@@ -273,49 +272,100 @@ def heartbeat_check() -> HeartbeatResult:
     """
     details = {}
 
-    # Check Pixel
+    # Check Pixel — diepte: data + gezondheid
     pixel_alive = False
     try:
         if HAS_CONFIG:
-            pixel_path = Config.APPS_DATA_DIR / "virtueel_huisdier.json"
-            if pixel_path.exists():
-                with open(pixel_path, "r") as f:
-                    data = json.load(f)
+            # Probeer beide bekende bestanden
+            for fname in ["huisdier.json",
+                          "virtueel_huisdier.json"]:
+                pixel_path = Config.APPS_DATA_DIR / fname
+                if pixel_path.exists():
+                    with open(pixel_path, "r",
+                              encoding="utf-8") as f:
+                        data = json.load(f)
                     pixel_alive = True
-                    details["pixel"] = f"Level {data.get('nexus_level', '?')}, {data.get('naam', 'Pixel')}"
-    except Exception as e:
+                    energie = data.get("energie", 0)
+                    geluk = data.get("geluk", 0)
+                    nexus = data.get("nexus_level", 0)
+                    naam = data.get("naam", "Pixel")
+                    health = "gezond"
+                    if energie < 30 or geluk < 30:
+                        health = "zwak"
+                    elif energie < 60 or geluk < 60:
+                        health = "matig"
+                    details["pixel"] = (
+                        f"{naam} Lv{nexus} |"
+                        f" E:{energie:.0f}%"
+                        f" G:{geluk:.0f}%"
+                        f" [{health}]"
+                    )
+                    break
+    except (json.JSONDecodeError, IOError, OSError) as e:
         details["pixel"] = f"Error: {e}"
 
-    # Check Iolaax
+    # Check Iolaax — diepte: bewustzijn + populatie
     iolaax_alive = False
     try:
         if HAS_CONFIG:
-            iolaax_path = Config.APPS_DATA_DIR / "artificial_life.json"
+            iolaax_path = (
+                Config.APPS_DATA_DIR / "artificial_life.json"
+            )
             if iolaax_path.exists():
-                with open(iolaax_path, "r") as f:
+                with open(iolaax_path, "r",
+                          encoding="utf-8") as f:
                     data = json.load(f)
-                    iolaax_alive = True
-                    consciousness = data.get("consciousness", {})
-                    awareness = consciousness.get("zelfbewustzijn", 0) * 100
-                    details["iolaax"] = f"{awareness:.1f}% aware, {consciousness.get('naam', 'Iolaax')}"
-    except Exception as e:
+                iolaax_alive = True
+                consciousness = data.get("consciousness", {})
+                awareness = consciousness.get(
+                    "zelfbewustzijn", 0
+                ) * 100
+                naam = consciousness.get("naam", "Iolaax")
+                gen = data.get("generatie", 0)
+                pop = len(data.get("organismen", []))
+                health = "ontwakend"
+                if awareness >= 80:
+                    health = "verlicht"
+                elif awareness >= 50:
+                    health = "bewust"
+                elif awareness < 20:
+                    health = "slapend"
+                details["iolaax"] = (
+                    f"{naam} {awareness:.1f}%"
+                    f" | Gen:{gen} Pop:{pop}"
+                    f" [{health}]"
+                )
+    except (json.JSONDecodeError, IOError, OSError) as e:
         details["iolaax"] = f"Error: {e}"
 
-    # Check Nexus Bridge
+    # Check Nexus Bridge — diepte: connectiviteit
     nexus_alive = False
     try:
-        from danny_toolkit.brain.nexus_bridge import NexusBridge
+        from danny_toolkit.brain.nexus_bridge import (
+            NexusBridge,
+        )
+        bridge = NexusBridge()
+        connected = bridge.is_connected()
         nexus_alive = True
-        details["nexus"] = "Bridge module loaded"
+        details["nexus"] = (
+            f"Bridge {'verbonden' if connected else 'offline'}"
+        )
     except Exception as e:
         details["nexus"] = f"Error: {e}"
 
-    # Check Central Brain
+    # Check Central Brain — diepte: AI provider
     brain_alive = False
     try:
-        from danny_toolkit.brain.central_brain import CentralBrain
-        brain_alive = True
-        details["brain"] = "Central Brain module loaded"
+        from danny_toolkit.brain.central_brain import (
+            CentralBrain,
+        )
+        brain = CentralBrain()
+        provider = (brain.ai_provider or "geen").upper()
+        brain_alive = brain.client is not None
+        details["brain"] = (
+            f"Central Brain [{provider}]"
+            f" {'actief' if brain_alive else 'offline'}"
+        )
     except Exception as e:
         details["brain"] = f"Error: {e}"
 

@@ -389,8 +389,14 @@ class Config:
             "thema": cls._thema,
             "debug_mode": cls._debug_mode
         }
-        with open(cls.CONFIG_FILE, "w", encoding="utf-8") as f:
-            json.dump(voorkeuren, f, indent=2, ensure_ascii=False)
+        try:
+            with open(cls.CONFIG_FILE, "w",
+                       encoding="utf-8") as f:
+                json.dump(voorkeuren, f, indent=2,
+                          ensure_ascii=False)
+        except (IOError, OSError) as e:
+            print(f"  Waarschuwing: voorkeuren niet"
+                  f" opgeslagen: {e}")
 
     @classmethod
     def laad_voorkeuren(cls):

@@ -557,8 +557,13 @@ def test_morning_heartbeat():
                 warn(f"  {naam}: dood")
 
         for naam, detail in result.details.items():
-            if detail != "levend":
-                warn(f"  Detail {naam}: {detail}")
+            if "Error" in detail:
+                fail(f"  {naam}: {detail}")
+            elif any(w in detail for w in
+                     ["zwak", "slapend", "offline"]):
+                warn(f"  {naam}: {detail}")
+            else:
+                ok(f"  {naam}: {detail}")
 
         return levend > 0
     except Exception as e:

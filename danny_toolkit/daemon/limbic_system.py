@@ -213,7 +213,8 @@ class LimbicSystem:
     def _on_mood_event(self, event: SensoryEvent):
         """Reageer op mood log event."""
         # Probeer mood score uit event te halen
-        mood_score = event.data.get("score", 5) / 10.0
+        raw = event.data.get("score", 5)
+        mood_score = max(0.0, min(1.0, raw / 10.0))
         self._health_score = (self._health_score + mood_score) / 2
         self._recalculate_state()
 
@@ -391,7 +392,8 @@ class LimbicSystem:
                 self.state.happiness = state_data.get("happiness", 0.5)
                 self.state.stress = state_data.get("stress", 0.3)
 
-            except Exception:
+            except (json.JSONDecodeError, IOError, OSError,
+                    KeyError, ValueError):
                 pass  # Gebruik defaults
 
     def get_status(self) -> Dict:

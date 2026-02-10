@@ -145,7 +145,8 @@ class TrinitySymbiosis:
                             stats=member_data.get("stats", {}),
                             linked=member_data.get("linked", True)
                         )
-            except Exception:
+            except (json.JSONDecodeError, IOError, OSError,
+                    KeyError, ValueError):
                 pass
 
     def _save_state(self):
@@ -270,8 +271,8 @@ class TrinitySymbiosis:
         for listener in self.event_listeners.get(event_key, []):
             try:
                 listener(event)
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"  [Trinity] Listener fout: {e}")
 
         # Propageer naar andere members
         for role, member in self.members.items():
