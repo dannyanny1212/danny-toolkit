@@ -515,21 +515,11 @@ class MemexAgent(BrainAgent):
 
         # Stap 1: PLAN — genereer zoektermen
         plan_prompt = (
-            "Je doorzoekt een SEMANTISCHE vector"
-            " database met Python broncode en"
-            " documentatie. Zoektermen moeten"
-            " natuurlijke taal zijn, GEEN"
-            " code-identifiers.\n"
             f"Vraag: '{task}'\n"
-            "Genereer 3 korte zoektermen"
-            " (Nederlands, 2-4 woorden).\n"
-            "Goed: [\"daemon emoties systeem\","
-            " \"sensorium zintuigen\","
-            " \"limbic mood state\"]\n"
-            "Fout: [\"DigitalDaemon_config\","
-            " \"get_status()\"]\n"
-            'Antwoord ALLEEN als JSON lijst:'
-            ' ["term1", "term2", "term3"]'
+            "Geef 3 zoektermen voor een"
+            " vector database. Behoud de"
+            " naam uit de vraag.\n"
+            'Alleen JSON: ["term1","term2","term3"]'
         )
         plan_raw, _, _ = await asyncio.to_thread(
             brain._execute_with_role,
@@ -541,17 +531,45 @@ class MemexAgent(BrainAgent):
                 r"\[.*?\]", str(plan_raw)
             )
             if match:
-                queries = json.loads(match.group())
+                parsed = json.loads(match.group())
+                queries = [
+                    str(q) for q in parsed
+                    if isinstance(q, str) and len(q) > 3
+                ]
             else:
-                queries = [task]
+                queries = []
         except (json.JSONDecodeError, ValueError):
-            queries = [task]
+            queries = []
+
+        # Originele vraag altijd als eerste
+        queries.insert(0, task)
+
+        # Extraheer kernentiteit uit de vraag
+        # zodat "Wat doet de Governor?" ook
+        # "Governor" als losse term zoekt
+        stop = {
+            "wat", "hoe", "wie", "waar", "welke",
+            "waarom", "wanneer", "doet", "werkt",
+            "is", "zijn", "de", "het", "een",
+            "van", "in", "op", "met", "voor",
+            "over", "uit", "aan", "er", "dit",
+            "dat", "nog", "ook", "al", "kan",
+            "kun", "moet", "mag", "wil", "zou",
+            "leg", "vertel", "beschrijf",
+        }
+        kern = [
+            w for w in task.split()
+            if w.lower().strip("?.,!") not in stop
+            and len(w) > 2
+        ]
+        if kern:
+            queries.insert(1, " ".join(kern))
 
         # Stap 2: EXECUTE — doorzoek ChromaDB + Cortical
         all_fragments = []
         sources = set()
 
-        for q in queries[:3]:
+        for q in queries[:4]:
             # ChromaDB (primaire bron)
             docs, metas = await asyncio.to_thread(
                 self._search_chromadb, q
