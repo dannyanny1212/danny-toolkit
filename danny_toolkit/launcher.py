@@ -1,9 +1,13 @@
 """
 Danny Toolkit Launcher - Hoofdmenu.
-Versie 2.0 - Met thema's, kleuren, statistieken en meer.
+Versie 3.0 - Rich Dashboard met thema's, kleuren, statistieken en meer.
 """
 
 import sys
+import os
+if os.name == "nt":
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
 import json
 from datetime import datetime
 from pathlib import Path
@@ -67,6 +71,15 @@ from .brain.nexus_bridge import (
 )
 from .brain.trinity_omega import PrometheusBrain, get_prometheus
 from .brain.visual_nexus import VisualNexus, build_visual_nexus
+
+# Rich UI imports
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+from rich.text import Text
+from rich.align import Align
+from rich.columns import Columns
+from rich.prompt import Prompt
 
 
 # =============================================================================
@@ -731,6 +744,31 @@ class WillProtocolApp:
         input("\n  Druk op Enter om terug te gaan...")
 
 
+class HeartbeatApp:
+    """Wrapper voor Heartbeat Daemon in launcher."""
+
+    def run(self):
+        """Start de Heartbeat Daemon."""
+        from .core.utils import clear_scherm
+
+        clear_scherm()
+        print(kleur("""
++===============================================================+
+|                                                               |
+|     H E A R T B E A T   D A E M O N                           |
+|                                                               |
+|     Autonome Achtergrond-Monitor                              |
+|                                                               |
++===============================================================+
+        """, Kleur.FEL_MAGENTA))
+
+        from .daemon.heartbeat import HeartbeatDaemon
+        daemon = HeartbeatDaemon()
+        daemon.start()
+
+        input("\n  Druk op Enter om terug te gaan...")
+
+
 class PulseProtocolApp:
     """Wrapper voor Pulse Protocol in launcher."""
 
@@ -768,14 +806,14 @@ BANNER_STANDAARD = """
 ║     ██████╔╝██║  ██║██║ ╚████║██║ ╚████║   ██║               ║
 ║     ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═══╝   ╚═╝               ║
 ║                                                               ║
-║              T O O L K I T   v2.0                             ║
+║              T O O L K I T   v3.0 // FEDERATION                ║
 ║                                                               ║
 ╚═══════════════════════════════════════════════════════════════╝
 """
 
 BANNER_MINIMAAL = """
 ============================================================
-     DANNY TOOLKIT v2.0
+     DANNY TOOLKIT v3.0
 ============================================================
 """
 
@@ -864,7 +902,7 @@ class LauncherStats:
 class Launcher:
     """Hoofdlauncher voor Danny Toolkit."""
 
-    VERSIE = "2.0.0"
+    VERSIE = "3.0.0"
 
     # Alle beschikbare apps
     APPS = {
@@ -919,6 +957,7 @@ class Launcher:
         "49": ("Listener Protocol", ListenerProtocolApp, "omega"),
         "50": ("Dialogue Protocol", DialogueProtocolApp, "omega"),
         "51": ("Will Protocol", WillProtocolApp, "omega"),
+        "52": ("Heartbeat Daemon", HeartbeatApp, "daemon"),
     }
 
     # Sneltoetsen
@@ -974,6 +1013,7 @@ class Launcher:
         "li": "49", # Listener Protocol
         "di": "50", # Dialogue Protocol
         "wi": "51", # Will Protocol
+        "hb": "52", # Heartbeat Daemon
     }
 
     def __init__(self):
@@ -982,6 +1022,7 @@ class Launcher:
         Config.laad_voorkeuren()
         self.stats = LauncherStats()
         self.stats.registreer_sessie()
+        self.console = Console()
 
     def _get_banner(self) -> str:
         """Haal de juiste banner op basis van thema."""
@@ -1007,140 +1048,203 @@ class Launcher:
         return kleur(tekst, kleuren.get(type_, ""))
 
     def toon_menu(self):
-        """Toont het hoofdmenu."""
+        """Toont het Rich-powered hoofdmenu dashboard."""
         clear_scherm()
+        con = self.console
         taal = Config.get_taal()
-        thema = Config.get_thema()
 
-        # Banner
-        print(self._kleur_tekst(self._get_banner(), "titel"))
+        # ── HEADER: ASCII logo in Rich Panel ──
+        banner_text = Text(self._get_banner(), style="bold cyan")
+        con.print(Panel(
+            Align.center(banner_text),
+            border_style="blue",
+            padding=(0, 1),
+        ))
 
-        # Recente apps
-        recente = self.stats.get_recente(3)
-        if recente:
-            print(self._kleur_tekst("  ★ RECENT GEBRUIKT", "categorie"))
-            for app_naam in recente:
-                # Vind de key voor deze app
-                for key, (naam, _, _) in self.APPS.items():
-                    if naam == app_naam:
-                        gebruik = self.stats.get_gebruik(app_naam)
-                        print(f"     {self._kleur_tekst(key, 'nummer')}. {naam} "
-                              f"{self._kleur_tekst(f'({gebruik}x)', 'info')}")
-                        break
-            print()
-
-        # Applicaties
-        print(self._kleur_tekst("  ═══ APPLICATIES ═══", "categorie"))
-        for key in ["1", "2", "3", "4", "5"]:
-            naam, _, _ = self.APPS[key]
-            gebruik = self.stats.get_gebruik(naam)
-            gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
-            print(f"     {self._kleur_tekst(key, 'nummer')}. {naam}"
-                  f"{self._kleur_tekst(gebruik_str, 'info')}")
-        print()
-
-        # AI Systemen
-        print(self._kleur_tekst("  ═══ AI SYSTEMEN ═══", "categorie"))
-        for key in ["6", "7", "8", "9", "10", "21", "24", "25", "34", "35",
-                    "37", "38"]:
-            naam, _, _ = self.APPS[key]
-            gebruik = self.stats.get_gebruik(naam)
-            gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
-            print(f"     {self._kleur_tekst(key, 'nummer')}. {naam}"
-                  f"{self._kleur_tekst(gebruik_str, 'info')}")
-        print()
-
-        # Productiviteit Apps
-        print(self._kleur_tekst("  ═══ PRODUCTIVITEIT ═══", "categorie"))
-        for key in ["11", "12", "13", "14", "15", "16", "17", "18", "19", "20",
-                    "22", "23", "27", "28", "29", "30", "31", "32", "33"]:
-            naam, _, _ = self.APPS[key]
-            gebruik = self.stats.get_gebruik(naam)
-            gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
-            print(f"     {self._kleur_tekst(key, 'nummer')}. {naam}"
-                  f"{self._kleur_tekst(gebruik_str, 'info')}")
-        print()
-
-        # Creatief
-        print(self._kleur_tekst("  ═══ CREATIEF ═══", "categorie"))
-        for key in ["26"]:
-            naam, _, _ = self.APPS[key]
-            gebruik = self.stats.get_gebruik(naam)
-            gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
-            print(f"     {self._kleur_tekst(key, 'nummer')}. {naam}"
-                  f"{self._kleur_tekst(gebruik_str, 'info')}")
-        print()
-
-        # Central Brain - AI Ecosysteem
-        print(self._kleur_tekst("  ═══ CENTRAL BRAIN ═══", "categorie"))
-        for key in ["36", "40", "42", "43", "44", "45", "46"]:
-            naam, _, _ = self.APPS[key]
-            gebruik = self.stats.get_gebruik(naam)
-            gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
-            label = {
-                "36": "[AI ECOSYSTEEM]",
-                "40": "[MIND+SOUL+BODY]",
-                "42": "[LEVEND DASHBOARD]",
-                "43": "[PASSIVE OBSERVE]",
-                "44": "[PIXEL SYMBIOSE]",
-                "45": "[THE CONSTRUCT]",
-                "46": "[SWARM AI]",
-            }.get(key, "")
-            print(f"     {self._kleur_tekst(key, 'nummer')}. {naam} "
-                  f"{self._kleur_tekst(label, 'info')}"
-                  f"{self._kleur_tekst(gebruik_str, 'info')}")
-        print()
-
-        # Digital Daemon - Levende Interface
-        print(self._kleur_tekst("  ═══ DIGITAL DAEMON ═══", "categorie"))
-        naam, _, _ = self.APPS["39"]
-        gebruik = self.stats.get_gebruik(naam)
-        gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
-        print(f"     {self._kleur_tekst('39', 'nummer')}. {naam} "
-              f"{self._kleur_tekst('[ALWAYS-ON]', 'info')}"
-              f"{self._kleur_tekst(gebruik_str, 'info')}")
-        print()
-
-        # Omega AI - Lichaam + Geest
-        print(self._kleur_tekst("  ═══ OMEGA AI ═══", "categorie"))
-        omega_apps = [
-            ("41", "[LICHAAM+GEEST]"),
-            ("47", "[BIO-WALLET]"),
-            ("48", "[THE VOICE]"),
-            ("49", "[THE LISTENER]"),
-            ("50", "[THE DIALOGUE]"),
-            ("51", "[THE WILL]"),
-        ]
-        for key, label in omega_apps:
-            naam, _, _ = self.APPS[key]
-            gebruik = self.stats.get_gebruik(naam)
-            gebruik_str = (
-                f" ({gebruik}x)" if gebruik > 0 else ""
-            )
-            print(
-                f"     {self._kleur_tekst(key, 'nummer')}"
-                f". {naam} "
-                f"{self._kleur_tekst(label, 'info')}"
-                f"{self._kleur_tekst(gebruik_str, 'info')}"
-            )
-        print()
-
-        # Systeem opties
-        print(self._kleur_tekst("  ═══ SYSTEEM ═══", "categorie"))
-        print(f"     {self._kleur_tekst('z', 'nummer')}. Zoeken")
-        print(f"     {self._kleur_tekst('i', 'nummer')}. Info & Statistieken")
-        print(f"     {self._kleur_tekst('o', 'nummer')}. Instellingen")
-        print(f"     {self._kleur_tekst('?', 'nummer')}. Help / Sneltoetsen")
-        print(f"     {self._kleur_tekst('0', 'nummer')}. Afsluiten")
-        print()
-
-        # Status balk
+        # ── STATS BAR ──
         sessies = self.stats.data["totaal_sessies"]
         totaal = self.stats.get_totaal_gebruik()
         thema_naam = Thema.get(Config._thema)["naam"]
         taal_naam = taal["naam"]
-        print(f"  {self._kleur_tekst(f'Sessies: {sessies} | Apps: {totaal} | Thema: {thema_naam} | Taal: {taal_naam}', 'info')}")
-        print()
+        nu = datetime.now().strftime("%H:%M | %d-%m-%Y")
+
+        stats_grid = Table.grid(expand=True)
+        stats_grid.add_column(ratio=1)
+        stats_grid.add_column(ratio=1)
+        stats_grid.add_column(ratio=1)
+        stats_grid.add_column(ratio=1)
+        stats_grid.add_row(
+            f"[green]ONLINE[/green] Sessie #{sessies}",
+            f"[cyan]Apps:[/cyan] {totaal} runs",
+            f"[yellow]Thema:[/yellow] {thema_naam}",
+            f"[blue]{nu}[/blue]",
+        )
+        con.print(Panel(
+            stats_grid,
+            style="on #1e212b",
+            border_style="dim",
+            padding=(0, 1),
+        ))
+
+        # ── RECENT ──
+        recente = self.stats.get_recente(3)
+        if recente:
+            recent_parts = []
+            for app_naam in recente:
+                for key, (naam, _, _) in self.APPS.items():
+                    if naam == app_naam:
+                        runs = self.stats.get_gebruik(naam)
+                        recent_parts.append(
+                            f"[bold green]{key}[/bold green]"
+                            f" {naam} [dim]({runs}x)[/dim]"
+                        )
+                        break
+            con.print(
+                f"  [bold yellow]RECENT:[/bold yellow]  "
+                + "  |  ".join(recent_parts)
+            )
+            con.print()
+
+        # ── APP GROEPERING ──
+        NEXUS_PRIME = {
+            "42": "DASHBOARD",
+            "46": "SWARM AI",
+            "36": "ECOSYSTEEM",
+            "40": "MIND+SOUL+BODY",
+            "39": "ALWAYS-ON",
+            "43": "OBSERVE",
+            "44": "SYMBIOSE",
+            "45": "CONSTRUCT",
+        }
+        OMEGA_PROTOCOLS = {
+            "41": "CORE",
+            "47": "BIO-WALLET",
+            "48": "VOICE",
+            "49": "LISTENER",
+            "50": "DIALOGUE",
+            "51": "EXECUTION",
+            "52": "HEARTBEAT",
+        }
+        ENGINEERING = [
+            "5", "6", "7", "8", "9", "10",
+            "21", "24", "25", "34", "35", "37", "38",
+        ]
+        SUBROUTINES = [
+            "1", "2", "3", "4",
+            "11", "12", "13", "14", "15", "16", "17",
+            "18", "19", "20", "22", "23",
+            "26", "27", "28", "29", "30", "31", "32", "33",
+        ]
+
+        # ── Helper: maak tabel met rijen ──
+        def _build_table(titel, items, kleur_stijl, met_label=False):
+            tbl = Table(
+                expand=True,
+                show_header=False,
+                border_style=kleur_stijl,
+                padding=(0, 1),
+            )
+            tbl.add_column("nr", width=4, style="bold green")
+            tbl.add_column("naam", ratio=3)
+            if met_label:
+                tbl.add_column("tag", ratio=2, style=kleur_stijl)
+            tbl.add_column("runs", width=6, justify="right",
+                           style="dim")
+
+            if isinstance(items, dict):
+                for key, label in items.items():
+                    naam = self.APPS[key][0]
+                    runs = self.stats.get_gebruik(naam)
+                    r = f"{runs}x" if runs > 0 else ""
+                    if met_label:
+                        tbl.add_row(key, naam, label, r)
+                    else:
+                        tbl.add_row(key, naam, r)
+            else:
+                for key in items:
+                    naam = self.APPS[key][0]
+                    runs = self.stats.get_gebruik(naam)
+                    r = f"{runs}x" if runs > 0 else ""
+                    tbl.add_row(key, naam, r)
+            return tbl
+
+        # Nexus Prime tabel
+        nexus_tbl = _build_table(
+            "NEXUS PRIME", NEXUS_PRIME, "cyan", met_label=True
+        )
+        nexus_panel = Panel(
+            nexus_tbl,
+            title="[bold cyan]NEXUS PRIME[/bold cyan]",
+            border_style="cyan",
+            subtitle="[dim]8 systems[/dim]",
+        )
+
+        # Omega Protocols tabel
+        omega_tbl = _build_table(
+            "OMEGA PROTOCOLS", OMEGA_PROTOCOLS, "magenta",
+            met_label=True,
+        )
+        omega_panel = Panel(
+            omega_tbl,
+            title="[bold magenta]OMEGA PROTOCOLS[/bold magenta]",
+            border_style="magenta",
+            subtitle="[dim]7 protocols[/dim]",
+        )
+
+        # Rij 1: Nexus Prime + Omega Protocols
+        con.print(Columns(
+            [nexus_panel, omega_panel], expand=True, equal=True,
+        ))
+
+        # Engineering Deck tabel
+        eng_tbl = _build_table(
+            "ENGINEERING DECK", ENGINEERING, "green"
+        )
+        eng_panel = Panel(
+            eng_tbl,
+            title="[bold green]ENGINEERING DECK[/bold green]",
+            border_style="green",
+            subtitle="[dim]13 tools[/dim]",
+        )
+
+        # Subroutines compact panel
+        sub_lines = []
+        for key in SUBROUTINES:
+            naam = self.APPS[key][0]
+            runs = self.stats.get_gebruik(naam)
+            r = f" [dim]({runs}x)[/dim]" if runs > 0 else ""
+            sub_lines.append(
+                f"[bold green]{key:>2}[/bold green] {naam}{r}"
+            )
+        sub_panel = Panel(
+            "\n".join(sub_lines),
+            title=(
+                "[bold white]SUBROUTINES[/bold white]"
+            ),
+            border_style="bright_black",
+            subtitle="[dim]24 apps[/dim]",
+        )
+
+        # Rij 2: Engineering + Subroutines
+        con.print(Columns(
+            [eng_panel, sub_panel], expand=True, equal=True,
+        ))
+
+        # ── FOOTER ──
+        footer_text = (
+            "[bold green]Z[/bold green] Zoeken  |  "
+            "[bold green]I[/bold green] Info  |  "
+            "[bold green]O[/bold green] Settings  |  "
+            "[bold green]?[/bold green] Help  |  "
+            "[bold red]0[/bold red] SHUTDOWN"
+        )
+        con.print(Panel(
+            Align.center(Text.from_markup(footer_text)),
+            style="on blue",
+            border_style="blue",
+            padding=(0, 1),
+        ))
+        con.print()
 
     def toon_help(self):
         """Toont help en sneltoetsen."""
@@ -1185,6 +1289,7 @@ class Launcher:
         print(f"     {self._kleur_tekst('li', 'nummer')} = Listener Protocol")
         print(f"     {self._kleur_tekst('di', 'nummer')} = Dialogue Protocol")
         print(f"     {self._kleur_tekst('wi', 'nummer')} = Will Protocol")
+        print(f"     {self._kleur_tekst('hb', 'nummer')} = Heartbeat Daemon")
         print()
 
         print("  Systeem commando's:")
@@ -1407,7 +1512,9 @@ class Launcher:
         # Interactieve modus
         while True:
             self.toon_menu()
-            keuze = input("  Keuze: ").strip().lower()
+            keuze = Prompt.ask(
+                "\n[bold cyan]COMMAND[/bold cyan] >"
+            ).strip().lower()
 
             # Afsluiten
             if keuze in ["0", "q", "quit", "exit"]:
@@ -1460,11 +1567,11 @@ def main():
 
         if arg in ["--help", "-h"]:
             print("""
-Danny Toolkit v2.0 — 51 apps
+Danny Toolkit v3.0 — 52 apps
 
 Gebruik:
   python main.py              Start interactieve launcher
-  python main.py <nummer>     Start app direct (1-51)
+  python main.py <nummer>     Start app direct (1-52)
   python main.py <sneltoets>  Start app via sneltoets
   python main.py --help       Toon deze help
 
@@ -1502,10 +1609,11 @@ Central Brain (36, 40, 42-46):
 Digital Daemon (39):
   dm = Digital Daemon
 
-Omega AI (41, 47-51):
+Omega AI (41, 47-52):
   om = Omega AI              pp = Pulse Protocol
   vo = Voice Protocol        li = Listener Protocol
   di = Dialogue Protocol     wi = Will Protocol
+  hb = Heartbeat Daemon
 """)
             return
 

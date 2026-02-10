@@ -124,6 +124,11 @@ QUEST_CHECKS = [
         "danny_toolkit.quests.will_protocol",
         ["WillProtocol"],
     ),
+    (
+        "XIV - THE MEMORY",
+        "danny_toolkit.quests.memory_protocol",
+        ["MemoryProtocol"],
+    ),
 ]
 
 SUBSYSTEM_CHECKS = [
@@ -312,6 +317,7 @@ def run_integrity_check():
         (49, "Listener Protocol"),
         (50, "Dialogue Protocol"),
         (51, "Will Protocol"),
+        (52, "Heartbeat Daemon"),
     ]
 
     launcher_ok = 0

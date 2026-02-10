@@ -86,10 +86,16 @@ from .trinity_symbiosis import (
 # Visual Nexus
 from .visual_nexus import VisualNexus, build_visual_nexus
 
+# Cortical Stack - Persistent Memory
+from .cortical_stack import CorticalStack, get_cortical_stack
+
 __all__ = [
     # Visual Nexus
     "VisualNexus",
     "build_visual_nexus",
+    # Cortical Stack
+    "CorticalStack",
+    "get_cortical_stack",
     # Central Brain
     "CentralBrain",
     "UnifiedMemory",

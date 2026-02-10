@@ -8,3 +8,4 @@ from .sensorium import Sensorium
 from .limbic_system import LimbicSystem
 from .metabolisme import Metabolisme
 from .daemon_core import DigitalDaemon
+from .heartbeat import HeartbeatDaemon

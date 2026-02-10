@@ -13,6 +13,7 @@ from .voice_protocol import VoiceProtocol
 from .listener_protocol import ListenerProtocol
 from .dialogue_protocol import DialogueProtocol
 from .will_protocol import WillProtocol
+from .memory_protocol import MemoryProtocol
 
 __all__ = [
     "CoreProtocol",
@@ -28,4 +29,5 @@ __all__ = [
     "ListenerProtocol",
     "DialogueProtocol",
     "WillProtocol",
+    "MemoryProtocol",
 ]

@@ -33,6 +33,68 @@ from danny_toolkit.brain.trinity_omega import (
     TaskPriority,
 )
 
+# Cortical Stack (persistent memory)
+try:
+    from danny_toolkit.brain.cortical_stack import (
+        get_cortical_stack,
+    )
+    HAS_CORTICAL = True
+except ImportError:
+    HAS_CORTICAL = False
+
+
+def _log_to_cortical(
+    actor, action, details=None, source="swarm_core"
+):
+    """Log naar CorticalStack als beschikbaar. Silent fail."""
+    if not HAS_CORTICAL:
+        return
+    try:
+        stack = get_cortical_stack()
+        stack.log_event(
+            actor=actor,
+            action=action,
+            details=details,
+            source=source,
+        )
+    except Exception:
+        pass
+
+
+def _learn_from_input(prompt):
+    """Extraheer feiten uit user input.
+
+    Herkent patronen als 'mijn naam is X',
+    'ik hou van X', 'mijn favoriete X is Y'.
+    """
+    if not HAS_CORTICAL:
+        return
+    try:
+        stack = get_cortical_stack()
+        lower = prompt.lower().strip()
+
+        if "mijn naam is " in lower:
+            naam = prompt[lower.index("mijn naam is ") + 13:]
+            naam = naam.split(".")[0].split(",")[0].strip()
+            if naam and len(naam) < 50:
+                stack.remember_fact("user_name", naam, 0.9)
+
+        for trigger in ["ik hou van ", "ik houd van "]:
+            if trigger in lower:
+                val = prompt[
+                    lower.index(trigger) + len(trigger):
+                ]
+                val = val.split(".")[0].split(",")[0].strip()
+                if val and len(val) < 100:
+                    stack.remember_fact(
+                        f"voorkeur_{hash(val) % 10000}",
+                        f"Houdt van: {val}",
+                        0.7,
+                    )
+                break
+    except Exception:
+        pass
+
 
 class CallbackWriter:
     """Intercepteert print() en vuurt callback per regel."""
@@ -194,6 +256,12 @@ def run_hub_spoke_pipeline(prompt, brain, callback=None):
         if callback:
             callback(msg)
 
+    # Cortical Stack logging
+    _log_to_cortical(
+        "user", "query", {"prompt": prompt[:500]}
+    )
+    _learn_from_input(prompt)
+
     assigned = "?"
     output = ""
 
@@ -278,6 +346,16 @@ def run_hub_spoke_pipeline(prompt, brain, callback=None):
             f" ({media['category']})")
 
     log("\u2705 PIPELINE COMPLETE")
+
+    # Log response naar Cortical Stack
+    _log_to_cortical(
+        "swarm", "response",
+        {
+            "assigned": assigned,
+            "output_preview": str(output)[:300],
+        },
+    )
+
     return result, assigned, output, media
 
 
@@ -300,6 +378,12 @@ def run_chain_pipeline(prompt, brain, callback=None):
         if callback:
             callback(msg)
 
+    # Cortical Stack logging
+    _log_to_cortical(
+        "user", "chain_query", {"prompt": prompt[:500]}
+    )
+    _learn_from_input(prompt)
+
     log("\U0001f4e1 Chain of Command gestart...")
     log(f"\U0001f4e1 Query: \"{prompt[:60]}...\"")
 
@@ -311,4 +395,8 @@ def run_chain_pipeline(prompt, brain, callback=None):
         result = brain.chain_of_command(prompt)
 
     log("\u2705 CHAIN COMPLETE")
+
+    # Log response naar Cortical Stack
+    _log_to_cortical("swarm", "chain_response", {})
+
     return result
