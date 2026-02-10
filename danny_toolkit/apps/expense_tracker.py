@@ -77,6 +77,20 @@ class ExpenseTrackerApp:
         with open(self.bestand, "w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2, ensure_ascii=False)
 
+    def _log_memory_event(self, event_type, data):
+        """Log event naar Unified Memory."""
+        try:
+            if not hasattr(self, "_memory"):
+                from ..brain.unified_memory import UnifiedMemory
+                self._memory = UnifiedMemory()
+            self._memory.store_event(
+                app="expense_tracker",
+                event_type=event_type,
+                data=data
+            )
+        except Exception:
+            pass  # Memory is optioneel
+
     def run(self):
         """Start de expense tracker."""
         while True:
@@ -176,6 +190,9 @@ class ExpenseTrackerApp:
 
         self.data["uitgaven"].append(uitgave)
         self._sla_op()
+        self._log_memory_event("expense_added", {
+            "bedrag": bedrag, "categorie": categorie
+        })
 
         print(f"\n[OK] Uitgave van €{bedrag:.2f} toegevoegd!")
 
@@ -215,6 +232,9 @@ class ExpenseTrackerApp:
 
         self.data["inkomsten"].append(inkomen)
         self._sla_op()
+        self._log_memory_event("income_added", {
+            "bedrag": bedrag
+        })
 
         print(f"\n[OK] Inkomen van €{bedrag:.2f} toegevoegd!")
 

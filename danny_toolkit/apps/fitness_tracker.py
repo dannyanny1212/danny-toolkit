@@ -62,6 +62,20 @@ class FitnessTrackerApp:
         with open(self.data_file, "w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2, ensure_ascii=False)
 
+    def _log_memory_event(self, event_type, data):
+        """Log event naar Unified Memory."""
+        try:
+            if not hasattr(self, "_memory"):
+                from ..brain.unified_memory import UnifiedMemory
+                self._memory = UnifiedMemory()
+            self._memory.store_event(
+                app="fitness_tracker",
+                event_type=event_type,
+                data=data
+            )
+        except Exception:
+            pass  # Memory is optioneel
+
     def _check_streak(self):
         """Check en update workout streak."""
         if self.data.get("laatste_workout"):
@@ -220,6 +234,12 @@ class FitnessTrackerApp:
         self.data["laatste_workout"] = workout["datum"]
         self.data["streak"] += 1
         self._sla_op()
+        self._log_memory_event("workout_logged", {
+            "oefening": ", ".join(
+                o["naam"] for o in workout["oefeningen"]
+            )[:80],
+            "duur": workout["duur_min"]
+        })
 
         # Samenvatting
         print("\n  " + "=" * 40)

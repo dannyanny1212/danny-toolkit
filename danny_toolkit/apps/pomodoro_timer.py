@@ -74,6 +74,20 @@ class PomodoroTimerApp:
         with open(self.bestand, "w", encoding="utf-8") as f:
             json.dump(self.stats, f, indent=2)
 
+    def _log_memory_event(self, event_type, data):
+        """Log event naar Unified Memory."""
+        try:
+            if not hasattr(self, "_memory"):
+                from ..brain.unified_memory import UnifiedMemory
+                self._memory = UnifiedMemory()
+            self._memory.store_event(
+                app="pomodoro_timer",
+                event_type=event_type,
+                data=data
+            )
+        except Exception:
+            pass  # Memory is optioneel
+
     def run(self):
         """Start de pomodoro timer."""
         while True:
@@ -180,6 +194,10 @@ class PomodoroTimerApp:
                 # Houd max 100 sessies
                 self.stats["sessies"] = self.stats["sessies"][-100:]
                 self._sla_op()
+                self._log_memory_event(
+                    "pomodoro_completed",
+                    {"duur_min": minuten}
+                )
 
                 print(f"\n  Pomodoro #{self.stats['totaal_pomodoros']} voltooid!")
                 print(f"  Vandaag: {self.stats['vandaag']['pomodoros']} pomodoros")

@@ -68,6 +68,20 @@ class NotitieApp:
         with open(self.bestand, "w", encoding="utf-8") as f:
             json.dump(self.notities, f, indent=2, ensure_ascii=False)
 
+    def _log_memory_event(self, event_type, data):
+        """Log event naar Unified Memory."""
+        try:
+            if not hasattr(self, "_memory"):
+                from ..brain.unified_memory import UnifiedMemory
+                self._memory = UnifiedMemory()
+            self._memory.store_event(
+                app="notitie_app",
+                event_type=event_type,
+                data=data
+            )
+        except Exception:
+            pass  # Memory is optioneel
+
     def run(self):
         """Start de notitie app."""
         while True:
@@ -160,6 +174,9 @@ class NotitieApp:
 
         self.notities["notities"].append(notitie)
         self._sla_op()
+        self._log_memory_event("note_created", {
+            "titel": titel, "categorie": categorie
+        })
         print(f"\n[OK] Notitie '{titel}' opgeslagen!")
 
     def _bekijk_notities(self):

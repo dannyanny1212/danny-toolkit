@@ -71,6 +71,20 @@ class HabitTrackerApp:
         with open(self.bestand, "w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2, ensure_ascii=False)
 
+    def _log_memory_event(self, event_type, data):
+        """Log event naar Unified Memory."""
+        try:
+            if not hasattr(self, "_memory"):
+                from ..brain.unified_memory import UnifiedMemory
+                self._memory = UnifiedMemory()
+            self._memory.store_event(
+                app="habit_tracker",
+                event_type=event_type,
+                data=data
+            )
+        except Exception:
+            pass  # Memory is optioneel
+
     def run(self):
         """Start de habit tracker."""
         while True:
@@ -177,6 +191,9 @@ class HabitTrackerApp:
         self.data["habits"].append(habit)
         self.data["streaks"][str(habit["id"])] = 0
         self._sla_op()
+        self._log_memory_event("habit_created", {
+            "naam": naam
+        })
 
         print(f"\n[OK] Habit '{naam}' toegevoegd!")
 
@@ -224,6 +241,10 @@ class HabitTrackerApp:
                 self.data["streaks"][str(habit["id"])] = 1
 
             self._sla_op()
+            self._log_memory_event("habit_completed", {
+                "naam": habit["naam"],
+                "streak": self.data["streaks"][str(habit["id"])]
+            })
 
             streak = self.data["streaks"][str(habit["id"])]
             print(f"\n[OK] '{habit['naam']}' voltooid!")

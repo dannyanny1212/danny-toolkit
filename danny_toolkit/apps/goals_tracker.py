@@ -107,6 +107,20 @@ class GoalsTrackerApp:
         with open(self.bestand, "w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2, ensure_ascii=False)
 
+    def _log_memory_event(self, event_type, data):
+        """Log event naar Unified Memory."""
+        try:
+            if not hasattr(self, "_memory"):
+                from ..brain.unified_memory import UnifiedMemory
+                self._memory = UnifiedMemory()
+            self._memory.store_event(
+                app="goals_tracker",
+                event_type=event_type,
+                data=data
+            )
+        except Exception:
+            pass  # Memory is optioneel
+
     def run(self):
         """Start de goals tracker."""
         while True:
@@ -319,6 +333,9 @@ class GoalsTrackerApp:
 
         self.data["doelen"].append(doel)
         self._sla_op()
+        self._log_memory_event("goal_created", {
+            "naam": naam, "categorie": categorie
+        })
 
         cat_naam, cat_emoji = self.CATEGORIEEN.get(categorie, ("Anders", "⭐"))
         print(f"\n[OK] Doel '{naam}' toegevoegd!")
@@ -389,6 +406,10 @@ class GoalsTrackerApp:
                 })
 
             self._sla_op()
+            self._log_memory_event("goal_updated", {
+                "naam": doel["naam"],
+                "voortgang": voortgang
+            })
 
         except ValueError:
             print("[!] Voer geldige nummers in!")

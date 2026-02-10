@@ -90,6 +90,20 @@ class DreamJournalApp:
         with open(self.data_file, "w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2, ensure_ascii=False)
 
+    def _log_memory_event(self, event_type, data):
+        """Log event naar Unified Memory."""
+        try:
+            if not hasattr(self, "_memory"):
+                from ..brain.unified_memory import UnifiedMemory
+                self._memory = UnifiedMemory()
+            self._memory.store_event(
+                app="dream_journal",
+                event_type=event_type,
+                data=data
+            )
+        except Exception:
+            pass  # Memory is optioneel
+
     def _log_droom(self):
         """Log een nieuwe droom."""
         clear_scherm()
@@ -187,6 +201,10 @@ class DreamJournalApp:
         self.data["laatste_log"] = droom["datum"]
 
         self._sla_op()
+        self._log_memory_event("dream_logged", {
+            "titel": droom["titel"],
+            "emoties": droom["emoties"]
+        })
 
         print("\n  " + "=" * 40)
         print("  DROOM OPGESLAGEN!")

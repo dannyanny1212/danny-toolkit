@@ -84,6 +84,20 @@ class MoodTrackerApp:
         with open(self.bestand, "w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2, ensure_ascii=False)
 
+    def _log_memory_event(self, event_type, data):
+        """Log event naar Unified Memory."""
+        try:
+            if not hasattr(self, "_memory"):
+                from ..brain.unified_memory import UnifiedMemory
+                self._memory = UnifiedMemory()
+            self._memory.store_event(
+                app="mood_tracker",
+                event_type=event_type,
+                data=data
+            )
+        except Exception:
+            pass  # Memory is optioneel
+
     def run(self):
         """Start de mood tracker."""
         while True:
@@ -209,6 +223,9 @@ class MoodTrackerApp:
             self.data["streak"] = 1
 
         self._sla_op()
+        self._log_memory_event("mood_logged", {
+            "stemming": naam, "score": score
+        })
 
         print(f"\n[OK] Mood gelogd: {emoji} {naam}")
         print(f"     Streak: {self.data['streak']} dagen!")

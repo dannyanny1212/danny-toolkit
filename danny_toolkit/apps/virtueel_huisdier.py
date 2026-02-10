@@ -504,6 +504,20 @@ class VirtueelHuisdierApp:
         with open(self.bestand, "w", encoding="utf-8") as f:
             json.dump(self.huisdier, f, indent=2, ensure_ascii=False)
 
+    def _log_memory_event(self, event_type, data):
+        """Log event naar Unified Memory."""
+        try:
+            if not hasattr(self, "_memory"):
+                from ..brain.unified_memory import UnifiedMemory
+                self._memory = UnifiedMemory()
+            self._memory.store_event(
+                app="virtueel_huisdier",
+                event_type=event_type,
+                data=data
+            )
+        except Exception:
+            pass  # Memory is optioneel
+
     # ==================== AI PERSONALITY SYSTEM ====================
 
     def _get_personality(self) -> dict:
@@ -1294,6 +1308,9 @@ Maak het dromerig en fantasierijk."""
 
         # Voeg herinnering toe
         self._ai_add_memory("voeren", f"At {voedsel['naam']}")
+        self._log_memory_event("pet_fed", {
+            "resultaat": voedsel["naam"]
+        })
 
         # Achievement checks
         if self.huisdier["stats"]["voedingen"] == 1:
@@ -1341,6 +1358,9 @@ Maak het dromerig en fantasierijk."""
 
         # Voeg herinnering toe
         self._ai_add_memory("spelen", "Leuk gespeeld met baasje!")
+        self._log_memory_event("pet_played", {
+            "resultaat": "gespeeld"
+        })
 
         # Slim huisdier deelt kennis tijdens spelen
         if iq >= 30 and "kennis" in self.huisdier:
@@ -5461,6 +5481,9 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
 
             if training["bekrachtiging"] >= nodig:
                 self._trick_geleerd(trick_id, trick)
+                self._log_memory_event("pet_trained", {
+                    "resultaat": trick["naam"]
+                })
         else:
             # MISLUKT - Geen straf, maar minder motivatie
             print(f"\n  [X] {naam} deed het niet goed...")

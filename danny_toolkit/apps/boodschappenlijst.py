@@ -199,6 +199,20 @@ class BoodschappenlijstApp:
         if not stil:
             succes("Opgeslagen!")
 
+    def _log_memory_event(self, event_type, data):
+        """Log event naar Unified Memory."""
+        try:
+            if not hasattr(self, "_memory"):
+                from ..brain.unified_memory import UnifiedMemory
+                self._memory = UnifiedMemory()
+            self._memory.store_event(
+                app="boodschappenlijst",
+                event_type=event_type,
+                data=data
+            )
+        except Exception:
+            pass  # Memory is optioneel
+
     def _get_huidige_lijst(self) -> dict:
         """Haalt de huidige actieve lijst op."""
         return self.data["lijsten"].get(self.huidige_lijst,
@@ -426,6 +440,9 @@ class BoodschappenlijstApp:
         }
 
         self._get_huidige_lijst()["items"].append(item)
+        self._log_memory_event("item_added", {
+            "item": naam, "categorie": categorie
+        })
         succes(f"'{naam}' toegevoegd!")
 
         # Vraag of het een favoriet moet worden
@@ -562,6 +579,9 @@ class BoodschappenlijstApp:
                 if 0 <= idx < len(items):
                     items[idx]["afgevinkt"] = not items[idx]["afgevinkt"]
                     status = "afgevinkt" if items[idx]["afgevinkt"] else "niet afgevinkt"
+                    self._log_memory_event("item_toggled", {
+                        "item": items[idx]["naam"]
+                    })
                     succes(f"'{items[idx]['naam']}' is nu {status}!")
                 else:
                     fout("Ongeldig nummer.")
