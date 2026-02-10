@@ -745,25 +745,47 @@ class WillProtocolApp:
 
 
 class HeartbeatApp:
-    """Wrapper voor Heartbeat Daemon in launcher."""
+    """Wrapper voor Heartbeat Daemon v2.0 in launcher."""
 
     def run(self):
-        """Start de Heartbeat Daemon."""
+        """Start de Heartbeat Daemon met SwarmEngine."""
+        import io
+        from contextlib import redirect_stdout
         from .core.utils import clear_scherm
 
         clear_scherm()
         print(kleur("""
 +===============================================================+
 |                                                               |
-|     H E A R T B E A T   D A E M O N                           |
+|     H E A R T B E A T   D A E M O N   v2.0                    |
 |                                                               |
-|     Autonome Achtergrond-Monitor                              |
+|     Autonome Achtergrond-Monitor + Swarm Engine               |
 |                                                               |
 +===============================================================+
         """, Kleur.FEL_MAGENTA))
 
+        # Brain laden voor Swarm taken
+        brain = None
+        try:
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                from .brain.trinity_omega import (
+                    PrometheusBrain,
+                )
+                brain = PrometheusBrain()
+            print(kleur(
+                "  Brain geladen voor Swarm taken.",
+                Kleur.GROEN,
+            ))
+        except Exception:
+            print(kleur(
+                "  Brain niet beschikbaar"
+                " (alleen monitoring).",
+                Kleur.GEEL,
+            ))
+
         from .daemon.heartbeat import HeartbeatDaemon
-        daemon = HeartbeatDaemon()
+        daemon = HeartbeatDaemon(brain=brain)
         daemon.start()
 
         input("\n  Druk op Enter om terug te gaan...")
