@@ -362,9 +362,9 @@ with feed_col:
                         )
                         render_media(st, media)
                     elif p.type == "research_report":
-                        st.caption(
-                            f"\U0001f4da {p.agent}"
-                            " | The Archivist"
+                        st.markdown(
+                            "### \U0001f4da"
+                            " Memex Analyse"
                         )
                         st.markdown(
                             str(p.display_text)
@@ -372,31 +372,65 @@ with feed_col:
                         data = p.content
                         if isinstance(data, dict):
                             with st.expander(
-                                "\U0001f50d Onderzoeksdata"
-                                " bekijken"
+                                "\U0001f50d Bekijk"
+                                " Onderzoeksdata"
+                                " & Bronnen"
                             ):
-                                st.write(
-                                    "**Gebruikte"
-                                    " Zoekstrategie:**"
+                                st.caption(
+                                    "\U0001f9e0"
+                                    " ZOEKSTRATEGIE"
+                                    " (PLAN)"
                                 )
-                                for q in data.get(
-                                    "queries", []
-                                ):
-                                    st.code(
-                                        f"\U0001f50d"
-                                        f" {q}",
-                                        language="text",
+                                tags = "".join(
+                                    "<span style='"
+                                    "background:#333;"
+                                    "padding:4px 8px;"
+                                    "border-radius:"
+                                    "4px;margin-right"
+                                    ":5px;font-size:"
+                                    "0.85em'>"
+                                    f"\U0001f50d {q}"
+                                    "</span>"
+                                    for q in data.get(
+                                        "queries", []
                                     )
-                                st.write(
-                                    "**Geraadpleegde"
-                                    " bronnen:** "
-                                    f"{data.get('sources_count', 0)}"
-                                    " documenten"
                                 )
+                                st.markdown(
+                                    tags,
+                                    unsafe_allow_html=True,
+                                )
+                                st.divider()
+                                src_count = data.get(
+                                    "sources_count", 0
+                                )
+                                frags = data.get(
+                                    "total_fragments",
+                                    src_count,
+                                )
+                                st.caption(
+                                    "\U0001f4c4"
+                                    " GEVONDEN"
+                                    f" BRONNEN"
+                                    f" ({src_count}"
+                                    f" documenten,"
+                                    f" {frags}"
+                                    f" fragmenten)"
+                                )
+                                src_list = data.get(
+                                    "sources_list", []
+                                )
+                                for s in src_list:
+                                    st.markdown(
+                                        f"- \U0001f4ce"
+                                        f" `{s}`"
+                                    )
+                                st.divider()
                                 st.info(
-                                    "Bronnen zijn"
-                                    " geverifieerd via"
-                                    " CorticalStack."
+                                    "\U0001f9e0"
+                                    " ChromaDB +"
+                                    " CorticalStack"
+                                    " — Dual Memory"
+                                    " geverifieerd."
                                 )
                     else:
                         st.markdown(
@@ -606,9 +640,9 @@ if prompt := st.chat_input(
                         )
                         render_media(st, media)
                     elif p.type == "research_report":
-                        st.caption(
-                            f"\U0001f4da {p.agent}"
-                            " | The Archivist"
+                        st.markdown(
+                            "### \U0001f4da"
+                            " Memex Analyse"
                         )
                         st.markdown(
                             str(p.display_text)
@@ -616,31 +650,65 @@ if prompt := st.chat_input(
                         data = p.content
                         if isinstance(data, dict):
                             with st.expander(
-                                "\U0001f50d Onderzoeksdata"
-                                " bekijken"
+                                "\U0001f50d Bekijk"
+                                " Onderzoeksdata"
+                                " & Bronnen"
                             ):
-                                st.write(
-                                    "**Gebruikte"
-                                    " Zoekstrategie:**"
+                                st.caption(
+                                    "\U0001f9e0"
+                                    " ZOEKSTRATEGIE"
+                                    " (PLAN)"
                                 )
-                                for q in data.get(
-                                    "queries", []
-                                ):
-                                    st.code(
-                                        f"\U0001f50d"
-                                        f" {q}",
-                                        language="text",
+                                tags = "".join(
+                                    "<span style='"
+                                    "background:#333;"
+                                    "padding:4px 8px;"
+                                    "border-radius:"
+                                    "4px;margin-right"
+                                    ":5px;font-size:"
+                                    "0.85em'>"
+                                    f"\U0001f50d {q}"
+                                    "</span>"
+                                    for q in data.get(
+                                        "queries", []
                                     )
-                                st.write(
-                                    "**Geraadpleegde"
-                                    " bronnen:** "
-                                    f"{data.get('sources_count', 0)}"
-                                    " documenten"
                                 )
+                                st.markdown(
+                                    tags,
+                                    unsafe_allow_html=True,
+                                )
+                                st.divider()
+                                src_count = data.get(
+                                    "sources_count", 0
+                                )
+                                frags = data.get(
+                                    "total_fragments",
+                                    src_count,
+                                )
+                                st.caption(
+                                    "\U0001f4c4"
+                                    " GEVONDEN"
+                                    f" BRONNEN"
+                                    f" ({src_count}"
+                                    f" documenten,"
+                                    f" {frags}"
+                                    f" fragmenten)"
+                                )
+                                src_list = data.get(
+                                    "sources_list", []
+                                )
+                                for s in src_list:
+                                    st.markdown(
+                                        f"- \U0001f4ce"
+                                        f" `{s}`"
+                                    )
+                                st.divider()
                                 st.info(
-                                    "Bronnen zijn"
-                                    " geverifieerd via"
-                                    " CorticalStack."
+                                    "\U0001f9e0"
+                                    " ChromaDB +"
+                                    " CorticalStack"
+                                    " — Dual Memory"
+                                    " geverifieerd."
                                 )
                     else:
                         st.markdown(
