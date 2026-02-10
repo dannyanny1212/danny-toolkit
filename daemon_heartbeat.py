@@ -13,9 +13,15 @@ Gebruik:
 
 import asyncio
 import io
+import os
+import sys
 import time
 from datetime import datetime
 from contextlib import redirect_stdout
+
+# Windows UTF-8 fix
+if os.name == "nt":
+    sys.stdout.reconfigure(encoding="utf-8")
 
 from rich.console import Console
 from rich.panel import Panel
