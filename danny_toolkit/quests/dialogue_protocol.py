@@ -125,7 +125,13 @@ class DialogueProtocol:
 
                 # 2. Verwerk
                 if verwerk_fn:
-                    response = verwerk_fn(tekst)
+                    try:
+                        response = verwerk_fn(tekst)
+                    except Exception as e:
+                        print(fout(
+                            f"  Verwerkingsfout: {e}"
+                        ))
+                        response = f"Ik hoorde: {tekst}"
                 else:
                     response = f"Ik hoorde: {tekst}"
 
@@ -138,7 +144,12 @@ class DialogueProtocol:
 
                 # 4. Spreek antwoord
                 if has_voice:
-                    voice.speak(response, mood)
+                    try:
+                        voice.speak(response, mood)
+                    except Exception as e:
+                        print(fout(
+                            f"  Spraakfout: {e}"
+                        ))
 
                 # 5. Bewaar in geschiedenis
                 self.geschiedenis.append(

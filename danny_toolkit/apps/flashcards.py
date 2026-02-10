@@ -405,8 +405,10 @@ Varieer in moeilijkheid. Nederlands."""
                                     "volgende_review": datetime.now().isoformat()
                                 })
                                 toegevoegd += 1
-                        except IndexError:
-                            pass
+                        except (IndexError, ValueError):
+                            print("Fout: AI-kaart kon niet"
+                                  " worden geparsed, overgeslagen.")
+                            continue
 
                 self._sla_op()
                 print(f"[OK] {toegevoegd} kaarten toegevoegd aan '{deck['naam']}'!")

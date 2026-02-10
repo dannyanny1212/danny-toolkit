@@ -104,7 +104,10 @@ class OmegaAI:
 
         # Governor (Omega-0) - beschermingslaag
         self.governor = OmegaGovernor()
-        self.governor.startup_check()
+        try:
+            self.governor.startup_check()
+        except Exception as e:
+            print(fout(f"  Governor startup waarschuwing: {e}"))
 
         # Interactie teller
         self._interactie_nr = 0
@@ -705,18 +708,23 @@ class OmegaAI:
 
                 else:
                     # Gewone interactie
-                    response = self._verwerk_input(
-                        gebruiker_input
-                    )
-                    naam = self.daemon.naam
-                    print(kleur(
-                        f"\n  {naam}: {response}\n",
-                        Kleur.FEL_CYAAN,
-                    ))
-                    if self._voice_aan:
-                        self._get_voice().speak(
-                            response, self._get_mood()
+                    try:
+                        response = self._verwerk_input(
+                            gebruiker_input
                         )
+                        naam = self.daemon.naam
+                        print(kleur(
+                            f"\n  {naam}: {response}\n",
+                            Kleur.FEL_CYAAN,
+                        ))
+                        if self._voice_aan:
+                            self._get_voice().speak(
+                                response, self._get_mood()
+                            )
+                    except Exception as e:
+                        print(fout(
+                            f"  Fout bij verwerking: {e}"
+                        ))
 
         except KeyboardInterrupt:
             self.stop()

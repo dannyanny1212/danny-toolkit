@@ -147,7 +147,16 @@ class BrainCLI:
 
                 print(kleur("\n  Brain denkt na...\n", Kleur.CYAAN))
 
-                response = self.brain.process_request(user_input)
+                try:
+                    response = self.brain.process_request(
+                        user_input
+                    )
+                except Exception as e:
+                    print(kleur(
+                        f"  Fout bij AI-verwerking: {e}",
+                        Kleur.ROOD,
+                    ))
+                    continue
 
                 print(kleur("  Brain:", Kleur.MAGENTA))
                 # Wrap response
@@ -297,11 +306,23 @@ class BrainCLI:
                 print(kleur(f"\n  Vraag: {vraag}\n", Kleur.CYAAN))
                 print(kleur("  Brain denkt na...\n", Kleur.GEEL))
 
-                response = self.brain.process_request(vraag)
+                try:
+                    response = self.brain.process_request(
+                        vraag
+                    )
+                except Exception as e:
+                    print(kleur(
+                        f"  Fout bij AI-verwerking: {e}",
+                        Kleur.ROOD,
+                    ))
+                    response = None
 
-                print(kleur("  Antwoord:", Kleur.MAGENTA))
-                for line in response.split("\n"):
-                    print(f"    {line}")
+                if response:
+                    print(kleur(
+                        "  Antwoord:", Kleur.MAGENTA
+                    ))
+                    for line in response.split("\n"):
+                        print(f"    {line}")
 
         except ValueError:
             pass

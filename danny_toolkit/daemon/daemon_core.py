@@ -341,7 +341,7 @@ class DigitalDaemon:
         for callback in self.message_callbacks:
             try:
                 callback(msg)
-            except:
+            except Exception:
                 pass
 
         # Console output

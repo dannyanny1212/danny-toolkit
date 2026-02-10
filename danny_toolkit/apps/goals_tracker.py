@@ -282,7 +282,7 @@ class GoalsTrackerApp:
             print(f"  {i}. {emoji} {naam_cat}")
 
         try:
-            cat_keuze = int(input("\nKeuze (1-8): ").strip()) - 1
+            cat_keuze = int(input(f"\nKeuze (1-{len(cats)}): ").strip()) - 1
             categorie = cats[cat_keuze][0] if 0 <= cat_keuze < len(cats) else "anders"
         except (ValueError, IndexError):
             categorie = "anders"

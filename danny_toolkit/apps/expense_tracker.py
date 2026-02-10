@@ -134,8 +134,12 @@ class ExpenseTrackerApp:
         totaal_uitgaven = sum(u["bedrag"] for u in self.data["uitgaven"])
         saldo = totaal_inkomen - totaal_uitgaven
 
-        kleur = "+" if saldo >= 0 else ""
-        print(f"|  Saldo: {kleur}€{saldo:.2f}{' ' * (38 - len(f'{saldo:.2f}'))}|")
+        if saldo >= 0:
+            saldo_str = f"+€{saldo:.2f}"
+        else:
+            saldo_str = f"-€{abs(saldo):.2f}"
+        padding = " " * max(0, 38 - len(saldo_str))
+        print(f"|  Saldo: {saldo_str}{padding}|")
 
     def _voeg_uitgave_toe(self):
         """Voeg een uitgave toe."""

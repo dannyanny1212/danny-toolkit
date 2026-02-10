@@ -1041,7 +1041,8 @@ class Launcher:
 
         # AI Systemen
         print(self._kleur_tekst("  ═══ AI SYSTEMEN ═══", "categorie"))
-        for key in ["6", "7", "8", "9", "10", "21", "24", "25", "34", "35"]:
+        for key in ["6", "7", "8", "9", "10", "21", "24", "25", "34", "35",
+                    "37", "38"]:
             naam, _, _ = self.APPS[key]
             gebruik = self.stats.get_gebruik(naam)
             gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
@@ -1072,12 +1073,13 @@ class Launcher:
 
         # Central Brain - AI Ecosysteem
         print(self._kleur_tekst("  ═══ CENTRAL BRAIN ═══", "categorie"))
-        for key in ["36", "42", "43", "44", "45", "46"]:
+        for key in ["36", "40", "42", "43", "44", "45", "46"]:
             naam, _, _ = self.APPS[key]
             gebruik = self.stats.get_gebruik(naam)
             gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
             label = {
                 "36": "[AI ECOSYSTEEM]",
+                "40": "[MIND+SOUL+BODY]",
                 "42": "[LEVEND DASHBOARD]",
                 "43": "[PASSIVE OBSERVE]",
                 "44": "[PIXEL SYMBIOSE]",
@@ -1101,42 +1103,26 @@ class Launcher:
 
         # Omega AI - Lichaam + Geest
         print(self._kleur_tekst("  ═══ OMEGA AI ═══", "categorie"))
-        naam, _, _ = self.APPS["41"]
-        gebruik = self.stats.get_gebruik(naam)
-        gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
-        print(f"     {self._kleur_tekst('41', 'nummer')}. {naam} "
-              f"{self._kleur_tekst('[LICHAAM+GEEST]', 'info')}"
-              f"{self._kleur_tekst(gebruik_str, 'info')}")
-        naam, _, _ = self.APPS["47"]
-        gebruik = self.stats.get_gebruik(naam)
-        gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
-        print(f"     {self._kleur_tekst('47', 'nummer')}. {naam} "
-              f"{self._kleur_tekst('[BIO-WALLET]', 'info')}"
-              f"{self._kleur_tekst(gebruik_str, 'info')}")
-        naam, _, _ = self.APPS["48"]
-        gebruik = self.stats.get_gebruik(naam)
-        gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
-        print(f"     {self._kleur_tekst('48', 'nummer')}. {naam} "
-              f"{self._kleur_tekst('[THE VOICE]', 'info')}"
-              f"{self._kleur_tekst(gebruik_str, 'info')}")
-        naam, _, _ = self.APPS["49"]
-        gebruik = self.stats.get_gebruik(naam)
-        gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
-        print(f"     {self._kleur_tekst('49', 'nummer')}. {naam} "
-              f"{self._kleur_tekst('[THE LISTENER]', 'info')}"
-              f"{self._kleur_tekst(gebruik_str, 'info')}")
-        naam, _, _ = self.APPS["50"]
-        gebruik = self.stats.get_gebruik(naam)
-        gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
-        print(f"     {self._kleur_tekst('50', 'nummer')}. {naam} "
-              f"{self._kleur_tekst('[THE DIALOGUE]', 'info')}"
-              f"{self._kleur_tekst(gebruik_str, 'info')}")
-        naam, _, _ = self.APPS["51"]
-        gebruik = self.stats.get_gebruik(naam)
-        gebruik_str = f" ({gebruik}x)" if gebruik > 0 else ""
-        print(f"     {self._kleur_tekst('51', 'nummer')}. {naam} "
-              f"{self._kleur_tekst('[THE WILL]', 'info')}"
-              f"{self._kleur_tekst(gebruik_str, 'info')}")
+        omega_apps = [
+            ("41", "[LICHAAM+GEEST]"),
+            ("47", "[BIO-WALLET]"),
+            ("48", "[THE VOICE]"),
+            ("49", "[THE LISTENER]"),
+            ("50", "[THE DIALOGUE]"),
+            ("51", "[THE WILL]"),
+        ]
+        for key, label in omega_apps:
+            naam, _, _ = self.APPS[key]
+            gebruik = self.stats.get_gebruik(naam)
+            gebruik_str = (
+                f" ({gebruik}x)" if gebruik > 0 else ""
+            )
+            print(
+                f"     {self._kleur_tekst(key, 'nummer')}"
+                f". {naam} "
+                f"{self._kleur_tekst(label, 'info')}"
+                f"{self._kleur_tekst(gebruik_str, 'info')}"
+            )
         print()
 
         # Systeem opties
@@ -1474,33 +1460,52 @@ def main():
 
         if arg in ["--help", "-h"]:
             print("""
-Danny Toolkit v2.0
+Danny Toolkit v2.0 — 51 apps
 
 Gebruik:
   python main.py              Start interactieve launcher
-  python main.py <nummer>     Start app direct (1-20)
+  python main.py <nummer>     Start app direct (1-51)
   python main.py <sneltoets>  Start app via sneltoets
   python main.py --help       Toon deze help
 
-Apps (1-5):               AI (6-10):
-  b = Boodschappenlijst     n = Nieuws Agent
-  r = Rekenmachine          w = Weer Agent
-  h = Huisdier
-  s = Schatzoek
-  c = Code Analyse
+Apps (1-5):
+  b  = Boodschappenlijst     r  = Rekenmachine
+  h  = Virtueel Huisdier     s  = Schatzoek Game
+  c  = Code Analyse
 
-Productiviteit (11-20, 22-23):
-  no = Notitie App          ha = Habit Tracker
-  wg = Wachtwoord Gen       ex = Expense Tracker
-  po = Pomodoro Timer       fl = Flashcards
-  un = Unit Converter       ag = Agenda Planner
-  mo = Mood Tracker         ci = Citaten Generator
-  go = Goals Tracker        ro = Room Planner
+AI Systemen (6-10, 21, 24-25, 34-35, 37-38):
+  mr = Mini-RAG              pr = Production RAG
+  n  = Nieuws Agent          w  = Weer Agent
+  cc = Claude Chat           vs = Vector Data Studio
+  al = Artificial Life       nl = NLP Studio
+  aq = Advanced Questions    ml = ML Studio
+  kc = Knowledge Companion   lc = Legendary Companion
 
-AI Extra (21, 24-25):
-  vs = Vector Data Studio
-  al = Artificial Life
-  nl = NLP Studio
+Productiviteit (11-20, 22-23, 26-33):
+  no = Notitie App           ha = Habit Tracker
+  wg = Wachtwoord Gen        ex = Expense Tracker
+  po = Pomodoro Timer        fl = Flashcards
+  un = Unit Converter        ag = Agenda Planner
+  mo = Mood Tracker          ci = Citaten Generator
+  go = Goals Tracker         ro = Room Planner
+  mu = Music Composer        re = Recipe Generator
+  fi = Fitness Tracker       dr = Dream Journal
+  cs = Code Snippets         la = Language Tutor
+  de = Decision Maker        tc = Time Capsule
+
+Central Brain (36, 40, 42-46):
+  br  = Central Brain        tr  = Trinity Symbiosis
+  sa  = Sanctuary Dashboard  dmo = Dream Monitor
+  nb  = Nexus Bridge         vn  = Visual Nexus
+  pb  = Prometheus Brain
+
+Digital Daemon (39):
+  dm = Digital Daemon
+
+Omega AI (41, 47-51):
+  om = Omega AI              pp = Pulse Protocol
+  vo = Voice Protocol        li = Listener Protocol
+  di = Dialogue Protocol     wi = Will Protocol
 """)
             return
 
