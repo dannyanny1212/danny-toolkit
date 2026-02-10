@@ -1,8 +1,12 @@
 """
-Heartbeat Daemon - Autonome Achtergrond-Daemon.
+Heartbeat Daemon v2.0 — Autonome Achtergrond-Daemon.
 
-CPU/RAM monitoring, reflectie-cycli en autonome groei.
-Draait naast de bestaande DigitalDaemon (app 39).
+CPU/RAM monitoring, reflectie-cycli, autonome groei
+en SwarmEngine-taken (scheduled + interval).
+
+v2.0: Swarm Integration — autonome taken via SwarmEngine
+      asyncio.gather(). Ochtend briefing, market watch,
+      systeem reflectie via dezelfde engine als de chat.
 
 Gebruik:
     python -m danny_toolkit.daemon.heartbeat
@@ -13,6 +17,7 @@ Geen nieuwe dependencies: psutil is optioneel (zelfde
 patroon als morning_protocol.py), Rich is al geinstalleerd.
 """
 
+import asyncio
 import random
 import threading
 import time
@@ -45,9 +50,40 @@ class HeartbeatDaemon:
     REFLECTION_INTERVAL = 10.0  # seconden
     GROWTH_CHANCE = 0.05        # 5% per reflectie
 
-    VERSION = "1.0.0"
+    VERSION = "2.0.0"
 
-    def __init__(self):
+    # Autonome Swarm taken (schedule)
+    SWARM_SCHEDULE = [
+        {
+            "name": "Ochtend Briefing",
+            "time": "08:00",
+            "prompt": (
+                "Geef een korte samenvatting van"
+                " de systeem-status en recente"
+                " activiteiten."
+            ),
+        },
+        {
+            "name": "Market Watch",
+            "interval": 3600,
+            "prompt": (
+                "Check Bitcoin prijs. Als daling"
+                " > 5%, geef alarm."
+            ),
+        },
+        {
+            "name": "System Reflect",
+            "interval": 300,
+            "prompt": (
+                "Reflecteer op recente interacties"
+                " en optimaliseer geheugen."
+            ),
+        },
+    ]
+
+    def __init__(self, brain=None):
+        self._brain = brain
+        self._engine = None
         self._stack = None
         self._running = False
         self._stop_event = threading.Event()
@@ -56,6 +92,7 @@ class HeartbeatDaemon:
         self._pulse_count = 0
         self._reflection_count = 0
         self._growth_count = 0
+        self._swarm_task_count = 0
         self._start_time = None
 
         # System metrics
@@ -68,6 +105,7 @@ class HeartbeatDaemon:
         # Timing
         self._last_reflection = 0.0
         self._last_stat_log = 0.0
+        self._last_swarm_check = {}
 
     def _get_stack(self):
         """Lazy import CorticalStack."""
@@ -80,6 +118,109 @@ class HeartbeatDaemon:
             except Exception:
                 self._stack = None
         return self._stack
+
+    def _get_engine(self):
+        """Lazy import SwarmEngine."""
+        if self._engine is None:
+            try:
+                from swarm_engine import SwarmEngine
+                self._engine = SwarmEngine(
+                    brain=self._brain
+                )
+            except Exception:
+                self._engine = None
+        return self._engine
+
+    # ─── Swarm Taken ───
+
+    def _run_swarm_task(self, task_config):
+        """Voer een autonome Swarm taak uit."""
+        engine = self._get_engine()
+        if engine is None:
+            self._log_activity(
+                "swarm", "Engine niet beschikbaar"
+            )
+            return
+
+        name = task_config["name"]
+        prompt = task_config["prompt"]
+
+        self._log_activity(
+            "swarm", f"{name} geactiveerd..."
+        )
+
+        try:
+            payloads = asyncio.run(
+                engine.run(prompt)
+            )
+            self._swarm_task_count += 1
+
+            for p in payloads:
+                tekst = str(p.display_text)[:120]
+                self._log_activity(
+                    "swarm",
+                    f"{name} [{p.agent}]: {tekst}",
+                )
+
+            # Log naar CorticalStack
+            stack = self._get_stack()
+            if stack:
+                try:
+                    stack.log_event(
+                        actor="heartbeat",
+                        action="swarm_task",
+                        details={
+                            "task": name,
+                            "agents": [
+                                p.agent for p in payloads
+                            ],
+                        },
+                        source="daemon",
+                    )
+                except Exception:
+                    pass
+        except Exception as e:
+            self._log_activity(
+                "swarm",
+                f"{name}: fout — {str(e)[:60]}",
+            )
+
+    def _check_swarm_schedule(self):
+        """Check of er autonome taken moeten draaien."""
+        now = datetime.now()
+        current_time = now.strftime("%H:%M")
+        timestamp = time.time()
+
+        for task in self.SWARM_SCHEDULE:
+            name = task["name"]
+
+            # Vaste-tijd taken (1x per minuut)
+            if "time" in task:
+                if (
+                    task["time"] == current_time
+                    and self._last_swarm_check.get(
+                        name
+                    ) != current_time
+                ):
+                    self._last_swarm_check[
+                        name
+                    ] = current_time
+                    self._run_swarm_task(task)
+
+            # Interval taken (elke X seconden)
+            if "interval" in task:
+                last_run = self._last_swarm_check.get(
+                    name, 0
+                )
+                if (
+                    isinstance(last_run, (int, float))
+                    and timestamp - last_run
+                    > task["interval"]
+                ):
+                    self._last_swarm_check[
+                        name
+                    ] = timestamp
+                    self._run_swarm_task(task)
 
     # ─── Monitor ───
 
@@ -287,6 +428,10 @@ class HeartbeatDaemon:
             "Groei events",
             f"[magenta]{self._growth_count}[/magenta]",
         )
+        sys_table.add_row(
+            "Swarm taken",
+            f"[yellow]{self._swarm_task_count}[/yellow]",
+        )
 
         sys_panel = Panel(
             sys_table,
@@ -389,6 +534,10 @@ class HeartbeatDaemon:
                     if self._reflection_count > 0:
                         self._autonomous_growth()
 
+                    # Swarm schedule check (elke 10 pulsen)
+                    if self._pulse_count % 10 == 0:
+                        self._check_swarm_schedule()
+
                     # Update display
                     live.update(self._build_display())
 
@@ -435,7 +584,23 @@ class HeartbeatDaemon:
 
 def main():
     """Entry point voor heartbeat daemon."""
-    daemon = HeartbeatDaemon()
+    import io
+    import sys
+    from contextlib import redirect_stdout
+
+    # Laad brain voor Swarm taken (boot output dempen)
+    brain = None
+    try:
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            from danny_toolkit.brain.trinity_omega import (
+                PrometheusBrain,
+            )
+            brain = PrometheusBrain()
+    except Exception:
+        pass
+
+    daemon = HeartbeatDaemon(brain=brain)
     daemon.start()
 
 
