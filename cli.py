@@ -366,32 +366,73 @@ def main():
             ))
 
         else:
-            # Swarm Engine output
+            # Swarm Engine per-payload rendering
             agents = [p.agent for p in payloads]
             assigned = " \u2192 ".join(agents)
-            output = "\n\n".join(
-                p.content for p in payloads
-                if isinstance(p.content, str)
-            )
             status = f"{len(payloads)} agent(s)"
             header = (
                 f"[bold]{assigned}[/bold]"
                 f" | {status}"
             )
 
-            console.print(Panel(
-                Markdown(output),
-                title="SWARM REPORT",
-                subtitle=header,
-                border_style="magenta",
-            ))
-
-            # Media rendering per payload
             for p in payloads:
-                if "media" in p.metadata:
-                    render_media(
-                        p.metadata["media"]
+                if p.type == "code":
+                    # Code block met syntax highlighting
+                    from rich.syntax import Syntax
+                    syntax = Syntax(
+                        str(p.content), "python",
+                        theme="monokai",
+                        line_numbers=True,
                     )
+                    console.print(Panel(
+                        syntax,
+                        title=(
+                            f"\U0001f4bb {p.agent}"
+                        ),
+                        border_style="green",
+                    ))
+                elif p.type == "metrics":
+                    # Tekst + media tickers/charts
+                    console.print(Panel(
+                        Markdown(
+                            str(p.display_text)
+                        ),
+                        title=(
+                            f"\U0001f4c8 {p.agent}"
+                        ),
+                        border_style="cyan",
+                    ))
+                    if "media" in p.metadata:
+                        render_media(
+                            p.metadata["media"]
+                        )
+                elif p.type in (
+                    "area_chart", "bar_chart",
+                ):
+                    console.print(Panel(
+                        Markdown(
+                            str(p.display_text)
+                        ),
+                        title=(
+                            f"\U0001f4ca {p.agent}"
+                        ),
+                        border_style="cyan",
+                    ))
+                    if "media" in p.metadata:
+                        render_media(
+                            p.metadata["media"]
+                        )
+                else:
+                    console.print(Panel(
+                        Markdown(
+                            str(p.display_text)
+                        ),
+                        title=(
+                            f"{p.agent}"
+                        ),
+                        subtitle=header,
+                        border_style="magenta",
+                    ))
 
 
 if __name__ == "__main__":

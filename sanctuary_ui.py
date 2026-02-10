@@ -266,9 +266,46 @@ with feed_col:
         with st.chat_message(
             msg["role"], avatar=msg.get("avatar")
         ):
-            st.markdown(msg["content"])
-            if msg.get("media"):
-                render_media(st, msg["media"])
+            if msg.get("payloads"):
+                # v5.0 per-payload replay
+                st.markdown(msg["content"].split(
+                    "\n\n"
+                )[0])
+                for p in msg["payloads"]:
+                    if p.type == "code":
+                        st.caption(
+                            f"\U0001f4bb {p.agent}"
+                        )
+                        st.code(
+                            p.content,
+                            language="python",
+                        )
+                    elif p.type == "metrics":
+                        st.caption(
+                            f"\U0001f4c8 {p.agent}"
+                            " Ticker"
+                        )
+                        media = p.metadata.get(
+                            "media"
+                        )
+                        render_media(st, media)
+                    elif p.type in (
+                        "area_chart", "bar_chart",
+                    ):
+                        st.caption(
+                            f"\U0001f4ca {p.agent}"
+                        )
+                        media = p.metadata.get(
+                            "media"
+                        )
+                        render_media(st, media)
+                    else:
+                        st.markdown(
+                            f"**[{p.agent}]**\n"
+                            f"{p.display_text}"
+                        )
+            else:
+                st.markdown(msg["content"])
 
 
 # --- SWARM ACTIVITY (rechts) — Opgeslagen logs ---
@@ -362,23 +399,12 @@ if prompt := st.chat_input(
                     callback=update_ui_log,
                 )
 
-            # Aggregeer output + media uit payloads
+            # Aggregeer header info uit payloads
             agents = [p.agent for p in payloads]
             assigned = " \u2192 ".join(agents)
-            output = "\n\n".join(
-                p.content for p in payloads
-                if isinstance(p.content, str)
-            )
             status_tekst = (
                 f"{len(payloads)} agent(s)"
             )
-
-            # Media: eerste payload met metadata
-            media = None
-            for p in payloads:
-                if "media" in p.metadata:
-                    media = p.metadata["media"]
-                    break
 
         # ===========================================
         # CHAIN OF COMMAND — Callback Pipeline
@@ -426,21 +452,80 @@ if prompt := st.chat_input(
     })
 
     # Toon resultaat in feed
-    response = (
-        f"**[{assigned}]** | "
-        f"Status: `{status_tekst}`\n\n"
-        f"{output}"
-    )
-    st.session_state.messages.append({
-        "role": "assistant",
-        "content": response,
-        "avatar": "\U0001f916",
-        "media": media,
-    })
+    if modus == "Hub & Spoke (route_task)":
+        # Per-payload rendering (v5.0)
+        header = (
+            f"**[{assigned}]** | "
+            f"Status: `{status_tekst}`"
+        )
+        # Bouw content voor history
+        history_text = header
+        for p in payloads:
+            history_text += (
+                f"\n\n**[{p.agent}]**\n"
+                f"{p.display_text}"
+            )
 
-    with feed_col:
-        with st.chat_message(
-            "assistant", avatar="\U0001f916"
-        ):
-            st.markdown(response)
-            render_media(st, media)
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": history_text,
+            "avatar": "\U0001f916",
+            "payloads": payloads,
+        })
+
+        with feed_col:
+            with st.chat_message(
+                "assistant", avatar="\U0001f916"
+            ):
+                st.markdown(header)
+                for p in payloads:
+                    if p.type == "code":
+                        st.caption(
+                            f"\U0001f4bb {p.agent}"
+                        )
+                        st.code(
+                            p.content,
+                            language="python",
+                        )
+                    elif p.type == "metrics":
+                        st.caption(
+                            f"\U0001f4c8 {p.agent}"
+                            " Ticker"
+                        )
+                        media = p.metadata.get(
+                            "media"
+                        )
+                        render_media(st, media)
+                    elif p.type in (
+                        "area_chart", "bar_chart",
+                    ):
+                        st.caption(
+                            f"\U0001f4ca {p.agent}"
+                        )
+                        media = p.metadata.get(
+                            "media"
+                        )
+                        render_media(st, media)
+                    else:
+                        st.markdown(
+                            f"**[{p.agent}]**\n"
+                            f"{p.display_text}"
+                        )
+    else:
+        # Chain of Command rendering
+        response = (
+            f"**[{assigned}]** | "
+            f"Status: `{status_tekst}`\n\n"
+            f"{output}"
+        )
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": response,
+            "avatar": "\U0001f916",
+        })
+
+        with feed_col:
+            with st.chat_message(
+                "assistant", avatar="\U0001f916"
+            ):
+                st.markdown(response)
