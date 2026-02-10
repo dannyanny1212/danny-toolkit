@@ -706,39 +706,65 @@ class PixelAgent(Agent):
             self.eyes.capture_screen
         )
 
-        # 2. PERCEPTIE: Analyseer het beeld
-        # TODO: LLaVA/GPT-4o vision call met
-        # self._encode_image(img_path)
-        # Voor nu: simulatie via Brain tekst-context
-        vision_context = (
-            "[Systeem] Screenshot gemaakt:"
-            f" {img_path}."
-            " (Simulatie: Pixel analyseert"
-            " het actieve venster.)"
-        )
+        # 2. PERCEPTIE: Analyseer via LLaVA (True Sight)
+        analysis = None
+        vision_status = "unknown"
 
-        from danny_toolkit.brain.trinity_omega import (
-            CosmicRole,
-        )
-        prompt = (
-            "Jij bent PIXEL, de visuele analist."
-            " Je kijkt naar een screenshot.\n"
-            f"De gebruiker vraagt: \"{task}\"\n\n"
-            f"CONTEXT: {vision_context}\n\n"
-            "Beschrijf wat je ziet en geef"
-            " feedback als er iets mis is."
-        )
+        try:
+            import ollama as _ollama
 
-        analysis, exec_time, status = (
-            await asyncio.to_thread(
-                brain._execute_with_role,
-                CosmicRole.PIXEL, prompt,
+            vision_prompt = (
+                "Analyseer dit beeld in detail."
+                f" De gebruiker vraagt: '{task}'."
+                " Als je tekst ziet, lees die"
+                " letterlijk voor. Antwoord"
+                " in het Nederlands."
             )
-        )
+
+            response = await asyncio.to_thread(
+                _ollama.chat,
+                model="llava",
+                messages=[{
+                    "role": "user",
+                    "content": vision_prompt,
+                    "images": [img_path],
+                }],
+            )
+            analysis = response.message.content
+            vision_status = "Real Vision (LLaVA)"
+
+        except Exception as e:
+            # Fallback: Brain tekst-analyse
+            vision_status = f"LLaVA fallback: {e}"
+            try:
+                from danny_toolkit.brain.trinity_omega import (
+                    CosmicRole,
+                )
+                fallback_prompt = (
+                    "Jij bent PIXEL, de visuele"
+                    " analist. Er is een screenshot"
+                    f" gemaakt: {img_path}.\n"
+                    f"De gebruiker vraagt:"
+                    f" \"{task}\"\n"
+                    "Beschrijf wat je verwacht"
+                    " te zien en geef feedback."
+                )
+                result, _, _ = (
+                    await asyncio.to_thread(
+                        brain._execute_with_role,
+                        CosmicRole.PIXEL,
+                        fallback_prompt,
+                    )
+                )
+                analysis = str(result) if result else None
+                vision_status = "Brain fallback"
+            except Exception:
+                pass
 
         display = (
-            str(analysis) if analysis
-            else "Pixel: geen analyse"
+            f"**Visuele Analyse:**\n{analysis}"
+            if analysis
+            else "Pixel: geen analyse mogelijk"
         )
         elapsed = time.time() - start_t
 
@@ -749,7 +775,7 @@ class PixelAgent(Agent):
             display_text=display,
             metadata={
                 "execution_time": elapsed,
-                "status": status,
+                "status": vision_status,
                 "image_path": img_path,
             },
         )
