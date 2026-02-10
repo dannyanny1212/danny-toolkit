@@ -297,7 +297,8 @@ class CentralBrain:
         self,
         user_input: str,
         use_tools: bool = True,
-        max_turns: int = 5
+        max_turns: int = 5,
+        model: str = None,
     ) -> str:
         """
         Verwerk gebruikersverzoek via Function Calling.
@@ -306,6 +307,7 @@ class CentralBrain:
             user_input: De vraag/opdracht van de gebruiker
             use_tools: Of tools gebruikt mogen worden
             max_turns: Maximum aantal tool-use rondes
+            model: Optioneel model override (tiered selection)
 
         Returns:
             Het antwoord
@@ -342,7 +344,10 @@ Belangrijke regels:
 
         # Route naar juiste provider
         if self.ai_provider == "groq":
-            return self._process_groq(system_message, use_tools, max_turns)
+            return self._process_groq(
+                system_message, use_tools, max_turns,
+                _model=model,
+            )
         else:
             return self._process_anthropic(system_message, use_tools, max_turns)
 

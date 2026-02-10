@@ -22,6 +22,7 @@ Gebruik:
 
 import io
 import re
+import random
 from contextlib import redirect_stdout
 
 import numpy as np
@@ -94,6 +95,41 @@ def _learn_from_input(prompt):
                 break
     except Exception:
         pass
+
+
+# ── FAST-TRACK: voorgedefinieerde responses ──
+
+_GREETING_RESPONSES = [
+    "Hoi! Alle systemen operationeel. Waarmee kan ik helpen?",
+    "Hallo! De Swarm is online en luistert.",
+    "Goedendag! Nexus staat stand-by.",
+    "Hey! Klaar voor actie.",
+]
+
+_GREETING_PATTERNS = [
+    r"^hallo\b", r"^hoi\b", r"^hey\b", r"^hi\b",
+    r"^goede(morgen|middag|avond)\b", r"^yo\b",
+    r"^hoe gaat het", r"^bedankt", r"^dank je",
+    r"^doei\b", r"^tot ziens",
+]
+
+
+def _fast_track_router(prompt):
+    """Bliksemsnel intent-herkenning zonder AI.
+
+    Returns:
+        (agent, response) tuple, of (None, None) als
+        de input te complex is voor fast-track.
+    """
+    lower = prompt.lower().strip()
+    woorden = lower.split()
+
+    # 1. Begroetingen (< 6 woorden)
+    if len(woorden) < 6:
+        if any(re.search(p, lower) for p in _GREETING_PATTERNS):
+            return "Echo", random.choice(_GREETING_RESPONSES)
+
+    return None, None
 
 
 class CallbackWriter:
@@ -276,6 +312,28 @@ def run_hub_spoke_pipeline(prompt, brain, callback=None):
 
     log("\U0001f6e1\ufe0f Governor: Input SAFE \u2713")
 
+    # ── FAST-TRACK: bypass voor simpele queries ──
+    fast_agent, fast_response = _fast_track_router(prompt)
+    if fast_agent:
+        log(f"\u26a1 [FAST-TRACK] {fast_agent}:"
+            " Directe response")
+        _log_to_cortical(
+            "swarm", "fast_track",
+            {"agent": fast_agent, "prompt": prompt[:200]},
+        )
+        from danny_toolkit.brain.trinity_omega import (
+            TaskResult,
+        )
+        fast_result = TaskResult(
+            task=prompt,
+            assigned_to=fast_agent,
+            status="TASK_COMPLETED",
+            result=fast_response,
+            execution_time=0.0,
+        )
+        log("\u2705 PIPELINE COMPLETE (fast-track)")
+        return fast_result, fast_agent, fast_response, None
+
     # ── STAP 2: Chronos Context ──
     log("\u23f3 Chronos: Injecting temporal context...")
     enriched = brain._chronos_enrich(prompt)
@@ -386,6 +444,23 @@ def run_chain_pipeline(prompt, brain, callback=None):
 
     log("\U0001f4e1 Chain of Command gestart...")
     log(f"\U0001f4e1 Query: \"{prompt[:60]}...\"")
+
+    # ── FAST-TRACK: bypass voor simpele queries ──
+    fast_agent, fast_response = _fast_track_router(prompt)
+    if fast_agent:
+        log(f"\u26a1 [FAST-TRACK] {fast_agent}:"
+            " Directe response")
+        _log_to_cortical(
+            "swarm", "fast_track_chain",
+            {"agent": fast_agent},
+        )
+        log("\u2705 CHAIN COMPLETE (fast-track)")
+        return {
+            "query": prompt,
+            "fast_track": True,
+            "agent": fast_agent,
+            "response": fast_response,
+        }
 
     if callback:
         writer = CallbackWriter(callback)

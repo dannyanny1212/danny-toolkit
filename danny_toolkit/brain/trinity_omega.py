@@ -728,6 +728,16 @@ class PrometheusBrain:
         ),
     }
 
+    # Tiered Model Selection: per-rol model keuze
+    # Routers/simpele rollen → 8b (snel, spaart rate limit)
+    # Specialisten → None (= 70b primary, default)
+    MODEL_TIER = {
+        CosmicRole.NEXUS: "llama-3.1-8b-instant",
+        CosmicRole.ECHO: "llama-3.1-8b-instant",
+        CosmicRole.CHRONOS: "llama-3.1-8b-instant",
+        CosmicRole.WEAVER: "llama-3.1-8b-instant",
+    }
+
     def _execute_with_role(
         self, role: CosmicRole, task: str
     ) -> tuple:
@@ -743,7 +753,8 @@ class PrometheusBrain:
         prefix = self.ROLE_CONTEXT.get(role, "")
         if prefix:
             task = f"{prefix}\n{task}"
-        return self._execute_with_brain(task)
+        model = self.MODEL_TIER.get(role)
+        return self._execute_with_brain(task, model=model)
 
     # --- HUB & SPOKE PIPELINE METHODEN ---
 
@@ -831,10 +842,16 @@ class PrometheusBrain:
 
     # --- SHARED BRAIN EXECUTION (1.1) ---
 
-    def _execute_with_brain(self, task: str) -> tuple:
+    def _execute_with_brain(
+        self, task: str, model: str = None,
+    ) -> tuple:
         """Voer taak uit via CentralBrain.
 
         Governor circuit breaker beschermt tegen API overbelasting.
+
+        Args:
+            task: De uit te voeren taak.
+            model: Optioneel model override (tiered selection).
 
         Returns:
             (result, execution_time, status) tuple.
@@ -852,7 +869,9 @@ class PrometheusBrain:
 
         start = time.time()
         try:
-            result = self.brain.process_request(task)
+            result = self.brain.process_request(
+                task, model=model,
+            )
             elapsed = time.time() - start
             # Check of resultaat een foutmelding bevat
             if isinstance(result, str) and any(
