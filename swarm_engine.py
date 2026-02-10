@@ -606,10 +606,22 @@ class MemexAgent(BrainAgent):
             )
         )
 
-        display = (
+        raw_answer = (
             str(answer) if answer
             else "Geen antwoord gegenereerd"
         )
+
+        # Hardcoded bronvermelding (programmatisch)
+        if sources:
+            sources_str = ", ".join(
+                sorted(list(sources))
+            )
+            display = (
+                f"{raw_answer}\n\n"
+                f"> **Bronnen:** {sources_str}"
+            )
+        else:
+            display = raw_answer
 
         return SwarmPayload(
             agent=self.name,
@@ -619,7 +631,7 @@ class MemexAgent(BrainAgent):
                 "sources_count": sources_count,
                 "sources_list": list(sources),
                 "total_fragments": total_fragments,
-                "raw_text": display,
+                "raw_text": raw_answer,
                 "used_web": used_web,
             },
             display_text=display,
