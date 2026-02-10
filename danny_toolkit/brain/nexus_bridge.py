@@ -36,12 +36,24 @@ class NexusBridge:
         Args:
             huisdier_data: Data van het virtueel huisdier
         """
-        self.huisdier = huisdier_data or {}
+        self.huisdier = huisdier_data or self._load_huisdier_data()
         self.brain = None
         self.brain_available = False
 
         # Lazy load brain om circular imports te voorkomen
         self._init_brain()
+
+    def _load_huisdier_data(self) -> dict:
+        """Laad huisdier data van disk."""
+        for filename in ["huisdier.json", "virtueel_huisdier.json"]:
+            path = Config.APPS_DATA_DIR / filename
+            if path.exists():
+                try:
+                    with open(path, "r", encoding="utf-8") as f:
+                        return json.load(f)
+                except (json.JSONDecodeError, IOError):
+                    pass
+        return {}
 
     def _init_brain(self):
         """Initialiseer Central Brain connectie."""

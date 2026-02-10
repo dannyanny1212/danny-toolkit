@@ -302,7 +302,10 @@ class SanctuaryDashboard:
         for entity in self.entities.values():
             if entity.percentage is not None:
                 scores.append(entity.percentage)
-            elif entity.state in [EntityState.ACTIVE, EntityState.AWARE, EntityState.BRIDGE]:
+            elif entity.state in [
+                EntityState.ACTIVE, EntityState.AWARE,
+                EntityState.BRIDGE, EntityState.DOCKED
+            ]:
                 scores.append(100)
             elif entity.state == EntityState.STANDBY:
                 scores.append(75)

@@ -224,7 +224,8 @@ class PrometheusBrain:
         ],
         CosmicRole.ORACLE: [
             "zoek op", "search", "fetch", "scrape",
-            "api call", "web",
+            "api call", "web", "onderzoek", "explore",
+            "discover", "research",
         ],
         CosmicRole.SENTINEL: [
             "beveilig", "security", "firewall", "audit",
@@ -244,14 +245,16 @@ class PrometheusBrain:
         ],
         CosmicRole.NAVIGATOR: [
             "strategie", "doel", "manifesto", "roadmap",
-            "lange termijn",
+            "lange termijn", "alignment", "waarden",
+            "values", "ethisch", "ethics",
         ],
         CosmicRole.ALCHEMIST: [
-            "convert", "transform", "etl", "data",
+            "convert", "transform", "data_clean", "etl",
+            "data",
         ],
         CosmicRole.VOID: [
-            "cleanup", "delete", "opruim", "cache",
-            "garbage",
+            "cleanup", "clean", "delete", "opruim",
+            "cache", "garbage",
         ],
     }
 
@@ -665,7 +668,8 @@ class PrometheusBrain:
         # Web/Search -> Oracle
         elif any(kw in task_lower for kw in [
             "zoek op", "search", "fetch", "scrape",
-            "api call"
+            "api call", "onderzoek", "explore",
+            "discover", "research"
         ]):
             return self._assign(
                 CosmicRole.ORACLE, task, priority
@@ -731,17 +735,16 @@ class PrometheusBrain:
 
         # === FASE 5: INFRASTRUCTURE ===
 
-        # Cleanup -> Void (VOOR Alchemist, want "clean"
-        # is substring van "cleanup")
+        # Cleanup -> Void (VOOR Alchemist)
         elif any(kw in task_lower for kw in [
-            "cleanup", "delete", "opruim", "cache",
-            "garbage"
+            "cleanup", "clean", "delete", "opruim",
+            "cache", "garbage"
         ]):
             return self._assign(CosmicRole.VOID, task, priority)
 
         # Data Transformatie -> Alchemist
         elif any(kw in task_lower for kw in [
-            "convert", "transform", "clean", "etl"
+            "convert", "transform", "data_clean", "etl"
         ]):
             return self._assign(
                 CosmicRole.ALCHEMIST, task, priority
@@ -750,7 +753,8 @@ class PrometheusBrain:
         # Strategie -> Navigator
         elif any(kw in task_lower for kw in [
             "strategie", "doel", "manifesto", "roadmap",
-            "lange termijn"
+            "lange termijn", "alignment", "waarden",
+            "values", "ethisch", "ethics"
         ]):
             return self._assign(
                 CosmicRole.NAVIGATOR, task, priority
