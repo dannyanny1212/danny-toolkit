@@ -258,6 +258,100 @@ class PrometheusBrain:
         ],
     }
 
+    # Nexus Semantic Router categorieën
+    NEXUS_CATEGORIES = {
+        "CODE": CosmicRole.IOLAAX,
+        "VISUAL": CosmicRole.PIXEL,
+        "SEARCH": CosmicRole.NAVIGATOR,
+        "COMPLEX": CosmicRole.ORACLE,
+        "SYSTEM": CosmicRole.LEGION,
+        "CASUAL": CosmicRole.ECHO,
+        "CRYPTO": CosmicRole.CIPHER,
+        "HEALTH": CosmicRole.VITA,
+        "CREATIVE": CosmicRole.SPARK,
+        "MEMORY": CosmicRole.ARCHIVIST,
+        "DATA": CosmicRole.ALCHEMIST,
+        "CLEANUP": CosmicRole.VOID,
+        "SECURITY": CosmicRole.SENTINEL,
+        "SCHEDULE": CosmicRole.CHRONOS,
+        "STRATEGY": CosmicRole.NAVIGATOR,
+    }
+
+    NEXUS_KEYWORD_MAP = {
+        "CODE": [
+            "code", "debug", "refactor", "git",
+            "functie", "class", "programmeer", "build",
+            "compile", "test", "script", "python",
+            "javascript",
+        ],
+        "VISUAL": [
+            "help", "uitleg", "interface", "praat",
+            "emotie", "gevoel", "dashboard", "menu",
+            "teken", "visualiseer",
+        ],
+        "SEARCH": [
+            "zoek op", "search", "fetch", "scrape",
+            "api call", "onderzoek", "explore",
+            "discover", "research",
+        ],
+        "COMPLEX": [
+            "denk na", "logica", "redeneer", "droom",
+            "bewustzijn", "evolve", "filosofie",
+            "ethiek", "waarom", "hypothese",
+        ],
+        "SYSTEM": [
+            "verwerk data", "indexeer alles",
+            "test alle", "batch", "bulk", "parallel",
+            "10000", "1000",
+        ],
+        "CASUAL": [
+            "hallo", "hoi", "hey", "goedemorgen",
+            "goedemiddag", "hoe gaat het",
+            "bedankt", "doei", "tot ziens",
+        ],
+        "CRYPTO": [
+            "blockchain", "crypto", "encrypt",
+            "decrypt", "smart contract", "bitcoin",
+            "wallet", "token", "ethereum",
+        ],
+        "HEALTH": [
+            "health", "hrv", "biohack", "biodata",
+            "biometr", "peptide", "gezondheid",
+            "slaap", "eiwit", "dna", "stress",
+        ],
+        "CREATIVE": [
+            "creatief", "idee", "brainstorm",
+            "ascii", "kunst", "innovate", "design",
+        ],
+        "MEMORY": [
+            "zoek kennis", "herinner", "rag",
+            "vector", "semantic", "geheugen",
+            "knowledge",
+        ],
+        "DATA": [
+            "convert", "transform", "data_clean",
+            "etl",
+        ],
+        "CLEANUP": [
+            "cleanup", "clean", "delete", "opruim",
+            "cache", "garbage",
+        ],
+        "SECURITY": [
+            "beveilig", "security", "firewall",
+            "audit", "threat",
+        ],
+        "SCHEDULE": [
+            "schedule", "cronjob", "timer", "ritme",
+            "planning", "agenda", "deadline",
+            "wanneer", "herinnering",
+        ],
+        "STRATEGY": [
+            "strategie", "doel", "manifesto",
+            "roadmap", "lange termijn", "alignment",
+            "waarden", "values", "ethisch", "ethics",
+        ],
+    }
+
     def __init__(self, auto_init: bool = True):
         self.nodes: Dict[CosmicRole, AgentNode] = {}
         self.swarm = OmegaSwarm()
@@ -567,23 +661,71 @@ class PrometheusBrain:
     # --- ROL-SPECIFIEKE CONTEXT (Federation v4.1) ---
 
     ROLE_CONTEXT = {
-        CosmicRole.PIXEL: "Je bent Pixel, interface & emotie.",
-        CosmicRole.IOLAAX: "Je bent Iolaax, redenering & logica.",
-        CosmicRole.NEXUS: "Je bent Nexus, verbinding & brug.",
-        CosmicRole.GOVERNOR: "Je bent Governor, systeembewaker.",
-        CosmicRole.SENTINEL: "Je bent Sentinel, beveiliging.",
-        CosmicRole.ARCHIVIST: "Je bent Archivist, geheugen.",
-        CosmicRole.CHRONOS: "Je bent Chronos, tijd & ritme.",
-        CosmicRole.WEAVER: "Je bent Weaver, code & bouwer.",
-        CosmicRole.CIPHER: "Je bent Cipher, crypto specialist.",
-        CosmicRole.VITA: "Je bent Vita, gezondheid expert.",
-        CosmicRole.ECHO: "Je bent Echo, patroon analist.",
-        CosmicRole.SPARK: "Je bent Spark, creatief genie.",
-        CosmicRole.ORACLE: "Je bent Oracle, web verkenner.",
-        CosmicRole.LEGION: "Je bent Legion, zwerm manager.",
-        CosmicRole.NAVIGATOR: "Je bent Navigator, strateeg.",
-        CosmicRole.ALCHEMIST: "Je bent Alchemist, data proc.",
-        CosmicRole.VOID: "Je bent Void, opruimer.",
+        CosmicRole.PIXEL: (
+            "Je bent Pixel, visual & interface specialist. "
+            "Je maakt dashboards, UI en emotionele output."
+        ),
+        CosmicRole.IOLAAX: (
+            "Je bent Iolaax, de Hoofdingenieur. "
+            "Je schrijft precieze, correcte code. "
+            "Antwoord technisch en zonder omhaal."
+        ),
+        CosmicRole.NEXUS: (
+            "Je bent Nexus, de Semantic Router. "
+            "Classificeer input in categorieën. "
+            "Antwoord ALLEEN met de categorie."
+        ),
+        CosmicRole.GOVERNOR: (
+            "Je bent Governor, systeembewaker."
+        ),
+        CosmicRole.SENTINEL: (
+            "Je bent Sentinel, beveiliging."
+        ),
+        CosmicRole.ARCHIVIST: (
+            "Je bent Archivist, geheugen & RAG."
+        ),
+        CosmicRole.CHRONOS: (
+            "Je bent Chronos, tijd & planning."
+        ),
+        CosmicRole.WEAVER: (
+            "Je bent Weaver, de Synthesizer. "
+            "Je genereert NIETS zelf. Je formatteert "
+            "en presenteert specialist-output als "
+            "een helder, leesbaar antwoord."
+        ),
+        CosmicRole.CIPHER: (
+            "Je bent Cipher, crypto & blockchain."
+        ),
+        CosmicRole.VITA: (
+            "Je bent Vita, gezondheid & biohacking."
+        ),
+        CosmicRole.ECHO: (
+            "Je bent Echo, de Smalltalk Handler. "
+            "Beantwoord casual conversatie warm "
+            "en vriendelijk. Kort en bondig."
+        ),
+        CosmicRole.SPARK: (
+            "Je bent Spark, creatief genie."
+        ),
+        CosmicRole.ORACLE: (
+            "Je bent Oracle, deep reasoning. "
+            "Beantwoord complexe, filosofische en "
+            "strategische vragen met diepgang."
+        ),
+        CosmicRole.LEGION: (
+            "Je bent Legion, zwerm manager."
+        ),
+        CosmicRole.NAVIGATOR: (
+            "Je bent Navigator, search & strategie. "
+            "Zoek externe informatie en formuleer "
+            "strategische antwoorden."
+        ),
+        CosmicRole.ALCHEMIST: (
+            "Je bent Alchemist, data transformatie."
+        ),
+        CosmicRole.VOID: (
+            "Je bent Void, opruimer."
+        ),
     }
 
     def _execute_with_role(
@@ -602,6 +744,90 @@ class PrometheusBrain:
         if prefix:
             task = f"{prefix}\n{task}"
         return self._execute_with_brain(task)
+
+    # --- HUB & SPOKE PIPELINE METHODEN ---
+
+    def _governor_gate(self, task: str) -> tuple:
+        """Stap 1: Governor valideert de input."""
+        if not self.governor.check_api_health():
+            return False, "API geblokkeerd (circuit breaker)"
+        return True, "OK"
+
+    def _chronos_enrich(self, task: str) -> str:
+        """Stap 2: Chronos injecteert tijdscontext."""
+        now = datetime.now()
+        dag_namen = [
+            "maandag", "dinsdag", "woensdag",
+            "donderdag", "vrijdag", "zaterdag",
+            "zondag",
+        ]
+        context = (
+            f"[Tijd: {now.strftime('%H:%M')} | "
+            f"Dag: {dag_namen[now.weekday()]} "
+            f"{now.strftime('%d-%m-%Y')}] "
+        )
+        return context + task
+
+    def _nexus_classify(self, task: str) -> str:
+        """Stap 3: Nexus classificeert de intentie.
+
+        Keyword-matching eerst (betrouwbaar), AI alleen
+        als geen keywords matchen.
+        """
+        # Poging 1: Keyword matching (betrouwbaar)
+        task_lower = task.lower()
+        best_cat = None
+        best_hits = 0
+        for cat, keywords in self.NEXUS_KEYWORD_MAP.items():
+            hits = sum(
+                1 for kw in keywords
+                if kw in task_lower
+            )
+            if hits > best_hits:
+                best_hits = hits
+                best_cat = cat
+
+        if best_cat and best_hits >= 1:
+            return best_cat
+
+        # Poging 2: AI classificatie (fallback)
+        categories = ", ".join(
+            self.NEXUS_CATEGORIES.keys()
+        )
+        prompt = (
+            f"Classificeer deze input in PRECIES "
+            f"één categorie: {categories}. "
+            f"Antwoord ALLEEN met de categorie.\n"
+            f"Input: {task}"
+        )
+        result, _, status = self._execute_with_role(
+            CosmicRole.NEXUS, prompt
+        )
+        if status == "OK" and result:
+            cat = result.strip().upper()
+            for key in self.NEXUS_CATEGORIES:
+                if key in cat:
+                    return key
+
+        return "CASUAL"
+
+    def _weaver_synthesize(
+        self, raw_result: str, original_task: str
+    ) -> str:
+        """Stap 6: Weaver formatteert het antwoord."""
+        prompt = (
+            f"Formatteer dit specialist-antwoord tot "
+            f"een helder, leesbaar geheel voor de "
+            f"gebruiker.\n"
+            f"Vraag: {original_task}\n"
+            f"Specialist output: {raw_result}"
+        )
+        result, _, status = self._execute_with_role(
+            CosmicRole.WEAVER, prompt
+        )
+        if status == "OK" and result:
+            return result
+        return raw_result
 
     # --- SHARED BRAIN EXECUTION (1.1) ---
 
@@ -645,178 +871,83 @@ class PrometheusBrain:
 
     # --- STAP 3: FEDERATED ROUTING LOGICA ---
 
-    def route_task(self, task: str, priority: TaskPriority = TaskPriority.MEDIUM) -> TaskResult:
+    def route_task(
+        self,
+        task: str,
+        priority: TaskPriority = TaskPriority.MEDIUM,
+    ) -> TaskResult:
+        """Hub & Spoke routing pipeline.
+
+        Stap 1: Governor gate (veiligheid)
+        Stap 2: Chronos context injectie (tijd/datum)
+        Stap 3: Nexus classificatie (AI + keyword)
+        Stap 4: Route naar specialist
+        Stap 5: Specialist voert uit
+        Stap 6: Weaver syntheseert (behalve CASUAL)
         """
-        Route een taak naar de juiste agent of zwerm.
+        print(
+            f"\n>> HUB & SPOKE: '{task[:50]}...' "
+            f"[Priority: {priority.name}]"
+        )
 
-        Routing volgorde (specifiek -> generiek):
-        FASE 1 - SWARM: Massa verwerking -> Legion
-        FASE 2 - SPECIALISTS (domein-specifiek eerst):
-            Cipher, Vita, Echo, Spark, Oracle
-        FASE 3 - GUARDIANS:
-            Sentinel, Archivist, Chronos
-        FASE 4 - TRINITY (generiek):
-            Pixel, Iolaax, Nexus
-        FASE 5 - INFRASTRUCTURE:
-            Alchemist, Navigator, Void
-        DEFAULT: Pixel (general-purpose)
-        """
-        print(f"\n>> ANALYZING TASK: '{task[:50]}...' "
-              f"[Priority: {priority.name}]")
-
-        task_lower = task.lower()
-
-        # === FASE 1: SWARM (massa verwerking) ===
-        if any(kw in task_lower for kw in [
-            "verwerk data", "indexeer alles", "test alle",
-            "batch", "bulk", "parallel", "10000", "1000"
-        ]):
-            return self._deploy_swarm(task, priority)
-
-        # === FASE 2: SPECIALISTS (domein-specifiek, eerst) ===
-        # Meest specifieke keywords eerst om misrouting
-        # te voorkomen.
-
-        # Crypto/Blockchain -> Cipher
-        elif any(kw in task_lower for kw in [
-            "blockchain", "crypto", "encrypt", "decrypt",
-            "smart contract", "patroon", "pattern"
-        ]):
-            return self._assign(CosmicRole.CIPHER, task, priority)
-
-        # Bio/Health -> Vita
-        # LET OP: "bio" verwijderd (matchte in "biological")
-        # → gebruik "biohack", "biodata", "biometr" etc.
-        elif any(kw in task_lower for kw in [
-            "health", "hrv", "biohack", "biodata",
-            "biometr", "peptide",
-            "gezondheid", "slaap", "eiwit", "dna"
-        ]):
-            return self._assign(CosmicRole.VITA, task, priority)
-
-        # Historisch -> Echo
-        elif any(kw in task_lower for kw in [
-            "wat gebeurde", "historie", "history",
-            "vorige keer", "context", "timeline"
-        ]):
-            return self._assign(CosmicRole.ECHO, task, priority)
-
-        # Creatief -> Spark
-        elif any(kw in task_lower for kw in [
-            "creatief", "idee", "brainstorm", "ascii",
-            "kunst", "innovate", "design"
-        ]):
-            return self._assign(CosmicRole.SPARK, task, priority)
-
-        # Web/Search -> Oracle
-        elif any(kw in task_lower for kw in [
-            "zoek op", "search", "fetch", "scrape",
-            "api call", "onderzoek", "explore",
-            "discover", "research"
-        ]):
-            return self._assign(
-                CosmicRole.ORACLE, task, priority
+        # STAP 1: Governor Gate
+        safe, reason = self._governor_gate(task)
+        if not safe:
+            print(
+                f"   [GOVERNOR] GEBLOKKEERD: {reason}"
+            )
+            return TaskResult(
+                task=task,
+                assigned_to="The Governor",
+                status="TASK_FAILED",
+                result=reason,
             )
 
-        # Code/Dev -> Weaver
-        elif any(kw in task_lower for kw in [
-            "code", "debug", "refactor", "git",
-            "functie", "class", "programmeer",
-            "build", "compile", "test"
-        ]):
-            return self._assign(
-                CosmicRole.WEAVER, task, priority
+        # STAP 2: Chronos Context Injectie
+        enriched = self._chronos_enrich(task)
+        print(f"   [CHRONOS] Context geïnjecteerd")
+
+        # STAP 3: Nexus Classificatie
+        category = self._nexus_classify(enriched)
+        print(f"   [NEXUS] Categorie: {category}")
+
+        # STAP 4: Route naar specialist
+        if category == "SYSTEM":
+            return self._deploy_swarm(
+                enriched, priority
             )
 
-        # === FASE 3: GUARDIANS ===
+        role = self.NEXUS_CATEGORIES.get(
+            category, CosmicRole.ECHO
+        )
 
-        # Beveiliging -> Sentinel
-        elif any(kw in task_lower for kw in [
-            "beveilig", "security", "firewall", "audit",
-            "threat", "wallet"
-        ]):
-            return self._assign(
-                CosmicRole.SENTINEL, task, priority
+        # STAP 5: Specialist voert uit
+        result = self._assign(role, enriched, priority)
+
+        # STAP 6: Weaver Synthese (skip voor CASUAL)
+        if (
+            category != "CASUAL"
+            and result.status == "TASK_COMPLETED"
+            and result.result
+        ):
+            synthesized = self._weaver_synthesize(
+                str(result.result), task
             )
+            if synthesized:
+                result = TaskResult(
+                    task=result.task,
+                    assigned_to=(
+                        f"{result.assigned_to}"
+                        f" -> Weaver"
+                    ),
+                    status=result.status,
+                    result=synthesized,
+                    execution_time=(
+                        result.execution_time
+                    ),
+                )
 
-        # Geheugen/RAG -> Archivist
-        elif any(kw in task_lower for kw in [
-            "zoek kennis", "herinner", "rag", "vector",
-            "semantic", "geheugen", "knowledge"
-        ]):
-            return self._assign(
-                CosmicRole.ARCHIVIST, task, priority
-            )
-
-        # Tijd/Planning -> Chronos
-        elif any(kw in task_lower for kw in [
-            "schedule", "cronjob", "timer", "ritme",
-            "planning", "agenda", "deadline",
-            "wanneer", "herinnering",
-        ]):
-            return self._assign(
-                CosmicRole.CHRONOS, task, priority
-            )
-
-        # === FASE 4: TRINITY (generiek, later) ===
-
-        # Interface/Emotie -> Pixel
-        # LET OP: "user interface" ipv "ui" (voorkomt
-        # match in "kruispunt", "gebruiken" etc.)
-        elif any(kw in task_lower for kw in [
-            "help", "uitleg", "interface", "praat",
-            "emotie", "gevoel", "user interface",
-            "dashboard", "menu"
-        ]):
-            return self._assign(CosmicRole.PIXEL, task, priority)
-
-        # Redenering/Logica -> Iolaax
-        # LET OP: "analyseer" verwijderd (te generiek,
-        # conflicteert met domein-specifieke taken)
-        elif any(kw in task_lower for kw in [
-            "denk na", "logica", "redeneer",
-            "droom", "bewustzijn", "evolve",
-            "filosofie", "ethiek"
-        ]):
-            return self._assign(CosmicRole.IOLAAX, task, priority)
-
-        # Verbinding/Bridge -> Nexus
-        elif any(kw in task_lower for kw in [
-            "verbind", "bridge", "sync", "koppel",
-            "integreer"
-        ]):
-            return self._assign(CosmicRole.NEXUS, task, priority)
-
-        # === FASE 5: INFRASTRUCTURE ===
-
-        # Cleanup -> Void (VOOR Alchemist)
-        elif any(kw in task_lower for kw in [
-            "cleanup", "clean", "delete", "opruim",
-            "cache", "garbage"
-        ]):
-            return self._assign(CosmicRole.VOID, task, priority)
-
-        # Data Transformatie -> Alchemist
-        elif any(kw in task_lower for kw in [
-            "convert", "transform", "data_clean", "etl"
-        ]):
-            return self._assign(
-                CosmicRole.ALCHEMIST, task, priority
-            )
-
-        # Strategie -> Navigator
-        elif any(kw in task_lower for kw in [
-            "strategie", "doel", "manifesto", "roadmap",
-            "lange termijn", "alignment", "waarden",
-            "values", "ethisch", "ethics"
-        ]):
-            return self._assign(
-                CosmicRole.NAVIGATOR, task, priority
-            )
-
-        # === DEFAULT: Pixel (general-purpose) ===
-        else:
-            return self._assign(CosmicRole.PIXEL, task, priority)
+        return result
 
     def _deploy_swarm(self, task: str, priority: TaskPriority) -> TaskResult:
         """Deploy de Legion zwerm voor massa-verwerking."""
@@ -1446,11 +1577,17 @@ class PrometheusBrain:
             dict met volledige chain of command resultaten
         """
         start_time = time.time()
+        original_query = query
 
         print()
         print("=" * 60)
         print("  CHAIN OF COMMAND - Multi-Node Orchestratie")
         print("=" * 60)
+        print()
+
+        # --- STAP 0: Chronos enrichment ---
+        query = self._chronos_enrich(query)
+        print(f"  [CHRONOS] Context geïnjecteerd")
         print()
 
         # --- STAP 1: Pixel ontvangt ---
@@ -1607,7 +1744,7 @@ class PrometheusBrain:
         success_count = len(sub_taken) - failed_count
 
         return {
-            "query": query,
+            "query": original_query,
             "ontvanger": pixel.name,
             "analyse": iolaax.name,
             "sub_taken": sub_taken,

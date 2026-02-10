@@ -310,6 +310,74 @@ def test_chain_three_domains(brain: PrometheusBrain):
     return failed == 0
 
 
+def test_hub_spoke_pipeline(brain: PrometheusBrain):
+    """Test 6: Hub & Spoke routing pipeline."""
+    print("\n" + "=" * 60)
+    print("  TEST 6: Hub & Spoke Pipeline")
+    print("=" * 60)
+
+    checks = []
+
+    # Test A: Casual -> Echo (geen Weaver)
+    result = brain.route_task("Hallo, hoe gaat het?")
+    checks.append((
+        "Casual -> Echo",
+        "Echo" in result.assigned_to,
+    ))
+
+    # Test B: Code -> Iolaax (+ Weaver synthese)
+    result = brain.route_task(
+        "Debug mijn Python code"
+    )
+    checks.append((
+        "Code -> Iolaax",
+        "Iolaax" in result.assigned_to,
+    ))
+
+    # Test C: Crypto -> Cipher
+    result = brain.route_task(
+        "Bitcoin blockchain analyse"
+    )
+    checks.append((
+        "Crypto -> Cipher",
+        "Cipher" in result.assigned_to,
+    ))
+
+    # Test D: Health -> Vita
+    result = brain.route_task(
+        "Analyseer mijn HRV data"
+    )
+    checks.append((
+        "Health -> Vita",
+        "Vita" in result.assigned_to,
+    ))
+
+    # Test E: Search -> Navigator
+    result = brain.route_task(
+        "Zoek op wat quantum computing is"
+    )
+    checks.append((
+        "Search -> Navigator",
+        "Navigator" in result.assigned_to,
+    ))
+
+    passed = 0
+    failed = 0
+    for name, ok in checks:
+        icon = "[OK]" if ok else "[FAIL]"
+        if ok:
+            passed += 1
+        else:
+            failed += 1
+        print(f"  {icon} {name}")
+
+    print(
+        f"\n  Resultaat: {passed}/{passed + failed}"
+        f" geslaagd"
+    )
+    return failed == 0
+
+
 def main():
     """Draai alle Chain of Command tests."""
     print()
@@ -328,6 +396,7 @@ def main():
     results.append(("Single-Domain CoC", test_chain_single_domain(brain)))
     results.append(("No-Domain Fallback", test_chain_no_domain(brain)))
     results.append(("3-Domain CoC", test_chain_three_domains(brain)))
+    results.append(("Hub & Spoke Pipeline", test_hub_spoke_pipeline(brain)))
 
     elapsed = time.time() - start
     passed = sum(1 for _, ok in results if ok)
