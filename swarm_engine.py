@@ -106,6 +106,7 @@ class SwarmPayload:
     type: str       # "text", "code", "metrics",
                     # "area_chart", "bar_chart"
     content: Any
+    display_text: str = ""  # Wat de gebruiker ziet
     timestamp: float = field(
         default_factory=lambda: datetime.now().timestamp()
     )
@@ -256,6 +257,7 @@ class BrainAgent(Agent):
             return SwarmPayload(
                 agent=self.name, type="text",
                 content="Brain offline",
+                display_text="Brain offline",
             )
         result, exec_time, status = (
             await asyncio.to_thread(
@@ -271,6 +273,7 @@ class BrainAgent(Agent):
             agent=self.name,
             type="text",
             content=content,
+            display_text=content,
             metadata={
                 "execution_time": exec_time,
                 "status": status,
@@ -290,9 +293,11 @@ class EchoAgent(Agent):
     ]
 
     async def process(self, task, brain=None):
+        resp = random.choice(self.RESPONSES)
         return SwarmPayload(
             agent=self.name, type="text",
-            content=random.choice(self.RESPONSES),
+            content=resp,
+            display_text=resp,
         )
 
 
@@ -356,11 +361,13 @@ def _fast_track_check(prompt):
             re.search(p, lower)
             for p in _GREETING_PATTERNS
         ):
+            resp = random.choice(
+                EchoAgent.RESPONSES
+            )
             return SwarmPayload(
                 agent="Echo", type="text",
-                content=random.choice(
-                    EchoAgent.RESPONSES
-                ),
+                content=resp,
+                display_text=resp,
             )
     return None
 
@@ -543,9 +550,11 @@ class SwarmEngine:
                     f"\u274c Governor: BLOCKED"
                     f" \u2014 {reason}"
                 )
+                blocked = f"BLOCKED: {reason}"
                 return [SwarmPayload(
                     agent="Governor", type="text",
-                    content=f"BLOCKED: {reason}",
+                    content=blocked,
+                    display_text=blocked,
                 )]
             log(
                 "\U0001f6e1\ufe0f Governor:"
