@@ -590,8 +590,12 @@ class PrometheusBrain:
             result = self.brain.process_request(task)
             elapsed = time.time() - start
             # Check of resultaat een foutmelding bevat
-            if (isinstance(result, str)
-                    and "fout opgetreden" in result.lower()):
+            if isinstance(result, str) and any(
+                fout in result.lower() for fout in [
+                    "fout opgetreden",
+                    "ollama fout",
+                ]
+            ):
                 self.governor.record_api_failure()
                 return result, elapsed, "FAIL"
             self.governor.record_api_success()
