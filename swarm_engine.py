@@ -531,6 +531,45 @@ class MemexAgent(BrainAgent):
 
         sources_count = len(sources)
         total_fragments = len(all_fragments)
+        used_web = False
+
+        # Stap 2B: KNOWLEDGE GAP — Navigator fallback
+        if not all_fragments:
+            try:
+                from danny_toolkit.brain.trinity_omega import (
+                    CosmicRole,
+                )
+                nav_prompt = (
+                    "Zoek informatie over: "
+                    + task
+                    + "\nGeef een beknopt,"
+                    " feitelijk antwoord."
+                )
+                nav_result, _, _ = (
+                    await asyncio.to_thread(
+                        brain._execute_with_role,
+                        CosmicRole.NAVIGATOR,
+                        nav_prompt,
+                    )
+                )
+                if nav_result:
+                    web_fragment = (
+                        "---\n"
+                        "FRAGMENT (Bron: Navigator"
+                        " Web Search):\n"
+                        + str(nav_result)
+                    )
+                    all_fragments.append(
+                        web_fragment
+                    )
+                    sources.add("Navigator (Web)")
+                    sources_count = len(sources)
+                    total_fragments = len(
+                        all_fragments
+                    )
+                    used_web = True
+            except Exception:
+                pass
 
         if all_fragments:
             context = "\n".join(
@@ -545,14 +584,18 @@ class MemexAgent(BrainAgent):
         # Stap 3: SYNTHESIZE — rapport met bronnen
         synth_prompt = (
             "GEBRUIKERSVRAAG: " + task + "\n\n"
-            "GEVONDEN KENNIS UIT DATABASE:\n"
+            "GEVONDEN KENNIS"
+            + (" (incl. web)" if used_web else "")
+            + ":\n"
             + context + "\n\n"
             "INSTRUCTIE:\n"
-            "Beantwoord de vraag enkel op basis"
+            "Beantwoord de vraag op basis"
             " van de bovenstaande kennis.\n"
-            "Citeer je bronnen met [Bron: X].\n"
-            "Als het antwoord niet in de tekst"
-            " staat, zeg dat dan."
+            "Citeer je bronnen:\n"
+            "- Documenten: [Bron: bestandsnaam]\n"
+            "- Web: [Bron: Navigator]\n"
+            "Als het antwoord niet in de context"
+            " staat, zeg dat eerlijk."
         )
         answer, exec_time, status = (
             await asyncio.to_thread(
@@ -575,6 +618,7 @@ class MemexAgent(BrainAgent):
                 "sources_list": list(sources),
                 "total_fragments": total_fragments,
                 "raw_text": display,
+                "used_web": used_web,
             },
             display_text=display,
             metadata={
@@ -582,6 +626,7 @@ class MemexAgent(BrainAgent):
                 "status": status,
                 "queries": queries[:3],
                 "sources": sources_count,
+                "used_web": used_web,
             },
         )
 

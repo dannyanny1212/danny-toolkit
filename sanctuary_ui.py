@@ -425,13 +425,24 @@ with feed_col:
                                         f" `{s}`"
                                     )
                                 st.divider()
-                                st.info(
-                                    "\U0001f9e0"
-                                    " ChromaDB +"
-                                    " CorticalStack"
-                                    " — Dual Memory"
-                                    " geverifieerd."
-                                )
+                                if data.get(
+                                    "used_web"
+                                ):
+                                    st.warning(
+                                        "\U0001f310"
+                                        " Kennisgat:"
+                                        " Navigator"
+                                        " Web Search"
+                                        " ingezet."
+                                    )
+                                else:
+                                    st.info(
+                                        "\U0001f9e0"
+                                        " ChromaDB +"
+                                        " CorticalStack"
+                                        " — Dual"
+                                        " Memory."
+                                    )
                     else:
                         st.markdown(
                             f"**[{p.agent}]**\n"
@@ -703,13 +714,24 @@ if prompt := st.chat_input(
                                         f" `{s}`"
                                     )
                                 st.divider()
-                                st.info(
-                                    "\U0001f9e0"
-                                    " ChromaDB +"
-                                    " CorticalStack"
-                                    " — Dual Memory"
-                                    " geverifieerd."
-                                )
+                                if data.get(
+                                    "used_web"
+                                ):
+                                    st.warning(
+                                        "\U0001f310"
+                                        " Kennisgat:"
+                                        " Navigator"
+                                        " Web Search"
+                                        " ingezet."
+                                    )
+                                else:
+                                    st.info(
+                                        "\U0001f9e0"
+                                        " ChromaDB +"
+                                        " CorticalStack"
+                                        " — Dual"
+                                        " Memory."
+                                    )
                     else:
                         st.markdown(
                             f"**[{p.agent}]**\n"
