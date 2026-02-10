@@ -1067,6 +1067,8 @@ class SwarmEngine:
             "uitleg", "waarvoor", "wie is",
             "wat betekent", "doel van", "rol van",
             "informatie over", "meer over",
+            "welke", "hoeveel", "waar zit",
+            "waar staat", "wanneer",
         ],
         "ALCHEMIST": [
             "convert", "transform", "data_clean",
