@@ -345,12 +345,70 @@ class IolaaxAgent(BrainAgent):
 
 
 class MemexAgent(BrainAgent):
-    """Agentic RAG: plan → zoek → synthetiseer.
+    """Agentic RAG: plan → zoek ChromaDB → synthetiseer.
 
     Stap 1: LLM genereert zoektermen (plan).
-    Stap 2: CorticalStack doorzoeken (execute).
+    Stap 2: ChromaDB doorzoeken + CorticalStack (execute).
     Stap 3: LLM schrijft rapport met bronnen.
+
+    ChromaDB = primaire bron (ingest.py knowledge base).
+    CorticalStack = secundaire bron (runtime events).
     """
+
+    _collection = None  # Lazy ChromaDB connectie
+
+    def _get_collection(self):
+        """Verbind met ChromaDB (zelfde DB als ingest.py)."""
+        if self._collection is not None:
+            return self._collection
+        try:
+            import chromadb
+            from chromadb.utils.embedding_functions import (
+                SentenceTransformerEmbeddingFunction,
+            )
+            from pathlib import Path
+
+            chroma_dir = str(
+                Path(__file__).parent
+                / "data" / "rag" / "chromadb"
+            )
+            client = chromadb.PersistentClient(
+                path=chroma_dir
+            )
+            embed_fn = (
+                SentenceTransformerEmbeddingFunction(
+                    model_name="all-MiniLM-L6-v2"
+                )
+            )
+            self._collection = (
+                client.get_collection(
+                    name="danny_knowledge",
+                    embedding_function=embed_fn,
+                )
+            )
+            return self._collection
+        except Exception:
+            return None
+
+    def _search_chromadb(self, query, n_results=3):
+        """Doorzoek ChromaDB knowledge base."""
+        collection = self._get_collection()
+        if not collection:
+            return [], []
+        try:
+            results = collection.query(
+                query_texts=[query],
+                n_results=n_results,
+                include=[
+                    "documents", "metadatas",
+                    "distances",
+                ],
+            )
+            docs = results["documents"][0]
+            metas = results["metadatas"][0]
+            return docs, metas
+        except Exception:
+            return [], []
 
     def _get_cortical_stack(self):
         """Haal CorticalStack op (lazy)."""
@@ -433,7 +491,6 @@ class MemexAgent(BrainAgent):
         )
 
         try:
-            # Zoek JSON array in output
             match = re.search(
                 r"\[.*?\]", str(plan_raw)
             )
@@ -444,25 +501,41 @@ class MemexAgent(BrainAgent):
         except (json.JSONDecodeError, ValueError):
             queries = [task]
 
-        # Stap 2: EXECUTE — doorzoek CorticalStack
-        all_docs = []
+        # Stap 2: EXECUTE — doorzoek ChromaDB + Cortical
+        all_fragments = []
+        sources = set()
+
         for q in queries[:3]:
-            docs = await asyncio.to_thread(
+            # ChromaDB (primaire bron)
+            docs, metas = await asyncio.to_thread(
+                self._search_chromadb, q
+            )
+            for doc, meta in zip(docs, metas):
+                bron = meta.get("bron", "onbekend")
+                fragment = (
+                    f"---\n"
+                    f"FRAGMENT (Bron: {bron}):\n"
+                    f"{doc}"
+                )
+                if fragment not in all_fragments:
+                    all_fragments.append(fragment)
+                    sources.add(bron)
+
+            # CorticalStack (secundaire bron)
+            cortical_docs = await asyncio.to_thread(
                 self._search_cortical, q
             )
-            all_docs.extend(docs)
+            for d in cortical_docs:
+                if d not in all_fragments:
+                    all_fragments.append(d)
 
-        # Deduplicate
-        seen = set()
-        unique_docs = []
-        for d in all_docs:
-            if d not in seen:
-                seen.add(d)
-                unique_docs.append(d)
+        sources_count = len(sources)
+        total_fragments = len(all_fragments)
 
-        sources_count = len(unique_docs)
-        if unique_docs:
-            context = "\n".join(unique_docs[:15])
+        if all_fragments:
+            context = "\n".join(
+                all_fragments[:15]
+            )
         else:
             context = (
                 "Geen relevante bronnen gevonden"
@@ -471,15 +544,15 @@ class MemexAgent(BrainAgent):
 
         # Stap 3: SYNTHESIZE — rapport met bronnen
         synth_prompt = (
-            "Gebruik UITSLUITEND deze context om"
-            " de vraag te beantwoorden.\n"
-            f"Vraag: {task}\n\n"
-            f"Context:\n{context}\n\n"
-            "Regels:\n"
-            "1. Wees accuraat.\n"
-            "2. Gebruik [Bron: X] waar mogelijk.\n"
-            "3. Als het antwoord niet in de context"
-            " staat, zeg dat eerlijk."
+            "GEBRUIKERSVRAAG: " + task + "\n\n"
+            "GEVONDEN KENNIS UIT DATABASE:\n"
+            + context + "\n\n"
+            "INSTRUCTIE:\n"
+            "Beantwoord de vraag enkel op basis"
+            " van de bovenstaande kennis.\n"
+            "Citeer je bronnen met [Bron: X].\n"
+            "Als het antwoord niet in de tekst"
+            " staat, zeg dat dan."
         )
         answer, exec_time, status = (
             await asyncio.to_thread(
@@ -499,6 +572,8 @@ class MemexAgent(BrainAgent):
             content={
                 "queries": queries[:3],
                 "sources_count": sources_count,
+                "sources_list": list(sources),
+                "total_fragments": total_fragments,
                 "raw_text": display,
             },
             display_text=display,
