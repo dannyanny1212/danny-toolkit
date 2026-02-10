@@ -55,7 +55,7 @@ class CentralBrain:
     - Workflow Engine: Super-workflows uitvoeren
     """
 
-    VERSIE = "1.0.0"
+    VERSIE = "1.1.0"
 
     def __init__(self, use_memory: bool = True):
         """
@@ -103,6 +103,14 @@ class CentralBrain:
             print(kleur(
                 "   [!] Central Brain in offline modus",
                 Kleur.GEEL,
+            ))
+
+        # Ollama als lokale fallback (geen rate limit!)
+        self._ollama_available = self._check_ollama()
+        if self._ollama_available:
+            print(kleur(
+                "   [OK] Fallback: Ollama lokaal beschikbaar",
+                Kleur.GROEN,
             ))
 
         # App Registry
@@ -341,6 +349,8 @@ Belangrijke regels:
     # Groq modellen: primair (groot) en fallback (klein)
     GROQ_MODEL_PRIMARY = "llama-3.3-70b-versatile"
     GROQ_MODEL_FALLBACK = "llama-3.1-8b-instant"
+    # Ollama lokaal model
+    OLLAMA_MODEL = "llama3.2:3b"
 
     def _process_groq(
         self,
@@ -483,7 +493,19 @@ Belangrijke regels:
                             max_turns,
                             _model=self.GROQ_MODEL_FALLBACK,
                         )
-                    # Stap 2: probeer Anthropic
+                    # Stap 2: probeer Ollama (lokaal)
+                    if self._ollama_available:
+                        print(kleur(
+                            "   [FALLBACK] Groq rate"
+                            " limit -> Ollama lokaal",
+                            Kleur.GEEL,
+                        ))
+                        return self._process_ollama(
+                            system_message,
+                            use_tools,
+                            max_turns,
+                        )
+                    # Stap 3: probeer Anthropic
                     if self._fallback_client:
                         print(kleur(
                             "   [FALLBACK] Groq rate limit"
@@ -593,6 +615,58 @@ Belangrijke regels:
 
         self._sla_stats_op()
         return "Maximum aantal rondes bereikt. Probeer een specifiekere vraag."
+
+    def _check_ollama(self) -> bool:
+        """Check of Ollama lokaal draait."""
+        try:
+            import requests
+            resp = requests.get(
+                "http://localhost:11434/api/tags",
+                timeout=2,
+            )
+            return resp.status_code == 200
+        except Exception:
+            return False
+
+    def _process_ollama(
+        self,
+        system_message: str,
+        use_tools: bool,
+        max_turns: int,
+    ) -> str:
+        """Verwerk request via lokale Ollama."""
+        import requests
+
+        messages = [{"role": "system", "content": system_message}]
+        messages.extend(self.conversation_history)
+
+        try:
+            resp = requests.post(
+                "http://localhost:11434/api/chat",
+                json={
+                    "model": self.OLLAMA_MODEL,
+                    "messages": messages,
+                    "stream": False,
+                },
+                timeout=120,
+            )
+
+            if resp.status_code == 200:
+                data = resp.json()
+                content = data.get(
+                    "message", {}
+                ).get("content", "")
+
+                self.conversation_history.append({
+                    "role": "assistant",
+                    "content": content,
+                })
+                self._sla_stats_op()
+                return content
+            else:
+                return f"Ollama fout: {resp.status_code}"
+        except Exception as e:
+            return f"Ollama fout: {e}"
 
     def _process_offline(self, user_input: str) -> str:
         """Verwerk request zonder AI (offline modus)."""
