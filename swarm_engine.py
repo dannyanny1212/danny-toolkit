@@ -392,8 +392,23 @@ class MemexAgent(BrainAgent):
         except Exception:
             return None
 
-    def _search_chromadb(self, query, n_results=3):
-        """Doorzoek ChromaDB knowledge base."""
+    # Bronweging: code > docs > data
+    _SOURCE_WEIGHT = {
+        ".py": 0.0, ".md": 0.05, ".txt": 0.05,
+        ".toml": 0.05, ".cfg": 0.05,
+        ".yaml": 0.05, ".yml": 0.05,
+        ".json": 0.15, ".csv": 0.15,
+        ".log": 0.20,
+    }
+
+    def _search_chromadb(self, query, n_results=10):
+        """Doorzoek ChromaDB met bronweging.
+
+        Haalt meer resultaten op (n_results=10),
+        herwaardeert scores (.py krijgt bonus,
+        .json krijgt penalty), en retourneert
+        de top 5.
+        """
         collection = self._get_collection()
         if not collection:
             return [], []
@@ -408,7 +423,27 @@ class MemexAgent(BrainAgent):
             )
             docs = results["documents"][0]
             metas = results["metadatas"][0]
-            return docs, metas
+            dists = results["distances"][0]
+
+            # Herweeg: lagere score = beter
+            weighted = []
+            for doc, meta, dist in zip(
+                docs, metas, dists,
+            ):
+                ext = meta.get("extensie", "")
+                penalty = self._SOURCE_WEIGHT.get(
+                    ext, 0.10,
+                )
+                weighted.append(
+                    (dist + penalty, doc, meta)
+                )
+            weighted.sort(key=lambda x: x[0])
+
+            top = weighted[:5]
+            return (
+                [w[1] for w in top],
+                [w[2] for w in top],
+            )
         except Exception:
             return [], []
 
@@ -480,11 +515,20 @@ class MemexAgent(BrainAgent):
 
         # Stap 1: PLAN — genereer zoektermen
         plan_prompt = (
-            "Jij bent een Expert Onderzoeker."
-            f" De gebruiker vraagt: '{task}'."
-            " Genereer 3 specifieke zoektermen"
-            " voor de database."
-            ' Antwoord ALLEEN als JSON lijst:'
+            "Je doorzoekt een SEMANTISCHE vector"
+            " database met Python broncode en"
+            " documentatie. Zoektermen moeten"
+            " natuurlijke taal zijn, GEEN"
+            " code-identifiers.\n"
+            f"Vraag: '{task}'\n"
+            "Genereer 3 korte zoektermen"
+            " (Nederlands, 2-4 woorden).\n"
+            "Goed: [\"daemon emoties systeem\","
+            " \"sensorium zintuigen\","
+            " \"limbic mood state\"]\n"
+            "Fout: [\"DigitalDaemon_config\","
+            " \"get_status()\"]\n"
+            'Antwoord ALLEEN als JSON lijst:'
             ' ["term1", "term2", "term3"]'
         )
         plan_raw, _, _ = await asyncio.to_thread(

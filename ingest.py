@@ -49,6 +49,13 @@ SUPPORTED_EXT = {
     ".ini", ".xml", ".html", ".pdf",
 }
 
+# Bestanden die worden overgeslagen bij ingest
+# (conversatie-data, geen kennisbron)
+SKIP_FILES = {
+    "interactions.json",
+    "vector_db.json",
+}
+
 console = Console()
 
 
@@ -165,6 +172,7 @@ class TheLibrarian:
             if (
                 f.is_file()
                 and f.suffix.lower() in SUPPORTED_EXT
+                and f.name not in SKIP_FILES
             ):
                 bestanden.append(f)
         return bestanden
