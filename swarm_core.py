@@ -21,7 +21,12 @@ Gebruik:
 """
 
 import io
+import re
 from contextlib import redirect_stdout
+
+import numpy as np
+import pandas as pd
+from datetime import datetime, timedelta
 
 from danny_toolkit.brain.trinity_omega import (
     CosmicRole,
@@ -43,6 +48,131 @@ class CallbackWriter:
         pass
 
 
+# ── MEDIA GENERATORS ──
+
+def _crypto_metrics():
+    """Genereer crypto market ticker + 30d chart data.
+
+    Combineert st.metric tickers (Bloomberg-stijl) met
+    30-dagen prijs en volume grafieken.
+    """
+    np.random.seed(42)
+    dagen = pd.date_range(
+        end=datetime.now(), periods=30, freq="D"
+    )
+    prijs = 42000 + np.cumsum(
+        np.random.randn(30) * 800
+    )
+    volume = np.abs(
+        np.random.randn(30) * 500 + 2000
+    )
+
+    # 24h delta berekenen uit de laatste 2 dagen
+    delta_pct = (
+        (prijs[-1] - prijs[-2]) / prijs[-2] * 100
+    )
+
+    return {
+        "type": "metrics",
+        "category": "CRYPTO",
+        "metrics": [
+            {
+                "label": "Bitcoin (BTC)",
+                "value": f"${prijs[-1]:,.2f}",
+                "delta": f"{delta_pct:+.2f}%",
+            },
+            {
+                "label": "Ethereum (ETH)",
+                "value": "$2,850.10",
+                "delta": "-1.12%",
+            },
+            {
+                "label": "Dominance",
+                "value": "54.2%",
+                "delta": "+0.4%",
+            },
+            {
+                "label": "Fear & Greed",
+                "value": "78",
+                "delta": "Extreme Greed",
+                "delta_color": "off",
+            },
+        ],
+        "data": pd.DataFrame(
+            {"Prijs (USD)": prijs}, index=dagen
+        ),
+        "extra": pd.DataFrame(
+            {"Volume": volume}, index=dagen
+        ),
+    }
+
+
+def _health_chart():
+    """Genereer 24-uur HRV + hartslag data."""
+    np.random.seed(7)
+    uren = pd.date_range(
+        end=datetime.now(), periods=24, freq="h"
+    )
+    hrv = np.abs(np.random.randn(24) * 15 + 55)
+    hartslag = np.abs(np.random.randn(24) * 8 + 72)
+    return {
+        "type": "area_chart",
+        "category": "HEALTH",
+        "data": pd.DataFrame(
+            {"HRV (ms)": hrv, "Hartslag": hartslag},
+            index=uren,
+        ),
+    }
+
+
+def _data_chart():
+    """Genereer 6 systeem-metrics bar chart."""
+    np.random.seed(13)
+    labels = [
+        "CPU", "RAM", "Disk", "Net",
+        "GPU", "Cache",
+    ]
+    waarden = np.random.randint(20, 95, size=6)
+    return {
+        "type": "bar_chart",
+        "category": "DATA",
+        "data": pd.DataFrame(
+            {"Gebruik (%)": waarden}, index=labels
+        ),
+    }
+
+
+def _code_media(output):
+    """Extraheer code blocks uit specialist output."""
+    pattern = r"```(?:\w+)?\n(.*?)```"
+    matches = re.findall(pattern, str(output), re.DOTALL)
+    if matches:
+        return {
+            "type": "code",
+            "category": "CODE",
+            "code": matches[0].strip(),
+        }
+    return None
+
+
+def _generate_media(category, output):
+    """Dispatcher: categorie → visuele media.
+
+    Returns:
+        dict met media-info, of None als er geen
+        visual bij deze categorie hoort.
+    """
+    if category == "CRYPTO":
+        return _crypto_metrics()
+    elif category == "HEALTH":
+        return _health_chart()
+    elif category == "DATA":
+        return _data_chart()
+    elif category == "CODE":
+        return _code_media(output)
+    return None
+
+
 def run_hub_spoke_pipeline(prompt, brain, callback=None):
     """Hub & Spoke pipeline met live callback.
 
@@ -53,10 +183,12 @@ def run_hub_spoke_pipeline(prompt, brain, callback=None):
                   wordt. Mag None zijn (silent mode).
 
     Returns:
-        (result, assigned, output) tuple.
+        (result, assigned, output, media) tuple.
         - result: TaskResult of None bij BLOCKED.
         - assigned: String met node-naam/keten.
         - output: Finale tekst voor de gebruiker.
+        - media: dict met visuele data (chart/code),
+                 of None als er geen visual hoort.
     """
     def log(msg):
         if callback:
@@ -72,7 +204,7 @@ def run_hub_spoke_pipeline(prompt, brain, callback=None):
 
     if not safe:
         log(f"\u274c Governor: BLOCKED \u2014 {reason}")
-        return None, "Governor", f"BLOCKED: {reason}"
+        return None, "Governor", f"BLOCKED: {reason}", None
 
     log("\U0001f6e1\ufe0f Governor: Input SAFE \u2713")
 
@@ -139,8 +271,14 @@ def run_hub_spoke_pipeline(prompt, brain, callback=None):
         else:
             log("\U0001f4dd Weaver: Skipped (raw output)")
 
+    # ── STAP 6: Media Generatie ──
+    media = _generate_media(category, output)
+    if media:
+        log(f"\U0001f4ca Media: {media['type']}"
+            f" ({media['category']})")
+
     log("\u2705 PIPELINE COMPLETE")
-    return result, assigned, output
+    return result, assigned, output, media
 
 
 def run_chain_pipeline(prompt, brain, callback=None):

@@ -1,5 +1,5 @@
 """
-SANCTUARY INTERFACE — The Glass Box UI v3.0
+SANCTUARY INTERFACE — The Glass Box UI v4.0
 ============================================
 
 Mission Control Dashboard voor de Prometheus Federation.
@@ -8,9 +8,10 @@ Live Hub & Spoke pipeline visualisatie:
   Rechts:  Swarm Activity (LIVE pipeline log)
   Sidebar: System State (Governor, Chronos, Agents)
 
-v3.0: Callback mechanisme — swarm_core.py backend
-      wrapper voedt de UI live via st.empty() + code
-      block. Clean scheiding frontend/backend.
+v4.0: Rich Media Protocol — contextual charts en code
+      blocks naast tekst-output. CRYPTO → line_chart,
+      HEALTH → area_chart, DATA → bar_chart,
+      CODE → code block.
 
 Gebruik: streamlit run sanctuary_ui.py
 """
@@ -106,6 +107,54 @@ from swarm_core import (
 )
 
 
+def render_media(container, media):
+    """Render rich media (chart/code) in container.
+
+    Args:
+        container: st of st.chat_message context.
+        media: dict met type/data/extra/code keys,
+               of None (geen visual).
+    """
+    if not media:
+        return
+
+    media_type = media.get("type")
+
+    if media_type == "metrics":
+        container.caption(
+            "\U0001f4c8 Cipher Market Live-Feed"
+        )
+        metrics = media.get("metrics", [])
+        if metrics:
+            cols = container.columns(len(metrics))
+            for idx, metric in enumerate(metrics):
+                cols[idx].metric(
+                    label=metric["label"],
+                    value=metric["value"],
+                    delta=metric["delta"],
+                    delta_color=metric.get(
+                        "delta_color", "normal"
+                    ),
+                )
+        # 30d chart onder de tickers
+        if "data" in media:
+            container.line_chart(media["data"])
+        if "extra" in media:
+            container.bar_chart(media["extra"])
+    elif media_type == "line_chart":
+        container.line_chart(media["data"])
+        if "extra" in media:
+            container.bar_chart(media["extra"])
+    elif media_type == "area_chart":
+        container.area_chart(media["data"])
+    elif media_type == "bar_chart":
+        container.bar_chart(media["data"])
+    elif media_type == "code":
+        container.code(
+            media.get("code", ""), language="python"
+        )
+
+
 # --- SIDEBAR: SYSTEM STATE ---
 with st.sidebar:
     st.markdown(
@@ -183,7 +232,7 @@ with st.sidebar:
 # --- HOOFDSCHERM ---
 st.markdown(
     '<p class="hub-spoke-label">'
-    'Sanctuary // Nexus — The Glass Box UI v3.0</p>',
+    'Sanctuary // Nexus — The Glass Box UI v4.0</p>',
     unsafe_allow_html=True,
 )
 st.title("S A N C T U A R Y")
@@ -220,6 +269,8 @@ with feed_col:
             msg["role"], avatar=msg.get("avatar")
         ):
             st.markdown(msg["content"])
+            if msg.get("media"):
+                render_media(st, msg["media"])
 
 
 # --- SWARM ACTIVITY (rechts) — Opgeslagen logs ---
@@ -308,7 +359,7 @@ if prompt := st.chat_input(
             with st.spinner(
                 "\U0001f680 Swarm Processing..."
             ):
-                result, assigned, output = (
+                result, assigned, output, media = (
                     run_hub_spoke_pipeline(
                         prompt, brain,
                         callback=update_ui_log,
@@ -355,6 +406,7 @@ if prompt := st.chat_input(
                 f"{success_count}/{total_sub} "
                 f"sub-taken geslaagd"
             )
+            media = None
 
     # Sla pipeline log op in session_state
     st.session_state.swarm_logs.append({
@@ -375,6 +427,7 @@ if prompt := st.chat_input(
         "role": "assistant",
         "content": response,
         "avatar": "\U0001f916",
+        "media": media,
     })
 
     with feed_col:
@@ -382,3 +435,4 @@ if prompt := st.chat_input(
             "assistant", avatar="\U0001f916"
         ):
             st.markdown(response)
+            render_media(st, media)
