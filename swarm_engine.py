@@ -1170,12 +1170,21 @@ class SwarmEngine:
 
         Scant input op keywords voor meerdere agents
         tegelijkertijd. Fallback naar ECHO.
+
+        MEMEX wint van IOLAAX bij kennisvragen:
+        als beide matchen, wordt IOLAAX verwijderd
+        (voorkomt nutteloze code-blokken bij RAG).
         """
         lower = user_input.lower()
         targets = []
         for agent_key, keywords in self.ROUTE_MAP.items():
             if any(kw in lower for kw in keywords):
                 targets.append(agent_key)
+
+        # MEMEX wint van IOLAAX bij kennisvragen
+        if "MEMEX" in targets and "IOLAAX" in targets:
+            targets.remove("IOLAAX")
+
         return targets or ["ECHO"]
 
     async def run(
