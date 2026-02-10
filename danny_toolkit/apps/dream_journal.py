@@ -169,17 +169,22 @@ class DreamJournalApp:
 
         # Opslaan
         self.data["dromen"].append(droom)
-        self.data["laatste_log"] = droom["datum"]
 
-        # Update streak
-        if self.data["laatste_log"]:
-            laatste = datetime.fromisoformat(self.data["laatste_log"])
-            if (datetime.now() - laatste).days <= 1:
+        # Update streak (check vorige log VOOR update)
+        vorige_log = self.data["laatste_log"]
+        if vorige_log:
+            laatste = datetime.fromisoformat(vorige_log)
+            dagen_verschil = (datetime.now() - laatste).days
+            if dagen_verschil == 0:
+                pass  # Zelfde dag, streak ongewijzigd
+            elif dagen_verschil == 1:
                 self.data["streak"] += 1
             else:
                 self.data["streak"] = 1
         else:
             self.data["streak"] = 1
+
+        self.data["laatste_log"] = droom["datum"]
 
         self._sla_op()
 

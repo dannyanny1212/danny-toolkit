@@ -107,8 +107,8 @@ class NexusBridge:
             # Sorteer op prioriteit
             insights.sort(key=lambda x: x["prioriteit"], reverse=True)
 
-        except Exception as e:
-            pass
+        except Exception:
+            pass  # Insights zijn optioneel
 
         return insights[:5]  # Max 5 inzichten
 

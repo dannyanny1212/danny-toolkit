@@ -575,8 +575,8 @@ class WillProtocol:
             while not self._stop_event.is_set():
                 try:
                     self.cyclus()
-                except Exception:
-                    pass
+                except Exception as e:
+                    print(f"  [WIL] Cyclus fout: {e}")
                 self._stop_event.wait(interval_seconden)
             self.actief = False
 

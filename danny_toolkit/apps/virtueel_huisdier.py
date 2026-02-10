@@ -7835,7 +7835,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                 genre_keuze = input("\n  Genre: ").strip()
                 try:
                     genre = genres[int(genre_keuze) - 1]
-                except:
+                except (ValueError, IndexError):
                     genre = random.choice(genres)
 
                 stemming = random.choice(stemmingen)
@@ -8291,7 +8291,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
             missie_keuze = input("\n  Kies missie (1-6): ").strip()
             try:
                 missie = missies[int(missie_keuze) - 1]
-            except:
+            except (ValueError, IndexError):
                 return
 
             self.huisdier["energie"] -= 3
@@ -8645,7 +8645,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                 if claude_chat:
                     echte_ai = True
                     print(f"  [AI] ECHTE Claude AI geactiveerd!")
-            except:
+            except Exception:
                 pass
 
         # Start de cycli

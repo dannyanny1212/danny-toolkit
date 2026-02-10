@@ -204,7 +204,7 @@ class Sensorium:
         try:
             stat = path.stat()
             return f"{stat.st_size}_{stat.st_mtime}"
-        except:
+        except Exception:
             return ""
 
     def _check_file_changes(self) -> List[SensoryEvent]:
