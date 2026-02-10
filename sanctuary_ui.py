@@ -101,10 +101,8 @@ brain, boot_log = laad_brain()
 
 # Imports die brain nodig hebben
 from danny_toolkit.brain.trinity_omega import NodeTier
-from swarm_core import (
-    run_hub_spoke_pipeline,
-    run_chain_pipeline,
-)
+from swarm_engine import run_swarm_sync, SwarmPayload
+from swarm_core import run_chain_pipeline
 
 
 def render_media(container, media):
@@ -359,18 +357,28 @@ if prompt := st.chat_input(
             with st.spinner(
                 "\U0001f680 Swarm Processing..."
             ):
-                result, assigned, output, media = (
-                    run_hub_spoke_pipeline(
-                        prompt, brain,
-                        callback=update_ui_log,
-                    )
+                payloads = run_swarm_sync(
+                    prompt, brain,
+                    callback=update_ui_log,
                 )
 
-            # Status bepalen
-            if result is None:
-                status_tekst = "BLOCKED"
-            else:
-                status_tekst = result.status
+            # Aggregeer output + media uit payloads
+            agents = [p.agent for p in payloads]
+            assigned = " \u2192 ".join(agents)
+            output = "\n\n".join(
+                p.content for p in payloads
+                if isinstance(p.content, str)
+            )
+            status_tekst = (
+                f"{len(payloads)} agent(s)"
+            )
+
+            # Media: eerste payload met metadata
+            media = None
+            for p in payloads:
+                if "media" in p.metadata:
+                    media = p.metadata["media"]
+                    break
 
         # ===========================================
         # CHAIN OF COMMAND — Callback Pipeline

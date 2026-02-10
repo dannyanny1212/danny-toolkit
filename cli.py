@@ -37,10 +37,8 @@ from rich.text import Text
 from rich.prompt import Prompt
 
 # Backend imports
-from swarm_core import (
-    run_hub_spoke_pipeline,
-    run_chain_pipeline,
-)
+from swarm_engine import run_swarm_sync, SwarmPayload
+from swarm_core import run_chain_pipeline
 from danny_toolkit.brain.trinity_omega import (
     PrometheusBrain,
 )
@@ -331,11 +329,9 @@ def main():
                     callback=live_callback,
                 )
             else:
-                result, assigned, output, media = (
-                    run_hub_spoke_pipeline(
-                        user_input, brain,
-                        callback=live_callback,
-                    )
+                payloads = run_swarm_sync(
+                    user_input, brain,
+                    callback=live_callback,
                 )
 
         # --- OUTPUT RENDERING ---
@@ -370,25 +366,32 @@ def main():
             ))
 
         else:
-            # Hub & Spoke output
-            status = (
-                result.status if result
-                else "BLOCKED"
+            # Swarm Engine output
+            agents = [p.agent for p in payloads]
+            assigned = " \u2192 ".join(agents)
+            output = "\n\n".join(
+                p.content for p in payloads
+                if isinstance(p.content, str)
             )
+            status = f"{len(payloads)} agent(s)"
             header = (
                 f"[bold]{assigned}[/bold]"
-                f" | Status: {status}"
+                f" | {status}"
             )
 
             console.print(Panel(
-                Markdown(str(output)),
-                title="WEAVER REPORT",
+                Markdown(output),
+                title="SWARM REPORT",
                 subtitle=header,
                 border_style="magenta",
             ))
 
-            # Rich Media
-            render_media(media)
+            # Media rendering per payload
+            for p in payloads:
+                if "media" in p.metadata:
+                    render_media(
+                        p.metadata["media"]
+                    )
 
 
 if __name__ == "__main__":
