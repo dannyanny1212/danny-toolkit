@@ -237,7 +237,8 @@ class PrometheusBrain:
         ],
         CosmicRole.CHRONOS: [
             "schedule", "cronjob", "timer", "ritme",
-            "planning", "agenda",
+            "planning", "agenda", "deadline",
+            "wanneer", "herinnering",
         ],
         CosmicRole.WEAVER: [
             "code", "debug", "refactor", "git",
@@ -658,7 +659,7 @@ class PrometheusBrain:
             Pixel, Iolaax, Nexus
         FASE 5 - INFRASTRUCTURE:
             Alchemist, Navigator, Void
-        DEFAULT: Weaver
+        DEFAULT: Pixel (general-purpose)
         """
         print(f"\n>> ANALYZING TASK: '{task[:50]}...' "
               f"[Priority: {priority.name}]")
@@ -717,6 +718,16 @@ class PrometheusBrain:
                 CosmicRole.ORACLE, task, priority
             )
 
+        # Code/Dev -> Weaver
+        elif any(kw in task_lower for kw in [
+            "code", "debug", "refactor", "git",
+            "functie", "class", "programmeer",
+            "build", "compile", "test"
+        ]):
+            return self._assign(
+                CosmicRole.WEAVER, task, priority
+            )
+
         # === FASE 3: GUARDIANS ===
 
         # Beveiliging -> Sentinel
@@ -740,7 +751,8 @@ class PrometheusBrain:
         # Tijd/Planning -> Chronos
         elif any(kw in task_lower for kw in [
             "schedule", "cronjob", "timer", "ritme",
-            "planning", "agenda"
+            "planning", "agenda", "deadline",
+            "wanneer", "herinnering",
         ]):
             return self._assign(
                 CosmicRole.CHRONOS, task, priority
@@ -802,9 +814,9 @@ class PrometheusBrain:
                 CosmicRole.NAVIGATOR, task, priority
             )
 
-        # === DEFAULT: Weaver ===
+        # === DEFAULT: Pixel (general-purpose) ===
         else:
-            return self._assign(CosmicRole.WEAVER, task, priority)
+            return self._assign(CosmicRole.PIXEL, task, priority)
 
     def _deploy_swarm(self, task: str, priority: TaskPriority) -> TaskResult:
         """Deploy de Legion zwerm voor massa-verwerking."""
@@ -825,9 +837,9 @@ class PrometheusBrain:
             10, self.swarm.active_tasks + 1
         )
         try:
-            # Gedeelde brain executie (1.1)
+            # Rol-specifieke brain executie (v4.2)
             ai_result, exec_time, brain_status = (
-                self._execute_with_brain(task)
+                self._execute_with_role(CosmicRole.LEGION, task)
             )
 
             if brain_status == "OK":
@@ -1268,22 +1280,22 @@ class PrometheusBrain:
             {
                 "kruispunt": "AI + BIO-HACKING",
                 "vraag": "Hoe gebruiken we Generative AI om nieuwe eiwitten of DNA-sequenties te ontwerpen voor levensverlenging?",
-                "expert": "Vita (SPECIALIST) + Iolaax (TRINITY)"
+                "expert": "Via route_task() -> Vita (eiwit/dna)"
             },
             {
                 "kruispunt": "CRYPTO + AI",
                 "vraag": "Hoe bouwen we autonome AI-agenten die hun eigen crypto-wallet beheren en diensten betalen?",
-                "expert": "Cipher (SPECIALIST)"
+                "expert": "Via route_task() -> Cipher (crypto)"
             },
             {
                 "kruispunt": "QUANTUM + CRYPTO",
                 "vraag": "Welke blockchain-encryptie is veilig tegen Quantum Computers (Post-Quantum Cryptography)?",
-                "expert": "Cipher (SPECIALIST) + Sentinel (GUARDIAN)"
+                "expert": "Via route_task() -> Cipher (blockchain)"
             },
             {
                 "kruispunt": "ETHICS + ALIGNMENT",
                 "vraag": "Hoe zorgen we dat een super-intelligente zwerm menselijke waarden behoudt?",
-                "expert": "Navigator (INFRA) + Sentinel (GUARDIAN)"
+                "expert": "Via route_task() -> Navigator (waarden)"
             }
         ]
 
