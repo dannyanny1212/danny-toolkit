@@ -19,9 +19,11 @@ Gebruik:
 """
 
 import asyncio
+import base64
 import json
 import re
 import random
+import time
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -631,6 +633,258 @@ class MemexAgent(BrainAgent):
         )
 
 
+class PixelAgent(Agent):
+    """THE EYES: Multimodal Vision Agent.
+
+    Maakt screenshots en analyseert ze via Brain.
+    Closed Loop: Legion doet → Pixel kijkt →
+    Brain oordeelt → Legion corrigeert.
+
+    Vision models (LLaVA/GPT-4o) kunnen later
+    de simulatie vervangen.
+    """
+
+    VISION_TRIGGERS = [
+        "kijk", "zie", "screenshot", "check",
+        "bekijk", "toon scherm", "wat zie",
+    ]
+
+    def __init__(self, name, role, model=None):
+        super().__init__(name, role, model)
+        from kinesis import KineticUnit
+        self.eyes = KineticUnit()
+
+    def _encode_image(self, image_path):
+        """Encode screenshot als base64 (voor vision API)."""
+        with open(image_path, "rb") as f:
+            return base64.b64encode(
+                f.read()
+            ).decode("utf-8")
+
+    async def process(self, task, brain=None):
+        start_t = time.time()
+
+        # Detecteer of dit een visuele taak is
+        lower = task.lower()
+        is_vision = any(
+            t in lower for t in self.VISION_TRIGGERS
+        )
+
+        if not is_vision or not brain:
+            # Normale Pixel taak (tekst-based)
+            if not brain:
+                return SwarmPayload(
+                    agent=self.name, type="text",
+                    content="Brain offline",
+                    display_text="Brain offline",
+                )
+            from danny_toolkit.brain.trinity_omega import (
+                CosmicRole,
+            )
+            result, exec_time, status = (
+                await asyncio.to_thread(
+                    brain._execute_with_role,
+                    CosmicRole.PIXEL, task,
+                )
+            )
+            content = (
+                str(result) if result
+                else "Pixel: geen resultaat"
+            )
+            return SwarmPayload(
+                agent=self.name, type="text",
+                content=content,
+                display_text=content,
+                metadata={
+                    "execution_time": exec_time,
+                    "status": status,
+                },
+            )
+
+        # 1. ACTIE: Kijk naar het scherm
+        img_path = await asyncio.to_thread(
+            self.eyes.capture_screen
+        )
+
+        # 2. PERCEPTIE: Analyseer het beeld
+        # TODO: LLaVA/GPT-4o vision call met
+        # self._encode_image(img_path)
+        # Voor nu: simulatie via Brain tekst-context
+        vision_context = (
+            "[Systeem] Screenshot gemaakt:"
+            f" {img_path}."
+            " (Simulatie: Pixel analyseert"
+            " het actieve venster.)"
+        )
+
+        from danny_toolkit.brain.trinity_omega import (
+            CosmicRole,
+        )
+        prompt = (
+            "Jij bent PIXEL, de visuele analist."
+            " Je kijkt naar een screenshot.\n"
+            f"De gebruiker vraagt: \"{task}\"\n\n"
+            f"CONTEXT: {vision_context}\n\n"
+            "Beschrijf wat je ziet en geef"
+            " feedback als er iets mis is."
+        )
+
+        analysis, exec_time, status = (
+            await asyncio.to_thread(
+                brain._execute_with_role,
+                CosmicRole.PIXEL, prompt,
+            )
+        )
+
+        display = (
+            str(analysis) if analysis
+            else "Pixel: geen analyse"
+        )
+        elapsed = time.time() - start_t
+
+        return SwarmPayload(
+            agent=self.name,
+            type="image_analysis",
+            content={"image_path": img_path},
+            display_text=display,
+            metadata={
+                "execution_time": elapsed,
+                "status": status,
+                "image_path": img_path,
+            },
+        )
+
+
+class LegionAgent(Agent):
+    """INFRASTRUCTURE AGENT: Bestuurt het OS.
+
+    Vertaalt Natural Language naar Kinesis-acties
+    via een LLM plan-stap, dan fysieke executie.
+    """
+
+    def __init__(self, name, role, model=None):
+        super().__init__(name, role, model)
+        from kinesis import KineticUnit
+        self.body = KineticUnit()
+
+    async def process(self, task, brain=None):
+        start_t = time.time()
+
+        if not brain:
+            return SwarmPayload(
+                agent=self.name, type="text",
+                content="Brain offline",
+                display_text="Brain offline",
+            )
+
+        # 1. PLAN: Vertaal intentie naar acties
+        from danny_toolkit.brain.trinity_omega import (
+            CosmicRole,
+        )
+        plan_prompt = (
+            "Jij bent LEGION, de systeem-operator."
+            f' De gebruiker wil: "{task}"\n\n'
+            "Zet dit om naar een JSON lijst van"
+            " acties. Mogelijke acties:\n"
+            '- {"action": "open",'
+            ' "target": "app_naam"}\n'
+            '- {"action": "type",'
+            ' "text": "tekst"}\n'
+            '- {"action": "press",'
+            ' "key": "enter"}\n'
+            '- {"action": "combo",'
+            ' "keys": ["ctrl", "c"]}\n'
+            '- {"action": "wait",'
+            ' "seconds": 2}\n\n'
+            "GEEF ALLEEN DE JSON."
+        )
+
+        raw_plan, _, _ = await asyncio.to_thread(
+            brain._execute_with_role,
+            CosmicRole.LEGION, plan_prompt,
+        )
+
+        execution_log = []
+
+        try:
+            # Parse JSON (strip markdown fencing)
+            clean_json = (
+                str(raw_plan)
+                .replace("```json", "")
+                .replace("```", "")
+                .strip()
+            )
+            # Zoek de JSON array
+            match = re.search(
+                r"\[.*\]", clean_json, re.DOTALL
+            )
+            if match:
+                steps = json.loads(match.group())
+            else:
+                steps = json.loads(clean_json)
+
+            # 2. EXECUTE: Voer stappen fysiek uit
+            for step in steps:
+                act = step.get("action")
+
+                if act == "open":
+                    res = self.body.launch_app(
+                        step["target"]
+                    )
+                elif act == "type":
+                    res = self.body.type_text(
+                        step["text"]
+                    )
+                elif act == "press":
+                    res = self.body.press_key(
+                        step["key"]
+                    )
+                elif act == "combo":
+                    res = self.body.hotkey(
+                        *step["keys"]
+                    )
+                elif act == "wait":
+                    time.sleep(
+                        step.get("seconds", 1)
+                    )
+                    res = "Waited"
+                else:
+                    res = f"Onbekende actie: {act}"
+
+                execution_log.append(
+                    f"{act}: {res}"
+                )
+
+        except Exception as e:
+            execution_log.append(
+                f"Fout bij uitvoeren plan: {e}"
+            )
+            execution_log.append(
+                f"Raw plan: {raw_plan}"
+            )
+
+        result_text = "\n".join(execution_log)
+        elapsed = time.time() - start_t
+
+        return SwarmPayload(
+            agent=self.name,
+            type="text",
+            content=(
+                steps
+                if "steps" in dir()
+                else str(raw_plan)
+            ),
+            display_text=(
+                "**Systeem Automatisering"
+                " Voltooid:**\n\n"
+                + result_text
+            ),
+            metadata={
+                "execution_time": elapsed,
+            },
+        )
+
+
 # ── FAST-TRACK ──
 
 _GREETING_PATTERNS = [
@@ -716,6 +970,12 @@ class SwarmEngine:
             "cleanup", "clean", "delete", "opruim",
             "cache", "garbage",
         ],
+        "LEGION": [
+            "open", "start", "launch", "typ",
+            "app", "scherm", "pc", "notepad",
+            "calculator", "chrome", "spotify",
+            "screenshot",
+        ],
         "CHRONOS_AGENT": [
             "schedule", "cronjob", "timer", "ritme",
             "planning", "agenda", "deadline",
@@ -724,7 +984,8 @@ class SwarmEngine:
         "PIXEL": [
             "help", "uitleg", "interface", "praat",
             "emotie", "gevoel", "dashboard", "menu",
-            "teken", "visualiseer",
+            "teken", "visualiseer", "kijk", "zie",
+            "bekijk", "check scherm", "wat zie",
         ],
     }
 
@@ -780,9 +1041,8 @@ class SwarmEngine:
                 "Weaver", "Synthesis",
                 CosmicRole.WEAVER,
             ),
-            "PIXEL": BrainAgent(
-                "Pixel", "Interface",
-                CosmicRole.PIXEL,
+            "PIXEL": PixelAgent(
+                "Pixel", "Vision",
             ),
             "ALCHEMIST": AlchemistAgent(
                 "Alchemist", "Data",
@@ -791,6 +1051,9 @@ class SwarmEngine:
             "VOID": BrainAgent(
                 "Void", "Cleanup",
                 CosmicRole.VOID,
+            ),
+            "LEGION": LegionAgent(
+                "Legion", "Infrastructure",
             ),
         }
 
