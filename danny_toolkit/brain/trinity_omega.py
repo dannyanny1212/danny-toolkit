@@ -250,7 +250,6 @@ class PrometheusBrain:
         ],
         CosmicRole.ALCHEMIST: [
             "convert", "transform", "data_clean", "etl",
-            "data",
         ],
         CosmicRole.VOID: [
             "cleanup", "clean", "delete", "opruim",
@@ -564,6 +563,45 @@ class PrometheusBrain:
             self._save_state()
             self._dirty = False
 
+    # --- ROL-SPECIFIEKE CONTEXT (Federation v4.1) ---
+
+    ROLE_CONTEXT = {
+        CosmicRole.PIXEL: "Je bent Pixel, interface & emotie.",
+        CosmicRole.IOLAAX: "Je bent Iolaax, redenering & logica.",
+        CosmicRole.NEXUS: "Je bent Nexus, verbinding & brug.",
+        CosmicRole.GOVERNOR: "Je bent Governor, systeembewaker.",
+        CosmicRole.SENTINEL: "Je bent Sentinel, beveiliging.",
+        CosmicRole.ARCHIVIST: "Je bent Archivist, geheugen.",
+        CosmicRole.CHRONOS: "Je bent Chronos, tijd & ritme.",
+        CosmicRole.WEAVER: "Je bent Weaver, code & bouwer.",
+        CosmicRole.CIPHER: "Je bent Cipher, crypto specialist.",
+        CosmicRole.VITA: "Je bent Vita, gezondheid expert.",
+        CosmicRole.ECHO: "Je bent Echo, patroon analist.",
+        CosmicRole.SPARK: "Je bent Spark, creatief genie.",
+        CosmicRole.ORACLE: "Je bent Oracle, web verkenner.",
+        CosmicRole.LEGION: "Je bent Legion, zwerm manager.",
+        CosmicRole.NAVIGATOR: "Je bent Navigator, strateeg.",
+        CosmicRole.ALCHEMIST: "Je bent Alchemist, data proc.",
+        CosmicRole.VOID: "Je bent Void, opruimer.",
+    }
+
+    def _execute_with_role(
+        self, role: CosmicRole, task: str
+    ) -> tuple:
+        """Voer taak uit met rol-specifieke context.
+
+        Args:
+            role: De CosmicRole van de uitvoerende node.
+            task: De uit te voeren taak.
+
+        Returns:
+            (result, execution_time, status) tuple.
+        """
+        prefix = self.ROLE_CONTEXT.get(role, "")
+        if prefix:
+            task = f"{prefix}\n{task}"
+        return self._execute_with_brain(task)
+
     # --- SHARED BRAIN EXECUTION (1.1) ---
 
     def _execute_with_brain(self, task: str) -> tuple:
@@ -782,7 +820,10 @@ class PrometheusBrain:
         self._task_counter += 1  # Fix 1.3: was missing
 
         # Try/finally voor swarm metrics (1.4)
-        self.swarm.active_tasks += 1
+        # Cap op 10 om onbegrensde groei te voorkomen
+        self.swarm.active_tasks = min(
+            10, self.swarm.active_tasks + 1
+        )
         try:
             # Gedeelde brain executie (1.1)
             ai_result, exec_time, brain_status = (
@@ -830,6 +871,11 @@ class PrometheusBrain:
         """Wijs een taak toe aan een specifieke agent."""
         agent = self.nodes[role]
 
+        # Energy tracking (Federation v4.1)
+        if agent.current_task is None and agent.energy < 100:
+            agent.energy = min(100, agent.energy + 10)
+        agent.energy = max(0, agent.energy - 5)
+
         print(f"   [ASSIGNED] {agent.name} ({role.name}) handling task")
         print(f"   >>> Capabilities: {', '.join(agent.capabilities[:3])}...")
 
@@ -837,9 +883,9 @@ class PrometheusBrain:
         agent.tasks_completed += 1
         self._task_counter += 1
 
-        # Gedeelde brain executie (1.1)
+        # Rol-specifieke brain executie (Federation v4.1)
         ai_result, exec_time, brain_status = (
-            self._execute_with_brain(task)
+            self._execute_with_role(role, task)
         )
 
         if brain_status == "OK":
@@ -1348,19 +1394,26 @@ class PrometheusBrain:
 
     # --- CHAIN OF COMMAND ---
 
-    def _detect_domains(self, query: str) -> Dict[CosmicRole, str]:
+    def _detect_domains(
+        self, query: str
+    ) -> Dict[CosmicRole, tuple]:
         """Detecteer alle relevante domeinen in een query.
 
         Returns:
-            Dict van CosmicRole -> matched keyword.
+            Dict van CosmicRole -> (eerste_keyword, hits).
         """
         query_lower = query.lower()
         matches = {}
         for role, keywords in self.DOMAIN_KEYWORDS.items():
+            count = 0
+            first_match = None
             for kw in keywords:
                 if kw in query_lower:
-                    matches[role] = kw
-                    break
+                    if first_match is None:
+                        first_match = kw
+                    count += 1
+            if count > 0:
+                matches[role] = (first_match, count)
         return matches
 
     def chain_of_command(self, query: str) -> dict:
@@ -1421,15 +1474,16 @@ class PrometheusBrain:
                   f"{len(domains)} domeinen gedetecteerd")
 
         if not domains:
-            # Geen domeinen gevonden, stuur naar Weaver
-            domains = {CosmicRole.WEAVER: "default"}
+            # Geen domeinen gevonden, stuur naar Pixel
+            domains = {CosmicRole.PIXEL: ("default", 1)}
             print(f"  >>> Geen specifieke domeinen, "
-                  f"fallback naar Weaver")
+                  f"fallback naar Pixel")
 
-        for role, keyword in domains.items():
+        for role, (keyword, hits) in domains.items():
             node = self.nodes[role]
             print(f"    - {node.name} ({role.name})"
-                  f" [match: \"{keyword}\"]")
+                  f" [match: \"{keyword}\","
+                  f" {hits} hit(s)]")
         print()
 
         # --- STAP 3: Delegeer sub-taken ---
@@ -1439,8 +1493,9 @@ class PrometheusBrain:
 
         sub_taken = []
         nodes_betrokken = [pixel.name, iolaax.name]
+        failed_count = 0
 
-        for role, keyword in domains.items():
+        for role, (keyword, hits) in domains.items():
             node = self.nodes[role]
             sub_taak = (
                 f"[{node.name}] Beantwoord het deel "
@@ -1449,6 +1504,9 @@ class PrometheusBrain:
             print(f"\n  >>> Delegeer naar {node.name}...")
             result = self._assign(role, sub_taak,
                                   TaskPriority.HIGH)
+
+            if result.status == "TASK_FAILED":
+                failed_count += 1
 
             sub_taken.append({
                 "node": node.name,
@@ -1463,6 +1521,11 @@ class PrometheusBrain:
             if node.name not in nodes_betrokken:
                 nodes_betrokken.append(node.name)
 
+        if failed_count > len(domains) / 2:
+            print(
+                f"\n  [WAARSCHUWING] {failed_count}/"
+                f"{len(domains)} sub-taken gefaald!"
+            )
         print()
 
         # --- STAP 4: Iolaax aggregeert ---
@@ -1529,6 +1592,8 @@ class PrometheusBrain:
         print("=" * 60)
         print()
 
+        success_count = len(sub_taken) - failed_count
+
         return {
             "query": query,
             "ontvanger": pixel.name,
@@ -1538,6 +1603,8 @@ class PrometheusBrain:
             "antwoord": str(antwoord),
             "nodes_betrokken": nodes_betrokken,
             "execution_time": execution_time,
+            "failed_count": failed_count,
+            "success_count": success_count,
         }
 
     # --- PERSISTENCE ---
@@ -1606,9 +1673,12 @@ class PrometheusBrain:
                         f" ({self._task_counter}"
                         f" historical tasks)"
                     )
-        except Exception:
+        except Exception as e:
             # Governor: probeer herstel van backup
             if self._state_file.exists():
+                print(
+                    f"  [WARNING] State load fout: {e}"
+                )
                 print(
                     "  [WARNING] State corrupt, "
                     "Governor probeert herstel..."

@@ -43,8 +43,7 @@ def test_domain_detection(brain: PrometheusBrain):
         ),
         (
             "Schedule een cronjob voor data cleanup",
-            {CosmicRole.CHRONOS, CosmicRole.VOID,
-             CosmicRole.ALCHEMIST},
+            {CosmicRole.CHRONOS, CosmicRole.VOID},
         ),
         (
             "Hallo wereld",
@@ -231,14 +230,14 @@ def test_chain_no_domain(brain: PrometheusBrain):
 
     checks = []
 
-    # Fallback naar Weaver
-    weaver_found = any(
-        st["node"] == "Weaver"
+    # Fallback naar Pixel
+    pixel_found = any(
+        st["node"] == "Pixel"
         for st in result["sub_taken"]
     )
     checks.append((
-        "Fallback naar Weaver",
-        weaver_found,
+        "Fallback naar Pixel",
+        pixel_found,
     ))
 
     # Nog steeds Pixel + Iolaax in flow

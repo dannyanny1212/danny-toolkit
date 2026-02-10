@@ -53,6 +53,7 @@ class OmegaGovernor:
         # Circuit breaker state
         self._api_failures = 0
         self._last_failure_time = 0.0
+        self._consecutive_successes = 0
 
         # Learning cycle tracking
         self._learning_cycles_this_hour = 0
@@ -66,6 +67,8 @@ class OmegaGovernor:
         return {
             "api_failures": self._api_failures,
             "last_failure_time": self._last_failure_time,
+            "consecutive_successes":
+                self._consecutive_successes,
             "learning_cycles_this_hour":
                 self._learning_cycles_this_hour,
             "hour_start": self._hour_start,
@@ -76,6 +79,9 @@ class OmegaGovernor:
         self._api_failures = data.get("api_failures", 0)
         self._last_failure_time = data.get(
             "last_failure_time", 0.0
+        )
+        self._consecutive_successes = data.get(
+            "consecutive_successes", 0
         )
         self._learning_cycles_this_hour = data.get(
             "learning_cycles_this_hour", 0
@@ -549,6 +555,7 @@ class OmegaGovernor:
             self._api_failures + 1, self.MAX_API_FAILURES
         )
         self._last_failure_time = time.time()
+        self._consecutive_successes = 0
         if self._api_failures >= self.MAX_API_FAILURES:
             print(
                 f"  [GOVERNOR] Circuit breaker geactiveerd "
@@ -556,18 +563,40 @@ class OmegaGovernor:
             )
 
     def record_api_success(self):
-        """Registreer een API succes (geleidelijke reset)."""
+        """Registreer een API succes (geleidelijke reset).
+
+        Vereist 2 opeenvolgende successen voordat failures
+        afnemen, om te voorkomen dat 1 toevallig succes de
+        circuit breaker reset.
+        """
         if self._api_failures > 0:
-            self._api_failures -= 1
-            if self._api_failures == 0:
-                self._last_failure_time = 0.0
-                print("  [GOVERNOR] Circuit breaker gereset")
+            self._consecutive_successes += 1
+            if self._consecutive_successes >= 2:
+                self._api_failures = max(
+                    0, self._api_failures - 1
+                )
+                self._consecutive_successes = 0
+                if self._api_failures == 0:
+                    self._last_failure_time = 0.0
+                    print(
+                        "  [GOVERNOR] Circuit breaker"
+                        " gereset"
+                    )
+                else:
+                    print(
+                        f"  [GOVERNOR] Circuit breaker"
+                        f" herstel"
+                        f" ({self._api_failures}/"
+                        f"{self.MAX_API_FAILURES})"
+                    )
             else:
                 print(
-                    f"  [GOVERNOR] Circuit breaker herstel "
-                    f"({self._api_failures}/"
-                    f"{self.MAX_API_FAILURES})"
+                    f"  [GOVERNOR] Succes geregistreerd"
+                    f" ({self._consecutive_successes}/2"
+                    f" voor herstel)"
                 )
+        else:
+            self._consecutive_successes = 0
 
     def trim_conversation(
         self, history: list
