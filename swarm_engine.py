@@ -581,10 +581,12 @@ class SwarmEngine:
             "beveilig", "security", "firewall",
             "audit", "threat",
         ],
-        "ARCHIVIST": [
+        "MEMEX": [
             "zoek kennis", "herinner", "rag",
             "vector", "semantic", "geheugen",
-            "knowledge",
+            "knowledge", "zoek in", "archief",
+            "wat weten we over", "recall",
+            "opzoeken", "doorzoek",
         ],
         "ALCHEMIST": [
             "convert", "transform", "data_clean",
@@ -646,7 +648,7 @@ class SwarmEngine:
                 "Sentinel", "Security",
                 CosmicRole.SENTINEL,
             ),
-            "ARCHIVIST": MemexAgent(
+            "MEMEX": MemexAgent(
                 "Memex", "Memory",
                 CosmicRole.ARCHIVIST,
             ),
