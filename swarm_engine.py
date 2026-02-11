@@ -400,7 +400,10 @@ class MemexAgent(BrainAgent):
                 )
             )
             return self._collection
-        except Exception:
+        except Exception as e:
+            print(
+                f"  [MemexAgent] ChromaDB fout: {e}"
+            )
             return None
 
     # Bronweging: code > docs > data
@@ -534,7 +537,8 @@ class MemexAgent(BrainAgent):
         )
         plan_raw, _, _ = await asyncio.to_thread(
             brain._execute_with_brain,
-            plan_prompt, "llama-3.1-8b-instant",
+            plan_prompt,
+            "llama-3.3-70b-versatile",
         )
 
         try:
