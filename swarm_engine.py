@@ -522,8 +522,8 @@ class MemexAgent(BrainAgent):
             'Alleen JSON: ["term1","term2","term3"]'
         )
         plan_raw, _, _ = await asyncio.to_thread(
-            brain._execute_with_role,
-            self.cosmic_role, plan_prompt,
+            brain._execute_with_brain,
+            plan_prompt, "llama-3.1-8b-instant",
         )
 
         try:
@@ -637,7 +637,7 @@ class MemexAgent(BrainAgent):
 
         if all_fragments:
             context = "\n".join(
-                all_fragments[:15]
+                all_fragments[:8]
             )
         else:
             context = (

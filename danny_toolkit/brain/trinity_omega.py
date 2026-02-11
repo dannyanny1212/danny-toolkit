@@ -869,8 +869,12 @@ class PrometheusBrain:
 
         start = time.time()
         try:
+            # Schone history per swarm call
+            # (voorkomt token-accumulatie)
+            self.brain.conversation_history = []
             result = self.brain.process_request(
                 task, model=model,
+                use_tools=False,
             )
             elapsed = time.time() - start
             # Check of resultaat een foutmelding bevat
