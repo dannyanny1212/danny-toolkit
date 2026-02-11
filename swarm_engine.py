@@ -1135,81 +1135,96 @@ class AdaptiveRouter:
     _embed_fn = None
     _profiel_embeddings = None
 
-    # Bilingual (NL+EN) profielen voor betere
+    # Bilingual (NL+EN) profielen V5.1 voor
     # matching met all-MiniLM-L6-v2.
     AGENT_PROFIELEN = {
         "IOLAAX": (
             "programming coding debugging software"
             " python javascript git bugs fix"
-            " refactoring algorithms testing"
-            " compiling code script build"
-            " implement error module import"
+            " crash error exception traceback"
+            " refactoring algorithms compiling"
+            " build implement module import"
             " fout oplossen repareren debuggen"
-            " schrijf code"
+            " crasht schrijf code script"
+            " terminal console"
         ),
         "CIPHER": (
             "cryptocurrency bitcoin ethereum"
             " blockchain wallet crypto trading"
             " price market koers prijs minen"
             " smart contracts tokens encryptie"
-            " decryptie"
+            " decryptie portfolio saldo winst"
         ),
         "VITA": (
             "gezondheid health slaap sleep stress"
             " biohacking hartslag heart rate HRV"
             " voeding nutrition wellness biometrie"
             " sport medicijn DNA peptiden analyse"
-            " diagnosis fitness"
+            " diagnosis fitness moe vermoeidheid"
+            " energie futloos ziek pijn herstel"
+            " voel me slecht conditie"
         ),
         "NAVIGATOR": (
             "web search internet online lookup"
             " fetch scrape API research explore"
             " discover browse zoeken onderzoek"
+            " vind informatie bronnen"
         ),
         "ORACLE": (
             "philosophy thinking logic reasoning"
             " consciousness ethics hypothesis"
-            " dream evolve deep thinking meaning"
-            " purpose"
+            " deep meaning purpose"
+            " zin van het bestaan waarom"
+            " leven we filosofie nadenken"
+            " ethiek moraal existentieel"
+            " vraagstuk analyse"
         ),
         "SPARK": (
             "creative ideas brainstorm art ASCII"
             " design innovation drawing"
             " visualization kunst creatief idee"
+            " ontwerp concept verzin iets"
         ),
         "SENTINEL": (
             "security firewall audit threats"
             " protect vulnerability defense"
-            " beveiligen beveiliging"
+            " beveiligen beveiliging wachtwoord"
+            " privacy hack aanval risico"
         ),
         "MEMEX": (
             "knowledge base RAG vector search"
             " recall remember archive document"
-            " lookup query answer explanation"
-            " what is how does describe explain"
-            " information about"
+            " lookup query explanation describe"
+            " geheugen herinner opzoeken"
+            " database collectie bronnen"
         ),
         "ALCHEMIST": (
             "data transform convert ETL pipeline"
             " cleaning processing analysis"
             " transformeren converteren verwerken"
+            " csv json format"
         ),
         "VOID": (
-            "cleanup clean delete cache garbage"
-            " remove temporary files opruimen"
-            " verwijderen schoonmaken"
+            "verwijder bestanden delete files"
+            " tijdelijke bestanden temporary"
+            " opruimen clean up schoonmaken"
+            " cache garbage prullenbak trash"
+            " recycle bin junk logs wissen"
+            " disk space ruimte vrijmaken"
+            " remove cleanup"
         ),
         "CHRONOS_AGENT": (
             "planning schedule agenda deadline"
             " timer cronjob reminder day rhythm"
             " bio rhythm calendar time planning"
-            " schema herinnering"
+            " schema herinnering klok tijd laat"
+            " datum wanneer agenda afspraak"
         ),
         "PIXEL": (
             "user interface dashboard menu screen"
             " display emotion feeling"
             " visualization help assistance"
-            " UI scherm"
+            " UI scherm ziet eruit plaatje"
         ),
     }
 
