@@ -1025,7 +1025,9 @@ class SwarmEngine:
             "code", "debug", "refactor", "git",
             "functie", "class", "programmeer", "build",
             "compile", "test", "script", "python",
-            "javascript",
+            "javascript", "schrijf", "algoritme",
+            "implementeer", "bug", "error", "fout",
+            "module", "import",
         ],
         "CIPHER": [
             "blockchain", "crypto", "encrypt",
@@ -1038,7 +1040,7 @@ class SwarmEngine:
             "slaap", "eiwit", "dna", "stress",
         ],
         "NAVIGATOR": [
-            "zoek op", "search", "fetch", "scrape",
+            "zoek op", "web search", "fetch", "scrape",
             "api call", "onderzoek", "explore",
             "discover", "research",
         ],
@@ -1081,7 +1083,8 @@ class SwarmEngine:
         # LEGION: disabled
 
         "CHRONOS_AGENT": [
-            "schedule", "cronjob", "timer", "ritme",
+            "schedule", "cronjob", "timer",
+            "dag ritme", "bio ritme",
             "planning", "agenda", "deadline",
             "wanneer", "herinnering",
         ],
