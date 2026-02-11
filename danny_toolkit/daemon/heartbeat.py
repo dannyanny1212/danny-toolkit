@@ -81,10 +81,13 @@ class HeartbeatDaemon:
         },
     ]
 
-    def __init__(self, brain=None):
+    def __init__(self, brain=None, daemon=None):
         self._brain = brain
+        self._daemon = daemon
         self._engine = None
         self._stack = None
+        self._proactive = None
+        self._singularity = None
         self._running = False
         self._stop_event = threading.Event()
 
@@ -106,6 +109,7 @@ class HeartbeatDaemon:
         self._last_reflection = 0.0
         self._last_stat_log = 0.0
         self._last_swarm_check = {}
+        self._last_proactive_check = 0.0
 
     def _get_stack(self):
         """Lazy import CorticalStack."""
@@ -130,6 +134,37 @@ class HeartbeatDaemon:
             except Exception:
                 self._engine = None
         return self._engine
+
+    def _get_proactive(self):
+        """Lazy import ProactiveEngine."""
+        if self._proactive is None:
+            if self._daemon is None:
+                return None
+            try:
+                from ..brain.proactive import (
+                    ProactiveEngine,
+                )
+                self._proactive = ProactiveEngine(
+                    self._daemon, self._brain
+                )
+            except Exception:
+                self._proactive = None
+        return self._proactive
+
+    def _get_singularity(self):
+        """Lazy import SingularityEngine."""
+        if self._singularity is None:
+            try:
+                from ..brain.singularity import (
+                    SingularityEngine,
+                )
+                self._singularity = SingularityEngine(
+                    daemon=self._daemon,
+                    brain=self._brain,
+                )
+            except Exception:
+                self._singularity = None
+        return self._singularity
 
     # ─── Swarm Taken ───
 
@@ -537,6 +572,23 @@ class HeartbeatDaemon:
                     # Swarm schedule check (elke 10 pulsen)
                     if self._pulse_count % 10 == 0:
                         self._check_swarm_schedule()
+
+                    # Singularity tick (elke 10 pulsen)
+                    if self._pulse_count % 10 == 0:
+                        singularity = (
+                            self._get_singularity()
+                        )
+                        if singularity:
+                            try:
+                                singularity.tick()
+                            except Exception:
+                                pass
+
+                    # Proactive timer check (~60s)
+                    if self._pulse_count % 60 == 0:
+                        proactive = self._get_proactive()
+                        if proactive:
+                            proactive._check_timer_regels()
 
                     # Update display
                     live.update(self._build_display())

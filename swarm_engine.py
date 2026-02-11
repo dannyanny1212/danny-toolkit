@@ -2542,6 +2542,34 @@ class SwarmEngine:
             },
         )
 
+        # Emit TASK_COMPLETE naar Sensorium
+        try:
+            if (
+                self.brain
+                and hasattr(self.brain, "governor")
+                and hasattr(
+                    self.brain.governor, "_daemon"
+                )
+                and self.brain.governor._daemon
+            ):
+                daemon = self.brain.governor._daemon
+                from danny_toolkit.daemon.sensorium import (
+                    EventType,
+                )
+                daemon.sensorium.sense_event(
+                    EventType.TASK_COMPLETE,
+                    source="swarm_engine",
+                    data={
+                        "agents": [
+                            r.agent for r in results
+                        ],
+                        "input": user_input[:100],
+                    },
+                    importance=0.6,
+                )
+        except Exception:
+            pass
+
         log("\u2705 SWARM COMPLETE")
         return results
 

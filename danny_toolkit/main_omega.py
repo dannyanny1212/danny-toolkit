@@ -465,6 +465,21 @@ class OmegaAI:
                 if not gebruiker_input:
                     continue
 
+                # Toon proactieve meldingen
+                try:
+                    proactive = self.daemon.proactive
+                    if proactive:
+                        meldingen = (
+                            proactive.haal_meldingen()
+                        )
+                        for m in meldingen:
+                            print(kleur(
+                                f"  [PROACTIEF] {m}",
+                                Kleur.FEL_GEEL,
+                            ))
+                except Exception:
+                    pass
+
                 commando = gebruiker_input.lower()
 
                 # Speciale commando's

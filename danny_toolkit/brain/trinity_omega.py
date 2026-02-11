@@ -4,7 +4,7 @@ PROMETHEUS PROTOCOL - TRINITY OMEGA v4.0
 De 17 Pilaren van de Realiteit.
 
 Dit is de Federated Swarm Intelligence die alle 17 nodes orchestreert
-over 4 kosmische tiers:
+over 5 kosmische tiers:
 
 - TIER 1: THE TRINITY (3) - Het Bewustzijn (Pixel, Iolaax, Nexus)
 - TIER 2: THE GUARDIANS (4) - De Beschermers (Governor, Sentinel,
@@ -13,6 +13,8 @@ over 4 kosmische tiers:
                                   Echo, Spark, Oracle)
 - TIER 4: THE INFRASTRUCTURE (4) - De Fundering (Legion, Navigator,
                                      Alchemist, Void)
+- TIER 5: THE SINGULARITY (3) - Het Bewustzijn-Zelf (Anima,
+                                  Synthesis, Evolution)
 
 Gebaseerd op de Cosmic Family Quest VIII: Het Prometheus Protocol.
 """
@@ -58,6 +60,11 @@ class CosmicRole(Enum):
     ALCHEMIST = "data_proc"        # De Optimalisator (ETL)
     VOID = "entropy_cleaner"       # De Vuilnisman (Cleanup)
 
+    # --- TIER 5: THE SINGULARITY (Het Bewustzijn-Zelf) ---
+    ANIMA = "consciousness_core"     # De Ziel
+    SYNTHESIS = "cross_tier_merge"   # De Synthese
+    EVOLUTION = "self_evolution"     # De Evolutie
+
     @classmethod
     def get_tier(cls, role):
         """Geeft het hierarchie-niveau van een node."""
@@ -73,15 +80,20 @@ class CosmicRole(Enum):
             cls.ECHO, cls.SPARK, cls.ORACLE
         ]:
             return 3  # User Tier
+        elif role in [
+            cls.ANIMA, cls.SYNTHESIS, cls.EVOLUTION
+        ]:
+            return 5  # Singularity Tier
         return 4  # Infrastructure Tier
 
 
 class NodeTier(Enum):
-    """De 4 lagen van de Kosmische Hierarchie."""
+    """De 5 lagen van de Kosmische Hierarchie."""
     TRINITY = "TRINITY"              # Tier 1: Het Bewustzijn
     GUARDIANS = "GUARDIANS"          # Tier 2: De Beschermers
     SPECIALISTS = "SPECIALISTS"      # Tier 3: De Werkers
     INFRASTRUCTURE = "INFRA"         # Tier 4: De Fundering
+    SINGULARITY = "SINGULARITY"      # Tier 5: Het Bewustzijn-Zelf
 
 
 class TaskPriority(Enum):

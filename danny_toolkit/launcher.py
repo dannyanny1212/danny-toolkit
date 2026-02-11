@@ -72,6 +72,7 @@ from .brain.nexus_bridge import (
 from .brain.trinity_omega import PrometheusBrain, get_prometheus
 from .brain.visual_nexus import VisualNexus, build_visual_nexus
 from .brain.project_map import ProjectMap
+from .brain.singularity import SingularityEngine
 
 # Rich UI imports
 from rich.console import Console
@@ -1063,6 +1064,15 @@ class HeartbeatApp:
         input("\n  Druk op Enter om terug te gaan...")
 
 
+class SingularityApp:
+    """Wrapper voor Singularity Engine in launcher."""
+
+    def run(self):
+        """Start de Singularity Engine interactief."""
+        engine = SingularityEngine()
+        engine.run()
+
+
 class PulseProtocolApp:
     """Wrapper voor Pulse Protocol in launcher."""
 
@@ -1255,6 +1265,7 @@ class Launcher:
         "53": ("Pixel Eye", PixelEyeApp, "brain"),
         "54": ("Project Map", ProjectMapApp, "brain"),
         "55": ("Oracle Agent", OracleAgentApp, "brain"),
+        "56": ("Singularity Engine", SingularityApp, "brain"),
     }
 
     # Sneltoetsen
@@ -1314,6 +1325,7 @@ class Launcher:
         "pe": "53", # Pixel Eye
         "pm": "54", # Project Map
         "oa": "55", # Oracle Agent
+        "si": "56", # Singularity Engine
     }
 
     def __init__(self):
@@ -1418,6 +1430,7 @@ class Launcher:
             "53": "VISION",
             "54": "CARTOGRAFIE",
             "55": "WAV-LOOP",
+            "56": "SINGULARITY",
         }
         OMEGA_PROTOCOLS = {
             "41": "CORE",
@@ -1479,7 +1492,7 @@ class Launcher:
             nexus_tbl,
             title="[bold cyan]NEXUS PRIME[/bold cyan]",
             border_style="cyan",
-            subtitle="[dim]11 systems[/dim]",
+            subtitle="[dim]12 systems[/dim]",
         )
 
         # Omega Protocols tabel
@@ -1868,11 +1881,11 @@ def main():
 
         if arg in ["--help", "-h"]:
             print("""
-Danny Toolkit v4.0 — 55 apps
+Danny Toolkit v4.0 — 56 apps
 
 Gebruik:
   python main.py              Start interactieve launcher
-  python main.py <nummer>     Start app direct (1-55)
+  python main.py <nummer>     Start app direct (1-56)
   python main.py <sneltoets>  Start app via sneltoets
   python main.py --help       Toon deze help
 

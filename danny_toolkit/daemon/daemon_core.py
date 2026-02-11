@@ -164,11 +164,27 @@ class DigitalDaemon:
         self.governor = OmegaGovernor()
         self.governor.connect_daemon(self)
 
+        # Proactive Engine (lazy)
+        self._proactive = None
+
         # Data file
         self._data_file = Config.APPS_DATA_DIR / "digital_daemon.json"
         self._load_data()
 
         print(kleur(f"\n[DAEMON] {naam} ontwaakt...", Kleur.MAGENTA))
+
+    @property
+    def proactive(self):
+        """Lazy ProactiveEngine property."""
+        if self._proactive is None:
+            try:
+                from ..brain.proactive import (
+                    ProactiveEngine,
+                )
+                self._proactive = ProactiveEngine(self)
+            except Exception:
+                pass
+        return self._proactive
 
     def _load_data(self):
         """Laad daemon data."""
@@ -251,6 +267,13 @@ class DigitalDaemon:
 
                 # Process housekeeper
                 self._run_housekeeper()
+
+                # Proactive timer check
+                if self._proactive is not None:
+                    try:
+                        self._proactive._check_timer_regels()
+                    except Exception:
+                        pass
 
             except Exception as e:
                 print(kleur(f"[DAEMON] Loop error: {e}", Kleur.ROOD))
