@@ -243,6 +243,10 @@ class PrometheusBrain:
         CosmicRole.WEAVER: [
             "code", "debug", "refactor", "git",
             "functie", "class", "programmeer",
+            "schrijf", "algoritme", "python",
+            "script", "implementeer", "build",
+            "bug", "error", "fout", "compile",
+            "test", "module", "import",
         ],
         CosmicRole.NAVIGATOR: [
             "strategie", "doel", "manifesto", "roadmap",
@@ -282,7 +286,9 @@ class PrometheusBrain:
             "code", "debug", "refactor", "git",
             "functie", "class", "programmeer", "build",
             "compile", "test", "script", "python",
-            "javascript",
+            "javascript", "schrijf", "algoritme",
+            "implementeer", "bug", "error", "fout",
+            "module", "import",
         ],
         "VISUAL": [
             "help", "uitleg", "interface", "praat",
