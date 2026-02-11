@@ -1,3 +1,4 @@
+
 """
 SANCTUARY INTERFACE — The Glass Box UI v4.0
 ============================================
@@ -152,6 +153,119 @@ def render_media(container, media):
     elif media_type == "code":
         container.code(
             media.get("code", ""), language="python"
+        )
+
+
+def render_payload(container, p):
+    """Render een SwarmPayload in een Streamlit container.
+
+    Args:
+        container: st of st.chat_message context.
+        p: SwarmPayload object.
+    """
+    if p.type == "code":
+        container.caption(
+            f"\U0001f4bb {p.agent}"
+        )
+        container.code(
+            p.content, language="python",
+        )
+    elif p.type == "metrics":
+        container.caption(
+            f"\U0001f4c8 {p.agent} Ticker"
+        )
+        media = p.metadata.get("media")
+        render_media(container, media)
+    elif p.type in (
+        "area_chart", "bar_chart", "line_chart",
+    ):
+        container.caption(
+            f"\U0001f4ca {p.agent}"
+        )
+        media = p.metadata.get("media")
+        render_media(container, media)
+    elif p.type == "image_analysis":
+        container.caption(
+            f"\U0001f5bc {p.agent} | Vision"
+        )
+        content = p.content or {}
+        if isinstance(content, dict):
+            img_path = content.get("image_path", "")
+            if img_path and os.path.isfile(img_path):
+                container.image(img_path)
+            elif img_path:
+                container.info(
+                    f"Afbeelding: {img_path}"
+                )
+        container.markdown(str(p.display_text))
+    elif p.type == "research_report":
+        container.markdown(
+            "### \U0001f4da Memex Analyse"
+        )
+        container.markdown(str(p.display_text))
+        data = p.content
+        if isinstance(data, dict):
+            with container.expander(
+                "\U0001f50d Bekijk"
+                " Onderzoeksdata & Bronnen"
+            ):
+                st.caption(
+                    "\U0001f9e0 ZOEKSTRATEGIE (PLAN)"
+                )
+                tags = "".join(
+                    "<span style='"
+                    "background:#333;"
+                    "padding:4px 8px;"
+                    "border-radius:4px;"
+                    "margin-right:5px;"
+                    "font-size:0.85em'>"
+                    f"\U0001f50d {q}</span>"
+                    for q in data.get(
+                        "queries", []
+                    )
+                )
+                st.markdown(
+                    tags,
+                    unsafe_allow_html=True,
+                )
+                st.divider()
+                src_count = data.get(
+                    "sources_count", 0
+                )
+                frags = data.get(
+                    "total_fragments",
+                    src_count,
+                )
+                st.caption(
+                    "\U0001f4c4 GEVONDEN"
+                    f" BRONNEN ({src_count}"
+                    f" documenten,"
+                    f" {frags} fragmenten)"
+                )
+                src_list = data.get(
+                    "sources_list", []
+                )
+                for s in src_list:
+                    st.markdown(
+                        f"- \U0001f4ce `{s}`"
+                    )
+                st.divider()
+                if data.get("used_web"):
+                    st.warning(
+                        "\U0001f310 Kennisgat:"
+                        " Navigator Web Search"
+                        " ingezet."
+                    )
+                else:
+                    st.info(
+                        "\U0001f9e0 ChromaDB +"
+                        " CorticalStack"
+                        " \u2014 Dual Memory."
+                    )
+    else:
+        container.markdown(
+            f"**[{p.agent}]**\n"
+            f"{p.display_text}"
         )
 
 
@@ -334,120 +448,7 @@ with feed_col:
                     "\n\n"
                 )[0])
                 for p in msg["payloads"]:
-                    if p.type == "code":
-                        st.caption(
-                            f"\U0001f4bb {p.agent}"
-                        )
-                        st.code(
-                            p.content,
-                            language="python",
-                        )
-                    elif p.type == "metrics":
-                        st.caption(
-                            f"\U0001f4c8 {p.agent}"
-                            " Ticker"
-                        )
-                        media = p.metadata.get(
-                            "media"
-                        )
-                        render_media(st, media)
-                    elif p.type in (
-                        "area_chart", "bar_chart",
-                    ):
-                        st.caption(
-                            f"\U0001f4ca {p.agent}"
-                        )
-                        media = p.metadata.get(
-                            "media"
-                        )
-                        render_media(st, media)
-                    elif p.type == "research_report":
-                        st.markdown(
-                            "### \U0001f4da"
-                            " Memex Analyse"
-                        )
-                        st.markdown(
-                            str(p.display_text)
-                        )
-                        data = p.content
-                        if isinstance(data, dict):
-                            with st.expander(
-                                "\U0001f50d Bekijk"
-                                " Onderzoeksdata"
-                                " & Bronnen"
-                            ):
-                                st.caption(
-                                    "\U0001f9e0"
-                                    " ZOEKSTRATEGIE"
-                                    " (PLAN)"
-                                )
-                                tags = "".join(
-                                    "<span style='"
-                                    "background:#333;"
-                                    "padding:4px 8px;"
-                                    "border-radius:"
-                                    "4px;margin-right"
-                                    ":5px;font-size:"
-                                    "0.85em'>"
-                                    f"\U0001f50d {q}"
-                                    "</span>"
-                                    for q in data.get(
-                                        "queries", []
-                                    )
-                                )
-                                st.markdown(
-                                    tags,
-                                    unsafe_allow_html=True,
-                                )
-                                st.divider()
-                                src_count = data.get(
-                                    "sources_count", 0
-                                )
-                                frags = data.get(
-                                    "total_fragments",
-                                    src_count,
-                                )
-                                st.caption(
-                                    "\U0001f4c4"
-                                    " GEVONDEN"
-                                    f" BRONNEN"
-                                    f" ({src_count}"
-                                    f" documenten,"
-                                    f" {frags}"
-                                    f" fragmenten)"
-                                )
-                                src_list = data.get(
-                                    "sources_list", []
-                                )
-                                for s in src_list:
-                                    st.markdown(
-                                        f"- \U0001f4ce"
-                                        f" `{s}`"
-                                    )
-                                st.divider()
-                                if data.get(
-                                    "used_web"
-                                ):
-                                    st.warning(
-                                        "\U0001f310"
-                                        " Kennisgat:"
-                                        " Navigator"
-                                        " Web Search"
-                                        " ingezet."
-                                    )
-                                else:
-                                    st.info(
-                                        "\U0001f9e0"
-                                        " ChromaDB +"
-                                        " CorticalStack"
-                                        " — Dual"
-                                        " Memory."
-                                    )
-                    else:
-                        st.markdown(
-                            f"**[{p.agent}]**\n"
-                            f"{p.display_text}"
-                        )
+                    render_payload(st, p)
             else:
                 st.markdown(msg["content"])
 
@@ -534,14 +535,19 @@ if prompt := st.chat_input(
         # ===========================================
         # HUB & SPOKE — Callback Pipeline
         # ===========================================
+        swarm_error = None
         if modus == "Hub & Spoke (route_task)":
-            with st.spinner(
-                "\U0001f680 Swarm Processing..."
-            ):
-                payloads = run_swarm_sync(
-                    prompt, brain,
-                    callback=update_ui_log,
-                )
+            try:
+                with st.spinner(
+                    "\U0001f680 Swarm Processing..."
+                ):
+                    payloads = run_swarm_sync(
+                        prompt, brain,
+                        callback=update_ui_log,
+                    )
+            except Exception as e:
+                swarm_error = str(e)
+                payloads = []
 
             # Aggregeer header info uit payloads
             agents = [p.agent for p in payloads]
@@ -554,27 +560,36 @@ if prompt := st.chat_input(
         # CHAIN OF COMMAND — Callback Pipeline
         # ===========================================
         else:
-            with st.spinner(
-                "\u26d3\ufe0f Chain Processing..."
-            ):
-                chain_result = run_chain_pipeline(
-                    prompt, brain,
-                    callback=update_ui_log,
-                )
+            try:
+                with st.spinner(
+                    "\u26d3\ufe0f Chain Processing..."
+                ):
+                    chain_result = run_chain_pipeline(
+                        prompt, brain,
+                        callback=update_ui_log,
+                    )
+            except Exception as e:
+                swarm_error = str(e)
+                chain_result = {}
 
-            # Extract uit chain result dict
+            # 1.4: Chain result validatie
+            if not isinstance(chain_result, dict):
+                chain_result = {}
+
             nodes = chain_result.get(
                 "nodes_betrokken", []
-            )
+            ) or []
             sub_taken = chain_result.get(
                 "sub_taken", []
-            )
+            ) or []
             success_count = chain_result.get(
                 "success_count", 0
             )
             total_sub = len(sub_taken)
 
-            assigned = " \u2192 ".join(nodes)
+            assigned = " \u2192 ".join(
+                str(n) for n in nodes
+            )
             output = str(
                 chain_result.get(
                     "antwoord", "Geen antwoord"
@@ -594,6 +609,13 @@ if prompt := st.chat_input(
         "tijd": datetime.now().strftime("%H:%M:%S"),
         "assigned": assigned,
     })
+
+    # 1.3: Toon foutmelding bij swarm/chain error
+    if swarm_error:
+        with feed_col:
+            st.error(
+                f"Fout tijdens executie: {swarm_error}"
+            )
 
     # Toon resultaat in feed
     if modus == "Hub & Spoke (route_task)":
@@ -623,120 +645,7 @@ if prompt := st.chat_input(
             ):
                 st.markdown(header)
                 for p in payloads:
-                    if p.type == "code":
-                        st.caption(
-                            f"\U0001f4bb {p.agent}"
-                        )
-                        st.code(
-                            p.content,
-                            language="python",
-                        )
-                    elif p.type == "metrics":
-                        st.caption(
-                            f"\U0001f4c8 {p.agent}"
-                            " Ticker"
-                        )
-                        media = p.metadata.get(
-                            "media"
-                        )
-                        render_media(st, media)
-                    elif p.type in (
-                        "area_chart", "bar_chart",
-                    ):
-                        st.caption(
-                            f"\U0001f4ca {p.agent}"
-                        )
-                        media = p.metadata.get(
-                            "media"
-                        )
-                        render_media(st, media)
-                    elif p.type == "research_report":
-                        st.markdown(
-                            "### \U0001f4da"
-                            " Memex Analyse"
-                        )
-                        st.markdown(
-                            str(p.display_text)
-                        )
-                        data = p.content
-                        if isinstance(data, dict):
-                            with st.expander(
-                                "\U0001f50d Bekijk"
-                                " Onderzoeksdata"
-                                " & Bronnen"
-                            ):
-                                st.caption(
-                                    "\U0001f9e0"
-                                    " ZOEKSTRATEGIE"
-                                    " (PLAN)"
-                                )
-                                tags = "".join(
-                                    "<span style='"
-                                    "background:#333;"
-                                    "padding:4px 8px;"
-                                    "border-radius:"
-                                    "4px;margin-right"
-                                    ":5px;font-size:"
-                                    "0.85em'>"
-                                    f"\U0001f50d {q}"
-                                    "</span>"
-                                    for q in data.get(
-                                        "queries", []
-                                    )
-                                )
-                                st.markdown(
-                                    tags,
-                                    unsafe_allow_html=True,
-                                )
-                                st.divider()
-                                src_count = data.get(
-                                    "sources_count", 0
-                                )
-                                frags = data.get(
-                                    "total_fragments",
-                                    src_count,
-                                )
-                                st.caption(
-                                    "\U0001f4c4"
-                                    " GEVONDEN"
-                                    f" BRONNEN"
-                                    f" ({src_count}"
-                                    f" documenten,"
-                                    f" {frags}"
-                                    f" fragmenten)"
-                                )
-                                src_list = data.get(
-                                    "sources_list", []
-                                )
-                                for s in src_list:
-                                    st.markdown(
-                                        f"- \U0001f4ce"
-                                        f" `{s}`"
-                                    )
-                                st.divider()
-                                if data.get(
-                                    "used_web"
-                                ):
-                                    st.warning(
-                                        "\U0001f310"
-                                        " Kennisgat:"
-                                        " Navigator"
-                                        " Web Search"
-                                        " ingezet."
-                                    )
-                                else:
-                                    st.info(
-                                        "\U0001f9e0"
-                                        " ChromaDB +"
-                                        " CorticalStack"
-                                        " — Dual"
-                                        " Memory."
-                                    )
-                    else:
-                        st.markdown(
-                            f"**[{p.agent}]**\n"
-                            f"{p.display_text}"
-                        )
+                    render_payload(st, p)
     else:
         # Chain of Command rendering
         response = (
