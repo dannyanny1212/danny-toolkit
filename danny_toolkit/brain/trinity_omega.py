@@ -772,9 +772,26 @@ class PrometheusBrain:
     # --- HUB & SPOKE PIPELINE METHODEN ---
 
     def _governor_gate(self, task: str) -> tuple:
-        """Stap 1: Governor valideert de input."""
+        """Stap 1: Governor valideert de input.
+
+        Checks:
+        1. Circuit breaker (API health)
+        2. Input validatie (injectie + lengte)
+        """
         if not self.governor.check_api_health():
             return False, "API geblokkeerd (circuit breaker)"
+
+        veilig, reden = self.governor.valideer_input(task)
+        if not veilig:
+            _log = getattr(self, "_cortical_log", None)
+            if _log:
+                _log(
+                    "governor", "input_blocked",
+                    {"reden": reden,
+                     "input_preview": task[:100]},
+                )
+            return False, reden
+
         return True, "OK"
 
     def _chronos_enrich(self, task: str) -> str:

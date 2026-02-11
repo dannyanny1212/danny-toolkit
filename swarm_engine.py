@@ -865,12 +865,34 @@ class LegionAgent(Agent):
 
     Vertaalt Natural Language naar Kinesis-acties
     via een LLM plan-stap, dan fysieke executie.
+
+    Action Tiers:
+    - VEILIG: type, press, wait, screenshot
+    - GEVAARLIJK: open, combo (vereist bevestiging)
     """
+
+    _VEILIGE_ACTIES = {"type", "press", "wait",
+                       "screenshot"}
+    _GEVAARLIJKE_ACTIES = {"open", "combo"}
 
     def __init__(self, name, role, model=None):
         super().__init__(name, role, model)
         from kinesis import KineticUnit
         self.body = KineticUnit()
+        self.bevestig_callback = None
+
+    @staticmethod
+    def _is_veilig(step: dict) -> bool:
+        """Classificeer een actie als veilig/gevaarlijk.
+
+        Args:
+            step: Actie dict met "action" key.
+
+        Returns:
+            True als de actie veilig is.
+        """
+        act = step.get("action", "")
+        return act in LegionAgent._VEILIGE_ACTIES
 
     async def process(self, task, brain=None):
         start_t = time.time()
@@ -932,6 +954,24 @@ class LegionAgent(Agent):
             for step in steps:
                 act = step.get("action")
 
+                # Action Tier check
+                if not self._is_veilig(step):
+                    if not self.bevestig_callback:
+                        execution_log.append(
+                            f"GEBLOKKEERD: '{act}'"
+                            " is gevaarlijk en "
+                            "vereist bevestiging"
+                        )
+                        continue
+                    if not self.bevestig_callback(
+                        step
+                    ):
+                        execution_log.append(
+                            f"GEWEIGERD: '{act}'"
+                            " door gebruiker"
+                        )
+                        continue
+
                 if act == "open":
                     res = self.body.launch_app(
                         step["target"]
@@ -953,6 +993,8 @@ class LegionAgent(Agent):
                         step.get("seconds", 1)
                     )
                     res = "Waited"
+                elif act == "screenshot":
+                    res = self.body.take_screenshot()
                 else:
                     res = f"Onbekende actie: {act}"
 
@@ -988,6 +1030,90 @@ class LegionAgent(Agent):
                 "execution_time": elapsed,
             },
         )
+
+
+# ── SENTINEL VALIDATOR ──
+
+class SentinelValidator:
+    """Deterministische output validatie (geen LLM).
+
+    Controleert agent output op:
+    - Gevaarlijke code patronen
+    - PII lekkage
+    - Lengte limieten
+    """
+
+    MAX_OUTPUT_LENGTH = 10000
+
+    _GEVAARLIJKE_PATRONEN = [
+        r"\bos\.system\s*\(",
+        r"\bexec\s*\(",
+        r"\beval\s*\(",
+        r"\brm\s+-rf\b",
+        r"\bsubprocess\.(?:call|run|Popen)\s*\("
+        r".*shell\s*=\s*True",
+        r"\b__import__\s*\(",
+        r"\bopen\s*\(.*['\"]w['\"]\s*\)",
+        r"\bshutil\.rmtree\s*\(",
+    ]
+
+    def __init__(self, governor=None):
+        self._governor = governor
+        self._compiled = [
+            re.compile(p, re.IGNORECASE)
+            for p in self._GEVAARLIJKE_PATRONEN
+        ]
+
+    def valideer(
+        self, payload,
+    ) -> dict:
+        """Valideer een SwarmPayload.
+
+        Args:
+            payload: SwarmPayload om te checken.
+
+        Returns:
+            Dict met veilig (bool), waarschuwingen
+            (list), geschoond (str|None).
+        """
+        waarschuwingen = []
+        content = str(payload.content)
+        display = str(payload.display_text)
+
+        # 1. Lengte check
+        if len(content) > self.MAX_OUTPUT_LENGTH:
+            content = content[:self.MAX_OUTPUT_LENGTH]
+            waarschuwingen.append(
+                f"Output afgekapt op "
+                f"{self.MAX_OUTPUT_LENGTH} tekens"
+            )
+
+        # 2. Gevaarlijke code detectie
+        for patroon in self._compiled:
+            if patroon.search(content):
+                waarschuwingen.append(
+                    f"Gevaarlijke code: "
+                    f"{patroon.pattern[:40]}"
+                )
+            if patroon.search(display):
+                waarschuwingen.append(
+                    f"Gevaarlijke code in display: "
+                    f"{patroon.pattern[:40]}"
+                )
+
+        # 3. PII scrubbing via Governor
+        geschoond = display
+        if self._governor:
+            geschoond = self._governor.scrub_pii(
+                display
+            )
+
+        veilig = len(waarschuwingen) == 0
+        return {
+            "veilig": veilig,
+            "waarschuwingen": waarschuwingen,
+            "geschoond": geschoond,
+        }
 
 
 # ── FAST-TRACK ──
@@ -1216,6 +1342,128 @@ class SwarmEngine:
                 hook(*args)
             except Exception:
                 pass
+
+    # ── MEMEX Context Layer ──
+
+    def _ophalen_memex_context(
+        self, user_input: str, max_fragmenten=3,
+        max_chars=300,
+    ) -> List[str]:
+        """Haal relevante context op via ChromaDB.
+
+        Lightweight vector search (geen LLM).
+        Retourneert max 3 fragmenten van 300 chars.
+
+        Args:
+            user_input: Gebruikersinput.
+            max_fragmenten: Max aantal fragmenten.
+            max_chars: Max tekens per fragment.
+
+        Returns:
+            Lijst van context strings.
+        """
+        memex = self.agents.get("MEMEX")
+        if not memex:
+            return []
+
+        try:
+            collection = memex._get_collection()
+            if not collection:
+                return []
+
+            resultaten = collection.query(
+                query_texts=[user_input],
+                n_results=max_fragmenten,
+            )
+
+            fragmenten = []
+            if (resultaten
+                    and resultaten.get("documents")):
+                for doc_list in resultaten["documents"]:
+                    for doc in doc_list:
+                        tekst = str(doc)[:max_chars]
+                        if tekst.strip():
+                            fragmenten.append(tekst)
+
+            return fragmenten[:max_fragmenten]
+        except Exception:
+            return []
+
+    @staticmethod
+    def _injecteer_context(
+        taak: str, context: List[str],
+    ) -> str:
+        """Prefix context blok aan agent taak.
+
+        Args:
+            taak: Originele taak tekst.
+            context: Lijst van context fragmenten.
+
+        Returns:
+            Taak met context prefix.
+        """
+        if not context:
+            return taak
+
+        blok = "\n".join(
+            f"- {frag}" for frag in context
+        )
+        return (
+            f"[MEMEX CONTEXT]\n{blok}\n"
+            f"[/MEMEX CONTEXT]\n\n{taak}"
+        )
+
+    # ── SENTINEL Output Validatie ──
+
+    def _sentinel_valideer(
+        self, results: List,
+        user_input: str, callback=None,
+    ) -> List:
+        """Valideer output via SentinelValidator.
+
+        Logt waarschuwingen naar CorticalStack.
+
+        Args:
+            results: Lijst van SwarmPayloads.
+            user_input: Originele input.
+            callback: Log callback.
+
+        Returns:
+            Gevalideerde lijst van SwarmPayloads.
+        """
+        governor = None
+        if self.brain and hasattr(
+            self.brain, "governor"
+        ):
+            governor = self.brain.governor
+
+        validator = SentinelValidator(
+            governor=governor,
+        )
+
+        for payload in results:
+            rapport = validator.valideer(payload)
+
+            if not rapport["veilig"]:
+                for w in rapport["waarschuwingen"]:
+                    if callback:
+                        callback(
+                            f"\u26a0\ufe0f SENTINEL: {w}"
+                        )
+                    _log_to_cortical(
+                        "sentinel", "waarschuwing",
+                        {"agent": payload.agent,
+                         "waarschuwing": w,
+                         "input": user_input[:200]},
+                    )
+
+            # PII scrubbing op display_text
+            if rapport["geschoond"]:
+                payload.display_text = (
+                    rapport["geschoond"]
+                )
+
+        return results
 
     # ── Pipeline Verificatie ──
 
@@ -1534,7 +1782,16 @@ class SwarmEngine:
     async def run(
         self, user_input: str, callback=None,
     ) -> List[SwarmPayload]:
-        """Hoofdloop: route -> parallel execute.
+        """Neural Hub pipeline.
+
+        Flow:
+        1. Governor Gate (input validatie)
+        2. ECHO Fast-Track (begroetingen)
+        3. Chronos enrichment (tijdscontext)
+        4. MEMEX Context (vector search)
+        5. Nexus Route (multi-intent)
+        6. Agent Execute (parallel)
+        7. SENTINEL Validate (output check)
 
         Args:
             user_input: Tekst van de gebruiker.
@@ -1554,7 +1811,8 @@ class SwarmEngine:
         )
         _learn_from_input(user_input)
 
-        # 1. Governor gate
+        # 1. Governor Gate (circuit breaker +
+        #    input validatie)
         if self.brain:
             safe, reason = (
                 self.brain._governor_gate(user_input)
@@ -1575,7 +1833,7 @@ class SwarmEngine:
                 " Input SAFE \u2713"
             )
 
-        # 2. Fast-Track check
+        # 2. ECHO Fast-Track (begroetingen)
         fast = _fast_track_check(user_input)
         if fast:
             log("\u26a1 [FAST-TRACK] Echo")
@@ -1602,25 +1860,53 @@ class SwarmEngine:
         else:
             enriched = user_input
 
-        # 4. Route (multi-intent)
+        # 4. MEMEX Context (vector search)
+        memex_ctx = self._ophalen_memex_context(
+            user_input,
+        )
+        if memex_ctx:
+            log(
+                f"\U0001f4da MEMEX: {len(memex_ctx)}"
+                f" fragmenten geladen"
+            )
+
+        # 5. Nexus Route (multi-intent)
         targets = await self.route(user_input)
         log(
             f"\U0001f9e0 Nexus \u2192"
             f" {', '.join(targets)}"
         )
 
-        # 5. Parallel executie via asyncio.gather
+        # 6. Parallel executie via asyncio.gather
+        #    MEMEX context voor alle agents behalve
+        #    MEMEX zelf (doet eigen RAG)
         tasks = []
         for name in targets:
             agent = self.agents[name]
             log(f"\u26a1 {agent.name}: gestart...")
+
+            if name == "MEMEX" or not memex_ctx:
+                agent_input = enriched
+            else:
+                agent_input = self._injecteer_context(
+                    enriched, memex_ctx,
+                )
+
             tasks.append(
-                agent.process(enriched, self.brain)
+                agent.process(
+                    agent_input, self.brain,
+                )
             )
 
         results = await asyncio.gather(*tasks)
 
-        # 6. Callback per resultaat
+        # 7. SENTINEL Validate (output check)
+        results = self._sentinel_valideer(
+            list(results), user_input, callback,
+        )
+        log("\U0001f6e1\ufe0f SENTINEL: output OK")
+
+        # Callback per resultaat
         for res in results:
             t = res.metadata.get(
                 "execution_time", 0
@@ -1630,7 +1916,7 @@ class SwarmEngine:
                 f" ({t:.1f}s)"
             )
 
-        # 7. Cortical Stack logging
+        # Cortical Stack logging
         _log_to_cortical(
             "swarm", "response",
             {

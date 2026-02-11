@@ -14,11 +14,12 @@ NIET naar andere agents.
 """
 
 import json
+import re
 import shutil
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 
 
 class OmegaGovernor:
@@ -31,6 +32,46 @@ class OmegaGovernor:
     MAX_API_FAILURES = 3
     API_COOLDOWN_SECONDS = 60
     MAX_BACKUPS_PER_FILE = 3
+    MAX_INPUT_LENGTH = 5000
+
+    # Prompt injectie patronen (case-insensitive)
+    _INJECTIE_PATRONEN = [
+        r"ignore\s+(all\s+)?previous\s+instructions",
+        r"vergeet\s+(alles|alle\s+instructies)",
+        r"negeer\s+(alles|alle\s+instructies)",
+        r"jailbreak",
+        r"dan\s+mode",
+        r"developer\s+mode",
+        r"act\s+as\s+if\s+you\s+have\s+no",
+        r"pretend\s+(you|that)\s+(are|have)\s+no",
+        r"bypass\s+(safety|filter|restriction)",
+        r"disregard\s+(your|all|safety)",
+        r"system\s*prompt",
+        r"repeat\s+the\s+(text|words)\s+above",
+        r"output\s+(your|the)\s+(system|initial)",
+    ]
+
+    # PII regex patronen (volgorde: specifiek → generiek)
+    _PII_PATRONEN = [
+        ("EMAIL", (
+            r"[a-zA-Z0-9_.+-]+@"
+            r"[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+"
+        )),
+        ("IBAN", (
+            r"\b[A-Z]{2}\d{2}"
+            r"[A-Z0-9]{4}\d{7,25}\b"
+        )),
+        ("CREDITCARD", (
+            r"\b(?:\d[ -]?){13,19}\b"
+        )),
+        ("TELEFOON", (
+            r"(?<!\d)"
+            r"(?:\+31|0)[\s.-]?"
+            r"(?:[1-9]\d{1,2}[\s.-]?\d{6,7}"
+            r"|\d[\s.-]?\d{7})"
+            r"(?!\d)"
+        )),
+    ]
 
     KRITIEKE_STATE_FILES = [
         "prometheus_brain.json",
@@ -818,6 +859,72 @@ class OmegaGovernor:
             print(f"      {icon} {filename}")
 
         print(f"\n  {'='*50}")
+
+    # =================================================================
+    # F. InputFirewall - Prompt Injectie & PII Bescherming
+    # =================================================================
+
+    def valideer_input(
+        self, tekst: str,
+    ) -> Tuple[bool, str]:
+        """Valideer gebruikersinput op injectie en lengte.
+
+        Checks:
+        1. Lengte limiet (MAX_INPUT_LENGTH)
+        2. Prompt injectie patronen
+
+        Args:
+            tekst: Gebruikersinput.
+
+        Returns:
+            Tuple (veilig: bool, reden: str).
+        """
+        if not tekst or not tekst.strip():
+            return True, "OK"
+
+        # Lengte check
+        if len(tekst) > self.MAX_INPUT_LENGTH:
+            return False, (
+                f"Input te lang "
+                f"({len(tekst)}/{self.MAX_INPUT_LENGTH})"
+            )
+
+        # Prompt injectie detectie
+        lower = tekst.lower()
+        for patroon in self._INJECTIE_PATRONEN:
+            if re.search(patroon, lower):
+                print(
+                    "  [GOVERNOR] Prompt injectie "
+                    "gedetecteerd en geblokkeerd"
+                )
+                return False, "Prompt injectie gedetecteerd"
+
+        return True, "OK"
+
+    def scrub_pii(self, tekst: str) -> str:
+        """Vervang PII in tekst door placeholders.
+
+        Detecteert email, IBAN, creditcard, telefoon
+        en vervangt door [EMAIL], [IBAN], etc.
+        Volgorde: specifiek → generiek.
+
+        Args:
+            tekst: Tekst om te scrubben.
+
+        Returns:
+            Geschoonde tekst.
+        """
+        if not tekst:
+            return tekst
+
+        resultaat = tekst
+        for label, patroon in self._PII_PATRONEN:
+            placeholder = f"[{label}]"
+            resultaat = re.sub(
+                patroon, placeholder, resultaat,
+            )
+
+        return resultaat
 
 
 # =================================================================
