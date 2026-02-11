@@ -7,6 +7,11 @@ embeddings (all-MiniLM-L6-v2).
 """
 
 import os
+
+# Forceer TQDM (sentence-transformers) om stil te zijn
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["TQDM_DISABLE"] = "True"
+
 import time
 from pathlib import Path
 from typing import List
