@@ -43,6 +43,23 @@ data/*_vectors.json
 # Governor backups (runtime data)
 data/backups/
 
+# SQLite databases (runtime)
+data/cortical_stack.db
+data/cortical_stack.db-shm
+data/cortical_stack.db-wal
+
+# Generated output
+data/logs/
+data/plots/
+data/screenshots/
+data/screenshot_*.png
+
+# ChromaDB vector store
+data/rag/chromadb/
+
+# RAG documenten (user uploads)
+data/rag/documenten/*.txt
+
 # Misc
 nul
 
