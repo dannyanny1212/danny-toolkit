@@ -21,10 +21,12 @@ Gebruik:
 import asyncio
 import base64
 import json
+import math
 import re
 import random
 import sys
 import time
+from collections import deque
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -1116,6 +1118,325 @@ class SentinelValidator:
         }
 
 
+# ── ADAPTIVE ROUTER ──
+
+class AdaptiveRouter:
+    """Embedding-based semantic routing.
+
+    Vervangt keyword matching door cosine similarity
+    met agent profiel-embeddings. Fallback naar
+    ROUTE_MAP als embeddings niet beschikbaar.
+    """
+
+    DREMPEL = 0.30
+    MAX_AGENTS = 3
+    _embed_fn = None
+    _profiel_embeddings = None
+
+    # Bilingual (NL+EN) profielen voor betere
+    # matching met all-MiniLM-L6-v2.
+    AGENT_PROFIELEN = {
+        "IOLAAX": (
+            "programming coding debugging software"
+            " python javascript git bugs fix"
+            " refactoring algorithms testing"
+            " compiling code script build"
+            " implement error module import"
+            " fout oplossen repareren debuggen"
+            " schrijf code"
+        ),
+        "CIPHER": (
+            "cryptocurrency bitcoin ethereum"
+            " blockchain wallet crypto trading"
+            " price market koers prijs minen"
+            " smart contracts tokens encryptie"
+            " decryptie"
+        ),
+        "VITA": (
+            "gezondheid health slaap sleep stress"
+            " biohacking hartslag heart rate HRV"
+            " voeding nutrition wellness biometrie"
+            " sport medicijn DNA peptiden analyse"
+            " diagnosis fitness"
+        ),
+        "NAVIGATOR": (
+            "web search internet online lookup"
+            " fetch scrape API research explore"
+            " discover browse zoeken onderzoek"
+        ),
+        "ORACLE": (
+            "philosophy thinking logic reasoning"
+            " consciousness ethics hypothesis"
+            " dream evolve deep thinking meaning"
+            " purpose"
+        ),
+        "SPARK": (
+            "creative ideas brainstorm art ASCII"
+            " design innovation drawing"
+            " visualization kunst creatief idee"
+        ),
+        "SENTINEL": (
+            "security firewall audit threats"
+            " protect vulnerability defense"
+            " beveiligen beveiliging"
+        ),
+        "MEMEX": (
+            "knowledge base RAG vector search"
+            " recall remember archive document"
+            " lookup query answer explanation"
+            " what is how does describe explain"
+            " information about"
+        ),
+        "ALCHEMIST": (
+            "data transform convert ETL pipeline"
+            " cleaning processing analysis"
+            " transformeren converteren verwerken"
+        ),
+        "VOID": (
+            "cleanup clean delete cache garbage"
+            " remove temporary files opruimen"
+            " verwijderen schoonmaken"
+        ),
+        "CHRONOS_AGENT": (
+            "planning schedule agenda deadline"
+            " timer cronjob reminder day rhythm"
+            " bio rhythm calendar time planning"
+            " schema herinnering"
+        ),
+        "PIXEL": (
+            "user interface dashboard menu screen"
+            " display emotion feeling"
+            " visualization help assistance"
+            " UI scherm"
+        ),
+    }
+
+    @classmethod
+    def _get_embed_fn(cls):
+        """Lazy laden van SentenceTransformer.
+
+        Hergebruikt MemexAgent pattern (suppress
+        stdout). Class variable: geladen 1x, gedeeld.
+        """
+        if cls._embed_fn is not None:
+            return cls._embed_fn
+        try:
+            import io as _io
+            from sentence_transformers import (
+                SentenceTransformer,
+            )
+            _old_out = sys.stdout
+            _old_err = sys.stderr
+            sys.stdout = _io.StringIO()
+            sys.stderr = _io.StringIO()
+            try:
+                model = SentenceTransformer(
+                    "all-MiniLM-L6-v2"
+                )
+            finally:
+                sys.stdout = _old_out
+                sys.stderr = _old_err
+            cls._embed_fn = model.encode
+            return cls._embed_fn
+        except Exception:
+            return None
+
+    @classmethod
+    def _bereken_profielen(cls):
+        """Embed alle agent profielen (eenmalig)."""
+        if cls._profiel_embeddings is not None:
+            return cls._profiel_embeddings
+        embed = cls._get_embed_fn()
+        if not embed:
+            return None
+        cls._profiel_embeddings = {}
+        for agent, tekst in cls.AGENT_PROFIELEN.items():
+            cls._profiel_embeddings[agent] = embed(
+                tekst
+            )
+        return cls._profiel_embeddings
+
+    @staticmethod
+    def _cosine_sim(vec_a, vec_b):
+        """Cosine similarity tussen twee vectoren."""
+        dot = sum(
+            a * b for a, b in zip(vec_a, vec_b)
+        )
+        mag_a = math.sqrt(
+            sum(a ** 2 for a in vec_a)
+        )
+        mag_b = math.sqrt(
+            sum(b ** 2 for b in vec_b)
+        )
+        if mag_a == 0 or mag_b == 0:
+            return 0.0
+        return dot / (mag_a * mag_b)
+
+    def route(self, user_input: str) -> List[str]:
+        """Semantische routing via cosine similarity.
+
+        Args:
+            user_input: Tekst van de gebruiker.
+
+        Returns:
+            Lijst van agent keys, gesorteerd op
+            relevantie. Fallback naar ["ECHO"].
+        """
+        embed = self._get_embed_fn()
+        if not embed:
+            raise RuntimeError("Embedding niet beschikbaar")
+
+        profielen = self._bereken_profielen()
+        if not profielen:
+            raise RuntimeError("Profielen niet beschikbaar")
+
+        input_vec = embed(user_input)
+
+        scores = []
+        for agent, profiel_vec in profielen.items():
+            sim = self._cosine_sim(
+                input_vec, profiel_vec,
+            )
+            if sim >= self.DREMPEL:
+                scores.append((agent, sim))
+
+        scores.sort(key=lambda x: x[1], reverse=True)
+        targets = [
+            s[0] for s in scores[:self.MAX_AGENTS]
+        ]
+
+        # MEMEX wint van IOLAAX bij kennisvragen
+        if "MEMEX" in targets and "IOLAAX" in targets:
+            targets.remove("IOLAAX")
+
+        return targets or ["ECHO"]
+
+
+# ── PIPELINE TUNER ──
+
+class PipelineTuner:
+    """Meet en optimaliseert pipeline stappen.
+
+    Houdt rolling stats bij en schakelt stappen
+    uit die consistent niks bijdragen.
+    """
+
+    VENSTER = 20
+    MEMEX_SKIP_NA = 10
+    SENTINEL_SAMPLE_NA = 20
+    SENTINEL_SAMPLE_RATE = 5
+
+    def __init__(self):
+        self._stats = {}
+        self._call_count = {}
+
+    def _ensure_stap(self, stap):
+        """Maak stats aan voor een stap."""
+        if stap not in self._stats:
+            self._stats[stap] = deque(
+                maxlen=self.VENSTER
+            )
+            self._call_count[stap] = 0
+
+    def registreer(self, stap, latency_ms, **metrics):
+        """Voeg meting toe aan rolling buffer.
+
+        Args:
+            stap: Naam van de pipeline stap.
+            latency_ms: Latency in milliseconden.
+            **metrics: Extra metrieken (bijv.
+                fragmenten, waarschuwingen).
+        """
+        self._ensure_stap(stap)
+        entry = {"latency_ms": latency_ms}
+        entry.update(metrics)
+        self._stats[stap].append(entry)
+        self._call_count[stap] += 1
+
+    def mag_skippen(self, stap) -> bool:
+        """Check of stap overgeslagen mag worden.
+
+        Args:
+            stap: Naam van de pipeline stap.
+
+        Returns:
+            True als de stap overgeslagen mag worden.
+        """
+        # Security-critical: NOOIT skippen
+        if stap in (
+            "governor", "fast_track", "chronos",
+            "route", "execute",
+        ):
+            return False
+
+        self._ensure_stap(stap)
+        entries = self._stats[stap]
+        count = self._call_count[stap]
+
+        if stap == "memex":
+            if count < self.MEMEX_SKIP_NA:
+                return False
+            recent = list(entries)[
+                -self.MEMEX_SKIP_NA:
+            ]
+            return all(
+                e.get("fragmenten", 1) == 0
+                for e in recent
+            )
+
+        if stap == "sentinel":
+            if count < self.SENTINEL_SAMPLE_NA:
+                return False
+            recent = list(entries)[
+                -self.SENTINEL_SAMPLE_NA:
+            ]
+            alle_schoon = all(
+                e.get("waarschuwingen", 1) == 0
+                for e in recent
+            )
+            if not alle_schoon:
+                return False
+            # Sample: skip als NIET de Mde call
+            return (
+                count % self.SENTINEL_SAMPLE_RATE != 0
+            )
+
+        return False
+
+    def get_samenvatting(self) -> str:
+        """Genereer pipeline timing samenvatting.
+
+        Returns:
+            String zoals "Gov:5ms MEMEX:skip
+            Route:2ms Exec:950ms Sent:30ms".
+        """
+        labels = {
+            "governor": "Gov",
+            "fast_track": "Fast",
+            "chronos": "Chrn",
+            "memex": "MEMEX",
+            "route": "Route",
+            "execute": "Exec",
+            "sentinel": "Sent",
+        }
+        parts = []
+        for stap, label in labels.items():
+            entries = self._stats.get(stap)
+            if not entries:
+                if self.mag_skippen(stap):
+                    parts.append(f"{label}:skip")
+                continue
+            laatste = entries[-1]
+            ms = laatste.get("latency_ms", 0)
+            parts.append(f"{label}:{ms:.0f}ms")
+        return " ".join(parts)
+
+    def reset(self):
+        """Reset alle stats."""
+        self._stats.clear()
+        self._call_count.clear()
+
+
 # ── FAST-TRACK ──
 
 _GREETING_PATTERNS = [
@@ -1232,6 +1553,8 @@ class SwarmEngine:
         self._oracle = oracle
         self.repair_mode = True
         self.agents = self._register_agents()
+        self._router = AdaptiveRouter()
+        self._tuner = PipelineTuner()
         self.on_pre_task = []
         self.on_post_task = []
         self.on_failure = []
@@ -1758,18 +2081,32 @@ class SwarmEngine:
         return resultaten
 
     async def route(self, user_input: str) -> List[str]:
-        """Multi-intent keyword routing.
+        """Adaptive routing: embedding-first, keyword-fallback.
 
-        Scant input op keywords voor meerdere agents
-        tegelijkertijd. Fallback naar ECHO.
+        1. Probeer AdaptiveRouter (cosine similarity)
+        2. Fallback naar ROUTE_MAP (keyword matching)
+        3. Fallback naar ECHO
 
-        MEMEX wint van IOLAAX bij kennisvragen:
-        als beide matchen, wordt IOLAAX verwijderd
-        (voorkomt nutteloze code-blokken bij RAG).
+        MEMEX wint van IOLAAX bij kennisvragen.
         """
+        # Probeer embedding-based routing
+        try:
+            targets = self._router.route(user_input)
+            _log_to_cortical(
+                "router", "adaptive",
+                {"targets": targets,
+                 "input": user_input[:200]},
+            )
+            return targets
+        except Exception:
+            pass
+
+        # Fallback: keyword matching
         lower = user_input.lower()
         targets = []
-        for agent_key, keywords in self.ROUTE_MAP.items():
+        for agent_key, keywords in (
+            self.ROUTE_MAP.items()
+        ):
             if any(kw in lower for kw in keywords):
                 targets.append(agent_key)
 
@@ -1777,21 +2114,26 @@ class SwarmEngine:
         if "MEMEX" in targets and "IOLAAX" in targets:
             targets.remove("IOLAAX")
 
+        _log_to_cortical(
+            "router", "keyword_fallback",
+            {"targets": targets or ["ECHO"],
+             "input": user_input[:200]},
+        )
         return targets or ["ECHO"]
 
     async def run(
         self, user_input: str, callback=None,
     ) -> List[SwarmPayload]:
-        """Neural Hub pipeline.
+        """Neural Hub pipeline met self-tuning.
 
         Flow:
         1. Governor Gate (input validatie)
         2. ECHO Fast-Track (begroetingen)
         3. Chronos enrichment (tijdscontext)
-        4. MEMEX Context (vector search)
-        5. Nexus Route (multi-intent)
+        4. MEMEX Context (vector search, tunable)
+        5. Nexus Route (adaptive/keyword)
         6. Agent Execute (parallel)
-        7. SENTINEL Validate (output check)
+        7. SENTINEL Validate (output check, tunable)
 
         Args:
             user_input: Tekst van de gebruiker.
@@ -1804,6 +2146,8 @@ class SwarmEngine:
             if callback:
                 callback(msg)
 
+        t = self._tuner
+
         # Cortical Stack logging
         _log_to_cortical(
             "user", "query",
@@ -1811,13 +2155,17 @@ class SwarmEngine:
         )
         _learn_from_input(user_input)
 
-        # 1. Governor Gate (circuit breaker +
-        #    input validatie)
+        # 1. Governor Gate (NOOIT skippen)
+        t0 = time.time()
         if self.brain:
             safe, reason = (
                 self.brain._governor_gate(user_input)
             )
             if not safe:
+                t.registreer(
+                    "governor",
+                    (time.time() - t0) * 1000,
+                )
                 log(
                     f"\u274c Governor: BLOCKED"
                     f" \u2014 {reason}"
@@ -1832,9 +2180,19 @@ class SwarmEngine:
                 "\U0001f6e1\ufe0f Governor:"
                 " Input SAFE \u2713"
             )
+        t.registreer(
+            "governor",
+            (time.time() - t0) * 1000,
+        )
 
-        # 2. ECHO Fast-Track (begroetingen)
+        # 2. ECHO Fast-Track (NOOIT skippen)
+        t0 = time.time()
         fast = _fast_track_check(user_input)
+        t.registreer(
+            "fast_track",
+            (time.time() - t0) * 1000,
+            hit=fast is not None,
+        )
         if fast:
             log("\u26a1 [FAST-TRACK] Echo")
             _log_to_cortical(
@@ -1845,7 +2203,8 @@ class SwarmEngine:
             log("\u2705 SWARM COMPLETE (fast-track)")
             return [fast]
 
-        # 3. Chronos enrichment
+        # 3. Chronos enrichment (NOOIT skippen)
+        t0 = time.time()
         if self.brain:
             enriched = self.brain._chronos_enrich(
                 user_input
@@ -1859,19 +2218,42 @@ class SwarmEngine:
             log(f"\u23f3 Chronos: {prefix} \u2713")
         else:
             enriched = user_input
-
-        # 4. MEMEX Context (vector search)
-        memex_ctx = self._ophalen_memex_context(
-            user_input,
+        t.registreer(
+            "chronos",
+            (time.time() - t0) * 1000,
         )
-        if memex_ctx:
+
+        # 4. MEMEX Context (tunable)
+        if not t.mag_skippen("memex"):
+            t0 = time.time()
+            memex_ctx = self._ophalen_memex_context(
+                user_input,
+            )
+            t.registreer(
+                "memex",
+                (time.time() - t0) * 1000,
+                fragmenten=len(memex_ctx),
+            )
+            if memex_ctx:
+                log(
+                    f"\U0001f4da MEMEX:"
+                    f" {len(memex_ctx)}"
+                    f" fragmenten geladen"
+                )
+        else:
+            memex_ctx = []
             log(
-                f"\U0001f4da MEMEX: {len(memex_ctx)}"
-                f" fragmenten geladen"
+                "\u23ed\ufe0f MEMEX:"
+                " overgeslagen (tuning)"
             )
 
-        # 5. Nexus Route (multi-intent)
+        # 5. Nexus Route (NOOIT skippen)
+        t0 = time.time()
         targets = await self.route(user_input)
+        t.registreer(
+            "route",
+            (time.time() - t0) * 1000,
+        )
         log(
             f"\U0001f9e0 Nexus \u2192"
             f" {', '.join(targets)}"
@@ -1880,6 +2262,7 @@ class SwarmEngine:
         # 6. Parallel executie via asyncio.gather
         #    MEMEX context voor alle agents behalve
         #    MEMEX zelf (doet eigen RAG)
+        t0 = time.time()
         tasks = []
         for name in targets:
             agent = self.agents[name]
@@ -1899,22 +2282,75 @@ class SwarmEngine:
             )
 
         results = await asyncio.gather(*tasks)
-
-        # 7. SENTINEL Validate (output check)
-        results = self._sentinel_valideer(
-            list(results), user_input, callback,
+        t.registreer(
+            "execute",
+            (time.time() - t0) * 1000,
         )
-        log("\U0001f6e1\ufe0f SENTINEL: output OK")
+
+        # 7. SENTINEL Validate (tunable)
+        if not t.mag_skippen("sentinel"):
+            t0 = time.time()
+            # Valideer en tel waarschuwingen
+            governor = None
+            if self.brain and hasattr(
+                self.brain, "governor"
+            ):
+                governor = self.brain.governor
+            sv = SentinelValidator(governor=governor)
+            warns = 0
+            results_list = list(results)
+            for payload in results_list:
+                rapport = sv.valideer(payload)
+                if not rapport["veilig"]:
+                    warns += len(
+                        rapport["waarschuwingen"]
+                    )
+                    for w in rapport["waarschuwingen"]:
+                        if callback:
+                            callback(
+                                f"\u26a0\ufe0f"
+                                f" SENTINEL: {w}"
+                            )
+                        _log_to_cortical(
+                            "sentinel", "waarschuwing",
+                            {"agent": payload.agent,
+                             "waarschuwing": w,
+                             "input": (
+                                 user_input[:200]
+                             )},
+                        )
+                if rapport["geschoond"]:
+                    payload.display_text = (
+                        rapport["geschoond"]
+                    )
+            results = results_list
+            t.registreer(
+                "sentinel",
+                (time.time() - t0) * 1000,
+                waarschuwingen=warns,
+            )
+            log(
+                "\U0001f6e1\ufe0f SENTINEL: output OK"
+            )
+        else:
+            results = list(results)
+            log(
+                "\u23ed\ufe0f SENTINEL:"
+                " sampling (tuning)"
+            )
 
         # Callback per resultaat
         for res in results:
-            t = res.metadata.get(
+            rt = res.metadata.get(
                 "execution_time", 0
             )
             log(
                 f"\u2705 {res.agent}: klaar"
-                f" ({t:.1f}s)"
+                f" ({rt:.1f}s)"
             )
+
+        # Pipeline samenvatting
+        log(f"\U0001f4ca {t.get_samenvatting()}")
 
         # Cortical Stack logging
         _log_to_cortical(
@@ -1924,6 +2360,7 @@ class SwarmEngine:
                 "output_preview": str(
                     results[0].content
                 )[:300],
+                "tuning": t.get_samenvatting(),
             },
         )
 

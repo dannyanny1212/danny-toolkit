@@ -40,6 +40,8 @@ from swarm_engine import (
     IolaaxAgent,
     LegionAgent,
     SentinelValidator,
+    AdaptiveRouter,
+    PipelineTuner,
     _fast_track_check,
     _crypto_metrics,
     _health_chart,
@@ -198,8 +200,8 @@ def test_keyword_routing():
         and "NAVIGATOR" in targets,
     ))
     checks.append((
-        "multi: exact 2 targets",
-        len(targets) == 2,
+        "multi: minstens 2 targets",
+        len(targets) >= 2,
     ))
 
     targets = asyncio.run(
@@ -408,8 +410,8 @@ def test_engine_no_brain():
         brain=None, callback=callback,
     )
     checks.append((
-        "multi-intent → 2 payloads",
-        len(payloads) == 2,
+        "multi-intent → minstens 2 payloads",
+        len(payloads) >= 2,
     ))
     agents = {p.agent for p in payloads}
     checks.append((
@@ -546,8 +548,8 @@ def test_engine_with_brain():
     elapsed = time.time() - start
 
     checks.append((
-        "multi-intent → 2 payloads",
-        len(payloads) == 2,
+        "multi-intent → minstens 2 payloads",
+        len(payloads) >= 2,
     ))
     agents = [p.agent for p in payloads]
     checks.append((
@@ -1007,6 +1009,335 @@ def test_backward_compat():
     return _print_checks(checks)
 
 
+def test_adaptive_router():
+    """Test 16: Adaptive Router (embedding-based)."""
+    print("\n" + "=" * 60)
+    print("  TEST 16: Adaptive Router")
+    print("=" * 60)
+
+    checks = []
+
+    # Agent profielen zijn gedefinieerd
+    checks.append((
+        "12 agent profielen",
+        len(AdaptiveRouter.AGENT_PROFIELEN) == 12,
+    ))
+
+    # Profielen bevatten verwachte agents
+    for agent in [
+        "IOLAAX", "CIPHER", "VITA", "MEMEX",
+        "NAVIGATOR", "PIXEL",
+    ]:
+        checks.append((
+            f"{agent} in profielen",
+            agent in AdaptiveRouter.AGENT_PROFIELEN,
+        ))
+
+    # Embedding functie laden
+    embed = AdaptiveRouter._get_embed_fn()
+    checks.append((
+        "embed functie geladen",
+        embed is not None,
+    ))
+
+    if embed is None:
+        # Skip embedding tests als model
+        # niet beschikbaar is
+        checks.append((
+            "SKIP: embedding niet beschikbaar",
+            True,
+        ))
+        return _print_checks(checks)
+
+    # Profielen berekenen
+    profielen = AdaptiveRouter._bereken_profielen()
+    checks.append((
+        "profielen berekend",
+        profielen is not None
+        and len(profielen) == 12,
+    ))
+
+    # Cosine similarity basis
+    vec_a = embed("bitcoin cryptocurrency")
+    vec_b = embed("ethereum blockchain")
+    vec_c = embed("gezondheid slaap")
+    sim_ab = AdaptiveRouter._cosine_sim(vec_a, vec_b)
+    sim_ac = AdaptiveRouter._cosine_sim(vec_a, vec_c)
+    checks.append((
+        "crypto-crypto sim > crypto-health sim",
+        sim_ab > sim_ac,
+    ))
+
+    # Route: crypto → CIPHER
+    router = AdaptiveRouter()
+    targets = router.route("bitcoin prijs")
+    checks.append((
+        "bitcoin → CIPHER",
+        "CIPHER" in targets,
+    ))
+
+    # Route: code → IOLAAX
+    targets = router.route("debug mijn python code")
+    checks.append((
+        "debug code → IOLAAX",
+        "IOLAAX" in targets,
+    ))
+
+    # Route: health → VITA
+    targets = router.route(
+        "gezondheid en slaap analyse"
+    )
+    checks.append((
+        "gezondheid → VITA",
+        "VITA" in targets,
+    ))
+
+    # Route: onzin → ECHO fallback
+    targets = router.route("xyzzy blorp qux")
+    checks.append((
+        "onzin → ECHO fallback",
+        targets == ["ECHO"],
+    ))
+
+    # Route: max 3 agents
+    targets = router.route(
+        "programmeren bitcoin gezondheid"
+        " security planning data"
+    )
+    checks.append((
+        "max 3 agents",
+        len(targets) <= 3,
+    ))
+
+    # MEMEX wint van IOLAAX
+    targets = router.route(
+        "wat is de kennis over codering"
+    )
+    if "MEMEX" in targets:
+        checks.append((
+            "MEMEX>IOLAAX prioriteit",
+            "IOLAAX" not in targets,
+        ))
+    else:
+        checks.append((
+            "MEMEX>IOLAAX prioriteit",
+            True,  # Geen conflict
+        ))
+
+    return _print_checks(checks)
+
+
+def test_pipeline_tuner():
+    """Test 17: Pipeline Tuner (self-tuning)."""
+    print("\n" + "=" * 60)
+    print("  TEST 17: Pipeline Tuner")
+    print("=" * 60)
+
+    checks = []
+    t = PipelineTuner()
+
+    # Governor NOOIT skippen
+    checks.append((
+        "governor: nooit skippen (leeg)",
+        t.mag_skippen("governor") is False,
+    ))
+    t.registreer("governor", 5.0)
+    checks.append((
+        "governor: nooit skippen (na 1)",
+        t.mag_skippen("governor") is False,
+    ))
+
+    # Route NOOIT skippen
+    checks.append((
+        "route: nooit skippen",
+        t.mag_skippen("route") is False,
+    ))
+
+    # Execute NOOIT skippen
+    checks.append((
+        "execute: nooit skippen",
+        t.mag_skippen("execute") is False,
+    ))
+
+    # MEMEX: niet skippen voor N lege calls
+    t2 = PipelineTuner()
+    for i in range(9):
+        t2.registreer("memex", 10.0, fragmenten=0)
+    checks.append((
+        "memex: niet skippen na 9 lege",
+        t2.mag_skippen("memex") is False,
+    ))
+
+    # MEMEX: wél skippen na N lege calls
+    t2.registreer("memex", 10.0, fragmenten=0)
+    checks.append((
+        "memex: skippen na 10 lege",
+        t2.mag_skippen("memex") is True,
+    ))
+
+    # MEMEX: niet skippen als 1 fragment
+    t3 = PipelineTuner()
+    for i in range(9):
+        t3.registreer("memex", 10.0, fragmenten=0)
+    t3.registreer("memex", 10.0, fragmenten=1)
+    checks.append((
+        "memex: niet skippen na 1 fragment",
+        t3.mag_skippen("memex") is False,
+    ))
+
+    # SENTINEL: niet skippen voor N schone
+    t4 = PipelineTuner()
+    for i in range(19):
+        t4.registreer(
+            "sentinel", 30.0, waarschuwingen=0,
+        )
+    checks.append((
+        "sentinel: niet skippen na 19 schone",
+        t4.mag_skippen("sentinel") is False,
+    ))
+
+    # SENTINEL: sampling na N schone calls
+    t4.registreer(
+        "sentinel", 30.0, waarschuwingen=0,
+    )
+    # Na 20 calls: skip als niet Mde call
+    # call_count = 20, 20 % 5 == 0 → NIET skippen
+    checks.append((
+        "sentinel: niet skippen op sample call",
+        t4.mag_skippen("sentinel") is False,
+    ))
+    # 21e call → 21 % 5 = 1 → wél skippen
+    t4.registreer(
+        "sentinel", 30.0, waarschuwingen=0,
+    )
+    checks.append((
+        "sentinel: skippen tussen samples",
+        t4.mag_skippen("sentinel") is True,
+    ))
+
+    # SENTINEL: niet skippen als waarschuwing
+    t5 = PipelineTuner()
+    for i in range(19):
+        t5.registreer(
+            "sentinel", 30.0, waarschuwingen=0,
+        )
+    t5.registreer(
+        "sentinel", 30.0, waarschuwingen=1,
+    )
+    checks.append((
+        "sentinel: niet skippen na waarschuwing",
+        t5.mag_skippen("sentinel") is False,
+    ))
+
+    # Samenvatting
+    t6 = PipelineTuner()
+    t6.registreer("governor", 5.0)
+    t6.registreer("route", 2.0)
+    t6.registreer("execute", 950.0)
+    samenvatting = t6.get_samenvatting()
+    checks.append((
+        "samenvatting bevat Gov",
+        "Gov:" in samenvatting,
+    ))
+    checks.append((
+        "samenvatting bevat Route",
+        "Route:" in samenvatting,
+    ))
+    checks.append((
+        "samenvatting bevat Exec",
+        "Exec:" in samenvatting,
+    ))
+
+    # Reset
+    t6.reset()
+    checks.append((
+        "reset wist stats",
+        len(t6._stats) == 0,
+    ))
+
+    return _print_checks(checks)
+
+
+def test_adaptive_integration():
+    """Test 18: Adaptive Routing Integratie."""
+    print("\n" + "=" * 60)
+    print("  TEST 18: Adaptive Routing Integratie")
+    print("=" * 60)
+
+    checks = []
+    engine = SwarmEngine(brain=None)
+
+    # Engine heeft router en tuner
+    checks.append((
+        "engine._router is AdaptiveRouter",
+        isinstance(engine._router, AdaptiveRouter),
+    ))
+    checks.append((
+        "engine._tuner is PipelineTuner",
+        isinstance(engine._tuner, PipelineTuner),
+    ))
+
+    # Route signature ongewijzigd
+    import inspect
+    sig = inspect.signature(engine.route)
+    params = list(sig.parameters.keys())
+    checks.append((
+        "route(self, user_input) signature",
+        params == ["user_input"],
+    ))
+
+    # Run signature ongewijzigd
+    sig = inspect.signature(engine.run)
+    params = list(sig.parameters.keys())
+    checks.append((
+        "run(self, user_input, callback) sig",
+        params == ["user_input", "callback"],
+    ))
+
+    # Route valt terug naar keywords als
+    # embedding faalt (forceer door tijdelijk
+    # router te breken)
+    class BrokenRouter:
+        def route(self, _):
+            raise RuntimeError("Gebroken")
+    engine._router = BrokenRouter()
+    targets = asyncio.run(
+        engine.route("bitcoin prijs analyse")
+    )
+    checks.append((
+        "fallback → keyword CIPHER",
+        "CIPHER" in targets,
+    ))
+    # Herstel router
+    engine._router = AdaptiveRouter()
+
+    # ROUTE_MAP bestaat nog
+    checks.append((
+        "ROUTE_MAP nog aanwezig",
+        len(engine.ROUTE_MAP) > 0,
+    ))
+
+    # Tuner timing na full pipeline run
+    logs = []
+    payloads = run_swarm_sync(
+        "debug mijn code", brain=None,
+        callback=lambda m: logs.append(m),
+    )
+    checks.append((
+        "samenvatting in logs (full pipeline)",
+        any(
+            "Gov:" in l or "Route:" in l
+            for l in logs
+        ),
+    ))
+    checks.append((
+        "SWARM COMPLETE in logs",
+        any("COMPLETE" in l for l in logs),
+    ))
+
+    return _print_checks(checks)
+
+
 # --- HELPER ---
 
 def _print_checks(checks):
@@ -1102,6 +1433,20 @@ def main():
     results.append((
         "Backward Compatibiliteit",
         test_backward_compat(),
+    ))
+
+    # Adaptive Routing + Self-Tuning tests
+    results.append((
+        "Adaptive Router",
+        test_adaptive_router(),
+    ))
+    results.append((
+        "Pipeline Tuner",
+        test_pipeline_tuner(),
+    ))
+    results.append((
+        "Adaptive Integratie",
+        test_adaptive_integration(),
     ))
 
     elapsed = time.time() - start
