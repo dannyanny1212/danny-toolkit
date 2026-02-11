@@ -355,7 +355,7 @@ Belangrijke regels:
     GROQ_MODEL_PRIMARY = "llama-3.3-70b-versatile"
     GROQ_MODEL_FALLBACK = "llama-3.1-8b-instant"
     # Ollama lokaal model
-    OLLAMA_MODEL = "llama3.2:3b"
+    OLLAMA_MODEL = "gemma3:4b"
 
     def _process_groq(
         self,
@@ -485,24 +485,12 @@ Belangrijke regels:
             except Exception as e:
                 # Fallback bij rate limit (429)
                 if "429" in str(e) or "rate_limit" in str(e):
-                    # Stap 1: probeer kleiner Groq model
-                    if model == self.GROQ_MODEL_PRIMARY:
-                        print(kleur(
-                            "   [FALLBACK] Groq 70b rate"
-                            " limit -> 8b model",
-                            Kleur.GEEL,
-                        ))
-                        return self._process_groq(
-                            system_message,
-                            use_tools,
-                            max_turns,
-                            _model=self.GROQ_MODEL_FALLBACK,
-                        )
-                    # Stap 2: probeer Ollama (lokaal)
+                    # Direct naar Ollama (skip 8b,
+                    # zelfde Groq account = zelfde limiet)
                     if self._ollama_available:
                         print(kleur(
                             "   [FALLBACK] Groq rate"
-                            " limit -> Ollama lokaal",
+                            f" limit -> {self.OLLAMA_MODEL}",
                             Kleur.GEEL,
                         ))
                         return self._process_ollama(
