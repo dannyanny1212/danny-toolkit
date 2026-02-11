@@ -16,6 +16,7 @@ import asyncio
 import json
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
 
 from ..agents.base import Agent, AgentConfig
@@ -111,10 +112,11 @@ class OracleAgent(Agent):
     """WAV-Loop operator — Will, Action, Verification.
 
     Vertaalt doelstellingen naar computeracties via:
-    1. _plan()    -> LLM genereert stappen (JSON)
-    2. _execute() -> KineticUnit voert uit
-    3. _verify()  -> PixelEye verifieert
-    4. _correct() -> LLM herplant bij falen
+    1. _plan()              -> LLM genereert stappen
+    2. _execute()           -> KineticUnit voert uit
+    3. _verify()            -> PixelEye verifieert
+    4. _diagnose_and_fix()  -> diagnose + correctie
+    5. execute_mission()    -> extern plan uitvoeren
     """
 
     def __init__(self, persist=True):
@@ -127,6 +129,7 @@ class OracleAgent(Agent):
         self._body = None
         self._eye = None
         self._repair_protocol = None
+        self.repair_history = []
 
     # ─── Lazy Properties ───
 
@@ -166,6 +169,23 @@ class OracleAgent(Agent):
 
     # ─── WAV-Loop Kern ───
 
+    def _extract_text(self, response):
+        """Extraheer tekst uit een API response.
+
+        Args:
+            response: dict met content blokken.
+
+        Returns:
+            str — samengevoegde tekst.
+        """
+        tekst = ""
+        for block in response.get("content", []):
+            if isinstance(block, dict):
+                tekst += block.get("text", "")
+            elif hasattr(block, "text"):
+                tekst += block.text
+        return tekst
+
     async def _plan(self, doelstelling):
         """LLM genereert een plan als JSON stappen.
 
@@ -191,15 +211,8 @@ class OracleAgent(Agent):
 
         response = await self._call_api(berichten)
 
-        # Extraheer tekst uit response
-        tekst = ""
-        for block in response.get("content", []):
-            if isinstance(block, dict):
-                tekst += block.get("text", "")
-            elif hasattr(block, "text"):
-                tekst += block.text
-
         # Parse JSON uit het antwoord
+        tekst = self._extract_text(response)
         stappen = self._parse_plan_json(tekst)
 
         if stappen:
@@ -305,8 +318,45 @@ class OracleAgent(Agent):
 
         return result
 
-    async def _correct(self, stap, verificatie):
-        """LLM herplant een gefaalde stap.
+    def _parse_stap_json(self, tekst):
+        """Parse een enkele stap-dict uit LLM output.
+
+        Args:
+            tekst: Raw LLM output.
+
+        Returns:
+            dict of None.
+        """
+        tekst = tekst.strip()
+
+        try:
+            result = json.loads(tekst)
+            if isinstance(result, dict):
+                return result
+        except json.JSONDecodeError:
+            pass
+
+        start = tekst.find("{")
+        einde = tekst.rfind("}")
+        if start != -1 and einde != -1 and einde > start:
+            try:
+                result = json.loads(
+                    tekst[start:einde + 1]
+                )
+                if isinstance(result, dict):
+                    return result
+            except json.JSONDecodeError:
+                pass
+
+        return None
+
+    async def _diagnose_and_fix(self, stap, verificatie):
+        """Diagnose + fix voor een gefaalde stap.
+
+        Twee-staps correctie:
+        1. Diagnose — LLM analyseert wat er mis ging
+        2. Fix — LLM stelt gecorrigeerde stap voor
+           met diagnose als extra context
 
         Args:
             stap: De originele stap die faalde.
@@ -315,15 +365,41 @@ class OracleAgent(Agent):
         Returns:
             Nieuwe stap-dict of None.
         """
-        self.log("Correctie aanvragen...", Kleur.GEEL)
-
         analyse = verificatie.get("analyse", "onbekend")
-        berichten = [{
+
+        # ── Stap 1: Diagnose ──
+        self.log("Diagnose aanvragen...", Kleur.GEEL)
+
+        diag_berichten = [{
             "role": "user",
             "content": (
                 f"De volgende stap is mislukt:\n"
-                f"{json.dumps(stap, ensure_ascii=False)}\n\n"
-                f"Verificatie zei: {analyse}\n\n"
+                f"{json.dumps(stap, ensure_ascii=False)}"
+                f"\n\nVisuele analyse: {analyse}\n\n"
+                "Wat ging er mis? Geef een korte"
+                " diagnose in 1-2 zinnen."
+            ),
+        }]
+
+        diag_response = await self._call_api(
+            diag_berichten
+        )
+        diagnose = self._extract_text(
+            diag_response
+        ).strip() or "Onbekende fout"
+
+        self.log(f"Diagnose: {diagnose[:60]}", Kleur.GEEL)
+
+        # ── Stap 2: Fix ──
+        self.log("Correctie aanvragen...", Kleur.GEEL)
+
+        fix_berichten = [{
+            "role": "user",
+            "content": (
+                f"De volgende stap is mislukt:\n"
+                f"{json.dumps(stap, ensure_ascii=False)}"
+                f"\n\nVisuele analyse: {analyse}"
+                f"\nDiagnose: {diagnose}\n\n"
                 "Geef EEN gecorrigeerde stap als JSON"
                 " object (geen array):\n"
                 '{"actie": "...", "args": {...},'
@@ -331,68 +407,51 @@ class OracleAgent(Agent):
             ),
         }]
 
-        response = await self._call_api(berichten)
+        fix_response = await self._call_api(
+            fix_berichten
+        )
+        fix_tekst = self._extract_text(fix_response)
+        nieuwe_stap = self._parse_stap_json(fix_tekst)
 
-        tekst = ""
-        for block in response.get("content", []):
-            if isinstance(block, dict):
-                tekst += block.get("text", "")
-            elif hasattr(block, "text"):
-                tekst += block.text
+        # ── Log in repair_history ──
+        geslaagd = nieuwe_stap is not None
+        self.repair_history.append({
+            "stap": stap,
+            "fout": analyse,
+            "diagnose": diagnose,
+            "fix": (
+                nieuwe_stap.get("actie", "")
+                if nieuwe_stap else "geen fix"
+            ),
+            "geslaagd": geslaagd,
+            "timestamp": datetime.now().isoformat(),
+        })
 
-        # Parse enkele stap
-        tekst = tekst.strip()
-        try:
-            result = json.loads(tekst)
-            if isinstance(result, dict):
-                return result
-        except json.JSONDecodeError:
-            pass
+        if not nieuwe_stap:
+            self.log(
+                "Geen geldige correctie",
+                Kleur.ROOD,
+            )
 
-        # Zoek JSON object in tekst
-        start = tekst.find("{")
-        einde = tekst.rfind("}")
-        if start != -1 and einde != -1 and einde > start:
-            try:
-                result = json.loads(tekst[start:einde + 1])
-                if isinstance(result, dict):
-                    return result
-            except json.JSONDecodeError:
-                pass
+        return nieuwe_stap
 
-        self.log("Geen geldige correctie", Kleur.ROOD)
-        return None
+    async def _execute_plan(self, stappen):
+        """Voer een lijst stappen uit met WAV-loop.
 
-    async def fulfill_will(self, doelstelling):
-        """Volledige WAV-loop: Will -> Action -> Verify.
+        Gedeelde kern voor fulfill_will() en
+        execute_mission(). Elke stap wordt uitgevoerd,
+        geverifieerd, en bij falen gediagnosticeerd +
+        gecorrigeerd (max MAX_CORRECTIES keer).
 
         Args:
-            doelstelling: Wat er bereikt moet worden.
+            stappen: list van stap-dicts (actie, args,
+                     verwachting).
 
         Returns:
-            dict met doelstelling, stappen (met status),
-            geslaagd (bool), tijd.
+            list van resultaat-dicts per stap.
         """
-        start = time.time()
-        self.log(
-            f"WIL: {doelstelling}",
-            Kleur.FEL_CYAAN,
-        )
-
-        # 1. WILL — Plan genereren
-        stappen = await self._plan(doelstelling)
-        if not stappen:
-            return {
-                "doelstelling": doelstelling,
-                "stappen": [],
-                "geslaagd": False,
-                "tijd": time.time() - start,
-                "reden": "Geen plan gegenereerd",
-            }
-
         resultaten = []
 
-        # 2. ACTION + VERIFICATION per stap
         for i, stap in enumerate(stappen):
             stap_nr = i + 1
             totaal = len(stappen)
@@ -407,7 +466,9 @@ class OracleAgent(Agent):
 
             while correcties <= MAX_CORRECTIES:
                 # Uitvoeren
-                actie_result = self._execute(huidige_stap)
+                actie_result = self._execute(
+                    huidige_stap
+                )
 
                 # Kort wachten voor visuele feedback
                 time.sleep(1)
@@ -417,7 +478,6 @@ class OracleAgent(Agent):
                     "verwachting", ""
                 )
                 if not verwachting:
-                    # Geen verwachting = sla verificatie over
                     resultaten.append({
                         "stap": huidige_stap,
                         "result": actie_result,
@@ -458,8 +518,10 @@ class OracleAgent(Agent):
                     f"{MAX_CORRECTIES}...",
                     Kleur.GEEL,
                 )
-                nieuwe_stap = await self._correct(
-                    huidige_stap, verificatie
+                nieuwe_stap = (
+                    await self._diagnose_and_fix(
+                        huidige_stap, verificatie
+                    )
                 )
                 if nieuwe_stap:
                     huidige_stap = nieuwe_stap
@@ -472,12 +534,31 @@ class OracleAgent(Agent):
                     })
                     break
 
+        return resultaten
+
+    def _wrap_resultaten(
+        self, doelstelling, resultaten, start
+    ):
+        """Wrap resultaten in standaard output format.
+
+        Args:
+            doelstelling: Beschrijving van de missie.
+            resultaten: list van stap-resultaten.
+            start: time.time() bij aanvang.
+
+        Returns:
+            dict met doelstelling, stappen, geslaagd,
+            tijd.
+        """
         elapsed = time.time() - start
         geslaagd_count = sum(
             1 for r in resultaten
             if r["status"] in ("geslaagd", "uitgevoerd")
         )
-        totaal_geslaagd = geslaagd_count == len(resultaten)
+        totaal_geslaagd = (
+            geslaagd_count == len(resultaten)
+            and len(resultaten) > 0
+        )
 
         status_kleur = (
             Kleur.FEL_GROEN if totaal_geslaagd
@@ -491,12 +572,24 @@ class OracleAgent(Agent):
         )
 
         # Onthoud resultaat
+        status = (
+            "geslaagd" if totaal_geslaagd
+            else "gefaald"
+        )
         self.remember(
-            f"Doelstelling '{doelstelling[:40]}...':"
-            f" {'geslaagd' if totaal_geslaagd else 'gefaald'}"
-            f" ({geslaagd_count}/{len(resultaten)} stappen)",
+            f"'{doelstelling[:40]}...': {status}"
+            f" ({geslaagd_count}/{len(resultaten)}"
+            f" stappen)",
             categorie="wav_loop",
         )
+
+        # Sla repair_history op
+        if self.repair_history:
+            self.remember(
+                f"Repairs: {len(self.repair_history)}"
+                f" correcties uitgevoerd",
+                categorie="repair_history",
+            )
         self._sla_state_op()
 
         return {
@@ -505,6 +598,73 @@ class OracleAgent(Agent):
             "geslaagd": totaal_geslaagd,
             "tijd": elapsed,
         }
+
+    async def fulfill_will(self, doelstelling):
+        """Volledige WAV-loop: Will -> Action -> Verify.
+
+        Genereert een plan via LLM en voert het uit.
+
+        Args:
+            doelstelling: Wat er bereikt moet worden.
+
+        Returns:
+            dict met doelstelling, stappen (met status),
+            geslaagd (bool), tijd.
+        """
+        start = time.time()
+        self.log(
+            f"WIL: {doelstelling}",
+            Kleur.FEL_CYAAN,
+        )
+
+        # 1. WILL — Plan genereren
+        stappen = await self._plan(doelstelling)
+        if not stappen:
+            return {
+                "doelstelling": doelstelling,
+                "stappen": [],
+                "geslaagd": False,
+                "tijd": time.time() - start,
+                "reden": "Geen plan gegenereerd",
+            }
+
+        # 2. ACTION + VERIFICATION
+        resultaten = await self._execute_plan(stappen)
+
+        return self._wrap_resultaten(
+            doelstelling, resultaten, start
+        )
+
+    async def execute_mission(self, intentie, plan):
+        """Voer een kant-en-klaar plan uit.
+
+        Verschil met fulfill_will(): slaat LLM planning
+        over en gebruikt het meegegeven plan direct.
+
+        Args:
+            intentie: Beschrijving van de missie.
+            plan: list van stap-dicts, elk met actie,
+                  args, verwachting.
+
+        Returns:
+            dict met doelstelling, stappen (met status),
+            geslaagd (bool), tijd.
+        """
+        start = time.time()
+        self.log(
+            f"MISSIE: {intentie}",
+            Kleur.FEL_CYAAN,
+        )
+        self.log(
+            f"Plan: {len(plan)} stappen (extern)",
+            Kleur.GROEN,
+        )
+
+        resultaten = await self._execute_plan(plan)
+
+        return self._wrap_resultaten(
+            intentie, resultaten, start
+        )
 
     # ─── Interactieve CLI ───
 
@@ -529,16 +689,22 @@ class OracleAgent(Agent):
         print()
 
         print(kleur("COMMANDO'S:", Kleur.GEEL))
-        print("  wil <doel>  - Voer doelstelling uit"
-              " (WAV-loop)")
-        print("  plan <doel> - Toon plan zonder"
+        print("  wil <doel>    - Voer doelstelling"
+              " uit (WAV-loop)")
+        print("  missie <doel> - Voer extern plan"
+              " uit (JSON)")
+        print("  plan <doel>   - Toon plan zonder"
               " uitvoering")
-        print("  diagnose    - Systeem diagnose")
-        print("  repair      - Automatische reparatie")
-        print("  rapport     - Governor health report")
-        print("  status      - Toon agent status")
-        print("  ogen        - Screenshot + analyse")
-        print("  stop        - Terug naar launcher")
+        print("  diagnose      - Systeem diagnose")
+        print("  repair        - Automatische"
+              " reparatie")
+        print("  rapport       - Governor health"
+              " report")
+        print("  status        - Toon agent status")
+        print("  ogen          - Screenshot +"
+              " analyse")
+        print("  stop          - Terug naar"
+              " launcher")
 
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
@@ -568,6 +734,48 @@ class OracleAgent(Agent):
                         else:
                             print("  Geef een doelstelling"
                                   " op.")
+
+                    elif cmd_lower.startswith("missie "):
+                        intentie = cmd[7:].strip()
+                        if not intentie:
+                            print(
+                                "  Geef een intentie"
+                                " op."
+                            )
+                            continue
+                        print(
+                            "  Voer JSON plan in"
+                            " (sluit af met lege"
+                            " regel):"
+                        )
+                        regels = []
+                        while True:
+                            regel = input("  ")
+                            if not regel.strip():
+                                break
+                            regels.append(regel)
+                        tekst = "\n".join(regels)
+                        plan = (
+                            self._parse_plan_json(
+                                tekst
+                            )
+                        )
+                        if plan:
+                            result = (
+                                loop.run_until_complete(
+                                    self.execute_mission(
+                                        intentie, plan
+                                    )
+                                )
+                            )
+                            self._toon_resultaat(
+                                result
+                            )
+                        else:
+                            print(kleur(
+                                "  Ongeldig JSON plan.",
+                                Kleur.ROOD,
+                            ))
 
                     elif cmd_lower.startswith("plan "):
                         doel = cmd[5:].strip()
