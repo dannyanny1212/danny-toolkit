@@ -21,7 +21,7 @@ _root = Path(__file__).parent.parent.parent
 if str(_root) not in sys.path:
     sys.path.insert(0, str(_root))
 
-from config import VISION_MODEL
+from config import VISION_MODEL, GOLDEN_DIR
 
 # ─── Constanten ───
 
@@ -358,6 +358,379 @@ class PixelEye:
             )
 
         console.print(stats_table)
+
+    # ─── Screenshot Helper ───
+
+    def _screenshot(self, naam):
+        """Maak screenshot en sla op.
+
+        Args:
+            naam: Bestandsnaam (zonder extensie).
+
+        Returns:
+            Pad naar screenshot (str).
+        """
+        try:
+            import pyautogui
+        except ImportError:
+            raise RuntimeError(
+                "pyautogui niet beschikbaar."
+                " Installeer met: pip install pyautogui"
+            )
+
+        screenshot_dir = _root / "data" / "screenshots"
+        os.makedirs(str(screenshot_dir), exist_ok=True)
+        pad = str(
+            screenshot_dir / f"{naam}.png"
+        )
+
+        screenshot = pyautogui.screenshot()
+        screenshot.save(pad)
+        return pad
+
+    # ─── Golden Master Management ───
+
+    def save_golden(self, naam, pad=None):
+        """Sla een screenshot op als golden master.
+
+        Als pad=None, maak screenshot van huidig scherm.
+
+        Args:
+            naam: Naam voor de golden master.
+            pad: Optioneel pad naar bestaand beeld.
+
+        Returns:
+            Pad naar golden master bestand (str).
+        """
+        os.makedirs(str(GOLDEN_DIR), exist_ok=True)
+        doel = GOLDEN_DIR / f"{naam}.png"
+
+        if pad:
+            # Kopieer bestaand bestand
+            import shutil
+            shutil.copy2(str(pad), str(doel))
+        else:
+            # Maak screenshot
+            try:
+                import pyautogui
+            except ImportError:
+                raise RuntimeError(
+                    "pyautogui niet beschikbaar."
+                    " Installeer met:"
+                    " pip install pyautogui"
+                )
+            screenshot = pyautogui.screenshot()
+            screenshot.save(str(doel))
+
+        console.print(
+            f"[green]Golden master opgeslagen:"
+            f"[/green] {doel}"
+        )
+        return str(doel)
+
+    def compare_golden(self, naam, vraag=None):
+        """Maak screenshot en vergelijk met golden master.
+
+        Args:
+            naam: Naam van de golden master.
+            vraag: Optionele extra context.
+
+        Returns:
+            dict met match, analyse, golden_pad,
+            huidig_pad, model, tijd.
+        """
+        golden_pad = GOLDEN_DIR / f"{naam}.png"
+        if not golden_pad.exists():
+            raise FileNotFoundError(
+                f"Golden master niet gevonden:"
+                f" {golden_pad}"
+            )
+
+        # Maak huidig screenshot
+        huidig_pad = self._screenshot(
+            f"golden_check_{naam}"
+        )
+
+        start = time.time()
+
+        # Analyseer beide beelden
+        prompt_golden = (
+            "Beschrijf dit beeld gedetailleerd."
+            " Antwoord in het Nederlands."
+        )
+        prompt_huidig = prompt_golden
+
+        try:
+            beschrijving_golden = self._vision_call(
+                str(golden_pad), prompt_golden
+            )
+            beschrijving_huidig = self._vision_call(
+                huidig_pad, prompt_huidig
+            )
+        except Exception as e:
+            return {
+                "match": None,
+                "analyse": None,
+                "fout": str(e),
+                "golden_pad": str(golden_pad),
+                "huidig_pad": huidig_pad,
+                "model": self.model,
+                "tijd": time.time() - start,
+            }
+
+        # Vergelijk via LLaVA
+        context = (
+            f" Context: {vraag}" if vraag else ""
+        )
+        vergelijk_prompt = (
+            "Vergelijk deze twee beschrijvingen"
+            " en bepaal of ze visueel overeenkomen."
+            " Zijn er significante visuele"
+            " afwijkingen?\n\n"
+            f"REFERENTIE:\n{beschrijving_golden}\n\n"
+            f"HUIDIG:\n{beschrijving_huidig}\n\n"
+            f"{context}\n"
+            "Begin je antwoord met MATCH of"
+            " AFWIJKING."
+            " Antwoord in het Nederlands."
+        )
+
+        try:
+            analyse = self._vision_call(
+                huidig_pad, vergelijk_prompt
+            )
+        except Exception:
+            analyse = (
+                f"Referentie: {beschrijving_golden}"
+                f"\n\nHuidig: {beschrijving_huidig}"
+            )
+
+        elapsed = time.time() - start
+        self._analyses += 2
+        self._totale_tijd += elapsed
+
+        match = analyse.strip().upper().startswith(
+            "MATCH"
+        )
+
+        console.print(
+            f"[{'green' if match else 'red'}]"
+            f"Golden check: "
+            f"{'MATCH' if match else 'AFWIJKING'}"
+            f"[/{'green' if match else 'red'}]"
+            f" [dim]({elapsed:.1f}s)[/dim]"
+        )
+
+        return {
+            "match": match,
+            "analyse": analyse,
+            "golden_pad": str(golden_pad),
+            "huidig_pad": huidig_pad,
+            "model": self.model,
+            "tijd": elapsed,
+        }
+
+    def list_goldens(self):
+        """Toon alle opgeslagen golden masters.
+
+        Returns:
+            Lijst van golden master namen (list).
+        """
+        if not GOLDEN_DIR.exists():
+            return []
+
+        goldens = []
+        for f in sorted(GOLDEN_DIR.glob("*.png")):
+            goldens.append(f.stem)
+        return goldens
+
+    # ─── Visual Logic Gate ───
+
+    def verify_action(
+        self, actie_fn, beschrijving, timeout=5
+    ):
+        """Voer actie uit en verifieer visueel.
+
+        1. Screenshot VOOR
+        2. actie_fn() uitvoeren
+        3. Wacht timeout seconden
+        4. Screenshot NA
+        5. LLaVA vergelijkt: is de verwachte
+           verandering opgetreden?
+
+        Args:
+            actie_fn: Callable die de actie uitvoert.
+            beschrijving: Wat er zou moeten veranderen.
+            timeout: Wachttijd na actie (seconden).
+
+        Returns:
+            dict met geslaagd, voor_pad, na_pad,
+            analyse, beschrijving, tijd.
+        """
+        console.print(
+            f"[cyan]Screenshot VOOR actie...[/cyan]"
+        )
+        voor_pad = self._screenshot("verify_voor")
+
+        console.print(
+            f"[cyan]Actie uitvoeren:"
+            f" {beschrijving}...[/cyan]"
+        )
+        actie_fn()
+
+        console.print(
+            f"[cyan]Wachten {timeout}s...[/cyan]"
+        )
+        time.sleep(timeout)
+
+        console.print(
+            f"[cyan]Screenshot NA actie...[/cyan]"
+        )
+        na_pad = self._screenshot("verify_na")
+
+        start = time.time()
+
+        # Analyseer beide beelden
+        prompt_beeld = (
+            "Beschrijf dit beeld gedetailleerd."
+            " Antwoord in het Nederlands."
+        )
+
+        try:
+            beschrijving_voor = self._vision_call(
+                voor_pad, prompt_beeld
+            )
+            beschrijving_na = self._vision_call(
+                na_pad, prompt_beeld
+            )
+        except Exception as e:
+            return {
+                "geslaagd": None,
+                "analyse": None,
+                "fout": str(e),
+                "voor_pad": voor_pad,
+                "na_pad": na_pad,
+                "beschrijving": beschrijving,
+                "model": self.model,
+                "tijd": time.time() - start,
+            }
+
+        # Vergelijk voor/na
+        vergelijk_prompt = (
+            "Je ziet twee beschrijvingen:"
+            " VOOR en NA een actie.\n"
+            "De verwachte verandering was:"
+            f" '{beschrijving}'.\n\n"
+            f"VOOR:\n{beschrijving_voor}\n\n"
+            f"NA:\n{beschrijving_na}\n\n"
+            "Vraag 1: Is de verandering"
+            " opgetreden? (JA/NEE)\n"
+            "Vraag 2: Beschrijf wat er"
+            " veranderd is.\n"
+            "Begin je antwoord met JA of NEE."
+            " Antwoord in het Nederlands."
+        )
+
+        try:
+            analyse = self._vision_call(
+                na_pad, vergelijk_prompt
+            )
+        except Exception:
+            analyse = (
+                f"VOOR: {beschrijving_voor}\n\n"
+                f"NA: {beschrijving_na}"
+            )
+
+        elapsed = time.time() - start
+        self._analyses += 2
+        self._totale_tijd += elapsed
+
+        geslaagd = analyse.strip().upper().startswith(
+            "JA"
+        )
+
+        console.print(
+            f"[{'green' if geslaagd else 'red'}]"
+            f"Verificatie: "
+            f"{'GESLAAGD' if geslaagd else 'GEFAALD'}"
+            f"[/{'green' if geslaagd else 'red'}]"
+            f" [dim]({elapsed:.1f}s)[/dim]"
+        )
+
+        return {
+            "geslaagd": geslaagd,
+            "voor_pad": voor_pad,
+            "na_pad": na_pad,
+            "analyse": analyse,
+            "beschrijving": beschrijving,
+            "model": self.model,
+            "tijd": elapsed,
+        }
+
+    def check_state(self, verwachting):
+        """Controleer of het scherm matcht met verwachting.
+
+        Puur beschrijvend — geen actie nodig.
+
+        Args:
+            verwachting: Beschrijving van wat je
+                verwacht te zien.
+
+        Returns:
+            dict met match, analyse, pad, model, tijd.
+        """
+        console.print(
+            f"[cyan]Screenshot maken...[/cyan]"
+        )
+        pad = self._screenshot("check_state")
+
+        start = time.time()
+
+        prompt = (
+            "Bekijk dit screenshot en beantwoord:\n"
+            f"Verwachting: '{verwachting}'\n\n"
+            "Komt het scherm overeen met de"
+            " verwachting?\n"
+            "Begin je antwoord met JA of NEE.\n"
+            "Geef daarna een korte toelichting."
+            " Antwoord in het Nederlands."
+        )
+
+        try:
+            analyse = self._vision_call(pad, prompt)
+        except Exception as e:
+            return {
+                "match": None,
+                "analyse": None,
+                "fout": str(e),
+                "pad": pad,
+                "model": self.model,
+                "tijd": time.time() - start,
+            }
+
+        elapsed = time.time() - start
+        self._analyses += 1
+        self._totale_tijd += elapsed
+
+        match = analyse.strip().upper().startswith(
+            "JA"
+        )
+
+        console.print(
+            f"[{'green' if match else 'red'}]"
+            f"Check: "
+            f"{'MATCH' if match else 'GEEN MATCH'}"
+            f"[/{'green' if match else 'red'}]"
+            f" [dim]({elapsed:.1f}s)[/dim]"
+        )
+
+        return {
+            "match": match,
+            "analyse": analyse,
+            "pad": pad,
+            "model": self.model,
+            "tijd": elapsed,
+        }
 
 
 __all__ = ["PixelEye"]

@@ -678,26 +678,32 @@ class PixelEyeApp:
         eye = PixelEye()
 
         print(kleur("COMMANDO'S:", Kleur.GEEL))
-        print("  screenshot  - Screenshot + analyse")
-        print("  analyze     - Analyseer afbeelding")
-        print("  describe    - Korte beschrijving")
-        print("  compare     - Vergelijk 2 beelden")
-        print("  stats       - Vision statistieken")
-        print("  stop        - Terug naar launcher")
+        print("  screenshot       - Screenshot + analyse")
+        print("  analyze          - Analyseer afbeelding")
+        print("  describe         - Korte beschrijving")
+        print("  compare          - Vergelijk 2 beelden")
+        print("  golden save <n>  - Sla scherm op als golden master")
+        print("  golden check <n> - Vergelijk met golden master")
+        print("  golden list      - Toon alle golden masters")
+        print("  verify           - Visuele verificatie na actie")
+        print("  check            - Controleer scherm tegen verwachting")
+        print("  stats            - Vision statistieken")
+        print("  stop             - Terug naar launcher")
 
         while True:
             try:
                 cmd = input(kleur(
                     "\n[PIXEL EYE] > ",
                     Kleur.FEL_MAGENTA,
-                )).strip().lower()
+                )).strip()
+                cmd_lower = cmd.lower()
 
-                if not cmd:
+                if not cmd_lower:
                     continue
 
-                if cmd in ["stop", "exit", "quit"]:
+                if cmd_lower in ["stop", "exit", "quit"]:
                     break
-                elif cmd == "screenshot":
+                elif cmd_lower == "screenshot":
                     vraag = input(
                         "  Vraag (optioneel): "
                     ).strip()
@@ -706,7 +712,7 @@ class PixelEyeApp:
                     )
                     if result["analyse"]:
                         print(f"\n{result['analyse']}")
-                elif cmd == "analyze":
+                elif cmd_lower == "analyze":
                     pad = input(
                         "  Pad naar afbeelding: "
                     ).strip()
@@ -718,12 +724,12 @@ class PixelEyeApp:
                     )
                     if result["analyse"]:
                         print(f"\n{result['analyse']}")
-                elif cmd == "describe":
+                elif cmd_lower == "describe":
                     pad = input(
                         "  Pad naar afbeelding: "
                     ).strip()
                     print(f"\n{eye.describe(pad)}")
-                elif cmd == "compare":
+                elif cmd_lower == "compare":
                     pad1 = input(
                         "  Pad beeld 1: "
                     ).strip()
@@ -735,7 +741,145 @@ class PixelEyeApp:
                         print(
                             f"\n{result['vergelijking']}"
                         )
-                elif cmd == "stats":
+                elif cmd_lower.startswith("golden"):
+                    parts = cmd.split()
+                    if len(parts) >= 2:
+                        sub = parts[1].lower()
+                    else:
+                        sub = ""
+
+                    if sub == "save":
+                        naam = (
+                            parts[2]
+                            if len(parts) >= 3
+                            else input(
+                                "  Naam: "
+                            ).strip()
+                        )
+                        if naam:
+                            pad = eye.save_golden(naam)
+                            print(kleur(
+                                f"  Opgeslagen: {pad}",
+                                Kleur.GROEN,
+                            ))
+                    elif sub == "check":
+                        naam = (
+                            parts[2]
+                            if len(parts) >= 3
+                            else input(
+                                "  Naam: "
+                            ).strip()
+                        )
+                        if naam:
+                            try:
+                                r = eye.compare_golden(
+                                    naam
+                                )
+                                status = (
+                                    "MATCH"
+                                    if r["match"]
+                                    else "AFWIJKING"
+                                )
+                                print(kleur(
+                                    f"  Resultaat: {status}",
+                                    Kleur.GROEN
+                                    if r["match"]
+                                    else Kleur.ROOD,
+                                ))
+                                if r["analyse"]:
+                                    print(
+                                        f"\n{r['analyse']}"
+                                    )
+                            except FileNotFoundError as e:
+                                print(kleur(
+                                    f"  {e}",
+                                    Kleur.ROOD,
+                                ))
+                    elif sub == "list":
+                        goldens = eye.list_goldens()
+                        if goldens:
+                            print(kleur(
+                                "  Golden masters:",
+                                Kleur.GEEL,
+                            ))
+                            for g in goldens:
+                                print(f"    - {g}")
+                        else:
+                            print(kleur(
+                                "  Geen golden masters"
+                                " gevonden.",
+                                Kleur.DIM,
+                            ))
+                    else:
+                        print(
+                            "  Gebruik: golden"
+                            " save/check/list"
+                        )
+                elif cmd_lower == "verify":
+                    beschrijving = input(
+                        "  Verwachte verandering: "
+                    ).strip()
+                    if not beschrijving:
+                        print(
+                            "  Geef een beschrijving op."
+                        )
+                        continue
+                    timeout = input(
+                        "  Timeout sec (5): "
+                    ).strip()
+                    timeout = (
+                        int(timeout)
+                        if timeout.isdigit()
+                        else 5
+                    )
+                    print(kleur(
+                        "  Voer nu de actie handmatig"
+                        f" uit binnen {timeout}"
+                        " seconden...",
+                        Kleur.GEEL,
+                    ))
+                    r = eye.verify_action(
+                        lambda: None,
+                        beschrijving,
+                        timeout=timeout,
+                    )
+                    status = (
+                        "GESLAAGD"
+                        if r["geslaagd"]
+                        else "GEFAALD"
+                    )
+                    print(kleur(
+                        f"  Resultaat: {status}",
+                        Kleur.GROEN
+                        if r["geslaagd"]
+                        else Kleur.ROOD,
+                    ))
+                    if r["analyse"]:
+                        print(f"\n{r['analyse']}")
+                elif cmd_lower == "check":
+                    verwachting = input(
+                        "  Verwachting: "
+                    ).strip()
+                    if not verwachting:
+                        print(
+                            "  Geef een verwachting op."
+                        )
+                        continue
+                    r = eye.check_state(verwachting)
+                    status = (
+                        "MATCH"
+                        if r["match"]
+                        else "GEEN MATCH"
+                    )
+                    print(kleur(
+                        f"  Resultaat: {status}",
+                        Kleur.GROEN
+                        if r["match"]
+                        else Kleur.ROOD,
+                    ))
+                    if r["analyse"]:
+                        print(f"\n{r['analyse']}")
+                elif cmd_lower == "stats":
                     eye.toon_stats()
                 else:
                     print(f"  Onbekend commando: {cmd}")

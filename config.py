@@ -14,6 +14,9 @@ DOCS_DIR = KNOWLEDGE_DIR / "documenten"
 MEDIA_DIR = DATA_DIR / "plots"
 LOGS_DIR = DATA_DIR / "logs"
 
+# Vision (Golden Masters)
+GOLDEN_DIR = DATA_DIR / "screenshots" / "golden"
+
 # Database (Episodisch Geheugen)
 DB_PATH = DATA_DIR / "cortical_stack.db"
 
