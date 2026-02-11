@@ -824,6 +824,8 @@ class OracleAgent(Agent):
         print("  status        - Toon agent status")
         print("  ogen          - Screenshot +"
               " analyse")
+        print("  orchestrate <fout> - Multi-agent"
+              " repair")
         print("  stop          - Terug naar"
               " launcher")
 
@@ -937,6 +939,30 @@ class OracleAgent(Agent):
                         )
                         if result.get("analyse"):
                             print(f"\n{result['analyse']}")
+
+                    elif cmd_lower.startswith(
+                        "orchestrate "
+                    ):
+                        beschrijving = cmd[12:].strip()
+                        if not beschrijving:
+                            print(
+                                "  Geef een fout-"
+                                "beschrijving op."
+                            )
+                            continue
+                        verwachting = input(
+                            "  Verwachting"
+                            " (Enter=overslaan): "
+                        ).strip() or None
+                        result = (
+                            self.repair_protocol
+                            .orchestrate_repair(
+                                beschrijving,
+                                verwachting,
+                            )
+                        )
+                        self.repair_protocol\
+                            .toon_orchestratie(result)
 
                     else:
                         print(
