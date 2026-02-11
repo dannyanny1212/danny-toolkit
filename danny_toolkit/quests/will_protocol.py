@@ -67,6 +67,7 @@ class UitvoerLog:
     resultaat: str
     details: str = ""
     duur_ms: int = 0
+    visueel: str = ""  # "", "OK", "AFWIJKING"
     timestamp: str = field(
         default_factory=lambda: datetime.now().isoformat()
     )
@@ -91,10 +92,18 @@ class WillProtocol:
 
     MAX_OPERATIES_PER_SESSIE = 50
 
+    VISUELE_VERWACHTINGEN = {
+        OperationType.HEALTH_CHECK:
+            "Er is een systeem health rapport zichtbaar",
+        OperationType.SCRIPT:
+            "Het script heeft visuele output geproduceerd",
+    }
+
     def __init__(self):
         self._sensorium = None
         self._governor = None
         self._daemon = None
+        self._eye = None
         self.actief = False
 
         # Tracking
@@ -138,6 +147,7 @@ class WillProtocol:
                 "resultaat": entry.resultaat,
                 "details": entry.details,
                 "duur_ms": entry.duur_ms,
+                "visueel": entry.visueel,
                 "timestamp": entry.timestamp,
             })
 
@@ -173,8 +183,16 @@ class WillProtocol:
             self._governor = OmegaGovernor()
         return self._governor
 
+    def _get_eye(self):
+        """Lazy PixelEye."""
+        if self._eye is None:
+            from ..skills.pixel_eye import PixelEye
+            self._eye = PixelEye()
+        return self._eye
+
     def koppel_systemen(
-        self, sensorium=None, governor=None, daemon=None
+        self, sensorium=None, governor=None,
+        daemon=None, eye=None
     ):
         """Koppel bestaande instanties (vanuit OmegaAI)."""
         if sensorium is not None:
@@ -183,6 +201,8 @@ class WillProtocol:
             self._governor = governor
         if daemon is not None:
             self._daemon = daemon
+        if eye is not None:
+            self._eye = eye
 
     # ─── Beslissingsmotor ───
 
@@ -373,6 +393,11 @@ class WillProtocol:
 
             details = executor(operatie)
 
+            # Visuele verificatie (closed-loop)
+            visueel = self._verificeer(operatie, details)
+            if visueel is not None:
+                details += f" | Visueel: {visueel}"
+
             # Update tracking
             duur = int((time.time() - start) * 1000)
             self._sessie_operaties += 1
@@ -400,6 +425,7 @@ class WillProtocol:
                 resultaat=Beslissing.UITGEVOERD.value,
                 details=details,
                 duur_ms=duur,
+                visueel=visueel or "",
             )
             self._log.append(log)
             self._bewaar_log()
@@ -417,6 +443,28 @@ class WillProtocol:
             self._log.append(log)
             self._bewaar_log()
             return log
+
+    def _verificeer(self, operatie, details):
+        """Visuele verificatie na executie.
+
+        Controleert via PixelEye of de operatie visueel
+        het verwachte resultaat heeft opgeleverd.
+
+        Returns:
+            None als niet visueel, "OK" of "AFWIJKING".
+        """
+        verwachting = self.VISUELE_VERWACHTINGEN.get(
+            operatie.type
+        )
+        if verwachting is None:
+            return None
+
+        try:
+            eye = self._get_eye()
+            result = eye.check_state(verwachting)
+            return "OK" if result["match"] else "AFWIJKING"
+        except Exception:
+            return None
 
     # ─── Operatie Executors ───
 
@@ -561,6 +609,27 @@ class WillProtocol:
         except (AttributeError, TypeError) as e:
             return f"Nurture fout: {e}"
 
+    def verifieer_intentie(
+        self, actie_fn, beschrijving, timeout=5
+    ):
+        """Voer een actie uit en verifieer visueel.
+
+        Closed-loop voor externe callers: actie uitvoeren,
+        screenshot voor/na, LLaVA vergelijkt.
+
+        Args:
+            actie_fn: Callable die de actie uitvoert.
+            beschrijving: Wat er zou moeten veranderen.
+            timeout: Wachttijd na actie (seconden).
+
+        Returns:
+            dict met geslaagd, analyse, voor_pad, na_pad.
+        """
+        eye = self._get_eye()
+        return eye.verify_action(
+            actie_fn, beschrijving, timeout
+        )
+
     # ─── Autonome Loop ───
 
     def start(self, interval_seconden=300):
@@ -700,10 +769,19 @@ class WillProtocol:
                     symbool = fout("[GEWEIGERD]")
                 else:
                     symbool = fout("[FOUT]")
+                visueel_label = ""
+                if log.visueel:
+                    visueel_label = kleur(
+                        f" [{log.visueel}]",
+                        Kleur.FEL_CYAAN
+                        if log.visueel == "OK"
+                        else Kleur.FEL_ROOD,
+                    )
                 print(
                     f"    {symbool} {log.operatie}:"
                     f" {log.details}"
                     f" ({log.duur_ms}ms)"
+                    f"{visueel_label}"
                 )
 
         print()
