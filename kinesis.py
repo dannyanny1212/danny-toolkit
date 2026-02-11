@@ -67,10 +67,100 @@ class KineticUnit:
         pyautogui.press(key)
         return f"Pressed {key}"
 
+    def double_click(self, x, y):
+        """Dubbelklik op een positie."""
+        print(f"[Kinesis] Double-click: ({x},{y})")
+        pyautogui.doubleClick(x, y)
+        return f"Double-clicked ({x},{y})"
+
+    def right_click(self, x, y):
+        """Rechts-klik op een positie."""
+        print(f"[Kinesis] Right-click: ({x},{y})")
+        pyautogui.rightClick(x, y)
+        return f"Right-clicked ({x},{y})"
+
     def hotkey(self, *keys):
-        """Combo's zoals Ctrl+C."""
+        """Combo's zoals Ctrl+C, Alt+Tab, Ctrl+Shift+S.
+
+        Args:
+            *keys: Toetsen in volgorde (modifiers eerst).
+
+        Voorbeelden:
+            hotkey("ctrl", "c")        # Kopieer
+            hotkey("ctrl", "v")        # Plak
+            hotkey("alt", "tab")       # Wissel venster
+            hotkey("ctrl", "shift", "s")  # Opslaan als
+            hotkey("win", "d")         # Bureaublad
+        """
+        combo = "+".join(keys)
+        print(f"[Kinesis] Hotkey: {combo}")
         pyautogui.hotkey(*keys)
-        return f"Combo {keys}"
+        return f"Hotkey {combo}"
+
+    def drag_drop(self, start_x, start_y,
+                  end_x, end_y, duration=0.5):
+        """Sleep een element van A naar B.
+
+        Args:
+            start_x: X-coordinaat startpositie.
+            start_y: Y-coordinaat startpositie.
+            end_x: X-coordinaat eindpositie.
+            end_y: Y-coordinaat eindpositie.
+            duration: Sleeptijd in seconden.
+        """
+        print(
+            f"[Kinesis] Drag: ({start_x},{start_y})"
+            f" -> ({end_x},{end_y})"
+        )
+        pyautogui.moveTo(start_x, start_y)
+        pyautogui.drag(
+            end_x - start_x,
+            end_y - start_y,
+            duration=duration,
+            button="left",
+        )
+        return (
+            f"Dragged ({start_x},{start_y})"
+            f" -> ({end_x},{end_y})"
+        )
+
+    def click(self, x, y, button="left", clicks=1):
+        """Klik op een positie.
+
+        Args:
+            x: X-coordinaat.
+            y: Y-coordinaat.
+            button: "left", "right" of "middle".
+            clicks: Aantal klikken (2 = dubbelklik).
+        """
+        print(
+            f"[Kinesis] Click: ({x},{y})"
+            f" [{button}] x{clicks}"
+        )
+        pyautogui.click(
+            x, y, clicks=clicks, button=button,
+        )
+        return (
+            f"Clicked ({x},{y})"
+            f" [{button}] x{clicks}"
+        )
+
+    def scroll(self, amount, x=None, y=None):
+        """Scroll omhoog (positief) of omlaag (negatief).
+
+        Args:
+            amount: Scroll-eenheden (+ = omhoog,
+                    - = omlaag).
+            x: Optioneel X-coordinaat.
+            y: Optioneel Y-coordinaat.
+        """
+        richting = "omhoog" if amount > 0 else "omlaag"
+        print(
+            f"[Kinesis] Scroll: {amount}"
+            f" ({richting})"
+        )
+        pyautogui.scroll(amount, x=x, y=y)
+        return f"Scrolled {amount} ({richting})"
 
     def take_screenshot(self):
         """Maakt een screenshot (ogen voor Pixel)."""
