@@ -126,6 +126,7 @@ class OracleAgent(Agent):
         )
         self._body = None
         self._eye = None
+        self._repair_protocol = None
 
     # ─── Lazy Properties ───
 
@@ -146,6 +147,22 @@ class OracleAgent(Agent):
             self._eye = PixelEye()
             self.log("PixelEye geladen", Kleur.GROEN)
         return self._eye
+
+    @property
+    def repair_protocol(self):
+        """Lazy SelfRepairProtocol."""
+        if self._repair_protocol is None:
+            from ..core.self_repair import (
+                SelfRepairProtocol,
+            )
+            self._repair_protocol = (
+                SelfRepairProtocol()
+            )
+            self.log(
+                "SelfRepairProtocol geladen",
+                Kleur.GROEN,
+            )
+        return self._repair_protocol
 
     # ─── WAV-Loop Kern ───
 
@@ -516,6 +533,9 @@ class OracleAgent(Agent):
               " (WAV-loop)")
         print("  plan <doel> - Toon plan zonder"
               " uitvoering")
+        print("  diagnose    - Systeem diagnose")
+        print("  repair      - Automatische reparatie")
+        print("  rapport     - Governor health report")
         print("  status      - Toon agent status")
         print("  ogen        - Screenshot + analyse")
         print("  stop        - Terug naar launcher")
@@ -561,6 +581,20 @@ class OracleAgent(Agent):
                         else:
                             print("  Geef een doelstelling"
                                   " op.")
+
+                    elif cmd_lower == "diagnose":
+                        d = self.repair_protocol.diagnose()
+                        self.repair_protocol.toon_diagnose(
+                            d
+                        )
+
+                    elif cmd_lower == "repair":
+                        r = self.repair_protocol.repair()
+                        self.repair_protocol.toon_rapport(r)
+
+                    elif cmd_lower == "rapport":
+                        self.repair_protocol.governor\
+                            .display_health()
 
                     elif cmd_lower == "status":
                         self.toon_status()
