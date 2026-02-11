@@ -725,12 +725,9 @@ class MemexAgent(BrainAgent):
 class PixelAgent(Agent):
     """THE EYES: Multimodal Vision Agent.
 
-    Maakt screenshots en analyseert ze via Brain.
+    Gebruikt PixelEye skill voor vision analyse.
     Closed Loop: Legion doet → Pixel kijkt →
     Brain oordeelt → Legion corrigeert.
-
-    Vision models (LLaVA/GPT-4o) kunnen later
-    de simulatie vervangen.
     """
 
     VISION_TRIGGERS = [
@@ -740,15 +737,10 @@ class PixelAgent(Agent):
 
     def __init__(self, name, role, model=None):
         super().__init__(name, role, model)
-        from kinesis import KineticUnit
-        self.eyes = KineticUnit()
-
-    def _encode_image(self, image_path):
-        """Encode screenshot als base64 (voor vision API)."""
-        with open(image_path, "rb") as f:
-            return base64.b64encode(
-                f.read()
-            ).decode("utf-8")
+        from danny_toolkit.skills.pixel_eye import (
+            PixelEye,
+        )
+        self.eye = PixelEye()
 
     async def process(self, task, brain=None):
         start_t = time.time()
@@ -790,41 +782,21 @@ class PixelAgent(Agent):
                 },
             )
 
-        # 1. ACTIE: Kijk naar het scherm
-        img_path = await asyncio.to_thread(
-            self.eyes.capture_screen
+        # Vision: screenshot + LLaVA via PixelEye
+        result = await asyncio.to_thread(
+            self.eye.analyze_screen, task
         )
 
-        # 2. PERCEPTIE: Analyseer via LLaVA (True Sight)
-        analysis = None
-        vision_status = "unknown"
+        analysis = result.get("analyse")
+        img_path = result.get("pad")
 
-        try:
-            import ollama as _ollama
-
-            vision_prompt = (
-                "Analyseer dit beeld in detail."
-                f" De gebruiker vraagt: '{task}'."
-                " Als je tekst ziet, lees die"
-                " letterlijk voor. Antwoord"
-                " in het Nederlands."
+        if analysis:
+            vision_status = (
+                f"Real Vision ({self.eye.model})"
             )
-
-            response = await asyncio.to_thread(
-                _ollama.chat,
-                model="llava",
-                messages=[{
-                    "role": "user",
-                    "content": vision_prompt,
-                    "images": [img_path],
-                }],
-            )
-            analysis = response.message.content
-            vision_status = "Real Vision (LLaVA)"
-
-        except Exception as e:
+        else:
             # Fallback: Brain tekst-analyse
-            vision_status = f"LLaVA fallback: {e}"
+            vision_status = "LLaVA fallback"
             try:
                 from danny_toolkit.brain.trinity_omega import (
                     CosmicRole,
@@ -838,14 +810,17 @@ class PixelAgent(Agent):
                     "Beschrijf wat je verwacht"
                     " te zien en geef feedback."
                 )
-                result, _, _ = (
+                fb_result, _, _ = (
                     await asyncio.to_thread(
                         brain._execute_with_role,
                         CosmicRole.PIXEL,
                         fallback_prompt,
                     )
                 )
-                analysis = str(result) if result else None
+                analysis = (
+                    str(fb_result) if fb_result
+                    else None
+                )
                 vision_status = "Brain fallback"
             except Exception:
                 pass
