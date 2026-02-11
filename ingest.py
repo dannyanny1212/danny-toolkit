@@ -32,11 +32,13 @@ from rich.progress import (
 )
 from rich.table import Table
 
+# ─── Config import ───
+from config import CHROMA_DIR, DOCS_DIR, KNOWLEDGE_DIR
+
 # ─── Constanten ───
 
 BASE_DIR = Path(__file__).parent
-DEFAULT_DOCS = BASE_DIR / "data" / "rag" / "documenten"
-CHROMA_DIR = str(BASE_DIR / "data" / "rag" / "chromadb")
+DEFAULT_DOCS = DOCS_DIR
 COLLECTION_NAME = "danny_knowledge"
 CHUNK_SIZE = 400       # woorden per chunk
 CHUNK_OVERLAP = 50     # overlap tussen chunks
