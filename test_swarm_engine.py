@@ -1049,12 +1049,26 @@ def test_adaptive_router():
         ))
         return _print_checks(checks)
 
-    # Profielen berekenen
+    # Profielen berekenen (multi-vector)
     profielen = AdaptiveRouter._bereken_profielen()
     checks.append((
         "profielen berekend",
         profielen is not None
         and len(profielen) == 12,
+    ))
+
+    # Multi-vector structuur
+    checks.append((
+        "IOLAAX heeft 3 sub-profielen",
+        len(profielen["IOLAAX"]) == 3,
+    ))
+    checks.append((
+        "MEMEX heeft 2 sub-profielen",
+        len(profielen["MEMEX"]) == 2,
+    ))
+    checks.append((
+        "CIPHER heeft 1 sub-profiel",
+        len(profielen["CIPHER"]) == 1,
     ))
 
     # Cosine similarity basis

@@ -1130,97 +1130,145 @@ class AdaptiveRouter:
     _embed_fn = None
     _profiel_embeddings = None
 
-    # Bilingual (NL+EN) profielen V5.1 voor
-    # matching met all-MiniLM-L6-v2.
+    # Multi-Vector Profielen V6.0
+    # Complexe agents (IOLAAX, MEMEX) zijn gesplitst
+    # in sub-profielen. route() pakt max(sim) over
+    # alle sub-vectoren per agent.
     AGENT_PROFIELEN = {
-        "IOLAAX": (
-            "programming coding debugging software"
-            " python javascript git bugs fix"
-            " crash error exception traceback"
-            " refactoring algorithms compiling"
-            " build implement module import"
-            " fout oplossen repareren debuggen"
-            " crasht schrijf code script"
-            " terminal console"
-        ),
-        "CIPHER": (
-            "cryptocurrency bitcoin ethereum"
-            " blockchain wallet crypto trading"
-            " price market koers prijs minen"
-            " smart contracts tokens encryptie"
-            " decryptie portfolio saldo winst"
-        ),
-        "VITA": (
-            "gezondheid health slaap sleep stress"
-            " biohacking hartslag heart rate HRV"
-            " voeding nutrition wellness biometrie"
-            " sport medicijn DNA peptiden analyse"
-            " diagnosis fitness moe vermoeidheid"
-            " energie futloos ziek pijn herstel"
-            " voel me slecht conditie"
-        ),
-        "NAVIGATOR": (
-            "web search internet online lookup"
-            " fetch scrape API research explore"
-            " discover browse zoeken onderzoek"
-            " vind informatie bronnen"
-        ),
-        "ORACLE": (
-            "philosophy thinking logic reasoning"
-            " consciousness ethics hypothesis"
-            " deep meaning purpose"
-            " zin van het bestaan waarom"
-            " leven we filosofie nadenken"
-            " ethiek moraal existentieel"
-            " vraagstuk analyse"
-        ),
-        "SPARK": (
-            "creative ideas brainstorm art ASCII"
-            " design innovation drawing"
-            " visualization kunst creatief idee"
-            " ontwerp concept verzin iets"
-        ),
-        "SENTINEL": (
-            "security firewall audit threats"
-            " protect vulnerability defense"
-            " beveiligen beveiliging wachtwoord"
-            " privacy hack aanval risico"
-        ),
-        "MEMEX": (
-            "knowledge base RAG vector search"
-            " recall remember archive document"
-            " lookup query explanation describe"
-            " geheugen herinner opzoeken"
-            " database collectie bronnen"
-        ),
-        "ALCHEMIST": (
-            "data transform convert ETL pipeline"
-            " cleaning processing analysis"
-            " transformeren converteren verwerken"
-            " csv json format"
-        ),
-        "VOID": (
-            "verwijder bestanden delete files"
-            " tijdelijke bestanden temporary"
-            " opruimen clean up schoonmaken"
-            " cache garbage prullenbak trash"
-            " recycle bin junk logs wissen"
-            " disk space ruimte vrijmaken"
-            " remove cleanup"
-        ),
-        "CHRONOS_AGENT": (
-            "planning schedule agenda deadline"
-            " timer cronjob reminder day rhythm"
-            " bio rhythm calendar time planning"
-            " schema herinnering klok tijd laat"
-            " datum wanneer agenda afspraak"
-        ),
-        "PIXEL": (
-            "user interface dashboard menu screen"
-            " display emotion feeling"
-            " visualization help assistance"
-            " UI scherm ziet eruit plaatje"
-        ),
+        "IOLAAX": [
+            # De Bouwer — code generatie
+            (
+                "programming coding software python"
+                " javascript code implement develop"
+                " schrijven script build create"
+                " function class module algorithm"
+                " syntax terminal console"
+            ),
+            # De Monteur — debugging
+            (
+                "debugging fix error crash python"
+                " code exception traceback bug"
+                " foutmelding repareren kapot werkt"
+                " niet stacktrace log issue resolve"
+                " failure debuggen crasht fout"
+                " oplossen script"
+            ),
+            # De Expert — refactoring & git
+            (
+                "git version control refactoring"
+                " python code clean optimization"
+                " performance architecture design"
+                " pattern best practices review"
+                " compiling build"
+            ),
+        ],
+        "CIPHER": [
+            (
+                "cryptocurrency bitcoin ethereum"
+                " blockchain wallet crypto trading"
+                " price market koers prijs minen"
+                " smart contracts tokens encryptie"
+                " decryptie portfolio saldo winst"
+            ),
+        ],
+        "VITA": [
+            (
+                "gezondheid health slaap sleep stress"
+                " biohacking hartslag heart rate HRV"
+                " voeding nutrition wellness biometrie"
+                " sport medicijn DNA peptiden analyse"
+                " diagnosis fitness moe vermoeidheid"
+                " energie futloos ziek pijn herstel"
+                " voel me slecht conditie"
+            ),
+        ],
+        "NAVIGATOR": [
+            (
+                "web search internet online lookup"
+                " fetch scrape API research explore"
+                " discover browse zoeken onderzoek"
+                " vind informatie bronnen"
+            ),
+        ],
+        "ORACLE": [
+            (
+                "philosophy thinking logic reasoning"
+                " consciousness ethics hypothesis"
+                " deep meaning purpose"
+                " zin van het bestaan waarom"
+                " leven we filosofie nadenken"
+                " ethiek moraal existentieel"
+                " vraagstuk analyse"
+            ),
+        ],
+        "SPARK": [
+            (
+                "creative ideas brainstorm art ASCII"
+                " design innovation drawing"
+                " visualization kunst creatief idee"
+                " ontwerp concept verzin iets"
+            ),
+        ],
+        "SENTINEL": [
+            (
+                "security firewall audit threats"
+                " protect vulnerability defense"
+                " beveiligen beveiliging wachtwoord"
+                " privacy hack aanval risico"
+            ),
+        ],
+        "MEMEX": [
+            # Het Archief — geheugen & recall
+            (
+                "database memory recall remember"
+                " retrieve archive history knowledge"
+                " base geheugen opslag herinner"
+                " zoek in bestanden long term"
+            ),
+            # RAG Context — document search
+            (
+                "RAG vector search document lookup"
+                " source bronvermelding reference"
+                " opzoeken context ophalen"
+                " collectie bronnen"
+            ),
+        ],
+        "ALCHEMIST": [
+            (
+                "data transform convert ETL pipeline"
+                " cleaning processing analysis"
+                " transformeren converteren verwerken"
+                " csv json format"
+            ),
+        ],
+        "VOID": [
+            (
+                "verwijder bestanden delete files"
+                " tijdelijke bestanden temporary"
+                " opruimen clean up schoonmaken"
+                " cache garbage prullenbak trash"
+                " recycle bin junk logs wissen"
+                " disk space ruimte vrijmaken"
+                " remove cleanup"
+            ),
+        ],
+        "CHRONOS_AGENT": [
+            (
+                "planning schedule agenda deadline"
+                " timer cronjob reminder day rhythm"
+                " bio rhythm calendar time planning"
+                " schema herinnering klok tijd laat"
+                " datum wanneer agenda afspraak"
+            ),
+        ],
+        "PIXEL": [
+            (
+                "user interface dashboard menu screen"
+                " display emotion feeling"
+                " visualization help assistance"
+                " UI scherm ziet eruit plaatje"
+            ),
+        ],
     }
 
     @classmethod
@@ -1255,17 +1303,21 @@ class AdaptiveRouter:
 
     @classmethod
     def _bereken_profielen(cls):
-        """Embed alle agent profielen (eenmalig)."""
+        """Embed alle agent sub-profielen (eenmalig).
+
+        Slaat per agent een lijst van vectoren op.
+        route() pakt max(sim) over alle sub-vectoren.
+        """
         if cls._profiel_embeddings is not None:
             return cls._profiel_embeddings
         embed = cls._get_embed_fn()
         if not embed:
             return None
         cls._profiel_embeddings = {}
-        for agent, tekst in cls.AGENT_PROFIELEN.items():
-            cls._profiel_embeddings[agent] = embed(
-                tekst
-            )
+        for agent, subs in cls.AGENT_PROFIELEN.items():
+            cls._profiel_embeddings[agent] = [
+                embed(tekst) for tekst in subs
+            ]
         return cls._profiel_embeddings
 
     @staticmethod
@@ -1330,21 +1382,27 @@ class AdaptiveRouter:
         input_vec = embed(user_input)
 
         scores = []
-        for agent, profiel_vec in profielen.items():
-            sim = self._cosine_sim(
-                input_vec, profiel_vec,
+        for agent, sub_vecs in profielen.items():
+            # max(sim) over alle sub-profielen
+            best = max(
+                self._cosine_sim(input_vec, sv)
+                for sv in sub_vecs
             )
-            if sim >= self.DREMPEL:
-                scores.append((agent, sim))
+            if best >= self.DREMPEL:
+                scores.append((agent, best))
 
         scores.sort(key=lambda x: x[1], reverse=True)
         targets = [
             s[0] for s in scores[:self.MAX_AGENTS]
         ]
 
-        # MEMEX wint van IOLAAX bij kennisvragen
+        # Bij overlap: hoogste score wint
         if "MEMEX" in targets and "IOLAAX" in targets:
-            targets.remove("IOLAAX")
+            score_map = dict(scores)
+            if score_map["MEMEX"] > score_map["IOLAAX"]:
+                targets.remove("IOLAAX")
+            else:
+                targets.remove("MEMEX")
 
         return targets or ["ECHO"]
 

@@ -42,11 +42,12 @@ def show_routing_detail(query, router):
     input_vec = embed(query)
 
     scores = []
-    for agent, profiel_vec in profielen.items():
-        sim = router._cosine_sim(
-            input_vec, profiel_vec,
+    for agent, sub_vecs in profielen.items():
+        best = max(
+            router._cosine_sim(input_vec, sv)
+            for sv in sub_vecs
         )
-        scores.append((agent, sim))
+        scores.append((agent, best))
 
     scores.sort(key=lambda x: x[1], reverse=True)
 
@@ -56,9 +57,13 @@ def show_routing_detail(query, router):
     ]
     targets = [s[0] for s in above[:router.MAX_AGENTS]]
 
-    # MEMEX > IOLAAX prioriteit
+    # Bij overlap: hoogste score wint
     if "MEMEX" in targets and "IOLAAX" in targets:
-        targets.remove("IOLAAX")
+        score_map = dict(scores)
+        if score_map["MEMEX"] > score_map["IOLAAX"]:
+            targets.remove("IOLAAX")
+        else:
+            targets.remove("MEMEX")
 
     if not targets:
         targets = ["ECHO"]
