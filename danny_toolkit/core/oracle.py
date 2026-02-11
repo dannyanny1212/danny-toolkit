@@ -717,6 +717,76 @@ class OracleAgent(Agent):
             intentie, resultaten, start
         )
 
+    # ─── Repair Plan Generator ───
+
+    async def generate_repair_plan(
+        self, fout_beschrijving, taak,
+    ):
+        """Genereer repair plan voor gefaalde taak.
+
+        Gebruikt een apart repair-prompt (NIET de
+        ORACLE_SYSTEM_PROMPT die voor muis/toetsenbord
+        acties is). Retourneert dict met analyse,
+        herstelde_input, strategie of None.
+
+        Args:
+            fout_beschrijving: Wat er mis ging.
+            taak: dict met input, verwachting, etc.
+
+        Returns:
+            dict of None bij falen.
+        """
+        taak_input = taak.get("input", "onbekend")
+        verwachting = taak.get("verwachting", "")
+
+        berichten = [{
+            "role": "user",
+            "content": (
+                "Je bent een repair-specialist."
+                " Een swarm-taak is mislukt.\n\n"
+                f"TAAK: {taak_input}\n"
+                f"VERWACHTING: {verwachting}\n"
+                f"FOUT: {fout_beschrijving}\n\n"
+                "Analyseer het probleem en geef"
+                " een repair plan als JSON:\n"
+                "{\n"
+                '  "analyse": "wat ging er mis",'
+                '\n'
+                '  "herstelde_input": "verbeterde'
+                ' opdracht",\n'
+                '  "strategie": "hoe te herstellen"'
+                "\n}\n\n"
+                "Antwoord ALLEEN met JSON."
+            ),
+        }]
+
+        try:
+            response = await self._call_api(
+                berichten
+            )
+            tekst = self._extract_text(response)
+            plan = self._parse_stap_json(tekst)
+
+            if plan and "herstelde_input" in plan:
+                self.log(
+                    "Repair plan gegenereerd",
+                    Kleur.GROEN,
+                )
+                return plan
+
+            self.log(
+                "Repair plan: ongeldig formaat",
+                Kleur.GEEL,
+            )
+            return None
+
+        except Exception as e:
+            self.log(
+                f"Repair plan fout: {e}",
+                Kleur.ROOD,
+            )
+            return None
+
     # ─── Interactieve CLI ───
 
     def run(self):

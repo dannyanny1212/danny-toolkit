@@ -33,6 +33,21 @@ import numpy as np
 import pandas as pd
 
 
+# ── CUSTOM EXCEPTIONS ──
+
+class TaskVerificationError(Exception):
+    """Fout bij verificatie van een swarm taak."""
+
+    def __init__(
+        self, bericht, taak=None,
+        agent=None, payload=None,
+    ):
+        super().__init__(bericht)
+        self.taak = taak
+        self.agent = agent
+        self.payload = payload
+
+
 # ── CORTICAL STACK LOGGING ──
 
 try:
@@ -1086,9 +1101,14 @@ class SwarmEngine:
         ],
     }
 
-    def __init__(self, brain=None):
+    def __init__(self, brain=None, oracle=None):
         self.brain = brain
+        self._oracle = oracle
+        self.repair_mode = True
         self.agents = self._register_agents()
+        self.on_pre_task = []
+        self.on_post_task = []
+        self.on_failure = []
 
     def _register_agents(self):
         from danny_toolkit.brain.trinity_omega import (
@@ -1152,6 +1172,342 @@ class SwarmEngine:
             # LEGION: disabled
 
         }
+
+    # ── Lazy Oracle Property ──
+
+    @property
+    def oracle(self):
+        """Lazy OracleAgent — geen import overhead."""
+        if self._oracle is None:
+            from danny_toolkit.core.oracle import (
+                OracleAgent,
+            )
+            self._oracle = OracleAgent(persist=False)
+        return self._oracle
+
+    # ── Hook Systeem ──
+
+    def add_hook(self, event, callback):
+        """Registreer een hook callback.
+
+        Args:
+            event: "pre_task", "post_task" of
+                   "failure".
+            callback: Callable die aangeroepen wordt.
+        """
+        hook_map = {
+            "pre_task": self.on_pre_task,
+            "post_task": self.on_post_task,
+            "failure": self.on_failure,
+        }
+        hook_list = hook_map.get(event)
+        if hook_list is not None:
+            hook_list.append(callback)
+
+    def _trigger_hooks(self, hooks, *args):
+        """Trigger alle hooks in een lijst.
+
+        Args:
+            hooks: Lijst van callables.
+            *args: Argumenten voor de callbacks.
+        """
+        for hook in hooks:
+            try:
+                hook(*args)
+            except Exception:
+                pass
+
+    # ── Pipeline Verificatie ──
+
+    async def _verify_task(
+        self, taak, payloads,
+    ):
+        """Verifieer of swarm output correct is.
+
+        Combineert agent output en vraagt Oracle LLM
+        of het resultaat voldoet aan de verwachting.
+
+        Args:
+            taak: dict met input, verwachting, etc.
+            payloads: lijst SwarmPayloads.
+
+        Returns:
+            dict met match (bool), analyse (str).
+        """
+        verwachting = taak.get("verwachting", "")
+        if not verwachting:
+            return {"match": True, "analyse": ""}
+
+        # Combineer output van alle agents
+        output_samenvatting = "\n".join(
+            f"{p.agent}: {str(p.content)[:300]}"
+            for p in payloads
+        )
+
+        berichten = [{
+            "role": "user",
+            "content": (
+                "Beoordeel of de output voldoet"
+                " aan de verwachting.\n\n"
+                f"OPDRACHT: {taak.get('input', '')}\n"
+                f"VERWACHTING: {verwachting}\n"
+                f"OUTPUT:\n{output_samenvatting}\n\n"
+                'Antwoord ALLEEN met JSON:\n'
+                '{"match": true/false,'
+                ' "analyse": "uitleg"}'
+            ),
+        }]
+
+        try:
+            response = await self.oracle._call_api(
+                berichten
+            )
+            tekst = self.oracle._extract_text(
+                response
+            )
+            result = self.oracle._parse_stap_json(
+                tekst
+            )
+            if result and "match" in result:
+                return result
+        except Exception:
+            pass
+
+        return {"match": False, "analyse": "onbekend"}
+
+    async def _handle_swarm_failure(
+        self, error, taak, callback=None,
+    ):
+        """Handel een gefaalde swarm taak af.
+
+        1. Vraag Oracle om repair plan
+        2. Voer herstelde taak uit
+        3. Optionele herverificatie
+
+        Args:
+            error: De foutbeschrijving.
+            taak: dict met input, verwachting, etc.
+            callback: Functie(str) voor live updates.
+
+        Returns:
+            dict met geslaagd, plan, payloads,
+            analyse.
+        """
+        def log(msg):
+            if callback:
+                callback(msg)
+
+        log(
+            "\U0001f527 Repair: plan genereren..."
+        )
+
+        plan = await self.oracle.generate_repair_plan(
+            str(error), taak,
+        )
+
+        if not plan:
+            log(
+                "\u274c Repair: geen plan"
+                " gegenereerd"
+            )
+            return {
+                "geslaagd": False,
+                "plan": None,
+                "payloads": [],
+                "analyse": "Geen repair plan",
+            }
+
+        herstelde_input = plan.get(
+            "herstelde_input",
+            taak.get("input", ""),
+        )
+
+        log(
+            f"\U0001f504 Repair: heruitvoeren"
+            f" met '{herstelde_input[:50]}...'"
+        )
+
+        # Heruitvoeren via bestaande run()
+        try:
+            payloads = await self.run(
+                herstelde_input, callback,
+            )
+        except Exception:
+            return {
+                "geslaagd": False,
+                "plan": plan,
+                "payloads": [],
+                "analyse": "Heruitvoering mislukt",
+            }
+
+        # Optionele herverificatie
+        analyse = ""
+        if taak.get("verwachting"):
+            verificatie = await self._verify_task(
+                taak, payloads,
+            )
+            analyse = verificatie.get(
+                "analyse", ""
+            )
+            if not verificatie.get("match"):
+                log(
+                    "\u274c Repair: herverificatie"
+                    " gefaald"
+                )
+                return {
+                    "geslaagd": False,
+                    "plan": plan,
+                    "payloads": payloads,
+                    "analyse": analyse,
+                }
+
+        log("\u2705 Repair: succesvol hersteld")
+        return {
+            "geslaagd": True,
+            "plan": plan,
+            "payloads": payloads,
+            "analyse": analyse,
+        }
+
+    # ── Pipeline Executie ──
+
+    async def execute_pipeline(
+        self, taken, callback=None,
+    ):
+        """Voer een pipeline van taken uit.
+
+        Per taak: pre_hook -> run -> verify ->
+        post_hook. Bij falen: repair ->
+        failure_hook.
+
+        Args:
+            taken: lijst van taak-dicts, elk met
+                input (str), verwachting (optioneel),
+                agents (optioneel), metadata
+                (optioneel).
+            callback: Functie(str) voor live updates.
+
+        Returns:
+            lijst van resultaat-dicts per taak.
+        """
+        def log(msg):
+            if callback:
+                callback(msg)
+
+        resultaten = []
+
+        for i, taak in enumerate(taken):
+            taak_nr = i + 1
+            taak_input = taak.get("input", "")
+
+            log(
+                f"\U0001f4cb Pipeline"
+                f" [{taak_nr}/{len(taken)}]:"
+                f" {taak_input[:50]}"
+            )
+
+            # Pre-task hooks
+            self._trigger_hooks(
+                self.on_pre_task, taak,
+            )
+
+            try:
+                # Uitvoeren via bestaande run()
+                payloads = await self.run(
+                    taak_input, callback,
+                )
+
+                # Verificatie (als verwachting)
+                if taak.get("verwachting"):
+                    verificatie = (
+                        await self._verify_task(
+                            taak, payloads,
+                        )
+                    )
+
+                    if not verificatie.get("match"):
+                        raise TaskVerificationError(
+                            verificatie.get(
+                                "analyse",
+                                "Verificatie gefaald",
+                            ),
+                            taak=taak,
+                            payload=payloads,
+                        )
+
+                # Post-task hooks
+                self._trigger_hooks(
+                    self.on_post_task,
+                    taak, payloads,
+                )
+
+                resultaten.append({
+                    "taak": taak,
+                    "payloads": payloads,
+                    "status": "geslaagd",
+                    "repair": None,
+                })
+
+            except (
+                TaskVerificationError,
+                Exception,
+            ) as e:
+                log(
+                    f"\u26a0\ufe0f Taak"
+                    f" {taak_nr} gefaald:"
+                    f" {str(e)[:80]}"
+                )
+
+                # Failure hooks
+                self._trigger_hooks(
+                    self.on_failure, taak, e,
+                )
+
+                # Self-healing via Oracle
+                repair = None
+                if self.repair_mode:
+                    repair = (
+                        await self._handle_swarm_failure(
+                            e, taak, callback,
+                        )
+                    )
+
+                if repair and repair.get("geslaagd"):
+                    resultaten.append({
+                        "taak": taak,
+                        "payloads": repair.get(
+                            "payloads", []
+                        ),
+                        "status": "hersteld",
+                        "repair": repair,
+                    })
+                else:
+                    resultaten.append({
+                        "taak": taak,
+                        "payloads": (
+                            e.payload
+                            if isinstance(
+                                e,
+                                TaskVerificationError,
+                            )
+                            else []
+                        ),
+                        "status": "gefaald",
+                        "repair": repair,
+                    })
+
+        geslaagd = sum(
+            1 for r in resultaten
+            if r["status"] in (
+                "geslaagd", "hersteld",
+            )
+        )
+        log(
+            f"\U0001f3c1 Pipeline voltooid:"
+            f" {geslaagd}/{len(resultaten)} OK"
+        )
+
+        return resultaten
 
     async def route(self, user_input: str) -> List[str]:
         """Multi-intent keyword routing.
@@ -1307,4 +1663,27 @@ def run_swarm_sync(
     engine = SwarmEngine(brain=brain)
     return asyncio.run(
         engine.run(user_input, callback)
+    )
+
+
+def run_pipeline_sync(
+    taken, brain=None, oracle=None,
+    callback=None,
+):
+    """Sync wrapper voor execute_pipeline.
+
+    Args:
+        taken: lijst van taak-dicts.
+        brain: PrometheusBrain instantie.
+        oracle: OracleAgent instantie (optioneel).
+        callback: Functie(str) voor live updates.
+
+    Returns:
+        Lijst van resultaat-dicts per taak.
+    """
+    engine = SwarmEngine(
+        brain=brain, oracle=oracle,
+    )
+    return asyncio.run(
+        engine.execute_pipeline(taken, callback)
     )
