@@ -71,6 +71,7 @@ from .brain.nexus_bridge import (
 )
 from .brain.trinity_omega import PrometheusBrain, get_prometheus
 from .brain.visual_nexus import VisualNexus, build_visual_nexus
+from .brain.project_map import ProjectMap
 
 # Rich UI imports
 from rich.console import Console
@@ -891,6 +892,19 @@ class PixelEyeApp:
 
 
 # =============================================================================
+# PROJECT MAP WRAPPER
+# =============================================================================
+
+class ProjectMapApp:
+    """Wrapper voor Project Map in launcher."""
+
+    def run(self):
+        """Start de Project Map interactief."""
+        pm = ProjectMap()
+        pm.run()
+
+
+# =============================================================================
 # PULSE PROTOCOL WRAPPER
 # =============================================================================
 
@@ -1219,6 +1233,7 @@ class Launcher:
         "51": ("Will Protocol", WillProtocolApp, "omega"),
         "52": ("Heartbeat Daemon", HeartbeatApp, "daemon"),
         "53": ("Pixel Eye", PixelEyeApp, "brain"),
+        "54": ("Project Map", ProjectMapApp, "brain"),
     }
 
     # Sneltoetsen
@@ -1276,6 +1291,7 @@ class Launcher:
         "wi": "51", # Will Protocol
         "hb": "52", # Heartbeat Daemon
         "pe": "53", # Pixel Eye
+        "pm": "54", # Project Map
     }
 
     def __init__(self):
@@ -1378,6 +1394,7 @@ class Launcher:
             "44": "SYMBIOSE",
             "45": "CONSTRUCT",
             "53": "VISION",
+            "54": "CARTOGRAFIE",
         }
         OMEGA_PROTOCOLS = {
             "41": "CORE",
@@ -1439,7 +1456,7 @@ class Launcher:
             nexus_tbl,
             title="[bold cyan]NEXUS PRIME[/bold cyan]",
             border_style="cyan",
-            subtitle="[dim]9 systems[/dim]",
+            subtitle="[dim]10 systems[/dim]",
         )
 
         # Omega Protocols tabel
