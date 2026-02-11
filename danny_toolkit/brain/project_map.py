@@ -32,6 +32,8 @@ CLUSTER_QUERIES = {
     "beveiliging": "governor bewaker bescherming",
     "kennis": "RAG embeddings zoeken knowledge",
     "actie": "kinetic muis toetsenbord klik automatie uitvoeren",
+    "geheugen": "sessie geschiedenis ervaring episodisch herinnering log",
+    "wil": "will doel missie intentie autonoom besluit drive motivatie",
 }
 
 
