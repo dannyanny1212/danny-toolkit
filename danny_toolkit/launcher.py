@@ -653,6 +653,100 @@ class PrometheusApp:
 
 
 # =============================================================================
+# PIXEL EYE WRAPPER
+# =============================================================================
+
+class PixelEyeApp:
+    """Wrapper voor Pixel Eye in launcher."""
+
+    def run(self):
+        """Start Pixel Eye interactief."""
+        from .core.utils import clear_scherm
+        from .skills.pixel_eye import PixelEye
+
+        clear_scherm()
+        print(kleur("""
++===============================================+
+|                                               |
+|     P I X E L   E Y E                         |
+|                                               |
+|     Het Oog — Vision Analyse                  |
+|                                               |
++===============================================+
+        """, Kleur.FEL_MAGENTA))
+
+        eye = PixelEye()
+
+        print(kleur("COMMANDO'S:", Kleur.GEEL))
+        print("  screenshot  - Screenshot + analyse")
+        print("  analyze     - Analyseer afbeelding")
+        print("  describe    - Korte beschrijving")
+        print("  compare     - Vergelijk 2 beelden")
+        print("  stats       - Vision statistieken")
+        print("  stop        - Terug naar launcher")
+
+        while True:
+            try:
+                cmd = input(kleur(
+                    "\n[PIXEL EYE] > ",
+                    Kleur.FEL_MAGENTA,
+                )).strip().lower()
+
+                if not cmd:
+                    continue
+
+                if cmd in ["stop", "exit", "quit"]:
+                    break
+                elif cmd == "screenshot":
+                    vraag = input(
+                        "  Vraag (optioneel): "
+                    ).strip()
+                    result = eye.analyze_screen(
+                        vraag or None
+                    )
+                    if result["analyse"]:
+                        print(f"\n{result['analyse']}")
+                elif cmd == "analyze":
+                    pad = input(
+                        "  Pad naar afbeelding: "
+                    ).strip()
+                    vraag = input(
+                        "  Vraag (optioneel): "
+                    ).strip()
+                    result = eye.analyze_image(
+                        pad, vraag or None
+                    )
+                    if result["analyse"]:
+                        print(f"\n{result['analyse']}")
+                elif cmd == "describe":
+                    pad = input(
+                        "  Pad naar afbeelding: "
+                    ).strip()
+                    print(f"\n{eye.describe(pad)}")
+                elif cmd == "compare":
+                    pad1 = input(
+                        "  Pad beeld 1: "
+                    ).strip()
+                    pad2 = input(
+                        "  Pad beeld 2: "
+                    ).strip()
+                    result = eye.compare(pad1, pad2)
+                    if result["vergelijking"]:
+                        print(
+                            f"\n{result['vergelijking']}"
+                        )
+                elif cmd == "stats":
+                    eye.toon_stats()
+                else:
+                    print(f"  Onbekend commando: {cmd}")
+
+            except (EOFError, KeyboardInterrupt):
+                break
+
+        input("\n  Druk op Enter...")
+
+
+# =============================================================================
 # PULSE PROTOCOL WRAPPER
 # =============================================================================
 
@@ -980,6 +1074,7 @@ class Launcher:
         "50": ("Dialogue Protocol", DialogueProtocolApp, "omega"),
         "51": ("Will Protocol", WillProtocolApp, "omega"),
         "52": ("Heartbeat Daemon", HeartbeatApp, "daemon"),
+        "53": ("Pixel Eye", PixelEyeApp, "brain"),
     }
 
     # Sneltoetsen
@@ -1036,6 +1131,7 @@ class Launcher:
         "di": "50", # Dialogue Protocol
         "wi": "51", # Will Protocol
         "hb": "52", # Heartbeat Daemon
+        "pe": "53", # Pixel Eye
     }
 
     def __init__(self):
@@ -1137,6 +1233,7 @@ class Launcher:
             "43": "OBSERVE",
             "44": "SYMBIOSE",
             "45": "CONSTRUCT",
+            "53": "VISION",
         }
         OMEGA_PROTOCOLS = {
             "41": "CORE",
@@ -1198,7 +1295,7 @@ class Launcher:
             nexus_tbl,
             title="[bold cyan]NEXUS PRIME[/bold cyan]",
             border_style="cyan",
-            subtitle="[dim]8 systems[/dim]",
+            subtitle="[dim]9 systems[/dim]",
         )
 
         # Omega Protocols tabel
