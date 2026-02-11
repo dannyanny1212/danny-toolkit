@@ -1130,6 +1130,8 @@ class AdaptiveRouter:
 
     DREMPEL = 0.30
     MAX_AGENTS = 3
+    _BLOK = 100       # Intentie-blok grootte
+    _MAX_BLOKKEN = 5  # Absoluut max = 500 chars
     _embed_fn = None
     _profiel_embeddings = None
 
@@ -1284,11 +1286,36 @@ class AdaptiveRouter:
         """
         embed = self._get_embed_fn()
         if not embed:
-            raise RuntimeError("Embedding niet beschikbaar")
+            raise RuntimeError(
+                "Embedding niet beschikbaar"
+            )
 
         profielen = self._bereken_profielen()
         if not profielen:
-            raise RuntimeError("Profielen niet beschikbaar")
+            raise RuntimeError(
+                "Profielen niet beschikbaar"
+            )
+
+        # Dynamische input-afkapping:
+        # Blok 0 (0-100): altijd — bevat intentie
+        # Blok 1-4: alleen als nieuw woord begint
+        # Max 500 chars (CPU DoS preventie)
+        length = len(user_input)
+        if length > self._BLOK:
+            eind = self._BLOK
+            for i in range(1, self._MAX_BLOKKEN):
+                grens = self._BLOK * (i + 1)
+                if length <= grens:
+                    eind = length
+                    break
+                # Stop bij blokgrens als daar een
+                # spatie/punt is (zinseinde = klaar)
+                ch = user_input[grens - 1]
+                if ch in ".!?\n":
+                    eind = grens
+                    break
+                eind = grens
+            user_input = user_input[:eind]
 
         input_vec = embed(user_input)
 
