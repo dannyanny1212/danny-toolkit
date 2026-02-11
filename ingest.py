@@ -16,11 +16,23 @@ ChromaDB wordt opgeslagen in data/rag/chromadb/
 """
 
 import argparse
+import io
 import logging
 import os
+import sys
 import time
 from pathlib import Path
 from typing import List, Dict, Any
+
+# --- WINDOWS UTF-8 FIX ---
+# Forceer de terminal om UTF-8 te spreken,
+# anders crasht hij op emoji's.
+sys.stdout = io.TextIOWrapper(
+    sys.stdout.buffer, encoding="utf-8"
+)
+sys.stderr = io.TextIOWrapper(
+    sys.stderr.buffer, encoding="utf-8"
+)
 
 from tqdm import tqdm
 
