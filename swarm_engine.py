@@ -1078,12 +1078,8 @@ class SwarmEngine:
             "cleanup", "clean", "delete", "opruim",
             "cache", "garbage",
         ],
-        "LEGION": [
-            "open", "start", "launch", "typ",
-            "app", "scherm", "pc", "notepad",
-            "calculator", "chrome", "spotify",
-            "screenshot",
-        ],
+        # LEGION: disabled
+
         "CHRONOS_AGENT": [
             "schedule", "cronjob", "timer", "ritme",
             "planning", "agenda", "deadline",
@@ -1160,9 +1156,8 @@ class SwarmEngine:
                 "Void", "Cleanup",
                 CosmicRole.VOID,
             ),
-            "LEGION": LegionAgent(
-                "Legion", "Infrastructure",
-            ),
+            # LEGION: disabled
+
         }
 
     async def route(self, user_input: str) -> List[str]:

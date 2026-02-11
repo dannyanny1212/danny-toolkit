@@ -299,11 +299,8 @@ class PrometheusBrain:
             "bewustzijn", "evolve", "filosofie",
             "ethiek", "waarom", "hypothese",
         ],
-        "SYSTEM": [
-            "verwerk data", "indexeer alles",
-            "test alle", "batch", "bulk", "parallel",
-            "10000", "1000",
-        ],
+        # SYSTEM/LEGION: disabled
+
         "CASUAL": [
             "hallo", "hoi", "hey", "goedemorgen",
             "goedemiddag", "hoe gaat het",
@@ -326,7 +323,15 @@ class PrometheusBrain:
         "MEMORY": [
             "zoek kennis", "herinner", "rag",
             "vector", "semantic", "geheugen",
-            "knowledge",
+            "knowledge", "archief",
+            # Kennisgerichte vragen → RAG
+            "wat doet", "wat is", "hoe werkt",
+            "leg uit", "vertel over", "beschrijf",
+            "uitleg", "waarvoor", "wie is",
+            "wat betekent", "doel van", "rol van",
+            "informatie over", "meer over",
+            "welke", "hoeveel", "waar zit",
+            "waar staat",
         ],
         "DATA": [
             "convert", "transform", "data_clean",
@@ -1033,6 +1038,24 @@ class PrometheusBrain:
 
         return result
 
+    def _rag_enrich(self, task: str) -> str:
+        """Verrijk taak met ChromaDB RAG context."""
+        try:
+            from ingest import TheLibrarian
+            lib = TheLibrarian()
+            results = lib.query(task, n_results=5)
+            docs = results.get("documents", [[]])[0]
+            if docs:
+                context = "\n---\n".join(docs)
+                return (
+                    f"KENNISBANK CONTEXT:\n{context}\n\n"
+                    f"VRAAG: {task}\n"
+                    f"Beantwoord op basis van de context."
+                )
+        except Exception as e:
+            print(f"   [RAG] Fout: {e}")
+        return task
+
     def _assign(self, role: CosmicRole, task: str, priority: TaskPriority) -> TaskResult:
         """Wijs een taak toe aan een specifieke agent."""
         agent = self.nodes[role]
@@ -1049,9 +1072,15 @@ class PrometheusBrain:
         agent.tasks_completed += 1
         self._task_counter += 1
 
+        # RAG context injectie voor ARCHIVIST
+        enriched_task = task
+        if role == CosmicRole.ARCHIVIST:
+            print(f"   [RAG] ChromaDB query...")
+            enriched_task = self._rag_enrich(task)
+
         # Rol-specifieke brain executie (Federation v4.1)
         ai_result, exec_time, brain_status = (
-            self._execute_with_role(role, task)
+            self._execute_with_role(role, enriched_task)
         )
 
         if brain_status == "OK":
