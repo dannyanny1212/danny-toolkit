@@ -1,0 +1,659 @@
+"""
+OracleAgent — WAV-Loop (Will-Action-Verification).
+
+De overgang van waarnemer naar operator.
+Verbindt de "wil" (LLM reasoning) met de "handen"
+(KineticUnit) en de "ogen" (PixelEye) in een
+gesloten feedback-lus: Will -> Action -> Verification.
+
+Gebruik:
+    from danny_toolkit.core.oracle import OracleAgent
+    agent = OracleAgent()
+    agent.run()
+"""
+
+import asyncio
+import json
+import sys
+import time
+from pathlib import Path
+
+from ..agents.base import Agent, AgentConfig
+from ..core.utils import kleur, Kleur, clear_scherm
+
+# Root pad voor kinesis.py import
+_root = Path(__file__).parent.parent.parent
+if str(_root) not in sys.path:
+    sys.path.insert(0, str(_root))
+
+
+# ─── Constanten ───
+
+MAX_CORRECTIES = 2
+
+ORACLE_SYSTEM_PROMPT = """\
+Je bent Oracle, de uitvoerende agent van Project Omega.
+Je taak is om doelstellingen te vertalen naar concrete
+computeracties die via muis en toetsenbord worden
+uitgevoerd.
+
+Wanneer je een plan maakt, antwoord ALLEEN met een JSON
+array van stappen. Geen extra tekst, geen uitleg,
+ENKEL de JSON array:
+
+[
+  {
+    "actie": "launch_app",
+    "args": {"app_name": "notepad"},
+    "verwachting": "Notepad is geopend"
+  },
+  {
+    "actie": "type_text",
+    "args": {"text": "Hallo wereld!"},
+    "verwachting": "Tekst 'Hallo wereld!' is zichtbaar"
+  }
+]
+
+Beschikbare acties:
+- type_text: {"text": "...", "interval": 0.05}
+- click: {"x": 100, "y": 200, "button": "left", "clicks": 1}
+- press_key: {"key": "enter"}
+- hotkey: {"keys": ["ctrl", "c"]}
+- launch_app: {"app_name": "notepad"}
+- scroll: {"amount": 3, "x": null, "y": null}
+- drag_drop: {"sx": 0, "sy": 0, "ex": 100, "ey": 100}
+- screenshot: {}
+
+Regels:
+- Houd stappen klein en verifieerbaar.
+- Elke stap heeft een duidelijke verwachting.
+- Verwachtingen in het Nederlands.
+- Bij correctie: pas ALLEEN de gefaalde stap aan.
+"""
+
+# Actie dispatch: actie-type -> (methode_naam, args_mapping)
+ACTIE_DISPATCH = {
+    "type_text": lambda body, args: body.type_text(
+        args.get("text", ""),
+        args.get("interval", 0.05),
+    ),
+    "click": lambda body, args: body.click(
+        args.get("x", 0),
+        args.get("y", 0),
+        args.get("button", "left"),
+        args.get("clicks", 1),
+    ),
+    "press_key": lambda body, args: body.press_key(
+        args.get("key", "enter"),
+    ),
+    "hotkey": lambda body, args: body.hotkey(
+        *args.get("keys", []),
+    ),
+    "launch_app": lambda body, args: body.launch_app(
+        args.get("app_name", ""),
+    ),
+    "scroll": lambda body, args: body.scroll(
+        args.get("amount", 0),
+        args.get("x"),
+        args.get("y"),
+    ),
+    "drag_drop": lambda body, args: body.drag_drop(
+        args.get("sx", 0),
+        args.get("sy", 0),
+        args.get("ex", 0),
+        args.get("ey", 0),
+    ),
+    "screenshot": lambda body, args: body.take_screenshot(),
+}
+
+
+class OracleAgent(Agent):
+    """WAV-Loop operator — Will, Action, Verification.
+
+    Vertaalt doelstellingen naar computeracties via:
+    1. _plan()    -> LLM genereert stappen (JSON)
+    2. _execute() -> KineticUnit voert uit
+    3. _verify()  -> PixelEye verifieert
+    4. _correct() -> LLM herplant bij falen
+    """
+
+    def __init__(self, persist=True):
+        super().__init__(
+            naam="Oracle",
+            systeem_prompt=ORACLE_SYSTEM_PROMPT,
+            config=AgentConfig(max_iteraties=5),
+            persist=persist,
+        )
+        self._body = None
+        self._eye = None
+
+    # ─── Lazy Properties ───
+
+    @property
+    def body(self):
+        """Lazy KineticUnit — geen import overhead."""
+        if self._body is None:
+            from kinesis import KineticUnit
+            self._body = KineticUnit()
+            self.log("KineticUnit geladen", Kleur.GROEN)
+        return self._body
+
+    @property
+    def eye(self):
+        """Lazy PixelEye — geen import overhead."""
+        if self._eye is None:
+            from ..skills.pixel_eye import PixelEye
+            self._eye = PixelEye()
+            self.log("PixelEye geladen", Kleur.GROEN)
+        return self._eye
+
+    # ─── WAV-Loop Kern ───
+
+    async def _plan(self, doelstelling):
+        """LLM genereert een plan als JSON stappen.
+
+        Args:
+            doelstelling: Wat er bereikt moet worden.
+
+        Returns:
+            list van stap-dicts, elk met actie,
+            args, verwachting.
+        """
+        self.log(
+            f"Planning: {doelstelling[:60]}...",
+            Kleur.CYAAN,
+        )
+
+        berichten = [{
+            "role": "user",
+            "content": (
+                f"Maak een plan voor: {doelstelling}\n"
+                "Antwoord ALLEEN met een JSON array."
+            ),
+        }]
+
+        response = await self._call_api(berichten)
+
+        # Extraheer tekst uit response
+        tekst = ""
+        for block in response.get("content", []):
+            if isinstance(block, dict):
+                tekst += block.get("text", "")
+            elif hasattr(block, "text"):
+                tekst += block.text
+
+        # Parse JSON uit het antwoord
+        stappen = self._parse_plan_json(tekst)
+
+        if stappen:
+            self.log(
+                f"Plan: {len(stappen)} stappen",
+                Kleur.GROEN,
+            )
+        else:
+            self.log("Geen geldig plan ontvangen", Kleur.ROOD)
+
+        return stappen
+
+    def _parse_plan_json(self, tekst):
+        """Parse JSON stappen uit LLM output.
+
+        Zoekt naar een JSON array in de tekst,
+        ook als er extra tekst omheen staat.
+
+        Args:
+            tekst: Raw LLM output.
+
+        Returns:
+            list van stap-dicts of lege lijst.
+        """
+        tekst = tekst.strip()
+
+        # Probeer directe parse
+        try:
+            result = json.loads(tekst)
+            if isinstance(result, list):
+                return result
+        except json.JSONDecodeError:
+            pass
+
+        # Zoek JSON array in de tekst
+        start = tekst.find("[")
+        einde = tekst.rfind("]")
+        if start != -1 and einde != -1 and einde > start:
+            try:
+                result = json.loads(tekst[start:einde + 1])
+                if isinstance(result, list):
+                    return result
+            except json.JSONDecodeError:
+                pass
+
+        return []
+
+    def _execute(self, stap):
+        """Voer een actie-stap uit via KineticUnit.
+
+        Args:
+            stap: dict met actie, args, verwachting.
+
+        Returns:
+            str resultaat van de actie.
+        """
+        actie = stap.get("actie", "")
+        args = stap.get("args", {})
+
+        self.log(
+            f"Uitvoeren: {actie} {args}",
+            Kleur.GEEL,
+        )
+
+        handler = ACTIE_DISPATCH.get(actie)
+        if not handler:
+            fout_msg = f"Onbekende actie: {actie}"
+            self.log(fout_msg, Kleur.ROOD)
+            return fout_msg
+
+        try:
+            result = handler(self.body, args)
+            self.log(f"Resultaat: {result}", Kleur.GROEN)
+            return result
+        except Exception as e:
+            fout_msg = f"Uitvoerfout: {e}"
+            self.log(fout_msg, Kleur.ROOD)
+            return fout_msg
+
+    def _verify(self, verwachting):
+        """Verifieer via PixelEye of het resultaat klopt.
+
+        Args:
+            verwachting: Wat er zichtbaar zou moeten zijn.
+
+        Returns:
+            dict met match (bool) en analyse (str).
+        """
+        self.log(
+            f"Verificatie: {verwachting[:50]}...",
+            Kleur.MAGENTA,
+        )
+
+        result = self.eye.check_state(verwachting)
+
+        if result.get("match"):
+            self.log("Verificatie: MATCH", Kleur.GROEN)
+        else:
+            self.log(
+                "Verificatie: GEEN MATCH",
+                Kleur.ROOD,
+            )
+
+        return result
+
+    async def _correct(self, stap, verificatie):
+        """LLM herplant een gefaalde stap.
+
+        Args:
+            stap: De originele stap die faalde.
+            verificatie: Het verificatie-resultaat.
+
+        Returns:
+            Nieuwe stap-dict of None.
+        """
+        self.log("Correctie aanvragen...", Kleur.GEEL)
+
+        analyse = verificatie.get("analyse", "onbekend")
+        berichten = [{
+            "role": "user",
+            "content": (
+                f"De volgende stap is mislukt:\n"
+                f"{json.dumps(stap, ensure_ascii=False)}\n\n"
+                f"Verificatie zei: {analyse}\n\n"
+                "Geef EEN gecorrigeerde stap als JSON"
+                " object (geen array):\n"
+                '{"actie": "...", "args": {...},'
+                ' "verwachting": "..."}'
+            ),
+        }]
+
+        response = await self._call_api(berichten)
+
+        tekst = ""
+        for block in response.get("content", []):
+            if isinstance(block, dict):
+                tekst += block.get("text", "")
+            elif hasattr(block, "text"):
+                tekst += block.text
+
+        # Parse enkele stap
+        tekst = tekst.strip()
+        try:
+            result = json.loads(tekst)
+            if isinstance(result, dict):
+                return result
+        except json.JSONDecodeError:
+            pass
+
+        # Zoek JSON object in tekst
+        start = tekst.find("{")
+        einde = tekst.rfind("}")
+        if start != -1 and einde != -1 and einde > start:
+            try:
+                result = json.loads(tekst[start:einde + 1])
+                if isinstance(result, dict):
+                    return result
+            except json.JSONDecodeError:
+                pass
+
+        self.log("Geen geldige correctie", Kleur.ROOD)
+        return None
+
+    async def fulfill_will(self, doelstelling):
+        """Volledige WAV-loop: Will -> Action -> Verify.
+
+        Args:
+            doelstelling: Wat er bereikt moet worden.
+
+        Returns:
+            dict met doelstelling, stappen (met status),
+            geslaagd (bool), tijd.
+        """
+        start = time.time()
+        self.log(
+            f"WIL: {doelstelling}",
+            Kleur.FEL_CYAAN,
+        )
+
+        # 1. WILL — Plan genereren
+        stappen = await self._plan(doelstelling)
+        if not stappen:
+            return {
+                "doelstelling": doelstelling,
+                "stappen": [],
+                "geslaagd": False,
+                "tijd": time.time() - start,
+                "reden": "Geen plan gegenereerd",
+            }
+
+        resultaten = []
+
+        # 2. ACTION + VERIFICATION per stap
+        for i, stap in enumerate(stappen):
+            stap_nr = i + 1
+            totaal = len(stappen)
+            self.log(
+                f"Stap {stap_nr}/{totaal}:"
+                f" {stap.get('actie', '?')}",
+                Kleur.FEL_GEEL,
+            )
+
+            correcties = 0
+            huidige_stap = stap
+
+            while correcties <= MAX_CORRECTIES:
+                # Uitvoeren
+                actie_result = self._execute(huidige_stap)
+
+                # Kort wachten voor visuele feedback
+                time.sleep(1)
+
+                # Verifieer
+                verwachting = huidige_stap.get(
+                    "verwachting", ""
+                )
+                if not verwachting:
+                    # Geen verwachting = sla verificatie over
+                    resultaten.append({
+                        "stap": huidige_stap,
+                        "result": actie_result,
+                        "verificatie": None,
+                        "status": "uitgevoerd",
+                    })
+                    break
+
+                verificatie = self._verify(verwachting)
+
+                if verificatie.get("match"):
+                    resultaten.append({
+                        "stap": huidige_stap,
+                        "result": actie_result,
+                        "verificatie": verificatie,
+                        "status": "geslaagd",
+                    })
+                    break
+
+                # Niet gematcht — correctie
+                correcties += 1
+                if correcties > MAX_CORRECTIES:
+                    self.log(
+                        f"Max correcties bereikt"
+                        f" voor stap {stap_nr}",
+                        Kleur.ROOD,
+                    )
+                    resultaten.append({
+                        "stap": huidige_stap,
+                        "result": actie_result,
+                        "verificatie": verificatie,
+                        "status": "gefaald",
+                    })
+                    break
+
+                self.log(
+                    f"Correctie {correcties}/"
+                    f"{MAX_CORRECTIES}...",
+                    Kleur.GEEL,
+                )
+                nieuwe_stap = await self._correct(
+                    huidige_stap, verificatie
+                )
+                if nieuwe_stap:
+                    huidige_stap = nieuwe_stap
+                else:
+                    resultaten.append({
+                        "stap": huidige_stap,
+                        "result": actie_result,
+                        "verificatie": verificatie,
+                        "status": "gefaald",
+                    })
+                    break
+
+        elapsed = time.time() - start
+        geslaagd_count = sum(
+            1 for r in resultaten
+            if r["status"] in ("geslaagd", "uitgevoerd")
+        )
+        totaal_geslaagd = geslaagd_count == len(resultaten)
+
+        status_kleur = (
+            Kleur.FEL_GROEN if totaal_geslaagd
+            else Kleur.FEL_ROOD
+        )
+        self.log(
+            f"WAV-Loop voltooid:"
+            f" {geslaagd_count}/{len(resultaten)}"
+            f" stappen OK ({elapsed:.1f}s)",
+            status_kleur,
+        )
+
+        # Onthoud resultaat
+        self.remember(
+            f"Doelstelling '{doelstelling[:40]}...':"
+            f" {'geslaagd' if totaal_geslaagd else 'gefaald'}"
+            f" ({geslaagd_count}/{len(resultaten)} stappen)",
+            categorie="wav_loop",
+        )
+        self._sla_state_op()
+
+        return {
+            "doelstelling": doelstelling,
+            "stappen": resultaten,
+            "geslaagd": totaal_geslaagd,
+            "tijd": elapsed,
+        }
+
+    # ─── Interactieve CLI ───
+
+    def run(self):
+        """Start de interactieve Oracle Agent CLI."""
+        clear_scherm()
+        print(kleur("""
++===============================================+
+|                                               |
+|     O R A C L E   A G E N T                   |
+|                                               |
+|     WAV-Loop: Will -> Action -> Verify        |
+|                                               |
++===============================================+
+        """, Kleur.FEL_CYAAN))
+
+        print(kleur(
+            f"  Provider: {self.provider.value}"
+            f" ({self.model})",
+            Kleur.DIM,
+        ))
+        print()
+
+        print(kleur("COMMANDO'S:", Kleur.GEEL))
+        print("  wil <doel>  - Voer doelstelling uit"
+              " (WAV-loop)")
+        print("  plan <doel> - Toon plan zonder"
+              " uitvoering")
+        print("  status      - Toon agent status")
+        print("  ogen        - Screenshot + analyse")
+        print("  stop        - Terug naar launcher")
+
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+        try:
+            while True:
+                try:
+                    cmd = input(kleur(
+                        "\n[ORACLE] > ",
+                        Kleur.FEL_CYAAN,
+                    )).strip()
+                    cmd_lower = cmd.lower()
+
+                    if not cmd_lower:
+                        continue
+
+                    if cmd_lower in ("stop", "exit", "quit"):
+                        break
+
+                    elif cmd_lower.startswith("wil "):
+                        doel = cmd[4:].strip()
+                        if doel:
+                            result = loop.run_until_complete(
+                                self.fulfill_will(doel)
+                            )
+                            self._toon_resultaat(result)
+                        else:
+                            print("  Geef een doelstelling"
+                                  " op.")
+
+                    elif cmd_lower.startswith("plan "):
+                        doel = cmd[5:].strip()
+                        if doel:
+                            stappen = (
+                                loop.run_until_complete(
+                                    self._plan(doel)
+                                )
+                            )
+                            self._toon_plan(stappen)
+                        else:
+                            print("  Geef een doelstelling"
+                                  " op.")
+
+                    elif cmd_lower == "status":
+                        self.toon_status()
+
+                    elif cmd_lower == "ogen":
+                        vraag = input(
+                            "  Vraag (optioneel): "
+                        ).strip()
+                        result = self.eye.analyze_screen(
+                            vraag or None
+                        )
+                        if result.get("analyse"):
+                            print(f"\n{result['analyse']}")
+
+                    else:
+                        print(
+                            f"  Onbekend commando:"
+                            f" {cmd}"
+                        )
+
+                except (EOFError, KeyboardInterrupt):
+                    break
+        finally:
+            loop.close()
+
+        self._sla_state_op()
+        input("\n  Druk op Enter...")
+
+    def _toon_plan(self, stappen):
+        """Toon een plan in leesbaar formaat."""
+        if not stappen:
+            print(kleur(
+                "  Geen plan gegenereerd.",
+                Kleur.ROOD,
+            ))
+            return
+
+        print(kleur(
+            f"\n  PLAN ({len(stappen)} stappen):",
+            Kleur.FEL_GEEL,
+        ))
+        print(kleur("  " + "-" * 40, Kleur.DIM))
+
+        for i, stap in enumerate(stappen, 1):
+            actie = stap.get("actie", "?")
+            args = stap.get("args", {})
+            verwachting = stap.get("verwachting", "-")
+
+            print(kleur(
+                f"\n  [{i}] {actie}",
+                Kleur.FEL_CYAAN,
+            ))
+            print(kleur(
+                f"      Args: {json.dumps(args, ensure_ascii=False)}",
+                Kleur.DIM,
+            ))
+            print(kleur(
+                f"      Verwacht: {verwachting}",
+                Kleur.GEEL,
+            ))
+
+    def _toon_resultaat(self, result):
+        """Toon WAV-loop resultaat."""
+        geslaagd = result.get("geslaagd", False)
+        stappen = result.get("stappen", [])
+        tijd = result.get("tijd", 0)
+
+        status = "GESLAAGD" if geslaagd else "GEFAALD"
+        status_kleur = (
+            Kleur.FEL_GROEN if geslaagd
+            else Kleur.FEL_ROOD
+        )
+
+        print(kleur(
+            f"\n  WAV-LOOP: {status} ({tijd:.1f}s)",
+            status_kleur,
+        ))
+        print(kleur("  " + "=" * 40, Kleur.DIM))
+
+        for i, s in enumerate(stappen, 1):
+            stap = s.get("stap", {})
+            stap_status = s.get("status", "?")
+
+            if stap_status in ("geslaagd", "uitgevoerd"):
+                icoon = kleur("[OK]", Kleur.GROEN)
+            else:
+                icoon = kleur("[X]", Kleur.ROOD)
+
+            print(
+                f"  {icoon} Stap {i}:"
+                f" {stap.get('actie', '?')}"
+                f" -> {stap_status}"
+            )
+
+
+__all__ = ["OracleAgent"]

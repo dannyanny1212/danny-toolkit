@@ -905,6 +905,21 @@ class ProjectMapApp:
 
 
 # =============================================================================
+# ORACLE AGENT WRAPPER
+# =============================================================================
+
+class OracleAgentApp:
+    """Wrapper voor Oracle Agent in launcher."""
+
+    def run(self):
+        """Start de Oracle Agent interactief."""
+        from .core.oracle import OracleAgent
+
+        agent = OracleAgent()
+        agent.run()
+
+
+# =============================================================================
 # PULSE PROTOCOL WRAPPER
 # =============================================================================
 
@@ -1234,6 +1249,7 @@ class Launcher:
         "52": ("Heartbeat Daemon", HeartbeatApp, "daemon"),
         "53": ("Pixel Eye", PixelEyeApp, "brain"),
         "54": ("Project Map", ProjectMapApp, "brain"),
+        "55": ("Oracle Agent", OracleAgentApp, "brain"),
     }
 
     # Sneltoetsen
@@ -1292,6 +1308,7 @@ class Launcher:
         "hb": "52", # Heartbeat Daemon
         "pe": "53", # Pixel Eye
         "pm": "54", # Project Map
+        "oa": "55", # Oracle Agent
     }
 
     def __init__(self):
@@ -1395,6 +1412,7 @@ class Launcher:
             "45": "CONSTRUCT",
             "53": "VISION",
             "54": "CARTOGRAFIE",
+            "55": "WAV-LOOP",
         }
         OMEGA_PROTOCOLS = {
             "41": "CORE",
@@ -1456,7 +1474,7 @@ class Launcher:
             nexus_tbl,
             title="[bold cyan]NEXUS PRIME[/bold cyan]",
             border_style="cyan",
-            subtitle="[dim]10 systems[/dim]",
+            subtitle="[dim]11 systems[/dim]",
         )
 
         # Omega Protocols tabel
