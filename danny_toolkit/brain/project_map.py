@@ -31,6 +31,7 @@ CLUSTER_QUERIES = {
     "emotie": "emotie mood gevoel limbisch",
     "beveiliging": "governor bewaker bescherming",
     "kennis": "RAG embeddings zoeken knowledge",
+    "actie": "kinetic muis toetsenbord klik automatie uitvoeren",
 }
 
 
