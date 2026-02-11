@@ -342,6 +342,7 @@ class SanctuaryApp:
         print("  biology     - Toon biologische analogie")
         print("  goodnight   - Volledige slaap sequence")
         print("  goodmorning - Volledige wakker sequence")
+        print("  tools       - Toon tool betrouwbaarheid")
         print("  stop        - Terug naar launcher")
 
         while True:
@@ -379,6 +380,10 @@ class SanctuaryApp:
                 elif cmd == "goodmorning":
                     print(
                         sanctuary.render_awakening_dashboard()
+                    )
+                elif cmd == "tools":
+                    print(
+                        sanctuary.render_tool_gezondheid()
                     )
                 else:
                     print(f"  Onbekend commando: {cmd}")

@@ -12,6 +12,7 @@ import os
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os.environ["TQDM_DISABLE"] = "True"
 
+import json
 import time
 from pathlib import Path
 from typing import List
@@ -42,6 +43,8 @@ COLLECTION_NAME = "danny_knowledge"
 CHUNK_SIZE = 400
 CHUNK_OVERLAP = 50
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+
+REPAIR_LOG_PAD = _root / "data" / "repair_logs.json"
 
 SUPPORTED_EXT = {
     ".txt", ".md", ".py", ".json", ".csv",
@@ -449,6 +452,129 @@ class TheLibrarian:
             ],
         )
         return results
+
+
+    # ─── Lessons Learned ───
+
+    def ingest_repair_logs(self):
+        """Ingest repair logs als Lessons Learned."""
+        if not REPAIR_LOG_PAD.exists():
+            console.print(
+                "[yellow]Geen repair logs"
+                " gevonden.[/yellow]"
+            )
+            return
+
+        try:
+            with open(
+                REPAIR_LOG_PAD, "r",
+                encoding="utf-8",
+            ) as f:
+                data = json.load(f)
+        except (json.JSONDecodeError, IOError) as e:
+            console.print(
+                f"[red]Kan repair logs niet"
+                f" lezen: {e}[/red]"
+            )
+            return
+
+        sessies = data.get("sessies", [])
+        if not sessies:
+            console.print(
+                "[yellow]Geen sessies in"
+                " repair logs.[/yellow]"
+            )
+            return
+
+        ids = []
+        documents = []
+        metadatas = []
+
+        for si, sessie in enumerate(sessies):
+            entries = sessie.get("entries", [])
+            for ei, entry in enumerate(entries):
+                doc_id = (
+                    f"repair_log::"
+                    f"s{si}_e{ei}"
+                )
+
+                # Bouw leesbare tekst
+                actie = entry.get("stap", {}).get(
+                    "actie", "onbekend"
+                )
+                fout = entry.get(
+                    "fout", "onbekend"
+                )
+                diagnose = entry.get(
+                    "diagnose", "onbekend"
+                )
+                fix = entry.get(
+                    "fix", "geen fix"
+                )
+                geslaagd = entry.get(
+                    "geslaagd", False
+                )
+
+                tekst = (
+                    f"Repair log: actie"
+                    f" '{actie}' faalde."
+                    f" Fout: {fout}."
+                    f" Diagnose: {diagnose}."
+                    f" Fix: {fix}."
+                    f" Resultaat:"
+                    f" {'geslaagd' if geslaagd else 'gefaald'}."
+                )
+
+                ids.append(doc_id)
+                documents.append(tekst)
+                metadatas.append({
+                    "bron": "repair_logs",
+                    "pad": "repair_logs.json",
+                    "categorie":
+                        "lessons_learned",
+                })
+
+        if ids:
+            self.collection.upsert(
+                ids=ids,
+                documents=documents,
+                metadatas=metadatas,
+            )
+            console.print(
+                f"[green]{len(ids)} repair"
+                f" entries ingested als"
+                f" Lessons Learned.[/green]"
+            )
+
+    def query_met_lessen(
+        self, vraag, n_results=5, n_lessen=3
+    ):
+        """Doorzoek knowledge base + lessons learned."""
+        resultaten = self.query(vraag, n_results)
+
+        try:
+            lessen = self.collection.query(
+                query_texts=[vraag],
+                n_results=n_lessen,
+                where={
+                    "categorie": "lessons_learned",
+                },
+                include=[
+                    "documents", "metadatas",
+                    "distances",
+                ],
+            )
+        except Exception:
+            lessen = {
+                "documents": [[]],
+                "metadatas": [[]],
+                "distances": [[]],
+            }
+
+        return {
+            "resultaten": resultaten,
+            "lessen": lessen,
+        }
 
 
 __all__ = ["TheLibrarian"]

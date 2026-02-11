@@ -436,6 +436,114 @@ class SanctuaryDashboard:
 
         return "\n".join(lines)
 
+    def render_tool_gezondheid(self) -> str:
+        """Render tool betrouwbaarheid en repair stats."""
+        lines = []
+        lines.append("")
+        lines.append("=" * 78)
+        lines.append(
+            "  TOOL GEZONDHEID & REPAIR HISTORY"
+        )
+        lines.append("=" * 78)
+        lines.append("")
+
+        # 1. Tool stats uit tool_stats.json
+        tool_stats_pad = (
+            Config.DATA_DIR / "tools"
+            / "tool_stats.json"
+        )
+        if tool_stats_pad.exists():
+            data = self._load_json(tool_stats_pad)
+            if data and "metrics" in data:
+                metrics = data["metrics"]
+                lines.append(
+                    "  TOOL               CALLS"
+                    "  SUCCES%  GEM.TIJD  STATUS"
+                )
+                lines.append("  " + "-" * 60)
+
+                for naam, m in metrics.items():
+                    calls = m.get(
+                        "totaal_calls", 0
+                    )
+                    if calls == 0:
+                        continue
+                    rate = m.get(
+                        "success_rate", "0.0%"
+                    )
+                    gem = m.get(
+                        "gemiddelde_tijd", "N/A"
+                    )
+
+                    # Parse percentage
+                    try:
+                        pct = float(
+                            rate.replace("%", "")
+                        )
+                    except (ValueError, AttributeError):
+                        pct = 0
+
+                    if pct >= 90:
+                        status = "GEZOND"
+                    elif pct >= 70:
+                        status = "MATIG"
+                    else:
+                        status = "KRITIEK"
+
+                    lines.append(
+                        f"  {naam:18} {calls:>5}"
+                        f"  {rate:>7}"
+                        f"  {gem:>8}  {status}"
+                    )
+
+                lines.append("")
+        else:
+            lines.append(
+                "  [Geen tool_stats.json"
+                " beschikbaar]"
+            )
+            lines.append("")
+
+        # 2. Repair history samenvatting
+        repair_pad = (
+            Config.DATA_DIR / "repair_logs.json"
+        )
+        if repair_pad.exists():
+            repair_data = self._load_json(
+                repair_pad
+            )
+            if repair_data:
+                sessies = repair_data.get(
+                    "sessies", []
+                )
+                totaal = sum(
+                    len(s.get("entries", []))
+                    for s in sessies
+                )
+                geslaagd = sum(
+                    1 for s in sessies
+                    for e in s.get("entries", [])
+                    if e.get("geslaagd")
+                )
+                lines.append(
+                    f"  REPAIR HISTORY:"
+                    f" {totaal} correcties"
+                    f" ({geslaagd} geslaagd,"
+                    f" {totaal - geslaagd}"
+                    f" gefaald)"
+                )
+                lines.append(
+                    f"  Sessies: {len(sessies)}"
+                )
+        else:
+            lines.append(
+                "  REPAIR HISTORY:"
+                " Geen reparaties uitgevoerd"
+            )
+
+        lines.append("")
+        return "\n".join(lines)
+
     def render_logs(self, count: int = 5) -> str:
         """Render laatste logs."""
         lines = []
@@ -544,6 +652,7 @@ class SanctuaryDashboard:
 
         output.append(self.render_entity_status())
         output.append(self.render_deep_metrics())
+        output.append(self.render_tool_gezondheid())
 
         # Background processes
         output.append("=" * 78)

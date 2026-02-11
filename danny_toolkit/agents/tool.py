@@ -221,7 +221,10 @@ class ToolHistoryEntry:
     parameters: dict
     result: ToolResult
     agent_naam: Optional[str] = None
-    timestamp: datetime = field(default_factory=datetime.now)
+    metadata: dict = field(default_factory=dict)
+    timestamp: datetime = field(
+        default_factory=datetime.now
+    )
 
     def to_dict(self) -> dict:
         """Converteer naar dictionary."""
@@ -229,10 +232,13 @@ class ToolHistoryEntry:
             "tool": self.tool_naam,
             "parameters": self.parameters,
             "success": self.result.success,
-            "execution_time": self.result.execution_time,
+            "execution_time":
+                self.result.execution_time,
             "cached": self.result.cached,
             "agent": self.agent_naam,
-            "timestamp": self.timestamp.isoformat(),
+            "metadata": self.metadata,
+            "timestamp":
+                self.timestamp.isoformat(),
         }
 
 
@@ -269,6 +275,34 @@ class ToolHistory:
         """Haal gefaalde calls op."""
         failures = [e for e in self.entries if not e.result.success]
         return list(reversed(failures[-count:]))
+
+    def get_repair_tagged(self, count=100):
+        """Haal repair-tagged entries op."""
+        tagged = [
+            e for e in self.entries
+            if e.metadata.get("repair_triggered")
+        ]
+        return list(reversed(tagged[-count:]))
+
+    def repair_stats(self):
+        """Statistieken over repair-tagged calls."""
+        tagged = [
+            e for e in self.entries
+            if e.metadata.get("repair_triggered")
+        ]
+        if not tagged:
+            return {
+                "totaal": 0, "geslaagd": 0,
+                "gefaald": 0,
+            }
+        geslaagd = sum(
+            1 for e in tagged if e.result.success
+        )
+        return {
+            "totaal": len(tagged),
+            "geslaagd": geslaagd,
+            "gefaald": len(tagged) - geslaagd,
+        }
 
     def stats(self) -> dict:
         """Geef history statistieken."""
@@ -547,7 +581,8 @@ class ToolRegistry:
         params: dict,
         agent_naam: str = None,
         skip_cache: bool = False,
-        skip_validation: bool = False
+        skip_validation: bool = False,
+        metadata: dict = None
     ) -> Union[str, ToolResult]:
         """
         Voer een tool uit met alle features.
@@ -599,7 +634,7 @@ class ToolRegistry:
                     data=None,
                     error=f"Validatie error: {error_msg}"
                 )
-                self._record_execution(tool_naam, params, error_result, agent_naam)
+                self._record_execution(tool_naam, params, error_result, agent_naam, metadata)
                 return str(error_result)
 
         # Check cache
@@ -614,7 +649,7 @@ class ToolRegistry:
                     cached=True,
                     execution_time=time.time() - start_time
                 )
-                self._record_execution(tool_naam, params, result, agent_naam)
+                self._record_execution(tool_naam, params, result, agent_naam, metadata)
                 return str(result)
 
         # Pre-execute hook
@@ -661,7 +696,7 @@ class ToolRegistry:
                 # Trigger success hooks
                 self._trigger_hooks(self.on_success, tool, params, result)
 
-                self._record_execution(tool_naam, params, result, agent_naam)
+                self._record_execution(tool_naam, params, result, agent_naam, metadata)
                 return str(result)
 
             except asyncio.TimeoutError:
@@ -687,7 +722,7 @@ class ToolRegistry:
         # Trigger error hooks
         self._trigger_hooks(self.on_error, tool, params, error_result)
 
-        self._record_execution(tool_naam, params, error_result, agent_naam)
+        self._record_execution(tool_naam, params, error_result, agent_naam, metadata)
         return f"Tool error: {last_error}"
 
     def _record_execution(
@@ -695,7 +730,8 @@ class ToolRegistry:
         tool_naam: str,
         params: dict,
         result: ToolResult,
-        agent_naam: str = None
+        agent_naam: str = None,
+        metadata: dict = None
     ):
         """Registreer een tool execution."""
         # Update metrics
@@ -712,7 +748,8 @@ class ToolRegistry:
                 tool_naam=tool_naam,
                 parameters=params,
                 result=result,
-                agent_naam=agent_naam
+                agent_naam=agent_naam,
+                metadata=metadata or {},
             )
             self.history.add(entry)
 

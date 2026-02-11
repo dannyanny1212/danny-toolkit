@@ -20,6 +20,7 @@ from datetime import datetime
 from pathlib import Path
 
 from ..agents.base import Agent, AgentConfig
+from ..core.config import Config
 from ..core.utils import kleur, Kleur, clear_scherm
 
 # Root pad voor kinesis.py import
@@ -31,6 +32,9 @@ if str(_root) not in sys.path:
 # ─── Constanten ───
 
 MAX_CORRECTIES = 2
+REPAIR_LOG_PAD = (
+    Config.DATA_DIR / "repair_logs.json"
+)
 
 ORACLE_SYSTEM_PROMPT = """\
 Je bent Oracle, de uitvoerende agent van Project Omega.
@@ -536,6 +540,52 @@ class OracleAgent(Agent):
 
         return resultaten
 
+    def _exporteer_repair_log(self):
+        """Exporteer repair_history naar bestand."""
+        if not self.repair_history:
+            return
+
+        pad = REPAIR_LOG_PAD
+
+        # Lees bestaande data
+        bestaand = {"sessies": []}
+        if pad.exists():
+            try:
+                with open(
+                    pad, "r", encoding="utf-8"
+                ) as f:
+                    bestaand = json.load(f)
+            except (json.JSONDecodeError, IOError):
+                pass
+
+        # Voeg nieuwe sessie toe
+        bestaand["sessies"].append({
+            "timestamp":
+                datetime.now().isoformat(),
+            "entries": self.repair_history,
+        })
+
+        # Schrijf terug
+        try:
+            with open(
+                pad, "w", encoding="utf-8"
+            ) as f:
+                json.dump(
+                    bestaand, f, indent=2,
+                    ensure_ascii=False,
+                )
+            self.log(
+                f"Repair log:"
+                f" {len(self.repair_history)}"
+                f" entries opgeslagen",
+                Kleur.GROEN,
+            )
+        except IOError as e:
+            self.log(
+                f"Repair log export mislukt: {e}",
+                Kleur.ROOD,
+            )
+
     def _wrap_resultaten(
         self, doelstelling, resultaten, start
     ):
@@ -591,6 +641,7 @@ class OracleAgent(Agent):
                 categorie="repair_history",
             )
         self._sla_state_op()
+        self._exporteer_repair_log()
 
         return {
             "doelstelling": doelstelling,
@@ -829,6 +880,7 @@ class OracleAgent(Agent):
             loop.close()
 
         self._sla_state_op()
+        self._exporteer_repair_log()
         input("\n  Druk op Enter...")
 
     def _toon_plan(self, stappen):
