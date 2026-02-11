@@ -1,6 +1,6 @@
 """
 Centrale configuratie voor Danny Toolkit.
-Versie 2.0 - Met thema's, talen en validatie.
+Versie 4.0 - COSMIC_OMEGA_V4. Met thema's, talen en validatie.
 """
 
 import os
@@ -242,7 +242,8 @@ class Config:
     OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
     # Models
-    CLAUDE_MODEL = "claude-sonnet-4-20250514"
+    CLAUDE_MODEL = "claude-opus-4-3-20250514"
+    MAX_TOKENS = 10000
     VOYAGE_MODEL = "voyage-3"
     GROQ_MODEL = "llama-3.3-70b-versatile"
 

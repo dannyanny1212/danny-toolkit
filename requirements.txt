@@ -1,3 +1,38 @@
+# Danny Toolkit v4.0 - COSMIC_OMEGA_V4
+# Core AI providers
 anthropic>=0.18.0
-voyageai>=0.2.0
 groq>=1.0.0
+voyageai>=0.2.0
+
+# Terminal UI
+rich>=13.0.0
+
+# Vector database & RAG
+chromadb>=0.4.0
+
+# Vision (Ollama lokaal)
+ollama>=0.1.0
+
+# System monitoring
+psutil>=5.9.0
+
+# Data & numeriek
+numpy>=1.24.0
+pandas>=2.0.0
+
+# Web UI
+streamlit>=1.30.0
+
+# Visualisatie
+matplotlib>=3.7.0
+tqdm>=4.65.0
+
+# OS automatisering (optioneel)
+pyautogui>=0.9.54
+
+# Spraak (optioneel)
+pyttsx3>=2.90
+SpeechRecognition>=3.10.0
+
+# HTTP
+requests>=2.31.0
