@@ -19,6 +19,8 @@ Geen nieuwe dependencies. Gebruikt stdlib + bestaande API's.
 """
 
 import json
+import shutil
+import sqlite3
 import subprocess
 import threading
 import time
@@ -40,6 +42,7 @@ class OperationType(Enum):
     OPTIMIZE = "optimize"
     SCRIPT = "script"
     NURTURE = "nurture"
+    RAG_CLEANUP = "rag_cleanup"
 
 
 class Beslissing(Enum):
@@ -88,7 +91,12 @@ class WillProtocol:
         OperationType.OPTIMIZE: 7200,
         OperationType.SCRIPT: 3600,
         OperationType.NURTURE: 900,
+        OperationType.RAG_CLEANUP: 86400,
     }
+
+    RAG_DB_PAD = (
+        Config.BASE_DIR / "data" / "rag" / "chromadb"
+    )
 
     MAX_OPERATIES_PER_SESSIE = 50
 
@@ -311,7 +319,23 @@ class WillProtocol:
             except (AttributeError, TypeError):
                 pass
 
-        # 7. Nacht? -> Extra backup
+        # 7. ChromaDB wees-mappen?
+        try:
+            wezen = self._scan_rag_wezen()
+            if wezen:
+                kandidaten.append(WilOperatie(
+                    type=OperationType.RAG_CLEANUP,
+                    reden=(
+                        f"{len(wezen)} wees-mappen"
+                        " in ChromaDB"
+                    ),
+                    prioriteit=2,
+                    data={"wezen": wezen},
+                ))
+        except Exception:
+            pass
+
+        # 8. Nacht? -> Extra backup
         uur = datetime.now().hour
         if uur >= 23 or uur <= 5:
             laatste_nacht = self._laatste_uitvoer.get(
@@ -380,6 +404,8 @@ class WillProtocol:
                 OperationType.OPTIMIZE: self._exec_optimize,
                 OperationType.SCRIPT: self._exec_script,
                 OperationType.NURTURE: self._exec_nurture,
+                OperationType.RAG_CLEANUP:
+                    self._exec_rag_cleanup,
             }
 
             executor = executors.get(operatie.type)
@@ -444,15 +470,33 @@ class WillProtocol:
             self._bewaar_log()
             return log
 
-    def _verificeer(self, operatie, details):
-        """Visuele verificatie na executie.
+    # Operaties met filesystem verificatie
+    FILESYSTEM_VERIFICATIES = {
+        OperationType.RAG_CLEANUP:
+            "_verificeer_rag_cleanup",
+    }
 
-        Controleert via PixelEye of de operatie visueel
-        het verwachte resultaat heeft opgeleverd.
+    def _verificeer(self, operatie, details):
+        """Verificatie na executie (filesystem of visueel).
+
+        Controleert of de operatie het verwachte resultaat
+        heeft opgeleverd. Filesystem checks gaan voor op
+        visuele checks via PixelEye.
 
         Returns:
-            None als niet visueel, "OK" of "AFWIJKING".
+            None als geen check, "OK" of "AFWIJKING".
         """
+        # 1. Filesystem verificatie (Oracle kijkt)
+        fs_methode = self.FILESYSTEM_VERIFICATIES.get(
+            operatie.type
+        )
+        if fs_methode is not None:
+            try:
+                return getattr(self, fs_methode)(operatie)
+            except Exception:
+                return None
+
+        # 2. Visuele verificatie (PixelEye kijkt)
         verwachting = self.VISUELE_VERWACHTINGEN.get(
             operatie.type
         )
@@ -608,6 +652,94 @@ class WillProtocol:
             return f"Gevoed: {nutrient} +5.0"
         except (AttributeError, TypeError) as e:
             return f"Nurture fout: {e}"
+
+    def _scan_rag_wezen(self) -> List[str]:
+        """Detecteer wees-mappen in ChromaDB opslag.
+
+        Vergelijkt UUID-mappen op schijf met actieve
+        segments in de SQLite metadata.
+
+        Returns:
+            Lijst van wees UUID-namen.
+        """
+        db_root = self.RAG_DB_PAD
+        sqlite_pad = db_root / "chroma.sqlite3"
+
+        if not sqlite_pad.exists():
+            return []
+
+        # Actieve segment UUIDs uit SQLite
+        conn = sqlite3.connect(str(sqlite_pad))
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT id FROM segments")
+            actieve_ids = {row[0] for row in cur.fetchall()}
+        finally:
+            conn.close()
+
+        # UUID-mappen op schijf vs actieve segments
+        wezen = []
+        for d in db_root.iterdir():
+            if (
+                d.is_dir()
+                and len(d.name) > 30
+                and d.name not in actieve_ids
+            ):
+                wezen.append(d.name)
+
+        return wezen
+
+    def _exec_rag_cleanup(
+        self, operatie: WilOperatie
+    ) -> str:
+        """Verwijder wees-mappen uit ChromaDB opslag.
+
+        Alleen mappen die NIET in de actieve SQLite
+        segments staan worden verwijderd.
+        """
+        db_root = self.RAG_DB_PAD
+        wezen = operatie.data.get("wezen", [])
+
+        if not wezen:
+            return "Geen wees-mappen opgegeven"
+
+        verwijderd = 0
+        vergrendeld = 0
+
+        for naam in wezen:
+            pad = db_root / naam
+            if not pad.exists():
+                continue
+            try:
+                shutil.rmtree(str(pad))
+                verwijderd += 1
+            except (PermissionError, OSError):
+                vergrendeld += 1
+
+        return (
+            f"RAG cleanup: {verwijderd} verwijderd"
+            f", {vergrendeld} vergrendeld"
+        )
+
+    def _verificeer_rag_cleanup(
+        self, operatie
+    ) -> str:
+        """Filesystem verificatie na RAG cleanup.
+
+        Telt UUID-mappen op schijf en vergelijkt met
+        actieve segments. Closed-loop: de Oracle kijkt
+        naar de realiteit.
+
+        Returns:
+            "OK" of "AFWIJKING".
+        """
+        try:
+            rest_wezen = self._scan_rag_wezen()
+            if not rest_wezen:
+                return "OK"
+            return "AFWIJKING"
+        except Exception:
+            return None
 
     def verifieer_intentie(
         self, actie_fn, beschrijving, timeout=5
