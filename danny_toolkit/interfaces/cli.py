@@ -16,8 +16,14 @@ Features:
 Gebruik: python danny_toolkit/interfaces/cli.py
 """
 
-import sys
 import os
+
+# Forceer TQDM en HuggingFace om stil te zijn
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["TQDM_DISABLE"] = "True"
+os.environ["HF_HUB_DISABLE_PROGRESS_BARS"] = "1"
+
+import sys
 import io
 import asyncio
 import time
@@ -37,6 +43,9 @@ import logging
 
 warnings.filterwarnings("ignore")
 logging.getLogger("transformers").setLevel(
+    logging.ERROR
+)
+logging.getLogger("sentence_transformers").setLevel(
     logging.ERROR
 )
 

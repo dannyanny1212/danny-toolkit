@@ -369,6 +369,7 @@ class MemexAgent(BrainAgent):
                 SentenceTransformerEmbeddingFunction,
             )
             from pathlib import Path
+            import io as _io
 
             chroma_dir = str(
                 Path(__file__).parent
@@ -377,11 +378,21 @@ class MemexAgent(BrainAgent):
             client = chromadb.PersistentClient(
                 path=chroma_dir
             )
-            embed_fn = (
-                SentenceTransformerEmbeddingFunction(
-                    model_name="all-MiniLM-L6-v2"
+            # Suppress BertModel LOAD REPORT spam
+            _old_out = sys.stdout
+            _old_err = sys.stderr
+            sys.stdout = _io.StringIO()
+            sys.stderr = _io.StringIO()
+            try:
+                embed_fn = (
+                    SentenceTransformerEmbeddingFunction(
+                        model_name="all-MiniLM-L6-v2"
+                    )
                 )
-            )
+                embed_fn(["warmup"])
+            finally:
+                sys.stdout = _old_out
+                sys.stderr = _old_err
             self._collection = (
                 client.get_collection(
                     name="danny_knowledge",

@@ -95,11 +95,24 @@ class TheLibrarian:
                 pass
 
         # Embedding model (lokaal, geen API kosten)
-        self.embed_fn = (
-            SentenceTransformerEmbeddingFunction(
-                model_name=EMBEDDING_MODEL
+        # Suppress BertModel LOAD REPORT spam
+        import io as _io
+        _old_stdout = sys.stdout
+        _old_stderr = sys.stderr
+        sys.stdout = _io.StringIO()
+        sys.stderr = _io.StringIO()
+        try:
+            self.embed_fn = (
+                SentenceTransformerEmbeddingFunction(
+                    model_name=EMBEDDING_MODEL
+                )
             )
-        )
+            # Force model load (lazy load veroorzaakt
+            # spam bij eerste query)
+            self.embed_fn(["warmup"])
+        finally:
+            sys.stdout = _old_stdout
+            sys.stderr = _old_stderr
 
         # Collectie maken of laden
         self.collection = (
