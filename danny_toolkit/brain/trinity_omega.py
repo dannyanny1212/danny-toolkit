@@ -223,7 +223,7 @@ class PrometheusBrain:
             "kunst", "innovate", "design",
         ],
         CosmicRole.ORACLE: [
-            "zoek op", "search", "fetch", "scrape",
+            "zoek op", "web search", "fetch", "scrape",
             "api call", "web", "onderzoek", "explore",
             "discover", "research",
         ],
@@ -236,7 +236,8 @@ class PrometheusBrain:
             "semantic", "geheugen", "knowledge",
         ],
         CosmicRole.CHRONOS: [
-            "schedule", "cronjob", "timer", "ritme",
+            "schedule", "cronjob", "timer",
+            "dag ritme", "bio ritme",
             "planning", "agenda", "deadline",
             "wanneer", "herinnering",
         ],
@@ -296,7 +297,7 @@ class PrometheusBrain:
             "teken", "visualiseer",
         ],
         "SEARCH": [
-            "zoek op", "search", "fetch", "scrape",
+            "zoek op", "web search", "fetch", "scrape",
             "api call", "onderzoek", "explore",
             "discover", "research",
         ],
@@ -352,7 +353,8 @@ class PrometheusBrain:
             "audit", "threat",
         ],
         "SCHEDULE": [
-            "schedule", "cronjob", "timer", "ritme",
+            "schedule", "cronjob", "timer",
+            "dag ritme", "bio ritme",
             "planning", "agenda", "deadline",
             "wanneer", "herinnering",
         ],
