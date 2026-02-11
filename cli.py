@@ -12,6 +12,8 @@ Features:
   - DataFrame → ASCII bar charts
   - Syntax-highlighted code blocks
   - Markdown-formatted Weaver output
+  - Governor health status bij boot
+  - Commando's: status, boot, chain, clear
 
 Gebruik: python cli.py
 """
@@ -40,7 +42,7 @@ from rich.prompt import Prompt
 from swarm_engine import run_swarm_sync, SwarmPayload
 from swarm_core import run_chain_pipeline
 from danny_toolkit.brain.trinity_omega import (
-    PrometheusBrain,
+    PrometheusBrain, NodeTier,
 )
 
 # --- CONFIGURATIE ---
@@ -79,6 +81,119 @@ def laad_brain():
     return brain, buf.getvalue()
 
 
+# --- GOVERNOR STATUS ---
+
+def show_governor_status(brain):
+    """Toon compacte Governor health status."""
+    try:
+        report = brain.governor.get_health_report()
+        cb = report.get("circuit_breaker", {})
+        cb_status = cb.get("status", "?")
+        cb_fails = cb.get("failures", 0)
+        cb_max = cb.get("max", 3)
+        learn = report.get("learning", {})
+        cycles = learn.get("cycles_this_hour", 0)
+        max_cycles = learn.get("max_per_hour", 20)
+        state_files = report.get("state_files", {})
+        healthy = sum(
+            1 for v in state_files.values() if v
+        )
+        total_sf = len(state_files)
+
+        if cb_status == "CLOSED":
+            cb_color = "green"
+        elif cb_status == "HALF_OPEN":
+            cb_color = "yellow"
+        else:
+            cb_color = "red"
+
+        console.print(
+            f"  [dim]Governor:[/dim]"
+            f" CB [{cb_color}]{cb_status}[/{cb_color}]"
+            f" ({cb_fails}/{cb_max})"
+            f" | Learning {cycles}/{max_cycles}/h"
+            f" | State {healthy}/{total_sf} OK"
+        )
+    except Exception:
+        console.print(
+            "  [dim]Governor: status niet"
+            " beschikbaar[/dim]"
+        )
+
+
+def show_boot_log(boot_log):
+    """Toon boot log in een dim panel."""
+    if boot_log.strip():
+        console.print(Panel(
+            boot_log.strip(),
+            title="[dim]Boot Log[/dim]",
+            border_style="dim",
+        ))
+
+
+# --- COMMANDO: STATUS ---
+
+def show_status(brain):
+    """Toon Governor health + agent grid per tier."""
+    show_governor_status(brain)
+    console.print()
+
+    tier_names = {
+        NodeTier.TRINITY: "TRINITY (God Tier)",
+        NodeTier.GUARDIANS: "GUARDIANS (Root Tier)",
+        NodeTier.SPECIALISTS: "SPECIALISTS (User Tier)",
+        NodeTier.INFRASTRUCTURE: "INFRA (Infra Tier)",
+    }
+
+    for tier in NodeTier:
+        tier_nodes = [
+            node for node in brain.nodes.values()
+            if node.tier == tier
+        ]
+        if not tier_nodes:
+            continue
+
+        table = Table(
+            title=tier_names.get(tier, str(tier)),
+            border_style="cyan",
+            show_lines=False,
+        )
+        table.add_column("Agent", style="bold white")
+        table.add_column("Status", width=10)
+        table.add_column(
+            "Energy", justify="right", width=8,
+        )
+        table.add_column(
+            "Tasks", justify="right", width=6,
+        )
+
+        for node in tier_nodes:
+            if node.status == "ACTIVE":
+                s_style = "[green]ACTIVE[/green]"
+            elif node.status == "DORMANT":
+                s_style = "[dim]DORMANT[/dim]"
+            else:
+                s_style = f"[yellow]{node.status}[/yellow]"
+
+            energy = node.energy
+            if energy >= 70:
+                e_style = f"[green]{energy}%[/green]"
+            elif energy >= 30:
+                e_style = f"[yellow]{energy}%[/yellow]"
+            else:
+                e_style = f"[red]{energy}%[/red]"
+
+            table.add_row(
+                node.name,
+                s_style,
+                e_style,
+                str(node.tasks_completed),
+            )
+
+        console.print(table)
+        console.print()
+
+
 # --- VISUALISATIE FUNCTIES ---
 
 def render_metrics(media):
@@ -101,11 +216,11 @@ def render_metrics(media):
             delta_str = f"[grey62]{delta}[/grey62]"
         elif "+" in delta:
             delta_str = (
-                f"[green]{delta}[/green] [green]▲[/green]"
+                f"[green]{delta}[/green] [green]\u25b2[/green]"
             )
         elif "-" in delta:
             delta_str = (
-                f"[red]{delta}[/red] [red]▼[/red]"
+                f"[red]{delta}[/red] [red]\u25bc[/red]"
             )
         else:
             delta_str = f"[grey62]{delta}[/grey62]"
@@ -224,256 +339,337 @@ def render_media(media):
         ))
 
 
+# --- PAYLOAD RENDERING (geextraheerd) ---
+
+def render_payload(p, header=""):
+    """Render een SwarmPayload naar de console.
+
+    Args:
+        p: SwarmPayload object.
+        header: Optionele subtitle string.
+    """
+    if p.type == "code":
+        from rich.syntax import Syntax
+        syntax = Syntax(
+            str(p.content), "python",
+            theme="monokai",
+            line_numbers=True,
+        )
+        console.print(Panel(
+            syntax,
+            title=f"\U0001f4bb {p.agent}",
+            border_style="green",
+        ))
+
+    elif p.type == "metrics":
+        console.print(Panel(
+            Markdown(str(p.display_text)),
+            title=f"\U0001f4c8 {p.agent}",
+            border_style="cyan",
+        ))
+        if "media" in p.metadata:
+            render_media(p.metadata["media"])
+
+    elif p.type in (
+        "area_chart", "bar_chart", "line_chart",
+    ):
+        console.print(Panel(
+            Markdown(str(p.display_text)),
+            title=f"\U0001f4ca {p.agent}",
+            border_style="cyan",
+        ))
+        if "media" in p.metadata:
+            render_media(p.metadata["media"])
+
+    elif p.type == "image_analysis":
+        content = p.content or {}
+        img_path = ""
+        if isinstance(content, dict):
+            img_path = content.get("image_path", "")
+        console.print(Panel(
+            Markdown(str(p.display_text)),
+            title=f"\U0001f5bc {p.agent} | Vision",
+            subtitle=(
+                f"[dim]{img_path}[/dim]"
+                if img_path else None
+            ),
+            border_style="blue",
+        ))
+
+    elif p.type == "research_report":
+        console.print(Panel(
+            Markdown(str(p.display_text)),
+            title=(
+                f"\U0001f4da {p.agent}"
+                " | The Archivist"
+            ),
+            border_style="yellow",
+        ))
+        data = p.content
+        if isinstance(data, dict):
+            queries = data.get("queries", [])
+            src = data.get("sources_count", 0)
+            q_lines = "\n".join(
+                f"  \U0001f50d {q}"
+                for q in queries
+            )
+            console.print(Panel(
+                (
+                    "[bold]Zoekstrategie"
+                    ":[/bold]\n"
+                    f"{q_lines}\n\n"
+                    "[bold]Bronnen:"
+                    f"[/bold] {src}"
+                    " documenten\n"
+                    "[dim]Geverifieerd"
+                    " via CorticalStack"
+                    "[/dim]"
+                ),
+                title=(
+                    "\U0001f50d"
+                    " Onderzoeksdata"
+                ),
+                border_style="dim yellow",
+            ))
+
+    else:
+        console.print(Panel(
+            Markdown(str(p.display_text)),
+            title=f"{p.agent}",
+            subtitle=header,
+            border_style="magenta",
+        ))
+
+
+def render_chain_result(chain_result):
+    """Render chain pipeline resultaat naar console.
+
+    Args:
+        chain_result: Dict of None van run_chain_pipeline.
+    """
+    if not isinstance(chain_result, dict):
+        console.print(Panel(
+            "[red]Chain pipeline gaf geen"
+            " geldig resultaat[/red]",
+            title="CHAIN REPORT",
+            border_style="red",
+        ))
+        return
+
+    nodes = chain_result.get(
+        "nodes_betrokken", []
+    ) or []
+    keten = " \u2192 ".join(
+        str(n) for n in nodes
+    )
+    antwoord = str(
+        chain_result.get(
+            "antwoord", "Geen antwoord"
+        )
+    )
+    success = chain_result.get(
+        "success_count", 0
+    )
+    total = len(
+        chain_result.get("sub_taken", []) or []
+    )
+
+    console.print(Panel(
+        Markdown(antwoord),
+        title="CHAIN REPORT",
+        subtitle=(
+            f"[bold]{keten}[/bold]"
+            f" | {success}/{total} geslaagd"
+        ),
+        border_style="yellow",
+    ))
+
+
 # --- DE CLI LOOP ---
 
 def main():
     clear_screen()
     print_header()
 
-    brain, boot_log = laad_brain()
+    # 1.2: Exception handling brain loading
+    try:
+        brain, boot_log = laad_brain()
+    except Exception as e:
+        console.print(
+            f"[red]Fout bij laden Federation:"
+            f" {e}[/red]"
+        )
+        sys.exit(1)
+
+    # 2.1: Boot log panel
+    show_boot_log(boot_log)
+
+    # 2.4: Governor status bij boot
+    show_governor_status(brain)
+
     console.print(
         "[green]Federation ONLINE[/green]\n"
     )
     console.print(
-        "[dim]Typ 'exit' om te stoppen  |"
-        "  'chain' voor Chain of Command modus[/dim]"
+        "[dim]Commando's: exit | chain | clear"
+        " | status | boot[/dim]"
     )
 
     chain_mode = False
 
-    while True:
-        # Modus indicator
-        mode_label = (
-            "[yellow]CHAIN[/yellow]"
-            if chain_mode
-            else "[cyan]HUB&SPOKE[/cyan]"
-        )
-
-        user_input = Prompt.ask(
-            f"\n{mode_label} [bold green]>[/bold green]"
-        )
-
-        # Commando's
-        cmd = user_input.strip().lower()
-        if cmd in ("exit", "quit", "q"):
-            console.print(
-                "[red]Shutting down...[/red]"
-            )
-            break
-        if cmd == "chain":
-            chain_mode = not chain_mode
-            status = "AAN" if chain_mode else "UIT"
-            console.print(
-                f"[yellow]Chain of Command:"
-                f" {status}[/yellow]"
-            )
-            continue
-        if cmd == "clear":
-            clear_screen()
-            print_header()
-            continue
-        if not cmd:
-            continue
-
-        console.print()
-
-        # --- LIVE PIPELINE ---
-        log_content = Text()
-
-        def update_cli_log(message):
-            ts = time.strftime("%H:%M:%S")
-
-            if "Nexus" in message:
-                style = "bold cyan"
-            elif "Governor" in message:
-                style = "green"
-            elif "Weaver" in message:
-                style = "magenta"
-            elif "Chronos" in message:
-                style = "yellow"
-            elif "COMPLETE" in message:
-                style = "bold green"
-            elif "BLOCKED" in message:
-                style = "bold red"
-            else:
-                style = "white"
-
-            log_content.append(
-                f"[{ts}] {message}\n",
-                style=style,
+    # 1.1: KeyboardInterrupt handling
+    try:
+        while True:
+            mode_label = (
+                "[yellow]CHAIN[/yellow]"
+                if chain_mode
+                else "[cyan]HUB&SPOKE[/cyan]"
             )
 
-        panel = Panel(
-            log_content,
-            title="SWARM ACTIVITY",
-            border_style="blue",
-        )
+            # 1.5: EOFError handling bij Prompt.ask()
+            try:
+                user_input = Prompt.ask(
+                    f"\n{mode_label}"
+                    " [bold green]>[/bold green]"
+                )
+            except EOFError:
+                console.print(
+                    "\n[red]Shutting down"
+                    " (EOF)...[/red]"
+                )
+                break
 
-        with Live(
-            panel,
-            refresh_per_second=4,
-            console=console,
-        ) as live:
+            # Commando's
+            cmd = user_input.strip().lower()
+            if cmd in ("exit", "quit", "q"):
+                console.print(
+                    "[red]Shutting down...[/red]"
+                )
+                break
+            if cmd == "chain":
+                chain_mode = not chain_mode
+                status = (
+                    "AAN" if chain_mode else "UIT"
+                )
+                console.print(
+                    f"[yellow]Chain of Command:"
+                    f" {status}[/yellow]"
+                )
+                continue
+            if cmd == "clear":
+                clear_screen()
+                print_header()
+                continue
+            # 2.5: Commando status
+            if cmd == "status":
+                show_status(brain)
+                continue
+            # 2.6: Commando boot
+            if cmd == "boot":
+                show_boot_log(boot_log)
+                continue
+            if not cmd:
+                continue
 
-            def live_callback(msg):
-                update_cli_log(msg)
-                live.update(Panel(
-                    log_content,
-                    title="SWARM ACTIVITY",
-                    border_style="blue",
+            console.print()
+
+            # --- LIVE PIPELINE ---
+            log_content = Text()
+
+            def update_cli_log(message):
+                ts = time.strftime("%H:%M:%S")
+
+                if "Nexus" in message:
+                    style = "bold cyan"
+                elif "Governor" in message:
+                    style = "green"
+                elif "Weaver" in message:
+                    style = "magenta"
+                elif "Chronos" in message:
+                    style = "yellow"
+                elif "COMPLETE" in message:
+                    style = "bold green"
+                elif "BLOCKED" in message:
+                    style = "bold red"
+                else:
+                    style = "white"
+
+                log_content.append(
+                    f"[{ts}] {message}\n",
+                    style=style,
+                )
+
+            panel = Panel(
+                log_content,
+                title="SWARM ACTIVITY",
+                border_style="blue",
+            )
+
+            # 1.3: Exception handling executie
+            try:
+                with Live(
+                    panel,
+                    refresh_per_second=4,
+                    console=console,
+                ) as live:
+
+                    def live_callback(msg):
+                        update_cli_log(msg)
+                        live.update(Panel(
+                            log_content,
+                            title="SWARM ACTIVITY",
+                            border_style="blue",
+                        ))
+
+                    if chain_mode:
+                        chain_result = (
+                            run_chain_pipeline(
+                                user_input, brain,
+                                callback=live_callback,
+                            )
+                        )
+                    else:
+                        payloads = run_swarm_sync(
+                            user_input, brain,
+                            callback=live_callback,
+                        )
+
+            except Exception as e:
+                console.print(Panel(
+                    f"[red]Fout tijdens executie:"
+                    f" {e}[/red]",
+                    title="ERROR",
+                    border_style="red",
                 ))
+                continue
+
+            # --- OUTPUT RENDERING ---
+            console.print()
 
             if chain_mode:
-                chain_result = run_chain_pipeline(
-                    user_input, brain,
-                    callback=live_callback,
-                )
+                # 1.4 + 3.2: Chain result validatie
+                render_chain_result(chain_result)
             else:
-                payloads = run_swarm_sync(
-                    user_input, brain,
-                    callback=live_callback,
+                # 3.1: Payload rendering
+                agents = [
+                    p.agent for p in payloads
+                ]
+                assigned = " \u2192 ".join(agents)
+                status = (
+                    f"{len(payloads)} agent(s)"
+                )
+                header = (
+                    f"[bold]{assigned}[/bold]"
+                    f" | {status}"
                 )
 
-        # --- OUTPUT RENDERING ---
-        console.print()
+                for p in payloads:
+                    render_payload(p, header)
 
-        if chain_mode:
-            # Chain of Command output
-            nodes = chain_result.get(
-                "nodes_betrokken", []
-            )
-            keten = " \u2192 ".join(nodes)
-            antwoord = str(
-                chain_result.get(
-                    "antwoord", "Geen antwoord"
-                )
-            )
-            success = chain_result.get(
-                "success_count", 0
-            )
-            total = len(
-                chain_result.get("sub_taken", [])
-            )
-
-            console.print(Panel(
-                Markdown(antwoord),
-                title="CHAIN REPORT",
-                subtitle=(
-                    f"[bold]{keten}[/bold]"
-                    f" | {success}/{total} geslaagd"
-                ),
-                border_style="yellow",
-            ))
-
-        else:
-            # Swarm Engine per-payload rendering
-            agents = [p.agent for p in payloads]
-            assigned = " \u2192 ".join(agents)
-            status = f"{len(payloads)} agent(s)"
-            header = (
-                f"[bold]{assigned}[/bold]"
-                f" | {status}"
-            )
-
-            for p in payloads:
-                if p.type == "code":
-                    # Code block met syntax highlighting
-                    from rich.syntax import Syntax
-                    syntax = Syntax(
-                        str(p.content), "python",
-                        theme="monokai",
-                        line_numbers=True,
-                    )
-                    console.print(Panel(
-                        syntax,
-                        title=(
-                            f"\U0001f4bb {p.agent}"
-                        ),
-                        border_style="green",
-                    ))
-                elif p.type == "metrics":
-                    # Tekst + media tickers/charts
-                    console.print(Panel(
-                        Markdown(
-                            str(p.display_text)
-                        ),
-                        title=(
-                            f"\U0001f4c8 {p.agent}"
-                        ),
-                        border_style="cyan",
-                    ))
-                    if "media" in p.metadata:
-                        render_media(
-                            p.metadata["media"]
-                        )
-                elif p.type in (
-                    "area_chart", "bar_chart",
-                ):
-                    console.print(Panel(
-                        Markdown(
-                            str(p.display_text)
-                        ),
-                        title=(
-                            f"\U0001f4ca {p.agent}"
-                        ),
-                        border_style="cyan",
-                    ))
-                    if "media" in p.metadata:
-                        render_media(
-                            p.metadata["media"]
-                        )
-                elif p.type == "research_report":
-                    console.print(Panel(
-                        Markdown(
-                            str(p.display_text)
-                        ),
-                        title=(
-                            f"\U0001f4da {p.agent}"
-                            " | The Archivist"
-                        ),
-                        border_style="yellow",
-                    ))
-                    data = p.content
-                    if isinstance(data, dict):
-                        queries = data.get(
-                            "queries", []
-                        )
-                        src = data.get(
-                            "sources_count", 0
-                        )
-                        q_lines = "\n".join(
-                            f"  \U0001f50d {q}"
-                            for q in queries
-                        )
-                        console.print(Panel(
-                            (
-                                "[bold]Zoekstrategie"
-                                ":[/bold]\n"
-                                f"{q_lines}\n\n"
-                                "[bold]Bronnen:"
-                                f"[/bold] {src}"
-                                " documenten\n"
-                                "[dim]Geverifieerd"
-                                " via CorticalStack"
-                                "[/dim]"
-                            ),
-                            title=(
-                                "\U0001f50d"
-                                " Onderzoeksdata"
-                            ),
-                            border_style="dim yellow",
-                        ))
-                else:
-                    console.print(Panel(
-                        Markdown(
-                            str(p.display_text)
-                        ),
-                        title=(
-                            f"{p.agent}"
-                        ),
-                        subtitle=header,
-                        border_style="magenta",
-                    ))
+    except KeyboardInterrupt:
+        console.print(
+            "\n[red]Shutting down...[/red]"
+        )
 
 
 if __name__ == "__main__":
