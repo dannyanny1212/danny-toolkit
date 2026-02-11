@@ -585,7 +585,7 @@ De Agentic Loop:
 4. Verificatie: De AI controleert of het doel bereikt is
 
 Belangrijke AI modellen in 2026:
-- Claude Opus 4.5: Het krachtigste model van Anthropic
+- Claude Opus 4.3: Het krachtigste model van Anthropic
 - Claude Sonnet: Sneller en goedkoper, ideaal voor dagelijks gebruik
 - Claude Haiku: Razendsnel voor simpele taken
 

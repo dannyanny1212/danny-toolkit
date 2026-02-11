@@ -30,6 +30,71 @@ if os.name == "nt":
 # FAIL-SAFE: Duw muis naar linkerbovenhoek om te stoppen!
 pyautogui.FAILSAFE = True
 
+# ── VEILIGE APP WHITELIST ──
+
+_VEILIGE_APPS = {
+    "notepad", "calc", "calculator", "mspaint",
+    "explorer", "cmd", "powershell", "terminal",
+    "chrome", "firefox", "msedge", "brave",
+    "code", "devenv", "rider",
+    "spotify", "vlc", "obs",
+    "excel", "winword", "powerpnt", "outlook",
+    "taskmgr", "control", "mmc",
+    "slack", "discord", "teams",
+    "python", "pip", "node", "npm", "git",
+    "wt",
+}
+
+_GEVAARLIJKE_TEKENS = set(";|&`$(){}[]<>!\n\r")
+
+
+def _valideer_app_naam(app_name: str) -> str:
+    """Valideer app naam tegen injectie.
+
+    Blokkeert shell metacharacters en
+    pad-traversal pogingen.
+
+    Args:
+        app_name: Naam van de applicatie.
+
+    Returns:
+        Geschoonde app naam.
+
+    Raises:
+        ValueError: Bij ongeldige app naam.
+    """
+    if not app_name or not app_name.strip():
+        raise ValueError(
+            "App naam mag niet leeg zijn"
+        )
+
+    naam = app_name.strip()
+
+    # Blokkeer shell metacharacters
+    gevonden = _GEVAARLIJKE_TEKENS & set(naam)
+    if gevonden:
+        raise ValueError(
+            f"Ongeldige tekens in app naam: "
+            f"{gevonden}"
+        )
+
+    # Blokkeer pad-traversal
+    if ".." in naam or "/" in naam or "\\" in naam:
+        raise ValueError(
+            "Pad-traversal niet toegestaan"
+        )
+
+    # Check whitelist (alleen base naam)
+    base = naam.lower().split(".")[0]
+    if base not in _VEILIGE_APPS:
+        raise ValueError(
+            f"App '{naam}' staat niet op de "
+            f"whitelist. Toegestaan: "
+            f"{', '.join(sorted(_VEILIGE_APPS))}"
+        )
+
+    return naam
+
 
 class KineticUnit:
     """De fysieke manipulator voor LEGION."""
@@ -38,23 +103,33 @@ class KineticUnit:
         self.os_type = platform.system()
 
     def launch_app(self, app_name):
-        """Start een applicatie (Windows geoptimaliseerd)."""
-        print(f"[Kinesis] Launching: {app_name}")
+        """Start een applicatie (veilig, geen shell).
+
+        Valideert app_name tegen whitelist en
+        blokkeert shell metacharacters.
+        """
+        try:
+            naam = _valideer_app_naam(app_name)
+        except ValueError as e:
+            return f"GEBLOKKEERD: {e}"
+
+        print(f"[Kinesis] Launching: {naam}")
         try:
             if self.os_type == "Windows":
                 subprocess.Popen(
-                    f"start {app_name}", shell=True
+                    ["cmd", "/c", "start", "", naam],
+                    shell=False,
                 )
             elif self.os_type == "Darwin":
                 subprocess.Popen(
-                    ["open", "-a", app_name]
+                    ["open", "-a", naam]
                 )
             else:
-                subprocess.Popen([app_name])
+                subprocess.Popen([naam])
             time.sleep(2)
-            return f"Opened {app_name}"
+            return f"Opened {naam}"
         except Exception as e:
-            return f"Fout bij openen {app_name}: {e}"
+            return f"Fout bij openen {naam}: {e}"
 
     def type_text(self, text, interval=0.05):
         """Typt als een mens (niet in 1x plakken)."""

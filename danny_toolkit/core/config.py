@@ -1,6 +1,6 @@
 """
 Centrale configuratie voor Danny Toolkit.
-Versie 2.0 - Met thema's, talen en validatie.
+Versie 4.0 - COSMIC_OMEGA_V4. Met thema's, talen en validatie.
 """
 
 import os
@@ -244,6 +244,7 @@ class Config:
 
     # Models
     CLAUDE_MODEL = "claude-sonnet-4-20250514"
+    MAX_TOKENS = 10000
     VOYAGE_MODEL = "voyage-4-large"
     # TODO: Groq verwijderd
     GROQ_MODEL = ""

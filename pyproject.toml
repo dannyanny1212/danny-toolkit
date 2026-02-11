@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "danny-toolkit"
-version = "2.1.0+omega"
+version = "4.0.0"
 description = "Danny's persoonlijke Python toolkit met AI-agents en apps"
 readme = "README.md"
 license = {text = "MIT"}
@@ -48,7 +48,7 @@ omega = "danny_toolkit.main_omega:main"
 heartbeat = "danny_toolkit.daemon.heartbeat:main"
 
 [project.urls]
-Homepage = "https://github.com/danny/danny-toolkit"
+Homepage = "https://github.com/dannyanny1212/danny-toolkit"
 
 [tool.setuptools.packages.find]
 where = ["."]

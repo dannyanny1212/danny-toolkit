@@ -1,6 +1,6 @@
 """
 Multi-Agent Orchestrator.
-Versie 2.0 - Met task queue, workflows, monitoring, retry logic en meer!
+Versie 4.0 - COSMIC_OMEGA_V4. Met task queue, workflows, monitoring, retry logic en meer!
 """
 
 import asyncio
