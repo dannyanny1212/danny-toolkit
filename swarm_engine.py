@@ -529,17 +529,16 @@ class MemexAgent(BrainAgent):
             )
 
         # Stap 1: PLAN — genereer zoektermen
+        # Zuinige call: max 50 tokens (TPM-bespaarder)
         plan_prompt = (
-            f"Vraag: '{task}'\n"
-            "Geef 3 zoektermen voor een"
-            " vector database. Behoud de"
-            " naam uit de vraag.\n"
-            'Alleen JSON: ["term1","term2","term3"]'
+            'JSON array: 3 zoektermen voor'
+            f' "{task}"'
         )
         plan_raw, _, _ = await asyncio.to_thread(
             brain._execute_with_brain,
             plan_prompt,
             "llama-3.3-70b-versatile",
+            50,
         )
 
         try:

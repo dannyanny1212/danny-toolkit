@@ -299,6 +299,7 @@ class CentralBrain:
         use_tools: bool = True,
         max_turns: int = 5,
         model: str = None,
+        max_tokens: int = 2000,
     ) -> str:
         """
         Verwerk gebruikersverzoek via Function Calling.
@@ -308,6 +309,7 @@ class CentralBrain:
             use_tools: Of tools gebruikt mogen worden
             max_turns: Maximum aantal tool-use rondes
             model: Optioneel model override (tiered selection)
+            max_tokens: Maximum tokens in antwoord (default 2000)
 
         Returns:
             Het antwoord
@@ -347,6 +349,7 @@ Belangrijke regels:
             return self._process_groq(
                 system_message, use_tools, max_turns,
                 _model=model,
+                _max_tokens=max_tokens,
             )
         else:
             return self._process_anthropic(system_message, use_tools, max_turns)
@@ -363,6 +366,7 @@ Belangrijke regels:
         use_tools: bool,
         max_turns: int,
         _model: str = None,
+        _max_tokens: int = 2000,
     ) -> str:
         """Verwerk request via GROQ API."""
         model = _model or self.GROQ_MODEL_PRIMARY
@@ -403,7 +407,7 @@ Belangrijke regels:
                 kwargs = {
                     "model": model,
                     "messages": messages,
-                    "max_tokens": 2000,
+                    "max_tokens": _max_tokens,
                 }
                 if tools:
                     kwargs["tools"] = tools

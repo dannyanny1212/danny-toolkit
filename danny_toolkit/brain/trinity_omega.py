@@ -857,6 +857,7 @@ class PrometheusBrain:
 
     def _execute_with_brain(
         self, task: str, model: str = None,
+        max_tokens: int = 2000,
     ) -> tuple:
         """Voer taak uit via CentralBrain.
 
@@ -865,6 +866,7 @@ class PrometheusBrain:
         Args:
             task: De uit te voeren taak.
             model: Optioneel model override (tiered selection).
+            max_tokens: Maximum tokens in antwoord.
 
         Returns:
             (result, execution_time, status) tuple.
@@ -888,6 +890,7 @@ class PrometheusBrain:
             result = self.brain.process_request(
                 task, model=model,
                 use_tools=False,
+                max_tokens=max_tokens,
             )
             elapsed = time.time() - start
             # Check of resultaat een foutmelding bevat
