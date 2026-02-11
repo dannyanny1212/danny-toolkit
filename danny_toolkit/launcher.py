@@ -1642,10 +1642,8 @@ class Launcher:
 
         # API Status
         print(self._kleur_tekst("  ─── API Status ───", "categorie"))
-        groq = succes("[OK] GRATIS!") if Config.has_groq_key() else fout("[NIET INGESTELD]")
         anthropic = succes("[OK]") if Config.has_anthropic_key() else fout("[NIET INGESTELD]")
         voyage = succes("[OK]") if Config.has_voyage_key() else fout("[NIET INGESTELD]")
-        print(f"  GROQ_API_KEY:      {groq}")
         print(f"  ANTHROPIC_API_KEY: {anthropic}")
         print(f"  VOYAGE_API_KEY:    {voyage}")
         print()

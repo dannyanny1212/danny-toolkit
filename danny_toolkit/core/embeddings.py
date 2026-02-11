@@ -386,6 +386,76 @@ class CachedEmbeddingProvider(EmbeddingProvider):
 
 
 # =============================================================================
+# CHROMADB ADAPTER
+# =============================================================================
+
+
+class VoyageChromaEmbedding:
+    """ChromaDB-compatibele wrapper voor Voyage AI.
+
+    Implementeert chromadb EmbeddingFunction protocol:
+    __call__(input: Documents) -> Embeddings
+
+    """
+
+    def __init__(self):
+        import voyageai
+        self.client = voyageai.Client(
+            api_key=Config.VOYAGE_API_KEY
+        )
+        self.model = Config.VOYAGE_MODEL
+
+    def name(self):
+        """ChromaDB protocol: unieke naam."""
+        return "VoyageChromaEmbedding"
+
+    def __call__(self, input):
+        """ChromaDB embedding interface.
+
+        Retry bij rate limits met korte backoff.
+        """
+        import time as _time
+
+        for poging in range(5):
+            try:
+                result = self.client.embed(
+                    texts=input,
+                    model=self.model,
+                    input_type="document",
+                )
+                return result.embeddings
+            except Exception as e:
+                naam = type(e).__name__
+                if "RateLimit" in naam or "429" in str(e):
+                    _time.sleep(5 * (poging + 1))
+                else:
+                    raise
+        raise RuntimeError(
+            "Voyage API rate limit na 5 pogingen"
+        )
+
+
+def get_chroma_embed_fn():
+    """Geeft ChromaDB embedding functie.
+
+    Voyage AI als key beschikbaar, anders
+    SentenceTransformer fallback.
+    """
+    if Config.has_voyage_key():
+        try:
+            return VoyageChromaEmbedding()
+        except Exception:
+            pass
+    # Fallback
+    from chromadb.utils.embedding_functions import (
+        SentenceTransformerEmbeddingFunction,
+    )
+    return SentenceTransformerEmbeddingFunction(
+        model_name="all-MiniLM-L6-v2"
+    )
+
+
+# =============================================================================
 # BENCHMARKING
 # =============================================================================
 

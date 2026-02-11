@@ -133,7 +133,6 @@ class BrainProtocol:
             Kleur.FEL_BLAUW,
         ))
         keten = [
-            "Groq 70b", "Groq 8b",
             "Ollama lokaal", "Anthropic",
         ]
         for stap in keten:

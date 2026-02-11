@@ -36,11 +36,11 @@ class ProductionRAG:
         self.vector_store = VectorStore(self.embedder)
         self.processor = DocumentProcessor()
 
-        # Probeer generator (Groq gratis, of Claude)
+        # Probeer generator (Claude)
         self.generator = None
         self.generator_provider = None
 
-        if Config.has_groq_key() or Config.has_anthropic_key():
+        if Config.has_anthropic_key():
             try:
                 self.generator = Generator()
                 self.generator_provider = self.generator.provider
@@ -49,7 +49,7 @@ class ProductionRAG:
                 print(kleur(f"   [!] Generator error: {e}", Kleur.ROOD))
         else:
             print(kleur("   [!] Geen API key - alleen retrieval", Kleur.GEEL))
-            print("       Tip: set GROQ_API_KEY voor gratis AI")
+            print("       Tip: set ANTHROPIC_API_KEY")
 
         # Conversatie geheugen
         self.conversatie = []

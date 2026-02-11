@@ -63,9 +63,7 @@ class ProjectMap:
         """Met embedding functie (voor .query())."""
         if self._query_collection is None:
             import chromadb
-            from chromadb.utils.embedding_functions import (
-                SentenceTransformerEmbeddingFunction,
-            )
+            from ..core.embeddings import get_chroma_embed_fn
 
             # Suppress model load spam
             import io as _io
@@ -74,12 +72,7 @@ class ProjectMap:
             sys.stdout = _io.StringIO()
             sys.stderr = _io.StringIO()
             try:
-                embed_fn = (
-                    SentenceTransformerEmbeddingFunction(
-                        model_name=_EMBEDDING_MODEL
-                    )
-                )
-                embed_fn(["warmup"])
+                embed_fn = get_chroma_embed_fn()
             finally:
                 sys.stdout = _old_stdout
                 sys.stderr = _old_stderr

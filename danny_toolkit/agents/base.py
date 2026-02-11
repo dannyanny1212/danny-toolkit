@@ -135,16 +135,7 @@ class Agent:
 
     def _init_provider(self):
         """Initialiseer de AI provider."""
-        # Probeer Groq eerst (gratis!)
-        if Config.has_groq_key():
-            try:
-                import groq
-                self.client = groq.Groq(api_key=Config.GROQ_API_KEY)
-                self.provider = AgentProvider.GROQ
-                self.model = Config.GROQ_MODEL
-                return
-            except Exception:
-                pass
+        # TODO: Groq verwijderd — direct naar Claude
 
         # Probeer Claude
         if Config.has_anthropic_key():
@@ -316,60 +307,7 @@ class Agent:
                         }
                     }
 
-                elif self.provider == AgentProvider.GROQ:
-                    # Groq heeft geen native tool support, simuleer het
-                    formatted_messages = [
-                        {"role": "system", "content": system_prompt}
-                    ]
-
-                    for msg in messages:
-                        if msg["role"] == "user":
-                            if isinstance(msg["content"], list):
-                                # Tool results
-                                content = ""
-                                for item in msg["content"]:
-                                    if item.get("type") == "tool_result":
-                                        content += f"\nTool result: {item['content']}"
-                                formatted_messages.append({
-                                    "role": "user",
-                                    "content": content
-                                })
-                            else:
-                                formatted_messages.append({
-                                    "role": "user",
-                                    "content": msg["content"]
-                                })
-                        elif msg["role"] == "assistant":
-                            if isinstance(msg["content"], list):
-                                text = ""
-                                for item in msg["content"]:
-                                    if item.get("type") == "text":
-                                        text += item.get("text", "")
-                                if text:
-                                    formatted_messages.append({
-                                        "role": "assistant",
-                                        "content": text
-                                    })
-                            else:
-                                formatted_messages.append(msg)
-
-                    response = self.client.chat.completions.create(
-                        model=self.model,
-                        max_tokens=self.config.max_tokens,
-                        messages=formatted_messages
-                    )
-
-                    return {
-                        "content": [{
-                            "type": "text",
-                            "text": response.choices[0].message.content
-                        }],
-                        "stop_reason": "end_turn",
-                        "usage": {
-                            "input": response.usage.prompt_tokens,
-                            "output": response.usage.completion_tokens,
-                        }
-                    }
+                # TODO: Groq provider verwijderd
 
                 else:
                     # Local fallback
@@ -377,7 +315,7 @@ class Agent:
                         "content": [{
                             "type": "text",
                             "text": "[LOCAL MODE] Geen AI provider beschikbaar. "
-                                   "Stel GROQ_API_KEY of ANTHROPIC_API_KEY in."
+                                   "Stel ANTHROPIC_API_KEY in."
                         }],
                         "stop_reason": "end_turn",
                         "usage": {"input": 0, "output": 0}

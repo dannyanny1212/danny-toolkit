@@ -381,8 +381,8 @@ class MemexAgent(BrainAgent):
             return self._collection
         try:
             import chromadb
-            from chromadb.utils.embedding_functions import (
-                SentenceTransformerEmbeddingFunction,
+            from danny_toolkit.core.embeddings import (
+                get_chroma_embed_fn,
             )
             from pathlib import Path
             import io as _io
@@ -394,18 +394,13 @@ class MemexAgent(BrainAgent):
             client = chromadb.PersistentClient(
                 path=chroma_dir
             )
-            # Suppress BertModel LOAD REPORT spam
+            # Suppress model load spam
             _old_out = sys.stdout
             _old_err = sys.stderr
             sys.stdout = _io.StringIO()
             sys.stderr = _io.StringIO()
             try:
-                embed_fn = (
-                    SentenceTransformerEmbeddingFunction(
-                        model_name="all-MiniLM-L6-v2"
-                    )
-                )
-                embed_fn(["warmup"])
+                embed_fn = get_chroma_embed_fn()
             finally:
                 sys.stdout = _old_out
                 sys.stderr = _old_err
@@ -1110,6 +1105,16 @@ class SwarmEngine:
         self.on_post_task = []
         self.on_failure = []
 
+    @property
+    def _governor(self):
+        """Lazy OmegaGovernor voor rate limit tracking."""
+        if not hasattr(self, "_gov_instance"):
+            from danny_toolkit.brain.governor import (
+                OmegaGovernor,
+            )
+            self._gov_instance = OmegaGovernor()
+        return self._gov_instance
+
     def _register_agents(self):
         from danny_toolkit.brain.trinity_omega import (
             CosmicRole,
@@ -1275,6 +1280,17 @@ class SwarmEngine:
 
         return {"match": False, "analyse": "onbekend"}
 
+    @staticmethod
+    def _is_rate_limit_error(error):
+        """Detecteer rate limit fout (429/quota)."""
+        fout_tekst = str(error).lower()
+        patronen = [
+            "429", "rate_limit", "rate limit",
+            "ratelimit", "too many requests",
+            "quota exceeded",
+        ]
+        return any(p in fout_tekst for p in patronen)
+
     async def _handle_swarm_failure(
         self, error, taak, callback=None,
     ):
@@ -1296,6 +1312,68 @@ class SwarmEngine:
         def log(msg):
             if callback:
                 callback(msg)
+
+        # Rate limit shortcut: wacht + retry
+        if self._is_rate_limit_error(error):
+            log(
+                "\u23f3 Rate limit gedetecteerd,"
+                " wachten op cooldown..."
+            )
+            self._governor.record_api_failure()
+            cooldown = min(
+                self._governor._circuit_breaker.get(
+                    "cooldown", 60
+                ),
+                65,
+            )
+            await asyncio.sleep(cooldown)
+
+            if not self._governor.check_api_health():
+                log(
+                    "\u274c API nog steeds"
+                    " onbeschikbaar"
+                )
+                return {
+                    "geslaagd": False,
+                    "plan": None,
+                    "payloads": [],
+                    "analyse": (
+                        "Rate limit: API"
+                        " onbeschikbaar na"
+                        " cooldown"
+                    ),
+                }
+
+            try:
+                payloads = await self.run(
+                    taak.get("input", ""),
+                    callback,
+                )
+                self._governor.record_api_success()
+                log(
+                    "\u2705 Rate limit:"
+                    " retry succesvol"
+                )
+                return {
+                    "geslaagd": True,
+                    "plan": {
+                        "analyse": "Rate limit",
+                        "strategie": "cooldown"
+                        " + retry",
+                    },
+                    "payloads": payloads,
+                    "analyse": "Rate limit retry",
+                }
+            except Exception:
+                return {
+                    "geslaagd": False,
+                    "plan": None,
+                    "payloads": [],
+                    "analyse": (
+                        "Rate limit:"
+                        " retry mislukt"
+                    ),
+                }
 
         log(
             "\U0001f527 Repair: plan genereren..."

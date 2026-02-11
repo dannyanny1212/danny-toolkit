@@ -37,11 +37,8 @@ try:
 except ImportError:
     ANTHROPIC_BESCHIKBAAR = False
 
-try:
-    from groq import Groq
-    GROQ_BESCHIKBAAR = True
-except ImportError:
-    GROQ_BESCHIKBAAR = False
+# TODO: Groq verwijderd
+GROQ_BESCHIKBAAR = False
 
 
 class CentralBrain:
@@ -71,28 +68,13 @@ class CentralBrain:
         self.data_dir.mkdir(exist_ok=True)
         self.data_file = self.data_dir / "brain_data.json"
 
-        # AI Client - probeer GROQ eerst (gratis), dan Anthropic
+        # AI Client — TODO: Groq verwijderd, direct Anthropic
         self.client = None
         self.ai_provider = None
         self._fallback_client = None
         self._fallback_provider = None
 
-        if GROQ_BESCHIKBAAR and Config.has_groq_key():
-            self.client = Groq()
-            self.ai_provider = "groq"
-            print(kleur(
-                "   [OK] Central Brain AI actief (GROQ)",
-                Kleur.GROEN,
-            ))
-            # Anthropic als fallback bij rate limit
-            if ANTHROPIC_BESCHIKBAAR and Config.has_anthropic_key():
-                self._fallback_client = Anthropic()
-                self._fallback_provider = "anthropic"
-                print(kleur(
-                    "   [OK] Fallback: Anthropic beschikbaar",
-                    Kleur.GROEN,
-                ))
-        elif ANTHROPIC_BESCHIKBAAR and Config.has_anthropic_key():
+        if ANTHROPIC_BESCHIKBAAR and Config.has_anthropic_key():
             self.client = Anthropic()
             self.ai_provider = "anthropic"
             print(kleur(
@@ -538,7 +520,7 @@ Belangrijke regels:
         for turn in range(max_turns):
             try:
                 response = self.client.messages.create(
-                    model="claude-sonnet-4-20250514",
+                    model=Config.CLAUDE_MODEL,
                     max_tokens=2000,
                     system=system_message,
                     tools=self.tool_definitions if use_tools else [],

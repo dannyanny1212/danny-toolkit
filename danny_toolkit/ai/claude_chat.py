@@ -1,5 +1,5 @@
 """
-AI Chat App - Interactieve chat met Claude of Groq API.
+AI Chat App - Interactieve chat met Claude API.
 Versie 2.0 - Met persona's, templates, geschiedenis, export en meer!
 """
 
@@ -210,18 +210,8 @@ class ClaudeChatApp:
             json.dump(self.data, f, indent=2, ensure_ascii=False)
 
     def _init_client(self) -> bool:
-        """Initialiseert de API client (Groq of Claude)."""
-        # Probeer Groq eerst (gratis!)
-        if Config.has_groq_key():
-            try:
-                import groq
-                self.client = groq.Groq(api_key=Config.GROQ_API_KEY)
-                self.model = Config.GROQ_MODEL
-                self.provider = "groq"
-                print(kleur(f"\n[OK] Groq API ({self.model}) - GRATIS!", Kleur.GROEN))
-                return True
-            except Exception as e:
-                print(kleur(f"[!] Groq error: {e}", Kleur.ROOD))
+        """Initialiseert de API client (Claude)."""
+        # TODO: Groq verwijderd — direct Claude
 
         # Probeer Claude
         if Config.has_anthropic_key():
@@ -237,11 +227,7 @@ class ClaudeChatApp:
 
         # Geen API key
         print(kleur("\n[!] Geen API key gevonden!", Kleur.ROOD))
-        print(kleur("\nOptie 1 - Groq (GRATIS, aanbevolen):", Kleur.GEEL))
-        print("   1. Ga naar: https://console.groq.com/keys")
-        print("   2. Maak account en genereer key")
-        print("   3. set GROQ_API_KEY=gsk_...")
-        print(kleur("\nOptie 2 - Claude (betaald):", Kleur.GEEL))
+        print(kleur("\nClaude API:", Kleur.GEEL))
         print("   1. Ga naar: https://console.anthropic.com/")
         print("   2. set ANTHROPIC_API_KEY=sk-ant-...")
         return False
@@ -271,14 +257,11 @@ class ClaudeChatApp:
                 messages=berichten
             )
             antwoord = response.content[0].text
-        else:  # groq
-            messages = [{"role": "system", "content": systeem}] + berichten
-            response = self.client.chat.completions.create(
-                model=self.model,
-                max_tokens=max_tokens,
-                messages=messages
+        else:
+            # TODO: Groq verwijderd — alleen Claude ondersteund
+            raise ValueError(
+                f"Provider '{self.provider}' niet ondersteund"
             )
-            antwoord = response.choices[0].message.content
 
         # Token schatting voor output
         self.tokens_geschat += self._schat_tokens(antwoord)

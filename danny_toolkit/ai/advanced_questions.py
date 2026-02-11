@@ -152,7 +152,7 @@ Help de gebruiker om inzichten om te zetten in concrete stappen."""
         # Eerste vraag
         try:
             response = self.client.messages.create(
-                model="claude-sonnet-4-20250514",
+                model=Config.CLAUDE_MODEL,
                 max_tokens=500,
                 system=mode_info["system"],
                 messages=[{
@@ -191,7 +191,7 @@ Help de gebruiker om inzichten om te zetten in concrete stappen."""
 
             try:
                 response = self.client.messages.create(
-                    model="claude-sonnet-4-20250514",
+                    model=Config.CLAUDE_MODEL,
                     max_tokens=500,
                     system=mode_info["system"],
                     messages=messages
@@ -287,7 +287,7 @@ Help de gebruiker om inzichten om te zetten in concrete stappen."""
 
         try:
             response = self.client.messages.create(
-                model="claude-sonnet-4-20250514",
+                model=Config.CLAUDE_MODEL,
                 max_tokens=800,
                 messages=[{
                     "role": "user",
@@ -370,7 +370,7 @@ etc."""
 
         try:
             response = self.client.messages.create(
-                model="claude-sonnet-4-20250514",
+                model=Config.CLAUDE_MODEL,
                 max_tokens=1500,
                 messages=[{
                     "role": "user",

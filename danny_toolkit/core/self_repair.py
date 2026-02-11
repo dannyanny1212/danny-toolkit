@@ -400,9 +400,7 @@ class SelfRepairProtocol:
             return self._collection
         try:
             import chromadb
-            from chromadb.utils.embedding_functions import (
-                SentenceTransformerEmbeddingFunction,
-            )
+            from .embeddings import get_chroma_embed_fn
             import io as _io
             import sys as _sys
 
@@ -412,18 +410,13 @@ class SelfRepairProtocol:
             client = chromadb.PersistentClient(
                 path=chroma_dir
             )
-            # Suppress BertModel LOAD REPORT spam
+            # Suppress model load spam
             _old_out = _sys.stdout
             _old_err = _sys.stderr
             _sys.stdout = _io.StringIO()
             _sys.stderr = _io.StringIO()
             try:
-                embed_fn = (
-                    SentenceTransformerEmbeddingFunction(
-                        model_name="all-MiniLM-L6-v2"
-                    )
-                )
-                embed_fn(["warmup"])
+                embed_fn = get_chroma_embed_fn()
             finally:
                 _sys.stdout = _old_out
                 _sys.stderr = _old_err

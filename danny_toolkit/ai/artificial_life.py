@@ -956,7 +956,7 @@ class ArtificialLifeApp:
             return None
         try:
             response = self.client.messages.create(
-                model="claude-sonnet-4-20250514",
+                model=Config.CLAUDE_MODEL,
                 max_tokens=max_tokens,
                 messages=[{"role": "user", "content": prompt}]
             )

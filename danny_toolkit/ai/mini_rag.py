@@ -13,6 +13,8 @@ from datetime import datetime
 
 from ..core.config import Config
 from ..core.utils import clear_scherm, kleur, Kleur
+from ..core.embeddings import TFIDFEmbeddings
+from ..core.document_processor import DocumentProcessor
 
 
 class MiniRAG:
@@ -45,7 +47,8 @@ class MiniRAG:
         self.data_file = Config.DATA_DIR / "rag_data.json"
         self.documenten = []
         self.index = {}
-        self.idf = {}  # Inverse Document Frequency
+        self.tfidf_embedder = None
+        self.processor = DocumentProcessor()
         self.data = self._laad_data()
         self.chunk_strategie = "sliding"
         self.chunk_grootte = 150
@@ -102,15 +105,7 @@ class MiniRAG:
 
     def _init_ai(self) -> bool:
         """Initialiseer AI client voor betere antwoorden."""
-        # Probeer Groq eerst
-        if Config.has_groq_key():
-            try:
-                import groq
-                self.ai_client = groq.Groq(api_key=Config.GROQ_API_KEY)
-                self.ai_provider = "groq"
-                return True
-            except Exception:
-                pass
+        # TODO: Groq verwijderd — direct Claude
 
         # Probeer Claude
         if Config.has_anthropic_key():
@@ -124,170 +119,58 @@ class MiniRAG:
 
         return False
 
-    def _maak_chunks_woorden(self, tekst: str, grootte: int = 150) -> list:
-        """Splitst tekst in chunks van vaste hoeveelheid woorden."""
-        woorden = tekst.split()
-        chunks = []
-        overlap = grootte // 3
-
-        for i in range(0, len(woorden), grootte - overlap):
-            chunk = " ".join(woorden[i:i + grootte])
-            if chunk and len(chunk) > 50:
-                chunks.append(chunk)
-
-        return chunks
-
-    def _maak_chunks_zinnen(self, tekst: str) -> list:
-        """Splitst tekst per zin."""
-        # Splits op zin-eindigende leestekens
-        zinnen = re.split(r'(?<=[.!?])\s+', tekst)
-        chunks = []
-        huidige_chunk = []
-        huidige_lengte = 0
-
-        for zin in zinnen:
-            zin = zin.strip()
-            if not zin:
-                continue
-
-            woorden = len(zin.split())
-
-            if huidige_lengte + woorden > 200 and huidige_chunk:
-                chunks.append(" ".join(huidige_chunk))
-                huidige_chunk = []
-                huidige_lengte = 0
-
-            huidige_chunk.append(zin)
-            huidige_lengte += woorden
-
-        if huidige_chunk:
-            chunks.append(" ".join(huidige_chunk))
-
-        return chunks
-
-    def _maak_chunks_paragraaf(self, tekst: str) -> list:
-        """Splitst tekst per paragraaf."""
-        paragrafen = tekst.split("\n\n")
-        chunks = []
-
-        for para in paragrafen:
-            para = para.strip()
-            if len(para) > 50:
-                # Als paragraaf te groot is, splits verder
-                if len(para.split()) > 300:
-                    chunks.extend(self._maak_chunks_woorden(para, 150))
-                else:
-                    chunks.append(para)
-
-        return chunks
-
-    def _maak_chunks_sliding(self, tekst: str, grootte: int = 150) -> list:
-        """Sliding window chunking met overlap."""
-        woorden = tekst.split()
-        chunks = []
-        stap = grootte // 2  # 50% overlap
-
-        for i in range(0, len(woorden) - grootte + 1, stap):
-            chunk = " ".join(woorden[i:i + grootte])
-            if chunk:
-                chunks.append(chunk)
-
-        # Laatste chunk als er nog woorden over zijn
-        if len(woorden) % stap != 0:
-            laatste = " ".join(woorden[-grootte:])
-            if laatste and laatste not in chunks:
-                chunks.append(laatste)
-
-        return chunks if chunks else [tekst]
-
-    def _maak_chunks(self, tekst: str) -> list:
-        """Splits tekst in chunks volgens gekozen strategie."""
+    def _maak_chunks(self, tekst: str,
+                      doc_id: str = "doc") -> list:
+        """Splits tekst in chunks via DocumentProcessor."""
         strategie = self.chunk_strategie
-
-        if strategie == "woorden":
-            return self._maak_chunks_woorden(tekst, self.chunk_grootte)
-        elif strategie == "zinnen":
-            return self._maak_chunks_zinnen(tekst)
+        if strategie == "zinnen":
+            chunk_dicts = self.processor.chunk_op_zinnen(
+                tekst, doc_id
+            )
         elif strategie == "paragraaf":
-            return self._maak_chunks_paragraaf(tekst)
-        else:  # sliding (default)
-            return self._maak_chunks_sliding(tekst, self.chunk_grootte)
+            chunk_dicts = self.processor.chunk_op_paragrafen(
+                tekst, doc_id
+            )
+        else:
+            chunk_dicts = self.processor.chunk_tekst(
+                tekst, doc_id
+            )
+        return [c["tekst"] for c in chunk_dicts]
 
-    def _tokenize(self, tekst: str) -> list:
-        """Tokenize tekst en verwijder stopwoorden."""
-        # Lowercase en splits
-        woorden = tekst.lower().split()
-        # Verwijder leestekens
-        woorden = [re.sub(r'[^\w]', '', w) for w in woorden]
-        # Filter stopwoorden en korte woorden
-        woorden = [w for w in woorden if w and len(w) > 2 and w not in self.STOPWOORDEN]
-        return woorden
-
-    def _maak_tf(self, tekst: str) -> dict:
-        """Bereken Term Frequency."""
-        woorden = self._tokenize(tekst)
-        tf = Counter(woorden)
-        # Normaliseer
-        totaal = sum(tf.values())
-        if totaal > 0:
-            for woord in tf:
-                tf[woord] = tf[woord] / totaal
-        return dict(tf)
-
-    def _bereken_idf(self):
-        """Bereken Inverse Document Frequency voor alle termen."""
-        doc_freq = Counter()
-        totaal_docs = len(self.index)
-
-        for chunk_data in self.index.values():
-            woorden = set(chunk_data["tf"].keys())
-            doc_freq.update(woorden)
-
-        self.idf = {}
-        for woord, freq in doc_freq.items():
-            # IDF formule: log(N / df)
-            self.idf[woord] = math.log(totaal_docs / freq) if freq > 0 else 0
-
-    def _maak_tfidf(self, tf: dict) -> dict:
-        """Bereken TF-IDF vector."""
-        tfidf = {}
-        for woord, tf_score in tf.items():
-            idf_score = self.idf.get(woord, 0)
-            tfidf[woord] = tf_score * idf_score
-        return tfidf
-
-    def _bm25_score(self, query_terms: list, chunk_data: dict,
-                   k1: float = 1.5, b: float = 0.75) -> float:
+    def _bm25_score(self, query_terms: list,
+                    chunk_data: dict,
+                    k1: float = 1.5,
+                    b: float = 0.75) -> float:
         """Bereken BM25 score."""
         tf = chunk_data["tf"]
         doc_len = chunk_data.get("length", 100)
-        avg_doc_len = self.data["statistieken"].get("avg_chunk_length", 100)
+        avg_doc_len = self.data["statistieken"].get(
+            "avg_chunk_length", 100
+        )
 
         score = 0.0
         for term in query_terms:
             if term in tf:
-                term_tf = tf[term] * doc_len  # Denormaliseer
-                idf = self.idf.get(term, 0)
+                term_tf = tf[term] * doc_len
+                idf = self.tfidf_embedder.idf.get(term, 0)
                 numerator = term_tf * (k1 + 1)
-                denominator = term_tf + k1 * (1 - b + b * (doc_len / avg_doc_len))
-                score += idf * (numerator / denominator) if denominator > 0 else 0
+                denominator = (
+                    term_tf
+                    + k1 * (1 - b + b * (doc_len / avg_doc_len))
+                )
+                if denominator > 0:
+                    score += idf * (numerator / denominator)
 
         return score
 
-    def _cosine_similarity(self, vec1: dict, vec2: dict) -> float:
-        """Bereken Cosine Similarity tussen twee vectoren."""
-        gemeenschappelijk = set(vec1.keys()) & set(vec2.keys())
-
-        if not gemeenschappelijk:
-            return 0.0
-
-        dot = sum(vec1[w] * vec2[w] for w in gemeenschappelijk)
-        mag1 = math.sqrt(sum(v ** 2 for v in vec1.values()))
-        mag2 = math.sqrt(sum(v ** 2 for v in vec2.values()))
-
+    def _cosine_dense(self, vec1: list,
+                       vec2: list) -> float:
+        """Cosine similarity voor dense vectoren."""
+        dot = sum(a * b for a, b in zip(vec1, vec2))
+        mag1 = math.sqrt(sum(a ** 2 for a in vec1))
+        mag2 = math.sqrt(sum(b ** 2 for b in vec2))
         if mag1 == 0 or mag2 == 0:
             return 0.0
-
         return dot / (mag1 * mag2)
 
     def _lees_bestand(self, pad: Path) -> str:
@@ -406,7 +289,7 @@ class MiniRAG:
             if not inhoud or len(inhoud) < 50:
                 continue
 
-            chunks = self._maak_chunks(inhoud)
+            chunks = self._maak_chunks(inhoud, bestand.stem)
 
             doc = {
                 "id": len(self.documenten),
@@ -426,34 +309,51 @@ class MiniRAG:
 
             totaal_chunks += len(chunks)
 
-        # Bouw index met TF
+        # Bouw index
         if toon_voortgang:
-            print(kleur("\n[INDEXEREN] Index opbouwen...", Kleur.CYAAN))
+            print(kleur(
+                "\n[INDEXEREN] Index opbouwen...", Kleur.CYAAN
+            ))
 
         totaal_lengte = 0
+        chunk_teksten = []
+        chunk_ids = []
 
         for doc in self.documenten:
             for i, chunk in enumerate(doc["chunks"]):
                 chunk_id = f"{doc['id']}_{i}"
-                tf = self._maak_tf(chunk)
                 chunk_len = len(chunk.split())
                 totaal_lengte += chunk_len
+                chunk_teksten.append(chunk)
+                chunk_ids.append(chunk_id)
 
                 self.index[chunk_id] = {
                     "doc_id": doc["id"],
                     "doc_naam": doc["naam"],
                     "chunk_idx": i,
                     "chunk": chunk,
-                    "tf": tf,
                     "length": chunk_len,
                 }
 
-        # Bereken IDF
-        self._bereken_idf()
+        # Train TF-IDF embedder
+        dim = min(512, max(100, len(chunk_teksten)))
+        self.tfidf_embedder = TFIDFEmbeddings(dimensies=dim)
+        self.tfidf_embedder.fit(chunk_teksten)
 
-        # Bereken TF-IDF voor alle chunks
-        for chunk_data in self.index.values():
-            chunk_data["tfidf"] = self._maak_tfidf(chunk_data["tf"])
+        # Embed chunks en bereken TF voor BM25
+        vectors = self.tfidf_embedder.embed(chunk_teksten)
+        for idx, chunk_id in enumerate(chunk_ids):
+            self.index[chunk_id]["tfidf_vector"] = vectors[idx]
+            # Raw TF voor BM25
+            woorden = self.tfidf_embedder._tokenize(
+                self.index[chunk_id]["chunk"]
+            )
+            tf = Counter(woorden)
+            totaal = sum(tf.values())
+            if totaal > 0:
+                for w in tf:
+                    tf[w] = tf[w] / totaal
+            self.index[chunk_id]["tf"] = dict(tf)
 
         # Update statistieken
         avg_len = totaal_lengte / len(self.index) if self.index else 100
@@ -464,7 +364,7 @@ class MiniRAG:
 
         if toon_voortgang:
             print(kleur(f"   [OK] {len(self.index)} chunks geïndexeerd", Kleur.GROEN))
-            print(kleur(f"   [OK] {len(self.idf)} unieke termen", Kleur.GROEN))
+            print(kleur(f"   [OK] {len(self.tfidf_embedder.idf) if self.tfidf_embedder else 0} unieke termen", Kleur.GROEN))
 
     def zoek(self, vraag: str, top_k: int = None, methode: str = "hybrid") -> list:
         """Zoek relevante chunks met verschillende methodes."""
@@ -474,22 +374,33 @@ class MiniRAG:
         top_k = top_k or self.data["instellingen"]["top_k"]
         min_score = self.data["instellingen"]["min_score"]
 
-        query_terms = self._tokenize(vraag)
-        query_tf = self._maak_tf(vraag)
-        query_tfidf = self._maak_tfidf(query_tf)
+        query_terms = self.tfidf_embedder._tokenize(vraag)
+        query_vector = self.tfidf_embedder._embed_one(vraag)
 
         scores = []
 
         for chunk_id, chunk_data in self.index.items():
             if methode == "tfidf":
-                score = self._cosine_similarity(query_tfidf, chunk_data["tfidf"])
+                score = self._cosine_dense(
+                    query_vector,
+                    chunk_data["tfidf_vector"]
+                )
             elif methode == "bm25":
-                score = self._bm25_score(query_terms, chunk_data)
+                score = self._bm25_score(
+                    query_terms, chunk_data
+                )
             else:  # hybrid
-                tfidf_score = self._cosine_similarity(query_tfidf, chunk_data["tfidf"])
-                bm25_score = self._bm25_score(query_terms, chunk_data)
-                # Normaliseer en combineer
-                score = 0.5 * tfidf_score + 0.5 * (bm25_score / 10 if bm25_score > 0 else 0)
+                tfidf_score = self._cosine_dense(
+                    query_vector,
+                    chunk_data["tfidf_vector"]
+                )
+                bm25_score = self._bm25_score(
+                    query_terms, chunk_data
+                )
+                score = 0.5 * tfidf_score + 0.5 * (
+                    bm25_score / 10
+                    if bm25_score > 0 else 0
+                )
 
             if score > min_score:
                 scores.append({
@@ -544,16 +455,9 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
                     messages=[{"role": "user", "content": prompt}]
                 )
                 return response.content[0].text
-            else:  # groq
-                response = self.ai_client.chat.completions.create(
-                    model=Config.GROQ_MODEL,
-                    max_tokens=512,
-                    messages=[
-                        {"role": "system", "content": systeem},
-                        {"role": "user", "content": prompt}
-                    ]
-                )
-                return response.choices[0].message.content
+            else:
+                # TODO: Groq verwijderd
+                return None
         except Exception as e:
             print(kleur(f"   [!] AI fout: {e}", Kleur.ROOD))
             return None
@@ -578,7 +482,10 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
 
         # Fallback: extractief antwoord
         vraag_lower = vraag.lower()
-        vraag_woorden = set(self._tokenize(vraag))
+        vraag_woorden = set(
+            w for w in vraag.lower().split()
+            if len(w) > 2 and w not in self.STOPWOORDEN
+        )
         relevante_zinnen = []
 
         for chunk in chunks:
@@ -586,7 +493,11 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
             for zin in zinnen:
                 zin = zin.strip()
                 if len(zin) > 30:
-                    zin_woorden = set(self._tokenize(zin))
+                    zin_woorden = set(
+                        w for w in zin.lower().split()
+                        if len(w) > 2
+                        and w not in self.STOPWOORDEN
+                    )
                     overlap = vraag_woorden & zin_woorden
                     if len(overlap) >= 2:
                         relevante_zinnen.append((zin, len(overlap), chunk["doc_naam"]))
@@ -633,7 +544,7 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
     def _extraheer_keywords(self, top_n: int = 20) -> list:
         """Extraheer belangrijkste keywords uit alle documenten."""
         # Gebruik IDF scores voor belangrijkheid
-        keywords = sorted(self.idf.items(), key=lambda x: x[1], reverse=True)
+        keywords = sorted(self.tfidf_embedder.idf.items(), key=lambda x: x[1], reverse=True)
         return keywords[:top_n]
 
     def _toon_document_info(self, doc_idx: int):
@@ -659,8 +570,12 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
         for i, chunk in enumerate(doc["chunks"]):
             chunk_id = f"{doc['id']}_{i}"
             if chunk_id in self.index:
-                for term, score in self.index[chunk_id]["tfidf"].items():
-                    doc_terms[term] += score
+                tf = self.index[chunk_id].get("tf", {})
+                for term, tf_score in tf.items():
+                    idf = self.tfidf_embedder.idf.get(
+                        term, 0
+                    )
+                    doc_terms[term] += tf_score * idf
 
         top_terms = doc_terms.most_common(10)
         if top_terms:
@@ -678,7 +593,7 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
         print(kleur("║  INDEX                                             ║", Kleur.CYAAN))
         print(f"║  Documenten:            {stats['documenten_geindexeerd']:>20}  ║")
         print(f"║  Chunks:                {stats['chunks_totaal']:>20}  ║")
-        print(f"║  Unieke termen:         {len(self.idf):>20}  ║")
+        print(f"║  Unieke termen:         {len(self.tfidf_embedder.idf) if self.tfidf_embedder else 0:>20}  ║")
         print(f"║  Gem. chunk lengte:     {stats.get('avg_chunk_length', 0):>17.1f}  ║")
         print(kleur("║                                                    ║", Kleur.CYAAN))
         print(kleur("║  GEBRUIK                                           ║", Kleur.CYAAN))
@@ -869,7 +784,7 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
 
     def _toon_keywords(self):
         """Toon belangrijkste keywords."""
-        if not self.idf:
+        if not self.tfidf_embedder or not self.tfidf_embedder.idf:
             print(kleur("[!] Geen index beschikbaar.", Kleur.ROOD))
             return
 

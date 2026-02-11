@@ -237,14 +237,16 @@ class Config:
     # API Keys
     ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
     VOYAGE_API_KEY = os.environ.get("VOYAGE_API_KEY", "")
-    GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+    # TODO: Groq verwijderd — voeg hier een nieuwe provider toe
+    GROQ_API_KEY = ""
     ELEVENLABS_API_KEY = os.environ.get("ELEVENLABS_API_KEY", "")
     OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
     # Models
     CLAUDE_MODEL = "claude-sonnet-4-20250514"
-    VOYAGE_MODEL = "voyage-3"
-    GROQ_MODEL = "llama-3.3-70b-versatile"
+    VOYAGE_MODEL = "voyage-4-large"
+    # TODO: Groq verwijderd
+    GROQ_MODEL = ""
 
     # RAG Settings
     CHUNK_SIZE = 350
@@ -302,7 +304,8 @@ class Config:
     @classmethod
     def has_groq_key(cls) -> bool:
         """Check of Groq API key beschikbaar is."""
-        return bool(cls.GROQ_API_KEY)
+        # TODO: Groq verwijderd — retourneert altijd False
+        return False
 
     @classmethod
     def has_elevenlabs_key(cls) -> bool:
@@ -339,7 +342,8 @@ class Config:
         # Update class attributes
         cls.ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
         cls.VOYAGE_API_KEY = os.environ.get("VOYAGE_API_KEY", "")
-        cls.GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+        # TODO: Groq verwijderd
+        # cls.GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
         cls.ELEVENLABS_API_KEY = os.environ.get("ELEVENLABS_API_KEY", "")
         cls.OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
@@ -431,11 +435,7 @@ class Config:
             )
             resultaten.append(("Voyage", valid, msg))
 
-        if cls.GROQ_API_KEY:
-            valid, msg = ConfigValidator.valideer_api_key(
-                cls.GROQ_API_KEY, "Groq"
-            )
-            resultaten.append(("Groq", valid, msg))
+        # TODO: Groq validatie verwijderd
 
         return resultaten
 
@@ -449,7 +449,7 @@ class Config:
         lijnen.append("[API Keys]")
         lijnen.append(f"  Anthropic: {'Ja' if cls.has_anthropic_key() else 'Nee'}")
         lijnen.append(f"  Voyage:    {'Ja' if cls.has_voyage_key() else 'Nee'}")
-        lijnen.append(f"  Groq:      {'Ja' if cls.has_groq_key() else 'Nee'}")
+        # Groq verwijderd
 
         # Voorkeuren
         lijnen.append("\n[Voorkeuren]")

@@ -9,19 +9,11 @@ from pathlib import Path
 from typing import List, Dict, Optional
 from ..core.config import Config
 from ..core.utils import clear_scherm
-
-# AI Integration
-try:
-    from anthropic import Anthropic
-    AI_BESCHIKBAAR = True
-except ImportError:
-    AI_BESCHIKBAAR = False
+from .base_app import BaseApp
 
 
-class RecipeGeneratorApp:
+class RecipeGeneratorApp(BaseApp):
     """Recipe Generator - Recepten en meal planning."""
-
-    VERSIE = "1.0"
 
     # Basis ingrediënten categorieën
     CATEGORIEEN = {
@@ -93,23 +85,10 @@ class RecipeGeneratorApp:
     ]
 
     def __init__(self):
-        Config.ensure_dirs()
-        self.data_dir = Config.APPS_DATA_DIR / "recipe_generator"
-        self.data_dir.mkdir(exist_ok=True)
-        self.data_file = self.data_dir / "data.json"
-        self.data = self._laad_data()
-        self.client = None
-        if AI_BESCHIKBAAR and Config.has_anthropic_key():
-            self.client = Anthropic()
+        super().__init__("recipe_generator/data.json")
 
-    def _laad_data(self) -> Dict:
-        """Laad opgeslagen data."""
-        if self.data_file.exists():
-            try:
-                with open(self.data_file, "r", encoding="utf-8") as f:
-                    return json.load(f)
-            except (json.JSONDecodeError, IOError):
-                pass
+    def _get_default_data(self) -> dict:
+        """Standaard data structuur."""
         return {
             "voorraad": {},
             "recepten": [],
@@ -117,11 +96,6 @@ class RecipeGeneratorApp:
             "boodschappenlijst": [],
             "favorieten": [],
         }
-
-    def _sla_op(self):
-        """Sla data op."""
-        with open(self.data_file, "w", encoding="utf-8") as f:
-            json.dump(self.data, f, indent=2, ensure_ascii=False)
 
     def _genereer_recept_ai(self, ingredienten: List[str]) -> Optional[Dict]:
         """Genereer recept met AI."""
@@ -140,13 +114,9 @@ Geef het recept in dit exacte JSON formaat (alleen de JSON, geen andere tekst):
     "stappen": ["Stap 1", "Stap 2", "Stap 3"]
 }}"""
 
-            response = self.client.messages.create(
-                model="claude-sonnet-4-20250514",
-                max_tokens=1000,
-                messages=[{"role": "user", "content": prompt}]
-            )
-
-            tekst = response.content[0].text
+            tekst = self._ai_request(prompt, max_tokens=1000)
+            if not tekst:
+                return None
             # Probeer JSON te extraheren
             import re
             match = re.search(r'\{.*\}', tekst, re.DOTALL)

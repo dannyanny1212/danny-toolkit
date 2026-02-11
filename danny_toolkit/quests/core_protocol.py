@@ -90,12 +90,7 @@ class CoreProtocol:
             Kleur.WIT,
         ))
 
-        has_groq = bool(Config.GROQ_API_KEY)
         has_anthropic = bool(Config.ANTHROPIC_API_KEY)
-        print(kleur(
-            f"    Groq key: {'JA' if has_groq else 'NEE'}",
-            Kleur.FEL_GROEN if has_groq else Kleur.FEL_ROOD,
-        ))
         print(kleur(
             f"    Anthropic key: "
             f"{'JA' if has_anthropic else 'NEE'}",

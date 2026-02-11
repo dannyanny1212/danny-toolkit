@@ -74,9 +74,6 @@ class TheLibrarian:
         )
 
         import chromadb
-        from chromadb.utils.embedding_functions import (
-            SentenceTransformerEmbeddingFunction,
-        )
 
         # Database (persistent op schijf)
         os.makedirs(CHROMA_DIR, exist_ok=True)
@@ -97,22 +94,15 @@ class TheLibrarian:
             except Exception:
                 pass
 
-        # Embedding model (lokaal, geen API kosten)
-        # Suppress BertModel LOAD REPORT spam
+        # Embedding model — Voyage AI of fallback
+        from ..core.embeddings import get_chroma_embed_fn
         import io as _io
         _old_stdout = sys.stdout
         _old_stderr = sys.stderr
         sys.stdout = _io.StringIO()
         sys.stderr = _io.StringIO()
         try:
-            self.embed_fn = (
-                SentenceTransformerEmbeddingFunction(
-                    model_name=EMBEDDING_MODEL
-                )
-            )
-            # Force model load (lazy load veroorzaakt
-            # spam bij eerste query)
-            self.embed_fn(["warmup"])
+            self.embed_fn = get_chroma_embed_fn()
         finally:
             sys.stdout = _old_stdout
             sys.stderr = _old_stderr
@@ -196,16 +186,17 @@ class TheLibrarian:
     def chunk_text(self, text, chunk_size=CHUNK_SIZE,
                    overlap=CHUNK_OVERLAP) -> List[str]:
         """Hakt tekst in overlappende chunks."""
-        woorden = text.split()
-        chunks = []
-        start = 0
-        while start < len(woorden):
-            eind = start + chunk_size
-            chunk = " ".join(woorden[start:eind])
-            if chunk.strip():
-                chunks.append(chunk)
-            start += chunk_size - overlap
-        return chunks
+        from ..core.document_processor import (
+            DocumentProcessor,
+        )
+        processor = DocumentProcessor(
+            chunk_size=chunk_size * 6,
+            overlap=overlap * 6,
+        )
+        chunk_dicts = processor.chunk_tekst(
+            text, "doc"
+        )
+        return [c["tekst"] for c in chunk_dicts]
 
     # ─── Ingest Pipeline ───
 
@@ -240,8 +231,12 @@ class TheLibrarian:
             f"[/green]"
             f" ({bestaand} bestaande chunks)"
         )
+        model_naam = (
+            getattr(self.embed_fn, "model", None)
+            or EMBEDDING_MODEL
+        )
         console.print(
-            f"  Model: [green]{EMBEDDING_MODEL}"
+            f"  Model: [green]{model_naam}"
             f"[/green]"
         )
 
@@ -346,7 +341,7 @@ class TheLibrarian:
         )
         result_table.add_row(
             "Embedding model",
-            f"[cyan]{EMBEDDING_MODEL}[/cyan]",
+            f"[cyan]{model_naam}[/cyan]",
         )
         result_table.add_row(
             "Database locatie",
@@ -399,9 +394,13 @@ class TheLibrarian:
             "Collectie",
             f"[cyan]{COLLECTION_NAME}[/cyan]",
         )
+        model_naam = (
+            getattr(self.embed_fn, "model", None)
+            or EMBEDDING_MODEL
+        )
         stats_table.add_row(
             "Embedding model",
-            f"[cyan]{EMBEDDING_MODEL}[/cyan]",
+            f"[cyan]{model_naam}[/cyan]",
         )
         stats_table.add_row(
             "Database locatie",

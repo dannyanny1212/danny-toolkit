@@ -1,7 +1,7 @@
 """
 AI Generator voor RAG systemen.
 Versie 2.0 - Met streaming, retry logic en templates.
-Ondersteunt: Claude API en Groq API (gratis!)
+Ondersteunt: Claude API
 """
 
 import time
@@ -163,7 +163,7 @@ def met_retry(func: Callable, retry_config: RetryConfig = None,
 # =============================================================================
 
 class Generator:
-    """Genereert antwoorden met Claude of Groq API."""
+    """Genereert antwoorden met Claude API."""
 
     def __init__(self, provider: str = "auto", api_key: str = None,
                  retry_config: RetryConfig = None):
@@ -171,7 +171,7 @@ class Generator:
         Initialiseer generator.
 
         Args:
-            provider: "claude", "groq", of "auto" (kiest beste beschikbare)
+            provider: "claude" of "auto" (kiest beste beschikbare)
             api_key: Optionele API key (anders uit environment)
             retry_config: Optionele retry configuratie
         """
@@ -187,17 +187,17 @@ class Generator:
         }
 
         if provider == "auto":
-            # Probeer Groq eerst (gratis), dan Claude
-            if Config.has_groq_key():
-                self._init_groq(api_key)
-            elif Config.has_anthropic_key():
+            # TODO: Groq verwijderd — alleen Claude
+            if Config.has_anthropic_key():
                 self._init_claude(api_key)
             else:
                 raise ValueError(
-                    "Geen API key gevonden (GROQ_API_KEY of ANTHROPIC_API_KEY)"
+                    "Geen API key gevonden (ANTHROPIC_API_KEY)"
                 )
         elif provider == "groq":
-            self._init_groq(api_key)
+            raise ValueError(
+                "Groq provider is verwijderd"
+            )
         elif provider == "claude":
             self._init_claude(api_key)
         else:
@@ -214,14 +214,9 @@ class Generator:
         print(f"   [OK] Claude API ({self.model})")
 
     def _init_groq(self, api_key: str = None):
-        """Initialiseer Groq API."""
-        import groq
-        self.client = groq.Groq(
-            api_key=api_key or Config.GROQ_API_KEY
-        )
-        self.model = Config.GROQ_MODEL
-        self.provider = "groq"
-        print(f"   [OK] Groq API ({self.model}) - GRATIS!")
+        """Groq API verwijderd."""
+        # TODO: Groq verwijderd — voeg hier een nieuwe provider toe
+        raise ValueError("Groq provider is verwijderd")
 
     def genereer(self, vraag: str, context: list, max_tokens: int = 2048) -> str:
         """Genereer antwoord op basis van vraag en context."""
@@ -268,15 +263,9 @@ class Generator:
 
     def _groq_chat(self, berichten: list, systeem: str,
                    max_tokens: int) -> str:
-        """Chat via Groq API."""
-        messages = [{"role": "system", "content": systeem}] + berichten
-        response = self.client.chat.completions.create(
-            model=self.model,
-            max_tokens=max_tokens,
-            messages=messages
-        )
-        self._update_token_stats_groq(response)
-        return response.choices[0].message.content
+        """Groq API verwijderd."""
+        # TODO: Groq verwijderd
+        raise ValueError("Groq provider is verwijderd")
 
     def _call_api_met_retry(self, systeem: str, user: str,
                             max_tokens: int) -> str:
@@ -308,17 +297,11 @@ class Generator:
             )
             self._update_token_stats(response)
             return response.content[0].text
-        else:  # groq
-            response = self.client.chat.completions.create(
-                model=self.model,
-                max_tokens=max_tokens,
-                messages=[
-                    {"role": "system", "content": systeem},
-                    {"role": "user", "content": user}
-                ]
+        else:
+            # TODO: Groq verwijderd
+            raise ValueError(
+                f"Provider '{self.provider}' niet ondersteund"
             )
-            self._update_token_stats_groq(response)
-            return response.choices[0].message.content
 
     def _update_token_stats(self, response):
         """Update token statistieken voor Claude."""
@@ -329,12 +312,9 @@ class Generator:
             pass
 
     def _update_token_stats_groq(self, response):
-        """Update token statistieken voor Groq."""
-        try:
-            self._statistieken["tokens_in"] += response.usage.prompt_tokens
-            self._statistieken["tokens_uit"] += response.usage.completion_tokens
-        except AttributeError:
-            pass
+        """Groq verwijderd — stub."""
+        # TODO: Groq verwijderd
+        pass
 
     # =========================================================================
     # STREAMING
@@ -372,7 +352,10 @@ class Generator:
         if self.provider == "claude":
             yield from self._stream_claude(systeem, user_prompt)
         else:
-            yield from self._stream_groq(systeem, user_prompt)
+            # TODO: Groq verwijderd
+            raise ValueError(
+                f"Provider '{self.provider}' niet ondersteund"
+            )
 
     def _stream_claude(self, systeem: str,
                        user: str) -> TypingGenerator[str, None, None]:
@@ -388,20 +371,9 @@ class Generator:
 
     def _stream_groq(self, systeem: str,
                      user: str) -> TypingGenerator[str, None, None]:
-        """Stream via Groq API."""
-        stream = self.client.chat.completions.create(
-            model=self.model,
-            max_tokens=2048,
-            stream=True,
-            messages=[
-                {"role": "system", "content": systeem},
-                {"role": "user", "content": user}
-            ]
-        )
-
-        for chunk in stream:
-            if chunk.choices[0].delta.content:
-                yield chunk.choices[0].delta.content
+        """Groq verwijderd — stub."""
+        # TODO: Groq verwijderd
+        raise ValueError("Groq provider is verwijderd")
 
     def stream_print(self, vraag: str, context: list = None,
                      systeem: str = None) -> str:
@@ -512,11 +484,12 @@ class Generator:
 # =============================================================================
 
 class GroqGenerator(Generator):
-    """Specifieke generator voor Groq (gratis!)."""
+    """Groq verwijderd — gebruik ClaudeGenerator."""
 
     def __init__(self, api_key: str = None, retry_config: RetryConfig = None):
+        # TODO: Groq verwijderd — fallback naar Claude
         super().__init__(
-            provider="groq",
+            provider="claude",
             api_key=api_key,
             retry_config=retry_config
         )
@@ -540,7 +513,7 @@ class ClaudeGenerator(Generator):
 class FallbackGenerator:
     """Generator met automatische fallback naar andere providers."""
 
-    def __init__(self, primair: str = "groq", secundair: str = "claude"):
+    def __init__(self, primair: str = "claude", secundair: str = "claude"):
         """
         Initialiseer met primaire en secundaire provider.
 

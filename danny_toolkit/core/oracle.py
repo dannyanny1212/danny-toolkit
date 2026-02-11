@@ -68,12 +68,14 @@ Beschikbare acties:
 - scroll: {"amount": 3, "x": null, "y": null}
 - drag_drop: {"sx": 0, "sy": 0, "ex": 100, "ey": 100}
 - screenshot: {}
+- zoek_kennis: {"query": "zoekterm", "n_results": 5}
 
 Regels:
 - Houd stappen klein en verifieerbaar.
 - Elke stap heeft een duidelijke verwachting.
 - Verwachtingen in het Nederlands.
 - Bij correctie: pas ALLEEN de gefaalde stap aan.
+- Gebruik zoek_kennis voor projectcontext.
 """
 
 # Actie dispatch: actie-type -> (methode_naam, args_mapping)
@@ -133,6 +135,7 @@ class OracleAgent(Agent):
         self._body = None
         self._eye = None
         self._repair_protocol = None
+        self._collection = None
         self.repair_history = []
 
     # ─── Lazy Properties ───
@@ -171,6 +174,90 @@ class OracleAgent(Agent):
             )
         return self._repair_protocol
 
+    @property
+    def kennis_collectie(self):
+        """Lazy ChromaDB collectie (danny_knowledge)."""
+        if self._collection is not None:
+            return self._collection
+        try:
+            import chromadb
+            from chromadb.utils.embedding_functions import (
+                SentenceTransformerEmbeddingFunction,
+            )
+            import io as _io
+            import sys as _sys
+
+            chroma_dir = str(
+                Config.RAG_DATA_DIR / "chromadb"
+            )
+            client = chromadb.PersistentClient(
+                path=chroma_dir
+            )
+            _old_out = _sys.stdout
+            _old_err = _sys.stderr
+            _sys.stdout = _io.StringIO()
+            _sys.stderr = _io.StringIO()
+            try:
+                embed_fn = (
+                    SentenceTransformerEmbeddingFunction(
+                        model_name="all-MiniLM-L6-v2"
+                    )
+                )
+            finally:
+                _sys.stdout = _old_out
+                _sys.stderr = _old_err
+            self._collection = (
+                client.get_collection(
+                    name="danny_knowledge",
+                    embedding_function=embed_fn,
+                )
+            )
+            return self._collection
+        except Exception:
+            return None
+
+    def _zoek_kennis(self, zoekterm, n_results=5):
+        """Zoek relevante kennis in ChromaDB.
+
+        Args:
+            zoekterm: Zoekterm voor semantic search.
+            n_results: Max aantal resultaten.
+
+        Returns:
+            list van dicts met tekst, bron, afstand.
+        """
+        collection = self.kennis_collectie
+        if not collection:
+            return []
+        try:
+            results = collection.query(
+                query_texts=[zoekterm],
+                n_results=n_results,
+            )
+            kennis = []
+            docs = results.get(
+                "documents", [[]]
+            )[0]
+            metas = results.get(
+                "metadatas", [[]]
+            )[0]
+            dists = results.get(
+                "distances", [[]]
+            )[0]
+            for doc, meta, dist in zip(
+                docs, metas, dists
+            ):
+                kennis.append({
+                    "tekst": doc,
+                    "bron": meta.get(
+                        "bron", "onbekend"
+                    ),
+                    "afstand": dist,
+                })
+            return kennis
+        except Exception:
+            return []
+
     # ─── WAV-Loop Kern ───
 
     def _extract_text(self, response):
@@ -205,12 +292,46 @@ class OracleAgent(Agent):
             Kleur.CYAAN,
         )
 
+        # Kennis-context ophalen uit ChromaDB
+        kennis_context = ""
+        try:
+            kennis = self._zoek_kennis(
+                doelstelling, 3
+            )
+            if kennis:
+                delen = []
+                for k in kennis:
+                    deel = (
+                        f"[{k['bron']}]:"
+                        f" {k['tekst'][:200]}"
+                    )
+                    delen.append(deel)
+                kennis_context = (
+                    "\n".join(delen)[:600]
+                )
+                self.log(
+                    f"Kennis: {len(kennis)}"
+                    " bronnen gevonden",
+                    Kleur.GROEN,
+                )
+        except Exception:
+            pass
+
+        prompt_tekst = (
+            f"Maak een plan voor: {doelstelling}\n"
+        )
+        if kennis_context:
+            prompt_tekst += (
+                f"\nProjectcontext:\n"
+                f"{kennis_context}\n\n"
+            )
+        prompt_tekst += (
+            "Antwoord ALLEEN met een JSON array."
+        )
+
         berichten = [{
             "role": "user",
-            "content": (
-                f"Maak een plan voor: {doelstelling}\n"
-                "Antwoord ALLEEN met een JSON array."
-            ),
+            "content": prompt_tekst,
         }]
 
         response = await self._call_api(berichten)
@@ -281,6 +402,10 @@ class OracleAgent(Agent):
             Kleur.GEEL,
         )
 
+        # Kennis-actie intercepteren
+        if actie == "zoek_kennis":
+            return self._execute_zoek_kennis(args)
+
         handler = ACTIE_DISPATCH.get(actie)
         if not handler:
             fout_msg = f"Onbekende actie: {actie}"
@@ -295,6 +420,44 @@ class OracleAgent(Agent):
             fout_msg = f"Uitvoerfout: {e}"
             self.log(fout_msg, Kleur.ROOD)
             return fout_msg
+
+    def _execute_zoek_kennis(self, args):
+        """Voer zoek_kennis actie uit voor de LLM.
+
+        Args:
+            args: dict met query en optioneel n_results.
+
+        Returns:
+            str — leesbare kennis-tekst.
+        """
+        query = args.get("query", "")
+        n = args.get("n_results", 5)
+
+        if not query:
+            return "Geen zoekterm opgegeven."
+
+        kennis = self._zoek_kennis(query, n)
+        if not kennis:
+            return (
+                f"Geen kennis gevonden voor:"
+                f" '{query}'"
+            )
+
+        regels = [
+            f"Kennis voor '{query}'"
+            f" ({len(kennis)} resultaten):"
+        ]
+        for k in kennis:
+            regels.append(
+                f"- [{k['bron']}]:"
+                f" {k['tekst'][:200]}"
+            )
+        resultaat = "\n".join(regels)
+        self.log(
+            f"Kennis: {len(kennis)} resultaten",
+            Kleur.GROEN,
+        )
+        return resultaat
 
     def _verify(self, verwachting):
         """Verifieer via PixelEye of het resultaat klopt.
@@ -586,6 +749,84 @@ class OracleAgent(Agent):
                 Kleur.ROOD,
             )
 
+    def _ingest_lessons_learned(self):
+        """Ingest repair entries als lessons learned
+        in ChromaDB.
+
+        Metadata compatibel met
+        TheLibrarian.ingest_repair_logs().
+        """
+        if not self.repair_history:
+            return
+
+        collection = self.kennis_collectie
+        if not collection:
+            return
+
+        ids = []
+        documents = []
+        metadatas = []
+        ts = datetime.now().strftime(
+            "%Y%m%d%H%M%S"
+        )
+
+        for i, entry in enumerate(
+            self.repair_history
+        ):
+            doc_id = (
+                f"repair_log::auto_{ts}_e{i}"
+            )
+
+            actie = entry.get("stap", {}).get(
+                "actie", "onbekend"
+            )
+            fout = entry.get("fout", "onbekend")
+            diagnose = entry.get(
+                "diagnose", "onbekend"
+            )
+            fix = entry.get("fix", "geen fix")
+            geslaagd = entry.get(
+                "geslaagd", False
+            )
+
+            tekst = (
+                f"Repair log: actie"
+                f" '{actie}' faalde."
+                f" Fout: {fout}."
+                f" Diagnose: {diagnose}."
+                f" Fix: {fix}."
+                f" Resultaat:"
+                f" {'geslaagd' if geslaagd else 'gefaald'}."
+            )
+
+            ids.append(doc_id)
+            documents.append(tekst)
+            metadatas.append({
+                "bron": "repair_logs",
+                "pad": "repair_logs.json",
+                "categorie": "lessons_learned",
+            })
+
+        if ids:
+            try:
+                collection.upsert(
+                    ids=ids,
+                    documents=documents,
+                    metadatas=metadatas,
+                )
+                self.log(
+                    f"Lessons learned:"
+                    f" {len(ids)} entries"
+                    f" ingested in ChromaDB",
+                    Kleur.GROEN,
+                )
+            except Exception as e:
+                self.log(
+                    f"Lessons learned ingest"
+                    f" mislukt: {e}",
+                    Kleur.ROOD,
+                )
+
     def _wrap_resultaten(
         self, doelstelling, resultaten, start
     ):
@@ -642,6 +883,7 @@ class OracleAgent(Agent):
             )
         self._sla_state_op()
         self._exporteer_repair_log()
+        self._ingest_lessons_learned()
 
         return {
             "doelstelling": doelstelling,
@@ -739,6 +981,53 @@ class OracleAgent(Agent):
         taak_input = taak.get("input", "onbekend")
         verwachting = taak.get("verwachting", "")
 
+        # Visuele context (optioneel)
+        visueel_context = ""
+        try:
+            scherm = self.eye.analyze_screen(
+                "Beschrijf foutmeldingen, popups of"
+                " onverwachte toestanden op het"
+                " scherm."
+            )
+            visueel_context = scherm.get(
+                "analyse", ""
+            )[:300]
+        except Exception:
+            pass
+
+        # Kennis context (optioneel)
+        kennis_context = ""
+        try:
+            zoekterm = (
+                f"{fout_beschrijving}"
+                f" {taak_input}"
+            )[:200]
+            kennis = self._zoek_kennis(zoekterm, 3)
+            if kennis:
+                delen = [
+                    f"[{k['bron']}]:"
+                    f" {k['tekst'][:150]}"
+                    for k in kennis
+                ]
+                kennis_context = (
+                    "\n".join(delen)[:400]
+                )
+        except Exception:
+            pass
+
+        # Bouw prompt met optionele secties
+        extra_context = ""
+        if visueel_context:
+            extra_context += (
+                f"SCHERMANALYSE:"
+                f" {visueel_context}\n"
+            )
+        if kennis_context:
+            extra_context += (
+                f"PROJECTKENNIS:\n"
+                f"{kennis_context}\n"
+            )
+
         berichten = [{
             "role": "user",
             "content": (
@@ -746,7 +1035,8 @@ class OracleAgent(Agent):
                 " Een swarm-taak is mislukt.\n\n"
                 f"TAAK: {taak_input}\n"
                 f"VERWACHTING: {verwachting}\n"
-                f"FOUT: {fout_beschrijving}\n\n"
+                f"FOUT: {fout_beschrijving}\n"
+                f"{extra_context}\n"
                 "Analyseer het probleem en geef"
                 " een repair plan als JSON:\n"
                 "{\n"
@@ -977,6 +1267,7 @@ class OracleAgent(Agent):
 
         self._sla_state_op()
         self._exporteer_repair_log()
+        self._ingest_lessons_learned()
         input("\n  Druk op Enter...")
 
     def _toon_plan(self, stappen):

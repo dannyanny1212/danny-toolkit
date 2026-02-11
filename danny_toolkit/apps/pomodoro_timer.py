@@ -3,64 +3,19 @@ Pomodoro Timer v2.0 - AI-Powered focus timer.
 """
 
 import time
-import json
-import os
 from datetime import datetime, timedelta
-from ..core.config import Config
 from ..core.utils import clear_scherm
-
-# AI Integration
-try:
-    from anthropic import Anthropic
-    AI_BESCHIKBAAR = True
-except ImportError:
-    AI_BESCHIKBAAR = False
+from .base_app import BaseApp
 
 
-class PomodoroTimerApp:
+class PomodoroTimerApp(BaseApp):
     """AI-Powered Pomodoro techniek timer."""
 
-    VERSIE = "2.0"
-
     def __init__(self):
-        Config.ensure_dirs()
-        self.bestand = Config.APPS_DATA_DIR / "pomodoro_stats.json"
-        self.stats = self._laad_stats()
-        self.client = None
-        self._init_ai()
+        super().__init__("pomodoro_stats.json")
+        self.stats = self.data
 
-    def _init_ai(self):
-        """Initialiseer AI client."""
-        if AI_BESCHIKBAAR:
-            api_key = os.environ.get("ANTHROPIC_API_KEY")
-            if api_key:
-                try:
-                    self.client = Anthropic(api_key=api_key)
-                except Exception:
-                    self.client = None
-
-    def _ai_request(self, prompt: str, max_tokens: int = 500) -> str:
-        """Maak een AI request."""
-        if not self.client:
-            return None
-        try:
-            response = self.client.messages.create(
-                model="claude-sonnet-4-20250514",
-                max_tokens=max_tokens,
-                messages=[{"role": "user", "content": prompt}]
-            )
-            return response.content[0].text
-        except Exception:
-            return None
-
-    def _laad_stats(self) -> dict:
-        """Laad pomodoro statistieken."""
-        if self.bestand.exists():
-            try:
-                with open(self.bestand, "r", encoding="utf-8") as f:
-                    return json.load(f)
-            except (json.JSONDecodeError, IOError):
-                pass
+    def _get_default_data(self) -> dict:
         return {
             "totaal_pomodoros": 0,
             "totaal_minuten": 0,
@@ -68,11 +23,6 @@ class PomodoroTimerApp:
             "streak": 0,
             "sessies": []
         }
-
-    def _sla_op(self):
-        """Sla stats op."""
-        with open(self.bestand, "w", encoding="utf-8") as f:
-            json.dump(self.stats, f, indent=2)
 
     def _log_memory_event(self, event_type, data):
         """Log event naar Unified Memory."""

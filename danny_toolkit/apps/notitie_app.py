@@ -2,71 +2,27 @@
 Notitie App v2.0 - AI-Powered Notities maken en organiseren.
 """
 
-import json
-import os
 from datetime import datetime
-from pathlib import Path
-from ..core.config import Config
 from ..core.utils import clear_scherm
-
-# AI Integration
-try:
-    from anthropic import Anthropic
-    AI_BESCHIKBAAR = True
-except ImportError:
-    AI_BESCHIKBAAR = False
+from .base_app import BaseApp
 
 
-class NotitieApp:
+class NotitieApp(BaseApp):
     """Een AI-powered app voor het maken en organiseren van notities."""
 
-    VERSIE = "2.0"
-
     def __init__(self):
-        Config.ensure_dirs()
-        self.bestand = Config.APPS_DATA_DIR / "notities.json"
-        self.notities = self._laad_notities()
-        self.client = None
-        self._init_ai()
+        super().__init__("notities.json")
+        self.notities = self.data
 
-    def _laad_notities(self) -> dict:
-        """Laad notities uit bestand."""
-        if self.bestand.exists():
-            try:
-                with open(self.bestand, "r", encoding="utf-8") as f:
-                    return json.load(f)
-            except (json.JSONDecodeError, IOError):
-                pass
-        return {"notities": [], "categorieen": ["Algemeen", "Werk", "Persoonlijk", "Ideeen"]}
-
-    def _init_ai(self):
-        """Initialiseer AI client."""
-        if AI_BESCHIKBAAR:
-            api_key = os.environ.get("ANTHROPIC_API_KEY")
-            if api_key:
-                try:
-                    self.client = Anthropic(api_key=api_key)
-                except Exception:
-                    self.client = None
-
-    def _ai_request(self, prompt: str, max_tokens: int = 500) -> str:
-        """Maak een AI request."""
-        if not self.client:
-            return None
-        try:
-            response = self.client.messages.create(
-                model="claude-sonnet-4-20250514",
-                max_tokens=max_tokens,
-                messages=[{"role": "user", "content": prompt}]
-            )
-            return response.content[0].text
-        except Exception:
-            return None
-
-    def _sla_op(self):
-        """Sla notities op."""
-        with open(self.bestand, "w", encoding="utf-8") as f:
-            json.dump(self.notities, f, indent=2, ensure_ascii=False)
+    def _get_default_data(self) -> dict:
+        """Standaard data voor notities."""
+        return {
+            "notities": [],
+            "categorieen": [
+                "Algemeen", "Werk",
+                "Persoonlijk", "Ideeen"
+            ]
+        }
 
     def _log_memory_event(self, event_type, data):
         """Log event naar Unified Memory."""
