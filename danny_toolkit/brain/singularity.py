@@ -35,12 +35,18 @@ class SingularityEngine:
     Wordt getikt vanuit HeartbeatDaemon elke ~10s.
     """
 
-    VERSION = "1.0.0"
+    VERSION = "1.1.0"
     REFLECTIE_INTERVAL = 300    # 5 min
     DROOM_INTERVAL = 600        # 10 min
     SYNTHESE_COOLDOWN = 120     # 2 min
     MAX_DROMEN_PER_UUR = 6
     MAX_INZICHTEN_PER_DAG = 50
+
+    # Nachtwacht constanten
+    NACHTWACHT_MIN_EVENTS = 10
+    NACHTWACHT_DREMPEL_MIN = 0.20
+    NACHTWACHT_DREMPEL_MAX = 0.45
+    NACHTWACHT_PATROON_DAGEN = 7
 
     def __init__(self, daemon=None, brain=None):
         self._daemon = daemon
@@ -69,6 +75,11 @@ class SingularityEngine:
         self._dromen_uur_start = time.time()
         self._inzichten_vandaag = 0
         self._inzichten_dag = datetime.now().day
+
+        # Nachtwacht state
+        self._nachtwacht_datum = None
+        self._nachtwacht_log: List[Dict] = []
+        self._originele_drempel = None
 
     # --- Lazy Properties ---
 
@@ -457,6 +468,504 @@ class SingularityEngine:
         except Exception:
             pass
 
+    # --- Nachtwacht (Subconscious Loop) ---
+
+    def _nachtwacht_cyclus(self):
+        """Eenmaal-per-nacht orchestrator.
+
+        Draait consolidatie, tuner-optimalisatie en
+        patroon-voorspelling achtereenvolgens.
+        Guard: skip als vandaag al gedraaid.
+        """
+        vandaag = datetime.now().strftime("%Y-%m-%d")
+        if self._nachtwacht_datum == vandaag:
+            return
+        self._nachtwacht_datum = vandaag
+
+        gisteren = (
+            datetime.now().replace(hour=0, minute=0,
+                                   second=0, microsecond=0)
+        )
+        gisteren_str = (
+            gisteren.strftime("%Y-%m-%d")
+        )
+
+        resultaat = {
+            "datum": vandaag,
+            "timestamp": datetime.now().isoformat(),
+        }
+
+        # 1. Memory Consolidation
+        try:
+            cons = self._nachtwacht_consolideer(
+                gisteren_str
+            )
+            resultaat["consolidatie"] = cons
+        except Exception:
+            resultaat["consolidatie"] = {"fout": True}
+
+        # 2. Self-Optimization
+        try:
+            tuner = self._nachtwacht_tuner()
+            resultaat["tuner"] = tuner
+        except Exception:
+            resultaat["tuner"] = {"fout": True}
+
+        # 3. Pre-Fetch
+        try:
+            voorsp = self._nachtwacht_voorspeller(
+                gisteren_str
+            )
+            resultaat["voorspeller"] = voorsp
+        except Exception:
+            resultaat["voorspeller"] = {"fout": True}
+
+        self._nachtwacht_log.append(resultaat)
+
+        # Bewaar maximaal 30 entries
+        if len(self._nachtwacht_log) > 30:
+            self._nachtwacht_log = (
+                self._nachtwacht_log[-30:]
+            )
+
+        # Log naar CorticalStack
+        stack = self.stack
+        if stack:
+            try:
+                stack.log_event(
+                    actor="singularity",
+                    action="nachtwacht",
+                    details=resultaat,
+                    source="singularity",
+                )
+            except Exception:
+                pass
+
+    def _nachtwacht_consolideer(
+        self, datum: str
+    ) -> Dict[str, Any]:
+        """Consolideer daglog naar long-term memory.
+
+        Query episodic_memory voor de gegeven datum,
+        groepeer per actor, tel frequenties en sla
+        samenvatting op als feit.
+
+        Args:
+            datum: Datum string "YYYY-MM-DD".
+
+        Returns:
+            Dict met events_verwerkt, actors,
+            stats_verwerkt.
+        """
+        stack = self.stack
+        if stack is None:
+            return {
+                "events_verwerkt": 0,
+                "actors": {},
+                "stats_verwerkt": 0,
+            }
+
+        # Query events van die datum
+        try:
+            cursor = stack._conn.execute(
+                "SELECT actor, action, details"
+                " FROM episodic_memory"
+                " WHERE timestamp >= ?"
+                " AND timestamp < ?",
+                (
+                    f"{datum}T00:00:00",
+                    f"{datum}T23:59:59",
+                ),
+            )
+            rows = cursor.fetchall()
+        except Exception:
+            rows = []
+
+        if not rows:
+            return {
+                "events_verwerkt": 0,
+                "actors": {},
+                "stats_verwerkt": 0,
+            }
+
+        # Groepeer per actor
+        actor_counts: Dict[str, int] = {}
+        for row in rows:
+            actor = row[0] if row[0] else "onbekend"
+            actor_counts[actor] = (
+                actor_counts.get(actor, 0) + 1
+            )
+
+        # Query system_stats gemiddelden
+        stats_verwerkt = 0
+        try:
+            cursor = stack._conn.execute(
+                "SELECT metric,"
+                " AVG(value) as gem,"
+                " MAX(value) as max_val,"
+                " COUNT(*) as cnt"
+                " FROM system_stats"
+                " WHERE timestamp >= ?"
+                " AND timestamp < ?"
+                " GROUP BY metric",
+                (
+                    f"{datum}T00:00:00",
+                    f"{datum}T23:59:59",
+                ),
+            )
+            stats_rows = cursor.fetchall()
+            stats_verwerkt = len(stats_rows)
+        except Exception:
+            stats_rows = []
+
+        # Bouw samenvatting tekst
+        actor_tekst = ", ".join(
+            f"{a}({c})" for a, c in sorted(
+                actor_counts.items(),
+                key=lambda x: -x[1],
+            )[:5]
+        )
+        tekst = (
+            f"Dag {datum}: {len(rows)} events."
+            f" Top actors: {actor_tekst}."
+        )
+        if stats_rows:
+            tekst += (
+                f" {stats_verwerkt} metrieken"
+                f" gelogd."
+            )
+
+        # Sla op als feit
+        try:
+            stack.remember_fact(
+                f"dag_samenvatting_{datum}",
+                tekst,
+                confidence=0.8,
+            )
+        except Exception:
+            pass
+
+        return {
+            "events_verwerkt": len(rows),
+            "actors": actor_counts,
+            "stats_verwerkt": stats_verwerkt,
+        }
+
+    def _nachtwacht_tuner(self) -> Dict[str, Any]:
+        """Optimaliseer AdaptiveRouter drempel.
+
+        Analyseer pipeline latency en pas DREMPEL
+        aan binnen veilige grenzen.
+
+        Returns:
+            Dict met oude_drempel, nieuwe_drempel,
+            reden.
+        """
+        try:
+            from ..swarm_engine import AdaptiveRouter
+        except ImportError:
+            try:
+                import sys
+                import importlib
+                mod = importlib.import_module(
+                    "swarm_engine"
+                )
+                AdaptiveRouter = mod.AdaptiveRouter
+            except Exception:
+                return {
+                    "oude_drempel": None,
+                    "nieuwe_drempel": None,
+                    "reden": "AdaptiveRouter niet"
+                             " beschikbaar",
+                }
+
+        oude = AdaptiveRouter.DREMPEL
+
+        # Backup originele drempel (eerste keer)
+        if self._originele_drempel is None:
+            self._originele_drempel = oude
+
+        # Probeer tuner samenvatting te halen
+        avg_latency = None
+        if self._brain is not None:
+            try:
+                swarm = self._brain.swarm_engine
+                if hasattr(swarm, "_tuner"):
+                    samenvatting = (
+                        swarm._tuner.get_samenvatting()
+                    )
+                    # Parse "Exec:950ms" patroon
+                    for deel in samenvatting.split():
+                        if deel.startswith("Exec:"):
+                            ms_str = deel[5:].rstrip(
+                                "ms"
+                            )
+                            try:
+                                avg_latency = float(
+                                    ms_str
+                                )
+                            except ValueError:
+                                pass
+            except Exception:
+                pass
+
+        if avg_latency is None:
+            return {
+                "oude_drempel": oude,
+                "nieuwe_drempel": oude,
+                "reden": "Geen latency data"
+                         " beschikbaar",
+            }
+
+        # Optimalisatie logica
+        nieuwe = oude
+        reden = "Geen aanpassing nodig"
+
+        if (avg_latency > 500
+                and oude < self.NACHTWACHT_DREMPEL_MAX):
+            nieuwe = min(
+                oude + 0.02,
+                self.NACHTWACHT_DREMPEL_MAX,
+            )
+            reden = (
+                f"Latency hoog ({avg_latency:.0f}ms)"
+                f" -> drempel verhoogd"
+            )
+        elif (avg_latency < 200
+                and oude > self.NACHTWACHT_DREMPEL_MIN):
+            nieuwe = max(
+                oude - 0.01,
+                self.NACHTWACHT_DREMPEL_MIN,
+            )
+            reden = (
+                f"Latency laag ({avg_latency:.0f}ms)"
+                f" -> drempel verlaagd"
+            )
+
+        if nieuwe != oude:
+            AdaptiveRouter.DREMPEL = round(nieuwe, 2)
+
+        return {
+            "oude_drempel": oude,
+            "nieuwe_drempel": round(nieuwe, 2),
+            "reden": reden,
+        }
+
+    def _nachtwacht_voorspeller(
+        self, datum: str
+    ) -> Dict[str, Any]:
+        """Detecteer tijdspatronen en voeg regels toe.
+
+        Analyseer events van afgelopen 7 dagen,
+        groepeer per (uur, actor). Als een actor
+        >= 4 van 7 dagen op hetzelfde uur actief is,
+        maak een ProactiveRule.
+
+        Args:
+            datum: Referentie datum "YYYY-MM-DD".
+
+        Returns:
+            Dict met patronen_gevonden,
+            regels_toegevoegd.
+        """
+        stack = self.stack
+        if stack is None:
+            return {
+                "patronen_gevonden": 0,
+                "regels_toegevoegd": 0,
+            }
+
+        # Query events van afgelopen 7 dagen
+        try:
+            ref = datetime.strptime(datum, "%Y-%m-%d")
+            start = ref.replace(
+                hour=0, minute=0,
+                second=0, microsecond=0,
+            )
+            from datetime import timedelta
+            begin = start - timedelta(
+                days=self.NACHTWACHT_PATROON_DAGEN
+            )
+            cursor = stack._conn.execute(
+                "SELECT timestamp, actor"
+                " FROM episodic_memory"
+                " WHERE timestamp >= ?"
+                " AND timestamp < ?",
+                (
+                    begin.strftime(
+                        "%Y-%m-%dT%H:%M:%S"
+                    ),
+                    start.strftime(
+                        "%Y-%m-%dT%H:%M:%S"
+                    ),
+                ),
+            )
+            rows = cursor.fetchall()
+        except Exception:
+            rows = []
+
+        if len(rows) < self.NACHTWACHT_MIN_EVENTS:
+            return {
+                "patronen_gevonden": 0,
+                "regels_toegevoegd": 0,
+            }
+
+        # Groepeer per (uur, actor, dag)
+        uur_actor_dagen: Dict[
+            tuple, set
+        ] = {}
+        for row in rows:
+            try:
+                ts = row[0]
+                actor = row[1]
+                # Parse uur en dag
+                dt = datetime.strptime(
+                    ts[:19], "%Y-%m-%dT%H:%M:%S"
+                )
+                uur = dt.hour
+                dag = dt.strftime("%Y-%m-%d")
+                key = (uur, actor)
+                if key not in uur_actor_dagen:
+                    uur_actor_dagen[key] = set()
+                uur_actor_dagen[key].add(dag)
+            except Exception:
+                continue
+
+        # Detecteer patronen (>= 4 van 7 dagen)
+        patronen = []
+        for (uur, actor), dagen in (
+            uur_actor_dagen.items()
+        ):
+            if len(dagen) >= 4:
+                patronen.append((uur, actor))
+
+        regels_toegevoegd = 0
+
+        # Voeg ProactiveEngine regels toe
+        if self._daemon and patronen:
+            try:
+                proactive = self._daemon.proactive
+                if proactive is not None:
+                    from .proactive import (
+                        ProactiveRule,
+                    )
+                    for uur, actor in patronen:
+                        regel_naam = (
+                            f"prefetch_{actor}_{uur}"
+                        )
+                        # Check duplicaat
+                        al_bestaat = False
+                        for r in proactive.regels:
+                            if r.naam == regel_naam:
+                                al_bestaat = True
+                                break
+                        if al_bestaat:
+                            continue
+
+                        proactive.voeg_regel_toe(
+                            ProactiveRule(
+                                naam=regel_naam,
+                                conditie=lambda s, u=uur: (
+                                    s.get("uur") == u - 1
+                                ),
+                                actie=(
+                                    f"melding:Pre-fetch"
+                                    f" {actor} voor"
+                                    f" {uur}:00"
+                                ),
+                                cooldown=86400,
+                                prioriteit=3,
+                                bron="nachtwacht",
+                            )
+                        )
+                        regels_toegevoegd += 1
+            except Exception:
+                pass
+
+        return {
+            "patronen_gevonden": len(patronen),
+            "regels_toegevoegd": regels_toegevoegd,
+        }
+
+    def _toon_nachtwacht(self):
+        """Toon nachtwacht log met kleuren."""
+        if not self._nachtwacht_log:
+            print(kleur(
+                "  Geen nachtwacht data"
+                " beschikbaar.",
+                Kleur.DIM,
+            ))
+            return
+
+        print()
+        print(kleur(
+            "  DE NACHTWACHT — Subconscious Loop",
+            Kleur.FEL_CYAAN,
+        ))
+        print(kleur(
+            "  " + "=" * 40,
+            Kleur.DIM,
+        ))
+
+        for entry in self._nachtwacht_log[-5:]:
+            print(kleur(
+                f"\n  Nacht: {entry.get('datum', '?')}",
+                Kleur.FEL_GEEL,
+            ))
+
+            # Consolidatie
+            cons = entry.get("consolidatie", {})
+            if cons.get("fout"):
+                print(kleur(
+                    "    Consolidatie: FOUT",
+                    Kleur.ROOD,
+                ))
+            else:
+                print(kleur(
+                    f"    Consolidatie:"
+                    f" {cons.get('events_verwerkt', 0)}"
+                    f" events,"
+                    f" {cons.get('stats_verwerkt', 0)}"
+                    f" stats",
+                    Kleur.CYAAN,
+                ))
+
+            # Tuner
+            tuner = entry.get("tuner", {})
+            if tuner.get("fout"):
+                print(kleur(
+                    "    Tuner: FOUT",
+                    Kleur.ROOD,
+                ))
+            else:
+                print(kleur(
+                    f"    Tuner:"
+                    f" {tuner.get('oude_drempel', '?')}"
+                    f" -> "
+                    f"{tuner.get('nieuwe_drempel', '?')}"
+                    f" ({tuner.get('reden', '?')})",
+                    Kleur.GEEL,
+                ))
+
+            # Voorspeller
+            voorsp = entry.get("voorspeller", {})
+            if voorsp.get("fout"):
+                print(kleur(
+                    "    Voorspeller: FOUT",
+                    Kleur.ROOD,
+                ))
+            else:
+                print(kleur(
+                    f"    Voorspeller:"
+                    f" {voorsp.get('patronen_gevonden', 0)}"
+                    f" patronen,"
+                    f" {voorsp.get('regels_toegevoegd', 0)}"
+                    f" regels",
+                    Kleur.MAGENTA,
+                ))
+
+        print()
+
     # --- Synthese (SYNTHESIS rol) ---
 
     def _synthese_taak(self, onderwerp: str):
@@ -673,6 +1182,10 @@ class SingularityEngine:
         ):
             self._droom_cyclus()
 
+        # Nachtwacht (eenmaal per nacht in SLAAP)
+        if self._modus == BewustzijnModus.SLAAP:
+            self._nachtwacht_cyclus()
+
         # Update score
         self._bereken_bewustzijn_score()
 
@@ -718,6 +1231,10 @@ class SingularityEngine:
             "inzichten": len(self._inzichten),
             "inzichten_vandaag": self._inzichten_vandaag,
             "synthese_taken": len(self._synthese_log),
+            "nachtwacht_datum": self._nachtwacht_datum,
+            "nachtwacht_log": len(
+                self._nachtwacht_log
+            ),
             "actief": not self._stop.is_set(),
         }
 
@@ -776,6 +1293,22 @@ class SingularityEngine:
         print(f"  Inzichten:{status['inzichten']}"
               f" ({status['inzichten_vandaag']}/dag)")
         print(f"  Synthese: {status['synthese_taken']}")
+        # Nachtwacht sectie
+        nw_datum = status.get(
+            "nachtwacht_datum", None
+        )
+        nw_log = status.get("nachtwacht_log", 0)
+        if nw_datum:
+            print(kleur(
+                f"  Nachtwacht: {nw_datum}"
+                f" ({nw_log} runs)",
+                Kleur.DIM,
+            ))
+        else:
+            print(kleur(
+                "  Nachtwacht: nog niet gedraaid",
+                Kleur.DIM,
+            ))
         print("=" * 50)
         print()
 
@@ -813,6 +1346,7 @@ class SingularityEngine:
         print("  score      - Toon bewustzijn score")
         print("  inzichten  - Toon inzichten")
         print("  dromen     - Toon dromen")
+        print("  nachtwacht - Toon nachtwacht log")
         print("  stop       - Terug naar launcher")
 
         while not self._stop.is_set():
@@ -944,6 +1478,9 @@ class SingularityEngine:
                                 f"  {d['hypothese']}",
                                 Kleur.MAGENTA,
                             ))
+
+                elif cmd == "nachtwacht":
+                    self._toon_nachtwacht()
 
                 else:
                     print(

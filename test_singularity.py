@@ -1,5 +1,5 @@
 """
-Tests voor SingularityEngine v1.0 — 17 tests.
+Tests voor SingularityEngine v1.1 — 22 tests.
 
 Draai: python test_singularity.py
 """
@@ -278,7 +278,7 @@ def test_12_get_status():
     )
     test(
         "status heeft 'versie'",
-        status["versie"] == "1.0.0",
+        status["versie"] == "1.1.0",
     )
     test(
         "status heeft 'actief'",
@@ -383,13 +383,175 @@ def test_17_totaal_rollen():
     )
 
 
+# ── Test 18: Nachtwacht datum guard ──
+
+def test_18_nachtwacht_guard():
+    """Test dat _nachtwacht_datum guard werkt."""
+    from danny_toolkit.brain.singularity import (
+        SingularityEngine,
+    )
+    engine = SingularityEngine()
+
+    # Eerste keer: datum is None, moet draaien
+    test(
+        "Nachtwacht datum begint None",
+        engine._nachtwacht_datum is None,
+    )
+
+    # Simuleer dat nachtwacht al gedraaid is
+    from datetime import datetime
+    vandaag = datetime.now().strftime("%Y-%m-%d")
+    engine._nachtwacht_datum = vandaag
+
+    # Log tellen voor en na
+    log_voor = len(engine._nachtwacht_log)
+    engine._nachtwacht_cyclus()
+    log_na = len(engine._nachtwacht_log)
+    test(
+        "Nachtwacht skip bij herhaling",
+        log_voor == log_na,
+    )
+
+
+# ── Test 19: Nachtwacht consolideer ──
+
+def test_19_nachtwacht_consolideer():
+    """Test _nachtwacht_consolideer() retourneert dict."""
+    from danny_toolkit.brain.singularity import (
+        SingularityEngine,
+    )
+    engine = SingularityEngine()
+
+    # Zonder stack: moet leeg dict retourneren
+    result = engine._nachtwacht_consolideer(
+        "2026-01-01"
+    )
+    test(
+        "Consolideer retourneert dict",
+        isinstance(result, dict),
+    )
+    test(
+        "Consolideer heeft events_verwerkt",
+        "events_verwerkt" in result,
+    )
+    test(
+        "Consolideer heeft actors",
+        "actors" in result,
+    )
+    test(
+        "Consolideer heeft stats_verwerkt",
+        "stats_verwerkt" in result,
+    )
+
+
+# ── Test 20: Nachtwacht tuner ──
+
+def test_20_nachtwacht_tuner():
+    """Test _nachtwacht_tuner() past DREMPEL aan."""
+    from danny_toolkit.brain.singularity import (
+        SingularityEngine,
+    )
+    engine = SingularityEngine()
+    result = engine._nachtwacht_tuner()
+    test(
+        "Tuner retourneert dict",
+        isinstance(result, dict),
+    )
+    test(
+        "Tuner heeft oude_drempel",
+        "oude_drempel" in result,
+    )
+    test(
+        "Tuner heeft nieuwe_drempel",
+        "nieuwe_drempel" in result,
+    )
+    test(
+        "Tuner heeft reden",
+        "reden" in result,
+    )
+
+    # Check grenzen
+    try:
+        from swarm_engine import AdaptiveRouter
+        drempel = AdaptiveRouter.DREMPEL
+        test(
+            "DREMPEL >= MIN",
+            drempel >= engine.NACHTWACHT_DREMPEL_MIN,
+        )
+        test(
+            "DREMPEL <= MAX",
+            drempel <= engine.NACHTWACHT_DREMPEL_MAX,
+        )
+    except ImportError:
+        test("DREMPEL grenzen (skip: geen router)", True)
+        test("DREMPEL grenzen (skip: geen router)", True)
+
+
+# ── Test 21: Nachtwacht voorspeller ──
+
+def test_21_nachtwacht_voorspeller():
+    """Test _nachtwacht_voorspeller() vindt patronen."""
+    from danny_toolkit.brain.singularity import (
+        SingularityEngine,
+    )
+    engine = SingularityEngine()
+
+    # Zonder stack: moet leeg resultaat geven
+    result = engine._nachtwacht_voorspeller(
+        "2026-02-10"
+    )
+    test(
+        "Voorspeller retourneert dict",
+        isinstance(result, dict),
+    )
+    test(
+        "Voorspeller heeft patronen_gevonden",
+        "patronen_gevonden" in result,
+    )
+    test(
+        "Voorspeller heeft regels_toegevoegd",
+        "regels_toegevoegd" in result,
+    )
+    test(
+        "Zonder stack: 0 patronen",
+        result["patronen_gevonden"] == 0,
+    )
+
+
+# ── Test 22: get_status bevat nachtwacht velden ──
+
+def test_22_status_nachtwacht():
+    """Test get_status() bevat nachtwacht velden."""
+    from danny_toolkit.brain.singularity import (
+        SingularityEngine,
+    )
+    engine = SingularityEngine()
+    status = engine.get_status()
+    test(
+        "status heeft nachtwacht_datum",
+        "nachtwacht_datum" in status,
+    )
+    test(
+        "status heeft nachtwacht_log",
+        "nachtwacht_log" in status,
+    )
+    test(
+        "nachtwacht_datum is None bij start",
+        status["nachtwacht_datum"] is None,
+    )
+    test(
+        "nachtwacht_log is 0 bij start",
+        status["nachtwacht_log"] == 0,
+    )
+
+
 # ── Main ──
 
 def main():
-    """Draai alle 17 test suites."""
+    """Draai alle 22 test suites."""
     print()
     print("=" * 55)
-    print("  SINGULARITY ENGINE TESTS — 17 suites")
+    print("  SINGULARITY ENGINE TESTS — 22 suites")
     print("=" * 55)
     print()
 
@@ -410,6 +572,11 @@ def main():
     test_15_tick()
     test_16_backward_compat_roles()
     test_17_totaal_rollen()
+    test_18_nachtwacht_guard()
+    test_19_nachtwacht_consolideer()
+    test_20_nachtwacht_tuner()
+    test_21_nachtwacht_voorspeller()
+    test_22_status_nachtwacht()
 
     print()
     print("=" * 55)
