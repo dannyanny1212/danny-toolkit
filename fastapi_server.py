@@ -334,7 +334,7 @@ async def health(
         governor_status=gov_status,
         circuit_breaker=cb_status,
         timestamp=datetime.now().isoformat(),
-        version="4.0.0",
+        version="5.0.0",
     )
 
 

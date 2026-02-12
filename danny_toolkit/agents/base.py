@@ -1,6 +1,6 @@
 """
 Base Agent class voor het agent framework.
-Versie 4.0 - COSMIC_OMEGA_V4. Met multi-provider, memory system, reflection en meer!
+Versie 5.0 - COSMIC_OMEGA_V5. Met multi-provider, memory system, reflection en meer!
 """
 
 import os

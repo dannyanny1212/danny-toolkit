@@ -212,7 +212,7 @@ class DannyToolkitGUI:
 
     def _configureer_venster(self):
         self.root.title(
-            "Danny Toolkit v4.0 // COSMIC_OMEGA_V4"
+            "Danny Toolkit v5.0 // COSMIC_OMEGA_V5"
         )
         self.root.configure(bg=BG)
         self.root.geometry("780x700")
@@ -230,7 +230,7 @@ class DannyToolkitGUI:
 
         titel = tk.Label(
             header,
-            text="DANNY TOOLKIT v4.0 // COSMIC_OMEGA_V4",
+            text="DANNY TOOLKIT v5.0 // COSMIC_OMEGA_V5",
             font=("Consolas", 16, "bold"),
             fg=SECTIE_KLEUREN["nexus"],
             bg=BG_HEADER,
@@ -410,7 +410,7 @@ class DannyToolkitGUI:
 
         versie = tk.Label(
             balk,
-            text="v4.0",
+            text="v5.0",
             font=("Consolas", 9, "bold"),
             fg=SECTIE_KLEUREN["nexus"],
             bg=BG_HEADER,
