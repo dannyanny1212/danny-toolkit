@@ -73,6 +73,8 @@ from .brain.trinity_omega import PrometheusBrain, get_prometheus
 from .brain.visual_nexus import VisualNexus, build_visual_nexus
 from .brain.project_map import ProjectMap
 from .brain.singularity import SingularityEngine
+from .brain.file_guard import FileGuard
+from .brain.security_research import SecurityResearchEngine
 
 # Rich UI imports
 from rich.console import Console
@@ -1073,6 +1075,15 @@ class SingularityApp:
         engine.run()
 
 
+class SecurityResearchApp:
+    """Wrapper voor Security Research Engine in launcher."""
+
+    def run(self):
+        """Start de Security Research Engine interactief."""
+        engine = SecurityResearchEngine()
+        engine.run()
+
+
 class PulseProtocolApp:
     """Wrapper voor Pulse Protocol in launcher."""
 
@@ -1266,6 +1277,7 @@ class Launcher:
         "54": ("Project Map", ProjectMapApp, "brain"),
         "55": ("Oracle Agent", OracleAgentApp, "brain"),
         "56": ("Singularity Engine", SingularityApp, "brain"),
+        "57": ("Security Research", SecurityResearchApp, "brain"),
     }
 
     # Sneltoetsen
@@ -1326,6 +1338,7 @@ class Launcher:
         "pm": "54", # Project Map
         "oa": "55", # Oracle Agent
         "si": "56", # Singularity Engine
+        "sr": "57", # Security Research
     }
 
     def __init__(self):
@@ -1335,6 +1348,15 @@ class Launcher:
         self.stats = LauncherStats()
         self.stats.registreer_sessie()
         self.console = Console()
+        self._file_guard_check()
+
+    def _file_guard_check(self):
+        """Voer FileGuard integriteitscheck uit bij startup."""
+        try:
+            guard = FileGuard()
+            guard.startup_check()
+        except Exception:
+            pass  # Nooit de launcher blokkeren
 
     def _get_banner(self) -> str:
         """Haal de juiste banner op basis van thema."""
@@ -1431,6 +1453,7 @@ class Launcher:
             "54": "CARTOGRAFIE",
             "55": "WAV-LOOP",
             "56": "SINGULARITY",
+            "57": "BEWAKING",
         }
         OMEGA_PROTOCOLS = {
             "41": "CORE",
@@ -1492,7 +1515,7 @@ class Launcher:
             nexus_tbl,
             title="[bold cyan]NEXUS PRIME[/bold cyan]",
             border_style="cyan",
-            subtitle="[dim]12 systems[/dim]",
+            subtitle="[dim]13 systems[/dim]",
         )
 
         # Omega Protocols tabel
@@ -1606,6 +1629,7 @@ class Launcher:
         print(f"     {self._kleur_tekst('di', 'nummer')} = Dialogue Protocol")
         print(f"     {self._kleur_tekst('wi', 'nummer')} = Will Protocol")
         print(f"     {self._kleur_tekst('hb', 'nummer')} = Heartbeat Daemon")
+        print(f"     {self._kleur_tekst('sr', 'nummer')} = Security Research")
         print()
 
         print("  Systeem commando's:")
@@ -1881,11 +1905,11 @@ def main():
 
         if arg in ["--help", "-h"]:
             print("""
-Danny Toolkit v4.0 — 56 apps
+Danny Toolkit v4.0 — 57 apps
 
 Gebruik:
   python main.py              Start interactieve launcher
-  python main.py <nummer>     Start app direct (1-56)
+  python main.py <nummer>     Start app direct (1-57)
   python main.py <sneltoets>  Start app via sneltoets
   python main.py --help       Toon deze help
 
@@ -1928,6 +1952,9 @@ Omega AI (41, 47-52):
   vo = Voice Protocol        li = Listener Protocol
   di = Dialogue Protocol     wi = Will Protocol
   hb = Heartbeat Daemon
+
+Central Brain Extra:
+  sr = Security Research
 """)
             return
 

@@ -79,6 +79,14 @@ class HeartbeatDaemon:
                 " en optimaliseer geheugen."
             ),
         },
+        {
+            "name": "Security Scan",
+            "interval": 3600,
+            "prompt": (
+                "Voer security en crypto research"
+                " scan uit."
+            ),
+        },
     ]
 
     def __init__(self, brain=None, daemon=None):
@@ -88,6 +96,7 @@ class HeartbeatDaemon:
         self._stack = None
         self._proactive = None
         self._singularity = None
+        self._security = None
         self._running = False
         self._stop_event = threading.Event()
 
@@ -110,6 +119,7 @@ class HeartbeatDaemon:
         self._last_stat_log = 0.0
         self._last_swarm_check = {}
         self._last_proactive_check = 0.0
+        self._last_security_scan = 0.0
 
     def _get_stack(self):
         """Lazy import CorticalStack."""
@@ -165,6 +175,21 @@ class HeartbeatDaemon:
             except Exception:
                 self._singularity = None
         return self._singularity
+
+    def _get_security(self):
+        """Lazy import SecurityResearchEngine."""
+        if self._security is None:
+            try:
+                from ..brain.security_research import (
+                    SecurityResearchEngine,
+                )
+                self._security = SecurityResearchEngine(
+                    brain=self._brain,
+                    daemon=self._daemon,
+                )
+            except Exception:
+                self._security = None
+        return self._security
 
     # ─── Swarm Taken ───
 
@@ -581,6 +606,24 @@ class HeartbeatDaemon:
                         if singularity:
                             try:
                                 singularity.tick()
+                            except Exception:
+                                pass
+
+                    # Security scan (elke 3600 pulsen)
+                    now_ts = time.time()
+                    if (
+                        now_ts - self._last_security_scan
+                        > 3600
+                    ):
+                        self._last_security_scan = now_ts
+                        security = self._get_security()
+                        if security:
+                            try:
+                                security.volledig_rapport()
+                                self._log_activity(
+                                    "security",
+                                    "Scan voltooid",
+                                )
                             except Exception:
                                 pass
 

@@ -40,6 +40,13 @@ data/*_vectors.json
 # Claude Code
 .claude/
 
+# Security config (bevat wallet adressen — NOOIT committen)
+data/security_config.json
+data/.security_config_hash
+
+# Niet-code bestanden
+data/met.pdf
+
 # Governor backups (runtime data)
 data/backups/
 
