@@ -734,6 +734,89 @@ class MemexAgent(BrainAgent):
         )
 
 
+class CoherentieAgent(Agent):
+    """Hardware coherentie — geen AI nodig.
+
+    Meet CPU/GPU correlatie en detecteert anomalieen
+    zoals ongeautoriseerd GPU-gebruik (crypto-mining).
+    """
+
+    async def process(self, task, brain=None):
+        from danny_toolkit.daemon.coherentie import (
+            CoherentieMonitor,
+        )
+        monitor = CoherentieMonitor()
+        rapport = await asyncio.to_thread(monitor.scan)
+
+        # Metrics payload
+        gpu_label = (
+            "GPU (NVML)"
+            if rapport["gpu_beschikbaar"]
+            else "GPU (n/a)"
+        )
+        metrics = [
+            {
+                "label": "CPU Gemiddeld",
+                "value": f"{rapport['cpu_gem']:.1f}%",
+                "delta": "",
+            },
+            {
+                "label": gpu_label,
+                "value": f"{rapport['gpu_gem']:.1f}%",
+                "delta": "",
+            },
+            {
+                "label": "Correlatie",
+                "value": f"{rapport['correlatie']:.4f}",
+                "delta": "",
+            },
+            {
+                "label": "Verdict",
+                "value": rapport["verdict"],
+                "delta": rapport["details"][:60],
+                "delta_color": (
+                    "normal"
+                    if rapport["verdict"] == "PASS"
+                    else "inverse"
+                ),
+            },
+        ]
+
+        # Chart data: CPU vs GPU reeksen
+        chart_data = pd.DataFrame({
+            "CPU %": rapport["cpu_reeks"],
+            "GPU %": rapport["gpu_reeks"],
+        })
+
+        display = (
+            f"**Coherentie Scan**\n"
+            f"CPU gem: {rapport['cpu_gem']:.1f}% | "
+            f"GPU gem: {rapport['gpu_gem']:.1f}%\n"
+            f"Correlatie: {rapport['correlatie']:.4f}\n"
+            f"**{rapport['verdict']}:** "
+            f"{rapport['details']}"
+        )
+
+        return SwarmPayload(
+            agent=self.name,
+            type="metrics",
+            content=display,
+            display_text=display,
+            metadata={
+                "execution_time": (
+                    rapport["duur_seconden"]
+                ),
+                "status": rapport["verdict"],
+                "media": {
+                    "type": "metrics",
+                    "category": "HARDWARE",
+                    "metrics": metrics,
+                    "data": chart_data,
+                },
+            },
+        )
+
+
 class PixelAgent(Agent):
     """THE EYES: Multimodal Vision Agent.
 
@@ -1269,6 +1352,15 @@ class AdaptiveRouter:
                 " UI scherm ziet eruit plaatje"
             ),
         ],
+        "COHERENTIE": [
+            (
+                "hardware coherentie cpu gpu load"
+                " correlatie mining crypto validatie"
+                " fingerprint check belasting"
+                " processor grafische kaart gebruik"
+                " anomalie detectie monitor"
+            ),
+        ],
     }
 
     @classmethod
@@ -1629,6 +1721,11 @@ class SwarmEngine:
         ],
         # LEGION: disabled
 
+        "COHERENTIE": [
+            "coherentie", "hardware", "gpu check",
+            "cpu check", "validatie", "fingerprint",
+            "mining", "load",
+        ],
         "CHRONOS_AGENT": [
             "schedule", "cronjob", "timer",
             "dag ritme", "bio ritme",
@@ -1722,6 +1819,9 @@ class SwarmEngine:
             "VOID": BrainAgent(
                 "Void", "Cleanup",
                 CosmicRole.VOID,
+            ),
+            "COHERENTIE": CoherentieAgent(
+                "Coherentie", "Hardware",
             ),
             # LEGION: disabled
 
