@@ -58,6 +58,7 @@ _DEFAULT_CONFIG = {
         "prijs_daling_pct": 5.0,
         "stijging_pct": 10.0,
         "whale_alert_usd": 100000,
+        "whale_alert_eth": 10.0,
     },
     "audit_bestanden": [
         "danny_toolkit/brain/governor.py",
@@ -101,6 +102,7 @@ class SecurityConfig:
     def __init__(self):
         Config.ensure_dirs()
         self._pad = _CONFIG_PAD
+        self._hash_gewijzigd = False
         self._data = self._laad()
 
     def _laad(self) -> dict:
@@ -115,6 +117,10 @@ class SecurityConfig:
                 for key, val in _DEFAULT_CONFIG.items():
                     if key not in data:
                         data[key] = val
+                    elif isinstance(val, dict):
+                        for sk, sv in val.items():
+                            if sk not in data[key]:
+                                data[key][sk] = sv
                 # Verifieer integriteit
                 self._verifieer_hash(data)
                 return data
@@ -349,6 +355,7 @@ class SecurityResearchEngine:
         self._coherentie = None
         self.config = SecurityConfig()
         self._alerts = []
+        self._eth_tx_cache = {}
 
     # ── Lazy properties ───────────────────────────────
 
@@ -416,8 +423,8 @@ class SecurityResearchEngine:
         balances = {}
         gescand = 0
         fouten = []
-        whale_drempel = self.config.drempels.get(
-            "whale_alert_usd", 100000
+        whale_drempel_eth = self.config.drempels.get(
+            "whale_alert_eth", 10.0
         )
 
         if not HAS_REQUESTS:
@@ -435,6 +442,38 @@ class SecurityResearchEngine:
         for adres in wallets.get("btc", []):
             gescand += 1
             scrub = _scrub_adres(adres)
+
+            # Balance check
+            try:
+                bal_url = (
+                    "https://blockstream.info/api"
+                    f"/address/{adres}"
+                )
+                bal_data = _fetch_json(bal_url)
+                if bal_data and isinstance(
+                    bal_data, dict
+                ):
+                    cs = bal_data.get(
+                        "chain_stats", {}
+                    )
+                    funded = cs.get(
+                        "funded_txo_sum", 0
+                    )
+                    spent = cs.get(
+                        "spent_txo_sum", 0
+                    )
+                    btc_bal = (funded - spent) / 1e8
+                    balances[scrub] = {
+                        "chain": "BTC",
+                        "balance": round(
+                            btc_bal, 8
+                        ),
+                        "unit": "BTC",
+                    }
+            except Exception:
+                pass
+
+            # Transacties
             try:
                 url = (
                     "https://blockstream.info/api"
@@ -499,6 +538,9 @@ class SecurityResearchEngine:
                     f"/{adres}/transactions"
                 )
                 data = _fetch_json(url)
+                # Cache voor scan_forensisch
+                if data:
+                    self._eth_tx_cache[adres] = data
                 if data and isinstance(data, dict):
                     items = data.get("items", [])
                     for tx in items[:5]:
@@ -533,7 +575,7 @@ class SecurityResearchEngine:
 
                         ernst = Ernst.MEDIUM
                         # Whale alert
-                        if waarde_eth > 10:
+                        if waarde_eth > whale_drempel_eth:
                             ernst = Ernst.HOOG
 
                         bevindingen.append({
@@ -1020,13 +1062,17 @@ class SecurityResearchEngine:
 
             # Transactie velocity check
             try:
-                url = (
-                    "https://eth.blockscout.com/api"
-                    "/v2/addresses"
-                    f"/{adres}/transactions"
-                    "?limit=50"
-                )
-                data = _fetch_json(url)
+                cached = self._eth_tx_cache.get(adres)
+                if cached:
+                    data = cached
+                else:
+                    url = (
+                        "https://eth.blockscout.com"
+                        "/api/v2/addresses"
+                        f"/{adres}/transactions"
+                        "?limit=50"
+                    )
+                    data = _fetch_json(url)
                 if data and isinstance(data, dict):
                     items = data.get("items", [])
                     if items:
@@ -1051,7 +1097,6 @@ class SecurityResearchEngine:
                                         "Z", "+00:00"
                                     )
                                 )
-                                uur_geleden = None
                                 tx_laatste_uur = 0
                                 for ts in timestamps:
                                     t = datetime.fromisoformat(
@@ -1143,11 +1188,14 @@ class SecurityResearchEngine:
             dict met alle scan resultaten + metadata.
         """
         start = time.time()
+        self._eth_tx_cache = {}
+
+        wallet_result = self.scan_wallets()
 
         rapport = {
             "timestamp": datetime.now().isoformat(),
             "versie": self.VERSION,
-            "wallets": self.scan_wallets(),
+            "wallets": wallet_result,
             "markt": self.scan_markt(),
             "code_audit": self.scan_code_audit(),
             "systeem": self.scan_systeem(),
@@ -1157,6 +1205,8 @@ class SecurityResearchEngine:
             "totaal_bevindingen": 0,
             "hoogste_ernst": Ernst.LAAG,
         }
+
+        self._eth_tx_cache = {}
 
         rapport["duur_seconden"] = round(
             time.time() - start, 2
@@ -1868,6 +1918,20 @@ class SecurityResearchEngine:
             print(kleur(
                 f"    Governor CB: {cb}", ck,
             ))
+        coh = r.get("coherentie")
+        if coh:
+            verdict = coh.get("verdict", "?")
+            ck = (
+                Kleur.FEL_GROEN
+                if verdict == "PASS"
+                else Kleur.FEL_ROOD
+            )
+            corr = coh.get("correlatie", 0)
+            print(kleur(
+                f"    Coherentie: {verdict}"
+                f" (correlatie: {corr:.2f})",
+                ck,
+            ))
         for b in r.get("bevindingen", []):
             print(kleur(
                 f"    [{b['ernst']}] {b['type']}",
@@ -2003,7 +2067,13 @@ def _fetch_json(url, timeout=10) -> dict | list | None:
     if not HAS_REQUESTS:
         return None
     try:
-        resp = requests.get(url, timeout=timeout)
+        resp = requests.get(
+            url,
+            timeout=timeout,
+            headers={
+                "User-Agent": "DannyToolkit/2.0",
+            },
+        )
         resp.raise_for_status()
         return resp.json()
     except Exception:
