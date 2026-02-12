@@ -1,6 +1,6 @@
 """
 Danny Toolkit Launcher - Hoofdmenu.
-Versie 5.0 - COSMIC_OMEGA_V5 Rich Dashboard met thema's, kleuren, statistieken en meer.
+Versie 4.0 - COSMIC_OMEGA_V4 Rich Dashboard met thema's, kleuren, statistieken en meer.
 """
 
 import sys
@@ -1210,14 +1210,14 @@ BANNER_STANDAARD = """
 ║     ██████╔╝██║  ██║██║ ╚████║██║ ╚████║   ██║               ║
 ║     ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═══╝   ╚═╝               ║
 ║                                                               ║
-║         T O O L K I T   v5.0 // COSMIC_OMEGA_V5                ║
+║         T O O L K I T   v4.0 // COSMIC_OMEGA_V4                ║
 ║                                                               ║
 ╚═══════════════════════════════════════════════════════════════╝
 """
 
 BANNER_MINIMAAL = """
 ============================================================
-     DANNY TOOLKIT v5.0
+     DANNY TOOLKIT v4.0
 ============================================================
 """
 
@@ -1306,7 +1306,7 @@ class LauncherStats:
 class Launcher:
     """Hoofdlauncher voor Danny Toolkit."""
 
-    VERSIE = "5.0.0"
+    VERSIE = "4.0.0"
 
     # Alle beschikbare apps
     APPS = {
@@ -2002,7 +2002,7 @@ def main():
 
         if arg in ["--help", "-h"]:
             print("""
-Danny Toolkit v5.0 — 59 apps
+Danny Toolkit v4.0 — 59 apps
 
 Gebruik:
   python main.py              Start interactieve launcher

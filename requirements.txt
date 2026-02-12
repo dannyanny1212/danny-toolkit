@@ -1,4 +1,4 @@
-# Danny Toolkit v5.0 - COSMIC_OMEGA_V5
+# Danny Toolkit v4.0 - COSMIC_OMEGA_V4
 # Core AI providers
 anthropic>=0.18.0
 groq>=1.0.0

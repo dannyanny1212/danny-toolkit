@@ -1,6 +1,6 @@
 """
 Tool system voor agents.
-Versie 5.0 - COSMIC_OMEGA_V5. Met categorieën, permissions, caching, metrics en meer!
+Versie 4.0 - COSMIC_OMEGA_V4. Met categorieën, permissions, caching, metrics en meer!
 """
 
 import asyncio
