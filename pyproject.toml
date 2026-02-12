@@ -42,6 +42,7 @@ full = [
 
 [project.scripts]
 danny-toolkit = "danny_toolkit.launcher:main"
+danny-gui = "danny_toolkit.gui_launcher:main"
 morning-protocol = "danny_toolkit.brain.morning_protocol:run_morning_protocol"
 brain = "danny_toolkit.brain.brain_cli:main"
 omega = "danny_toolkit.main_omega:main"
