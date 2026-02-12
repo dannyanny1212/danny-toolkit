@@ -342,6 +342,50 @@ with st.sidebar:
     with st.expander("Boot Log", expanded=False):
         st.code(boot_log[-2000:], language="text")
 
+    # --- API KEY ---
+    st.divider()
+    st.header("\U0001f511 API Toegang")
+
+    if "api_key" not in st.session_state:
+        st.session_state.api_key = os.getenv(
+            "FASTAPI_SECRET_KEY", ""
+        )
+
+    with st.form("api_key_form"):
+        api_key_input = st.text_input(
+            "API Key",
+            value=st.session_state.api_key,
+            type="password",
+            placeholder="Voer je API key in...",
+        )
+        api_port = st.text_input(
+            "Poort",
+            value=os.getenv("FASTAPI_PORT", "8000"),
+            max_chars=5,
+        )
+        opslaan = st.form_submit_button(
+            "Opslaan"
+        )
+        if opslaan:
+            st.session_state.api_key = api_key_input
+            st.session_state.api_port = api_port
+            st.success("API key opgeslagen.")
+
+    if st.session_state.api_key:
+        api_url = (
+            f"http://localhost:"
+            f"{st.session_state.get('api_port', '8000')}"
+        )
+        st.code(
+            f"curl -X POST {api_url}/api/v1/query \\\n"
+            f"  -H \"X-API-Key: "
+            f"{st.session_state.api_key}\" \\\n"
+            f"  -H \"Content-Type: application/json\""
+            f" \\\n"
+            f"  -d '{{\"message\": \"hallo\"}}'",
+            language="bash",
+        )
+
     # --- FEED THE MIND ---
     st.divider()
     st.header("\U0001f4c2 FEED THE MIND")

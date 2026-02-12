@@ -359,6 +359,65 @@ class TheLibrarian:
             "[/bold green]"
         )
 
+    # ─── Single File Ingest ───
+
+    def ingest_file(self, pad,
+                    chunk_size=CHUNK_SIZE,
+                    overlap=CHUNK_OVERLAP) -> int:
+        """Indexeer één bestand naar ChromaDB.
+
+        Returns:
+            Aantal chunks verwerkt.
+        """
+        pad = Path(pad)
+        if not pad.is_file():
+            console.print(
+                f"[red]Bestand niet gevonden:"
+                f" {pad}[/red]"
+            )
+            return 0
+
+        tekst = self._lees_bestand(pad)
+        if not tekst.strip():
+            return 0
+
+        chunks = self.chunk_text(
+            tekst, chunk_size, overlap
+        )
+        if not chunks:
+            return 0
+
+        ids = []
+        documents = []
+        metadatas = []
+
+        for i, chunk in enumerate(chunks):
+            ids.append(
+                f"{pad.name}::chunk_{i}"
+            )
+            documents.append(chunk)
+            metadatas.append({
+                "bron": pad.name,
+                "pad": str(pad),
+                "chunk_nr": i,
+                "totaal_chunks": len(chunks),
+                "extensie": pad.suffix,
+                "grootte_bytes":
+                    pad.stat().st_size,
+            })
+
+        self.collection.upsert(
+            ids=ids,
+            documents=documents,
+            metadatas=metadatas,
+        )
+
+        console.print(
+            f"[green]{len(ids)} chunks"
+            f" geïndexeerd: {pad.name}[/green]"
+        )
+        return len(ids)
+
     # ─── Stats ───
 
     def toon_stats(self):

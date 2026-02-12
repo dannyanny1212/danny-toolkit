@@ -424,17 +424,21 @@ async def ingest(
     # Probeer te indexeren via TheLibrarian
     chunks = 0
     try:
-        from ingest import TheLibrarian
-        librarian = TheLibrarian()
-        chunks = librarian.ingest_file(str(doel))
-    except ImportError:
-        # Ingest module niet beschikbaar
-        chunks = -1
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Indexering mislukt: {e}",
+        from danny_toolkit.skills.librarian import (
+            TheLibrarian,
         )
+    except ImportError:
+        chunks = -1
+
+    if chunks == 0:
+        try:
+            librarian = TheLibrarian()
+            chunks = librarian.ingest_file(str(doel))
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Indexering mislukt: {e}",
+            )
 
     return IngestResponse(
         status="OK" if chunks >= 0 else "OPGESLAGEN",
