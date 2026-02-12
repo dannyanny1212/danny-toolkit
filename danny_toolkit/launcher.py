@@ -1107,6 +1107,95 @@ class PulseProtocolApp:
         input("\n  Druk op Enter om terug te gaan...")
 
 
+class FastAPIApp:
+    """Wrapper voor FastAPI Server in launcher."""
+
+    def run(self):
+        """Start de FastAPI server."""
+        from .core.utils import clear_scherm
+
+        clear_scherm()
+        print(kleur("""
++===============================================================+
+|                                                               |
+|     F A S T A P I   S E R V E R                               |
+|                                                               |
+|     REST API — SwarmEngine via HTTP                           |
+|                                                               |
++===============================================================+
+        """, Kleur.FEL_GROEN))
+
+        print(kleur(
+            "  Endpoints:\n"
+            "    POST /api/v1/query    — Prompt verwerken\n"
+            "    GET  /api/v1/health   — Systeem status\n"
+            "    GET  /api/v1/agents   — Agent lijst\n"
+            "    POST /api/v1/ingest   — RAG upload\n"
+            "    GET  /api/v1/heartbeat — Daemon status\n"
+            "    GET  /docs            — Swagger UI\n",
+            Kleur.CYAAN,
+        ))
+
+        try:
+            import fastapi_server
+            fastapi_server.main()
+        except KeyboardInterrupt:
+            print(kleur(
+                "\n  Server gestopt.",
+                Kleur.GEEL,
+            ))
+        except Exception as e:
+            print(kleur(
+                f"\n  [FOUT] FastAPI: {e}",
+                Kleur.FEL_ROOD,
+            ))
+        input("\n  Druk op Enter om terug te gaan...")
+
+
+class TelegramBotApp:
+    """Wrapper voor Telegram Bot in launcher."""
+
+    def run(self):
+        """Start de Telegram bot."""
+        from .core.utils import clear_scherm
+
+        clear_scherm()
+        print(kleur("""
++===============================================================+
+|                                                               |
+|     T E L E G R A M   B O T                                   |
+|                                                               |
+|     SwarmEngine via Telegram                                  |
+|                                                               |
++===============================================================+
+        """, Kleur.FEL_CYAAN))
+
+        print(kleur(
+            "  Commando's in Telegram:\n"
+            "    /start     — Welkomstbericht\n"
+            "    /status    — Systeem gezondheid\n"
+            "    /agents    — Agent overzicht\n"
+            "    /heartbeat — Daemon status\n"
+            "    <tekst>    — SwarmEngine query\n",
+            Kleur.CYAAN,
+        ))
+
+        try:
+            import telegram_bot
+            telegram_bot.main()
+        except KeyboardInterrupt:
+            print(kleur(
+                "\n  Bot gestopt.",
+                Kleur.GEEL,
+            ))
+        except Exception as e:
+            print(kleur(
+                f"\n  [FOUT] Telegram Bot: {e}",
+                Kleur.FEL_ROOD,
+            ))
+        input("\n  Druk op Enter om terug te gaan...")
+
+
 # =============================================================================
 # ASCII BANNERS
 # =============================================================================
@@ -1278,6 +1367,8 @@ class Launcher:
         "55": ("Oracle Agent", OracleAgentApp, "brain"),
         "56": ("Singularity Engine", SingularityApp, "brain"),
         "57": ("Security Research", SecurityResearchApp, "brain"),
+        "58": ("FastAPI Server", FastAPIApp, "brain"),
+        "59": ("Telegram Bot", TelegramBotApp, "brain"),
     }
 
     # Sneltoetsen
@@ -1339,6 +1430,8 @@ class Launcher:
         "oa": "55", # Oracle Agent
         "si": "56", # Singularity Engine
         "sr": "57", # Security Research
+        "fa": "58", # FastAPI Server
+        "tb": "59", # Telegram Bot
     }
 
     def __init__(self):
@@ -1454,6 +1547,8 @@ class Launcher:
             "55": "WAV-LOOP",
             "56": "SINGULARITY",
             "57": "BEWAKING",
+            "58": "REST-API",
+            "59": "TELEGRAM",
         }
         OMEGA_PROTOCOLS = {
             "41": "CORE",
@@ -1515,7 +1610,7 @@ class Launcher:
             nexus_tbl,
             title="[bold cyan]NEXUS PRIME[/bold cyan]",
             border_style="cyan",
-            subtitle="[dim]13 systems[/dim]",
+            subtitle="[dim]15 systems[/dim]",
         )
 
         # Omega Protocols tabel
@@ -1630,6 +1725,8 @@ class Launcher:
         print(f"     {self._kleur_tekst('wi', 'nummer')} = Will Protocol")
         print(f"     {self._kleur_tekst('hb', 'nummer')} = Heartbeat Daemon")
         print(f"     {self._kleur_tekst('sr', 'nummer')} = Security Research")
+        print(f"     {self._kleur_tekst('fa', 'nummer')} = FastAPI Server")
+        print(f"     {self._kleur_tekst('tb', 'nummer')} = Telegram Bot")
         print()
 
         print("  Systeem commando's:")
@@ -1905,7 +2002,7 @@ def main():
 
         if arg in ["--help", "-h"]:
             print("""
-Danny Toolkit v4.0 — 57 apps
+Danny Toolkit v4.0 — 59 apps
 
 Gebruik:
   python main.py              Start interactieve launcher
@@ -1955,6 +2052,8 @@ Omega AI (41, 47-52):
 
 Central Brain Extra:
   sr = Security Research
+  fa = FastAPI Server
+  tb = Telegram Bot
 """)
             return
 

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "danny-toolkit"
-version = "4.0.0"
+version = "4.1.0"
 description = "Danny's persoonlijke Python toolkit met AI-agents en apps"
 readme = "README.md"
 license = {text = "MIT"}
@@ -47,6 +47,8 @@ morning-protocol = "danny_toolkit.brain.morning_protocol:run_morning_protocol"
 brain = "danny_toolkit.brain.brain_cli:main"
 omega = "danny_toolkit.main_omega:main"
 heartbeat = "danny_toolkit.daemon.heartbeat:main"
+danny-api = "fastapi_server:main"
+danny-bot = "telegram_bot:main"
 
 [project.urls]
 Homepage = "https://github.com/dannyanny1212/danny-toolkit"

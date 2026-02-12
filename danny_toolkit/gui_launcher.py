@@ -88,6 +88,8 @@ APP_NAMEN = {
     "55": "Oracle Agent",
     "56": "Singularity Engine",
     "57": "Security Research",
+    "58": "FastAPI Server",
+    "59": "Telegram Bot",
 }
 
 # ── Sectie definities (volgorde uit launcher.py) ──
@@ -97,7 +99,7 @@ SECTIES = {
         "keys": [
             "42", "46", "36", "40", "39",
             "43", "44", "45", "53", "54",
-            "55", "56", "57",
+            "55", "56", "57", "58", "59",
         ],
     },
     "OMEGA PROTOCOLS": {
