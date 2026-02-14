@@ -1,0 +1,7 @@
+site_name: Danny Toolkit
+theme:
+  name: material
+nav:
+  - Home: index.md
+  - GPU Acceleratie: gpu.md
+  - RAG Pipeline: rag.md
