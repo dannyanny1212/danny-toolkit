@@ -9,12 +9,39 @@ if sys.stdout.encoding != "utf-8":
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 
+def _ensure_llama_dlls():
+    """Pre-load CUDA DLLs voor llama-cpp-python (PyTorch fallback als CUDA Toolkit ontbreekt)."""
+    import os, ctypes, pathlib
+    llama_lib = pathlib.Path(sys.prefix, "Lib/site-packages/llama_cpp/lib")
+    if not llama_lib.exists():
+        return
+    os.add_dll_directory(str(llama_lib))
+    # Zoek CUDA DLLs: eerst Toolkit, dan PyTorch bundled
+    cuda_bin = os.path.join(os.environ.get("CUDA_PATH", r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1"), "bin")
+    if os.path.isdir(cuda_bin):
+        os.add_dll_directory(cuda_bin)
+    else:
+        try:
+            import torch
+            torch_lib = str(pathlib.Path(torch.__file__).parent / "lib")
+            if os.path.isdir(torch_lib):
+                os.add_dll_directory(torch_lib)
+        except ImportError:
+            pass
+    # Pre-load in dependency order
+    for dll in ["ggml-base.dll", "ggml-cpu.dll", "ggml-cuda.dll", "ggml.dll", "llama.dll"]:
+        p = llama_lib / dll
+        if p.exists():
+            try:
+                ctypes.CDLL(str(p))
+            except OSError:
+                pass
+
+
 def cmd_gpu(args):
     """GPU inference met llama-cpp-python + Phi-3 GGUF."""
     import os
-    cuda_bin = r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\bin"
-    if cuda_bin not in os.environ.get("PATH", ""):
-        os.environ["PATH"] = cuda_bin + os.pathsep + os.environ.get("PATH", "")
+    _ensure_llama_dlls()
 
     from llama_cpp import Llama
 
@@ -207,9 +234,7 @@ def cmd_index(args):
 def cmd_ask(args):
     """Stel een vraag aan je geindexeerde documenten."""
     import os
-    cuda_bin = r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\bin"
-    if cuda_bin not in os.environ.get("PATH", ""):
-        os.environ["PATH"] = cuda_bin + os.pathsep + os.environ.get("PATH", "")
+    _ensure_llama_dlls()
 
     from danny_toolkit.core.embeddings import TorchGPUEmbeddings
     from danny_toolkit.core.index_store import IndexStore
@@ -217,7 +242,7 @@ def cmd_ask(args):
     try:
         from llama_cpp import Llama
         has_llm = True
-    except ImportError:
+    except (ImportError, RuntimeError):
         has_llm = False
 
     store = IndexStore()
