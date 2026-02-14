@@ -1631,6 +1631,9 @@ _GREETING_PATTERNS = [
     r"^goede(morgen|middag|avond)\b", r"^yo\b",
     r"^hoe gaat het", r"^bedankt", r"^dank je",
     r"^doei\b", r"^tot ziens",
+    r"^dag\b", r"^welterusten\b", r"^goedenacht\b",
+    r"^dankjewel\b", r"^thanks\b", r"^top\b",
+    r"^oke\b", r"^oké\b", r"^prima\b",
 ]
 
 
@@ -1750,6 +1753,22 @@ class SwarmEngine:
         self.on_pre_task = []
         self.on_post_task = []
         self.on_failure = []
+        self._query_count = 0
+        self._total_time = 0.0
+
+    def get_stats(self) -> Dict[str, Any]:
+        """Statistieken: verwerkte queries, agents, gem. responstijd."""
+        avg_ms = (
+            self._total_time / self._query_count
+            if self._query_count > 0
+            else 0.0
+        )
+        return {
+            "queries_processed": self._query_count,
+            "active_agents": len(self.agents),
+            "avg_response_ms": round(avg_ms, 1),
+            "registered_agents": list(self.agents.keys()),
+        }
 
     @property
     def _governor(self):
@@ -2479,6 +2498,7 @@ class SwarmEngine:
                  "prompt": user_input[:200]},
             )
             log("\u2705 SWARM COMPLETE (fast-track)")
+            self._query_count += 1
             return [fast]
 
         # 3. Chronos enrichment (NOOIT skippen)
@@ -2671,6 +2691,12 @@ class SwarmEngine:
             pass
 
         log("\u2705 SWARM COMPLETE")
+        self._query_count += 1
+        self._total_time += sum(
+            e.get("latency_ms", 0)
+            for stap in self._tuner._stats.values()
+            for e in stap
+        )
         return results
 
 

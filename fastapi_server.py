@@ -54,6 +54,7 @@ FASTAPI_SECRET_KEY = os.getenv(
 )
 FASTAPI_PORT = int(os.getenv("FASTAPI_PORT", "8000"))
 
+_SERVER_START_TIME = time.time()
 
 # ─── SINGLETON BRAIN ───────────────────────────────
 
@@ -112,6 +113,9 @@ class HealthResponse(BaseModel):
     circuit_breaker: str
     timestamp: str
     version: str
+    uptime_seconds: float = 0.0
+    memory_mb: float = 0.0
+    active_agents: int = 0
 
 
 class AgentInfo(BaseModel):
@@ -329,13 +333,36 @@ async def health(
         gov_status = "NIET BESCHIKBAAR"
         cb_status = "ONBEKEND"
 
+    # Uptime
+    uptime = time.time() - _SERVER_START_TIME
+
+    # Memory usage
+    mem_mb = 0.0
+    try:
+        import psutil
+        proc = psutil.Process(os.getpid())
+        mem_mb = proc.memory_info().rss / (1024 * 1024)
+    except Exception:
+        pass
+
+    # Active agents
+    actief = 0
+    if hasattr(brain, "nodes"):
+        actief = sum(
+            1 for n in brain.nodes.values()
+            if n.status == "ACTIVE"
+        )
+
     return HealthResponse(
         status="ONLINE",
         brain_online=brain.is_online,
         governor_status=gov_status,
         circuit_breaker=cb_status,
         timestamp=datetime.now().isoformat(),
-        version="4.0.0",
+        version="5.1.0",
+        uptime_seconds=round(uptime, 1),
+        memory_mb=round(mem_mb, 1),
+        active_agents=actief,
     )
 
 

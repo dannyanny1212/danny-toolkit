@@ -12,7 +12,11 @@ import sys
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8")
 
-from danny_toolkit.launcher import main
-
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] in ("--version", "-V"):
+        from danny_toolkit import __version__
+        print(f"Danny Toolkit v{__version__} — COSMIC_OMEGA_V5")
+        sys.exit(0)
+
+    from danny_toolkit.launcher import main
     main()

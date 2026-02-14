@@ -468,6 +468,28 @@ class Config:
 
         return "\n".join(lijnen)
 
+    @classmethod
+    def toon_api_status(cls) -> str:
+        """Overzicht van alle API keys met validatiestatus."""
+        lijnen = ["=== API STATUS ===\n"]
+
+        providers = [
+            ("Anthropic", cls.ANTHROPIC_API_KEY, cls.has_anthropic_key()),
+            ("Voyage", cls.VOYAGE_API_KEY, cls.has_voyage_key()),
+            ("OpenAI", cls.OPENAI_API_KEY, cls.has_openai_key()),
+            ("ElevenLabs", cls.ELEVENLABS_API_KEY, cls.has_elevenlabs_key()),
+        ]
+
+        for naam, key, beschikbaar in providers:
+            if not beschikbaar:
+                lijnen.append(f"  {naam}: NIET GECONFIGUREERD")
+            else:
+                valid, msg = ConfigValidator.valideer_api_key(key, naam)
+                status = "OK" if valid else "ONGELDIG"
+                lijnen.append(f"  {naam}: {status} — {msg}")
+
+        return "\n".join(lijnen)
+
 
 # Laad voorkeuren bij import
 Config.laad_voorkeuren()

@@ -94,10 +94,23 @@ async def cmd_start(update, context):
         "Stuur een bericht en ik verwerk het via "
         "de SwarmEngine.\n\n"
         "Commando's:\n"
-        "  /status  — Systeem gezondheid\n"
-        "  /agents  — Beschikbare agents\n"
+        "  /ping      — Response check\n"
+        "  /status    — Systeem gezondheid\n"
+        "  /agents    — Beschikbare agents\n"
         "  /heartbeat — Daemon status\n"
-        "  /help    — Dit bericht\n"
+        "  /help      — Dit bericht\n"
+    )
+
+
+async def cmd_ping(update, context):
+    """Handler voor /ping command — meet response tijd."""
+    start = time.time()
+    latency = (time.time() - start) * 1000
+    nu = datetime.now().strftime("%H:%M:%S")
+    await update.message.reply_text(
+        f"PONG — {latency:.1f}ms\n"
+        f"Tijd: {nu}\n"
+        f"Bot is online."
     )
 
 
@@ -424,6 +437,9 @@ def main():
     )
     application.add_handler(
         CommandHandler("help", cmd_start)
+    )
+    application.add_handler(
+        CommandHandler("ping", cmd_ping)
     )
     application.add_handler(
         CommandHandler("status", cmd_status)
