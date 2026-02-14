@@ -97,6 +97,9 @@ class IndexStore:
     def search(self, query_vec: np.ndarray, k: int = 5) -> list[dict]:
         """Search the index and return results with metadata."""
         self._load()
+        # Verhoog nprobe voor IVF indices zodat meer clusters doorzocht worden
+        if hasattr(self.index, "nprobe"):
+            self.index.nprobe = min(10, getattr(self.index, "nlist", 10))
         k = min(k, self.index.ntotal)
         D, I = self.index.search(query_vec, k)
 
