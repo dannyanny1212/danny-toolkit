@@ -271,6 +271,12 @@ class Config:
     BACKUP_DIR = DATA_DIR / "backups"
     LOG_DIR = DATA_DIR / "logs"
 
+    # Hoofdgebruiker (uit .env)
+    HOOFDGEBRUIKER_NAAM = os.environ.get("HOOFDGEBRUIKER_NAAM", "")
+    HOOFDGEBRUIKER_EMAIL = os.environ.get("HOOFDGEBRUIKER_EMAIL", "")
+    HOOFDGEBRUIKER_LAND = os.environ.get("HOOFDGEBRUIKER_LAND", "")
+    HOOFDGEBRUIKER_TELEFOON = os.environ.get("HOOFDGEBRUIKER_TELEFOON", "")
+
     # User preferences (defaults)
     _taal = "nl"
     _thema = "standaard"
@@ -347,6 +353,12 @@ class Config:
         # cls.GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
         cls.ELEVENLABS_API_KEY = os.environ.get("ELEVENLABS_API_KEY", "")
         cls.OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+
+        # Hoofdgebruiker
+        cls.HOOFDGEBRUIKER_NAAM = os.environ.get("HOOFDGEBRUIKER_NAAM", "")
+        cls.HOOFDGEBRUIKER_EMAIL = os.environ.get("HOOFDGEBRUIKER_EMAIL", "")
+        cls.HOOFDGEBRUIKER_LAND = os.environ.get("HOOFDGEBRUIKER_LAND", "")
+        cls.HOOFDGEBRUIKER_TELEFOON = os.environ.get("HOOFDGEBRUIKER_TELEFOON", "")
 
         return geladen
 
@@ -445,6 +457,13 @@ class Config:
         """Genereer een status rapport van de configuratie."""
         lijnen = []
         lijnen.append("=== CONFIGURATIE STATUS ===\n")
+
+        # Hoofdgebruiker
+        lijnen.append("[Hoofdgebruiker]")
+        lijnen.append(f"  Naam:     {cls.HOOFDGEBRUIKER_NAAM or 'Niet ingesteld'}")
+        lijnen.append(f"  Email:    {cls.HOOFDGEBRUIKER_EMAIL or 'Niet ingesteld'}")
+        lijnen.append(f"  Land:     {cls.HOOFDGEBRUIKER_LAND or 'Niet ingesteld'}")
+        lijnen.append(f"  Telefoon: {cls.HOOFDGEBRUIKER_TELEFOON or 'Niet ingesteld'}")
 
         # API Keys
         lijnen.append("[API Keys]")
