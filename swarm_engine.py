@@ -30,11 +30,8 @@ from collections import deque
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Dict, Any, Optional
 
-# Beperk de default thread pool tot 6 workers
-# om GIL contention en context switching te verminderen.
-_swarm_executor = ThreadPoolExecutor(
-    max_workers=6, thread_name_prefix="swarm"
-)
+# Max workers voor de per-loop thread pool.
+_SWARM_MAX_WORKERS = 6
 from dataclasses import dataclass, field
 from datetime import datetime
 
@@ -2452,7 +2449,10 @@ class SwarmEngine:
 
         # Beperk thread pool voor deze event loop
         loop = asyncio.get_running_loop()
-        loop.set_default_executor(_swarm_executor)
+        loop.set_default_executor(ThreadPoolExecutor(
+            max_workers=_SWARM_MAX_WORKERS,
+            thread_name_prefix="swarm",
+        ))
 
         t = self._tuner
 
