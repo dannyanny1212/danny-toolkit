@@ -555,27 +555,33 @@ def cmd_benchmark(args):
 
     embed_cache = {}
 
+    failed_providers = set()
+
     for naam, prov in providers.items():
-        # Warmup
-        if hasattr(prov, "embed"):
-            prov.embed([test_teksten[0]]) if not isinstance(prov, TorchGPUEmbeddings) else prov.embed([test_teksten[0]])
+        try:
+            # Warmup
+            prov.embed([test_teksten[0]])
 
-        start = _time.perf_counter()
-        result = prov.embed(test_teksten)
-        elapsed = _time.perf_counter() - start
+            start = _time.perf_counter()
+            result = prov.embed(test_teksten)
+            elapsed = _time.perf_counter() - start
 
-        embed_cache[naam] = (prov, result)
+            embed_cache[naam] = (prov, result)
 
-        per_tekst = elapsed / len(test_teksten) * 1000
-        per_sec = len(test_teksten) / elapsed if elapsed > 0 else 0
+            per_tekst = elapsed / len(test_teksten) * 1000
+            per_sec = len(test_teksten) / elapsed if elapsed > 0 else 0
 
-        speed_table.add_row(
-            naam,
-            str(len(test_teksten)),
-            f"{elapsed * 1000:.1f}",
-            f"{per_tekst:.2f}",
-            f"{per_sec:.1f}",
-        )
+            speed_table.add_row(
+                naam,
+                str(len(test_teksten)),
+                f"{elapsed * 1000:.1f}",
+                f"{per_tekst:.2f}",
+                f"{per_sec:.1f}",
+            )
+        except Exception as e:
+            failed_providers.add(naam)
+            err = "rate limit" if "RateLimit" in type(e).__name__ or "429" in str(e) else str(e)[:40]
+            speed_table.add_row(naam, "-", "-", "-", f"[red]{err}[/red]")
 
     console.print(speed_table)
 
@@ -602,20 +608,22 @@ def cmd_benchmark(args):
     for tekst_a, tekst_b in similarity_paren:
         row = [f"{tekst_a[:24]}.. vs {tekst_b[:22]}.."]
         for naam, prov in providers.items():
-            if isinstance(prov, TorchGPUEmbeddings):
+            if naam in failed_providers:
+                row.append("[dim]skipped[/dim]")
+                continue
+            try:
                 va = prov.embed([tekst_a])[0]
                 vb = prov.embed([tekst_b])[0]
-            else:
-                va = prov.embed([tekst_a])[0]
-                vb = prov.embed([tekst_b])[0]
-            sim = cosine_sim(va, vb)
-            # Kleur op basis van score
-            if sim > 0.7:
-                row.append(f"[green]{sim:.4f}[/green]")
-            elif sim > 0.4:
-                row.append(f"[yellow]{sim:.4f}[/yellow]")
-            else:
-                row.append(f"[red]{sim:.4f}[/red]")
+                sim = cosine_sim(va, vb)
+                if sim > 0.7:
+                    row.append(f"[green]{sim:.4f}[/green]")
+                elif sim > 0.4:
+                    row.append(f"[yellow]{sim:.4f}[/yellow]")
+                else:
+                    row.append(f"[red]{sim:.4f}[/red]")
+            except Exception as e:
+                err = "rate limit" if "RateLimit" in type(e).__name__ or "429" in str(e) else str(e)[:20]
+                row.append(f"[dim]{err}[/dim]")
         sim_table.add_row(*row)
 
     console.print(sim_table)
