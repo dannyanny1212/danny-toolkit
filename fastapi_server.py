@@ -47,6 +47,7 @@ if os.name == "nt":
 # .env laden
 load_dotenv(Path(__file__).parent / ".env")
 
+# WARNING: Wijzig deze sleutel in productie! Standaard is onveilig.
 FASTAPI_SECRET_KEY = os.getenv(
     "FASTAPI_SECRET_KEY",
     "verander-dit-naar-een-willekeurige-sleutel",
