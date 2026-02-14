@@ -1,9 +1,16 @@
 # danny_toolkit/core/index_store.py — Persistent FAISS index + metadata
+from __future__ import annotations
+
 import hashlib
 import json
-import numpy as np
-import faiss
 from pathlib import Path
+
+try:
+    import numpy as np
+    import faiss
+    _HAS_FAISS = True
+except ImportError:
+    _HAS_FAISS = False
 
 DEFAULT_STORE = Path.home() / ".danny-toolkit" / "index"
 
@@ -14,6 +21,8 @@ class IndexStore:
     """Persistent FAISS index with document metadata."""
 
     def __init__(self, store_dir: str = None):
+        if not _HAS_FAISS:
+            raise ImportError("IndexStore vereist 'numpy' en 'faiss-cpu'. Installeer met: pip install numpy faiss-cpu")
         self.store_dir = Path(store_dir) if store_dir else DEFAULT_STORE
         self.store_dir.mkdir(parents=True, exist_ok=True)
         self.index_path = self.store_dir / "faiss.index"
