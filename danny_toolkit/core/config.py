@@ -237,17 +237,23 @@ class Config:
     # API Keys
     ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
     VOYAGE_API_KEY = os.environ.get("VOYAGE_API_KEY", "")
-    # TODO: Groq verwijderd — voeg hier een nieuwe provider toe
-    GROQ_API_KEY = ""
+    GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
     ELEVENLABS_API_KEY = os.environ.get("ELEVENLABS_API_KEY", "")
     OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
-    # Models
+    # TEXT GENERATION (Groq Cloud — $0 VRAM)
+    LLM_PROVIDER = "groq"
+    LLM_MODEL = "llama-3.3-70b-versatile"
+
+    # VISION GENERATION (Ollama lokaal — RTX 3060 Ti)
+    VISION_PROVIDER = "ollama"
+    VISION_MODEL = "llava:latest"
+
+    # Fallback / overige modellen
     CLAUDE_MODEL = "claude-sonnet-4-20250514"
     MAX_TOKENS = 10000
     VOYAGE_MODEL = "voyage-4-large"
-    # TODO: Groq verwijderd
-    GROQ_MODEL = ""
+    GROQ_MODEL = "llama-3.3-70b-versatile"
 
     # RAG Settings
     CHUNK_SIZE = 350
@@ -311,8 +317,7 @@ class Config:
     @classmethod
     def has_groq_key(cls) -> bool:
         """Check of Groq API key beschikbaar is."""
-        # TODO: Groq verwijderd — retourneert altijd False
-        return False
+        return bool(cls.GROQ_API_KEY)
 
     @classmethod
     def has_elevenlabs_key(cls) -> bool:
@@ -349,8 +354,7 @@ class Config:
         # Update class attributes
         cls.ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
         cls.VOYAGE_API_KEY = os.environ.get("VOYAGE_API_KEY", "")
-        # TODO: Groq verwijderd
-        # cls.GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+        cls.GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
         cls.ELEVENLABS_API_KEY = os.environ.get("ELEVENLABS_API_KEY", "")
         cls.OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
@@ -448,7 +452,11 @@ class Config:
             )
             resultaten.append(("Voyage", valid, msg))
 
-        # TODO: Groq validatie verwijderd
+        if cls.GROQ_API_KEY:
+            valid, msg = ConfigValidator.valideer_api_key(
+                cls.GROQ_API_KEY, "Groq"
+            )
+            resultaten.append(("Groq", valid, msg))
 
         return resultaten
 
@@ -467,9 +475,9 @@ class Config:
 
         # API Keys
         lijnen.append("[API Keys]")
+        lijnen.append(f"  Groq:      {'Ja' if cls.has_groq_key() else 'Nee'}")
         lijnen.append(f"  Anthropic: {'Ja' if cls.has_anthropic_key() else 'Nee'}")
         lijnen.append(f"  Voyage:    {'Ja' if cls.has_voyage_key() else 'Nee'}")
-        # Groq verwijderd
 
         # Voorkeuren
         lijnen.append("\n[Voorkeuren]")
@@ -493,6 +501,7 @@ class Config:
         lijnen = ["=== API STATUS ===\n"]
 
         providers = [
+            ("Groq", cls.GROQ_API_KEY, cls.has_groq_key()),
             ("Anthropic", cls.ANTHROPIC_API_KEY, cls.has_anthropic_key()),
             ("Voyage", cls.VOYAGE_API_KEY, cls.has_voyage_key()),
             ("OpenAI", cls.OPENAI_API_KEY, cls.has_openai_key()),
