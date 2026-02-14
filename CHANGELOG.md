@@ -7,6 +7,29 @@ Format gebaseerd op [Keep a Changelog](https://keepachangelog.com/) en [Semantic
 
 ---
 
+## v5.1.1 — Metadata Consistency Update (2026-02-14)
+
+Deze release brengt de volledige codebase in lijn met versie `v5.1.1` en
+subsystem-label `COSMIC_OMEGA_V5`. Alle resterende referenties naar oudere versies
+(`v5.1.0`, `v4.x`, `COSMIC_OMEGA_V4`) zijn opgeschoond.
+
+### Gewijzigde bestanden
+- OMEGA_PROTOCOL.py — status naar COSMIC_OMEGA_V5
+- agents/base.py — header naar v5.1.1
+- agents/orchestrator.py — header naar v5.1.1
+- agents/tool.py — header naar v5.1.1
+- brain/morning_protocol.py — reset-regel naar COSMIC_OMEGA_V5
+- brain/trinity_omega.py — SYSTEM_NAME naar COSMIC_OMEGA_V5
+- launcher.py — header naar v5.1.1
+- fastapi_server.py — versie naar 5.1.1
+
+### Samenvatting
+- Geen functionele wijzigingen
+- Volledige metadata-opschoning
+- Codebase nu 100% consistent op v5.1.1 // COSMIC_OMEGA_V5
+
+---
+
 ## [5.1.0] - 2026-02-13
 
 ### Added

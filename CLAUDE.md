@@ -184,6 +184,23 @@ Last stable pre-v5 release. Includes:
 - MINOR: 8 extra Nederlandse fast-track patronen in EchoAgent
 - MINOR: `danny_toolkit/utils/ensure_directory.py` utility module
 
+### v5.1.1 — Metadata Consistency Update
+
+Deze update synchroniseert alle resterende versie-strings in de codebase met de huidige
+v5.1.1 release. Acht bestanden bevatten nog oude referenties naar `v5.1.0` of
+`COSMIC_OMEGA_V4`. Deze zijn opgeschoond en vervangen door `v5.1.1` en
+`COSMIC_OMEGA_V5`.
+
+Aangepaste onderdelen:
+- Agents (base, orchestrator, tool) headers bijgewerkt
+- OMEGA_PROTOCOL status geüpdatet naar COSMIC_OMEGA_V5
+- MORNING_PROTOCOL reset-regel geüpdatet
+- TRINITY_OMEGA systeemnaam geüpdatet
+- FastAPI server versie geüpdatet naar 5.1.1
+- GUI versie-strings gesynchroniseerd
+
+Deze update bevat geen logische wijzigingen, enkel metadata-correcties.
+
 ## Guidelines for Claude Code
 
 Claude should:
