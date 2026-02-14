@@ -10,6 +10,8 @@ from .base_app import BaseApp
 class AgendaPlannerApp(BaseApp):
     """AI-Powered agenda en planning assistent."""
 
+    PUBLICEERT = ["agenda_update"]
+
     def __init__(self):
         super().__init__("agenda.json")
 
@@ -141,6 +143,14 @@ class AgendaPlannerApp(BaseApp):
 
         self.data["afspraken"].append(afspraak)
         self._sla_op()
+
+        # Publiceer naar NeuralBus
+        self.publish("agenda_update", {
+            "actie": "afspraak_toegevoegd",
+            "titel": titel,
+            "datum": datum.isoformat(),
+            "tijd": tijd,
+        })
 
         print(f"\n[OK] Afspraak '{titel}' toegevoegd voor {datum.strftime('%d-%m-%Y')}!")
 
@@ -280,6 +290,10 @@ class AgendaPlannerApp(BaseApp):
                         t["voltooid"] = True
                         t["voltooid_op"] = datetime.now().isoformat()
                         self._sla_op()
+                        self.publish("agenda_update", {
+                            "actie": "taak_voltooid",
+                            "titel": t["titel"],
+                        })
                         print(f"[OK] Taak '{t['titel']}' voltooid!")
                         break
             except ValueError:
@@ -345,6 +359,13 @@ class AgendaPlannerApp(BaseApp):
             print("  • Plan pauzes tussen afspraken")
             print("  • Houd buffer voor onverwachte zaken")
             return
+
+        # Verrijk met cross-app context via NeuralBus
+        bus_context = self.get_bus_context(
+            ["health_status_change", "weather_update", "mood_update"],
+        )
+        if bus_context:
+            context += f"\n{bus_context}"
 
         print("\n[AI plant je dag...]")
         prompt = f"""Maak een optimale dagplanning op basis van:

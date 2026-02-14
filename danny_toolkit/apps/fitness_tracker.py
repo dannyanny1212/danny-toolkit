@@ -9,6 +9,12 @@ from typing import List, Dict, Optional
 from ..core.config import Config
 from ..core.utils import clear_scherm
 
+try:
+    from ..core.neural_bus import get_bus, EventTypes
+    HAS_BUS = True
+except ImportError:
+    HAS_BUS = False
+
 
 class FitnessTrackerApp:
     """Fitness Tracker - Track je workouts en voortgang."""
@@ -240,6 +246,21 @@ class FitnessTrackerApp:
             )[:80],
             "duur": workout["duur_min"]
         })
+
+        # Publiceer naar NeuralBus
+        if HAS_BUS:
+            get_bus().publish(
+                EventTypes.HEALTH_STATUS_CHANGE,
+                {
+                    "type": workout_type,
+                    "duur_min": workout["duur_min"],
+                    "calorieen": workout["calorieen"],
+                    "oefeningen": len(workout["oefeningen"]),
+                    "streak": self.data["streak"],
+                    "doel": self.data.get("profiel", {}).get("doel", "fit"),
+                },
+                bron="fitness_tracker",
+            )
 
         # Samenvatting
         print("\n  " + "=" * 40)

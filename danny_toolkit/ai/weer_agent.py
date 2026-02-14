@@ -25,6 +25,12 @@ from typing import List, Dict, Any, Optional
 
 from ..core.utils import clear_scherm, kleur, Kleur
 
+try:
+    from ..core.neural_bus import get_bus, EventTypes
+    HAS_BUS = True
+except ImportError:
+    HAS_BUS = False
+
 
 class WeerAgentApp:
     """
@@ -1020,6 +1026,20 @@ class WeerAgentApp:
         print(f"   {kleur('[TOOL]', 'grijs')} get_weer() aanroepen...")
         weer = self._tool_get_weer(locatie)
         print(f"   {kleur('[OK]', 'groen')} Weer: {weer['icon']} {weer['conditie']}, {weer['temp']}°C")
+
+        # Publiceer naar NeuralBus
+        if HAS_BUS:
+            get_bus().publish(
+                EventTypes.WEATHER_UPDATE,
+                {
+                    "stad": weer["stad"],
+                    "temp": weer["temp"],
+                    "conditie": weer["conditie"],
+                    "wind": weer["wind"],
+                    "vochtigheid": weer["vochtigheid"],
+                },
+                bron="weer_agent",
+            )
 
         print(f"   {kleur('[TOOL]', 'grijs')} get_voorspelling() aanroepen...")
         voorspelling = self._tool_get_voorspelling(locatie)

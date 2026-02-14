@@ -15,6 +15,8 @@ from .base_app import BaseApp
 class RecipeGeneratorApp(BaseApp):
     """Recipe Generator - Recepten en meal planning."""
 
+    LUISTERT_NAAR = ["health_status_change", "weather_update"]
+
     # Basis ingrediënten categorieën
     CATEGORIEEN = {
         "groenten": ["ui", "knoflook", "tomaat", "paprika", "wortel", "aardappel",
@@ -86,6 +88,16 @@ class RecipeGeneratorApp(BaseApp):
 
     def __init__(self):
         super().__init__("recipe_generator/data.json")
+        self._laatste_health = None
+        self._laatste_weer = None
+
+    def _on_health_status_change(self, event):
+        """Ontvang fitness updates via NeuralBus."""
+        self._laatste_health = event.data
+
+    def _on_weather_update(self, event):
+        """Ontvang weer updates via NeuralBus."""
+        self._laatste_weer = event.data
 
     def _get_default_data(self) -> dict:
         """Standaard data structuur."""
@@ -98,13 +110,32 @@ class RecipeGeneratorApp(BaseApp):
         }
 
     def _genereer_recept_ai(self, ingredienten: List[str]) -> Optional[Dict]:
-        """Genereer recept met AI."""
+        """Genereer recept met AI, verrijkt met cross-app context."""
         if not self.client:
             return None
 
+        # Bouw context op basis van NeuralBus events
+        extra_context = ""
+        if self._laatste_health:
+            cal = self._laatste_health.get("calorieen", 0)
+            doel = self._laatste_health.get("doel", "fit")
+            extra_context += (
+                f"\nDe gebruiker heeft net {cal} kcal verbrand bij een workout. "
+                f"Fitness doel: {doel}. Pas het recept hierop aan "
+                f"(bijv. eiwitrijk na kracht, koolhydraten na cardio)."
+            )
+        if self._laatste_weer:
+            temp = self._laatste_weer.get("temp")
+            conditie = self._laatste_weer.get("conditie", "")
+            if temp is not None:
+                extra_context += (
+                    f"\nHet weer is {conditie}, {temp} graden. "
+                    f"Suggereer een passend gerecht (warm bij koud weer, fris bij warm)."
+                )
+
         try:
             prompt = f"""Genereer een recept met deze ingrediënten: {', '.join(ingredienten)}
-
+{extra_context}
 Geef het recept in dit exacte JSON formaat (alleen de JSON, geen andere tekst):
 {{
     "naam": "Naam van het gerecht",
