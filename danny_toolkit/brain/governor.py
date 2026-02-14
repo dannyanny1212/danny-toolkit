@@ -103,6 +103,35 @@ class OmegaGovernor:
         # Daemon referentie (bi-directionele link)
         self._daemon = None
 
+        # CorticalStack (lazy init)
+        self._stack = None
+
+    @property
+    def stack(self):
+        """Lazy CorticalStack."""
+        if self._stack is None:
+            try:
+                from .cortical_stack import (
+                    get_cortical_stack,
+                )
+                self._stack = get_cortical_stack()
+            except Exception:
+                self._stack = None
+        return self._stack
+
+    def _log(self, action, details=None):
+        """Log event naar CorticalStack als beschikbaar."""
+        if self.stack:
+            try:
+                self.stack.log_event(
+                    actor="governor",
+                    action=action,
+                    details=details,
+                    source="governor",
+                )
+            except Exception:
+                pass
+
     def to_dict(self) -> dict:
         """Serialiseer Governor state voor persistence."""
         return {
@@ -260,6 +289,9 @@ class OmegaGovernor:
         except Exception as e:
             print(f"  [GOVERNOR] Backup mislukt voor "
                   f"{file_path.name}: {e}")
+            self._log("backup_mislukt", {
+                "bestand": file_path.name,
+            })
             return False
 
     def restore_state(self, file_path: Path) -> bool:
@@ -288,6 +320,10 @@ class OmegaGovernor:
                         f"  [GOVERNOR] Hersteld: "
                         f"{file_path.name} van backup {i}"
                     )
+                    self._log("state_hersteld", {
+                        "bestand": file_path.name,
+                        "backup": i,
+                    })
                     return True
                 except Exception as e:
                     print(
@@ -420,6 +456,7 @@ class OmegaGovernor:
                 "  [GOVERNOR] Learning rate limit bereikt "
                 f"({self.MAX_LEARNING_CYCLES_PER_HOUR}/uur)"
             )
+            self._log("learning_rate_limit")
             return False
 
         # Snapshot adaptations
@@ -468,6 +505,9 @@ class OmegaGovernor:
                 except Exception:
                     pass
             print("  [GOVERNOR] Rollback uitgevoerd")
+            self._log("learning_rollback", {
+                "params": list(snapshot.keys()),
+            })
             return False
 
         self._learning_cycles_this_hour += 1
@@ -520,6 +560,7 @@ class OmegaGovernor:
                 f"  [GOVERNOR] WAARSCHUWING: Geheugen "
                 f"te groot ({size}/{self.MAX_MEMORY_ENTRIES})"
             )
+            self._log("geheugen_limiet", {"size": size})
             return False
         return True
 
@@ -538,6 +579,9 @@ class OmegaGovernor:
                 "  [GOVERNOR] IOLAAX beschermd: "
                 "status hersteld naar ACTIVE"
             )
+            self._log("entity_beschermd", {
+                "node": getattr(node, "name", str(node)),
+            })
             return True
         return False
 
@@ -602,6 +646,9 @@ class OmegaGovernor:
                 f"  [GOVERNOR] Circuit breaker geactiveerd "
                 f"na {self._api_failures} failures"
             )
+            self._log("circuit_breaker_open", {
+                "failures": self._api_failures,
+            })
 
     def record_api_success(self):
         """Registreer een API succes (geleidelijke reset).
@@ -623,6 +670,7 @@ class OmegaGovernor:
                         "  [GOVERNOR] Circuit breaker"
                         " gereset"
                     )
+                    self._log("circuit_breaker_reset")
                 else:
                     print(
                         f"  [GOVERNOR] Circuit breaker"
@@ -630,6 +678,9 @@ class OmegaGovernor:
                         f" ({self._api_failures}/"
                         f"{self.MAX_API_FAILURES})"
                     )
+                    self._log("circuit_breaker_herstel", {
+                        "failures": self._api_failures,
+                    })
             else:
                 print(
                     f"  [GOVERNOR] Succes geregistreerd"
@@ -657,6 +708,9 @@ class OmegaGovernor:
             f"  [GOVERNOR] Conversatie getrimd: "
             f"{trimmed} berichten verwijderd"
         )
+        self._log("conversatie_getrimd", {
+            "verwijderd": trimmed,
+        })
         return history[-self.MAX_CONVERSATION_HISTORY:]
 
     # =================================================================
@@ -758,6 +812,9 @@ class OmegaGovernor:
             f"  [GOVERNOR] Startup check voltooid: "
             f"{rapport['status']}"
         )
+        self._log("startup_check", {
+            "status": rapport["status"],
+        })
         return rapport
 
     # =================================================================
@@ -883,6 +940,9 @@ class OmegaGovernor:
 
         # Lengte check
         if len(tekst) > self.MAX_INPUT_LENGTH:
+            self._log("input_te_lang", {
+                "lengte": len(tekst),
+            })
             return False, (
                 f"Input te lang "
                 f"({len(tekst)}/{self.MAX_INPUT_LENGTH})"
@@ -896,6 +956,9 @@ class OmegaGovernor:
                     "  [GOVERNOR] Prompt injectie "
                     "gedetecteerd en geblokkeerd"
                 )
+                self._log("prompt_injectie_geblokkeerd", {
+                    "tekst_preview": tekst[:200],
+                })
                 return False, "Prompt injectie gedetecteerd"
 
         return True, "OK"

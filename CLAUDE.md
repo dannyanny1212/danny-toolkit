@@ -45,7 +45,7 @@ pip install -e ".[dev]"        # Editable install with dev tools (pytest, black,
 ## Architecture
 
 ### Swarm Engine (`swarm_engine.py`)
-The core orchestrator. Uses `asyncio.gather()` to run multiple agents in parallel. Key pattern:
+The core orchestrator. Uses `asyncio.gather()` to run multiple agents in parallel. Default thread pool is capped at 6 workers (`_swarm_executor`) to limit GIL contention. Key pattern:
 - `SwarmPayload` dataclass carries agent responses (agent name, content type, content)
 - `SwarmEngine` receives user input, routes via `AdaptiveRouter` (keyword-based multi-intent), dispatches to agent classes
 - `run_swarm_sync()` is the synchronous entry point that wraps the async engine
@@ -58,7 +58,7 @@ The LLM federation layer. Organizes 17 agent roles across 5 tiers (`NodeTier` / 
 Autonomous safety layer (Level 2 in the hierarchy: Danny > Governor > Orchestrator > Agents). Enforces hard-coded limits: rate limiting, circuit breaking, prompt injection detection, input length validation. Its rules cannot be overridden by agents.
 
 ### CorticalStack (`danny_toolkit/brain/cortical_stack.py`)
-SQLite-based persistent memory (episodic events, semantic facts, system metrics). Thread-safe with WAL mode. Singleton via `get_cortical_stack()`.
+SQLite-based persistent memory (episodic events, semantic facts, system metrics). Thread-safe with WAL mode and `PRAGMA synchronous=NORMAL`. Writes are batched (flush every 20 writes or 5 seconds) for reduced lock contention. Singleton via `get_cortical_stack()`. Call `stack.flush()` to force-commit pending writes.
 
 ### Config (`danny_toolkit/core/config.py`)
 Central `Config` class with all paths, API keys (from env vars), model settings, and user preferences (theme/language). All data directories are derived from `Config.BASE_DIR`. Call `Config.ensure_dirs()` to auto-create directory structure.
@@ -129,7 +129,7 @@ Four frontends share the same SwarmEngine backend:
 - **Import fallbacks**: Many modules use `try/except ImportError` to gracefully degrade when optional dependencies (chromadb, ollama, pyautogui) are missing.
 - **AI fallback chain**: Groq 70b -> Groq 8b -> Ollama local -> Anthropic Claude. Prevents single point of failure.
 - **Singleton brain**: Both `fastapi_server.py` and `telegram_bot.py` use a module-level `_brain` singleton for `PrometheusBrain`.
-- **CorticalStack logging**: Swarm engine and agents log events via `_log_to_cortical()` when CorticalStack is available.
+- **CorticalStack logging**: Swarm engine and agents log events via `_log_to_cortical()` when CorticalStack is available. Writes are batched — call `stack.flush()` before shutdown.
 - **Fact extraction**: `_learn_from_input()` in `swarm_engine.py` extracts user facts (name, preferences) into semantic memory.
 
 ## Environment Variables

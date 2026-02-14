@@ -38,9 +38,12 @@ class CorticalStack:
 
     Thread-safe via een Lock op alle schrijfoperaties.
     Leesoperaties zijn lockvrij (WAL mode).
+    Writes worden gebatched voor betere performance.
     """
 
     SCHEMA_VERSION = 1
+    _BATCH_SIZE = 20        # flush na N writes
+    _BATCH_INTERVAL = 5.0   # flush elke N seconden
 
     def __init__(self, db_path: Optional[Path] = None):
         Config.ensure_dirs()
@@ -54,7 +57,10 @@ class CorticalStack:
         )
         self._conn.row_factory = sqlite3.Row
         self._conn.execute("PRAGMA journal_mode=WAL")
+        self._conn.execute("PRAGMA synchronous=NORMAL")
         self._conn.execute("PRAGMA busy_timeout=5000")
+        self._pending_writes = 0
+        self._last_flush = time.time()
         self._create_tables()
 
     # ─── Schema ───
@@ -116,6 +122,29 @@ class CorticalStack:
 
             self._conn.commit()
 
+    def _maybe_flush(self):
+        """Commit als batch vol is of interval verstreken.
+
+        Moet aangeroepen worden BINNEN self._lock.
+        """
+        self._pending_writes += 1
+        now = time.time()
+        if (
+            self._pending_writes >= self._BATCH_SIZE
+            or now - self._last_flush >= self._BATCH_INTERVAL
+        ):
+            self._conn.commit()
+            self._pending_writes = 0
+            self._last_flush = now
+
+    def flush(self):
+        """Forceer commit van alle pending writes."""
+        with self._lock:
+            if self._pending_writes > 0:
+                self._conn.commit()
+                self._pending_writes = 0
+                self._last_flush = time.time()
+
     # ─── Episodic Memory ───
 
     def log_event(
@@ -144,7 +173,7 @@ class CorticalStack:
                 """,
                 (now, actor, action, details_json, source),
             )
-            self._conn.commit()
+            self._maybe_flush()
             return cur.lastrowid
 
     def get_recent_events(
@@ -229,7 +258,7 @@ class CorticalStack:
                     """,
                     (key, value, confidence, now, now),
                 )
-                self._conn.commit()
+                self._maybe_flush()
                 return True
             except sqlite3.Error:
                 return False
@@ -265,7 +294,7 @@ class CorticalStack:
                 """,
                 (now, key),
             )
-            self._conn.commit()
+            self._maybe_flush()
 
         return self._row_to_dict(row)
 
@@ -331,7 +360,7 @@ class CorticalStack:
                 """,
                 (now, metric, value, tags_json),
             )
-            self._conn.commit()
+            self._maybe_flush()
             return cur.lastrowid
 
     def get_stats_summary(
@@ -416,8 +445,9 @@ class CorticalStack:
             self._conn.commit()
 
     def close(self):
-        """Sluit de database connectie."""
+        """Flush pending writes en sluit de database."""
         try:
+            self.flush()
             self._conn.close()
         except sqlite3.Error:
             pass

@@ -52,7 +52,7 @@ Full technical architecture of Danny Toolkit v5.0 (Project Omega / COSMIC_OMEGA_
 
 ### 1. Swarm Engine (`swarm_engine.py`)
 
-The central orchestrator. Receives user input, routes it through the `AdaptiveRouter`, and dispatches to one or more specialized agent classes in parallel via `asyncio.gather()`.
+The central orchestrator. Receives user input, routes it through the `AdaptiveRouter`, and dispatches to one or more specialized agent classes in parallel via `asyncio.gather()`. The default thread pool is capped at 6 workers (`_swarm_executor`) to limit GIL contention and context switching.
 
 **Key classes and functions:**
 - `SwarmPayload` -- Dataclass that carries agent responses (agent name, content type, content, display text, timestamp, metadata)
@@ -157,6 +157,7 @@ The system uses a three-layer memory architecture:
 - **Tables:** `episodic_memory` (timeline events), `semantic_memory` (key-value facts, UNIQUE), `system_stats` (metrics)
 - **Access:** Singleton via `get_cortical_stack()`
 - **Thread safety:** Lock on writes, WAL mode for lock-free reads
+- **Write batching:** Commits are batched (every 20 writes or 5 seconds) to reduce lock contention. `PRAGMA synchronous=NORMAL` for reduced fsync overhead. Call `stack.flush()` to force-commit pending writes before shutdown.
 
 ### Layer 2: UnifiedMemory (Cross-App Vector)
 - **File:** `danny_toolkit/brain/unified_memory.py`
@@ -225,10 +226,11 @@ All four interfaces consume the same `run_swarm_sync()` entry point:
 - Setup via BotFather
 
 ### Heartbeat Daemon (`daemon_heartbeat.py`)
-- Autonomous background process
-- Periodically invokes SwarmEngine for scheduled tasks
-- Proves full pipeline works without UI
-- Rich console output for monitoring
+- Autonomous background process with Rich Live display
+- Swarm tasks and security scans run in a 2-worker `ThreadPoolExecutor` (non-blocking UI)
+- Swarm schedule checked every 60 pulses (60 seconds); stats logged every 30 pulses
+- Scheduled tasks: Ochtend Briefing (08:00), Market Watch (hourly), System Reflect (5 min), Security Scan (hourly, background)
+- CorticalStack writes are flushed on daemon shutdown
 
 ---
 

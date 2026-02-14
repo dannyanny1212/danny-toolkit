@@ -18,9 +18,11 @@ patroon als morning_protocol.py), Rich is al geinstalleerd.
 """
 
 import asyncio
+import queue
 import random
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 
 from rich.align import Align
@@ -121,6 +123,12 @@ class HeartbeatDaemon:
         self._last_proactive_check = 0.0
         self._last_security_scan = 0.0
 
+        # Background worker for heavy tasks (swarm, security)
+        self._task_queue = queue.Queue()
+        self._worker_pool = ThreadPoolExecutor(
+            max_workers=2, thread_name_prefix="hb-worker"
+        )
+
     def _get_stack(self):
         """Lazy import CorticalStack."""
         if self._stack is None:
@@ -194,7 +202,7 @@ class HeartbeatDaemon:
     # ─── Swarm Taken ───
 
     def _run_swarm_task(self, task_config):
-        """Voer een autonome Swarm taak uit."""
+        """Submit een autonome Swarm taak naar de worker pool."""
         engine = self._get_engine()
         if engine is None:
             self._log_activity(
@@ -203,16 +211,31 @@ class HeartbeatDaemon:
             return
 
         name = task_config["name"]
-        prompt = task_config["prompt"]
-
         self._log_activity(
-            "swarm", f"{name} geactiveerd..."
+            "swarm", f"{name} ingepland..."
+        )
+        self._worker_pool.submit(
+            self._execute_swarm_task, task_config
         )
 
+    def _execute_swarm_task(self, task_config):
+        """Voer een Swarm taak uit (draait in worker thread)."""
+        engine = self._get_engine()
+        if engine is None:
+            return
+
+        name = task_config["name"]
+        prompt = task_config["prompt"]
+
         try:
-            payloads = asyncio.run(
-                engine.run(prompt)
-            )
+            loop = asyncio.new_event_loop()
+            try:
+                payloads = loop.run_until_complete(
+                    engine.run(prompt)
+                )
+            finally:
+                loop.close()
+
             self._swarm_task_count += 1
 
             for p in payloads:
@@ -282,6 +305,19 @@ class HeartbeatDaemon:
                     ] = timestamp
                     self._run_swarm_task(task)
 
+    def _execute_security_scan(self, security):
+        """Voer security scan uit (draait in worker thread)."""
+        try:
+            security.volledig_rapport()
+            self._log_activity(
+                "security", "Scan voltooid"
+            )
+        except Exception as e:
+            self._log_activity(
+                "security",
+                f"Scan fout: {str(e)[:60]}",
+            )
+
     # ─── Monitor ───
 
     def _monitor_system(self):
@@ -295,8 +331,8 @@ class HeartbeatDaemon:
             self._ram = random.uniform(30.0, 70.0)
 
     def _log_heartbeat(self):
-        """Log stats naar CorticalStack elke 5 beats."""
-        if self._pulse_count % 5 != 0:
+        """Log stats naar CorticalStack elke 30 beats."""
+        if self._pulse_count % 30 != 0:
             return
 
         stack = self._get_stack()
@@ -594,8 +630,8 @@ class HeartbeatDaemon:
                     if self._reflection_count > 0:
                         self._autonomous_growth()
 
-                    # Swarm schedule check (elke 10 pulsen)
-                    if self._pulse_count % 10 == 0:
+                    # Swarm schedule check (elke 60 pulsen)
+                    if self._pulse_count % 60 == 0:
                         self._check_swarm_schedule()
 
                     # Singularity tick (elke 10 pulsen)
@@ -609,7 +645,7 @@ class HeartbeatDaemon:
                             except Exception:
                                 pass
 
-                    # Security scan (elke 3600 pulsen)
+                    # Security scan (elke 3600 pulsen, background)
                     now_ts = time.time()
                     if (
                         now_ts - self._last_security_scan
@@ -618,14 +654,14 @@ class HeartbeatDaemon:
                         self._last_security_scan = now_ts
                         security = self._get_security()
                         if security:
-                            try:
-                                security.volledig_rapport()
-                                self._log_activity(
-                                    "security",
-                                    "Scan voltooid",
-                                )
-                            except Exception:
-                                pass
+                            self._log_activity(
+                                "security",
+                                "Scan ingepland...",
+                            )
+                            self._worker_pool.submit(
+                                self._execute_security_scan,
+                                security,
+                            )
 
                     # Proactive timer check (~60s)
                     if self._pulse_count % 60 == 0:
@@ -645,11 +681,12 @@ class HeartbeatDaemon:
             pass
         finally:
             self._running = False
+            self._worker_pool.shutdown(wait=False)
             self._log_activity(
                 "stop", "Heartbeat Daemon gestopt"
             )
 
-            # Log stop event
+            # Log stop event en flush
             if stack:
                 try:
                     stack.log_event(
@@ -663,6 +700,7 @@ class HeartbeatDaemon:
                         },
                         source="daemon",
                     )
+                    stack.flush()
                 except Exception:
                     pass
 
@@ -672,9 +710,10 @@ class HeartbeatDaemon:
             )
 
     def stop(self):
-        """Stop de daemon."""
+        """Stop de daemon en worker pool."""
         self._stop_event.set()
         self._running = False
+        self._worker_pool.shutdown(wait=False)
 
 
 def main():

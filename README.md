@@ -20,7 +20,7 @@ architectuur voor parallelle agent-executie.
 | Memex RAG | Knowledge | "Plan-Search-Cite" protocol. Zoekt in lokale PDF's/Code en episodisch geheugen. Citeert bronnen expliciet. |
 | Project Oculus | Vision | Pixel Agent. Kan het scherm zien (screenshots) en analyseren via LLaVA 7B. |
 | Project Kinesis | Action | Legion Agent. Bestuurt muis & toetsenbord. Opent apps, typt tekst en voert systeemtaken uit. |
-| Heartbeat Daemon | Life | Autonoom achtergrondproces dat op eigen initiatief taken uitvoert zonder user input. |
+| Heartbeat Daemon | Life | Autonoom achtergrondproces met background worker pool. Voert swarm taken en security scans non-blocking uit. |
 
 ---
 
