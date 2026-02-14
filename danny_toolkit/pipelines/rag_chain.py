@@ -15,6 +15,13 @@ from danny_toolkit.core.faiss_index import FaissIndex
 from danny_toolkit.brain.citation_marshall import CitationMarshall
 
 
+def _flush_vram():
+    """Force garbage collection and flush CUDA cache."""
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+
 def load_llm(model_name="microsoft/Phi-3-mini-4k-instruct"):
     if not _HAS_TRANSFORMERS:
         raise ImportError(
@@ -99,15 +106,34 @@ def run_rag_chain():
     for d in retrieved_docs:
         print("-", d)
 
-    # 6. Free vectors but keep embedder for citation verification
-    del doc_vecs, q_vec
-    gc.collect()
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
+    # =========================================================================
+    # MEMORY HANDSHAKE — VRAM Choreography
+    # =========================================================================
+    # Embedder (~400 MB) stays parked in VRAM while LLM (~2.5 GB) loads.
+    # If VRAM can't hold both (OOM), fall back to Slow Path: release embedder
+    # before LLM, then reload embedder for Marshall verification.
+    # =========================================================================
 
-    # 7. LLM laden
-    print("\nLLM laden...")
-    tokenizer, model = load_llm()
+    # 6. Free vectors but keep embedder for Fast Path
+    del doc_vecs, q_vec
+    _flush_vram()
+    print("\n>> Vectors freed, embedder stays alive (~400 MB parked)")
+
+    # 7. LLM laden — try Fast Path (embedder + LLM coexist)
+    slow_path = False
+    print("\n>> Loading LLM (Fast Path: embedder stays in VRAM)...")
+    try:
+        tokenizer, model = load_llm()
+    except RuntimeError as e:
+        if "out of memory" in str(e).lower() or "CUDA" in str(e):
+            # OOM: switch to Slow Path
+            print(f"\n>> OOM detected, switching to Slow Path...")
+            del embedder
+            _flush_vram()
+            slow_path = True
+            tokenizer, model = load_llm()
+        else:
+            raise
 
     # 8. Context bouwen
     context = "\n".join(retrieved_docs)
@@ -120,11 +146,15 @@ def run_rag_chain():
 
     # 10. Free LLM VRAM before verification
     del tokenizer, model
-    gc.collect()
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
+    _flush_vram()
+    print(">> LLM freed")
 
     # 11. Citation Marshall — hallucination check
+    if slow_path:
+        # Slow Path: reload embedder for Marshall
+        print(">> Slow Path: reloading embedder for verification...")
+        embedder = TorchGPUEmbeddings()
+
     print("\n=== Citation Verification ===")
     marshall = CitationMarshall(embedding_provider=embedder)
     source_docs = [{"content": doc} for doc in retrieved_docs]
@@ -134,15 +164,15 @@ def run_rag_chain():
     print(verified_answer)
 
     stats = marshall.get_stats()
-    print(f"\n=== Marshall Stats ===")
+    path_label = "Slow Path" if slow_path else "Fast Path"
+    print(f"\n=== Marshall Stats ({path_label}) ===")
     print(f"Verified: {stats['verified']} | Flagged: {stats['flagged']} | "
           f"Uncited: {stats['uncited']} | Trust Rate: {stats['trust_rate']}")
 
-    # 12. Free embedder
+    # 12. Final cleanup
     del embedder, marshall
-    gc.collect()
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
+    _flush_vram()
+    print(">> All VRAM freed")
 
 if __name__ == "__main__":
     run_rag_chain()
