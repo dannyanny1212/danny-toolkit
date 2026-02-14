@@ -451,7 +451,7 @@ def get_chroma_embed_fn():
         SentenceTransformerEmbeddingFunction,
     )
     return SentenceTransformerEmbeddingFunction(
-        model_name="all-MiniLM-L6-v2"
+        model_name="sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
     )
 
 
@@ -620,23 +620,36 @@ class TorchGPUEmbeddings:
     Returns CPU tensors so FAISS (CPU or GPU) can consume them.
     """
 
-    def __init__(self, model_name: str = "sentence-transformers/all-MiniLM-L6-v2"):
+    def __init__(self, model_name: str = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"):
+        self.model_name = model_name
         self.device = get_device()
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model = AutoModel.from_pretrained(model_name).to(self.device)
         self.model.eval()
 
     @torch.inference_mode()
-    def embed(self, texts: list[str]):
-        enc = self.tokenizer(
-            texts,
-            padding=True,
-            truncation=True,
-            return_tensors="pt"
-        ).to(self.device)
+    def embed(self, texts: list[str], batch_size: int = 32):
+        if len(texts) <= batch_size:
+            enc = self.tokenizer(
+                texts,
+                padding=True,
+                truncation=True,
+                return_tensors="pt"
+            ).to(self.device)
+            out = self.model(**enc)
+            emb = out.last_hidden_state.mean(dim=1)
+            return emb.detach().cpu()
 
-        out = self.model(**enc)
-        emb = out.last_hidden_state.mean(dim=1)
-
-        # Return CPU tensor so FAISS can use it
-        return emb.detach().cpu()
+        all_emb = []
+        for i in range(0, len(texts), batch_size):
+            batch = texts[i:i + batch_size]
+            enc = self.tokenizer(
+                batch,
+                padding=True,
+                truncation=True,
+                return_tensors="pt"
+            ).to(self.device)
+            out = self.model(**enc)
+            emb = out.last_hidden_state.mean(dim=1)
+            all_emb.append(emb.detach().cpu())
+        return torch.cat(all_emb, dim=0)
