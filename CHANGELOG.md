@@ -7,6 +7,19 @@ Format gebaseerd op [Keep a Changelog](https://keepachangelog.com/) en [Semantic
 
 ---
 
+## [5.1.0] - 2026-02-13
+
+### Added
+- `main.py`: `--version` / `-V` flag — toont versie zonder launcher te starten
+- `telegram_bot.py`: `/ping` command — meet response tijd, verifieert bot online
+- `danny_toolkit/core/config.py`: `Config.toon_api_status()` — overzicht welke API keys actief zijn met validatie
+- `fastapi_server.py`: `/health` endpoint uitgebreid met `uptime_seconds`, `memory_mb`, `active_agents`
+- `swarm_engine.py`: `SwarmEngine.get_stats()` — telt verwerkte queries, actieve agents, gemiddelde responstijd
+- `swarm_engine.py`: 8 extra Nederlandse fast-track patronen (dag, welterusten, dankjewel, top, oke, prima, etc.)
+- `danny_toolkit/utils/ensure_directory.py`: utility functie voor veilig directory aanmaken
+
+---
+
 ## [5.0.1] - 2026-02-13
 
 ### Fixed

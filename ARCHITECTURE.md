@@ -57,9 +57,10 @@ The central orchestrator. Receives user input, routes it through the `AdaptiveRo
 **Key classes and functions:**
 - `SwarmPayload` -- Dataclass that carries agent responses (agent name, content type, content, display text, timestamp, metadata)
 - `SwarmEngine` -- Main orchestrator class
+- `SwarmEngine.get_stats()` -- Returns query count, active agents, average response time
 - `AdaptiveRouter` -- Keyword-based multi-intent router with multi-vector profiling
 - `run_swarm_sync(prompt, brain)` -- Synchronous wrapper; the primary entry point for all interfaces
-- `_fast_track_check(prompt)` -- Regex-based fast path for greetings/smalltalk (no AI needed)
+- `_fast_track_check(prompt)` -- Regex-based fast path for greetings/smalltalk (no AI needed, 19 patterns)
 - `_learn_from_input(prompt)` -- Extracts user facts (name, preferences) into CorticalStack semantic memory
 
 **Agent classes (all async):**
@@ -214,10 +215,11 @@ All four interfaces consume the same `run_swarm_sync()` entry point:
 - Swagger docs at `/docs`
 - Auth via `X-API-Key` header (`FASTAPI_SECRET_KEY`)
 - Singleton brain instance
-- Endpoints for chat, health, document upload
+- Endpoints for chat, health (with uptime, memory, active agents), document upload
 
 ### Telegram Bot (`telegram_bot.py`)
 - Admin-only (filtered by `TELEGRAM_ADMIN_ID`)
+- Commands: `/start`, `/ping`, `/status`, `/agents`, `/heartbeat`, `/help`
 - Commands: `/start`, `/status`, `/help`
 - Forwards messages to SwarmEngine
 - Setup via BotFather

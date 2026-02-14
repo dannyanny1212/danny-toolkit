@@ -30,6 +30,7 @@ Dit document geeft een hoog-niveau overzicht van alle hoofdonderdelen van Danny 
   - PixelEye Vision
   - SingularityEngine / DigitalDaemon / Kinesis
   - Apps (±50 mini‑apps)
+  - Utils (`danny_toolkit/utils/`)
 
 ## 2. Globale Flow
 1. Gebruiker stuurt input via een interface

@@ -175,6 +175,15 @@ Last stable pre-v5 release. Includes:
 - PATCH: versie-string consistentie fix in `danny_toolkit/core/config.py`
 - PATCH: security warning comment bij default `FASTAPI_SECRET_KEY`
 
+### v5.1.0 (branch upgrade/v5.1.0)
+- MINOR: `--version` / `-V` CLI flag in `main.py`
+- MINOR: `/ping` command in Telegram bot
+- MINOR: `Config.toon_api_status()` in `danny_toolkit/core/config.py`
+- MINOR: `/health` endpoint uitgebreid met uptime, memory, active agents
+- MINOR: `SwarmEngine.get_stats()` voor query statistieken
+- MINOR: 8 extra Nederlandse fast-track patronen in EchoAgent
+- MINOR: `danny_toolkit/utils/ensure_directory.py` utility module
+
 ## Guidelines for Claude Code
 
 Claude should:

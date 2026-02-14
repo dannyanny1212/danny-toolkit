@@ -42,6 +42,11 @@ Agents draaien bovenop:
 - Rol: Self‑healing
 - Output: Diagnose + fix‑voorstel
 
+### EchoAgent
+- Rol: Fast-track smalltalk (regex, geen AI)
+- Patronen: 19 Nederlandse begroetingen/afscheid/bevestigingen
+- Output: Directe response zonder LLM
+
 ## 3. Agent Lifecycle
 
 1. SwarmEngine selecteert agents
@@ -50,3 +55,11 @@ Agents draaien bovenop:
 4. Agent draait taak
 5. Resultaat terug naar SwarmEngine
 6. SwarmEngine combineert outputs
+
+## 4. Statistieken
+
+`SwarmEngine.get_stats()` retourneert:
+- `queries_processed`: aantal verwerkte queries
+- `active_agents`: aantal geregistreerde agents
+- `avg_response_ms`: gemiddelde responstijd
+- `registered_agents`: lijst van agent-namen
