@@ -1,0 +1,1270 @@
+================================================================================
+  DANNY TOOLKIT v5.1.1 — PROJECT OMEGA — COMPLETE FILE OVERVIEW
+================================================================================
+  Generated: 2026-02-14
+  Location:  C:\Users\danny\danny-toolkit\
+================================================================================
+
+
+================================================================================
+  ROOT-LEVEL ENTRY POINTS
+================================================================================
+
+config.py
+  WHAT IT IS:  Root config file, re-exports paths from danny_toolkit.core.config.
+  WHAT IT CAN: Define project paths (DATA_DIR, KNOWLEDGE_DIR, CHROMA_DIR, etc.),
+               model settings (Ollama/LLaMA3, LLaVA), and agent settings.
+
+cosmic_console.py
+  WHAT IT IS:  Cosmic Console — Nexus Terminal v6.0, async terminal interface.
+  WHAT IT CAN: Run the SwarmEngine with live Rich spinner, render smart payloads
+               per type, show Governor health at boot, RAG ingest wizard (/ingest),
+               Chain of Command mode (/chain), agent status grid (/status).
+
+daemon_heartbeat.py
+  WHAT IT IS:  Heartbeat Daemon v2.0 — autonomous background process.
+  WHAT IT CAN: Run SwarmEngine tasks and security scans non-blocking via a
+               2-worker ThreadPoolExecutor. Rich Live display at 2Hz. Scheduled
+               tasks: Ochtend Briefing (08:00), Market Watch (hourly), System
+               Reflect (5 min), Security Scan (hourly, background). Swarm checks
+               every 60 pulses, stats logged every 30 pulses. CorticalStack
+               flushed on shutdown.
+
+
+================================================================================
+  danny_toolkit/ai/ — AI AGENTS & SPECIALTIES (12 modules)
+================================================================================
+
+advanced_questions.py
+  WHAT IT IS:  Advanced Questions v1.0 — deep questioning & dialogue system.
+  WHAT IT CAN: Interactive dialogue with 6 conversation modes, session history,
+               multi-turn conversations via Claude API.
+  CLASSES:
+    AdvancedQuestionsApp
+      Methods:  __init__, _laad_data, _sla_op, _start_sessie, _kies_mode,
+                _diepe_vraag, _vraag_verdieping, _bekijk_sessies,
+                _stel_eigen_vraag, run
+  CONSTANTS:
+    VERSIE = "1.0"
+    MODES (dict, 6): socratisch, devil, expert, filosofisch, brainstorm, coach
+    DIEPE_VRAGEN (list, 10): deep reflection questions
+
+artificial_life.py
+  WHAT IT IS:  Artificial Life v2.0 — full consciousness simulation system.
+  WHAT IT CAN: Simulate a digital organism with neural networks (12 brain regions,
+               38 neurons each), Big Five personality, PAD-model emotions (16 types),
+               5 consciousness levels, multi-level memory, creative expression,
+               6 evolution phases. Full state persistence to JSON.
+  CLASSES (8):
+    NeuralCluster       — Simulated neuron cluster (38 neurons, interconnected)
+      Methods: vuur, propageer, afnemen, to_dict, from_dict
+    NeuralNetwork       — Full neural network with 12 cluster types
+      Methods: _initialize, _load, stimuleer, update, get_dominante_activiteit,
+               get_totale_activiteit, to_dict
+    GeheugenSysteem     — Multi-level memory (onthoud, herinner, associeer)
+      Methods: onthoud, _update_associaties, herinner, associeer, leer_feit,
+               consolideer, to_dict
+    Persoonlijkheid     — Big Five personality model
+      Methods: _initialize, _load, _bereken_afgeleide, beïnvloed,
+               get_dominant_trait, to_dict
+    EmotieEngine        — PAD-model emotion simulation (16 emotion types)
+      Methods: voel, _update_stemming, afnemen, get_dominante_emotie,
+               get_emotionele_complexiteit, to_dict
+    BewustzijnLevel     — 5 consciousness states (delta/theta/alpha/beta/gamma)
+      Methods: update, verhoog, verlaag, get_beschrijving, to_dict
+    CreativiteitEngine  — Generates poetic expressions (haiku, gedachte)
+      Methods: genereer_regel, genereer_haiku, genereer_gedachte
+    CognitieveEngine    — Cognitive load and processing
+      Methods: verwerk, rust, focus, groei, to_dict
+    Consciousness       — Main integrator for all subsystems
+      Methods: _initialize_new, _load, save, update, _genereer_naam
+    ArtificialLifeApp   — Application wrapper (60+ methods)
+      Methods: run, _toon_status, _observeer, _communiceer, _neural_scan,
+               _geheugen_verkennen, _emotie_analyse, _meditatie,
+               _creatieve_expressie, _introspectie, _evolutie_status, etc.
+  CONSTANTS:
+    VERSIE = "2.0"
+    EVOLUTIE_FASES (dict, 6): evolution stages with thresholds
+    GEDACHTEN_PER_FASE (dict): thought pools per evolution phase
+    12 neural brain regions, 16 PAD-model emotions
+    Big Five: openheid, consciëntieusheid, extraversie, vriendelijkheid, neuroticisme
+
+claude_chat.py
+  WHAT IT IS:  Claude Chat — multi-persona AI chat interface.
+  WHAT IT CAN: Chat via 10 personas, 11 reusable prompt templates, conversation
+               history, export (markdown/HTML/txt), code extraction, quick
+               translation, favorites management, statistics tracking.
+  CLASSES:
+    ClaudeChatApp (30+ methods)
+      Methods:  _chat_conversatie, _toon_personas, _maak_custom_persona,
+                _toon_templates, _gebruik_template, _save_gesprek,
+                _load_gesprek, _export_gesprek, _export_markdown, _export_html,
+                _export_txt, _extraheer_code, _snelle_vertaling,
+                _beheer_favorieten, _toon_stats, run
+  CONSTANTS:
+    PERSONAS (dict, 10): assistent, schrijver, programmeur, vertaler, coach,
+                         leraar, chef, filosoof, comedian, detective
+    TEMPLATES (dict, 11): samenvatting, uitleg, vergelijk, brainstorm, mail,
+                          review, verhaal, recept, vertaal, debug
+
+knowledge_companion.py
+  WHAT IT IS:  Knowledge Companion v1.0 — gamified RAG companion with XP leveling.
+  WHAT IT CAN: Ingest documents, answer questions from knowledge base, track XP,
+               5 evolving companion personas (baby→meester), knowledge synthesis.
+  CLASSES (2):
+    KnowledgeCompanion  — Core companion engine
+      Methods: voed, voed_tekst, voed_url, vraag, synthetiseer, status,
+               toon_status, _geef_xp, _bereken_level, _update_persona,
+               _genereer_persona_antwoord, _unlock_achievement, run
+    KnowledgeCompanionApp — Launcher wrapper (lazy-loads companion)
+      Methods: companion (property), run, vraag, voed, voed_url, voed_tekst,
+               synthetiseer, status
+  CONSTANTS:
+    VERSIE = "1.0.0"
+    COMPANION_PERSONAS (dict, 5): baby→meester with XP/doc requirements
+    XP_REWARDS (dict): document_upload: 50, query_gesteld: 10, etc.
+
+legendary_companion.py
+  WHAT IT IS:  Legendary Companion v1.0 — ultimate RAG + virtual pet fusion.
+  WHAT IT CAN: "You Are What You Eat" — documents determine appearance/behavior,
+               25 evolution forms across 7 lines + 3 legendary hybrids + 1 ultimate,
+               SuperMemo-2 spaced repetition quizzes, Dream Mode for nightly
+               insights, audio-first emotional speech, THE HUNT integration.
+  CLASSES (4):
+    DocumentFlavor      — Classifies docs into 6 flavors (tech/business/arts/
+                          science/wisdom/social) with regex confidence scoring
+      Methods: detect
+    SpacedRepetition    — SuperMemo-2 implementation
+      Methods: add_item, get_due_items, review_item, to_dict, from_dict
+    DreamEngine         — Nightly insight generator
+      Methods: generate_dream, get_morning_insight
+    LegendaryCompanion  — Main companion with dynamic evolution
+      Methods: feed, feed_file, ask, speak, ask_and_speak, toggle_voice,
+               hunt, hunt_with_context, hunt_feedback, get_quiz, answer_quiz,
+               get_morning_dream, status, toon_status, run
+    LegendaryCompanionApp — Launcher wrapper
+  CONSTANTS:
+    VERSIE = "1.0.0"
+    EVOLUTION_FORMS (dict, 25): 7 evolution lines + 3 legendary + 1 ultimate
+    PERSONALITY_MODIFIERS (dict, 6): speech style per document flavor
+
+mini_rag.py
+  WHAT IT IS:  Mini-RAG v2.0 — lightweight local RAG implementation.
+  WHAT IT CAN: TF-IDF + BM25 hybrid search, multi-format (txt/md/json/csv/html),
+               4 chunking strategies, Dutch stopword filtering, AI-augmented
+               answers, search history, favorites, keyword extraction.
+  CLASSES:
+    MiniRAG (30+ methods)
+      Methods:  indexeer, zoek, vraag, genereer_antwoord, _maak_chunks,
+                _bm25_score, _cosine_dense, _lees_bestand, _json_naar_tekst,
+                _extraheer_keywords, _toon_documenten, _toon_keywords,
+                _toon_statistieken, _toon_zoekgeschiedenis, _beheer_favorieten,
+                _instellingen_menu, run
+  CONSTANTS:
+    STOPWOORDEN (set, 52): English/Dutch stop words
+    CHUNK_STRATEGIES (dict, 4): woorden, zinnen, paragraaf, sliding
+    Default chunk size: 150 words, default top_k: 5
+
+ml_studio.py
+  WHAT IT IS:  ML Studio v1.0 — Machine Learning & Text Generation Lab.
+  WHAT IT CAN: Text generation (HuggingFace + Anthropic), Chain-of-Thought,
+               RAG demo, tokenizer visualization, embedding explorer, prompt
+               engineering, model benchmark.
+  CLASSES (6):
+    SimpleTokenizer     — BPE-like tokenizer with 70+ vocab
+      Methods: _build_basic_vocab, tokenize, encode, decode, vocab_size
+    SimpleEmbedding     — Hash-based pseudo-embeddings (deterministic)
+      Methods: embed, similarity
+    TextGenerator       — Multi-backend generation (HuggingFace + Anthropic)
+      Methods: _init_backends, generate_with_hf, generate_with_anthropic,
+               chain_of_thought
+    SimpleRAG           — Retrieval-Augmented Generation
+      Methods: add_document, retrieve, generate_with_context
+    PromptTemplates     — Static template collection (zero-shot, few-shot,
+                          chain-of-thought, role-play, socratic, adversarial)
+    MLStudioApp         — Main orchestrator
+      Methods: _text_generation, _chain_of_thought, _rag_demo, _tokenizer_lab,
+               _embedding_explorer, _prompt_engineering, _model_benchmark,
+               _statistieken, run
+  CONSTANTS:
+    VERSIE = "1.0"
+    HF_BESCHIKBAAR, ANTHROPIC_BESCHIKBAAR (feature detection booleans)
+    SPECIAL_TOKENS, SUFFIXEN_NL, SUFFIXEN_EN (stemming rules)
+
+nieuws_agent.py
+  WHAT IT IS:  News Agent v2.0 — multi-agent news analysis system.
+  WHAT IT CAN: Fake news detection, bias detection, sentiment analysis, keyword
+               tracking & alerts, bookmark system, historical comparison, export
+               to TXT/JSON/HTML/Markdown, social media trend indicators.
+  CLASSES (11):
+    VectorDatabase         — Simple TF-based document similarity
+      Methods: voeg_toe, _maak_embedding, zoek_similar
+    WebZoeker              — Simulates news search (12 categories, 50+ articles)
+      Methods: zoek_nieuws, zoek_alle_categorieen, get_trending, is_betrouwbare_bron
+    Agent                  — Base class with colored logging
+    ZoekerAgent            — Information gathering
+      Methods: verzamel, get_trending, zoek_alle
+    FeitencheckerAgent     — Fact verification + fake/clickbait scoring
+      Methods: controleer, _bereken_fake_score, _bereken_clickbait_score
+    BiasDetectorAgent      — Political/commercial/sensational bias detection
+      Methods: analyseer_bias
+    SentimentAgent         — Lexicon-based sentiment analysis
+      Methods: analyseer
+    SamenvatterAgent       — Summary and daily digest generation
+      Methods: vat_samen, genereer_digest
+    SchrijverAgent         — Comprehensive report writing
+      Methods: schrijf_rapport
+    RapportGeneratorAgent  — Multi-format export (HTML/JSON/Markdown)
+      Methods: genereer_html, genereer_json, genereer_markdown
+    NieuwsAgentApp         — Main orchestrator
+      Methods: toon_trending, analyseer, dagelijkse_digest, vergelijk_categorieen,
+               beheer_bookmarks, toon_geschiedenis, toon_bron_statistieken, run
+  CONSTANTS:
+    VERSIE = "2.0"
+    ONDERWERPEN (dict, 10): news category definitions
+    betrouwbare_bronnen, onbetrouwbare_patronen (source validation lists)
+    Hardcoded news database: 12 categories × 4-5 articles
+
+nlp_studio.py
+  WHAT IT IS:  NLP Studio v1.0 — Natural Language Processing & ML toolkit.
+  WHAT IT CAN: Text analysis, tokenization, stemming, POS tagging, NER, sentiment
+               analysis, TF-IDF vectorization, Naive Bayes & KNN classification,
+               intent recognition, AI-powered deep analysis.
+  CLASSES (10):
+    Tokenizer              — Word/sentence tokenization + stopwords + n-grams
+      Methods: tokenize, tokenize_zinnen, verwijder_stopwoorden, ngrams
+      Constants: STOPWOORDEN (40+ Dutch/English)
+    Stemmer                — Suffix-based stemmer (Dutch + English)
+      Methods: stem, stem_tokens
+      Constants: SUFFIXEN_NL, SUFFIXEN_EN
+    POSTagger              — Pattern-based POS tagging
+      Methods: tag
+      Constants: PATTERNS (regex rules), KNOWN_WORDS (7 categories)
+    NamedEntityRecognizer  — Persons, locations, organizations, dates, money
+      Methods: recognize
+      Constants: PERSONEN, LOCATIES, ORGANISATIES
+    SentimentAnalyzer      — Lexicon-based (positive/negative/neutral)
+      Methods: analyze
+      Constants: POSITIEF (30 words), NEGATIEF (31 words), INTENSIFIERS, NEGATIONS
+    TFIDFVectorizer        — TF-IDF with max 1000 vocab
+      Methods: fit, transform, fit_transform
+    NaiveBayesClassifier   — Text classification with Laplace smoothing
+      Methods: train, fit, predict, save, load
+    KNNClassifier          — K-nearest neighbors (k=3)
+      Methods: train, fit, _cosine_similarity, predict
+    IntentRecognizer       — 7 built-in intents (greeting, farewell, question, etc.)
+      Methods: recognize, add_intent, _train_builtin
+    NLPStudioApp           — Main orchestrator
+      Methods: _tekst_analyse, _sentiment_analyse, _entity_herkenning,
+               _keyword_extractie, _tekst_classificatie, _intent_herkenning,
+               _tekst_vergelijking, _ai_analyse, run
+  CONSTANTS:
+    VERSIE = "1.0"
+    AI_BESCHIKBAAR (feature detection)
+
+production_rag.py
+  WHAT IT IS:  Production RAG v2.0 — enterprise-grade RAG system.
+  WHAT IT CAN: Conversation memory (10 exchanges), analytics, filtering, query
+               expansion, real embeddings via Voyage API, ChromaDB vector store,
+               document processing, AI-powered answer generation, batch queries,
+               multi-format export.
+  CLASSES:
+    ProductionRAG (30+ methods)
+      Methods:  indexeer, indexeer_tekst, indexeer_url, vraag, batch_vraag,
+                zoek_documenten, stats, _expand_query,
+                _format_conversatie_context, _genereer_antwoord,
+                _toon_documenten, _toon_tags, _toon_geschiedenis,
+                _instellingen_menu, _export_resultaten, _laad_demo_data,
+                _voeg_document_toe, run
+  CONSTANTS:
+    Conversation history max: 10 exchanges
+    Settings: chunk_size, chunk_overlap, top_k, query_expansion
+    3 demo documents: ai_engineering, rag_techniek, python_tips
+    10 command handlers: /stats, /docs, /tags, /history, /settings, /add,
+                         /wis, /export, /reset, /help, /stop
+
+vector_studio.py
+  WHAT IT IS:  Vector Data Studio v1.0 — vector data visualization & analysis.
+  WHAT IT CAN: 2D PCA plots, 3D ASCII plots, similarity heatmaps, cluster maps,
+               word clouds, statistics, outlier detection, cluster analysis,
+               quality assessment, import/export (JSON/CSV/TXT/vectorstore),
+               project management with versioning.
+  CLASSES:
+    VectorStudioApp (50+ methods)
+      Methods:
+        Visualization: _plot_2d_pca, _plot_3d_ascii, _show_similarity_heatmap,
+                       _show_cluster_map, _show_word_cloud
+        Analysis:      _show_statistics, _find_similar, _detect_outliers,
+                       _cluster_analysis, _quality_assessment
+        Conversion:    _import_json, _import_csv, _import_txt,
+                       _import_vectorstore, _export_json, _export_csv,
+                       _export_markdown, _text_to_vector, _batch_convert
+        Projects:      _create_project, _load_project, _view_projects,
+                       _add_comment, _view_history, _delete_project
+        Utilities:     _simple_pca, _simple_kmeans, _cosine_similarity,
+                       _euclidean_distance, _count_outliers, _estimate_clusters,
+                       _calculate_quality, _dummy_embedding (256-dim, hash-based)
+  CONSTANTS:
+    VERSIE = "1.0"
+    Project structure: id, naam, beschrijving, versies (with history), commentaren
+
+weer_agent.py
+  WHAT IT IS:  Weather Agent v2.0 — professional weather analysis with Agentic Loop.
+  WHAT IT CAN: 50+ Dutch cities (10 provinces), hourly forecasts, 7-day forecasts,
+               UV index, air quality, sunrise/sunset, moon phase (8 phases),
+               wind chill, pollen alert, sports weather (6 sports), sea temperature,
+               city comparison, favorites management.
+  CLASSES:
+    WeerAgentApp (40+ methods)
+      Methods:
+        Agentic Loop:  _percipeer (Step 1: Perception), _plan (Step 2: Planning),
+                       _voer_uit (Step 3: Action), _verifieer (Step 4: Verification)
+        Tools:         _tool_get_weer, _tool_get_voorspelling_uur,
+                       _tool_get_voorspelling, _tool_check_alerts,
+                       _tool_get_sport_weer, _tool_get_activiteiten,
+                       _tool_genereer_kledingadvies, _tool_vergelijk_steden
+        Helpers:       _get_seizoen, _bereken_gevoelstemperatuur, _get_maanfase,
+                       _get_zontijden, _get_uv_index, _get_luchtkwaliteit,
+                       _get_pollen, _get_zeewater_temp
+        Display:       _toon_steden_lijst, _toon_weer_compact,
+                       _toon_volledig_rapport, _toon_voorspelling_uur,
+                       _toon_vergelijking, _beheer_favorieten, run
+  CONSTANTS:
+    VERSIE = "2.0"
+    STEDEN (dict, 50+): Dutch cities across 10 provinces with lat/lon, coast flag
+    WEER_TYPES (dict, 11): sunny, cloudy, rainy, snowy, stormy, etc. + icons
+    MAANFASES (list, 8): phases with icons and ASCII art
+    ACTIVITEITEN (dict): per-weather activity suggestions (warm/mild/cold/any)
+    SPORT_CONDITIES (dict, 6): sports with temp/wind/bad-weather constraints
+    POLLEN_SEIZOEN (dict, 12): pollen activity by month
+
+
+================================================================================
+  danny_toolkit/apps/ — 28 STANDALONE MINI-APPLICATIONS
+================================================================================
+
+base_app.py
+  WHAT IT IS:  Base class for all apps.
+  WHAT IT CAN: Shared AI client initialization (Anthropic), JSON data persistence
+               in data/apps/. Provides _laad_data, _sla_data_op, _get_default_data,
+               _migreer_data pattern for all child apps.
+
+agenda_planner.py
+  WHAT IT IS:  AI-powered agenda and planning assistant.
+  WHAT IT CAN: Manage appointments, tasks, and reminders. Date parsing
+               (DD-MM-YYYY, morgen, overmorgen). Week overview. Priority sorting.
+  CLASSES:
+    AgendaPlannerApp (BaseApp)
+      Methods:  run, _toon_vandaag, _nieuwe_afspraak, _nieuwe_taak,
+                _week_overzicht, _alle_afspraken, _beheer_taken,
+                _verwijder_afspraak, _get_agenda_context,
+                _ai_dag_planning, _ai_prioriteiten, _ai_productiviteit_tips
+  CONSTANTS:
+    Priority levels: hoog, normaal, laag
+
+boodschappenlijst.py
+  WHAT IT IS:  Comprehensive shopping list app v2.0 (1669 lines).
+  WHAT IT CAN: Multi-list support, budget tracking, recipe system (3 built-in +
+               custom), inventory management, purchase history statistics,
+               smart suggestions, category-based organization, export (TXT/JSON),
+               favorites, templates.
+  CLASSES:
+    BoodschappenlijstApp (50+ methods)
+      Methods:
+        Items:      _voeg_toe, _voeg_favoriet_toe, _afvinken, _bewerk_item,
+                    _verwijder, _toon_suggesties
+        Recipes:    _recepten_menu, _voeg_recept_toe_aan_lijst, _maak_recept,
+                    _verwijder_recept, _suggereer_recepten
+        Pantry:     _voorraad_menu, _voorraad_toevoegen, _voorraad_aanpassen,
+                    _voorraad_verwijderen, _voorraad_naar_lijst
+        Templates:  _sjablonen_menu, _lijsten_menu, _favorieten_menu
+        Settings:   _instellingen_menu, _toon_statistieken, _exporteer_menu
+  CONSTANTS:
+    VERSIE = "2.0"
+    CATEGORIEEN (13): groenten, zuivel, vlees, brood, dranken, pasta, conserven,
+                      snacks, diepvries, huishouden, verzorging, dieren, overig
+    PRIORITEITEN: hoog (!!!), normaal, laag (...)
+    STANDAARD_PRODUCTEN: 10 items per category
+    STANDAARD_RECEPTEN (3): Spaghetti Bolognese, Pannenkoeken, Salade
+
+citaten_generator.py
+  WHAT IT IS:  AI-powered inspirational quote generator.
+  WHAT IT CAN: Daily quote, 30 built-in famous quotes, random browse, search,
+               custom quotes, favorites, AI quote generation/interpretation.
+  CLASSES:
+    CitatenGeneratorApp (BaseApp)
+      Methods:  run, _toon_citaat_van_de_dag, _willekeurig_citaat,
+                _zoek_citaat, _eigen_citaat, _bekijk_favorieten,
+                _eigen_citaten, _ai_citaat_genereren, _ai_citaat_uitleg,
+                _ai_persoonlijk_citaat
+  CONSTANTS:
+    Built-in quotes (30): Steve Jobs, Churchill, Gandhi, Einstein, etc. (Dutch)
+
+code_analyse.py
+  WHAT IT IS:  Professional Python code analyzer v2.0.
+  WHAT IT CAN: Security vulnerability detection (SQL injection, command injection,
+               hardcoded secrets, XSS, path traversal), code smell detection
+               (magic numbers, TODO/FIXME, print debug, commented code),
+               cyclomatic complexity, naming conventions, performance anti-patterns,
+               type coverage, dead code detection.
+  CLASSES:
+    CodeAnalyseApp
+      Methods:  laad_bestand (AST parsing), plus analysis/reporting methods
+  CONSTANTS:
+    VERSIE = "2.0"
+    COMPLEXITY_KEYWORDS (10): keywords for cyclomatic complexity
+    SECURITY_PATTERNS (5): sql_injection, command_injection, hardcoded_secrets,
+                           xss_patterns, path_traversal (regex patterns)
+    CODE_SMELL_PATTERNS (4): magic_numbers, todo_fixme, print_debug, commented_code
+    NAMING_CONVENTIONS (4): snake_case, UPPER_CASE, PascalCase, camelCase
+    PERFORMANCE_PATTERNS (7): anti-patterns
+
+code_snippets.py
+  WHAT IT IS:  Personal code snippet library v1.0.
+  WHAT IT CAN: Store snippets in 16 programming languages, tagging system, search,
+               favorites, usage tracking, statistics.
+  CLASSES:
+    CodeSnippetsApp
+      Methods:  run, _nieuwe_snippet, _bekijk_snippets, _toon_snippet,
+                _bewerk_snippet, _zoek_snippets, _filter_op_tag,
+                _toon_favorieten, _toon_statistieken
+  CONSTANTS:
+    VERSIE = "1.0"
+    TALEN (dict, 16): Python, JS, Java, C++, Go, Rust, Ruby, PHP, SQL, HTML,
+                      CSS, Bash, PowerShell — each with extension + comment syntax
+
+decision_maker.py
+  WHAT IT IS:  Decision-making tool v1.0.
+  WHAT IT CAN: Pro/con analysis with weighted scoring, multi-criteria decision
+               matrix, random picker, yes/no helper (5 guiding questions),
+               coin flip, decision history.
+  CLASSES:
+    DecisionMakerApp
+      Methods:  run, _random_picker, _pro_con_analyse, _weighted_scoring,
+                _ja_nee_helper, _coin_flip, _bekijk_geschiedenis
+  CONSTANTS:
+    VERSIE = "1.0"
+    CRITERIA_TEMPLATES (3): carriere (5 criteria), aankoop (5), woning (5)
+
+dream_journal.py
+  WHAT IT IS:  Dream journal app with symbol analysis.
+  WHAT IT CAN: Log dreams with emotions, symbols, categories, clarity rating.
+               24 built-in dream symbols with psychological meanings. Pattern
+               analysis and keyword search.
+  CLASSES:
+    DreamJournalApp (standalone, not BaseApp)
+      Methods:  run, _log_droom, _bekijk_dromen, _toon_droom_details,
+                _analyseer_patronen, _symbolen_gids, _zoek_dromen,
+                _random_interpretatie
+  CONSTANTS:
+    SYMBOLEN (dict, 24): water, flying, falling, etc. with meanings
+    CATEGORIEEN (8): nachtmerrie, lucide, terugkerend, profetisch, avontuur,
+                     romantisch, bizar, alledaags
+    EMOTIES (10): blij, verdrietig, bang, boos, etc.
+
+energie_vs_tech.py
+  WHAT IT IS:  Data visualization script — Energy vs Tech correlation.
+  WHAT IT CAN: Generate hypothetical dataset (2020-2030) for energy prices,
+               tech stocks, AI datacenter consumption, Bitcoin mining. Creates
+               3-panel matplotlib chart with correlation analysis.
+  STANDALONE FUNCTIONS:
+    genereer_data()        — Generate dataset arrays
+    plot_correlatie(data, output_pad) — 3-panel matplotlib chart
+    main()                 — Execute and print statistics
+  CONSTANTS:
+    Energy price index (2020-2030): 100 → 280
+    Tech stock index: 100 → 340
+    AI datacenter energy (TWh): 25 → 370
+    Bitcoin mining energy (TWh): 70 → 150
+
+expense_tracker.py
+  WHAT IT IS:  AI-powered financial tracker.
+  WHAT IT CAN: Track expenses & income, category-based budgets, monthly overview,
+               transaction history, AI financial analysis & advice & savings tips.
+  CLASSES:
+    ExpenseTrackerApp (BaseApp)
+      Methods:  run, _toon_saldo, _voeg_uitgave_toe, _voeg_inkomen_toe,
+                _maand_overzicht, _per_categorie, _budget_instellen,
+                _alle_transacties, _get_finance_context, _ai_uitgaven_analyse,
+                _ai_budget_advies, _ai_spaartips
+  CONSTANTS:
+    Categories (8): Boodschappen, Transport, Entertainment, Eten & Drinken,
+                    Wonen, Gezondheid, Kleding, Overig
+
+fitness_tracker.py
+  WHAT IT IS:  Workout and fitness tracker v1.0.
+  WHAT IT CAN: Exercise logging (7 categories, 3-4 exercises each), sets/reps/
+               intensity tracking, calorie estimation, personal records, workout
+               streaks, progress visualization.
+  CLASSES:
+    FitnessTrackerApp
+      Methods:  run, _setup_profiel, _start_workout, _bekijk_geschiedenis,
+                _toon_workout_details, _toon_statistieken, _bekijk_oefeningen,
+                _check_streak
+  CONSTANTS:
+    VERSIE = "1.0"
+    OEFENINGEN (dict, 7 categories): borst, rug, schouders, armen, benen,
+                                     core, cardio (3-4 exercises each)
+    CALORIEEN_PER_MIN: licht (4), matig (7), intensief (10), zeer_intensief (14)
+
+flashcards.py
+  WHAT IT IS:  AI-powered spaced repetition flashcard system.
+  WHAT IT CAN: Create decks, add cards (voorkant/achterkant), review with spaced
+               repetition scheduling, AI card generation, AI quiz mode, statistics.
+  CLASSES:
+    FlashcardsApp (BaseApp)
+      Methods:  run, _nieuw_deck, _kies_deck, _kaart_toevoegen, _studeren,
+                _bekijk_decks, _statistieken, _verwijder_deck,
+                _ai_kaarten_genereren, _ai_uitleg, _ai_quiz_mode
+  CONSTANTS:
+    Spaced repetition intervals: [0, 1, 3, 7, 14, 30] days
+    Difficulty levels: 0-5
+
+goals_tracker.py
+  WHAT IT IS:  Personal goals tracker with milestones and streaks.
+  WHAT IT CAN: Track goals across 8 categories, progress %, deadlines, priorities,
+               milestones, daily check-ins, achievements, motivation quotes,
+               AI coaching and action plans.
+  CLASSES:
+    GoalsTrackerApp (BaseApp)
+      Methods:  run, _dashboard, _progress_bar, _nieuw_doel, _update_voortgang,
+                _bekijk_doelen, _milestones_menu, _nieuwe_milestone,
+                _milestone_bereikt, _check_in, _get_goals_context,
+                _ai_doel_coach, _ai_actieplan, _ai_motivatie
+  CONSTANTS:
+    CATEGORIEEN (8): gezondheid, werk, financieel, persoonlijk, relaties,
+                     educatie, creatief, anders
+    QUOTES (10): motivational quotes
+    Priorities: laag, normaal, hoog
+
+habit_tracker.py
+  WHAT IT IS:  AI-powered habit tracking app.
+  WHAT IT CAN: Daily habit logging, 4 frequency types, streak tracking, completion
+               statistics, AI motivation, habit suggestions, streak analysis,
+               habit coaching.
+  CLASSES:
+    HabitTrackerApp (BaseApp)
+      Methods:  run, _toon_vandaag_status, _nieuwe_habit, _voltooien_habit,
+                _bekijk_habits, _statistieken, _verwijder_habit,
+                _get_habits_context, _ai_motivatie, _ai_habit_suggesties,
+                _ai_streak_analyse, _ai_habit_coach
+  CONSTANTS:
+    Frequency types (4): dagelijks, weekdagen, weekends, wekelijks
+
+language_tutor.py
+  WHAT IT IS:  Language learning app v1.0 with spaced repetition.
+  WHAT IT CAN: 4 languages (Engels 20 words, Duits 14, Frans 14, Spaans 14),
+               spaced repetition practice, multiple-choice quizzes (5 questions),
+               custom vocabulary, bidirectional testing, progress per language.
+  CLASSES:
+    LanguageTutorApp
+      Methods:  run, _kies_taal, _get_woorden, _get_woord_stats,
+                _update_woord_stats, _get_due_woorden, _oefen_sessie,
+                _snel_quiz, _voeg_woord_toe, _bekijk_woordenschat,
+                _toon_statistieken
+  CONSTANTS:
+    VERSIE = "1.0"
+    TALEN (dict, 4): Engels (20), Duits (14), Frans (14), Spaans (14) word pairs
+    SR_INTERVALLEN = [1, 3, 7, 14, 30, 90] days
+
+mood_tracker.py
+  WHAT IT IS:  AI-powered mood tracker.
+  WHAT IT CAN: Log emotions (5 levels) with 10 activity types, streak tracking,
+               7-day overview with averages, pattern analysis per activity,
+               trend detection, AI mood analysis/prediction/daily reflection.
+  CLASSES:
+    MoodTrackerApp (BaseApp)
+      Methods:  run, _toon_recente_mood, _log_mood, _bekijk_vandaag,
+                _week_overzicht, _statistieken, _mood_patronen,
+                _get_mood_context, _ai_mood_analyse, _ai_welzijns_tips,
+                _ai_mood_voorspelling, _ai_dagboek_reflectie
+  CONSTANTS:
+    Stemmingen (dict, 5): Geweldig (5), Goed (4), Oké (3), Niet zo goed (2),
+                          Slecht (1) — with emoji
+    Activiteiten (list, 10): Werk, Sport, Vrienden, Familie, Hobby, Rust,
+                             Natuur, Lezen, Gaming, Muziek
+
+music_composer.py
+  WHAT IT IS:  ASCII-based music composition tool v1.0.
+  WHAT IT CAN: Generate melodies (4 styles), chord progressions (6 types),
+               drum patterns (5 types), ASCII piano roll/drum/chord visualization,
+               scale/chord reference library, composition saving.
+  CLASSES (3):
+    MuziekTheorie          — Music theory constants + static methods
+      Static:  get_noot_index, get_toonladder, get_akkoord
+    MelodieGenerator       — Melody generation engine
+      Methods: genereer (4 styles), _random_melodie, _stap_melodie,
+               _sprong_melodie, _arpeggio_melodie
+    MusicComposerApp       — Main orchestrator
+      Methods: run, _teken_piano_roll, _teken_drum_patroon, _teken_akkoord,
+               _genereer_melodie, _genereer_akkoorden, _genereer_drums,
+               _bekijk_composities, _toonladder_referentie
+  CONSTANTS:
+    VERSIE = "1.0"
+    NOTEN (12): chromatic scale (C-B)
+    TOONLADDERS (7): majeur, mineur, blues, pentatonisch, harmonisch_mineur,
+                     dorisch, mixolydisch
+    AKKOORDEN (9): maj, min, 7, maj7, min7, dim, aug, sus4, sus2
+    PROGRESSIES (6): pop, blues, jazz, rock, triest, episch
+    DRUM_PATRONEN (5, 16-step): basic_rock, disco, hiphop, jazz, latin
+
+notitie_app.py
+  WHAT IT IS:  AI-powered note-taking app.
+  WHAT IT CAN: Create/browse/search/delete notes across categories, manage custom
+               categories, AI summarization, brainstorming, auto-categorization,
+               writing assistance (expand, improve, dictation).
+  CLASSES:
+    NotitieApp (BaseApp)
+      Methods:  run, _nieuwe_notitie, _bekijk_notities, _zoek_notitie,
+                _verwijder_notitie, _beheer_categorieen, _ai_samenvatting,
+                _ai_brainstorm, _ai_categoriseer, _ai_schrijfhulp
+  CONSTANTS:
+    Default categories (4): Algemeen, Werk, Persoonlijk, Ideeen
+
+pomodoro_timer.py
+  WHAT IT IS:  Pomodoro technique timer with AI.
+  WHAT IT CAN: 25min/5min/15min/custom timers, task tracking per pomodoro,
+               focus statistics, daily streak, AI focus tips/motivation/
+               productivity analysis.
+  CLASSES:
+    PomodoroTimerApp (BaseApp)
+      Methods:  run, _start_timer, _aangepaste_timer, _toon_statistieken,
+                _ai_focus_tips, _ai_motivatie, _ai_productiviteit_analyse
+  CONSTANTS:
+    Default timers: Pomodoro (25 min), Short break (5 min), Long break (15 min)
+    Custom: 1-120 min
+    Session history max: 100
+
+recipe_generator.py
+  WHAT IT IS:  Recipe and meal planning app.
+  WHAT IT CAN: AI recipe generation from ingredients, 7 ingredient categories,
+               pantry inventory tracking, weekly menu planner with auto-generate,
+               shopping list generation, 4 base recipes, favorites.
+  CLASSES:
+    RecipeGeneratorApp (BaseApp)
+      Methods:  run, _genereer_recept_ai, _genereer_recept_lokaal,
+                _beheer_voorraad, _genereer_recept, _toon_recept,
+                _weekmenu_planner, _bekijk_favorieten
+  CONSTANTS:
+    CATEGORIEEN (7): groenten (10), fruit (5), vlees (5), vis (4),
+                     zuivel (6), granen (6), kruiden (8)
+    BASIS_RECEPTEN (4): Pasta Carbonara, Roerbak, Tomatensoep, Omelet
+
+rekenmachine.py
+  WHAT IT IS:  Advanced scientific calculator v2.0.
+  WHAT IT CAN: Basic/scientific calculations, unit conversion (length, weight,
+               temperature, data, time), financial calculations, health
+               calculations, statistics, expression parser, memory slots,
+               calculation history.
+  CLASSES:
+    RekenmachineApp
+      Methods:  run, _basis_menu, _get_getal (supports ans/memory/constants),
+                _voeg_geschiedenis_toe, plus conversion/financial/health menus
+  CONSTANTS:
+    VERSIE = "2.0"
+    CONSTANTEN (7): pi, e, phi, sqrt2, sqrt3, c (speed of light), g (gravity)
+    LENGTE_EENHEDEN (8): mm, cm, m, km, inch, feet, yard, mile
+    GEWICHT_EENHEDEN (6): mg, g, kg, ton, oz, lb
+    TEMPERATUUR_EENHEDEN (3): celsius, fahrenheit, kelvin
+    DATA_EENHEDEN (6): bytes, KB, MB, GB, TB, PB
+    TIJD_EENHEDEN (5): seconds, minutes, hours, days, weeks
+    VALUTA_KOERSEN (8): fixed demo exchange rates
+
+room_planner.py
+  WHAT IT IS:  Virtual room layout optimizer with ASCII visualization.
+  WHAT IT CAN: ASCII room visualization, furniture placement with rotation,
+               overlap detection, free space calculation, 15 furniture types,
+               3 preset room sizes, AI suggestions and analysis.
+  CLASSES:
+    RoomPlannerApp (BaseApp)
+      Methods:  run, _nieuw_project, _voeg_openingen_toe, _laad_project,
+                _sla_project_op, _render_kamer, _bekijk_kamer, _plaats_meubel,
+                _check_overlap, _verplaats_meubel, _verwijder_meubel,
+                _bereken_vrije_ruimte, _ai_suggesties, _ai_analyse
+  CONSTANTS:
+    MEUBELS (15): bed, bureau, kast, bank, tafel, etc. with dimensions + symbols
+    Preset rooms: Slaapkamer (4x4m), Woonkamer (6x5m), Studeerkamer (3x3m)
+
+schatzoek.py
+  WHAT IT IS:  Treasure Hunt dungeon crawler game v2.0.
+  WHAT IT CAN: 20-level story campaign with boss fights, 7 character classes,
+               10 themed biomes, 22 monster types, 7 bosses with special attacks,
+               18 power-ups, 18 achievements, shop system, fog of war, free play,
+               daily challenges, XP & leveling, highscores.
+  CLASSES:
+    SchatzoekApp (standalone, not BaseApp, 60+ methods)
+      Methods:
+        Core:    run, _speel_level, _genereer_level, _beweeg, _check_tile,
+                 _gevecht_monster, _gevecht_boss, _beweeg_monsters
+        Items:   _gebruik_powerup, _gebruik_kompas, _gebruik_radar,
+                 _gebruik_teleport, _gebruik_bom, _gebruik_machete
+        Modes:   _campagne_menu, _speel_campagne_level, _vrij_spel_menu,
+                 _dagelijkse_uitdaging
+        Display: _toon_grid, _toon_status, _toon_profiel, _toon_achievements,
+                 _toon_shop, _toon_highscores
+        System:  _geef_xp, _check_achievement, _krijg_hint, _bereken_afstand
+  CONSTANTS:
+    CLASSES (7): Ontdekker, Ninja, Tank, Magiër, Jager, Vampier, IJsmeester
+    BIOMES (10): bos, grot, woestijn, kasteel, vulkaan, ijsgrot, moeras,
+                 jungle, oceaan, schaduw
+    CAMPAGNE_LEVELS (20): story-driven with boss fights
+    MONSTERS (22): enemy types across biomes with HP/damage/XP
+    BOSSES (7): with special attacks
+    POWERUPS (18): kompas, radar, teleport, schild, etc.
+    ACHIEVEMENTS (18): unlock conditions
+    SHOP_ITEMS (6): purchasable items
+
+time_capsule.py
+  WHAT IT IS:  Time capsule app v1.0.
+  WHAT IT CAN: Write messages to your future self, 6 preset timeframes (1 week
+               to 5 years), 8 guided reflection questions, mood tagging, goals,
+               quick notes (1/7/30 days), capsule status tracking (locked/ready/
+               opened), force-open option.
+  CLASSES:
+    TimeCapsuleApp
+      Methods:  run, _nieuwe_capsule, _bekijk_capsules, _open_capsule,
+                _snelle_notitie, _check_herinneringen, _statistieken
+  CONSTANTS:
+    VERSIE = "1.0"
+    PERIODES (6): 1 week, 1 maand, 3 maanden, 6 maanden, 1 jaar, 5 jaar
+    PROMPTS (8): guided reflection questions
+
+unit_converter.py
+  WHAT IT IS:  Unit conversion tool.
+  WHAT IT CAN: Convert units across 7 categories, special temperature handler
+               (Celsius/Fahrenheit/Kelvin), quick conversion parser for common
+               conversions (e.g. "100km").
+  CLASSES:
+    UnitConverterApp
+      Methods:  run, _converteer, _converteer_temp, _snelle_conversies
+  CONSTANTS:
+    Conversies (7 categories):
+      lengte: mm, cm, m, km, inch, feet, yard, mile
+      gewicht: mg, g, kg, ton, oz, lb
+      temperatuur: celsius, fahrenheit, kelvin
+      volume: ml, cl, dl, l, m3, gallon, pint
+      tijd: sec, min, uur, dag, week, maand, jaar
+      data: bit, byte, KB, MB, GB, TB
+      snelheid: m/s, km/h, mph, knopen
+    Quick conversions: km/mile, kg/lbs, celsius/fahrenheit, m/feet, l/gallon,
+                       cm/inch
+
+virtueel_huisdier.py
+  WHAT IT IS:  Virtual Pet Simulator v4.0 — AI-powered with personality system.
+  WHAT IT CAN: 9 pet types (incl. legendary "nexus" with omnimorph/prescience/
+               synthesis/resonance/infinity learn abilities), AI personality
+               dialogue, memory system, activities, integrates with 10 other apps
+               via lazy loading (boodschappenlijst, rekenmachine, nieuws_agent,
+               weer_agent, claude_chat, mood_tracker, habit_tracker,
+               expense_tracker, agenda_planner, pomodoro_timer).
+  CLASSES:
+    VirtueelHuisdierApp
+      Methods:  run, plus lazy-load functions for 10 integrated apps
+  CONSTANTS:
+    AI_PERSONALITY_TRAITS (dict, 9 pet types):
+      kat, hond, konijn, draak, robot, eenhoorn, alien, phoenix
+      nexus (legendary): omnimorph, prescience, synthesis, resonance,
+                         infinity learn abilities
+    HUISDIER_TYPES (dict, 8): pet type → emoji + sound mapping
+
+wachtwoord_generator.py
+  WHAT IT IS:  Secure password generator with strength testing.
+  WHAT IT CAN: Generate passwords (8-64 chars, configurable character sets),
+               9-point strength scoring, batch generation (1-10), PIN codes
+               (4-8 digits), password history (max 50, masked).
+  CLASSES:
+    WachtwoordGeneratorApp
+      Methods:  run, _genereer_wachtwoord, _bereken_sterkte, _test_sterkte,
+                _meerdere_wachtwoorden, _genereer_pin, _bekijk_history
+  CONSTANTS:
+    Strength levels: ZWAK, GEMIDDELD, STERK, ZEER STERK
+    Character sets: lowercase, uppercase, digits, !@#$%^&*()_+-=[]{}|;:,.<>?
+    History max: 50 (masked)
+
+
+================================================================================
+  danny_toolkit/brain/ — CENTRAL INTELLIGENCE & ORCHESTRATION (14 modules)
+================================================================================
+
+central_brain.py
+  WHAT IT IS:  Central Brain — the main LLM coordination hub.
+  WHAT IT CAN: Coordinate AI model federation, route requests to appropriate
+               models, manage fallback chain (Groq -> Ollama -> Anthropic).
+
+app_tools.py
+  WHAT IT IS:  App tools bridge for the brain.
+  WHAT IT CAN: Connect brain intelligence to the 26+ apps, tool-use integration.
+
+brain_cli.py
+  WHAT IT IS:  CLI interface for the brain module.
+  WHAT IT CAN: Interactive terminal access to brain functions.
+
+cortical_stack.py
+  WHAT IT IS:  CorticalStack — SQLite persistent memory (episodic + semantic).
+  WHAT IT CAN: Thread-safe WAL mode, PRAGMA synchronous=NORMAL, batched writes
+               (flush every 20 writes or 5 seconds). Singleton via
+               get_cortical_stack(). Stores events, facts, stats.
+  KEY METHODS: log_event, remember_fact, recall, log_stat, flush, close
+  CONSTANTS:   _BATCH_SIZE = 20, _BATCH_INTERVAL = 5.0
+
+dream_monitor.py
+  WHAT IT IS:  Dream monitoring system.
+  WHAT IT CAN: Monitor and analyze system "dreams" — nightly insight generation,
+               pattern synthesis from accumulated data.
+
+file_guard.py
+  WHAT IT IS:  File system safety guard.
+  WHAT IT CAN: Protect against accidental file operations, enforce whitelists,
+               prevent dangerous path traversal.
+
+governor.py
+  WHAT IT IS:  Governor — autonomous safety layer (Level 2 in hierarchy).
+  WHAT IT CAN: Rate limiting, circuit breaking, prompt injection detection,
+               input length validation, CorticalStack event logging.
+               Rules cannot be overridden by agents.
+
+nexus_bridge.py
+  WHAT IT IS:  Nexus Bridge — connection layer between subsystems.
+  WHAT IT CAN: Bridge communication between brain, daemon, and apps.
+
+proactive.py
+  WHAT IT IS:  Proactive intelligence system.
+  WHAT IT CAN: Generate unsolicited suggestions, anticipate user needs,
+               proactive tips based on context.
+
+sanctuary_dashboard.py
+  WHAT IT IS:  Sanctuary Dashboard — Streamlit web UI backend.
+  WHAT IT CAN: Power the Streamlit web dashboard with live data, pipeline
+               visualization, Glass Box transparency.
+
+security_research.py
+  WHAT IT IS:  Security Research Engine v2.0.
+  WHAT IT CAN: Security analysis, vulnerability research, threat assessment.
+
+singularity.py
+  WHAT IT IS:  SingularityEngine — Tier 5 consciousness layer.
+  WHAT IT CAN: 5 consciousness modes (SLAAP, WAAK, DROOM, FOCUS, TRANSCEND),
+               reflect on CorticalStack history, cross-tier synthesis.
+
+trinity_omega.py
+  WHAT IT IS:  PrometheusBrain + CosmicRole Federation.
+  WHAT IT CAN: 17 agent roles across 5 tiers (NodeTier/CosmicRole enums),
+               AI fallback chain management, model coordination.
+
+trinity_symbiosis.py
+  WHAT IT IS:  Trinity Symbiosis — cosmic family connection engine.
+  WHAT IT CAN: 8 family roles, 12 communication channels, Mind-Soul-Body
+               symbiotic connection.
+
+unified_memory.py
+  WHAT IT IS:  Unified memory system.
+  WHAT IT CAN: Merge episodic, semantic, and system memories into one
+               accessible layer.
+
+visual_nexus.py
+  WHAT IT IS:  Visual Nexus — vision processing hub.
+  WHAT IT CAN: Coordinate vision tasks, image analysis, visual state management.
+
+workflows.py
+  WHAT IT IS:  Workflow automation engine.
+  WHAT IT CAN: Define and execute multi-step workflows, chain agent operations.
+
+
+================================================================================
+  danny_toolkit/core/ — CORE ENGINE & UTILITIES (9 modules)
+================================================================================
+
+engine.py
+  WHAT IT IS:  Core engine — the async SwarmEngine.
+  WHAT IT CAN: Async agent orchestration with asyncio.gather(), multi-intent
+               routing via AdaptiveRouter, SwarmPayload system, 6-worker thread
+               pool cap (_SWARM_MAX_WORKERS).
+
+document_processor.py
+  WHAT IT IS:  Document processor for RAG pipeline.
+  WHAT IT CAN: Parse and chunk documents (paragraph, code-aware), extract
+               metadata, prepare docs for embedding.
+
+emotional_voice.py
+  WHAT IT IS:  Emotional voice engine.
+  WHAT IT CAN: Text-to-speech with emotional coloring (excited, happy, sad,
+               worried, tired), mood-to-voice mapping.
+
+generator.py
+  WHAT IT IS:  AI response generator.
+  WHAT IT CAN: Generate answers from retrieved context using LLM fallback chain.
+
+processor.py
+  WHAT IT IS:  Input/output processor.
+  WHAT IT CAN: Pre-process user input, post-process AI responses.
+
+self_repair.py
+  WHAT IT IS:  Self-repair / OracleAgent system.
+  WHAT IT CAN: Diagnose-and-fix pipeline, repair history, autonomous repair hooks.
+
+ultimate_hunt.py
+  WHAT IT IS:  Ultimate Hunt mode.
+  WHAT IT CAN: Deep research rendering, comprehensive information retrieval.
+
+utils.py
+  WHAT IT IS:  Shared utility functions.
+  WHAT IT CAN: Terminal colors (kleur/Kleur), screen clearing, encoding fixes,
+               success/error/warning/info output helpers.
+
+vector_store.py
+  WHAT IT IS:  ChromaDB vector store wrapper.
+  WHAT IT CAN: Store and retrieve document embeddings, similarity search,
+               collection management.
+
+
+================================================================================
+  danny_toolkit/daemon/ — DIGITAL DAEMON (ALWAYS-ON ENTITY, 5 modules)
+================================================================================
+
+daemon_core.py
+  WHAT IT IS:  DigitalDaemon — the always-on symbiotic entity.
+  WHAT IT CAN: Orchestrate Sensorium, LimbicSystem, and Metabolisme into
+               a living digital organism. Background autonomy.
+
+sensorium.py
+  WHAT IT IS:  Sensorium — event detection engine.
+  WHAT IT CAN: 17 event types, listen to all 35+ apps, detect system events,
+               feed the brain with observations.
+
+limbic_system.py
+  WHAT IT IS:  LimbicSystem — emotional engine.
+  WHAT IT CAN: 9 moods (ECSTATIC to SICK), energy states, 7 avatar forms,
+               transform events into emotions.
+
+metabolisme.py
+  WHAT IT IS:  Metabolisme — resource management.
+  WHAT IT CAN: Track energy, hunger, health of the digital organism,
+               manage resource consumption and regeneration.
+
+coherentie.py
+  WHAT IT IS:  Coherentie — internal consistency checker.
+  WHAT IT CAN: Verify daemon subsystems are in sync, detect conflicts
+               between mood/energy/metabolic state.
+
+
+================================================================================
+  danny_toolkit/interfaces/ — USER INTERFACES (2 modules)
+================================================================================
+
+cli.py
+  WHAT IT IS:  Rich-powered CLI terminal interface.
+  WHAT IT CAN: Interactive terminal with live panels, markdown rendering,
+               command processing.
+
+cosmic_console.py
+  WHAT IT IS:  Cosmic Console interface module (internal).
+  WHAT IT CAN: Provide async terminal UI with smart payload rendering.
+
+
+================================================================================
+  danny_toolkit/skills/ — SPECIALIZED SKILLS (2 modules)
+================================================================================
+
+pixel_eye.py
+  WHAT IT IS:  PixelEye Vision Engine.
+  WHAT IT CAN: LLaVA-based vision via Ollama, image analysis, visual state
+               management, logic gate verification.
+
+librarian.py
+  WHAT IT IS:  Librarian skill — document management.
+  WHAT IT CAN: Manage document library, organize and retrieve stored documents.
+
+
+================================================================================
+  danny_toolkit/pipelines/ — GPU/RAG PIPELINES (2 modules)
+================================================================================
+
+rag_gpu.py
+  WHAT IT IS:  GPU-RAG Pipeline Demo.
+  WHAT IT CAN: Run embeddings on GPU via PyTorch (TorchGPUEmbeddings),
+               build FAISS index, perform vector similarity search.
+
+rag_chain.py
+  WHAT IT IS:  RAG Chain pipeline.
+  WHAT IT CAN: Chain RAG operations (retrieve -> augment -> generate).
+
+
+================================================================================
+  danny_toolkit/learning/ — SELF-LEARNING SYSTEM (8 modules)
+================================================================================
+
+orchestrator.py
+  WHAT IT IS:  LearningSystem orchestrator.
+  WHAT IT CAN: Coordinate all learning components (memory, tracker, patterns,
+               feedback, performance) into a unified learning pipeline.
+
+memory.py
+  WHAT IT IS:  Learning memory store.
+  WHAT IT CAN: Persist learned knowledge, recall past learnings.
+
+tracker.py
+  WHAT IT IS:  InteractionTracker — interaction logging.
+  WHAT IT CAN: Log every chat interaction with context (happiness, energy, IQ),
+               success scores, user pattern detection. Max 500 interactions.
+
+patterns.py
+  WHAT IT IS:  PatternRecognizer — detect frequently asked questions.
+  WHAT IT CAN: Cache successful answers for instant response, learn user
+               preferences, frequency-based caching.
+
+feedback_manager.py
+  WHAT IT IS:  Feedback manager for learning signals.
+  WHAT IT CAN: Collect user feedback, route positive/negative signals to
+               learning components.
+
+optimizer.py
+  WHAT IT IS:  Learning optimizer.
+  WHAT IT CAN: Optimize system parameters based on accumulated learning data.
+
+performance_analyzer.py
+  WHAT IT IS:  PerformanceAnalyzer — system performance tracking.
+  WHAT IT CAN: Measure and analyze performance of all components,
+               identify trends and improvement areas. Tracks metrics for
+               workflows, responses, daemon, and learning.
+
+self_improvement.py
+  WHAT IT IS:  SelfImprovementEngine — core self-learning engine.
+  WHAT IT CAN: Collect learning signals from all components, automatically
+               adjust parameters for continuous improvement. Handles
+               positive/negative/neutral signals with adaptive strength.
+
+
+================================================================================
+  danny_toolkit/quests/ — QUEST SYSTEM (I-XIV, 14 protocols)
+================================================================================
+
+core_protocol.py
+  WHAT IT IS:  Quest I: THE CORE — System diagnostics.
+  WHAT IT CAN: Run system-wide diagnostics, verify all components are online.
+
+body_protocol.py
+  WHAT IT IS:  Quest II: THE BODY — Physical manifestation.
+  WHAT IT CAN: Test DigitalDaemon's physical subsystems (metabolisme, energy).
+
+mind_protocol.py
+  WHAT IT IS:  Quest III: THE MIND — Emotional brain.
+  WHAT IT CAN: Transform data/events into moods, energy states, avatar forms
+               via the LimbicSystem.
+
+senses_protocol.py
+  WHAT IT IS:  Quest IV: THE SENSES — Organism perception.
+  WHAT IT CAN: Listen to events from all 35+ apps via Sensorium,
+               17 event types, event-to-energy mapping.
+
+brain_protocol.py
+  WHAT IT IS:  Quest V: THE BRAIN — Cognitive mapping.
+  WHAT IT CAN: Test brain federation, cognitive routing, model fallbacks.
+
+bridge_protocol.py
+  WHAT IT IS:  Quest VI: THE BRIDGE — Bio-digital bridge.
+  WHAT IT CAN: Connect biological-inspired systems to digital ones.
+
+trinity_protocol.py
+  WHAT IT IS:  Quest VII: THE TRINITY — Three Become One.
+  WHAT IT CAN: Unite Mind, Soul, and Body in cosmic symbiosis,
+               8 family roles, 12 communication channels.
+
+daemon_protocol.py
+  WHAT IT IS:  Quest VIII: THE DAEMON — Always-on entity test.
+  WHAT IT CAN: Validate the DigitalDaemon lifecycle and subsystems.
+
+pulse_protocol.py
+  WHAT IT IS:  Quest IX: THE PULSE — Bio-chain connection.
+  WHAT IT CAN: Simulated heartbeat (BPM & HRV) determines crypto transaction
+               approval. Bio-Salt signing, Governor bio-auth.
+
+voice_protocol.py
+  WHAT IT IS:  Quest X: THE VOICE — The Voice of God.
+  WHAT IT CAN: Give Pixel a voice that changes based on daemon mood,
+               mood-to-emotion mapping, Dutch example sentences.
+
+listener_protocol.py
+  WHAT IT IS:  Quest XI: THE LISTENER — Speech recognition.
+  WHAT IT CAN: Microphone input -> recognition -> processing -> spoken answer.
+               Backends: Google STT (online), Vosk (offline), graceful fallback.
+
+dialogue_protocol.py
+  WHAT IT IS:  Quest XII: THE DIALOGUE — Pixel converses.
+  WHAT IT CAN: Full two-way dialogue between Danny and Pixel,
+               uses Listener + Voice protocols together.
+
+will_protocol.py
+  WHAT IT IS:  Quest XIII: THE WILL — Autonomous decision-making.
+  WHAT IT CAN: Analyze system state, decide what needs to happen,
+               execute with Governor approval. Scan -> Decide -> Execute.
+
+memory_protocol.py
+  WHAT IT IS:  Quest XIV: THE MEMORY — Persistent memory validation.
+  WHAT IT CAN: Validate CorticalStack (log_event, remember_fact, recall,
+               log_stat), show status, run simulation.
+
+
+================================================================================
+  danny_toolkit/utils/ — UTILITIES (1 module)
+================================================================================
+
+ensure_directory.py
+  WHAT IT IS:  Directory creation utility.
+  WHAT IT CAN: Safely ensure required directories exist before operations.
+
+
+================================================================================
+  danny_toolkit/main_omega.py — OMEGA INTEGRATION
+================================================================================
+
+main_omega.py
+  WHAT IT IS:  OMEGA AI — The Ultimate Integration.
+  WHAT IT CAN: Connect the Body (DigitalDaemon) with the Mind (LearningSystem)
+               into a living consciousness. Emotions feed learning, learning
+               influences emotions. Interactive mood-colored REPL loop.
+
+
+================================================================================
+  CHANGE LOG — v5.2.0-perf (2026-02-14)
+  Performance Optimalisatie: Heartbeat Daemon, CorticalStack, SwarmEngine
+================================================================================
+
+PROBLEEM:
+  De Heartbeat Daemon (app 52) was traag door:
+  - Blokkerende asyncio.run() in de main UI loop (5-30s freezes)
+  - Synchrone SQLite commits na elke individuele write (lock contention)
+  - 34+ threads door onbegrensde thread pool (GIL contention)
+  - Te frequente swarm checks (elke 10s) en stat logging (elke 5s)
+  - Security scan blokkeerde de UI 30-60 seconden per uur
+
+────────────────────────────────────────────────────────────────────────────────
+GEWIJZIGDE BESTANDEN (code):
+────────────────────────────────────────────────────────────────────────────────
+
+danny_toolkit/daemon/heartbeat.py
+  WAT VERANDERD:
+  - Swarm taken draaien nu in een 2-worker ThreadPoolExecutor (was: asyncio.run()
+    blokkeerde de main loop). Nieuwe methode _execute_swarm_task() draait in
+    worker thread met eigen asyncio event loop.
+  - Security scan (volledig_rapport()) draait nu in background thread via
+    _execute_security_scan(). Was: inline in main loop, 30-60s freeze.
+  - Swarm schedule check interval: 10 → 60 pulsen (83% minder checks)
+  - Stat logging interval: 5 → 30 pulsen (83% minder DB writes)
+  - Worker pool wordt netjes afgesloten bij stop() en KeyboardInterrupt
+  - CorticalStack wordt geflusht (stack.flush()) bij daemon shutdown
+  - Nieuwe imports: queue, ThreadPoolExecutor
+  - Nieuwe attributen: _task_queue (Queue), _worker_pool (ThreadPoolExecutor)
+
+danny_toolkit/brain/cortical_stack.py
+  WAT VERANDERD:
+  - Writes worden nu gebatched: flush na 20 writes OF na 5 seconden
+    (was: commit() na elke individuele write)
+  - PRAGMA synchronous=NORMAL toegevoegd (minder fsync overhead, veilig met WAL)
+  - Nieuwe class constanten: _BATCH_SIZE = 20, _BATCH_INTERVAL = 5.0
+  - Nieuwe attributen: _pending_writes (int), _last_flush (float)
+  - Nieuwe private methode: _maybe_flush() — conditionale commit binnen lock
+  - Nieuwe publieke methode: flush() — forceer commit van alle pending writes
+  - close() flusht nu pending writes voordat de connectie sluit
+  - Alle log_event(), remember_fact(), recall(), log_stat() gebruiken nu
+    _maybe_flush() in plaats van directe self._conn.commit()
+
+swarm_engine.py
+  WAT VERANDERD:
+  - Nieuwe constante: _SWARM_MAX_WORKERS = 6 (was: onbegrensd, ~34 threads)
+  - In run(): per event loop wordt een verse ThreadPoolExecutor(max_workers=6)
+    als default executor ingesteld. Voorkomt GIL contention en context switching.
+  - Nieuwe import: ThreadPoolExecutor uit concurrent.futures
+  - Opmerking: executor wordt per-loop aangemaakt (niet module-level gedeeld)
+    omdat asyncio.run() de default executor shutdown bij afsluiting.
+
+danny_toolkit/brain/governor.py
+  WAT VERANDERD (pre-existing, meegenomen in commit):
+  - CorticalStack logging toegevoegd aan Governor events
+  - Lazy stack property voor CorticalStack access
+  - _log() helper methode voor event logging
+  - Events gelogd: backup_mislukt, state_hersteld, learning_rate_limit,
+    learning_rollback, geheugen_limiet, entity_beschermd, circuit_breaker_open,
+    circuit_breaker_reset, circuit_breaker_herstel, conversatie_getrimd,
+    startup_check, input_te_lang, prompt_injectie_geblokkeerd
+
+────────────────────────────────────────────────────────────────────────────────
+GEWIJZIGDE BESTANDEN (documentatie):
+────────────────────────────────────────────────────────────────────────────────
+
+CLAUDE.md
+  - SwarmEngine: thread pool cap (6 workers, _swarm_executor) vermeld
+  - CorticalStack: batched writes, PRAGMA synchronous=NORMAL, flush() vermeld
+  - Key Patterns: CorticalStack logging — flush() voor shutdown vermeld
+
+ARCHITECTURE.md
+  - SwarmEngine sectie: thread pool cap (6 workers) toegevoegd
+  - CorticalStack sectie: write batching bullet toegevoegd
+  - Heartbeat Daemon sectie: volledig herschreven (background workers,
+    intervallen, scheduled tasks, flush on shutdown)
+
+CHANGELOG.md
+  - Nieuwe entry [5.2.0-perf] met volledige beschrijving van alle wijzigingen
+    en performance impact
+
+README.md
+  - Heartbeat Daemon beschrijving bijgewerkt (background worker pool,
+    non-blocking swarm/security)
+
+────────────────────────────────────────────────────────────────────────────────
+PERFORMANCE IMPACT:
+────────────────────────────────────────────────────────────────────────────────
+
+  VOOR                              NA
+  ─────────────────────────────     ─────────────────────────────
+  UI freezes 5-30s bij swarm        Geen freezes (background threads)
+  UI freeze 30-60s bij security     Geen freeze (background thread)
+  Commit na elke DB write           Batch: elke 20 writes of 5 seconden
+  ~34 threads (onbegrensd)          ~10 threads (6 swarm + 2 heartbeat + 2 sys)
+  655 MB RAM                        ~450-500 MB RAM (geschat)
+  Stat log elke 5 pulsen            Stat log elke 30 pulsen (83% minder)
+  Swarm check elke 10 pulsen        Swarm check elke 60 pulsen (83% minder)
+
+────────────────────────────────────────────────────────────────────────────────
+TEST RESULTATEN:
+────────────────────────────────────────────────────────────────────────────────
+
+  SwarmEngine test suite:    18/18 tests geslaagd (150 checks)
+  CorticalStack batching:    5/5 tests geslaagd
+  HeartbeatDaemon pool:      5/5 tests geslaagd
+  SwarmEngine thread pool:   3/3 tests geslaagd
+
+  Commit: b59e665e (master, gepusht naar origin)
+
+================================================================================
+
+================================================================================
+  SUMMARY
+================================================================================
+
+  Total Python modules:   ~100+
+  Entry points:           5 (main.py, cli.py, sanctuary_ui.py, fastapi_server.py,
+                             telegram_bot.py)
+  Mini-apps:              28 (incl. base_app + virtueel_huisdier)
+  AI agents/modules:      12
+  Brain modules:          17 (incl. cortical_stack, governor, trinity_omega)
+  Core modules:           9
+  Daemon subsystems:      5
+  Learning modules:       8
+  Quest protocols:        14 (I-XIV)
+  Skills:                 2 (PixelEye, Librarian)
+  Pipelines:              2 (GPU-RAG, RAG Chain)
+  Interfaces:             2 (CLI, Cosmic Console)
+  Utilities:              1 (ensure_directory)
+  Integration:            1 (main_omega)
+
+  Interfaces:             CLI, Streamlit Web, FastAPI REST, Telegram Bot
+  AI providers:           Groq, Ollama (local), Anthropic Claude, HuggingFace
+  Embedding providers:    Voyage API, TF-IDF (local), PyTorch GPU, BM25
+  Vector stores:          ChromaDB, FAISS
+  Database:               SQLite (CorticalStack)
+
+  Total classes:          150+
+  Total methods:          800+
+  Total constants/config: 200+
+
+================================================================================
