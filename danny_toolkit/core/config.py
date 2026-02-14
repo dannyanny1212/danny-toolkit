@@ -241,13 +241,18 @@ class Config:
     ELEVENLABS_API_KEY = os.environ.get("ELEVENLABS_API_KEY", "")
     OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
-    # TEXT GENERATION (Groq Cloud — $0 VRAM)
+    # THE BRAIN (Cloud — High IQ, Zero VRAM)
     LLM_PROVIDER = "groq"
     LLM_MODEL = "llama-3.3-70b-versatile"
+    LLM_FALLBACK_MODEL = "llama-3.1-8b-instant"
 
-    # VISION GENERATION (Ollama lokaal — RTX 3060 Ti)
+    # THE EYES (Lokaal — RTX 3060 Ti, ~4.7 GB VRAM)
     VISION_PROVIDER = "ollama"
     VISION_MODEL = "llava:latest"
+
+    # THE MEMORY (Hybrid)
+    EMBEDDING_PROVIDER = "voyage"
+    VERIFICATION_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
     # Fallback / overige modellen
     CLAUDE_MODEL = "claude-sonnet-4-20250514"
