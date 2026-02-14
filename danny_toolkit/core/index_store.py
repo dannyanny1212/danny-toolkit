@@ -245,3 +245,47 @@ class IndexStore:
 
         ok = all(c["passed"] for c in checks)
         return {"ok": ok, "checks": checks}
+
+    def repair(self) -> dict:
+        """Repareer de index: backfill ontbrekende hashes en verwijder duplicaten.
+
+        Geen re-embedding nodig — werkt op bestaande vectors + metadata.
+        """
+        self._load()
+        vectors = np.load(self.vectors_path)
+
+        original_count = len(self.metadata)
+
+        # 1. Backfill ontbrekende hashes
+        hashes_added = 0
+        for m in self.metadata:
+            if not m.get("hash"):
+                m["hash"] = self._hash(m.get("text", ""))
+                hashes_added += 1
+
+        # 2. Dedup: houd eerste voorkomen, verwijder latere duplicaten
+        seen_hashes = set()
+        keep_indices = []
+        for i, m in enumerate(self.metadata):
+            h = m["hash"]
+            if h not in seen_hashes:
+                seen_hashes.add(h)
+                keep_indices.append(i)
+
+        duplicates_removed = original_count - len(keep_indices)
+
+        # 3. Rebuild met gefilterde data
+        if duplicates_removed > 0:
+            vectors = vectors[keep_indices].astype("float32")
+            self.metadata = [self.metadata[i] for i in keep_indices]
+
+        # 4. Rebuild FAISS index + save
+        self.index = None
+        self.build(vectors, self.metadata)
+
+        return {
+            "original_count": original_count,
+            "final_count": len(self.metadata),
+            "hashes_added": hashes_added,
+            "duplicates_removed": duplicates_removed,
+        }

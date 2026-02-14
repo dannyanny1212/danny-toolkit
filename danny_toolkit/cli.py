@@ -103,9 +103,30 @@ def cmd_cpu(args):
 
 def cmd_index(args):
     """Index een directory met documenten naar FAISS."""
+    from danny_toolkit.core.index_store import IndexStore
+
+    if args.repair:
+        store = IndexStore()
+        if not store.exists():
+            print("Geen index gevonden. Draai eerst: danny index <directory>")
+            sys.exit(1)
+
+        print("=== Danny Index: Repair Mode ===")
+        result = store.repair()
+
+        print(f"\n=== Repair Klaar ===")
+        print(f"  Origineel:           {result['original_count']} chunks")
+        print(f"  Hashes toegevoegd:   {result['hashes_added']}")
+        print(f"  Duplicaten verwijderd: {result['duplicates_removed']}")
+        print(f"  Finaal:              {result['final_count']} chunks")
+        return
+
+    if not args.directory:
+        print("Geef een directory op, of gebruik --repair.")
+        sys.exit(1)
+
     from danny_toolkit.core.doc_loader import load_directory
     from danny_toolkit.core.embeddings import TorchGPUEmbeddings
-    from danny_toolkit.core.index_store import IndexStore
 
     print(f"=== Danny Index: {args.directory} ===")
     chunks = load_directory(args.directory, chunk_size=args.chunk_size)
@@ -304,10 +325,11 @@ def main():
     p_cpu = sub.add_parser("cpu", help="CPU-only FAISS retrieval")
     p_cpu.add_argument("question", help="Vraag voor retrieval")
 
-    # danny index <directory>
+    # danny index <directory> | danny index --repair
     p_index = sub.add_parser("index", help="Index een directory met documenten")
-    p_index.add_argument("directory", help="Pad naar directory met documenten")
+    p_index.add_argument("directory", nargs="?", default=None, help="Pad naar directory met documenten")
     p_index.add_argument("--chunk-size", type=int, default=500, help="Woorden per chunk")
+    p_index.add_argument("--repair", action="store_true", help="Repareer bestaande index: backfill hashes + dedup")
 
     # danny scrape <url>
     p_scrape = sub.add_parser("scrape", help="Scrape een website en indexeer de content")
