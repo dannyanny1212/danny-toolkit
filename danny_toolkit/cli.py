@@ -157,8 +157,15 @@ def cmd_ask(args):
         src = os.path.basename(r["source"])
         print(f"  {r['rank']}. [{src}] {r['text'][:80]}...")
 
-    # 3. Build context
-    context = "\n\n".join(r["text"] for r in results)
+    # 3. Build context (max ~3000 tokens ≈ 12000 chars om binnen 4096 context te blijven)
+    context_parts = []
+    char_count = 0
+    for r in results:
+        if char_count + len(r["text"]) > 12000:
+            break
+        context_parts.append(r["text"])
+        char_count += len(r["text"])
+    context = "\n\n".join(context_parts)
 
     # 4. LLM answer
     model_path = args.model or r"C:\models\phi3.Q4_K_M.gguf"
@@ -201,11 +208,11 @@ def cmd_scrape(args):
     embedder = TorchGPUEmbeddings()
     vectors = embedder.embed(texts).numpy().astype("float32")
 
-    print("FAISS index bouwen...")
+    print("FAISS index bijwerken...")
     store = IndexStore()
-    store.build(vectors, chunks)
+    store.append(vectors, chunks)
 
-    print(f"\n=== Klaar! {len(chunks)} chunks geindexeerd van {args.url} ===")
+    print(f"\n=== Klaar! {len(chunks)} chunks toegevoegd van {args.url} ===")
 
 
 def main():

@@ -15,6 +15,7 @@ class IndexStore:
         self.store_dir.mkdir(parents=True, exist_ok=True)
         self.index_path = self.store_dir / "faiss.index"
         self.meta_path = self.store_dir / "metadata.json"
+        self.vectors_path = self.store_dir / "vectors.npy"
         self.index = None
         self.metadata = []
 
@@ -33,7 +34,23 @@ class IndexStore:
 
         self.index.add(vectors)
         self.metadata = metadata
+        self._vectors = vectors
         self._save()
+
+    def append(self, vectors: np.ndarray, metadata: list[dict]):
+        """Append vectors + metadata to the existing index, or create a new one."""
+        if not self.exists():
+            self.build(vectors, metadata)
+            return
+
+        self._load()
+        old_vectors = np.load(self.vectors_path)
+        all_vectors = np.vstack([old_vectors, vectors]).astype("float32")
+        all_metadata = self.metadata + metadata
+
+        self.index = None  # Reset zodat build() een nieuwe index maakt
+        self.build(all_vectors, all_metadata)
+        print(f"  Index uitgebreid: {all_vectors.shape[0]} chunks totaal")
 
     def search(self, query_vec: np.ndarray, k: int = 5) -> list[dict]:
         """Search the index and return results with metadata."""
@@ -59,6 +76,8 @@ class IndexStore:
         faiss.write_index(self.index, str(self.index_path))
         with open(self.meta_path, "w", encoding="utf-8") as f:
             json.dump(self.metadata, f, ensure_ascii=False)
+        if hasattr(self, "_vectors"):
+            np.save(self.vectors_path, self._vectors)
         print(f"  Index opgeslagen: {self.store_dir}")
 
     def _load(self):
