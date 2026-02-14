@@ -3,7 +3,7 @@ TheLibrarian — De Bibliothecaris van Project Omega.
 
 Beheert de Knowledge Base: leest bestanden, chunked
 tekst en slaat op in ChromaDB met sentence-transformer
-embeddings (all-MiniLM-L6-v2).
+embeddings (paraphrase-multilingual-mpnet-base-v2).
 """
 
 import os
@@ -42,7 +42,7 @@ from config import CHROMA_DIR, DOCS_DIR
 COLLECTION_NAME = "danny_knowledge"
 CHUNK_SIZE = 400
 CHUNK_OVERLAP = 50
-EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
 
 REPAIR_LOG_PAD = _root / "data" / "repair_logs.json"
 

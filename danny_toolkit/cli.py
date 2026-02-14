@@ -159,7 +159,7 @@ def cmd_index(args):
         embedder = TorchGPUEmbeddings()
         vectors = embedder.embed(texts).numpy().astype("float32")
 
-        model_name = getattr(embedder, "model_name", "sentence-transformers/all-MiniLM-L6-v2")
+        model_name = getattr(embedder, "model_name", "sentence-transformers/paraphrase-multilingual-mpnet-base-v2")
         print(f"  Embeddings berekend: {len(texts)} ({model_name})")
 
         store.index = None  # Reset zodat build() een nieuwe index maakt

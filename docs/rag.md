@@ -20,7 +20,7 @@ python -m danny_toolkit.pipelines.rag_chain
 Documenten
     |
     v
-TorchGPUEmbeddings (all-MiniLM-L6-v2)
+TorchGPUEmbeddings (paraphrase-multilingual-mpnet-base-v2)
     |
     v
 FaissIndex (GPU/CPU hybrid)

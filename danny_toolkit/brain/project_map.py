@@ -21,7 +21,7 @@ from ..core.utils import kleur, Kleur, clear_scherm
 _ROOT = Path(__file__).parent.parent.parent
 _CHROMA_DIR = _ROOT / "data" / "rag" / "chromadb"
 _COLLECTION_NAME = "danny_knowledge"
-_EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+_EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
 
 # ─── Cluster queries voor semantische analyse ───
 CLUSTER_QUERIES = {

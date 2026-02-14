@@ -1383,7 +1383,7 @@ class AdaptiveRouter:
             sys.stderr = _io.StringIO()
             try:
                 model = SentenceTransformer(
-                    "all-MiniLM-L6-v2"
+                    "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
                 )
             finally:
                 sys.stdout = _old_out
