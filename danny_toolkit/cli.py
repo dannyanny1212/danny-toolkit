@@ -105,6 +105,56 @@ def cmd_index(args):
     """Index een directory met documenten naar FAISS."""
     from danny_toolkit.core.index_store import IndexStore
 
+    if args.rebuild:
+        store = IndexStore()
+        if not store.exists():
+            print("Geen index gevonden. Draai eerst: danny index <directory>")
+            sys.exit(1)
+
+        print("=== Danny Index: Rebuild ===")
+        store._load()
+
+        texts = [m["text"] for m in store.metadata]
+        if not texts:
+            print("  Geen chunks gevonden om te rebuilden.")
+            sys.exit(1)
+
+        print(f"  Chunks geladen:      {len(texts)}")
+        print("  Embeddings berekenen...")
+
+        from danny_toolkit.core.embeddings import TorchGPUEmbeddings
+        embedder = TorchGPUEmbeddings()
+        vectors = embedder.embed(texts).numpy().astype("float32")
+
+        model_name = getattr(embedder, "model_name", "sentence-transformers/all-MiniLM-L6-v2")
+        print(f"  Embeddings berekend: {len(texts)} ({model_name})")
+
+        store.index = None  # Reset zodat build() een nieuwe index maakt
+        store.build(vectors, store.metadata)
+
+        print(f"  FAISS herbouwd:      ja")
+        print(f"  Schema:              v{store._schema_version}")
+        print(f"\nResultaat: REBUILD COMPLEET")
+        return
+
+    if args.upgrade:
+        store = IndexStore()
+        if not store.exists():
+            print("Geen index gevonden. Draai eerst: danny index <directory>")
+            sys.exit(1)
+
+        print("=== Danny Index: Upgrade ===")
+        result = store.upgrade()
+
+        print(f"  Schema:              v{result['old_schema']} \u2192 v{result['new_schema']}")
+        print(f"  Hashes toegevoegd:   {result['hashes_added']}")
+        print(f"  Duplicaten verwijderd: {result['duplicates_removed']}")
+        print(f"  Lege chunks verwijderd: {result['empty_removed']}")
+        print(f"  Index herbouwd:      ja")
+        print(f"  Finaal:              {result['final_count']} chunks")
+        print(f"\nResultaat: UPGRADE COMPLEET")
+        return
+
     if args.repair:
         store = IndexStore()
         if not store.exists():
@@ -122,7 +172,7 @@ def cmd_index(args):
         return
 
     if not args.directory:
-        print("Geef een directory op, of gebruik --repair.")
+        print("Geef een directory op, of gebruik --repair / --upgrade.")
         sys.exit(1)
 
     from danny_toolkit.core.doc_loader import load_directory
@@ -157,7 +207,12 @@ def cmd_ask(args):
 
     from danny_toolkit.core.embeddings import TorchGPUEmbeddings
     from danny_toolkit.core.index_store import IndexStore
-    from llama_cpp import Llama
+
+    try:
+        from llama_cpp import Llama
+        has_llm = True
+    except ImportError:
+        has_llm = False
 
     store = IndexStore()
     if not store.exists():
@@ -194,16 +249,39 @@ def cmd_ask(args):
 
     # --trace output
     if getattr(args, "trace", False):
-        print(f"\n--- Trace: {len(results)} chunks gevonden, {used_count} gebruikt ({char_count} chars) ---")
+        from rich.console import Console
+        from rich.table import Table
+
+        console = Console()
+        table = Table(
+            title=f"Trace: {len(results)} chunks, {used_count} gebruikt ({char_count} chars)",
+            border_style="cyan",
+        )
+        table.add_column("#", style="bold", width=3)
+        table.add_column("Status", width=8)
+        table.add_column("Dist", width=8)
+        table.add_column("Bron", width=20)
+        table.add_column("Chunk", width=6)
+        table.add_column("Hash", width=14)
+        table.add_column("Preview")
+
         for r in results:
-            status = "GEBRUIKT" if r.get("_used") else "AFGEKAPT"
+            status = "[green]GEBRUIKT[/green]" if r.get("_used") else "[yellow]AFGEKAPT[/yellow]"
             h = r.get("hash", "-")[:12] if r.get("hash") else "-"
             src = os.path.basename(r["source"])
             preview = r["text"][:80].replace("\n", " ")
-            print(f"  #{r['rank']}  [{status}]  dist={r['distance']:.4f}  src={src}  chunk={r['chunk']}  hash={h}  {preview}...")
-        print()
+            table.add_row(
+                str(r["rank"]), status, f"{r['distance']:.4f}",
+                src, str(r["chunk"]), h, preview + "...",
+            )
+
+        console.print(table)
 
     # 4. LLM answer
+    if not has_llm:
+        print("\n[llama-cpp-python niet geinstalleerd — alleen retrieval weergegeven]")
+        return
+
     model_path = args.model or r"C:\models\phi3.Q4_K_M.gguf"
     print(f"\nLLM laden: {model_path}")
     llm = Llama(model_path=model_path, n_gpu_layers=-1, n_ctx=4096, verbose=False)
@@ -279,6 +357,126 @@ def cmd_verify(args):
         sys.exit(1)
 
 
+def cmd_trace(args):
+    """Trace retrieval resultaten zonder LLM."""
+    import os
+    cuda_bin = r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\bin"
+    if cuda_bin not in os.environ.get("PATH", ""):
+        os.environ["PATH"] = cuda_bin + os.pathsep + os.environ.get("PATH", "")
+
+    from danny_toolkit.core.embeddings import TorchGPUEmbeddings
+    from danny_toolkit.core.index_store import IndexStore
+    from rich.console import Console
+    from rich.table import Table
+
+    store = IndexStore()
+    if not store.exists():
+        print("Geen index gevonden. Draai eerst: danny index <directory>")
+        sys.exit(1)
+
+    # 1. Embed query
+    embedder = TorchGPUEmbeddings()
+    q_vec = embedder.embed([args.question]).numpy().astype("float32")
+
+    # 2. Retrieve
+    results = store.search(q_vec, k=args.top_k)
+
+    # 3. Rich Table
+    console = Console()
+    table = Table(
+        title=f"Trace: '{args.question}' — {len(results)} resultaten",
+        border_style="cyan",
+    )
+    table.add_column("#", style="bold", width=3)
+    table.add_column("Dist", width=8)
+    table.add_column("Bron", width=20)
+    table.add_column("Chunk", width=6)
+    table.add_column("Hash", width=14)
+    table.add_column("Preview")
+
+    for r in results:
+        h = r.get("hash", "-")[:12] if r.get("hash") else "-"
+        src = os.path.basename(r["source"])
+        preview = r["text"][:80].replace("\n", " ")
+        table.add_row(
+            str(r["rank"]), f"{r['distance']:.4f}",
+            src, str(r["chunk"]), h, preview + "...",
+        )
+
+    console.print(table)
+
+    # 4. HTML export
+    if args.html:
+        from datetime import datetime
+        from pathlib import Path
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        out_dir = Path("data/output")
+        out_dir.mkdir(parents=True, exist_ok=True)
+        out_file = out_dir / f"trace_{timestamp}.html"
+
+        rows_html = ""
+        for r in results:
+            dist = r["distance"]
+            # Kleurcodering: groen (dichtbij) → rood (ver)
+            # Normaliseer distance naar 0-1 range (0=groen, 1=rood)
+            ratio = min(dist / 2.0, 1.0)
+            red = int(ratio * 220)
+            green = int((1 - ratio) * 180)
+            color = f"rgb({red}, {green}, 60)"
+
+            h = r.get("hash", "-")[:12] if r.get("hash") else "-"
+            src = os.path.basename(r["source"])
+            text_escaped = r["text"].replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+            rows_html += f"""<tr>
+  <td>{r['rank']}</td>
+  <td style="color:{color};font-weight:bold">{dist:.4f}</td>
+  <td>{src}</td>
+  <td>{r['chunk']}</td>
+  <td><code>{h}</code></td>
+  <td class="text">{text_escaped}</td>
+</tr>
+"""
+
+        html = f"""<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>Danny Trace — {args.question}</title>
+<style>
+  body {{ font-family: 'Segoe UI', Tahoma, sans-serif; background: #1a1a2e; color: #e0e0e0; margin: 2em; }}
+  h1 {{ color: #00d4ff; font-size: 1.4em; }}
+  .meta {{ color: #888; margin-bottom: 1.5em; }}
+  table {{ border-collapse: collapse; width: 100%; }}
+  th {{ background: #16213e; color: #00d4ff; padding: 8px 12px; text-align: left; }}
+  td {{ padding: 8px 12px; border-bottom: 1px solid #2a2a4a; }}
+  tr:hover {{ background: #16213e; }}
+  code {{ background: #2a2a4a; padding: 2px 6px; border-radius: 3px; font-size: 0.85em; }}
+  .text {{ max-width: 500px; white-space: pre-wrap; word-break: break-word; font-size: 0.9em; }}
+</style>
+</head>
+<body>
+<h1>Danny Trace Resultaten</h1>
+<div class="meta">
+  Query: <strong>{args.question}</strong><br>
+  Timestamp: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}<br>
+  Resultaten: {len(results)} (top-k={args.top_k})
+</div>
+<table>
+<thead>
+<tr><th>#</th><th>Distance</th><th>Bron</th><th>Chunk</th><th>Hash</th><th>Tekst</th></tr>
+</thead>
+<tbody>
+{rows_html}
+</tbody>
+</table>
+</body>
+</html>"""
+
+        out_file.write_text(html, encoding="utf-8")
+        console.print(f"\n[green]HTML export:[/green] {out_file}")
+
+
 def cmd_scrape(args):
     """Scrape een website en voeg toe aan de FAISS index."""
     from danny_toolkit.core.web_scraper import scrape_with_depth
@@ -325,11 +523,13 @@ def main():
     p_cpu = sub.add_parser("cpu", help="CPU-only FAISS retrieval")
     p_cpu.add_argument("question", help="Vraag voor retrieval")
 
-    # danny index <directory> | danny index --repair
+    # danny index <directory> | danny index --repair | danny index --upgrade
     p_index = sub.add_parser("index", help="Index een directory met documenten")
     p_index.add_argument("directory", nargs="?", default=None, help="Pad naar directory met documenten")
     p_index.add_argument("--chunk-size", type=int, default=500, help="Woorden per chunk")
     p_index.add_argument("--repair", action="store_true", help="Repareer bestaande index: backfill hashes + dedup")
+    p_index.add_argument("--upgrade", action="store_true", help="Unified upgrade: schema migratie + repair + rebuild")
+    p_index.add_argument("--rebuild", action="store_true", help="Herbereken embeddings voor alle chunks en herbouw FAISS index")
 
     # danny scrape <url>
     p_scrape = sub.add_parser("scrape", help="Scrape een website en indexeer de content")
@@ -343,6 +543,12 @@ def main():
     p_ask.add_argument("--top-k", type=int, default=5, help="Aantal bronnen")
     p_ask.add_argument("--model", help="Pad naar GGUF model", default=None)
     p_ask.add_argument("--trace", action="store_true", help="Toon welke chunks gebruikt zijn")
+
+    # danny trace "vraag"
+    p_trace = sub.add_parser("trace", help="Trace retrieval resultaten (geen LLM)")
+    p_trace.add_argument("question", help="Query om te tracen")
+    p_trace.add_argument("--top-k", type=int, default=10, help="Aantal resultaten")
+    p_trace.add_argument("--html", action="store_true", help="Exporteer als HTML bestand")
 
     # danny stats
     sub.add_parser("stats", help="Toon index statistieken")
@@ -359,7 +565,7 @@ def main():
     commands = {
         "gpu": cmd_gpu, "chain": cmd_chain, "cpu": cmd_cpu,
         "index": cmd_index, "scrape": cmd_scrape, "ask": cmd_ask,
-        "stats": cmd_stats, "verify": cmd_verify,
+        "trace": cmd_trace, "stats": cmd_stats, "verify": cmd_verify,
     }
     commands[args.command](args)
 

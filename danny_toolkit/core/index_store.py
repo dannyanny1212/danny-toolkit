@@ -7,6 +7,8 @@ from pathlib import Path
 
 DEFAULT_STORE = Path.home() / ".danny-toolkit" / "index"
 
+SCHEMA_VERSION = 1
+
 
 class IndexStore:
     """Persistent FAISS index with document metadata."""
@@ -19,6 +21,7 @@ class IndexStore:
         self.vectors_path = self.store_dir / "vectors.npy"
         self.index = None
         self.metadata = []
+        self._schema_version = SCHEMA_VERSION
 
     @staticmethod
     def _hash(text: str) -> str:
@@ -114,10 +117,15 @@ class IndexStore:
 
     def _save(self):
         faiss.write_index(self.index, str(self.index_path))
+        wrapper = {
+            "schema_version": SCHEMA_VERSION,
+            "chunks": self.metadata,
+        }
         with open(self.meta_path, "w", encoding="utf-8") as f:
-            json.dump(self.metadata, f, ensure_ascii=False)
+            json.dump(wrapper, f, ensure_ascii=False)
         if hasattr(self, "_vectors"):
             np.save(self.vectors_path, self._vectors)
+        self._schema_version = SCHEMA_VERSION
         print(f"  Index opgeslagen: {self.store_dir}")
 
     def _load(self):
@@ -129,7 +137,17 @@ class IndexStore:
             )
         self.index = faiss.read_index(str(self.index_path))
         with open(self.meta_path, "r", encoding="utf-8") as f:
-            self.metadata = json.load(f)
+            raw = json.load(f)
+        # Backwards-compatible: plain list = schema v0, dict met schema_version = die versie
+        if isinstance(raw, list):
+            self.metadata = raw
+            self._schema_version = 0
+        elif isinstance(raw, dict) and "schema_version" in raw:
+            self._schema_version = raw["schema_version"]
+            self.metadata = raw.get("chunks", [])
+        else:
+            self.metadata = raw if isinstance(raw, list) else []
+            self._schema_version = 0
         print(f"  Index geladen: {self.index.ntotal} chunks")
 
     def exists(self) -> bool:
@@ -177,6 +195,7 @@ class IndexStore:
             "sources": sorted(sources),
             "domains": sorted(domains),
             "has_hashes": has_hashes,
+            "schema_version": self._schema_version,
             "index_type": index_type,
             "vectors_size_mb": vectors_size_mb,
             "metadata_size_mb": metadata_size_mb,
@@ -243,17 +262,30 @@ class IndexStore:
             "detail": f"{missing_sources} chunks zonder source",
         })
 
+        # 7. Schema versie
+        checks.append({
+            "name": "schema_version",
+            "passed": self._schema_version >= SCHEMA_VERSION,
+            "detail": f"v{self._schema_version} (huidig: v{SCHEMA_VERSION})",
+        })
+
         ok = all(c["passed"] for c in checks)
         return {"ok": ok, "checks": checks}
 
-    def repair(self) -> dict:
-        """Repareer de index: backfill ontbrekende hashes en verwijder duplicaten.
+    def upgrade(self) -> dict:
+        """Unified diagnose + reparatie pipeline.
 
-        Geen re-embedding nodig — werkt op bestaande vectors + metadata.
+        Detecteert automatisch wat er mis is en fixt alles in één pass:
+        - Schema migratie (v0 → v1)
+        - Backfill ontbrekende hashes
+        - Verwijder duplicaten
+        - Verwijder lege chunks
+        - Rebuild FAISS index
         """
         self._load()
         vectors = np.load(self.vectors_path)
 
+        old_schema = self._schema_version
         original_count = len(self.metadata)
 
         # 1. Backfill ontbrekende hashes
@@ -263,29 +295,55 @@ class IndexStore:
                 m["hash"] = self._hash(m.get("text", ""))
                 hashes_added += 1
 
-        # 2. Dedup: houd eerste voorkomen, verwijder latere duplicaten
+        # 2. Verwijder lege chunks
+        non_empty = [
+            (i, m) for i, m in enumerate(self.metadata)
+            if m.get("text", "").strip()
+        ]
+        empty_removed = original_count - len(non_empty)
+        if empty_removed > 0:
+            keep_indices = [i for i, _ in non_empty]
+            vectors = vectors[keep_indices].astype("float32")
+            self.metadata = [m for _, m in non_empty]
+
+        # 3. Dedup: houd eerste voorkomen, verwijder latere duplicaten
         seen_hashes = set()
-        keep_indices = []
+        dedup_indices = []
         for i, m in enumerate(self.metadata):
             h = m["hash"]
             if h not in seen_hashes:
                 seen_hashes.add(h)
-                keep_indices.append(i)
+                dedup_indices.append(i)
 
-        duplicates_removed = original_count - len(keep_indices)
-
-        # 3. Rebuild met gefilterde data
+        duplicates_removed = len(self.metadata) - len(dedup_indices)
         if duplicates_removed > 0:
-            vectors = vectors[keep_indices].astype("float32")
-            self.metadata = [self.metadata[i] for i in keep_indices]
+            vectors = vectors[dedup_indices].astype("float32")
+            self.metadata = [self.metadata[i] for i in dedup_indices]
 
-        # 4. Rebuild FAISS index + save
+        # 4. Rebuild FAISS index + save (save schrijft schema v1 wrapper)
         self.index = None
         self.build(vectors, self.metadata)
 
         return {
+            "old_schema": old_schema,
+            "new_schema": SCHEMA_VERSION,
             "original_count": original_count,
             "final_count": len(self.metadata),
             "hashes_added": hashes_added,
             "duplicates_removed": duplicates_removed,
+            "empty_removed": empty_removed,
+            "rebuilt": True,
+        }
+
+    def repair(self) -> dict:
+        """Repareer de index (backwards compat — delegeert naar upgrade()).
+
+        Retourneert hetzelfde formaat als voorheen voor backwards compatibiliteit.
+        """
+        result = self.upgrade()
+        return {
+            "original_count": result["original_count"],
+            "final_count": result["final_count"],
+            "hashes_added": result["hashes_added"],
+            "duplicates_removed": result["duplicates_removed"],
         }
