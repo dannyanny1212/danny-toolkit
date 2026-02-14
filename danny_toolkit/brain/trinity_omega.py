@@ -1,5 +1,5 @@
 """
-PROMETHEUS PROTOCOL - TRINITY OMEGA v4.0
+PROMETHEUS PROTOCOL - TRINITY OMEGA v5.1.1
 =========================================
 De 17 Pilaren van de Realiteit.
 

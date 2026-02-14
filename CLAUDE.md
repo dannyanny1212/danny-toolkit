@@ -163,7 +163,7 @@ Last stable pre-v5 release. Includes:
 - FastAPI Server + Telegram Bot
 - Security Research Engine v2.0
 - AdaptiveRouter V6.0
-- Sanctuary UI v4.0
+- Sanctuary UI v5.1.1
 
 ### v5.0.0 (commit 6c0b437)
 - Metadata-only version bump

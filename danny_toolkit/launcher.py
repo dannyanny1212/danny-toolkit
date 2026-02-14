@@ -1210,14 +1210,14 @@ BANNER_STANDAARD = """
 ║     ██████╔╝██║  ██║██║ ╚████║██║ ╚████║   ██║               ║
 ║     ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═══╝   ╚═╝               ║
 ║                                                               ║
-║         T O O L K I T   v4.0 // COSMIC_OMEGA_V4                ║
+║         T O O L K I T   v5.1.1 // COSMIC_OMEGA_V5              ║
 ║                                                               ║
 ╚═══════════════════════════════════════════════════════════════╝
 """
 
 BANNER_MINIMAAL = """
 ============================================================
-     DANNY TOOLKIT v4.0
+     DANNY TOOLKIT v5.1.1
 ============================================================
 """
 
@@ -2002,7 +2002,7 @@ def main():
 
         if arg in ["--help", "-h"]:
             print("""
-Danny Toolkit v4.0 — 59 apps
+Danny Toolkit v5.1.1 — 59 apps
 
 Gebruik:
   python main.py              Start interactieve launcher

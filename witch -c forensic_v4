@@ -1,0 +1,269 @@
+* [33m1253e14[m[33m ([m[1;36mHEAD[m[33m)[m Voeg FastAPI Server + Telegram Bot toe — v4.1.0
+* [33m226eea1[m Voeg GUI Launcher toe — Tkinter visueel venster met 57 apps
+* [33mdfe435b[m Fix 7 bugs en gaten in Security Research Engine v2.0
+* [33m935b60a[m Voeg Security Research Engine v2.0 toe — Forensics & Hardening
+* [33m10d56e5[m Voeg CoherentieAgent toe — hardware CPU/GPU correlatie monitoring
+* [33m74c8c7b[m Voeg De Nachtwacht toe — Subconscious Loop v1.0 in SingularityEngine
+* [33mfc28161[m Voeg Tier 5 Singularity Engine toe — bewustzijns-laag over alle systemen
+* [33mc0a9c1c[m Voeg Multi-Vector Profiling toe aan AdaptiveRouter V6.0
+*   [33mc6adfe8[m Merge branch 'recovered-project-branch'
+[32m|[m[33m\[m  
+[32m|[m * [33ma00658f[m Polish AdaptiveRouter profielen V5.1
+[32m|[m * [33mc488d87[m Fix AdaptiveRouter input-afkapping: dynamisch per 100-char blok
+[32m|[m * [33m774998a[m Voeg Neural Hub live test toe — routing scores en tuning demo
+[32m|[m * [33meaf45e4[m Chore: Update project structuur en dependencies voor COSMIC_OMEGA_V4
+[32m|[m * [33m452cc50[m Voeg Adaptive Routing en Self-Tuning Pipeline toe aan SwarmEngine
+[32m|[m * [33m1913585[m Voeg Neural Hub architectuur en security hardening toe
+* [33m|[m [33m77dbb64[m Voeg Project Deduplicatie toe — BaseApp, Config.CLAUDE_MODEL, TF-IDF en chunking consolidatie
+* [33m|[m [33m289be79[m Voeg Multi-Agent Orchestratie Repair Flow toe — visuele diagnose, kennis-lookup, LLM-planning en executie
+[33m|[m[33m/[m  
+* [33mef00e34[m Voeg Oracle Self-Healing Pipeline toe aan SwarmEngine — verificatie, repair en hooks
+* [33m820b2e6[m Voeg State Management & Tool Integration toe — repair persistentie, metadata tagging, lessons learned
+* [33mbd9b5a3[m Voeg execute_mission, diagnose-and-fix en repair_history toe aan OracleAgent
+* [33m5d932af[m Voeg SelfRepairProtocol toe — zelf-diagnose en -reparatie
+* [33m72c50bf[m Voeg OracleAgent toe — WAV-Loop operator (app #55)
+* [33m0d8b794[m Voeg geheugen + wil clusters toe aan Oracle's Cartografie
+* [33m2e06123[m Voeg actie cluster toe aan Project Map — kinetic mapping
+* [33m0852c94[m Voeg Project Map toe — Oracle's Cartografie (app #54)
+* [33m464553f[m Voeg RAG_CLEANUP toe aan WillProtocol — autonome self-maintenance
+* [33m12bfc3e[m Voeg PixelEye visuele verificatie toe aan WillProtocol
+* [33me37d256[m Voeg Visual State Manager + Logic Gate toe aan Pixel Eye
+* [33meccbcbd[m Voeg Pixel Eye toe aan launcher als app #53
+* [33m298b44c[m Refactor PixelAgent: gebruik PixelEye skill intern
+* [33m0360dc1[m Voeg PixelEye vision skill toe — standalone LLaVA analyse
+* [33m5926726[m TPM-bespaarder: max_tokens doorvoeren door hele API chain
+* [33m77ef343[m Fix ontbrekende sys import in swarm_engine.py
+* [33mb740eda[m Fix Memex 0 bronnen: gebruik 70b model voor zoektermen, log ChromaDB fouten
+* [33m40deb33[m Skip Groq 8b fallback, direct naar gemma3:4b lokaal
+* [33m51df097[m Suppress BertModel LOAD REPORT in librarian en swarm_engine
+* [33m49b6ab8[m Fix TQDM loading weights spam in librarian.py
+* [33ma57022a[m Voeg Nexus Terminal v2.0 toe als interfaces/cli.py
+* [33m375b927[m splits TheLibrarian
+* [33m44d4231[m Voeg Windows UTF-8 fix toe aan ingest.py voor emoji output
+* [33m8373475[m Voeg BatchProcessor toe aan ingest.py met 3 chunking strategieën
+* [33me205a2b[m Fix substring bugs in trinity_omega.py routing keywords
+* [33me93b193[m Voeg muis-acties toe aan KineticUnit
+* [33m343f0a7[m Fix SwarmEngine routing: code keywords + substring bugs
+* [33m95f01b4[m Voeg Weaver routing keywords toe voor code-gerelateerde queries
+* [33me97ecdb[m Verplaats docs naar data/rag/documenten voor RAG ingestie
+* [33m13bb729[m Voeg cosmic_console en pep8 style guide toe
+* [33mc6f43e3[m Voeg runtime data files toe aan .gitignore
+* [33mcb26a91[m Voeg V6 bridge modules toe voor engine en librarian imports
+* [33m0a742f4[m Voeg Sanctuary UI Chain of Command test screenshot toe
+* [33ma4ad39f[m Voeg Sanctuary UI test screenshot toe na config refactor
+* [33md74e53e[m Refactor ingest.py: gebruik centraal config.py voor paden
+* [33m699193b[m Fix config.py paden naar werkelijke structuur (rag, plots)
+* [33mec5a63b[m Voeg Sanctuary UI screenshots toe (playwright tests)
+* [33mbeae961[m Voeg V6 directorystructuur, config en wrappers toe
+* [33m376a247[m Voeg Cosmic Console v6.0 toe — async Nexus Terminal
+* [33m91a54ce[m Voeg error handling, payload types en refactor toe aan Sanctuary UI
+* [33m475782c[m Voeg error handling, commando's en refactor toe aan CLI
+* [33me0ff105[m Voeg ChromaDB RAG toe aan Hub & Spoke pipeline
+* [33m60093c6[m Fix Groq rate limit: use_tools=False, 8b PLAN, schone history
+* [33mccec7c7[m Fix MEMEX wint van IOLAAX bij kennisvragen
+* [33mc2c9413[m Voeg welke/hoeveel/waar/wanneer toe aan MEMEX routing
+* [33m08a6d14[m Voeg kernentiteit-extractie toe aan MemexAgent PLAN fase
+* [33m04745d8[m Verbeter MemexAgent RAG kwaliteit: bronweging, betere prompts, data-filter
+* [33m423f065[m Voeg kennisgerichte keywords toe aan MEMEX routing
+* [33mdc9bc2a[m Update README.md naar Project Omega v5 documentatie
+* [33md7aa04b[m Voeg hardcoded bronvermelding toe aan MemexAgent display_text
+* [33m8892a40[m Voeg True Sight toe aan PixelAgent — LLaVA vision vervangt simulatie
+* [33m6587842[m Voeg Kinetic Core + LegionAgent + PixelAgent toe (Project Oculus)
+* [33m555ab73[m Fix Windows UTF-8 encoding in HeartbeatDaemon
+* [33mf525913[m Voeg HeartbeatDaemon v2.0 toe — autonome SwarmEngine pulse
+* [33m17c2570[m Voeg Navigator web-fallback toe aan MemexAgent
+* [33mca80064[m Upgrade research_report rendering met tags en bronnenlijst
+* [33md2b0607[m Voeg Feed The Mind drag-and-drop toe aan Sanctuary sidebar
+* [33m4eda906[m Koppel MemexAgent aan ChromaDB knowledge base
+* [33m1b88bbd[m Refactor ingest.py naar TheLibrarian class met upsert en query()
+* [33mff340e6[m Voeg Universal Ingest Protocol toe (ingest.py)
+* [33ma5eb763[m Upgrade research rendering naar Ultimate Mode met expander
+* [33m3757885[m Hernoem ARCHIVIST naar MEMEX en voeg extra routing keywords toe
+* [33m77ab95f[m Voeg MemexAgent (Agentic RAG) toe met research rendering
+* [33m2c3dd58[m Upgrade HeartbeatApp wrapper in launcher naar v2.0
+* [33m30bc332[m Upgrade Heartbeat Daemon naar v2.0 met SwarmEngine integratie
+* [33mbd92f0f[m Voeg per-payload rendering toe aan Sanctuary UI en CLI
+* [33ma26f6b5[m Voeg v5.0 bridge toe aan swarm_core.py
+* [33m99554da[m Voeg display_text veld toe aan SwarmPayload
+* [33mcce512f[m Voeg Swarm Engine tests toe: 8 tests, 59 checks
+* [33m9400f68[m Voeg Swarm Engine v5.0 toe: OOP agents + asyncio parallel executie
+* [33m3daf9ee[m Voeg Fast-Track Router en Tiered Model Selection toe
+* [33mc6a3f6a[m Fix RuntimeWarning bij python -m daemon.heartbeat
+* [33m0b05768[m Voeg PROJECT OMEGA toe: Cortical Stack + Heartbeat Daemon + Quest XIV
+* [33mb51b025[m Voeg CLI tests toe: 8 tests, 38 checks (cli.py + swarm_core media)
+* [33ma7e9972[m Voeg Sanctuary CLI toe: Rich terminal interface v4.0
+* [33mfee20d3[m Voeg Rich Media Protocol toe: Sanctuary UI v4.0
+* [33m7245859[m Voeg callback mechanisme toe: Sanctuary UI v3.0
+* [33mc4e560f[m Upgrade Sanctuary UI v2.0: live pipeline visualisatie
+* [33mac1a301[m Voeg Sanctuary Interface toe (Glass Box UI)
+* [33m8a7f59b[m Voeg energie vs. tech correlatie-analyse script toe
+* [33m6c7b00c[m Hub & Spoke v5.0: route_task() herschreven naar 6-stappen pipeline
+* [33m0b3211f[m Federation v4.2: bereikbaarheid en consistentie (5 verbeteringen)
+* [33m9d74726[m Prometheus Federation v4.1: 8 verbeteringen + Pixel fallback
+* [33md25f44f[m Voeg Unified Memory koppeling toe aan 10 apps (16 event-punten)
+* [33m2aba0e7[m Fix attribuut-bugs in Quest II-V en ontgrendel CRYPTO-QUANTUM verbinding
+* [33m1601239[m Voeg Quest I-VIII bestanden toe als diagnostische wrappers in quests/
+* [33m509db70[m Brede audit v4: heartbeat verdieping, specifieke excepts en config bescherming
+* [33m4f40891[m Voeg Cosmic Awareness Test toe — 10 tests, alle subsystemen
+* [33m0fcc705[m Brede audit v3: bare except fixes, streak bug en will_protocol logging
+* [33m22ef508[m Brede audit v2: menu-fixes, bug-fixes en error handling voor 8 bestanden
+* [33mef37073[m Fix failure detectie en reset historische counters
+* [33m5b3108f[m Fix routing keywords, NexusBridge auto-load en Unity Score DOCKED
+* [33m658b636[m Voeg Ollama lokaal toe als fallback in AI keten - Groq 70b -> 8b -> Ollama -> Anthropic
+* [33m8220845[m Voeg AI fallback keten toe bij Groq rate limit
+* [33m5e3934d[m Fix 6 verkeerde module-paden in app_tools.py
+* [33m948cfc1[m Fix 4 FEDERATION ONLINE bugs: persistence, circuit breaker, labels
+* [33m0bc9af8[m Voeg countdown timer toe aan Governor circuit breaker
+* [33m0483414[m Fix Governor backup WinError warnings op Windows
+* [33m46b5faf[m Voeg Quest XIII toe: The Will (Pixel Handelt) + fix mapstructuur
+* [33m6788d5d[m Fix Smart Audit: THE SWARM target naar trinity_omega.py
+* [33m66913f8[m Fix Windows encoding in Smart Audit script
+* [33mc2140fd[m Voeg Quest XII toe: The Dialogue (Pixel Converseert)
+* [33mab5db19[m Voeg Quest XI toe: The Listener (Pixel Hoort)
+* [33mfc6d7f7[m Voeg Omega Integrity Check toe: goddelijke systeemvalidatie
+* [33mafa6b07[m Voeg Quest X toe: The Voice (De Stem van God)
+* [33m7381b25[m Integreer Pulse Protocol in OmegaAI en Launcher
+* [33m03a55f2[m Verbeter Pulse Protocol: rich fallback, _step() methode, getuned drempels
+* [33m83f3c75[m Voeg Quest IX toe: The Pulse Protocol (Bio-Digital Bridge)
+* [33mb85b236[m Voeg Governor-Daemon feedback-loop en OmegaSwarm class toe
+* [33m8f217c2[m Voeg Deep Dive Autopsie toe: decodering van alle 17 nodes
+* [33m611dbb9[m Voeg test_full_chain.py toe voor Chain of Command verificatie
+* [33m9368dde[m Voeg Chain of Command multi-node orchestratie toe
+* [33ma69d72e[m Fix circuit breaker: geleidelijke reset ipv directe reset
+* [33m711cd9f[m Fix Vita routing: vervang bare 'bio' door specifieke keywords
+* [33mf05f5b9[m Fix circuit breaker teller: cap op MAX_API_FAILURES (3)
+* [33m7734c65[m Voeg __main__.py toe aan brain module voor clean simulatie
+* [33mf6c12b8[m Fix 3 Governor problemen: circuit breaker, persistence, state opslag
+* [33m94bbd5c[m Voeg knowledge keyword toe aan Archivist routing
+* [33m2ebea7d[m Fix 3 routing bugs in route_task() - 21/21 tests correct
+* [33m16ec040[m Voeg .claude/ en data/backups/ toe aan .gitignore
+* [33m7e398d7[m Integreer Governor (Omega-0) in Daemon en OmegaAI
+* [33m00f452d[m Fix 2 cosmetische punten in Governor guards
+* [33m7bc2337[m Herschrijf CosmicRole naar 4-tier hierarchie met 17 Kosmische Nodes
+* [33mf52d222[m Voeg Governor (Omega-0) beschermingslaag toe aan Prometheus Brain
+* [33mc86f71e[m Maak Prometheus Brain functioneel - verbind met CentralBrain en LearningSystem
+* [33mef53bab[m Fix 6 bugs in NexusBridgeApp - gebruik correcte methodes uit nexus_bridge.py
+* [33m8f5129c[m Fix kleur bug in SanctuaryApp - vervang hardcoded ANSI strings door Kleur constanten
+* [33m102ae03[m Voeg Dream Monitor, Nexus Bridge, Visual Nexus en Prometheus Brain toe aan launcher als app 43-46
+* [33m886f2c2[m Fix kleur bug in 17 bestanden - gebruik ANSI codes in plaats van strings
+* [33m4841471[m Fix kleur bug in launcher.py - gebruik ANSI codes in plaats van strings
+* [33mb55986f[m Voeg ontbrekende sneltoetsen toe voor Mini-RAG, Production RAG en Claude Chat
+* [33m7625b1d[m Voeg Sanctuary Dashboard toe aan launcher als app 42
+* [33m8f2fe31[m Voeg Omega AI toe aan launcher als app 41
+* [33m9bbec30[m Fix kleur bug in daemon_core.py - gebruik ANSI codes in plaats van strings
+* [33m7e00e83[m Voeg Omega AI toe - verbindt Daemon (lichaam) met LearningSystem (geest)
+* [33m97a912f[m Voeg Ultimate Self-Learning AI systeem toe
+* [33mea559ae[m Update versie naar 2.1.0+omega
+* [33md379696[m Voeg pyproject.toml toe voor package installatie
+* [33m62db0d2[m Voeg Morning Protocol toe met 3-laags verificatie
+* [33mcb1c63e[m Voeg Cosmic Dream Monitor toe - Passive Observation Mode
+* [33mcdbb82d[m Voeg Digital Sanctuary Dashboard toe - Het levende systeem dashboard
+* [33mb670d96[m Voeg NEXUS Brain Bridge toe - Symbiose tussen Pixel en Central Brain
+* [33m6f470e1[m[33m ([m[1;33mtag: [m[1;33mv3.0-TRANSCENDENT[m[33m)[m Voeg The Construct toe - Visual Nexus + Omega Protocol
+* [33m122aa4a[m Voeg God Mode toe aan PrometheusBrain
+* [33m0698fe9[m Voeg Singularity Nexus toe aan PrometheusBrain
+* [33m7bf5bad[m Voeg Tri-Force Protocol toe aan PrometheusBrain
+* [33m73fdbe8[m Voeg Prometheus Protocol toe - Federated Swarm Intelligence
+* [33mbfc4465[m Voeg Cosmic Family toe - Uitbreiding van Trinity naar 8 leden
+* [33m5e93dcf[m Voeg Trinity Symbiosis toe - MIND + SOUL + BODY
+* [33mb43e6bb[m Voeg Digital Daemon toe aan launcher
+* [33m457b266[m Fix glitch avatar Unicode encoding voor Windows
+* [33ma449f1f[m Voeg Digital Daemon toe - De Levende Interface
+* [33mcc64109[m Update .gitignore met data bestanden
+* [33ma297da4[m Voeg THE HUNT toe - Ultimate Go Fetch System
+* [33m5bd4234[m Voeg Audio-First Upgrade toe (Upgrade 4)
+* [33m4e94c2a[m Voeg Legendary Companion toe aan Central Brain
+* [33mc922e14[m Voeg Legendary Companion toe - Ultieme RAG + Huisdier Fusie
+* [33md7a2d11[m Upgrade Artificial Life naar v2.0 - Geavanceerd Bewustzijn
+* [33m07dcc4e[m Voeg delegate methods toe voor Central Brain integratie
+* [33mc819eb9[m Fix ASCII banner voor Windows compatibiliteit
+* [33ma06b78f[m Fix Knowledge Companion bugs
+* [33m19c0bfa[m Voeg Knowledge Companion toe - RAG + Gamification fusie
+* [33m3dd0f55[m Fix encoding voor Windows terminal in Brain CLI
+* [33mfcdc3a4[m Voeg GROQ support toe aan Central Brain
+* [33mbe82fd7[m Voeg Central Brain AI Ecosysteem toe
+* [33m9fc7e05[m Voeg Advanced ML Studio toe
+* [33mf8c2f95[m Voeg 9 nieuwe apps toe aan toolkit
+* [33mb5b5a31[m Voeg NLP Studio toe met Machine Learning
+* [33m7b4e944[m Voeg Artificial Selfaware Life toe
+* [33me8e8621[m Voeg Goals Tracker en Room Planner toe
+* [33m72e8733[m Voeg Vector Data Studio toe
+* [33m6f74a99[m Voeg NEXUS Mythical Legendary huisdier toe
+* [33m7c3f843[m Voeg Self-Learning System toe aan Virtueel Huisdier
+* [33m689e165[m Verlaag AI Gesprek vragen van 20 naar 3
+* [33mf28c4f6[m Verlaag Lange sessie cycli van 20 naar 3 in Auto Learn Mode
+* [33m9c1d29e[m Integreer 5 AI-powered productiviteits-apps in Virtueel Huisdier
+* [33m328067d[m Voeg AI-functionaliteit toe aan 8 productiviteits-apps
+* [33m3b5d3bd[m Voeg data-bestanden toe aan .gitignore
+* [33m2878c23[m Upgrade Virtueel Huisdier naar v4.0 - VOLLEDIG AI-POWERED
+* [33m30f78da[m Voeg Auto Learn & Sleep Mode toe aan Virtueel Huisdier
+* [33m1f93e09[m Voeg 6 nieuwe AI toolkit integraties toe aan Virtueel Huisdier
+* [33m7d266fe[m Reduceer energie verbruik met factor 10
+* [33mf1e06a5[m Verhoog AI Gesprek van 3 naar 20 vragen
+* [33m28cf66a[m Voeg 80+ nieuwe kennisfeiten toe aan Virtueel Huisdier
+* [33m9188c59[m Voeg 10 nieuwe productiviteit apps toe aan toolkit
+* [33m571e8ef[m Voeg 10 power-up en avontuur features toe aan Virtueel Huisdier
+* [33mac7ba94[m Voeg 10 nieuwe leven & economie features toe aan Virtueel Huisdier
+* [33m77a8489[m Voeg 5 nieuwe avonturen features toe aan Virtueel Huisdier
+* [33mc8d9a9b[m Voeg 5 nieuwe AI krachten toe aan Virtueel Huisdier
+* [33m3dadea7[m Voeg 34 nieuwe kennisfeiten toe aan Virtueel Huisdier
+* [33m03a1ff8[m Voeg extra AI/ML kennisfeiten toe aan Virtueel Huisdier
+* [33m00e784a[m Voeg nieuwe kennisfeiten toe aan Virtueel Huisdier
+* [33mbd81f0c[m Integreer Vector Database, ML/AI en REST API kennis in Virtueel Huisdier
+* [33m837cd3f[m Voeg CONDITIONERING systeem toe aan tricks training
+* [33m1a9fae2[m Koppel AI Gesprek aan ECHTE Claude Chat API
+* [33m56565a0[m Fix false positives in Bug Jacht Logic patronen
+* [33m956947e[m Voeg permanente kennisopslag toe aan Virtueel Huisdier
+* [33m3d390f3[m Verbeter Virtueel Huisdier met ECHTE app integraties
+* [33mfc0150a[m Fix Bug Jacht false positives voor analyse bestanden
+* [33m263346e[m Upgrade naar Versie 3.0 - Echte AI App Integratie
+* [33m3d8f22b[m Verbeter Bug Jacht patronen - minder false positives
+* [33m9f56778[m Fix security issue: vervang os.system() met subprocess.run()
+* [33macec9f4[m Update Bug Jacht om ECHTE code te analyseren
+* [33m83d0925[m Voeg Huisdier Leren (AI) menu toe
+* [33m8163bff[m Fix _check_level_up naar _check_evolutie
+* [33m50cfef2[m Voeg Huisdier Werk menu toe met 3 nieuwe activiteiten
+* [33m3024a45[m Voeg Schatzoek Avontuur toe aan Virtueel Huisdier
+* [33m50218d2[m Voeg beloning veld toe aan tricks in Virtueel Huisdier
+* [33m9996b28[m Fix Virtueel Huisdier data migratie voor geneste velden
+* [33md5fcbfd[m Fix Virtueel Huisdier bugs
+* [33m9f03ee4[m Verhoog chunk size naar 350 voor betere context
+* [33m65bf84c[m Consolideer backpropagation en lru_cache secties
+* [33mf30657d[m Verbeter RAG generator prompt voor volledigere antwoorden
+* [33m4f2effb[m Maak backpropagation en lru_cache secties compacter
+* [33m2dd7f96[m Verklein RAG chunk size naar 200 voor betere resultaten
+* [33me730183[m Verbeter kennisbank voor missende onderwerpen
+* [33m1763547[m Verbeter RAG instellingen en kennisbank documenten
+* [33m482ba69[m Voeg kennisbank toe met AI en Python documentatie
+* [33mdf6e37e[m Voeg nieuwe features toe aan Virtueel Huisdier en Code Analyse
+* [33mae621c3[m Voeg 4 nieuwe character classes toe aan Schatzoek
+* [33m777ad66[m Voeg 5 nieuwe biomes toe aan Schatzoek Game
+* [33meb85d0f[m Voeg nieuwe features toe aan 5 apps
+* [33m7cbe721[m Voeg nieuwe features toe aan apps
+* [33m4c8ab5f[m Voeg grote update toe aan Tool System (v2.0)
+* [33me48d50d[m Voeg grote update toe aan Agent Base (v2.0)
+* [33m6b12f29[m Voeg grote update toe aan Orchestrator (v2.0)
+* [33m474b15c[m Voeg grote update toe aan Production RAG (v2.0)
+* [33ma2428c2[m Voeg grote update toe aan Mini RAG (v2.0)
+* [33m37fdf93[m Voeg grote update toe aan AI Chat (v2.0)
+* [33m192b23e[m Voeg grote update toe aan Weer Agent (v2.0)
+* [33m6bd16ec[m Voeg grote update toe aan Nieuws Agent (v2.0)
+* [33ma27bb09[m Voeg grote update toe aan Code Analyse (v2.0)
+* [33m02e601e[m Voeg grote update toe aan Schatzoek Game (v2.0)
+* [33m334c342[m Voeg grote update toe aan Slimme Rekenmachine (v2.0)
+* [33m0b0705a[m Voeg grote update toe aan Boodschappenlijst (v2.0)
+* [33m82713db[m Voeg grote update toe aan Virtueel Huisdier (v2.0)
+* [33me462a39[m Voeg grote update toe aan Launcher (v2.0)
+* [33m005f92f[m Voeg grote update toe aan alle Core Modules (v2.0)
+* [33m669ae42[m Voeg grote update toe aan Nieuws Agent (v2.0)
+* [33mcb9e30a[m Voeg grote update toe aan Weer Agent (v2.0)
+* [33mffe7e9f[m Voeg grote update toe aan Code Analyse
+* [33m8401c55[m Voeg grote update toe aan Boodschappenlijst
+* [33m9d3776e[m Voeg grote update toe aan Schatzoek Game
+* [33macca8f9[m Voeg voedselkeuzes toe aan Virtueel Huisdier
+* [33m7456913[m Voeg worteltrekken toe aan Slimme Rekenmachine
+* [33me17179a[m Voeg MIT LICENSE toe
+* [33m88698fa[m Update .gitignore
+* [33m6b80a04[m Voeg README.md toe
+* [33m4b9927a[m Voeg Groq API ondersteuning toe (gratis alternatief voor Claude)
+* [33mc05abf0[m Voeg Danny Toolkit toe - Unified Python Applications
