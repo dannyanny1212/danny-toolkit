@@ -12,6 +12,7 @@ import torch
 
 from danny_toolkit.core.embeddings import TorchGPUEmbeddings
 from danny_toolkit.core.faiss_index import FaissIndex
+from danny_toolkit.brain.citation_marshall import CitationMarshall
 
 
 def load_llm(model_name="microsoft/Phi-3-mini-4k-instruct"):
@@ -98,8 +99,8 @@ def run_rag_chain():
     for d in retrieved_docs:
         print("-", d)
 
-    # 6. Free embedder VRAM before loading the LLM
-    del embedder, doc_vecs, q_vec
+    # 6. Free vectors but keep embedder for citation verification
+    del doc_vecs, q_vec
     gc.collect()
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
@@ -112,10 +113,36 @@ def run_rag_chain():
     context = "\n".join(retrieved_docs)
 
     # 9. Antwoord genereren
-    answer = generate_answer(tokenizer, model, question, context)
+    raw_answer = generate_answer(tokenizer, model, question, context)
 
-    print("\n=== Antwoord ===")
-    print(answer)
+    print("\n=== Raw Antwoord ===")
+    print(raw_answer)
+
+    # 10. Free LLM VRAM before verification
+    del tokenizer, model
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+    # 11. Citation Marshall — hallucination check
+    print("\n=== Citation Verification ===")
+    marshall = CitationMarshall(embedding_provider=embedder)
+    source_docs = [{"content": doc} for doc in retrieved_docs]
+    verified_answer = marshall.verify_response(raw_answer, source_docs)
+
+    print("\n=== Verified Antwoord ===")
+    print(verified_answer)
+
+    stats = marshall.get_stats()
+    print(f"\n=== Marshall Stats ===")
+    print(f"Verified: {stats['verified']} | Flagged: {stats['flagged']} | "
+          f"Uncited: {stats['uncited']} | Trust Rate: {stats['trust_rate']}")
+
+    # 12. Free embedder
+    del embedder, marshall
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
 if __name__ == "__main__":
     run_rag_chain()
