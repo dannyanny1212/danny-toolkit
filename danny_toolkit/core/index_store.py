@@ -107,6 +107,7 @@ class IndexStore:
                 "text": meta["text"],
                 "source": meta["source"],
                 "chunk": meta["chunk"],
+                "hash": meta.get("hash", ""),
                 "distance": float(D[0][rank]),
             })
         return results
@@ -133,3 +134,114 @@ class IndexStore:
 
     def exists(self) -> bool:
         return self.index_path.exists() and self.meta_path.exists()
+
+    def stats(self) -> dict:
+        """Retourneer statistieken over de index."""
+        self._load()
+
+        sources = list({m.get("source", "") for m in self.metadata if m.get("source")})
+        domains = []
+        for src in sources:
+            if src.startswith("http://") or src.startswith("https://"):
+                try:
+                    from urllib.parse import urlparse
+                    domain = urlparse(src).netloc
+                    if domain and domain not in domains:
+                        domains.append(domain)
+                except Exception:
+                    pass
+
+        has_hashes = sum(1 for m in self.metadata if m.get("hash"))
+
+        # Index type detectie
+        index_type = "Flat"
+        try:
+            # IVF indices hebben een nlist attribuut via de quantizer
+            if hasattr(self.index, "nlist"):
+                index_type = "IVFFlat"
+        except Exception:
+            pass
+
+        # Bestandsgroottes
+        vectors_size_mb = 0.0
+        if self.vectors_path.exists():
+            vectors_size_mb = round(self.vectors_path.stat().st_size / (1024 * 1024), 2)
+
+        metadata_size_mb = 0.0
+        if self.meta_path.exists():
+            metadata_size_mb = round(self.meta_path.stat().st_size / (1024 * 1024), 2)
+
+        return {
+            "total_chunks": len(self.metadata),
+            "total_sources": len(sources),
+            "sources": sorted(sources),
+            "domains": sorted(domains),
+            "has_hashes": has_hashes,
+            "index_type": index_type,
+            "vectors_size_mb": vectors_size_mb,
+            "metadata_size_mb": metadata_size_mb,
+        }
+
+    def verify(self) -> dict:
+        """Verifieer consistentie van de index."""
+        self._load()
+
+        checks = []
+
+        # 1. vectors.npy rijen == len(metadata)
+        vectors_count = 0
+        if self.vectors_path.exists():
+            vecs = np.load(self.vectors_path)
+            vectors_count = vecs.shape[0]
+
+        meta_count = len(self.metadata)
+        checks.append({
+            "name": "vectors_count == metadata_count",
+            "passed": vectors_count == meta_count,
+            "detail": f"vectors={vectors_count}, metadata={meta_count}",
+        })
+
+        # 2. vectors.npy rijen == index.ntotal
+        faiss_total = self.index.ntotal if self.index else 0
+        checks.append({
+            "name": "vectors_count == faiss_ntotal",
+            "passed": vectors_count == faiss_total,
+            "detail": f"vectors={vectors_count}, faiss={faiss_total}",
+        })
+
+        # 3. Missing hashes (legacy entries)
+        missing_hashes = sum(1 for m in self.metadata if not m.get("hash"))
+        checks.append({
+            "name": "missing_hashes",
+            "passed": missing_hashes == 0,
+            "detail": f"{missing_hashes} chunks zonder hash",
+        })
+
+        # 4. Duplicate hashes
+        from collections import Counter
+        hash_counts = Counter(m.get("hash") for m in self.metadata if m.get("hash"))
+        duplicate_hashes = sum(1 for h, c in hash_counts.items() if c > 1)
+        checks.append({
+            "name": "duplicate_hashes",
+            "passed": duplicate_hashes == 0,
+            "detail": f"{duplicate_hashes} hashes komen >1x voor",
+        })
+
+        # 5. Empty texts
+        empty_texts = sum(1 for m in self.metadata if not m.get("text", "").strip())
+        checks.append({
+            "name": "empty_texts",
+            "passed": empty_texts == 0,
+            "detail": f"{empty_texts} chunks met lege tekst",
+        })
+
+        # 6. Missing sources
+        missing_sources = sum(1 for m in self.metadata if not m.get("source"))
+        checks.append({
+            "name": "missing_sources",
+            "passed": missing_sources == 0,
+            "detail": f"{missing_sources} chunks zonder source",
+        })
+
+        ok = all(c["passed"] for c in checks)
+        return {"ok": ok, "checks": checks}

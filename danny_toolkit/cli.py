@@ -160,12 +160,27 @@ def cmd_ask(args):
     # 3. Build context (max ~3000 tokens ≈ 12000 chars om binnen 4096 context te blijven)
     context_parts = []
     char_count = 0
+    used_count = 0
     for r in results:
         if char_count + len(r["text"]) > 12000:
-            break
-        context_parts.append(r["text"])
-        char_count += len(r["text"])
+            r["_used"] = False
+        else:
+            r["_used"] = True
+            context_parts.append(r["text"])
+            char_count += len(r["text"])
+            used_count += 1
     context = "\n\n".join(context_parts)
+
+    # --trace output
+    if getattr(args, "trace", False):
+        print(f"\n--- Trace: {len(results)} chunks gevonden, {used_count} gebruikt ({char_count} chars) ---")
+        for r in results:
+            status = "GEBRUIKT" if r.get("_used") else "AFGEKAPT"
+            h = r.get("hash", "-")[:12] if r.get("hash") else "-"
+            src = os.path.basename(r["source"])
+            preview = r["text"][:80].replace("\n", " ")
+            print(f"  #{r['rank']}  [{status}]  dist={r['distance']:.4f}  src={src}  chunk={r['chunk']}  hash={h}  {preview}...")
+        print()
 
     # 4. LLM answer
     model_path = args.model or r"C:\models\phi3.Q4_K_M.gguf"
@@ -187,6 +202,60 @@ def cmd_ask(args):
     antwoord = output["choices"][0]["text"].strip()
 
     print(f"\n=== Antwoord ===\n{antwoord}")
+
+
+def cmd_stats(args):
+    """Toon statistieken over de FAISS index."""
+    from danny_toolkit.core.index_store import IndexStore
+
+    store = IndexStore()
+    if not store.exists():
+        print("Geen index gevonden. Draai eerst: danny index <directory>")
+        sys.exit(1)
+
+    s = store.stats()
+
+    print("=== Index Statistieken ===")
+    print(f"  Totaal chunks:    {s['total_chunks']}")
+    print(f"  Totaal bronnen:   {s['total_sources']}")
+    print(f"  Chunks met hash:  {s['has_hashes']}")
+    print(f"  Index type:       {s['index_type']}")
+    print(f"  Vectors grootte:  {s['vectors_size_mb']} MB")
+    print(f"  Metadata grootte: {s['metadata_size_mb']} MB")
+
+    if s["sources"]:
+        print(f"\n--- Bronnen ({s['total_sources']}) ---")
+        for src in s["sources"]:
+            print(f"  - {src}")
+
+    if s["domains"]:
+        print(f"\n--- Domeinen ({len(s['domains'])}) ---")
+        for d in s["domains"]:
+            print(f"  - {d}")
+
+
+def cmd_verify(args):
+    """Verifieer consistentie van de FAISS index."""
+    from danny_toolkit.core.index_store import IndexStore
+
+    store = IndexStore()
+    if not store.exists():
+        print("Geen index gevonden. Draai eerst: danny index <directory>")
+        sys.exit(1)
+
+    result = store.verify()
+
+    print("=== Index Verificatie ===")
+    for check in result["checks"]:
+        status = "OK" if check["passed"] else "FAIL"
+        print(f"  [{status}] {check['name']}: {check['detail']}")
+
+    print()
+    if result["ok"]:
+        print("Resultaat: ALLES OK")
+    else:
+        print("Resultaat: FOUTEN GEVONDEN")
+        sys.exit(1)
 
 
 def cmd_scrape(args):
@@ -251,6 +320,13 @@ def main():
     p_ask.add_argument("question", help="Vraag over je documenten")
     p_ask.add_argument("--top-k", type=int, default=5, help="Aantal bronnen")
     p_ask.add_argument("--model", help="Pad naar GGUF model", default=None)
+    p_ask.add_argument("--trace", action="store_true", help="Toon welke chunks gebruikt zijn")
+
+    # danny stats
+    sub.add_parser("stats", help="Toon index statistieken")
+
+    # danny verify
+    sub.add_parser("verify", help="Verifieer index consistentie")
 
     args = parser.parse_args()
 
@@ -261,6 +337,7 @@ def main():
     commands = {
         "gpu": cmd_gpu, "chain": cmd_chain, "cpu": cmd_cpu,
         "index": cmd_index, "scrape": cmd_scrape, "ask": cmd_ask,
+        "stats": cmd_stats, "verify": cmd_verify,
     }
     commands[args.command](args)
 
