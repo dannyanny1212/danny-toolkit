@@ -22,8 +22,14 @@ def cmd_gpu(args):
         verbose=False,
     )
 
-    prompt = f"<|user|>\n{args.question}\n<|end|>\n<|assistant|>\n"
-    output = llm(prompt, max_tokens=256, temperature=0.2, top_p=0.9)
+    prompt = (
+        f"<|system|>\n"
+        f"Je bent een behulpzame assistent. Antwoord kort en bondig in het Nederlands. "
+        f"Verzin NIETS en blijf bij het onderwerp.\n"
+        f"<|end|>\n"
+        f"<|user|>\n{args.question}\n<|end|>\n<|assistant|>\n"
+    )
+    output = llm(prompt, max_tokens=256, temperature=0.0, top_p=0.9, repeat_penalty=1.1)
     antwoord = output["choices"][0]["text"].strip()
 
     print(f"\n=== GPU Antwoord ===\n{antwoord}")
@@ -160,16 +166,46 @@ def cmd_ask(args):
     llm = Llama(model_path=model_path, n_gpu_layers=-1, n_ctx=4096, verbose=False)
 
     prompt = (
+        f"<|system|>\n"
+        f"Je bent een behulpzame assistent. Beantwoord ALLEEN op basis van de gegeven context. "
+        f"Verzin NIETS. Als het antwoord niet in de context staat, zeg dat eerlijk. "
+        f"Antwoord kort en bondig in het Nederlands.\n"
+        f"<|end|>\n"
         f"<|user|>\n"
-        f"Gebruik de context hieronder om de vraag te beantwoorden.\n\n"
         f"Context:\n{context}\n\n"
         f"Vraag: {args.question}\n"
         f"<|end|>\n<|assistant|>\n"
     )
-    output = llm(prompt, max_tokens=512, temperature=0.2, top_p=0.9)
+    output = llm(prompt, max_tokens=256, temperature=0.0, top_p=0.9, repeat_penalty=1.1)
     antwoord = output["choices"][0]["text"].strip()
 
     print(f"\n=== Antwoord ===\n{antwoord}")
+
+
+def cmd_scrape(args):
+    """Scrape een website en voeg toe aan de FAISS index."""
+    from danny_toolkit.core.web_scraper import scrape_with_depth
+    from danny_toolkit.core.embeddings import TorchGPUEmbeddings
+    from danny_toolkit.core.index_store import IndexStore
+
+    print(f"=== Danny Scrape: {args.url} (depth={args.depth}) ===")
+    chunks = scrape_with_depth(args.url, depth=args.depth, chunk_size=args.chunk_size)
+
+    if not chunks:
+        print("Geen content gevonden.")
+        sys.exit(1)
+
+    texts = [c["text"] for c in chunks]
+
+    print("Embeddings berekenen...")
+    embedder = TorchGPUEmbeddings()
+    vectors = embedder.embed(texts).numpy().astype("float32")
+
+    print("FAISS index bouwen...")
+    store = IndexStore()
+    store.build(vectors, chunks)
+
+    print(f"\n=== Klaar! {len(chunks)} chunks geindexeerd van {args.url} ===")
 
 
 def main():
@@ -197,6 +233,12 @@ def main():
     p_index.add_argument("directory", help="Pad naar directory met documenten")
     p_index.add_argument("--chunk-size", type=int, default=500, help="Woorden per chunk")
 
+    # danny scrape <url>
+    p_scrape = sub.add_parser("scrape", help="Scrape een website en indexeer de content")
+    p_scrape.add_argument("url", help="URL om te scrapen")
+    p_scrape.add_argument("--depth", type=int, default=0, help="Diepte voor link-crawling (0=alleen die pagina)")
+    p_scrape.add_argument("--chunk-size", type=int, default=500, help="Woorden per chunk")
+
     # danny ask "vraag"
     p_ask = sub.add_parser("ask", help="Stel een vraag aan je geindexeerde docs")
     p_ask.add_argument("question", help="Vraag over je documenten")
@@ -211,7 +253,7 @@ def main():
 
     commands = {
         "gpu": cmd_gpu, "chain": cmd_chain, "cpu": cmd_cpu,
-        "index": cmd_index, "ask": cmd_ask,
+        "index": cmd_index, "scrape": cmd_scrape, "ask": cmd_ask,
     }
     commands[args.command](args)
 

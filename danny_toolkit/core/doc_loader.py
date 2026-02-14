@@ -33,7 +33,7 @@ def load_directory(directory: str, chunk_size: int = 500, overlap: int = 50) -> 
         ".json": _load_text,
         ".csv": _load_text,
         ".log": _load_text,
-        ".html": _load_text,
+        ".html": _load_html,
         ".xml": _load_text,
         ".rst": _load_text,
     }
@@ -223,6 +223,28 @@ def _load_text(filepath: Path) -> list[dict]:
     text = filepath.read_text(encoding="utf-8", errors="ignore")
     if text.strip():
         return [{"text": text, "page": None}]
+    return []
+
+
+# ═══════════════════════════════════════════
+# HTML bestanden
+# ═══════════════════════════════════════════
+
+def _load_html(filepath: Path) -> list[dict]:
+    from bs4 import BeautifulSoup
+
+    html = filepath.read_text(encoding="utf-8", errors="ignore")
+    soup = BeautifulSoup(html, "html.parser")
+
+    for tag in soup(["script", "style", "nav", "footer", "header", "aside"]):
+        tag.decompose()
+
+    text = soup.get_text(separator="\n", strip=True)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    text = re.sub(r"[ \t]+", " ", text)
+
+    if text.strip():
+        return [{"text": text.strip(), "page": None}]
     return []
 
 

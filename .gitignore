@@ -10,6 +10,7 @@ eggs/
 *.egg-info/
 *.egg
 venv/
+venv311/
 ENV/
 .venv/
 
