@@ -3,7 +3,9 @@
 Ondersteunde formaten:
   - PDF  (.pdf)   — pdfplumber met tabel-extractie + fallback PyPDF2
   - Word (.docx)  — python-docx
+  - PowerPoint (.pptx) — python-pptx
   - Excel (.xlsx) — openpyxl
+  - EPUB (.epub)  — ebooklib + BeautifulSoup
   - Tekst (.txt, .md, .py, .json, .csv, .log, .html, .xml, .rst)
 
 Chunks bevatten metadata: bron, pagina/sectie, chunk nummer.
@@ -26,7 +28,9 @@ def load_directory(directory: str, chunk_size: int = 500, overlap: int = 50) -> 
     loaders = {
         ".pdf": _load_pdf,
         ".docx": _load_docx,
+        ".pptx": _load_pptx,
         ".xlsx": _load_xlsx,
+        ".epub": _load_epub,
         ".txt": _load_text,
         ".md": _load_text,
         ".py": _load_text,
@@ -219,6 +223,66 @@ def _load_xlsx(filepath: Path) -> list[dict]:
 
     wb.close()
     return sheets
+
+
+# ═══════════════════════════════════════════
+# PPTX — PowerPoint presentaties
+# ═══════════════════════════════════════════
+
+def _load_pptx(filepath: Path) -> list[dict]:
+    from pptx import Presentation
+
+    prs = Presentation(str(filepath))
+    slides = []
+
+    for i, slide in enumerate(prs.slides, 1):
+        parts = []
+        for shape in slide.shapes:
+            if shape.has_text_frame:
+                text = shape.text_frame.text.strip()
+                if text:
+                    parts.append(text)
+            if shape.has_table:
+                rows = []
+                for row in shape.table.rows:
+                    cells = [cell.text.strip() for cell in row.cells]
+                    if any(cells):
+                        rows.append(" | ".join(cells))
+                if rows:
+                    parts.append("\n".join(rows))
+        combined = "\n\n".join(parts)
+        if combined.strip():
+            slides.append({"text": combined, "page": i})
+
+    return slides
+
+
+# ═══════════════════════════════════════════
+# EPUB — E-books
+# ═══════════════════════════════════════════
+
+def _load_epub(filepath: Path) -> list[dict]:
+    import ebooklib
+    from ebooklib import epub
+    from bs4 import BeautifulSoup
+
+    book = epub.read_epub(str(filepath), options={"ignore_ncx": True})
+    chapters = []
+
+    for i, item in enumerate(book.get_items_of_type(ebooklib.ITEM_DOCUMENT), 1):
+        soup = BeautifulSoup(item.get_content(), "html.parser")
+
+        for tag in soup(["script", "style"]):
+            tag.decompose()
+
+        text = soup.get_text(separator="\n", strip=True)
+        text = re.sub(r"\n{3,}", "\n\n", text)
+        text = re.sub(r"[ \t]+", " ", text)
+
+        if text.strip():
+            chapters.append({"text": text.strip(), "page": i})
+
+    return chapters
 
 
 # ═══════════════════════════════════════════
