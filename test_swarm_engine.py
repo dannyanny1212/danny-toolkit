@@ -994,8 +994,8 @@ def test_backward_compat():
         "MEMEX" in engine.ROUTE_MAP,
     ))
     checks.append((
-        "14 agents geregistreerd",
-        len(engine.agents) == 14,
+        "15 agents geregistreerd",
+        len(engine.agents) == 15,
     ))
 
     # Fast-track werkt nog
@@ -1019,8 +1019,8 @@ def test_adaptive_router():
 
     # Agent profielen zijn gedefinieerd
     checks.append((
-        "12 agent profielen",
-        len(AdaptiveRouter.AGENT_PROFIELEN) == 12,
+        "13 agent profielen",
+        len(AdaptiveRouter.AGENT_PROFIELEN) == 13,
     ))
 
     # Profielen bevatten verwachte agents
@@ -1054,7 +1054,7 @@ def test_adaptive_router():
     checks.append((
         "profielen berekend",
         profielen is not None
-        and len(profielen) == 12,
+        and len(profielen) == 13,
     ))
 
     # Multi-vector structuur
