@@ -3,14 +3,17 @@ Embedding providers voor RAG systemen.
 Versie 2.0 - Met TF-IDF, caching en benchmarking.
 """
 
+import logging
 import math
 import hashlib
 import json
 import time
+from collections import Counter, OrderedDict
 from pathlib import Path
-from collections import Counter
 from typing import List, Dict, Optional
 from .config import Config
+
+logger = logging.getLogger(__name__)
 
 
 class EmbeddingProvider:
@@ -232,6 +235,8 @@ class EmbeddingCache:
     Cache voor embeddings om herberekeningen te voorkomen.
     """
 
+    _SAVE_INTERVAL = 50  # auto-save every N writes
+
     def __init__(self, cache_bestand: Path = None, max_grootte: int = 10000):
         """
         Initialiseer cache.
@@ -244,16 +249,17 @@ class EmbeddingCache:
             Config.RAG_DATA_DIR / "embedding_cache.json"
         )
         self.max_grootte = max_grootte
-        self.cache: Dict[str, list] = {}
+        self.cache: OrderedDict[str, list] = OrderedDict()
         self.hits = 0
         self.misses = 0
+        self._writes_since_save = 0
 
         self._laad()
 
     def _hash_tekst(self, tekst: str, provider: str) -> str:
         """Genereer hash voor tekst + provider."""
         content = f"{provider}:{tekst}"
-        return hashlib.md5(content.encode()).hexdigest()
+        return hashlib.sha256(content.encode()).hexdigest()
 
     def _laad(self):
         """Laad cache van disk."""
@@ -261,11 +267,11 @@ class EmbeddingCache:
             try:
                 with open(self.cache_bestand, "r", encoding="utf-8") as f:
                     data = json.load(f)
-                    self.cache = data.get("cache", {})
+                    self.cache = OrderedDict(data.get("cache", {}))
                     self.hits = data.get("hits", 0)
                     self.misses = data.get("misses", 0)
             except (json.JSONDecodeError, IOError):
-                self.cache = {}
+                self.cache = OrderedDict()
 
     def _opslaan(self):
         """Sla cache op naar disk."""
@@ -279,7 +285,7 @@ class EmbeddingCache:
 
     def get(self, tekst: str, provider: str) -> Optional[list]:
         """
-        Haal embedding uit cache.
+        Haal embedding uit cache (LRU: verplaatst naar einde).
 
         Returns:
             Embedding of None als niet gecached
@@ -287,21 +293,31 @@ class EmbeddingCache:
         key = self._hash_tekst(tekst, provider)
         if key in self.cache:
             self.hits += 1
+            self.cache.move_to_end(key)
             return self.cache[key]
         self.misses += 1
         return None
 
     def set(self, tekst: str, provider: str, embedding: list):
         """Voeg embedding toe aan cache."""
-        # Verwijder oudste entries als cache vol is
-        if len(self.cache) >= self.max_grootte:
-            # Verwijder eerste 10%
-            te_verwijderen = list(self.cache.keys())[:self.max_grootte // 10]
-            for key in te_verwijderen:
-                del self.cache[key]
-
         key = self._hash_tekst(tekst, provider)
+
+        # Move existing key to end (LRU) or evict oldest if full
+        if key in self.cache:
+            self.cache.move_to_end(key)
+        elif len(self.cache) >= self.max_grootte:
+            # Verwijder oudste 10% (least recently used)
+            te_verwijderen = self.max_grootte // 10 or 1
+            for _ in range(min(te_verwijderen, len(self.cache))):
+                self.cache.popitem(last=False)
+
         self.cache[key] = embedding
+
+        # Auto-save periodiek
+        self._writes_since_save += 1
+        if self._writes_since_save >= self._SAVE_INTERVAL:
+            self._opslaan()
+            self._writes_since_save = 0
 
     def opslaan(self):
         """Expliciet opslaan."""
@@ -309,9 +325,10 @@ class EmbeddingCache:
 
     def wis(self):
         """Wis de hele cache."""
-        self.cache = {}
+        self.cache = OrderedDict()
         self.hits = 0
         self.misses = 0
+        self._writes_since_save = 0
         self._opslaan()
 
     def statistieken(self) -> dict:
@@ -414,8 +431,6 @@ class VoyageChromaEmbedding:
 
         Retry bij rate limits met korte backoff.
         """
-        import time as _time
-
         for poging in range(5):
             try:
                 result = self.client.embed(
@@ -424,10 +439,14 @@ class VoyageChromaEmbedding:
                     input_type="document",
                 )
                 return result.embeddings
+            except (ConnectionError, TimeoutError, OSError) as e:
+                logger.warning("Voyage API netwerk fout (poging %d): %s", poging + 1, e)
+                time.sleep(5 * (poging + 1))
             except Exception as e:
                 naam = type(e).__name__
                 if "RateLimit" in naam or "429" in str(e):
-                    _time.sleep(5 * (poging + 1))
+                    logger.warning("Voyage API rate limit (poging %d)", poging + 1)
+                    time.sleep(5 * (poging + 1))
                 else:
                     raise
         raise RuntimeError(
@@ -444,8 +463,8 @@ def get_chroma_embed_fn():
     if Config.has_voyage_key():
         try:
             return VoyageChromaEmbedding()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("VoyageChromaEmbedding mislukt, fallback naar SentenceTransformer: %s", e)
     # Fallback
     from chromadb.utils.embedding_functions import (
         SentenceTransformerEmbeddingFunction,
@@ -618,11 +637,13 @@ except ImportError:
     _HAS_TORCH_GPU = False
 
 
-class TorchGPUEmbeddings:
+class TorchGPUEmbeddings(EmbeddingProvider):
     """
     GPU-accelerated embedding provider using HuggingFace models.
     Returns CPU tensors so FAISS (CPU or GPU) can consume them.
     """
+
+    naam = "torch_gpu"
 
     def __init__(self, model_name: str = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"):
         if not _HAS_TORCH_GPU:
@@ -632,30 +653,33 @@ class TorchGPUEmbeddings:
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model = AutoModel.from_pretrained(model_name).to(self.device)
         self.model.eval()
+        self.dimensies = self.model.config.hidden_size
 
-    @(torch.inference_mode() if _HAS_TORCH_GPU else lambda f: f)
-    def embed(self, texts: list[str], batch_size: int = 32):
-        if len(texts) <= batch_size:
-            enc = self.tokenizer(
-                texts,
-                padding=True,
-                truncation=True,
-                return_tensors="pt"
-            ).to(self.device)
-            out = self.model(**enc)
-            emb = out.last_hidden_state.mean(dim=1)
-            return emb.detach().cpu()
+    def _masked_mean_pool(self, last_hidden_state, attention_mask):
+        """Mean pooling met attention mask (negeert padding tokens)."""
+        mask = attention_mask.unsqueeze(-1).float()
+        summed = (last_hidden_state * mask).sum(dim=1)
+        counts = mask.sum(dim=1).clamp(min=1e-9)
+        return summed / counts
 
-        all_emb = []
-        for i in range(0, len(texts), batch_size):
-            batch = texts[i:i + batch_size]
-            enc = self.tokenizer(
-                batch,
-                padding=True,
-                truncation=True,
-                return_tensors="pt"
-            ).to(self.device)
-            out = self.model(**enc)
-            emb = out.last_hidden_state.mean(dim=1)
-            all_emb.append(emb.detach().cpu())
-        return torch.cat(all_emb, dim=0)
+    def _embed_batch(self, texts):
+        """Embed een enkele batch teksten."""
+        enc = self.tokenizer(
+            texts,
+            padding=True,
+            truncation=True,
+            return_tensors="pt"
+        ).to(self.device)
+        out = self.model(**enc)
+        emb = self._masked_mean_pool(out.last_hidden_state, enc["attention_mask"])
+        return emb.detach().cpu()
+
+    def embed(self, texts, batch_size: int = 32):
+        with torch.inference_mode():
+            if len(texts) <= batch_size:
+                return self._embed_batch(texts)
+
+            all_emb = []
+            for i in range(0, len(texts), batch_size):
+                all_emb.append(self._embed_batch(texts[i:i + batch_size]))
+            return torch.cat(all_emb, dim=0)
