@@ -199,7 +199,7 @@ def cmd_index(args):
 
     print("FAISS index bouwen...")
     store = IndexStore()
-    store.build(vectors, chunks)
+    store.append(vectors, chunks)
 
     print(f"\n=== Klaar! {len(chunks)} chunks geindexeerd ===")
 
