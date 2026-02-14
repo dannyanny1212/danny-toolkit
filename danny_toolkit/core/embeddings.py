@@ -603,3 +603,40 @@ def lijst_providers() -> List[str]:
     if Config.has_voyage_key():
         providers.insert(0, "voyage")
     return providers
+
+
+# =============================================================================
+# GPU-ACCELERATED EMBEDDING PROVIDER
+# =============================================================================
+
+from transformers import AutoTokenizer, AutoModel
+import torch
+from danny_toolkit.core.gpu import get_device
+
+
+class TorchGPUEmbeddings:
+    """
+    GPU-accelerated embedding provider using HuggingFace models.
+    Returns CPU tensors so FAISS (CPU or GPU) can consume them.
+    """
+
+    def __init__(self, model_name: str = "sentence-transformers/all-MiniLM-L6-v2"):
+        self.device = get_device()
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.model = AutoModel.from_pretrained(model_name).to(self.device)
+        self.model.eval()
+
+    @torch.inference_mode()
+    def embed(self, texts: list[str]):
+        enc = self.tokenizer(
+            texts,
+            padding=True,
+            truncation=True,
+            return_tensors="pt"
+        ).to(self.device)
+
+        out = self.model(**enc)
+        emb = out.last_hidden_state.mean(dim=1)
+
+        # Return CPU tensor so FAISS can use it
+        return emb.detach().cpu()
