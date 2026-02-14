@@ -603,7 +603,7 @@ def print_verdict(report: VerificationReport):
     elif report.overall_status == "REVIEW":
         print(f"    {c('Review de code wijzigingen voordat je verder gaat.', 'yellow')}")
     elif report.overall_status == "CRITICAL":
-        print(f"    {c('NOODREM: git reset --hard COSMIC_OMEGA_V4', 'red')}")
+        print(f"    {c('NOODREM: git reset --hard COSMIC_OMEGA_V5', 'red')}")
 
     print()
     print(c("=" * 70, "cyan"))

@@ -1,6 +1,6 @@
 """
 Danny Toolkit Launcher - Hoofdmenu.
-Versie 4.0 - COSMIC_OMEGA_V4 Rich Dashboard met thema's, kleuren, statistieken en meer.
+Versie 5.1.1 - COSMIC_OMEGA_V5 Rich Dashboard met thema's, kleuren, statistieken en meer.
 """
 
 import sys
