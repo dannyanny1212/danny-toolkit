@@ -1010,7 +1010,8 @@ class ClaudeChatApp:
 
                 try:
                     antwoord = self._chat_conversatie(self.conversatie)
-                    print(f"\n{kleur(f'{persona['emoji']} AI', 'groen')}: {antwoord}")
+                    emoji = persona["emoji"]
+                    print(f"\n{kleur(f'{emoji} AI', 'groen')}: {antwoord}")
                     self.conversatie.append({"role": "assistant", "content": antwoord})
                 except Exception as e:
                     print(kleur(f"[FOUT] {e}", Kleur.ROOD))
