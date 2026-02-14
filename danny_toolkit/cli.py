@@ -256,8 +256,17 @@ def cmd_ask(args):
     embedder = TorchGPUEmbeddings()
     q_vec = embedder.embed([args.question]).numpy().astype("float32")
 
-    # 2. Retrieve
-    results = store.search(q_vec, k=args.top_k)
+    # 2. Retrieve (overfetch bij --source filter)
+    store._load()
+    fetch_k = min(args.top_k * 10, store.index.ntotal) if args.source else args.top_k
+    results = store.search(q_vec, k=fetch_k)
+
+    if args.source:
+        filt = args.source.lower()
+        results = [r for r in results if filt in r["source"].lower()]
+        results = results[:args.top_k]
+        for i, r in enumerate(results):
+            r["rank"] = i + 1
 
     print(f"\n--- Top {len(results)} bronnen ---")
     for r in results:
@@ -721,6 +730,7 @@ def main():
     p_ask.add_argument("--top-k", type=int, default=5, help="Aantal bronnen")
     p_ask.add_argument("--model", help="Pad naar GGUF model", default=None)
     p_ask.add_argument("--trace", action="store_true", help="Toon welke chunks gebruikt zijn")
+    p_ask.add_argument("--source", help="Filter op bronnaam (substring match)")
 
     # danny trace "vraag"
     p_trace = sub.add_parser("trace", help="Trace retrieval resultaten (geen LLM)")
