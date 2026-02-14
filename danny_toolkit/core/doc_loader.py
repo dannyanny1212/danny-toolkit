@@ -15,13 +15,13 @@ from pathlib import Path
 
 
 def load_directory(directory: str, chunk_size: int = 500, overlap: int = 50) -> list[dict]:
-    """Load all supported files from a directory and split into chunks.
+    """Load all supported files from a directory (or single file) and split into chunks.
 
     Returns list of dicts: {"text": str, "source": str, "chunk": int, "page": int|None}
     """
-    directory = Path(directory)
-    if not directory.exists():
-        raise FileNotFoundError(f"Directory niet gevonden: {directory}")
+    target = Path(directory)
+    if not target.exists():
+        raise FileNotFoundError(f"Pad niet gevonden: {target}")
 
     loaders = {
         ".pdf": _load_pdf,
@@ -42,7 +42,13 @@ def load_directory(directory: str, chunk_size: int = 500, overlap: int = 50) -> 
     file_count = 0
     skipped = []
 
-    for filepath in sorted(directory.rglob("*")):
+    # Enkel bestand of directory
+    if target.is_file():
+        files = [target]
+    else:
+        files = sorted(target.rglob("*"))
+
+    for filepath in files:
         if not filepath.is_file():
             continue
         ext = filepath.suffix.lower()
