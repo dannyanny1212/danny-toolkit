@@ -483,6 +483,145 @@ def cmd_trace(args):
         console.print(f"\n[green]HTML export:[/green] {out_file}")
 
 
+def cmd_benchmark(args):
+    """Benchmark embedding providers: snelheid en similarity."""
+    import time as _time
+    from rich.console import Console
+    from rich.table import Table
+
+    console = Console()
+
+    # Test teksten
+    test_teksten = [
+        "PyTorch met CUDA draait nu op je RTX 3060 Ti voor GPU-versnelde inferentie.",
+        "FAISS CPU werkt als fallback wanneer GPU-FAISS niet beschikbaar is.",
+        "Embeddings worden berekend op de GPU voor maximale snelheid bij retrieval.",
+        "RAG combineert retrieval en LLM-inference om contextuele antwoorden te genereren.",
+        "Vector databases slaan hoge-dimensionale embeddings op voor nearest-neighbor search.",
+        "Prompt injection is een aanval waarbij kwaadaardige instructies in de input worden verborgen.",
+        "Document chunking splitst lange teksten in kleinere stukken voor betere retrieval nauwkeurigheid.",
+        "Cosine similarity meet de hoek tussen twee vectoren als maat voor semantische gelijkenis.",
+        "TF-IDF weegt termen op basis van hun frequentie in het document versus het gehele corpus.",
+        "Sentence transformers produceren dense embeddings die semantische betekenis vastleggen.",
+    ]
+
+    if args.extended:
+        # Meer teksten voor betrouwbaardere timing
+        test_teksten = test_teksten * 5
+
+    similarity_paren = [
+        ("GPU versnelling voor machine learning", "CUDA inferentie op een videokaart"),
+        ("Hoe werkt RAG?", "retrieval augmented generation pipeline"),
+        ("prompt injection aanval", "kwaadaardige input in LLM systemen"),
+    ]
+
+    providers = {}
+
+    # --- Hash Embeddings ---
+    console.print("\n[cyan]Providers laden...[/cyan]")
+    from danny_toolkit.core.embeddings import HashEmbeddings, TFIDFEmbeddings
+    providers["Hash (256d)"] = HashEmbeddings(dimensies=256)
+
+    # --- TF-IDF ---
+    tfidf = TFIDFEmbeddings(dimensies=512)
+    tfidf.fit(test_teksten)
+    providers["TF-IDF (512d)"] = tfidf
+
+    # --- TorchGPU ---
+    from danny_toolkit.core.embeddings import TorchGPUEmbeddings
+    import torch
+    torch_emb = TorchGPUEmbeddings()
+    providers[f"TorchGPU ({torch_emb.device})"] = torch_emb
+
+    # --- Voyage (optioneel) ---
+    if args.voyage:
+        from danny_toolkit.core.config import Config
+        if Config.has_voyage_key():
+            try:
+                from danny_toolkit.core.embeddings import VoyageEmbeddings
+                providers["Voyage (1024d)"] = VoyageEmbeddings()
+            except Exception as e:
+                console.print(f"[yellow]Voyage overgeslagen: {e}[/yellow]")
+
+    # === Speed Benchmark ===
+    console.print(f"\n[cyan]Speed benchmark ({len(test_teksten)} teksten)...[/cyan]")
+
+    speed_table = Table(title="Embedding Speed Benchmark", border_style="cyan")
+    speed_table.add_column("Provider", width=22)
+    speed_table.add_column("Teksten", justify="right", width=8)
+    speed_table.add_column("Totaal (ms)", justify="right", width=12)
+    speed_table.add_column("Per tekst (ms)", justify="right", width=14)
+    speed_table.add_column("Teksten/sec", justify="right", width=12)
+
+    embed_cache = {}
+
+    for naam, prov in providers.items():
+        # Warmup
+        if hasattr(prov, "embed"):
+            prov.embed([test_teksten[0]]) if not isinstance(prov, TorchGPUEmbeddings) else prov.embed([test_teksten[0]])
+
+        start = _time.perf_counter()
+        result = prov.embed(test_teksten)
+        elapsed = _time.perf_counter() - start
+
+        embed_cache[naam] = (prov, result)
+
+        per_tekst = elapsed / len(test_teksten) * 1000
+        per_sec = len(test_teksten) / elapsed if elapsed > 0 else 0
+
+        speed_table.add_row(
+            naam,
+            str(len(test_teksten)),
+            f"{elapsed * 1000:.1f}",
+            f"{per_tekst:.2f}",
+            f"{per_sec:.1f}",
+        )
+
+    console.print(speed_table)
+
+    # === Similarity Benchmark ===
+    import math
+
+    def cosine_sim(v1, v2):
+        if hasattr(v1, "tolist"):
+            v1 = v1.tolist()
+        if hasattr(v2, "tolist"):
+            v2 = v2.tolist()
+        dot = sum(a * b for a, b in zip(v1, v2))
+        m1 = math.sqrt(sum(a ** 2 for a in v1))
+        m2 = math.sqrt(sum(b ** 2 for b in v2))
+        return dot / (m1 * m2) if m1 > 0 and m2 > 0 else 0.0
+
+    console.print(f"\n[cyan]Similarity benchmark ({len(similarity_paren)} paren)...[/cyan]")
+
+    sim_table = Table(title="Cosine Similarity Vergelijking", border_style="cyan")
+    sim_table.add_column("Paar", width=50)
+    for naam in providers:
+        sim_table.add_column(naam, justify="right", width=14)
+
+    for tekst_a, tekst_b in similarity_paren:
+        row = [f"{tekst_a[:24]}.. vs {tekst_b[:22]}.."]
+        for naam, prov in providers.items():
+            if isinstance(prov, TorchGPUEmbeddings):
+                va = prov.embed([tekst_a])[0]
+                vb = prov.embed([tekst_b])[0]
+            else:
+                va = prov.embed([tekst_a])[0]
+                vb = prov.embed([tekst_b])[0]
+            sim = cosine_sim(va, vb)
+            # Kleur op basis van score
+            if sim > 0.7:
+                row.append(f"[green]{sim:.4f}[/green]")
+            elif sim > 0.4:
+                row.append(f"[yellow]{sim:.4f}[/yellow]")
+            else:
+                row.append(f"[red]{sim:.4f}[/red]")
+        sim_table.add_row(*row)
+
+    console.print(sim_table)
+    console.print(f"\n[green]Benchmark compleet![/green]")
+
+
 def cmd_scrape(args):
     """Scrape een website en voeg toe aan de FAISS index."""
     from danny_toolkit.core.web_scraper import scrape_with_depth
@@ -556,6 +695,11 @@ def main():
     p_trace.add_argument("--top-k", type=int, default=10, help="Aantal resultaten")
     p_trace.add_argument("--html", action="store_true", help="Exporteer als HTML bestand")
 
+    # danny benchmark
+    p_bench = sub.add_parser("benchmark", help="Benchmark embedding providers (snelheid + similarity)")
+    p_bench.add_argument("--extended", action="store_true", help="5x meer teksten voor betrouwbaardere timing")
+    p_bench.add_argument("--voyage", action="store_true", help="Inclusief Voyage AI (vereist API key)")
+
     # danny stats
     sub.add_parser("stats", help="Toon index statistieken")
 
@@ -571,7 +715,8 @@ def main():
     commands = {
         "gpu": cmd_gpu, "chain": cmd_chain, "cpu": cmd_cpu,
         "index": cmd_index, "scrape": cmd_scrape, "ask": cmd_ask,
-        "trace": cmd_trace, "stats": cmd_stats, "verify": cmd_verify,
+        "trace": cmd_trace, "benchmark": cmd_benchmark,
+        "stats": cmd_stats, "verify": cmd_verify,
     }
     commands[args.command](args)
 
