@@ -2,30 +2,47 @@
 
 # Danny Toolkit v5 – RAG Pipeline (MEMEX)
 
+Dit document beschrijft de volledige RAG‑pipeline van MEMEX.
+
 ## 1. Ingestie
-- PDF, TXT, MD, CODE
-- `python ingest.py --batch --method paragraph`
-- `python ingest.py --batch --method code`
+
+Bronnen in `data/rag/documenten/`:
+
+- PDF
+- TXT
+- MD
+- CODE
+- Batch ingest via:
+  - `python ingest.py --batch --method paragraph`
+  - `python ingest.py --batch --method code`
 
 ## 2. Chunking
-- Paragraph‑gebaseerd
-- Code‑aware
-- Metadata per chunk
+
+- Paragraph‑gebaseerd voor gewone tekst
+- Code‑aware chunking voor broncode
+- Metadata per chunk:
+  - pad
+  - type
+  - timestamp
 
 ## 3. Embeddings
+
 - Voyage embeddings
-- ChromaDB opslag
+- Vectoren opgeslagen in ChromaDB (`data/rag/chromadb/`)
 
 ## 4. Query Flow
-1. Vraag → SwarmEngine
-2. Router → RAGAgent
-3. PLAN‑fase
+
+1. Gebruiker stelt vraag
+2. SwarmEngine routeert naar RAGAgent / ResearchAgent
+3. PLAN‑fase: entiteiten en intentie bepalen
 4. Query naar ChromaDB
-5. Top‑k documenten
-6. Synthese via LLM
-7. Antwoord + bronnen
+5. Top‑k documenten ophalen
+6. Context + vraag naar LLM
+7. Antwoord + bronverwijzingen terug
 
 ## 5. Kwaliteitsprincipes
-- Altijd bronverwijzingen
-- Geen hallucinaties
-- Logging van queries
+
+- Altijd bronverwijzingen tonen
+- Geen hallucinaties zonder bron
+- Logging van queries voor debugging
+- Geen destructieve acties op basis van RAG alleen

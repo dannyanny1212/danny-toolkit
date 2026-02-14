@@ -2,32 +2,48 @@
 
 # Danny Toolkit v5 – Agent Reference
 
+Dit document beschrijft de belangrijkste agents, hun rol en hun typische gebruik.
+
 ## 1. Architectuur
+
 Agents draaien bovenop:
-- SwarmEngine
-- PrometheusBrain
-- Governor
+
+- SwarmEngine (orchestratie)
+- PrometheusBrain (rol/fallback)
+- Governor (veiligheid)
 
 ## 2. Kernagents
+
 ### CodeAgent
-- Code genereren, refactoren, analyseren
+- Rol: Code genereren, refactoren, analyseren
+- Input: Beschrijving, bestaande code, foutmeldingen
+- Output: Python‑code, uitleg, diffs
 
 ### RAGAgent / ResearchAgent
-- Kennis opvragen via MEMEX
+- Rol: Kennis opvragen via MEMEX
+- Input: Vraag in natuurlijke taal
+- Output: Samenvatting + bronnen
 
 ### VisionAgent / PixelEyeAgent
-- Afbeeldingen analyseren
+- Rol: Afbeeldingen analyseren
+- Input: Image + prompt
+- Output: Detecties, verificaties
 
 ### OSAgent
-- OS‑automatisatie
+- Rol: OS‑automatisatie
+- Input: Taakbeschrijving
+- Output: Acties / logs
 
 ### QuestAgent
-- Diagnostische workflows
+- Rol: Diagnostische workflows
+- Output: Stappenplan, status
 
 ### OracleAgent
-- Self‑healing
+- Rol: Self‑healing
+- Output: Diagnose + fix‑voorstel
 
 ## 3. Agent Lifecycle
+
 1. SwarmEngine selecteert agents
 2. PrometheusBrain wijst rol + model toe
 3. Governor valideert input
