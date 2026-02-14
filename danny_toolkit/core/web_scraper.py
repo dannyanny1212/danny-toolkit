@@ -8,10 +8,15 @@ Ondersteunt:
 """
 
 import re
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, urlencode, parse_qs
 
 import requests
 from bs4 import BeautifulSoup
+
+try:
+    import trafilatura
+except ImportError:
+    trafilatura = None
 
 
 def scrape_url(url: str, chunk_size: int = 500, overlap: int = 50) -> list[dict]:
@@ -67,7 +72,7 @@ def scrape_with_depth(start_url: str, depth: int = 0,
     all_chunks = []
 
     def _crawl(url: str, current_depth: int):
-        normalized = url.rstrip("/")
+        normalized = _normalize_url(url)
         if normalized in visited:
             return
         visited.add(normalized)
@@ -116,34 +121,68 @@ def _fetch(url: str) -> str | None:
 
 
 def _parse_html(html: str) -> tuple[str, str]:
-    """Parse HTML en retourneer (title, schone_tekst)."""
-    soup = BeautifulSoup(html, "html.parser")
+    """Parse HTML en retourneer (title, schone_tekst).
 
-    # Haal titel op
+    Gebruikt trafilatura voor main-content extractie (filtert boilerplate).
+    Fallback naar BS4 als trafilatura niet beschikbaar is of niets retourneert.
+    """
+    # Titel altijd via BS4
+    soup = BeautifulSoup(html, "html.parser")
     title = ""
     if soup.title and soup.title.string:
         title = soup.title.string.strip()
 
-    # Verwijder ongewenste elementen
+    # Primary: trafilatura (haalt alleen main-content op)
+    if trafilatura is not None:
+        text = trafilatura.extract(html, include_comments=False,
+                                   include_tables=True, deduplicate=True)
+        if text and text.strip():
+            return title, text.strip()
+
+    # Fallback: BS4 tag-stripping
     for tag in soup(["script", "style", "nav", "footer", "header",
                      "aside", "form", "noscript", "iframe"]):
         tag.decompose()
 
-    # Extraheer tekst
     text = soup.get_text(separator="\n", strip=True)
-
-    # Clean up
     text = re.sub(r"\n{3,}", "\n\n", text)
     text = re.sub(r"[ \t]+", " ", text)
 
     return title, text.strip()
 
 
+def _normalize_url(url: str) -> str:
+    """Normaliseer een URL voor consistente vergelijking.
+
+    - Lowercase scheme + netloc
+    - Strip trailing slash
+    - Verwijder fragment
+    - Sorteer query parameters
+    """
+    parsed = urlparse(url)
+    scheme = parsed.scheme.lower()
+    netloc = parsed.netloc.lower()
+    path = parsed.path.rstrip("/") or "/"
+
+    # Sorteer query parameters
+    query = ""
+    if parsed.query:
+        params = parse_qs(parsed.query, keep_blank_values=True)
+        sorted_params = sorted(params.items())
+        query = urlencode(sorted_params, doseq=True)
+
+    normalized = f"{scheme}://{netloc}{path}"
+    if query:
+        normalized += f"?{query}"
+    return normalized
+
+
 def _extract_internal_links(html: str, base_url: str) -> list[str]:
     """Extraheer interne links uit HTML."""
     soup = BeautifulSoup(html, "html.parser")
-    base_domain = urlparse(base_url).netloc
+    base_domain = urlparse(base_url).netloc.lower()
     links = []
+    seen = set()
 
     for a in soup.find_all("a", href=True):
         href = a["href"]
@@ -151,20 +190,17 @@ def _extract_internal_links(html: str, base_url: str) -> list[str]:
 
         # Alleen interne links (zelfde domein)
         parsed = urlparse(full_url)
-        if parsed.netloc != base_domain:
+        if parsed.netloc.lower() != base_domain:
             continue
 
         # Skip anchors, mailto, javascript
         if parsed.scheme not in ("http", "https"):
             continue
 
-        # Strip fragment
-        clean_url = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
-        if parsed.query:
-            clean_url += f"?{parsed.query}"
-
-        if clean_url not in links:
-            links.append(clean_url)
+        normalized = _normalize_url(full_url)
+        if normalized not in seen:
+            seen.add(normalized)
+            links.append(normalized)
 
     return links
 

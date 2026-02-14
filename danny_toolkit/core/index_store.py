@@ -1,4 +1,5 @@
 # danny_toolkit/core/index_store.py — Persistent FAISS index + metadata
+import hashlib
 import json
 import numpy as np
 import faiss
@@ -19,8 +20,18 @@ class IndexStore:
         self.index = None
         self.metadata = []
 
+    @staticmethod
+    def _hash(text: str) -> str:
+        """MD5-hash van chunk-tekst voor deduplicatie."""
+        return hashlib.md5(text.encode()).hexdigest()
+
     def build(self, vectors: np.ndarray, metadata: list[dict]):
         """Build and save a new index from vectors + metadata."""
+        # Zorg dat elke metadata entry een hash heeft
+        for m in metadata:
+            if "hash" not in m:
+                m["hash"] = self._hash(m.get("text", ""))
+
         dim = vectors.shape[1]
         n = vectors.shape[0]
 
@@ -38,18 +49,46 @@ class IndexStore:
         self._save()
 
     def append(self, vectors: np.ndarray, metadata: list[dict]):
-        """Append vectors + metadata to the existing index, or create a new one."""
+        """Append vectors + metadata to the existing index, or create a new one.
+
+        Deduplicatie via MD5-hash: chunks die al bestaan worden geskipt.
+        """
+        # Zorg dat nieuwe chunks een hash hebben
+        for m in metadata:
+            if "hash" not in m:
+                m["hash"] = self._hash(m.get("text", ""))
+
         if not self.exists():
             self.build(vectors, metadata)
             return
 
         self._load()
+
+        # Bestaande hashes ophalen
+        existing_hashes = {m.get("hash") for m in self.metadata if "hash" in m}
+
+        # Filter duplicaten
+        new_indices = [
+            i for i, m in enumerate(metadata)
+            if m["hash"] not in existing_hashes
+        ]
+        n_skipped = len(metadata) - len(new_indices)
+
+        if not new_indices:
+            print(f"  {n_skipped} duplicaten geskipt, 0 nieuwe chunks")
+            return
+
+        new_vectors = vectors[new_indices]
+        new_metadata = [metadata[i] for i in new_indices]
+
         old_vectors = np.load(self.vectors_path)
-        all_vectors = np.vstack([old_vectors, vectors]).astype("float32")
-        all_metadata = self.metadata + metadata
+        all_vectors = np.vstack([old_vectors, new_vectors]).astype("float32")
+        all_metadata = self.metadata + new_metadata
 
         self.index = None  # Reset zodat build() een nieuwe index maakt
         self.build(all_vectors, all_metadata)
+        if n_skipped > 0:
+            print(f"  {n_skipped} duplicaten geskipt, {len(new_indices)} nieuwe chunks")
         print(f"  Index uitgebreid: {all_vectors.shape[0]} chunks totaal")
 
     def search(self, query_vec: np.ndarray, k: int = 5) -> list[dict]:
