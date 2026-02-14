@@ -1,22 +1,42 @@
 # danny_toolkit/pipelines/rag_chain.py
 
-from danny_toolkit.core.embeddings import TorchGPUEmbeddings
-from danny_toolkit.core.faiss_index import FaissIndex
-from danny_toolkit.core.gpu import get_device
-from transformers import AutoModelForCausalLM, AutoTokenizer
+import gc
+
+try:
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+    _HAS_TRANSFORMERS = True
+except ImportError:
+    _HAS_TRANSFORMERS = False
+
 import torch
 
+from danny_toolkit.core.embeddings import TorchGPUEmbeddings
+from danny_toolkit.core.faiss_index import FaissIndex
+
+
 def load_llm(model_name="microsoft/Phi-3-mini-4k-instruct"):
-    device = get_device()
+    if not _HAS_TRANSFORMERS:
+        raise ImportError(
+            "rag_chain vereist 'transformers'. "
+            "Installeer met: pip install transformers"
+        )
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
-        dtype=torch.float16,
-        device_map="auto"
+        torch_dtype=torch.float16,
+        device_map="auto",
     )
     return tokenizer, model
 
-def generate_answer(tokenizer, model, question, context):
+
+def generate_answer(tokenizer, model, question, context, max_context_tokens=3072):
+    # Truncate context to stay within model's 4k window
+    context_ids = tokenizer.encode(context, add_special_tokens=False)
+    if len(context_ids) > max_context_tokens:
+        context = tokenizer.decode(
+            context_ids[:max_context_tokens], skip_special_tokens=True
+        )
+
     prompt = (
         "Je bent een behulpzame AI-assistent.\n"
         "Gebruik de context hieronder om de vraag te beantwoorden.\n\n"
@@ -26,13 +46,21 @@ def generate_answer(tokenizer, model, question, context):
     )
 
     inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-    output = model.generate(
-        **inputs,
-        max_new_tokens=256,
-        temperature=0.2,
-        top_p=0.9
-    )
-    return tokenizer.decode(output[0], skip_special_tokens=True)
+    input_len = inputs["input_ids"].shape[1]
+
+    with torch.inference_mode():
+        output = model.generate(
+            **inputs,
+            max_new_tokens=256,
+            do_sample=True,
+            temperature=0.2,
+            top_p=0.9,
+        )
+
+    # Slice off the prompt tokens so only the answer is returned
+    answer_ids = output[0][input_len:]
+    return tokenizer.decode(answer_ids, skip_special_tokens=True)
+
 
 def run_rag_chain():
     print("=== GPU-RAG Chain ===")
@@ -49,6 +77,9 @@ def run_rag_chain():
     embedder = TorchGPUEmbeddings()
     doc_vecs = embedder.embed(docs)
 
+    print(f"Embeddings shape: {doc_vecs.shape}")
+    print("Building FAISS index...")
+
     # 3. FAISS index
     index = FaissIndex(dim=doc_vecs.shape[1])
     index.train(doc_vecs)
@@ -59,20 +90,28 @@ def run_rag_chain():
 
     # 5. Retrieval
     D, I = index.search(q_vec, k=3)
-    retrieved_docs = [docs[idx] for idx in I[0]]
+
+    # Filter out invalid FAISS indices (-1 means no result)
+    retrieved_docs = [docs[idx] for idx in I[0] if 0 <= idx < len(docs)]
 
     print("\n=== Retrieved Docs ===")
     for d in retrieved_docs:
         print("-", d)
 
-    # 6. LLM laden
+    # 6. Free embedder VRAM before loading the LLM
+    del embedder, doc_vecs, q_vec
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+    # 7. LLM laden
     print("\nLLM laden...")
     tokenizer, model = load_llm()
 
-    # 7. Context bouwen
+    # 8. Context bouwen
     context = "\n".join(retrieved_docs)
 
-    # 8. Antwoord genereren
+    # 9. Antwoord genereren
     answer = generate_answer(tokenizer, model, question, context)
 
     print("\n=== Antwoord ===")
