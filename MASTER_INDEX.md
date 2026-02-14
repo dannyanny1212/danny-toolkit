@@ -67,7 +67,14 @@ Alle subsystemen, architectuuronderdelen en technische referenties zijn hier ges
 
 ---
 
-## 7. Aanvullende Documentatie (optioneel)
+## 7. Workflow & Governance
+
+- UPGRADE_WORKFLOW.md
+- BRANCH_STRATEGY.md
+- HARDENING_CHECKLIST.md
+- RELEASE_NOTES_TEMPLATE.md
+
+## 8. Aanvullende Documentatie (optioneel)
 
 - CHANGELOG.md
 - CONTRIBUTING.md
@@ -75,7 +82,7 @@ Alle subsystemen, architectuuronderdelen en technische referenties zijn hier ges
 
 ---
 
-## 8. Navigatie
+## 9. Navigatie
 
 Gebruik dit document als centrale hub om snel naar subsystemen, architectuuronderdelen of technische referenties te springen.
 Alle documenten zijn modulair en onafhankelijk leesbaar.

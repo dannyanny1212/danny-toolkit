@@ -171,6 +171,10 @@ Last stable pre-v5 release. Includes:
 - No logic changes, no new features
 - Purpose: major release alignment (COSMIC_OMEGA_V5)
 
+### v5.0.1 (branch fix/v5.0.1)
+- PATCH: versie-string consistentie fix in `danny_toolkit/core/config.py`
+- PATCH: security warning comment bij default `FASTAPI_SECRET_KEY`
+
 ## Guidelines for Claude Code
 
 Claude should:
