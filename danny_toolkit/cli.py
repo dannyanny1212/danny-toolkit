@@ -258,7 +258,7 @@ def cmd_ask(args):
 
     # 2. Retrieve (overfetch bij --source filter)
     store._load()
-    fetch_k = min(args.top_k * 10, store.index.ntotal) if args.source else args.top_k
+    fetch_k = store.index.ntotal if args.source else args.top_k
     results = store.search(q_vec, k=fetch_k)
 
     if args.source:
