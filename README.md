@@ -180,6 +180,50 @@ danny-toolkit/
 
 ---
 
+## GPU‑acceleratie (CUDA 12.1 + llama‑cpp‑python 0.3.4)
+
+Deze toolkit ondersteunt volledige GPU‑acceleratie voor GGUF‑modellen via
+`llama-cpp-python` 0.3.4 (cu121). Getest en geverifieerd op:
+
+| Component | Versie / Specificatie |
+|-----------|----------------------|
+| GPU | NVIDIA RTX 3060 Ti |
+| CUDA Toolkit | 12.1 |
+| OS | Windows 10/11 |
+| Python | 3.11 |
+| llama-cpp-python | 0.3.4 (cu121 pre-built wheel) |
+| Model | Phi‑3 Mini Instruct Q4_K_M (3.82B params) |
+
+### Performance
+
+- Alle 33/33 layers offloaded naar CUDA
+- Model VRAM: ~2.2 GiB
+- KV‑cache VRAM: ~768 MiB
+- Latency: ~243 ms voor 30 tokens
+
+### Setup
+
+```bash
+# Python 3.11 venv
+py -3.11 -m venv venv311
+venv311\Scripts\activate
+
+# llama-cpp-python met CUDA
+pip install llama-cpp-python==0.3.4 --only-binary=llama-cpp-python \
+    --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu121
+
+# GGUF model
+# Download Phi-3 Q4_K_M naar C:\models\phi3.Q4_K_M.gguf
+```
+
+### Vereisten
+
+- CUDA Toolkit 12.1 geïnstalleerd (`C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\`)
+- NVIDIA driver met CUDA 12.x support
+- Minimaal 4 GiB VRAM
+
+---
+
 ## Safety Protocols
 
 - **Governor**: Circuit-breaker in PrometheusBrain voorkomt API-spam

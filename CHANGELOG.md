@@ -1,9 +1,26 @@
-# CHANGELOG.md
+# Changelog
+Alle belangrijke wijzigingen aan dit project worden hier gedocumenteerd.
 
-# Danny Toolkit – Changelog
+---
 
-Alle noemenswaardige wijzigingen worden hier gedocumenteerd.
-Format gebaseerd op [Keep a Changelog](https://keepachangelog.com/) en [Semantic Versioning](https://semver.org/).
+## [1.2.0-gpu-phi3] – 2026-02-14
+### Added
+- Volledige GPU‑accelerated RAG‑pipeline (`rag_gpu.py`)
+- Ondersteuning voor Phi‑3 Mini Instruct (GGUF) via `llama-cpp-python` 0.3.4 (cu121)
+- FAISS GPU/CPU hybrid index logic in `faiss_index.py`
+- Automatische CUDA‑detectie en volledige layer‑offload naar RTX 3060 Ti
+- Benchmarksectie toegevoegd aan README
+- Documentatie voor CUDA‑installatie, GPU‑vereisten en GGUF‑modelgebruik
+
+### Changed
+- `rag_chain.py` geüpdatet voor GGUF‑modellen en CUDA‑offload
+- Pipeline geoptimaliseerd voor 30 tok / 243 ms op Phi‑3 Q4_K_M
+
+### Performance
+- Phi‑3 Mini Instruct Q4_K_M (3.82B params) draait volledig op GPU
+- Model VRAM: ~2.2 GiB
+- KV‑cache VRAM: ~768 MiB
+- Totale latency: ~243 ms voor 30 tokens
 
 ---
 
