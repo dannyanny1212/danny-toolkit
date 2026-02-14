@@ -34,6 +34,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
     "black>=23.0.0",
     "flake8>=6.0.0",
 ]
@@ -54,6 +55,8 @@ omega = "danny_toolkit.main_omega:main"
 heartbeat = "danny_toolkit.daemon.heartbeat:main"
 danny-api = "fastapi_server:main"
 danny-bot = "telegram_bot:main"
+danny-test = "danny_toolkit.commands.test_runner:main"
+danny-ci = "danny_toolkit.commands.test_runner:ci"
 
 [project.urls]
 Homepage = "https://github.com/dannyanny1212/danny-toolkit"
@@ -64,3 +67,9 @@ include = ["danny_toolkit*"]
 
 [tool.setuptools.package-data]
 danny_toolkit = ["*.json", "*.txt"]
+
+[tool.pytest.ini_options]
+addopts = "--cov=danny_toolkit --cov-report=term-missing"
+markers = [
+    "stress: Stress & concurrency tests (excluded by default, use --stress)",
+]
