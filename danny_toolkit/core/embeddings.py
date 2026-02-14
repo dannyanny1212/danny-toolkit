@@ -609,9 +609,13 @@ def lijst_providers() -> List[str]:
 # GPU-ACCELERATED EMBEDDING PROVIDER
 # =============================================================================
 
-from transformers import AutoTokenizer, AutoModel
-import torch
-from danny_toolkit.core.gpu import get_device
+try:
+    from transformers import AutoTokenizer, AutoModel
+    import torch
+    from danny_toolkit.core.gpu import get_device
+    _HAS_TORCH_GPU = True
+except ImportError:
+    _HAS_TORCH_GPU = False
 
 
 class TorchGPUEmbeddings:
@@ -621,13 +625,15 @@ class TorchGPUEmbeddings:
     """
 
     def __init__(self, model_name: str = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"):
+        if not _HAS_TORCH_GPU:
+            raise ImportError("TorchGPUEmbeddings vereist 'transformers' en 'torch'. Installeer met: pip install transformers torch")
         self.model_name = model_name
         self.device = get_device()
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model = AutoModel.from_pretrained(model_name).to(self.device)
         self.model.eval()
 
-    @torch.inference_mode()
+    @(torch.inference_mode() if _HAS_TORCH_GPU else lambda f: f)
     def embed(self, texts: list[str], batch_size: int = 32):
         if len(texts) <= batch_size:
             enc = self.tokenizer(
