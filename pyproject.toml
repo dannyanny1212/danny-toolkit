@@ -41,8 +41,10 @@ full = [
 ]
 
 [project.scripts]
+danny = "danny_toolkit.cli:main"
 danny-toolkit = "danny_toolkit.launcher:main"
 danny-gui = "danny_toolkit.gui_launcher:main"
+danny-rag = "danny_toolkit.rag_gui:main"
 morning-protocol = "danny_toolkit.brain.morning_protocol:run_morning_protocol"
 brain = "danny_toolkit.brain.brain_cli:main"
 omega = "danny_toolkit.main_omega:main"
