@@ -12,11 +12,15 @@ Gebruik:
     bus.publish(EventTypes.WEATHER_UPDATE, {"stad": "Amsterdam", "temp": 12})
 """
 
+import asyncio
+import logging
 import threading
 import time
 from collections import defaultdict
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 
 class EventTypes:
@@ -160,7 +164,16 @@ class NeuralBus:
         # Lever af buiten de lock (voorkom deadlocks)
         for cb in callbacks:
             try:
-                cb(event)
+                if asyncio.iscoroutinefunction(cb):
+                    # Async callback — dispatch via event loop
+                    try:
+                        loop = asyncio.get_running_loop()
+                        loop.create_task(self._safe_async_dispatch(cb, event))
+                    except RuntimeError:
+                        # Geen actieve loop — run blocking
+                        asyncio.run(cb(event))
+                else:
+                    cb(event)
                 self._stats["events_afgeleverd"] += 1
             except Exception:
                 self._stats["fouten"] += 1
@@ -232,6 +245,52 @@ class NeuralBus:
                 result[et] = [e.to_dict() for e in events]
 
         return result
+
+    def get_context_stream(
+        self,
+        event_types: List[str] = None,
+        count: int = 20,
+    ) -> str:
+        """
+        Geeft een geformateerde tekst van recente events voor LLM injectie.
+
+        Voorkomt hallucinaties door de AI te gronden in de echte
+        systeemstaat. Injecteer dit als systeem-context in elke prompt.
+
+        Args:
+            event_types: Welke types ophalen (None = allemaal)
+            count: Totaal aantal events (over alle types)
+
+        Returns:
+            Leesbare string voor LLM context, of lege string.
+        """
+        with self._lock:
+            types = event_types or list(self._history.keys())
+            # Verzamel alle events, sorteer op timestamp
+            all_events: List[BusEvent] = []
+            for et in types:
+                all_events.extend(self._history.get(et, []))
+
+        if not all_events:
+            return ""
+
+        all_events.sort(key=lambda e: e.timestamp)
+        recent = all_events[-count:]
+
+        lines = ["[REAL-TIME SYSTEM STATE]"]
+        for e in recent:
+            t = e.timestamp.strftime("%H:%M:%S")
+            data_str = ", ".join(f"{k}={v}" for k, v in e.data.items())
+            lines.append(f"- {t} | {e.bron}: {e.event_type} -> {data_str}")
+        return "\n".join(lines)
+
+    async def _safe_async_dispatch(self, callback: Callable, event: BusEvent):
+        """Veilige uitvoering van async callbacks."""
+        try:
+            await callback(event)
+        except Exception as e:
+            logger.error("Async callback fout: %s", e)
+            self._stats["fouten"] += 1
 
     def statistieken(self) -> dict:
         """Geef bus statistieken."""
