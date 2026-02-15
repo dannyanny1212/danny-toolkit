@@ -1,154 +1,70 @@
+# danny_toolkit/brain/__init__.py
 """
-Danny's AI Ecosysteem - Central Brain Module.
-
-Dit is het hart van het geïntegreerde AI-ecosysteem dat alle 31+ apps
-orchestreert via Function Calling en Unified Memory.
+Danny's AI Ecosysteem - Central Brain Module v6.0
 
 Componenten:
-- CentralBrain: De hoofd orchestrator met Function Calling
-- UnifiedMemory: Gedeelde vector database voor alle apps
-- Workflows: Super-workflows (Health Loop, Deep Work Loop, etc.)
-- BrainCLI: Command-line interface
-- TrinitySymbiosis: Verbinding tussen Mind, Soul en Body
-- PrometheusBrain: Federated Swarm Intelligence (17 Nodes)
-- NexusBridge: Verbinding tussen NEXUS (Pixel) en Central Brain
+- Core Intelligence: CentralBrain, PrometheusBrain, Governor, CorticalStack
+- v6.0 Inventions: Strategist, Tribunal, VoidWalker, Artificer, BlackBox, etc.
+- Anti-Hallucination: CitationMarshall, RealityAnchor, TruthAnchor
+- Subsystems: NexusBridge, VisualNexus, SingularityEngine, etc.
 """
 
+# --- CORE INTELLIGENCE ---
 from .central_brain import CentralBrain
-from .unified_memory import UnifiedMemory
-from .workflows import WorkflowEngine, SUPER_WORKFLOWS
-from .brain_cli import BrainCLI
-
-# NEXUS Brain Integration
-from .nexus_bridge import (
-    NexusBridge,
-    NexusOracleMode,
-    create_nexus_bridge,
-    get_nexus_greeting,
-)
-
-# Digital Sanctuary Dashboard
-from .sanctuary_dashboard import (
-    SanctuaryDashboard,
-    get_sanctuary,
-    show_hibernation,
-    show_awakening,
-    show_live,
-    show_biology,
-    goodnight,
-    goodmorning,
-)
-
-# Dream Monitor - Passive Observation Mode
-from .dream_monitor import (
-    dream_monitor,
-    quick_peek,
-)
-
-# Morning Protocol - 3-Laags Verificatie
-from .morning_protocol import (
-    run_morning_protocol,
-    quick_check,
-)
-
-# Prometheus Protocol - Federated Swarm Intelligence
-from .trinity_omega import (
-    PrometheusBrain,
-    CosmicRole,
-    NodeTier,
-    TaskPriority,
-    AgentNode,
-    SwarmMetrics,
-    TaskResult,
-    get_prometheus,
-    route,
-)
-
-# Legacy Trinity Symbiosis (backwards compatibility)
-from .trinity_symbiosis import (
-    TrinitySymbiosis,
-    TrinityRole,
-    TrinityChannel,
-    COSMIC_FAMILY_CONFIG,
-    get_trinity,
-    connect_iolaax,
-    connect_pixel,
-    connect_daemon,
-    connect_echo,
-    connect_unity,
-    connect_ember,
-    connect_brave,
-    connect_joy,
-    connect_cosmic_family,
-    emit_trinity_event,
-)
-
-# Visual Nexus
-from .visual_nexus import VisualNexus, build_visual_nexus
-
-# Cortical Stack - Persistent Memory
+from .trinity_omega import PrometheusBrain
+from .governor import OmegaGovernor
 from .cortical_stack import CorticalStack, get_cortical_stack
+from .unified_memory import UnifiedMemory
+
+# --- v6.0 INVENTIONS (SELF-EFFICIENCY) ---
+# Lazy — heavy deps (groq, sentence-transformers, duckduckgo-search)
+try:
+    from .strategist import Strategist
+    from .tribunal import Tribunal
+    from .adversarial_tribunal import AdversarialTribunal
+    from .void_walker import VoidWalker
+    from .artificer import Artificer
+    from .black_box import BlackBox
+    from .the_mirror import TheMirror
+    from .ghost_writer import GhostWriter
+    from .dreamer import Dreamer
+except ImportError:
+    pass
+
+# --- ANTI-HALLUCINATION & TRUTH ---
+try:
+    from .citation_marshall import CitationMarshall
+    from .reality_anchor import RealityAnchor
+    from .truth_anchor import TruthAnchor
+except ImportError:
+    pass
+
+# --- SUBSYSTEMS & INFRASTRUCTURE ---
+from .nexus_bridge import NexusBridge
+from .visual_nexus import VisualNexus
+from .singularity import SingularityEngine
+from .proactive import ProactiveEngine
+from .file_guard import FileGuard
+from .workflows import WorkflowEngine
+from .brain_cli import BrainCLI
+from .project_map import ProjectMap
 
 __all__ = [
-    # Visual Nexus
-    "VisualNexus",
-    "build_visual_nexus",
-    # Cortical Stack
-    "CorticalStack",
-    "get_cortical_stack",
-    # Central Brain
-    "CentralBrain",
-    "UnifiedMemory",
-    "WorkflowEngine",
-    "SUPER_WORKFLOWS",
-    "BrainCLI",
-    # NEXUS Brain Integration
-    "NexusBridge",
-    "NexusOracleMode",
-    "create_nexus_bridge",
-    "get_nexus_greeting",
-    # Digital Sanctuary Dashboard
-    "SanctuaryDashboard",
-    "get_sanctuary",
-    "show_hibernation",
-    "show_awakening",
-    "show_live",
-    "show_biology",
-    "goodnight",
-    "goodmorning",
-    # Dream Monitor
-    "dream_monitor",
-    "quick_peek",
-    # Morning Protocol
-    "run_morning_protocol",
-    "quick_check",
-    # Legacy Trinity Symbiosis
-    "TrinitySymbiosis",
-    "TrinityRole",
-    "TrinityChannel",
-    "COSMIC_FAMILY_CONFIG",
-    "get_trinity",
-    "connect_iolaax",
-    "connect_pixel",
-    "connect_daemon",
-    "connect_echo",
-    "connect_unity",
-    "connect_ember",
-    "connect_brave",
-    "connect_joy",
-    "connect_cosmic_family",
-    "emit_trinity_event",
-    # Prometheus Protocol - Federated Swarm Intelligence
-    "PrometheusBrain",
-    "CosmicRole",
-    "NodeTier",
-    "TaskPriority",
-    "AgentNode",
-    "SwarmMetrics",
-    "TaskResult",
-    "get_prometheus",
-    "route",
+    # Core Intelligence
+    "CentralBrain", "PrometheusBrain", "OmegaGovernor",
+    "CorticalStack", "get_cortical_stack", "UnifiedMemory",
+    # v6.0 Inventions
+    "Strategist", "Tribunal", "AdversarialTribunal",
+    "VoidWalker", "Artificer", "BlackBox",
+    "TheMirror", "GhostWriter", "Dreamer",
+    # Anti-Hallucination
+    "CitationMarshall", "RealityAnchor", "TruthAnchor",
+    # Subsystems
+    "NexusBridge", "VisualNexus", "SingularityEngine",
+    "ProactiveEngine", "FileGuard", "WorkflowEngine",
+    # Utils
+    "ProjectMap", "BrainCLI",
 ]
 
-__version__ = "4.0.0"
+__version__ = "6.0.0"
 __author__ = "Danny"
