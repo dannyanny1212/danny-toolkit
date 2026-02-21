@@ -642,8 +642,12 @@ except (ImportError, RuntimeError):
 
 class TorchGPUEmbeddings(EmbeddingProvider):
     """
-    GPU-accelerated embedding provider using HuggingFace models.
-    Returns CPU tensors so FAISS (CPU or GPU) can consume them.
+    Thread-safe GPU-accelerated embedding provider (~400MB VRAM).
+
+    Het model wordt slechts één keer geladen (Singleton via get_torch_embedder).
+    Alle 347 micro-agents tappen uit dezelfde gedeelde instantie.
+    Bij GPU-fout: automatische fallback naar CPU.
+    Noodrem: force_flush() vernietigt het model en leegt VRAM.
     """
 
     naam = "torch_gpu"
@@ -652,11 +656,29 @@ class TorchGPUEmbeddings(EmbeddingProvider):
         if not _HAS_TORCH_GPU:
             raise ImportError("TorchGPUEmbeddings vereist 'transformers' en 'torch'. Installeer met: pip install transformers torch")
         self.model_name = model_name
-        self.device = get_device()
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModel.from_pretrained(model_name).to(self.device)
-        self.model.eval()
+
+        # GPU met automatische CPU fallback
+        target_device = get_device()
+        try:
+            self.device = target_device
+            self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+            self.model = AutoModel.from_pretrained(model_name).to(self.device)
+            self.model.eval()
+        except Exception as e:
+            if str(target_device) != "cpu":
+                logger.warning("GPU laden mislukt (%s), fallback naar CPU", e)
+                self.device = torch.device("cpu")
+                self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+                self.model = AutoModel.from_pretrained(model_name).to(self.device)
+                self.model.eval()
+            else:
+                raise
+
         self.dimensies = self.model.config.hidden_size
+        logger.info(
+            "TorchGPUEmbeddings geladen op %s (%dd)",
+            str(self.device).upper(), self.dimensies,
+        )
 
     def _masked_mean_pool(self, last_hidden_state, attention_mask):
         """Mean pooling met attention mask (negeert padding tokens)."""
@@ -706,3 +728,23 @@ def get_torch_embedder(
             if _torch_gpu_instance is None:
                 _torch_gpu_instance = TorchGPUEmbeddings(model_name)
     return _torch_gpu_instance
+
+
+def force_flush_embeddings():
+    """Noodrem: vernietigt het embedding model en leegt VRAM.
+
+    Gebruik wanneer Ollama of een ander proces alle VRAM opeist.
+    Na flush moet get_torch_embedder() opnieuw worden aangeroepen.
+    """
+    global _torch_gpu_instance
+    with _torch_gpu_lock:
+        if _torch_gpu_instance is not None:
+            import gc
+            logger.warning("VRAM force flush — embedding model wordt vernietigd")
+            del _torch_gpu_instance.model
+            del _torch_gpu_instance.tokenizer
+            _torch_gpu_instance = None
+            gc.collect()
+            if _HAS_TORCH_GPU and torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            logger.info("VRAM flush voltooid")
