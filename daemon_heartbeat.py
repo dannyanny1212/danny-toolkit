@@ -214,6 +214,13 @@ def main():
     try:
         asyncio.run(daemon.pulse())
     except KeyboardInterrupt:
+        try:
+            from danny_toolkit.brain.cortical_stack import (
+                get_cortical_stack,
+            )
+            get_cortical_stack().flush()
+        except Exception:
+            pass
         console.print(
             "\n[red]Daemon gestopt.[/red]"
         )

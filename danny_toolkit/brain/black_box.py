@@ -1,9 +1,12 @@
 import json
+import logging
 import time
 from typing import Optional
 
 from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import Kleur
+
+logger = logging.getLogger(__name__)
 
 try:
     from danny_toolkit.core.vector_store import VectorStore
@@ -35,8 +38,8 @@ class BlackBox:
                     embedding_provider=self._embedder,
                     db_file=self.db_path,
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("VectorStore init failed: %s", e)
 
     def record_crash(
         self,

@@ -670,6 +670,13 @@ def main():
                     render_payload(p, header)
 
     except KeyboardInterrupt:
+        try:
+            from danny_toolkit.brain.cortical_stack import (
+                get_cortical_stack,
+            )
+            get_cortical_stack().flush()
+        except Exception:
+            pass
         console.print(
             "\n[red]Shutting down...[/red]"
         )

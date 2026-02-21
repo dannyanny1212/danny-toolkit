@@ -1,8 +1,11 @@
+import logging
 import os
 import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 # Robuuste .env loader — vindt altijd de project root
 try:
@@ -266,8 +269,8 @@ class TheCortex:
                     },
                     bron="cortex",
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("NeuralBus publish error: %s", e)
 
     def find_related(
         self,
@@ -297,7 +300,8 @@ class TheCortex:
                 else:
                     results.append(node)
             return results
-        except Exception:
+        except Exception as e:
+            logger.debug("Graph traversal error: %s", e)
             return []
 
     def _find_related_sql(
@@ -343,7 +347,8 @@ class TheCortex:
                     f"(conf: {row[3]:.1f})"
                 )
             return "\n".join(lines)
-        except Exception:
+        except Exception as e:
+            logger.debug("Entity context error: %s", e)
             return ""
 
     async def hybrid_search(
@@ -383,8 +388,8 @@ class TheCortex:
                         ctx = self.get_entity_context(rel)
                         if ctx:
                             graph_context.append(ctx)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Entity expansion error: %s", e)
 
         # Stap 3: Combineer resultaten
         if graph_context:
@@ -419,7 +424,7 @@ class TheCortex:
                 stats["db_triples"] = self._stack._conn.execute(
                     "SELECT COUNT(*) FROM knowledge_graph"
                 ).fetchone()[0]
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Stats DB error: %s", e)
 
         return stats

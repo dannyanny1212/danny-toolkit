@@ -16,6 +16,7 @@ Setup:
     5. Zet je ID in .env (TELEGRAM_ADMIN_ID)
 """
 
+import atexit
 import asyncio
 import io
 import logging
@@ -47,6 +48,19 @@ logging.basicConfig(
     level=logging.INFO,
 )
 logger = logging.getLogger("DannyBot")
+
+
+def _shutdown():
+    """Flush CorticalStack op shutdown."""
+    try:
+        from danny_toolkit.brain.cortical_stack import (
+            get_cortical_stack,
+        )
+        get_cortical_stack().flush()
+    except Exception:
+        pass
+
+atexit.register(_shutdown)
 
 
 # ─── SINGLETON BRAIN ───────────────────────────────

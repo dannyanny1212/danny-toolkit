@@ -8,6 +8,7 @@ Het hart van Danny's AI Ecosysteem met:
 - Proactieve suggesties
 """
 
+import logging
 import os
 import json
 import asyncio
@@ -16,6 +17,8 @@ import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Callable
+
+logger = logging.getLogger(__name__)
 
 # Robuuste .env loader — vindt altijd de project root
 try:
@@ -773,7 +776,8 @@ Belangrijke regels:
             return any(
                 target in m for m in models
             )
-        except Exception:
+        except Exception as e:
+            logger.debug("Ollama check failed: %s", e)
             return False
 
     def _process_ollama(

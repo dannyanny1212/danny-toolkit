@@ -181,6 +181,18 @@ app.add_middleware(
 )
 
 
+@app.on_event("shutdown")
+async def _shutdown_event():
+    """Flush CorticalStack bij server shutdown."""
+    try:
+        from danny_toolkit.brain.cortical_stack import (
+            get_cortical_stack,
+        )
+        get_cortical_stack().flush()
+    except Exception:
+        pass
+
+
 # ─── ENDPOINTS ──────────────────────────────────────
 
 @app.post(

@@ -18,6 +18,7 @@ Gebruik:
         print(p.agent, p.type, p.content)
 """
 
+import atexit
 import asyncio
 import base64
 import json
@@ -82,8 +83,8 @@ def _log_to_cortical(
             details=details,
             source=source,
         )
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("Cortical log failed: %s", e)
 
 
 def _learn_from_input(prompt):
@@ -121,8 +122,20 @@ def _learn_from_input(prompt):
                         0.7,
                     )
                 break
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("Fact extraction failed: %s", e)
+
+
+def _shutdown():
+    """Flush CorticalStack op shutdown."""
+    if HAS_CORTICAL:
+        try:
+            stack = get_cortical_stack()
+            stack.flush()
+        except Exception:
+            pass
+
+atexit.register(_shutdown)
 
 
 # ── SWARM PAYLOAD ──
@@ -516,8 +529,8 @@ class MemexAgent(BrainAgent):
                     f"[Event] {actor}/{action}:"
                     f" {details}"
                 )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Cortical event search failed: %s", e)
 
         try:
             facts = stack.recall_all(
@@ -538,8 +551,8 @@ class MemexAgent(BrainAgent):
                         f"[Feit] {f.get('key', '?')}:"
                         f" {val}"
                     )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Cortical fact recall failed: %s", e)
 
         return results
 
@@ -670,8 +683,8 @@ class MemexAgent(BrainAgent):
                         all_fragments
                     )
                     used_web = True
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Navigator web search failed: %s", e)
 
         if all_fragments:
             context = "\n".join(
@@ -1004,8 +1017,8 @@ class PixelAgent(Agent):
                     else None
                 )
                 vision_status = "Brain fallback"
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Vision fallback failed: %s", e)
 
         display = (
             f"**Visuele Analyse:**\n{analysis}"
@@ -2093,8 +2106,8 @@ class SwarmEngine:
         for hook in hooks:
             try:
                 hook(*args)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Hook execution failed: %s", e)
 
     # ── MEMEX Context Layer ──
 
@@ -2271,8 +2284,8 @@ class SwarmEngine:
             )
             if result and "match" in result:
                 return result
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Oracle parse failed: %s", e)
 
         return {"match": False, "analyse": "onbekend"}
 
@@ -2589,8 +2602,8 @@ class SwarmEngine:
                  "input": user_input[:200]},
             )
             return targets
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Embedding router failed: %s", e)
 
         # Fallback: keyword matching
         lower = user_input.lower()
