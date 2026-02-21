@@ -52,37 +52,29 @@ class Artificer:
 
     async def execute_task(self, request: str) -> str:
         """
-        Full Artificer loop: search → forge → verify → execute → learn.
-        """
-        # 1. Check Registry (cached skills) — skip failed ones
-        registry = self._load_registry()
-        for name, meta in registry.items():
-            keywords = meta.get("keywords", [])
-            if any(kw.lower() in request.lower() for kw in keywords):
-                if meta.get("last_error"):
-                    print(f"{Kleur.GEEL}🔥 Artificer: Skill '{name}' "
-                          f"failed previously, forging new...{Kleur.RESET}")
-                    break
-                print(f"{Kleur.GROEN}🛠️  Artificer: Using existing "
-                      f"skill '{name}'...{Kleur.RESET}")
-                return self._run_script(name)
+        Full Artificer loop: forge → verify → execute → learn.
 
-        # 2. Forge New Skill
+        Always forges a fresh script — keyword matching was too loose
+        and caused stale skill reuse for unrelated tasks.
+        """
+        registry = self._load_registry()
+
+        # Always forge — each task gets its own script
         print(f"{Kleur.GEEL}🔥 Artificer: Forging new tool for "
-              f"'{request}'...{Kleur.RESET}")
+              f"'{request[:80]}'...{Kleur.RESET}")
         code = await self._write_script(request)
 
         if not code:
             return "❌ Artificer: Failed to generate code."
 
-        # 3. Verify (safety + syntax)
+        # Verify (safety + syntax)
         if not self._safety_check(code):
             return "❌ Artificer blocked unsafe code."
 
         if not self._syntax_check(code):
             return "❌ Artificer blocked code with syntax errors."
 
-        # 4. Save & Register
+        # Save & Register (incrementing skill number)
         skill_name = f"skill_{len(registry) + 1}.py"
         self._save_script(skill_name, code, request)
 
