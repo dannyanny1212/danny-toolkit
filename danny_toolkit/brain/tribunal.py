@@ -26,7 +26,7 @@ class Tribunal:
     """
     def __init__(self):
         self.client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
-        self.worker_model = "gemma2-9b-it"
+        self.worker_model = "mixtral-8x7b-32768"
         self.auditor_model = "llama-3.1-8b-instant"
 
     async def deliberate(self, user_prompt: str) -> str:

@@ -387,7 +387,7 @@ Belangrijke regels:
             return self._process_anthropic(system_message, use_tools, max_turns)
 
     # Groq modellen: primair (groot) en fallback (klein)
-    GROQ_MODEL_PRIMARY = "gemma2-9b-it"
+    GROQ_MODEL_PRIMARY = "mixtral-8x7b-32768"
     GROQ_MODEL_FALLBACK = "llama-3.1-8b-instant"
     # Ollama lokaal model
     OLLAMA_MODEL = "gemma3:4b"

@@ -79,7 +79,7 @@ class DevOpsDaemon:
 
     def __init__(self):
         self.client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
-        self.model = "gemma2-9b-it"
+        self.model = "mixtral-8x7b-32768"
         self.test_runner = Config.BASE_DIR / "run_all_tests.py"
         self.log_dir = Config.DATA_DIR / "logs" / "devops"
         self.log_dir.mkdir(parents=True, exist_ok=True)

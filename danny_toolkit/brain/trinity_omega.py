@@ -828,10 +828,10 @@ class PrometheusBrain:
     # Routers/simpele rollen → 8b (snel, spaart rate limit)
     # Specialisten → None (= 70b primary, default)
     MODEL_TIER = {
-        CosmicRole.NEXUS: "gemma2-9b-it",
-        CosmicRole.ECHO: "gemma2-9b-it",
-        CosmicRole.CHRONOS: "gemma2-9b-it",
-        CosmicRole.WEAVER: "gemma2-9b-it",
+        CosmicRole.NEXUS: "mixtral-8x7b-32768",
+        CosmicRole.ECHO: "mixtral-8x7b-32768",
+        CosmicRole.CHRONOS: "mixtral-8x7b-32768",
+        CosmicRole.WEAVER: "mixtral-8x7b-32768",
     }
 
     def _execute_with_role(

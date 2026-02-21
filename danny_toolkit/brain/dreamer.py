@@ -36,7 +36,7 @@ class Dreamer:
     """
     def __init__(self):
         self.client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
-        self.model = "gemma2-9b-it"
+        self.model = "mixtral-8x7b-32768"
 
     async def rem_cycle(self):
         """Full REM cycle — run at 04:00 via daemon_heartbeat."""
