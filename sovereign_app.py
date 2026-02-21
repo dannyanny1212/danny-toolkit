@@ -20,6 +20,13 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="repla
 import customtkinter as ctk
 from PIL import Image
 
+# VRAM monitor — veilig importeren (draait alleen als torch+CUDA beschikbaar)
+try:
+    from danny_toolkit.core.vram_manager import vram_rapport
+    _HAS_VRAM = True
+except ImportError:
+    _HAS_VRAM = False
+
 # Pad naar project root (waar dit script staat)
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 
@@ -171,6 +178,40 @@ class SovereignDashboard(ctk.CTk):
         )
         self.pulse_display.pack()
 
+        # VRAM Monitor
+        self.vram_header = ctk.CTkLabel(
+            self.status_sidebar, text="VRAM MONITOR",
+            font=("Segoe UI", 12, "bold"),
+        )
+        self.vram_header.pack(pady=(20, 5))
+
+        self.vram_bar = ctk.CTkProgressBar(
+            self.status_sidebar,
+            orientation="horizontal",
+            progress_color="#FF6600",
+        )
+        self.vram_bar.pack(padx=20, fill="x")
+        self.vram_bar.set(0)
+
+        self.vram_stats = ctk.CTkFrame(self.status_sidebar, fg_color="transparent")
+        self.vram_stats.pack(padx=10, fill="x", pady=(5, 0))
+
+        self.vram_gpu_label = ctk.CTkLabel(
+            self.vram_stats, text="GPU: --",
+            font=("Consolas", 10), text_color="gray", anchor="w",
+        )
+        self.vram_gpu_label.pack(fill="x")
+        self.vram_usage_label = ctk.CTkLabel(
+            self.vram_stats, text="Gebruik: -- / -- MB",
+            font=("Consolas", 10), text_color="gray", anchor="w",
+        )
+        self.vram_usage_label.pack(fill="x")
+        self.vram_status_label = ctk.CTkLabel(
+            self.vram_stats, text="Status: --",
+            font=("Consolas", 10), text_color="gray", anchor="w",
+        )
+        self.vram_status_label.pack(fill="x")
+
         # Status label
         self.status_label = ctk.CTkLabel(
             self.status_sidebar, text="IDLE",
@@ -202,7 +243,41 @@ class SovereignDashboard(ctk.CTk):
             color = "gray"
         self.pulse_display.configure(text_color=color)
 
+        # VRAM monitor update
+        self._update_vram()
+
         self.after(1000, self._update_live_meters)
+
+    def _update_vram(self):
+        if not _HAS_VRAM:
+            self.vram_gpu_label.configure(text="GPU: N/A (torch)")
+            self.vram_status_label.configure(text="Status: CPU only", text_color="gray")
+            return
+
+        rapport = vram_rapport()
+        if not rapport.get("beschikbaar"):
+            self.vram_gpu_label.configure(text="GPU: CUDA niet actief")
+            self.vram_status_label.configure(text="Status: CPU only", text_color="gray")
+            self.vram_bar.set(0)
+            return
+
+        totaal = rapport["totaal_mb"]
+        in_gebruik = rapport["in_gebruik_mb"]
+        vrij = rapport["vrij_mb"]
+        ratio = in_gebruik / totaal if totaal > 0 else 0
+
+        self.vram_bar.set(ratio)
+        self.vram_gpu_label.configure(text=f"GPU: {rapport['gpu_naam']}")
+        self.vram_usage_label.configure(
+            text=f"Gebruik: {in_gebruik:,} / {totaal:,} MB",
+        )
+
+        if rapport["gezond"]:
+            self.vram_status_label.configure(text=f"Vrij: {vrij:,} MB  [OK]", text_color="#00FF00")
+            self.vram_bar.configure(progress_color="#FF6600")
+        else:
+            self.vram_status_label.configure(text=f"Vrij: {vrij:,} MB  [!]", text_color="red")
+            self.vram_bar.configure(progress_color="red")
 
     def _append(self, text):
         self.console.insert("end", text)
