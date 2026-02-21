@@ -11,6 +11,7 @@ Omega bouwt de brug: emoties voeden leren, leren beinvloedt emoties.
 
 import sys
 import signal
+import asyncio
 from datetime import datetime
 
 from .core.utils import (
@@ -18,6 +19,12 @@ from .core.utils import (
     fix_encoding, clear_scherm,
 )
 from .daemon.daemon_core import DigitalDaemon
+
+try:
+    from .brain.strategist import Strategist
+    HAS_STRATEGIST = True
+except ImportError:
+    HAS_STRATEGIST = False
 from .daemon.sensorium import EventType
 from .daemon.limbic_system import Mood, AvatarForm
 from .learning.orchestrator import LearningSystem
@@ -721,8 +728,35 @@ class OmegaAI:
                 elif commando == "help":
                     print(info(HELP_TEKST))
 
+                # OMEGA SOVEREIGN: Strategist interceptor
+                elif len(gebruiker_input) > 20 and HAS_STRATEGIST:
+                    print(kleur(
+                        "\n  OMEGA SOVEREIGN AUTONOMY GEACTIVEERD",
+                        Kleur.FEL_CYAAN,
+                    ))
+                    print(kleur(
+                        f"  Missie: '{gebruiker_input}'\n",
+                        Kleur.MAGENTA,
+                    ))
+                    try:
+                        strategist = Strategist()
+                        resultaat = asyncio.run(
+                            strategist.execute_mission(gebruiker_input)
+                        )
+                        print(kleur(
+                            "\n  === MISSIE RESULTAAT ===",
+                            Kleur.FEL_GROEN,
+                        ))
+                        print(resultaat)
+                        print(kleur(
+                            "  ========================\n",
+                            Kleur.FEL_GROEN,
+                        ))
+                    except Exception as e:
+                        print(fout(f"\n  Strategist fout: {e}\n"))
+
                 else:
-                    # Gewone interactie
+                    # Gewone interactie (korte zinnen / smalltalk)
                     try:
                         response = self._verwerk_input(
                             gebruiker_input
