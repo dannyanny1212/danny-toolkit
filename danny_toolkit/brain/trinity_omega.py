@@ -24,6 +24,7 @@ from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional, Callable
 from datetime import datetime
 import json
+import os
 import time
 from pathlib import Path
 
@@ -1090,6 +1091,10 @@ class PrometheusBrain:
 
     def _rag_enrich(self, task: str) -> str:
         """Verrijk taak met ChromaDB RAG context."""
+        # Skip ChromaDB in test-modus (Rust FFI crasht
+        # in subprocess met piped stdout op Windows)
+        if os.environ.get("DANNY_TEST_MODE") == "1":
+            return task
         try:
             from ingest import TheLibrarian
             lib = TheLibrarian()
