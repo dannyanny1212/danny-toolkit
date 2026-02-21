@@ -3,12 +3,15 @@ Language Tutor v1.0 - Woordenschat trainer, quizzes, spaced repetition.
 """
 
 import json
+import logging
 import random
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple
 from ..core.config import Config
 from ..core.utils import clear_scherm
+
+logger = logging.getLogger(__name__)
 
 
 class LanguageTutorApp:
@@ -78,8 +81,8 @@ class LanguageTutorApp:
             try:
                 with open(self.data_file, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
-                pass
+            except (json.JSONDecodeError, IOError) as e:
+                logger.debug("Language tutor data load error: %s", e)
         return {
             "actieve_taal": None,
             "woorden": {},  # {taal: {woord: {stats}}}

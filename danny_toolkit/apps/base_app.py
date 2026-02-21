@@ -130,8 +130,8 @@ class BaseApp:
                 with open(self.bestand, "r",
                            encoding="utf-8") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
-                pass
+            except (json.JSONDecodeError, IOError) as e:
+                logger.debug("App data load error: %s", e)
         return self._get_default_data()
 
     def _get_default_data(self) -> dict:

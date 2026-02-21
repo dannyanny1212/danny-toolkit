@@ -21,13 +21,17 @@ import ast
 import os
 import json
 import hashlib
+import logging
 from pathlib import Path
 from datetime import datetime
 from collections import Counter
 from statistics import mean, median, stdev
 from typing import List, Dict, Any, Optional, Set, Tuple
 
+from ..core.config import Config
 from ..core.utils import clear_scherm, kleur, Kleur
+
+logger = logging.getLogger(__name__)
 
 
 class CodeAnalyseApp:
@@ -122,7 +126,7 @@ class CodeAnalyseApp:
         self.huidige_tree = None
 
         # Data opslag
-        self.data_bestand = Path.home() / ".danny_toolkit" / "code_analyse.json"
+        self.data_bestand = Config.APPS_DATA_DIR / "code_analyse.json"
         self.data = self._laad_data()
 
     def _laad_data(self) -> Dict[str, Any]:
@@ -132,8 +136,8 @@ class CodeAnalyseApp:
                 with open(self.data_bestand, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     return self._migreer_data(data)
-            except (json.JSONDecodeError, IOError):
-                pass
+            except (json.JSONDecodeError, IOError) as e:
+                logger.debug("Code analyse data load error: %s", e)
         return self._standaard_data()
 
     def _standaard_data(self) -> Dict[str, Any]:

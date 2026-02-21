@@ -19,6 +19,7 @@ Features:
 """
 
 import json
+import logging
 import os
 import sys
 import time
@@ -32,6 +33,8 @@ from enum import Enum
 
 from ..core.config import Config
 from ..core.utils import kleur
+
+logger = logging.getLogger(__name__)
 
 
 class SystemState(Enum):
@@ -203,7 +206,8 @@ class SanctuaryDashboard:
                 action="Memory Consolidation (Vector Indexing)",
                 sub_processes=["RAG Optimization", "Tool Cache Refresh"]
             )
-        except Exception:
+        except Exception as e:
+            logger.debug("CentralBrain metrics error: %s", e)
             self.metrics["central_brain"] = SystemMetric(
                 naam="CENTRAL BRAIN",
                 state=SystemState.STANDBY,
@@ -278,8 +282,8 @@ class SanctuaryDashboard:
             try:
                 with open(path, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
-                pass
+            except (json.JSONDecodeError, IOError) as e:
+                logger.debug("JSON load error for %s: %s", path, e)
         return None
 
     def _log(self, source: str, message: str, level: str = "INFO"):

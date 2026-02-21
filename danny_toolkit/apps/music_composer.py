@@ -4,12 +4,15 @@ ASCII-gebaseerde muziek compositie tool.
 """
 
 import json
+import logging
 import random
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Tuple, Optional
 from ..core.config import Config
 from ..core.utils import clear_scherm
+
+logger = logging.getLogger(__name__)
 
 
 class MuziekTheorie:
@@ -181,8 +184,8 @@ class MusicComposerApp:
             try:
                 with open(self.composities_file, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
-                pass
+            except (json.JSONDecodeError, IOError) as e:
+                logger.debug("Composities load error: %s", e)
         return []
 
     def _sla_op(self):

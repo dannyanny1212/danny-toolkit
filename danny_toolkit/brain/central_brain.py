@@ -859,8 +859,8 @@ Belangrijke regels:
             try:
                 user_context = self.unified_memory.get_user_context()
                 context.update(user_context)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("User context injection error: %s", e)
 
         # NeuralBus real-time state (grounding)
         try:
@@ -868,8 +868,8 @@ Belangrijke regels:
             stream = get_bus().get_context_stream(count=10)
             if stream:
                 context["real_time_state"] = stream
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("NeuralBus context error: %s", e)
 
         return context
 

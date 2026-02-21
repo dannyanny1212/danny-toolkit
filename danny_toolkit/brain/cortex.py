@@ -321,7 +321,8 @@ class TheCortex:
                 WHERE entity_b = ? AND confidence >= ?
             """, (entity, min_confidence, entity, min_confidence)).fetchall()
             return [row[0] for row in rows]
-        except Exception:
+        except Exception as e:
+            logger.debug("Related entities query error: %s", e)
             return []
 
     def get_entity_context(self, entity: str) -> str:

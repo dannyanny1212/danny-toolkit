@@ -17,12 +17,15 @@ Features:
 """
 
 import json
+import logging
 import random
 import time
 from datetime import datetime, date
 from pathlib import Path
 from ..core.config import Config
 from ..core.utils import clear_scherm, kleur, Kleur, succes, fout, waarschuwing, info
+
+logger = logging.getLogger(__name__)
 
 
 class SchatzoekApp:
@@ -369,8 +372,8 @@ class SchatzoekApp:
             try:
                 with open(self.save_file, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except json.JSONDecodeError:
-                pass
+            except json.JSONDecodeError as e:
+                logger.debug("Schatzoek save load error: %s", e)
         return self._maak_lege_data()
 
     def _maak_lege_data(self) -> dict:

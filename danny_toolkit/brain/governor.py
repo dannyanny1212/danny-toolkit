@@ -14,10 +14,13 @@ NIET naar andere agents.
 """
 
 import json
+import logging
 import re
 import shutil
 import time
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
 
@@ -115,7 +118,8 @@ class OmegaGovernor:
                     get_cortical_stack,
                 )
                 self._stack = get_cortical_stack()
-            except Exception:
+            except Exception as e:
+                logger.debug("CorticalStack init error: %s", e)
                 self._stack = None
         return self._stack
 
@@ -129,8 +133,8 @@ class OmegaGovernor:
                     details=details,
                     source="governor",
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Governor log error: %s", e)
 
     def to_dict(self) -> dict:
         """Serialiseer Governor state voor persistence."""
@@ -469,8 +473,8 @@ class OmegaGovernor:
                         "bounds": adapt["bounds"],
                         "setter": adapt["setter"],
                     }
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("Snapshot error for %s: %s", name, e)
 
         # Voer learning cycle uit
         try:
@@ -494,16 +498,16 @@ class OmegaGovernor:
                             f"{name}={current} buiten "
                             f"bounds {bounds}"
                         )
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("Validation error for %s: %s", name, e)
 
         # Rollback als nodig
         if rollback_needed and snapshot:
             for name, snap in snapshot.items():
                 try:
                     snap["setter"](snap["value"])
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("Rollback error for %s: %s", name, e)
             print("  [GOVERNOR] Rollback uitgevoerd")
             self._log("learning_rollback", {
                 "params": list(snapshot.keys()),

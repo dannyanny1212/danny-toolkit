@@ -3,12 +3,15 @@ Decision Maker v1.0 - Pro/con analyse, weighted scoring, random picker.
 """
 
 import json
+import logging
 import random
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional
 from ..core.config import Config
 from ..core.utils import clear_scherm
+
+logger = logging.getLogger(__name__)
 
 
 class DecisionMakerApp:
@@ -54,8 +57,8 @@ class DecisionMakerApp:
             try:
                 with open(self.data_file, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
-                pass
+            except (json.JSONDecodeError, IOError) as e:
+                logger.debug("Decision data load error: %s", e)
         return {
             "beslissingen": [],
             "snelle_keuzes": [],

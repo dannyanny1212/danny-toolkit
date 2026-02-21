@@ -3,9 +3,12 @@ Room Planner v1.0 - Virtuele ruimte-indeling optimizer.
 Plan je kamer met ASCII visualisatie en slimme tips.
 """
 
+import logging
 from datetime import datetime
 from ..core.utils import clear_scherm
 from .base_app import BaseApp
+
+logger = logging.getLogger(__name__)
 
 
 class RoomPlannerApp(BaseApp):

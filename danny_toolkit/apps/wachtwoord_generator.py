@@ -2,12 +2,15 @@
 Wachtwoord Generator - Genereer veilige wachtwoorden.
 """
 
+import json
+import logging
 import random
 import string
-import json
 from datetime import datetime
 from ..core.config import Config
 from ..core.utils import clear_scherm
+
+logger = logging.getLogger(__name__)
 
 
 class WachtwoordGeneratorApp:
@@ -24,8 +27,8 @@ class WachtwoordGeneratorApp:
             try:
                 with open(self.bestand, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
-                pass
+            except (json.JSONDecodeError, IOError) as e:
+                logger.debug("Password history load error: %s", e)
         return []
 
     def _sla_op(self):

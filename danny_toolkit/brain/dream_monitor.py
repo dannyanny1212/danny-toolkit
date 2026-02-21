@@ -20,6 +20,7 @@ Usage:
     dream_monitor()
 """
 
+import logging
 import time
 import random
 import sys
@@ -27,6 +28,8 @@ import json
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional
+
+logger = logging.getLogger(__name__)
 
 # Try to import real system data
 try:
@@ -224,8 +227,8 @@ def get_real_entity_data() -> Dict:
         if iolaax_path.exists():
             with open(iolaax_path, "r", encoding="utf-8") as f:
                 data["iolaax"] = json.load(f)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("Entity data load error: %s", e)
 
     return data
 

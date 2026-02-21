@@ -3,12 +3,15 @@ Code Snippets v1.0 - Persoonlijke code bibliotheek met tags en zoeken.
 """
 
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional
 from collections import Counter
 from ..core.config import Config
 from ..core.utils import clear_scherm
+
+logger = logging.getLogger(__name__)
 
 
 class CodeSnippetsApp:
@@ -49,8 +52,8 @@ class CodeSnippetsApp:
             try:
                 with open(self.data_file, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
-                pass
+            except (json.JSONDecodeError, IOError) as e:
+                logger.debug("Snippets data load error: %s", e)
         return {
             "snippets": [],
             "tags": [],

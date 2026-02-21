@@ -13,11 +13,15 @@ Data is hypothetisch maar gebaseerd op werkelijke trends:
 Gebruik: python -m danny_toolkit.apps.energie_vs_tech
 """
 
+import logging
+
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 def genereer_data():

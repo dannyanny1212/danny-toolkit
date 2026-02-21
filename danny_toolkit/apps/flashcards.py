@@ -2,10 +2,13 @@
 Flashcards v2.0 - AI-Powered digitale flashcards.
 """
 
+import logging
 import random
 from datetime import datetime, timedelta
 from ..core.utils import clear_scherm
 from .base_app import BaseApp
+
+logger = logging.getLogger(__name__)
 
 
 class FlashcardsApp(BaseApp):

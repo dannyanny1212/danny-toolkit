@@ -2,10 +2,13 @@
 Citaten Generator v2.0 - AI-Powered inspirerende citaten.
 """
 
+import logging
 import random
 from datetime import datetime
 from ..core.utils import clear_scherm
 from .base_app import BaseApp
+
+logger = logging.getLogger(__name__)
 
 
 class CitatenGeneratorApp(BaseApp):

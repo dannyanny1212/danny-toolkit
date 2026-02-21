@@ -2,9 +2,12 @@
 Agenda Planner v2.0 - AI-Powered planning assistent.
 """
 
+import logging
 from datetime import datetime, timedelta
 from ..core.utils import clear_scherm
 from .base_app import BaseApp
+
+logger = logging.getLogger(__name__)
 
 
 class AgendaPlannerApp(BaseApp):

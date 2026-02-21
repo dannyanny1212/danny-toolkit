@@ -10,9 +10,12 @@ STATUS: SACRED INTEGRATION
 """
 
 import json
+import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 from ..core.config import Config
 from ..core.utils import kleur
@@ -62,6 +65,7 @@ class NexusBridge:
             self.brain = CentralBrain(use_memory=True)
             self.brain_available = True
         except Exception as e:
+            logger.debug("CentralBrain init error: %s", e)
             self.brain_available = False
 
     def is_connected(self) -> bool:
@@ -107,8 +111,8 @@ class NexusBridge:
             # Sorteer op prioriteit
             insights.sort(key=lambda x: x["prioriteit"], reverse=True)
 
-        except Exception:
-            pass  # Insights zijn optioneel
+        except Exception as e:
+            logger.debug("Proactive insights error: %s", e)
 
         return insights[:5]  # Max 5 inzichten
 
@@ -246,8 +250,8 @@ class NexusBridge:
                     "reden": self._workflow_reden(workflow_key)
                 }
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Workflow suggestion error: %s", e)
 
         return None
 
@@ -323,7 +327,8 @@ class NexusBridge:
             else:
                 return "Nog geen app data verzameld."
 
-        except Exception:
+        except Exception as e:
+            logger.debug("Cross-app summary error: %s", e)
             return "Kon cross-app data niet ophalen."
 
     def get_wisdom_for_emotion(self, emotie: str) -> str:

@@ -58,8 +58,8 @@ class Dreamer:
             from danny_toolkit.brain.ghost_writer import GhostWriter
             writer = GhostWriter()
             await writer.haunt()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("GhostWriter haunt error: %s", e)
 
         # 5. Research failures — fill knowledge gaps overnight
         await self._research_failures()
@@ -76,8 +76,8 @@ class Dreamer:
             forecast = oracle.generate_daily_forecast()
             if forecast:
                 print(f"{Kleur.CYAAN}🔮 {forecast.split(chr(10))[0]}{Kleur.RESET}")
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("OracleEye forecast error: %s", e)
 
         print(f"{Kleur.GROEN}🌙 REM cycle complete.{Kleur.RESET}")
 

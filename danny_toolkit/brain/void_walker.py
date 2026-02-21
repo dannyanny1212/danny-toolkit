@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import time
 from typing import List, Optional, Tuple
@@ -6,6 +7,8 @@ from typing import List, Optional, Tuple
 from groq import AsyncGroq
 from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import Kleur
+
+logger = logging.getLogger(__name__)
 
 try:
     from danny_toolkit.core.web_scraper import scrape_url
@@ -70,14 +73,14 @@ class VoidWalker:
                     embedding_provider=embedder,
                     db_file=self.db_path,
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("VectorStore init error: %s", e)
         # Fallback: TheCortex als VectorStore niet beschikbaar
         if not self._store and HAS_CORTEX:
             try:
                 self._store = TheCortex()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("TheCortex fallback init error: %s", e)
 
     async def fill_knowledge_gap(self, topic: str) -> Optional[str]:
         """
@@ -174,7 +177,8 @@ class VoidWalker:
             if chunks:
                 return " ".join(c["text"] for c in chunks[:3])
             return None
-        except Exception:
+        except Exception as e:
+            logger.debug("Harvest error for URL: %s", e)
             return None
 
     async def _digest(self, topic: str, raw_text: str) -> Optional[str]:

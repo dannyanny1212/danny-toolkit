@@ -106,8 +106,8 @@ class AdversarialTribunal:
                 if resp.status_code == 200:
                     self._provider = "ollama"
                     logger.info("Tribunal using direct Ollama client")
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Ollama check error: %s", e)
 
         if not self._provider:
             logger.warning("Tribunal: geen AI provider beschikbaar")

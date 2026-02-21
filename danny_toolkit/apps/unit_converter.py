@@ -2,7 +2,11 @@
 Unit Converter - Converteer eenheden.
 """
 
+import logging
+
 from ..core.utils import clear_scherm
+
+logger = logging.getLogger(__name__)
 
 
 class UnitConverterApp:
