@@ -17,7 +17,7 @@ class GhostWriter:
     def __init__(self, watch_dir: str = None):
         self.watch_dir = watch_dir or str(Config.BASE_DIR / "danny_toolkit")
         self.client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
-        self.model = "llama-3.1-8b-instant"
+        self.model = "gemma2-9b-it"
 
     async def haunt(self):
         """
