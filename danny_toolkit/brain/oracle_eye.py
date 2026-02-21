@@ -193,7 +193,7 @@ class TheOracleEye:
             or verwachte_queries > self._HIGH_QUERY_THRESHOLD
         ):
             return "llama-3.1-8b-instant"
-        return "llama-3.3-70b-versatile"
+        return "llama-3.1-8b-instant"
 
     def suggest_model(
         self,
@@ -231,7 +231,7 @@ class TheOracleEye:
             ):
                 return "llama-3.1-8b-instant"
 
-        return "llama-3.3-70b-versatile"
+        return "llama-3.1-8b-instant"
 
     def get_peak_hours(self, days: int = 7) -> List[int]:
         """Top 5 uren met meeste activiteit."""

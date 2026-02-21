@@ -66,7 +66,7 @@ class Strategist:
     """
     def __init__(self):
         self.client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
-        self.model = "llama-3.3-70b-versatile"
+        self.model = "llama-3.1-8b-instant"
         self.walker = VoidWalker() if HAS_WALKER else None
         self.artificer = Artificer() if HAS_ARTIFICER else None
         self._bus = get_bus() if HAS_BUS else None

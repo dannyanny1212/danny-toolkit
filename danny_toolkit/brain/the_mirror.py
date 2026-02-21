@@ -23,7 +23,7 @@ class TheMirror:
     def __init__(self):
         self.profile_path = Config.DATA_DIR / "user_profile.json"
         self.client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
-        self.model = "llama-3.3-70b-versatile"
+        self.model = "llama-3.1-8b-instant"
 
     async def reflect(self):
         """

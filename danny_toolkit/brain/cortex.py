@@ -89,7 +89,7 @@ class TheCortex:
 
     def __init__(self):
         self.client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
-        self.model = "llama-3.3-70b-versatile"
+        self.model = "llama-3.1-8b-instant"
 
         # In-memory graaf (NetworkX)
         self._graph = nx.DiGraph() if HAS_NETWORKX else None

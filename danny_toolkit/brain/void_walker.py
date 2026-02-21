@@ -53,7 +53,7 @@ class VoidWalker:
     """
     def __init__(self):
         self.client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
-        self.model = "llama-3.3-70b-versatile"
+        self.model = "llama-3.1-8b-instant"
         self.db_path = Config.DATA_DIR / "memory" / "knowledge_companion.json"
 
         self._store = None
