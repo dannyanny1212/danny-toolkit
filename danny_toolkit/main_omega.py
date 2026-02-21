@@ -796,6 +796,18 @@ class OmegaAI:
                     ))
                     try:
                         strategist = Strategist()
+                        # Wire VectorStore into VoidWalker
+                        if strategist.walker and not strategist.walker._store:
+                            try:
+                                from danny_toolkit.core.vector_store import VectorStore
+                                from danny_toolkit.core.embeddings import get_torch_embedder
+                                embedder = get_torch_embedder()
+                                strategist.walker._store = VectorStore(
+                                    embedding_provider=embedder,
+                                    db_file=strategist.walker.db_path,
+                                )
+                            except Exception:
+                                pass  # Geen embedder = geen opslag, niet fataal
                         resultaat = asyncio.run(
                             strategist.execute_mission(gebruiker_input)
                         )

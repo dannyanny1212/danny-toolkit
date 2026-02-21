@@ -29,7 +29,7 @@ def create_shortcut():
         f'oLink.TargetPath = "{TARGET}"',
         f'oLink.WorkingDirectory = "{WORKING_DIR}"',
         'oLink.WindowStyle = 1',
-        f'oLink.Description = "Omega Sovereign v6.1 Dashboard"',
+        f'oLink.Description = "Omega Sovereign v6.1 — Strategist + Artificer + VoidWalker + TheCortex + NeuralBus"',
     ]
 
     if os.path.isfile(ICON):
