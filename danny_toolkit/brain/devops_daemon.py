@@ -115,6 +115,41 @@ class DevOpsDaemon:
                 pass
 
     # =================================================================
+    # Core: API Pre-Check
+    # =================================================================
+
+    async def check_api_health(self) -> dict:
+        """
+        Minimale Groq API pre-check (1 token) om rate limits
+        te detecteren voordat de zware test cycle start.
+
+        Returns:
+            Dict met groq_ok (bool), latency_ms (float), status (str).
+        """
+        start = time.time()
+        try:
+            await self.client.chat.completions.create(
+                model="llama-3.1-8b-instant",
+                messages=[{"role": "user", "content": "ok"}],
+                max_tokens=1,
+            )
+            latency = (time.time() - start) * 1000
+            return {
+                "groq_ok": True,
+                "latency_ms": round(latency, 1),
+                "status": "healthy",
+            }
+        except Exception as e:
+            latency = (time.time() - start) * 1000
+            err = str(e).lower()
+            status = "rate_limited" if "429" in err or "rate" in err else f"error: {str(e)[:80]}"
+            return {
+                "groq_ok": False,
+                "latency_ms": round(latency, 1),
+                "status": status,
+            }
+
+    # =================================================================
     # Core: Health Check
     # =================================================================
 
@@ -260,6 +295,22 @@ class DevOpsDaemon:
         print(f"\n{Kleur.MAGENTA}{'=' * 50}{Kleur.RESET}")
         print(f"{Kleur.MAGENTA}  DEVOPS DAEMON — OUROBOROS CYCLE{Kleur.RESET}")
         print(f"{Kleur.MAGENTA}{'=' * 50}{Kleur.RESET}\n")
+
+        # 0. API pre-check — detect rate limits before heavy cycle
+        api_health = await self.check_api_health()
+        if not api_health["groq_ok"]:
+            print(f"{Kleur.GEEL}⚠ Groq API niet beschikbaar: "
+                  f"{api_health['status']} — cycle overgeslagen{Kleur.RESET}")
+            self._publish_event("health_check", {
+                "status": "skipped",
+                "reason": api_health["status"],
+            })
+            return {
+                "timestamp": datetime.now().isoformat(),
+                "status": "SKIPPED",
+                "reason": api_health["status"],
+                "analyses": [],
+            }
 
         # 1. Health check
         health = await self.run_health_check()

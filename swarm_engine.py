@@ -825,6 +825,82 @@ class CoherentieAgent(Agent):
         )
 
 
+class StrategistAgent(Agent):
+    """Recursive planner: decompose, delegate, chain."""
+
+    def _get_strategist(self):
+        if not hasattr(self, "_strategist"):
+            try:
+                from danny_toolkit.brain.strategist import (
+                    Strategist,
+                )
+                self._strategist = Strategist()
+            except Exception:
+                self._strategist = None
+        return self._strategist
+
+    async def process(self, task, brain=None):
+        start_t = time.time()
+        strat = self._get_strategist()
+        if strat is None:
+            return SwarmPayload(
+                agent=self.name, type="text",
+                content="Strategist niet beschikbaar",
+                display_text="Strategist niet beschikbaar",
+            )
+        result = await strat.execute_mission(task)
+        elapsed = time.time() - start_t
+        return SwarmPayload(
+            agent=self.name,
+            type="text",
+            content=result,
+            display_text=result,
+            metadata={"execution_time": elapsed},
+        )
+
+
+class ArtificerAgent(Agent):
+    """Autonomous skill forge-verify-execute loop."""
+
+    def _get_artificer(self):
+        if not hasattr(self, "_artificer"):
+            try:
+                from danny_toolkit.brain.artificer import (
+                    Artificer,
+                )
+                self._artificer = Artificer()
+            except Exception:
+                self._artificer = None
+        return self._artificer
+
+    async def process(self, task, brain=None):
+        start_t = time.time()
+        art = self._get_artificer()
+        if art is None:
+            return SwarmPayload(
+                agent=self.name, type="text",
+                content="Artificer niet beschikbaar",
+                display_text="Artificer niet beschikbaar",
+            )
+        result = await art.execute_task(task)
+        elapsed = time.time() - start_t
+
+        # Detect code blocks in output
+        media = _code_media(result)
+        p_type = "code" if media else "text"
+        meta = {"execution_time": elapsed}
+        if media:
+            meta["media"] = media
+
+        return SwarmPayload(
+            agent=self.name,
+            type=p_type,
+            content=result,
+            display_text=result,
+            metadata=meta,
+        )
+
+
 class PixelAgent(Agent):
     """THE EYES: Multimodal Vision Agent.
 
@@ -1369,6 +1445,24 @@ class AdaptiveRouter:
                 " anomalie detectie monitor"
             ),
         ],
+        "STRATEGIST": [
+            (
+                "plan mission strategy objective goal"
+                " decompose workflow pipeline steps"
+                " missie strategie doel opdracht"
+                " uitvoeren plannen orchestreer"
+                " uitwerken stappenplan"
+            ),
+        ],
+        "ARTIFICER": [
+            (
+                "forge tool build script create utility"
+                " generate program automate tool maker"
+                " smeden bouwen genereer maak een tool"
+                " schrijf een script automatiseer"
+                " skill forge nieuw programma"
+            ),
+        ],
     }
 
     @classmethod
@@ -1750,6 +1844,16 @@ class SwarmEngine:
             "teken", "visualiseer", "kijk", "zie",
             "bekijk", "check scherm", "wat zie",
         ],
+        "STRATEGIST": [
+            "missie", "mission", "plan een", "strategie",
+            "strategy", "stappenplan", "orchestreer",
+            "decompose", "workflow", "doel bereiken",
+        ],
+        "ARTIFICER": [
+            "forge", "smeed", "maak een tool",
+            "bouw een tool", "skill", "genereer script",
+            "utility", "maak een script",
+        ],
     }
 
     def __init__(self, brain=None, oracle=None):
@@ -1851,6 +1955,12 @@ class SwarmEngine:
             "COHERENTIE": CoherentieAgent(
                 "Coherentie", "Hardware",
             ),
+            "STRATEGIST": StrategistAgent(
+                "Strategist", "Planning",
+            ),
+            "ARTIFICER": ArtificerAgent(
+                "Artificer", "Forge",
+            ),
             # LEGION: disabled
 
         }
@@ -1866,6 +1976,65 @@ class SwarmEngine:
             )
             self._oracle = OracleAgent(persist=False)
         return self._oracle
+
+    @property
+    def _tribunal(self):
+        """Lazy AdversarialTribunal."""
+        if not hasattr(self, "_tribunal_instance"):
+            try:
+                from danny_toolkit.brain.adversarial_tribunal import (
+                    AdversarialTribunal,
+                )
+                self._tribunal_instance = (
+                    AdversarialTribunal(brain=self.brain)
+                )
+            except Exception:
+                self._tribunal_instance = None
+        return self._tribunal_instance
+
+    async def _tribunal_verify(
+        self, results, user_input, callback=None,
+    ):
+        """Tribunal verificatie voor Strategist output."""
+        tribunal = self._tribunal
+        if tribunal is None:
+            return results
+
+        verified = []
+        for payload in results:
+            if payload.agent != "Strategist":
+                verified.append(payload)
+                continue
+
+            content = str(
+                payload.display_text or payload.content
+            )[:3000]
+            try:
+                verdict = await tribunal.adeliberate(
+                    user_input, content,
+                )
+                payload.metadata["tribunal_verified"] = (
+                    verdict.accepted
+                )
+                payload.metadata["tribunal_rounds"] = (
+                    verdict.rounds
+                )
+                if not verdict.accepted:
+                    payload.metadata["tribunal_warning"] = (
+                        "Niet gevalideerd door Tribunal"
+                    )
+                    if callback:
+                        callback(
+                            "\u2696\ufe0f TRIBUNAL: output niet"
+                            " gevalideerd"
+                        )
+            except Exception:
+                payload.metadata["tribunal_warning"] = (
+                    "Tribunal verificatie mislukt"
+                )
+            verified.append(payload)
+
+        return verified
 
     # ── Hook Systeem ──
 
@@ -2588,6 +2757,12 @@ class SwarmEngine:
             "execute",
             (time.time() - t0) * 1000,
         )
+
+        # 6.5 Tribunal Verification (alleen STRATEGIST)
+        if any(r.agent == "Strategist" for r in results):
+            results = await self._tribunal_verify(
+                list(results), user_input, callback,
+            )
 
         # 7. SENTINEL Validate (tunable)
         if not t.mag_skippen("sentinel"):

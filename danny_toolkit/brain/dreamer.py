@@ -58,12 +58,15 @@ class Dreamer:
         except Exception:
             pass
 
-        # 5. Pre-Compute — anticipate tomorrow
+        # 5. Research failures — fill knowledge gaps overnight
+        await self._research_failures()
+
+        # 6. Pre-Compute — anticipate tomorrow
         insight = await self._anticipate()
         if insight:
             print(f"{Kleur.CYAAN}✨ Morning Insight: {insight}{Kleur.RESET}")
 
-        # 6. Oracle Eye — dagelijkse resource forecast
+        # 7. Oracle Eye — dagelijkse resource forecast
         try:
             from danny_toolkit.brain.oracle_eye import TheOracleEye
             oracle = TheOracleEye()
@@ -158,3 +161,30 @@ class Dreamer:
         except Exception as e:
             print(f"{Kleur.ROOD}🔮 Anticipation error: {e}{Kleur.RESET}")
             return None
+
+    async def _research_failures(self):
+        """Research top failure topics via VoidWalker."""
+        try:
+            from danny_toolkit.brain.black_box import BlackBox
+            from danny_toolkit.brain.void_walker import VoidWalker
+            bb = BlackBox()
+            stats = bb.get_stats()
+            if stats.get("recorded_failures", 0) == 0:
+                return
+            print(f"{Kleur.GEEL}🔬 Researching past failures...{Kleur.RESET}")
+            walker = VoidWalker()
+            if bb._store and bb._store.documenten:
+                topics = set()
+                for doc_id, doc in (
+                    bb._store.documenten.items()
+                    if isinstance(bb._store.documenten, dict)
+                    else enumerate(bb._store.documenten)
+                ):
+                    tekst = doc.get("tekst", "") if isinstance(doc, dict) else ""
+                    if tekst:
+                        topics.add(tekst[:100])
+                for topic in list(topics)[:3]:
+                    await walker.fill_knowledge_gap(topic)
+            print(f"{Kleur.GROEN}🔬 Failure research complete.{Kleur.RESET}")
+        except Exception:
+            pass

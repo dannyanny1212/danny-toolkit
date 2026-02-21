@@ -32,6 +32,20 @@ try:
 except ImportError:
     HAS_ARTIFICER = False
 
+HAS_BUS = False
+try:
+    from danny_toolkit.core.neural_bus import get_bus, EventTypes
+    HAS_BUS = True
+except ImportError:
+    pass
+
+HAS_STACK = False
+try:
+    from danny_toolkit.brain.cortical_stack import get_cortical_stack
+    HAS_STACK = True
+except ImportError:
+    pass
+
 
 class Strategist:
     """
@@ -52,6 +66,8 @@ class Strategist:
         self.model = "llama-3.3-70b-versatile"
         self.walker = VoidWalker() if HAS_WALKER else None
         self.artificer = Artificer() if HAS_ARTIFICER else None
+        self._bus = get_bus() if HAS_BUS else None
+        self._stack = get_cortical_stack() if HAS_STACK else None
 
     async def execute_mission(self, user_objective: str) -> str:
         """
@@ -67,6 +83,16 @@ class Strategist:
 
         steps = plan["steps"]
         context_buffer = ""
+
+        # Publish mission started
+        self._publish_event(EventTypes.MISSION_STARTED if HAS_BUS else None, {
+            "objective": user_objective,
+            "steps": len(steps),
+        })
+        self._log_event("mission_started", {
+            "objective": user_objective,
+            "steps": len(steps),
+        })
 
         # 2. THE EXECUTION LOOP
         for i, step in enumerate(steps):
@@ -96,6 +122,14 @@ class Strategist:
                 result = f"[Skipped: {tool} unavailable]"
 
             context_buffer += f"\n[Result of Step {i+1}]:\n{result}\n"
+
+            # Publish step completed
+            self._publish_event(EventTypes.STEP_COMPLETED if HAS_BUS else None, {
+                "step": i + 1,
+                "total": len(steps),
+                "tool": tool,
+                "action": action,
+            })
 
         # 3. THE REPORT
         print(f"\n{Kleur.GROEN}🏁 Mission Accomplished.{Kleur.RESET}")
@@ -152,3 +186,24 @@ class Strategist:
         except Exception as e:
             print(f"{Kleur.ROOD}♟️  Groq error: {e}{Kleur.RESET}")
             return None
+
+    def _publish_event(self, event_type, data: dict):
+        """Publiceer event op NeuralBus als beschikbaar."""
+        if self._bus and event_type:
+            try:
+                self._bus.publish(event_type, data, bron="strategist")
+            except Exception:
+                pass
+
+    def _log_event(self, action: str, details: Optional[dict] = None):
+        """Log naar CorticalStack als beschikbaar."""
+        if self._stack:
+            try:
+                self._stack.log_event(
+                    actor="strategist",
+                    action=action,
+                    details=details,
+                    source="strategist",
+                )
+            except Exception:
+                pass

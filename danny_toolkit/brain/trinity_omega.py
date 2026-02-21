@@ -1095,6 +1095,16 @@ class PrometheusBrain:
         # in subprocess met piped stdout op Windows)
         if os.environ.get("DANNY_TEST_MODE") == "1":
             return task
+
+        # BlackBox: check for known failure patterns
+        bb_warning = ""
+        try:
+            from danny_toolkit.brain.black_box import BlackBox
+            bb = BlackBox()
+            bb_warning = bb.retrieve_warnings(task)
+        except Exception:
+            pass
+
         try:
             from ingest import TheLibrarian
             lib = TheLibrarian()
@@ -1106,17 +1116,30 @@ class PrometheusBrain:
                     from danny_toolkit.brain.truth_anchor import TruthAnchor
                     anchor = TruthAnchor()
                     if not anchor.verify(task, docs[:3]):
+                        # Record failure in BlackBox
+                        try:
+                            from danny_toolkit.brain.black_box import BlackBox
+                            bb_rec = BlackBox()
+                            bb_rec.record_crash(
+                                task, str(docs[:3])[:500],
+                                "TruthAnchor rejected: RAG context below relevance threshold",
+                            )
+                        except Exception:
+                            pass
                         docs = None  # Context too weak, skip RAG
                 except Exception:
                     pass
 
             if docs:
                 context = "\n---\n".join(docs)
-                return (
+                enriched = (
                     f"KENNISBANK CONTEXT:\n{context}\n\n"
                     f"VRAAG: {task}\n"
                     f"Beantwoord op basis van de context."
                 )
+                if bb_warning:
+                    enriched = f"{bb_warning}\n\n{enriched}"
+                return enriched
         except Exception as e:
             print(f"   [RAG] Fout: {e}")
 
@@ -1132,9 +1155,25 @@ class PrometheusBrain:
                 )
                 if graph_context:
                     task = f"{task}\n\nGRAAF CONTEXT:\n{graph_context}"
+                    if bb_warning:
+                        task = f"{bb_warning}\n\n{task}"
+                    return task
         except Exception:
             pass
 
+        # VoidWalker: last resort — autonomous research for unknown topics
+        try:
+            from danny_toolkit.brain.void_walker import VoidWalker
+            import asyncio as _aio2
+            walker = VoidWalker()
+            knowledge = _aio2.run(walker.fill_knowledge_gap(task[:200]))
+            if knowledge:
+                task = f"{task}\n\nONDERZOEK CONTEXT:\n{knowledge[:1500]}"
+        except Exception:
+            pass
+
+        if bb_warning:
+            task = f"{bb_warning}\n\n{task}"
         return task
 
     def _assign(self, role: CosmicRole, task: str, priority: TaskPriority) -> TaskResult:

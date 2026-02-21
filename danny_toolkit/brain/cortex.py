@@ -149,7 +149,7 @@ class TheCortex:
 
     def _build_graph(self):
         """Laad alle triples uit SQLite in NetworkX graaf."""
-        if not self._graph or not self._stack:
+        if self._graph is None or not self._stack:
             return
         try:
             rows = self._stack._conn.execute(
@@ -246,7 +246,7 @@ class TheCortex:
                 print(f"{Kleur.ROOD}[Cortex] Write-fout: {e}{Kleur.RESET}")
 
         # Sync naar NetworkX
-        if self._graph:
+        if self._graph is not None:
             self._graph.add_edge(
                 entity_a, entity_b,
                 relatie=relatie,
@@ -276,7 +276,7 @@ class TheCortex:
         min_confidence: float = 0.3,
     ) -> List[str]:
         """BFS graph traversal — vind gerelateerde entiteiten."""
-        if not self._graph or entity not in self._graph:
+        if self._graph is None or entity not in self._graph:
             # Fallback: SQLite-only query
             return self._find_related_sql(entity, min_confidence)
 

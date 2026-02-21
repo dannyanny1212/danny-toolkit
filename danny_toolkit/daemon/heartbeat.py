@@ -124,6 +124,10 @@ class HeartbeatDaemon:
         self._last_security_scan = 0.0
         self._last_rem_date = None
 
+        # DevOps
+        self._devops = None
+        self._last_devops_check = 0.0
+
         # Background worker for heavy tasks (swarm, security)
         self._task_queue = queue.Queue()
         self._worker_pool = ThreadPoolExecutor(
@@ -199,6 +203,68 @@ class HeartbeatDaemon:
             except Exception:
                 self._security = None
         return self._security
+
+    def _get_devops(self):
+        """Lazy import DevOpsDaemon."""
+        if self._devops is None:
+            try:
+                from ..brain.devops_daemon import (
+                    DevOpsDaemon,
+                )
+                self._devops = DevOpsDaemon()
+            except Exception:
+                self._devops = None
+        return self._devops
+
+    def _run_devops_check(self):
+        """Submit DevOps health check naar worker pool."""
+        devops = self._get_devops()
+        if devops is None:
+            self._log_activity(
+                "devops", "DevOpsDaemon niet beschikbaar"
+            )
+            return
+        self._log_activity(
+            "devops", "CI check ingepland..."
+        )
+        self._worker_pool.submit(
+            self._execute_devops_check, devops
+        )
+
+    def _execute_devops_check(self, devops):
+        """Voer DevOps check uit (draait in worker thread)."""
+        try:
+            loop = asyncio.new_event_loop()
+            try:
+                rapport = loop.run_until_complete(
+                    devops.auto_fix_cycle()
+                )
+            finally:
+                loop.close()
+
+            status = rapport.get("status", "UNKNOWN")
+            self._log_activity(
+                "devops", f"CI check klaar: {status}"
+            )
+
+            stack = self._get_stack()
+            if stack:
+                try:
+                    stack.log_event(
+                        actor="heartbeat",
+                        action="devops_check",
+                        details={
+                            "status": status,
+                        },
+                        source="daemon",
+                    )
+                except Exception:
+                    pass
+        except Exception as e:
+            self._log_activity(
+                "devops",
+                f"CI fout: {str(e)[:60]}",
+            )
 
     # ─── Swarm Taken ───
 
@@ -708,6 +774,16 @@ class HeartbeatDaemon:
                     # Oracle Eye forecast check (~300 pulsen)
                     if self._pulse_count % 300 == 0:
                         self._check_oracle_forecast()
+
+                    # DevOps CI check (~300 pulsen / 5 min)
+                    if (
+                        self._pulse_count % 300 == 0
+                        and self._pulse_count > 0
+                    ):
+                        now_ts2 = time.time()
+                        if now_ts2 - self._last_devops_check > 290:
+                            self._last_devops_check = now_ts2
+                            self._run_devops_check()
 
                     # Update display
                     live.update(self._build_display())

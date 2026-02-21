@@ -10,6 +10,7 @@ The Judge (Governor): Accepts if Skeptic says TRUE, loops back if FALSE.
 Max 3 retries before returning a system error.
 """
 
+import asyncio
 import logging
 from typing import Optional, Dict, List
 
@@ -276,6 +277,10 @@ class AdversarialTribunal:
                 if total > 0 else "N/A"
             ),
         }
+
+    async def adeliberate(self, question: str, context: str = "") -> "TribunalVerdict":
+        """Async wrapper — draait sync deliberate() in thread."""
+        return await asyncio.to_thread(self.deliberate, question, context)
 
     def get_transcript(self) -> List[Dict]:
         """Return the full transcript of the last deliberation."""

@@ -9,6 +9,13 @@ from groq import AsyncGroq
 from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import Kleur
 
+HAS_BUS = False
+try:
+    from danny_toolkit.core.neural_bus import get_bus, EventTypes
+    HAS_BUS = True
+except ImportError:
+    pass
+
 
 # Forbidden patterns — static analysis blocklist
 _FORBIDDEN = [
@@ -31,6 +38,7 @@ class Artificer:
         self.registry_path = self.skills_dir / "registry.json"
         self.client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
         self.model = "llama-3.3-70b-versatile"
+        self._bus = get_bus() if HAS_BUS else None
         self._ensure_setup()
 
     def _ensure_setup(self):
@@ -73,7 +81,15 @@ class Artificer:
 
         # 5. Execute
         print(f"{Kleur.GROEN}🚀 Artificer: Executing...{Kleur.RESET}")
-        return self._run_script(skill_name)
+        result = self._run_script(skill_name)
+
+        # Publish forge success
+        self._publish_event(EventTypes.FORGE_SUCCESS if HAS_BUS else None, {
+            "skill": skill_name,
+            "request": request[:200],
+        })
+
+        return result
 
     async def _write_script(self, task: str) -> Optional[str]:
         prompt = f"""
@@ -154,6 +170,14 @@ class Artificer:
             return "❌ Script timed out (30s limit)."
         except Exception as e:
             return f"❌ Execution error: {e}"
+
+    def _publish_event(self, event_type, data: dict):
+        """Publiceer event op NeuralBus als beschikbaar."""
+        if self._bus and event_type:
+            try:
+                self._bus.publish(event_type, data, bron="artificer")
+            except Exception:
+                pass
 
     def _load_registry(self) -> Dict:
         try:

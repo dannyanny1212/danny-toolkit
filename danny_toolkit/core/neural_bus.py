@@ -36,6 +36,9 @@ class EventTypes:
     SYSTEM_EVENT = "system_event"
     KNOWLEDGE_GRAPH_UPDATE = "knowledge_graph_update"
     RESOURCE_FORECAST = "resource_forecast"
+    MISSION_STARTED = "mission_started"
+    STEP_COMPLETED = "step_completed"
+    FORGE_SUCCESS = "forge_success"
 
 
 class BusEvent:
