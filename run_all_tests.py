@@ -5,7 +5,9 @@ Draait alle 8 test suites in volgorde en geeft een totaaloverzicht.
 Gebruik: python run_all_tests.py
 """
 
+import gc
 import io
+import os
 import subprocess
 import sys
 import time
@@ -14,15 +16,20 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="repla
 
 PROJECT_ROOT = sys.path[0] or "."
 
+# Locked interpreter — voorkomt CUDA 0xC0000005 door DLL mismatch
+PYTHON = os.path.join(PROJECT_ROOT, "venv311", "Scripts", "python.exe")
+if not os.path.isfile(PYTHON):
+    PYTHON = sys.executable  # fallback
+
 TESTS = [
-    {"naam": "NeuralBus",         "cmd": [sys.executable, f"{PROJECT_ROOT}/test_neural_bus.py"]},
-    {"naam": "Proactive",         "cmd": [sys.executable, f"{PROJECT_ROOT}/test_proactive.py"]},
-    {"naam": "Singularity",       "cmd": [sys.executable, f"{PROJECT_ROOT}/test_singularity.py"]},
-    {"naam": "CLI",               "cmd": [sys.executable, f"{PROJECT_ROOT}/test_cli.py"]},
-    {"naam": "Neural Hub",        "cmd": [sys.executable, f"{PROJECT_ROOT}/test_neural_hub.py"]},
-    {"naam": "Swarm Engine",      "cmd": [sys.executable, f"{PROJECT_ROOT}/test_swarm_engine.py"]},
-    {"naam": "Full Chain",        "cmd": [sys.executable, "-m", "danny_toolkit.test_full_chain"], "cwd": PROJECT_ROOT},
-    {"naam": "Cosmic Awareness",  "cmd": [sys.executable, "-m", "danny_toolkit.test_cosmic_awareness"], "cwd": PROJECT_ROOT},
+    {"naam": "NeuralBus",         "cmd": [PYTHON, f"{PROJECT_ROOT}/test_neural_bus.py"]},
+    {"naam": "Proactive",         "cmd": [PYTHON, f"{PROJECT_ROOT}/test_proactive.py"]},
+    {"naam": "Singularity",       "cmd": [PYTHON, f"{PROJECT_ROOT}/test_singularity.py"]},
+    {"naam": "CLI",               "cmd": [PYTHON, f"{PROJECT_ROOT}/test_cli.py"]},
+    {"naam": "Neural Hub",        "cmd": [PYTHON, f"{PROJECT_ROOT}/test_neural_hub.py"]},
+    {"naam": "Swarm Engine",      "cmd": [PYTHON, f"{PROJECT_ROOT}/test_swarm_engine.py"]},
+    {"naam": "Full Chain",        "cmd": [PYTHON, "-m", "danny_toolkit.test_full_chain"], "cwd": PROJECT_ROOT},
+    {"naam": "Cosmic Awareness",  "cmd": [PYTHON, "-m", "danny_toolkit.test_cosmic_awareness"], "cwd": PROJECT_ROOT},
 ]
 
 BREEDTE = 60
@@ -34,16 +41,33 @@ def run_test(test: dict) -> dict:
     print(f"  ▶ {naam}")
     print(f"{'=' * BREEDTE}")
 
+    # Schone env per subprocess — voorkomt CUDA VRAM-conflict (0xC0000005)
+    # Tests draaien op CPU; productie gebruikt GPU
+    clean_env = os.environ.copy()
+    clean_env["PYTHONIOENCODING"] = "utf-8"
+    clean_env["CUDA_VISIBLE_DEVICES"] = "-1"
+    clean_env["ANONYMIZED_TELEMETRY"] = "False"  # ChromaDB posthog crash preventie
+    clean_env["DANNY_TEST_MODE"] = "1"  # Skip ChromaDB PersistentClient (Rust FFI crash in subprocess)
+
     start = time.time()
     try:
-        result = subprocess.run(
+        proc = subprocess.Popen(
             test["cmd"],
             cwd=test.get("cwd", PROJECT_ROOT),
-            capture_output=False,
-            timeout=600,
+            env=clean_env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            bufsize=1,
         )
+        for line in proc.stdout:
+            print(line, end="", flush=True)
+        proc.stdout.close()
+        proc.wait(timeout=600)
         duur = time.time() - start
-        geslaagd = result.returncode == 0
+        geslaagd = proc.returncode == 0
     except subprocess.TimeoutExpired:
         duur = time.time() - start
         geslaagd = False
@@ -70,6 +94,14 @@ def main():
 
     for test in TESTS:
         resultaten.append(run_test(test))
+        # VRAM purge tussen suites — voorkomt CUDA segfaults
+        gc.collect()
+        try:
+            import torch
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+        except ImportError:
+            pass
 
     totaal_duur = time.time() - totaal_start
     geslaagd = sum(1 for r in resultaten if r["geslaagd"])

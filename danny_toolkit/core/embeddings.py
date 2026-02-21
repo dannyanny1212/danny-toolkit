@@ -636,7 +636,7 @@ try:
     import torch
     from danny_toolkit.core.gpu import get_device
     _HAS_TORCH_GPU = True
-except ImportError:
+except (ImportError, RuntimeError):
     _HAS_TORCH_GPU = False
 
 

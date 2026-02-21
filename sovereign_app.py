@@ -23,6 +23,11 @@ from PIL import Image
 # Pad naar project root (waar dit script staat)
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 
+# Locked interpreter — voorkomt CUDA 0xC0000005 door DLL mismatch
+PYTHON = os.path.join(PROJECT_ROOT, "venv311", "Scripts", "python.exe")
+if not os.path.isfile(PYTHON):
+    PYTHON = sys.executable  # fallback
+
 
 class SovereignDashboard(ctk.CTk):
     def __init__(self):
@@ -71,14 +76,14 @@ class SovereignDashboard(ctk.CTk):
 
         # Knoppen — paden exact uit run_all_tests.py
         tests = [
-            ("Neural Bus",       [sys.executable, os.path.join(PROJECT_ROOT, "test_neural_bus.py")]),
-            ("Proactive",        [sys.executable, os.path.join(PROJECT_ROOT, "test_proactive.py")]),
-            ("Singularity",      [sys.executable, os.path.join(PROJECT_ROOT, "test_singularity.py")]),
-            ("CLI",              [sys.executable, os.path.join(PROJECT_ROOT, "test_cli.py")]),
-            ("Neural Hub",       [sys.executable, os.path.join(PROJECT_ROOT, "test_neural_hub.py")]),
-            ("Swarm Engine",     [sys.executable, os.path.join(PROJECT_ROOT, "test_swarm_engine.py")]),
-            ("Full Chain",       [sys.executable, "-m", "danny_toolkit.test_full_chain"]),
-            ("Cosmic Awareness", [sys.executable, "-m", "danny_toolkit.test_cosmic_awareness"]),
+            ("Neural Bus",       [PYTHON, os.path.join(PROJECT_ROOT,"test_neural_bus.py")]),
+            ("Proactive",        [PYTHON, os.path.join(PROJECT_ROOT,"test_proactive.py")]),
+            ("Singularity",      [PYTHON, os.path.join(PROJECT_ROOT,"test_singularity.py")]),
+            ("CLI",              [PYTHON, os.path.join(PROJECT_ROOT,"test_cli.py")]),
+            ("Neural Hub",       [PYTHON, os.path.join(PROJECT_ROOT,"test_neural_hub.py")]),
+            ("Swarm Engine",     [PYTHON, os.path.join(PROJECT_ROOT,"test_swarm_engine.py")]),
+            ("Full Chain",       [PYTHON, "-m", "danny_toolkit.test_full_chain"]),
+            ("Cosmic Awareness", [PYTHON, "-m", "danny_toolkit.test_cosmic_awareness"]),
         ]
 
         self.test_buttons = []
@@ -97,7 +102,7 @@ class SovereignDashboard(ctk.CTk):
             fg_color="#6A0DAD", hover_color="#8B2FC9",
             command=lambda: self.run_test(
                 "All Tests",
-                [sys.executable, os.path.join(PROJECT_ROOT, "run_all_tests.py")],
+                [PYTHON, os.path.join(PROJECT_ROOT,"run_all_tests.py")],
             ),
         )
         self.btn_all.pack(pady=5, padx=20, fill="x")
@@ -108,7 +113,7 @@ class SovereignDashboard(ctk.CTk):
             fg_color="darkgreen", hover_color="#228B22",
             command=lambda: self.run_test(
                 "Omega Ignition",
-                [sys.executable, os.path.join(PROJECT_ROOT, "omega_ignition.py")],
+                [PYTHON, os.path.join(PROJECT_ROOT,"omega_ignition.py")],
             ),
         )
         self.btn_ignition.pack(pady=(15, 10), padx=20, fill="x")
@@ -219,6 +224,7 @@ class SovereignDashboard(ctk.CTk):
             process = subprocess.Popen(
                 cmd,
                 cwd=PROJECT_ROOT,
+                env=os.environ.copy(),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,

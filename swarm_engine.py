@@ -385,6 +385,10 @@ class MemexAgent(BrainAgent):
         """Verbind met ChromaDB (zelfde DB als ingest.py)."""
         if self._collection is not None:
             return self._collection
+        # ChromaDB PersistentClient + Rust backend crasht in
+        # subprocess-pipe op Windows (0xC0000005). Skip in tests.
+        if os.environ.get("DANNY_TEST_MODE") == "1":
+            return None
         try:
             import chromadb
             from danny_toolkit.core.embeddings import (
@@ -1369,10 +1373,10 @@ class AdaptiveRouter:
 
     @classmethod
     def _get_embed_fn(cls):
-        """Lazy laden van SentenceTransformer.
+        """Lazy laden van SentenceTransformer op CPU.
 
-        Hergebruikt MemexAgent pattern (suppress
-        stdout). Class variable: geladen 1x, gedeeld.
+        CPU-only: router embed korte strings, geen GPU nodig.
+        Voorkomt CUDA ACCESS_VIOLATION (0xC0000005) op Windows.
         """
         if cls._embed_fn is not None:
             return cls._embed_fn
@@ -1387,7 +1391,8 @@ class AdaptiveRouter:
             sys.stderr = _io.StringIO()
             try:
                 model = SentenceTransformer(
-                    "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
+                    "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+                    device="cpu",
                 )
             finally:
                 sys.stdout = _old_out
