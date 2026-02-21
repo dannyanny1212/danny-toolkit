@@ -86,6 +86,7 @@ class OmegaIgnition:
             sys.stdout = _devnull
             try:
                 from danny_toolkit.brain import Strategist, Tribunal, VoidWalker
+                from danny_toolkit.brain import TheCortex, TheOracleEye
                 from danny_toolkit.core.neural_bus import get_bus
                 bus = get_bus()
             finally:
@@ -98,6 +99,42 @@ class OmegaIgnition:
         except ImportError as e:
             print(f"  {Kleur.ROOD}❌ Neural Link Error: {e}{Kleur.RESET}")
             self.errors += 1
+
+        # TheCortex — Knowledge Graph
+        try:
+            _real_stdout = sys.stdout
+            _devnull = open(os.devnull, "w", encoding="utf-8")
+            sys.stdout = _devnull
+            try:
+                from danny_toolkit.brain import TheCortex
+                cortex = TheCortex()
+                stats = cortex.get_stats()
+            finally:
+                sys.stdout = _real_stdout
+                _devnull.close()
+            print(f"  {Kleur.GROEN}✔ TheCortex: Online ({stats.get('db_entities', 0)} entities, {stats.get('db_triples', 0)} triples){Kleur.RESET}")
+        except Exception as e:
+            print(f"  {Kleur.GEEL}⚠ TheCortex: {e}{Kleur.RESET}")
+
+        # TheOracleEye — Predictive Scaler
+        try:
+            _real_stdout = sys.stdout
+            _devnull = open(os.devnull, "w", encoding="utf-8")
+            sys.stdout = _devnull
+            try:
+                from danny_toolkit.brain import TheOracleEye
+                oracle = TheOracleEye()
+                peaks = oracle.get_peak_hours()
+            finally:
+                sys.stdout = _real_stdout
+                _devnull.close()
+            if peaks:
+                peak_str = ", ".join(f"{h:02d}:00" for h in peaks[:3])
+                print(f"  {Kleur.GROEN}✔ TheOracleEye: Online (piekuren: {peak_str}){Kleur.RESET}")
+            else:
+                print(f"  {Kleur.GROEN}✔ TheOracleEye: Online (nog geen patronen){Kleur.RESET}")
+        except Exception as e:
+            print(f"  {Kleur.GEEL}⚠ TheOracleEye: {e}{Kleur.RESET}")
 
     def fase_3_optimalisatie(self):
         print(f"\n{Kleur.GEEL}[3/3] MEMORY & CACHE OPTIMALISATIE{Kleur.RESET}")

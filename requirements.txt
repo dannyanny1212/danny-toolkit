@@ -25,6 +25,9 @@ transformers>=4.30.0
 numpy>=1.24.0
 pandas>=2.0.0
 
+# Graph processing
+networkx>=3.0
+
 # Web UI
 streamlit>=1.30.0
 

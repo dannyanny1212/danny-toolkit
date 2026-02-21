@@ -1109,6 +1109,33 @@ class PrometheusBrain:
                 )
         except Exception as e:
             print(f"   [RAG] Fout: {e}")
+
+        # Cortex Graph RAG — voeg associatief geheugen toe
+        try:
+            from danny_toolkit.brain.cortex import TheCortex
+            cortex = TheCortex()
+            # Zoek entiteiten uit query in de kennisgraaf
+            stats = cortex.get_stats()
+            if stats.get("db_entities", 0) > 0:
+                # Zoek welke bekende entiteiten in de taak voorkomen
+                all_ents = cortex._stack._conn.execute(
+                    "SELECT naam FROM entities ORDER BY mention_count DESC LIMIT 100"
+                ).fetchall()
+                matched = [
+                    row[0] for row in all_ents
+                    if row[0].lower() in task.lower()
+                ]
+                graph_parts = []
+                for ent in matched[:3]:
+                    ctx = cortex.get_entity_context(ent)
+                    if ctx:
+                        graph_parts.append(ctx)
+                if graph_parts:
+                    graph_context = "\n\n".join(graph_parts)
+                    task = f"{task}\n\nGRAAF CONTEXT:\n{graph_context}"
+        except Exception:
+            pass
+
         return task
 
     def _assign(self, role: CosmicRole, task: str, priority: TaskPriority) -> TaskResult:

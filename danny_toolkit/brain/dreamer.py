@@ -55,6 +55,16 @@ class Dreamer:
         if insight:
             print(f"{Kleur.CYAAN}✨ Morning Insight: {insight}{Kleur.RESET}")
 
+        # 5. Oracle Eye — dagelijkse resource forecast
+        try:
+            from danny_toolkit.brain.oracle_eye import TheOracleEye
+            oracle = TheOracleEye()
+            forecast = oracle.generate_daily_forecast()
+            if forecast:
+                print(f"{Kleur.CYAAN}🔮 {forecast.split(chr(10))[0]}{Kleur.RESET}")
+        except Exception:
+            pass
+
         print(f"{Kleur.GROEN}🌙 REM cycle complete.{Kleur.RESET}")
 
     def _vacuum(self):

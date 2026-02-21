@@ -448,6 +448,17 @@ class HeartbeatDaemon:
 
     # ─── Display ───
 
+    def _check_oracle_forecast(self):
+        """Vraag OracleEye om pre-warm advies."""
+        try:
+            from danny_toolkit.brain.oracle_eye import TheOracleEye
+            oracle = TheOracleEye()
+            advies = oracle.pre_warm_check()
+            if advies:
+                self._log_activity("oracle", advies)
+        except Exception:
+            pass
+
     def _log_activity(self, type_: str, bericht: str):
         """Voeg toe aan activity log (max 8)."""
         now = datetime.now().strftime("%H:%M:%S")
@@ -668,6 +679,10 @@ class HeartbeatDaemon:
                         proactive = self._get_proactive()
                         if proactive:
                             proactive._check_timer_regels()
+
+                    # Oracle Eye forecast check (~300 pulsen)
+                    if self._pulse_count % 300 == 0:
+                        self._check_oracle_forecast()
 
                     # Update display
                     live.update(self._build_display())

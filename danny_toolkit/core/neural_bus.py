@@ -34,6 +34,8 @@ class EventTypes:
     RECIPE_GENERATED = "recipe_generated"
     GOAL_UPDATE = "goal_update"
     SYSTEM_EVENT = "system_event"
+    KNOWLEDGE_GRAPH_UPDATE = "knowledge_graph_update"
+    RESOURCE_FORECAST = "resource_forecast"
 
 
 class BusEvent:

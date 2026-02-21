@@ -29,6 +29,8 @@ try:
     from .ghost_writer import GhostWriter
     from .dreamer import Dreamer
     from .devops_daemon import DevOpsDaemon
+    from .cortex import TheCortex
+    from .oracle_eye import TheOracleEye
 except ImportError:
     pass
 
@@ -58,6 +60,7 @@ __all__ = [
     "Strategist", "Tribunal", "AdversarialTribunal",
     "VoidWalker", "Artificer", "BlackBox",
     "TheMirror", "GhostWriter", "Dreamer", "DevOpsDaemon",
+    "TheCortex", "TheOracleEye",
     # Anti-Hallucination
     "CitationMarshall", "RealityAnchor", "TruthAnchor",
     # Subsystems

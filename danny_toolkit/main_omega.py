@@ -25,6 +25,18 @@ try:
     HAS_STRATEGIST = True
 except ImportError:
     HAS_STRATEGIST = False
+
+try:
+    from .brain.cortex import TheCortex
+    HAS_CORTEX = True
+except ImportError:
+    HAS_CORTEX = False
+
+try:
+    from .brain.oracle_eye import TheOracleEye
+    HAS_ORACLE = True
+except ImportError:
+    HAS_ORACLE = False
 from .daemon.sensorium import EventType
 from .daemon.limbic_system import Mood, AvatarForm
 from .learning.orchestrator import LearningSystem
@@ -63,6 +75,8 @@ Commando's:
   leer      - Forceer een learning cycle
   feedback  - Geef feedback (excellent/good/ok/bad/wrong)
   avatar    - Toon ASCII avatar
+  cortex    - Knowledge Graph status/stats
+  oracle    - Predictieve resource forecast
   pulse     - Activeer Bio-Wallet (Quest IX)
   spreek    - Laat Pixel spreken (Quest X)
   voice     - Voice status/on/off/demo
@@ -336,6 +350,42 @@ class OmegaAI:
                 print(kleur(f"    - {s}", Kleur.GEEL))
 
         print(kleur(f"{'='*60}", Kleur.FEL_CYAAN))
+
+        # Cortex summary
+        if HAS_CORTEX:
+            try:
+                cortex = TheCortex()
+                stats = cortex.get_stats()
+                print(kleur(
+                    f"\n  CORTEX: {stats['db_entities']} entities, "
+                    f"{stats['db_triples']} triples, "
+                    f"{stats['graph_nodes']} graph nodes",
+                    Kleur.FEL_CYAAN,
+                ))
+            except Exception:
+                pass
+
+        # Oracle summary
+        if HAS_ORACLE:
+            try:
+                oracle = TheOracleEye()
+                advies = oracle.pre_warm_check()
+                peaks = oracle.get_peak_hours()
+                if peaks:
+                    peak_str = ", ".join(
+                        f"{h:02d}:00" for h in peaks[:3]
+                    )
+                    print(kleur(
+                        f"  ORACLE: Piekuren {peak_str}",
+                        Kleur.FEL_MAGENTA,
+                    ))
+                if advies:
+                    print(kleur(
+                        f"  ORACLE: {advies}",
+                        Kleur.FEL_GEEL,
+                    ))
+            except Exception:
+                pass
 
         # Governor health
         self.governor.display_health()
@@ -725,6 +775,12 @@ class OmegaAI:
                         ))
                         print()
 
+                elif commando == "cortex":
+                    self._toon_cortex()
+
+                elif commando == "oracle":
+                    self._toon_oracle()
+
                 elif commando == "help":
                     print(info(HELP_TEKST))
 
@@ -777,6 +833,86 @@ class OmegaAI:
 
         except KeyboardInterrupt:
             self.stop()
+
+    def _toon_cortex(self):
+        """Toon TheCortex Knowledge Graph status."""
+        if not HAS_CORTEX:
+            print(fout("  TheCortex niet beschikbaar."))
+            return
+        try:
+            cortex = TheCortex()
+            stats = cortex.get_stats()
+            print(kleur(
+                f"\n{'='*60}\n"
+                f"  INVENTION #17: THE CORTEX\n"
+                f"{'='*60}",
+                Kleur.FEL_CYAAN,
+            ))
+            print(kleur(
+                f"  NetworkX:   "
+                f"{'JA' if stats['has_networkx'] else 'NEE'}",
+                Kleur.CYAAN,
+            ))
+            print(kleur(
+                f"  Entities:   {stats['db_entities']}",
+                Kleur.CYAAN,
+            ))
+            print(kleur(
+                f"  Triples:    {stats['db_triples']}",
+                Kleur.CYAAN,
+            ))
+            print(kleur(
+                f"  Graaf:      "
+                f"{stats['graph_nodes']} nodes, "
+                f"{stats['graph_edges']} edges",
+                Kleur.CYAAN,
+            ))
+            print(kleur(f"{'='*60}\n", Kleur.FEL_CYAAN))
+        except Exception as e:
+            print(fout(f"  Cortex fout: {e}"))
+
+    def _toon_oracle(self):
+        """Toon TheOracleEye predictieve forecast."""
+        if not HAS_ORACLE:
+            print(fout("  TheOracleEye niet beschikbaar."))
+            return
+        try:
+            oracle = TheOracleEye()
+            print(kleur(
+                f"\n{'='*60}\n"
+                f"  INVENTION #18: THE ORACLE EYE\n"
+                f"{'='*60}",
+                Kleur.FEL_MAGENTA,
+            ))
+
+            # Piekuren
+            peaks = oracle.get_peak_hours()
+            if peaks:
+                peak_str = ", ".join(
+                    f"{h:02d}:00" for h in peaks
+                )
+                print(kleur(
+                    f"  Piekuren:   {peak_str}",
+                    Kleur.CYAAN,
+                ))
+
+            # Pre-warm advies
+            advies = oracle.pre_warm_check()
+            if advies:
+                print(kleur(
+                    f"  Advies:     {advies}",
+                    Kleur.FEL_GEEL,
+                ))
+
+            # Forecast
+            forecast = oracle.generate_daily_forecast()
+            if forecast:
+                for line in forecast.split("\n"):
+                    print(kleur(f"  {line}", Kleur.CYAAN))
+
+            print(kleur(f"{'='*60}\n", Kleur.FEL_MAGENTA))
+        except Exception as e:
+            print(fout(f"  Oracle fout: {e}"))
 
     def stop(self):
         """Graceful shutdown - sla alles op."""
