@@ -37,8 +37,11 @@ try:
 except ImportError:
     ANTHROPIC_BESCHIKBAAR = False
 
-# TODO: Groq verwijderd
-GROQ_BESCHIKBAAR = False
+try:
+    from groq import Groq
+    GROQ_BESCHIKBAAR = True
+except ImportError:
+    GROQ_BESCHIKBAAR = False
 
 
 class CentralBrain:
@@ -68,13 +71,24 @@ class CentralBrain:
         self.data_dir.mkdir(exist_ok=True)
         self.data_file = self.data_dir / "brain_data.json"
 
-        # AI Client — TODO: Groq verwijderd, direct Anthropic
+        # AI Client — Groq primair, Anthropic fallback
         self.client = None
         self.ai_provider = None
         self._fallback_client = None
         self._fallback_provider = None
 
-        if ANTHROPIC_BESCHIKBAAR and Config.has_anthropic_key():
+        if GROQ_BESCHIKBAAR and Config.has_groq_key():
+            self.client = Groq()
+            self.ai_provider = "groq"
+            print(kleur(
+                "   [OK] Central Brain AI actief (Groq)",
+                Kleur.GROEN,
+            ))
+            # Anthropic als fallback
+            if ANTHROPIC_BESCHIKBAAR and Config.has_anthropic_key():
+                self._fallback_client = Anthropic()
+                self._fallback_provider = "anthropic"
+        elif ANTHROPIC_BESCHIKBAAR and Config.has_anthropic_key():
             self.client = Anthropic()
             self.ai_provider = "anthropic"
             print(kleur(

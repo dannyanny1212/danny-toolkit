@@ -11,10 +11,18 @@ import os
 import subprocess
 import sys
 import time
+from pathlib import Path
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
 PROJECT_ROOT = sys.path[0] or "."
+
+# Laad .env zodat API keys beschikbaar zijn in subprocess-env
+try:
+    from dotenv import load_dotenv
+    load_dotenv(Path(PROJECT_ROOT) / ".env", override=True)
+except ImportError:
+    pass
 
 # Locked interpreter — voorkomt CUDA 0xC0000005 door DLL mismatch
 PYTHON = os.path.join(PROJECT_ROOT, "venv311", "Scripts", "python.exe")
