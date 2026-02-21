@@ -702,12 +702,12 @@ class TorchGPUEmbeddings(EmbeddingProvider):
     def embed(self, texts, batch_size: int = 32):
         with torch.inference_mode():
             if len(texts) <= batch_size:
-                return self._embed_batch(texts)
+                return self._embed_batch(texts).tolist()
 
             all_emb = []
             for i in range(0, len(texts), batch_size):
                 all_emb.append(self._embed_batch(texts[i:i + batch_size]))
-            return torch.cat(all_emb, dim=0)
+            return torch.cat(all_emb, dim=0).tolist()
 
 
 # =============================================================================
