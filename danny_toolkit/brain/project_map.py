@@ -12,8 +12,10 @@ from pathlib import Path
 from collections import defaultdict
 
 if os.name == "nt":
-    sys.stdout.reconfigure(encoding="utf-8")
-    sys.stderr.reconfigure(encoding="utf-8")
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8")
 
 from ..core.utils import kleur, Kleur, clear_scherm
 

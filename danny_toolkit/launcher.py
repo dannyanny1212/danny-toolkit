@@ -6,8 +6,10 @@ Versie 5.1.1 - OMEGA_SOVEREIGN Rich Dashboard met thema's, kleuren, statistieken
 import sys
 import os
 if os.name == "nt":
-    sys.stdout.reconfigure(encoding="utf-8")
-    sys.stderr.reconfigure(encoding="utf-8")
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8")
 import json
 from datetime import datetime
 from pathlib import Path
