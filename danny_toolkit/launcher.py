@@ -76,6 +76,14 @@ from .brain.singularity import SingularityEngine
 from .brain.file_guard import FileGuard
 from .brain.security_research import SecurityResearchEngine
 
+try:
+    from .brain.strategist import Strategist
+    HAS_STRATEGIST = True
+except ImportError:
+    HAS_STRATEGIST = False
+
+import asyncio
+
 # Rich UI imports
 from rich.console import Console
 from rich.panel import Panel
@@ -1986,6 +1994,20 @@ class Launcher:
             # Directe app keuze
             elif keuze in self.APPS:
                 self.start_app(keuze)
+
+            # OMEGA SOVEREIGN: Intent Interceptor
+            elif len(keuze) > 2 and HAS_STRATEGIST:
+                print(f"\n{Kleur.CYAAN}  OMEGA SOVEREIGN AUTONOMY GEACTIVEERD{Kleur.RESET}")
+                print(f"{Kleur.MAGENTA}  Missie ontvangen: '{keuze}'{Kleur.RESET}\n")
+                try:
+                    strategist = Strategist()
+                    resultaat = asyncio.run(strategist.execute_mission(keuze))
+                    print(f"\n{Kleur.GROEN}  === MISSIE RESULTAAT ==={Kleur.RESET}")
+                    print(resultaat)
+                    print(f"{Kleur.GROEN}  ========================{Kleur.RESET}")
+                except Exception as e:
+                    print(fout(f"\n  Strategist fout: {e}"))
+                input("\n  Druk op Enter om terug te gaan...")
 
             else:
                 print(fout("\n  Ongeldige keuze. Typ '?' voor help."))
