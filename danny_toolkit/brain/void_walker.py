@@ -136,11 +136,11 @@ class VoidWalker:
         elif self._store and hasattr(self._store, "add_triple"):
             self._store.add_triple(
                 topic, "researched_by", "void_walker",
-                source="void_walker",
+                bron="void_walker",
             )
             self._store.add_triple(
                 topic, "has_knowledge", clean_knowledge[:500],
-                source="void_walker",
+                bron="void_walker",
             )
             print(f"{Kleur.GROEN}✨ Void Walker: Knowledge acquired "
                   f"(Cortex). '{topic}' is now known.{Kleur.RESET}")
