@@ -28,6 +28,9 @@ import os
 import time
 from pathlib import Path
 
+import asyncio
+import threading
+
 from .governor import OmegaGovernor
 
 
@@ -397,6 +400,12 @@ class PrometheusBrain:
         # Governor (Omega-0) - Autonome Bewaker
         self.governor = OmegaGovernor()
 
+        # Phase 6: Feedback loop subsystems (lazy loaded)
+        self._blackbox = None
+        self._voidwalker = None
+        self._bus = None
+        self._init_feedback_loop()
+
         # Batch state persistence (1.2)
         self._dirty = False
 
@@ -458,6 +467,67 @@ class PrometheusBrain:
         except Exception as e:
             print(f"  [LEARNING] Niet beschikbaar ({e})")
             self.learning = None
+
+    def _init_feedback_loop(self):
+        """Lazy load BlackBox, VoidWalker en NeuralBus voor feedback loop."""
+        try:
+            from danny_toolkit.brain.black_box import BlackBox
+            self._blackbox = BlackBox()
+        except Exception:
+            self._blackbox = None
+        try:
+            from danny_toolkit.brain.void_walker import VoidWalker
+            self._voidwalker = VoidWalker()
+        except Exception:
+            self._voidwalker = None
+        try:
+            from danny_toolkit.core.neural_bus import get_bus
+            self._bus = get_bus()
+        except Exception:
+            self._bus = None
+
+    def _trigger_learning_cycle(self, query: str, response: str, reason: str):
+        """Async feedback loop: BlackBox record → VoidWalker research → NeuralBus event.
+
+        Draait in een achtergrond-thread zodat de gebruiker niet wacht.
+        """
+        # 1. Record failure in BlackBox
+        if self._blackbox:
+            try:
+                self._blackbox.record_crash(query, response[:500], reason)
+                print(f"  [BLACKBOX] Knowledge gap recorded: {reason}")
+            except Exception:
+                pass
+
+        # 2. Publiceer LEARNING_CYCLE_STARTED op NeuralBus
+        if self._bus:
+            try:
+                from danny_toolkit.core.neural_bus import EventTypes
+                self._bus.publish(
+                    EventTypes.LEARNING_CYCLE_STARTED,
+                    {"query": query[:200], "reason": reason},
+                    bron="trinity_omega",
+                )
+            except Exception:
+                pass
+
+        # 3. VoidWalker research in achtergrond-thread
+        if self._voidwalker:
+            def _research():
+                try:
+                    loop = asyncio.new_event_loop()
+                    result = loop.run_until_complete(
+                        self._voidwalker.fill_knowledge_gap(query[:200])
+                    )
+                    loop.close()
+                    if result:
+                        print(f"  [VOIDWALKER] Knowledge gap filled for: {query[:60]}...")
+                except Exception:
+                    pass
+
+            t = threading.Thread(target=_research, daemon=True)
+            t.start()
+            print(f"  [FEEDBACK] Learning cycle gestart (achtergrond research)")
 
     def _awaken_federation(self):
         """Initialiseer alle 17 Kosmische Nodes."""
@@ -1116,16 +1186,11 @@ class PrometheusBrain:
                     from danny_toolkit.brain.truth_anchor import TruthAnchor
                     anchor = TruthAnchor()
                     if not anchor.verify(task, docs[:3]):
-                        # Record failure in BlackBox
-                        try:
-                            from danny_toolkit.brain.black_box import BlackBox
-                            bb_rec = BlackBox()
-                            bb_rec.record_crash(
-                                task, str(docs[:3])[:500],
-                                "TruthAnchor rejected: RAG context below relevance threshold",
-                            )
-                        except Exception:
-                            pass
+                        # Phase 6: Feedback loop — record + research
+                        self._trigger_learning_cycle(
+                            task, str(docs[:3])[:500],
+                            "TruthAnchor rejected: RAG context below relevance threshold",
+                        )
                         docs = None  # Context too weak, skip RAG
                 except Exception:
                     pass
@@ -1209,6 +1274,11 @@ class PrometheusBrain:
         elif brain_status == "FAIL":
             status = "TASK_FAILED"
             print(f"   >>> {agent.name} fout: {ai_result}")
+            # Phase 6: Feedback loop on failure
+            self._trigger_learning_cycle(
+                task, str(ai_result)[:500],
+                f"TASK_FAILED by {agent.name} ({role.name})",
+            )
         else:
             status = "TASK_QUEUED"
 

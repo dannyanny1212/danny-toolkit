@@ -39,6 +39,7 @@ class EventTypes:
     MISSION_STARTED = "mission_started"
     STEP_COMPLETED = "step_completed"
     FORGE_SUCCESS = "forge_success"
+    LEARNING_CYCLE_STARTED = "learning_cycle_started"
 
 
 class BusEvent:

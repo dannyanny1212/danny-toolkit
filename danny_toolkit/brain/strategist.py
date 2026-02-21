@@ -149,10 +149,19 @@ class Strategist:
         - "artificer": for writing and running Python scripts or file operations.
         - "brain": for summarization, analysis, or writing text.
 
+        CRITICAL RULE for "details" field:
+        When a step uses "void_walker" (internet research), write the "details" field
+        as a natural human search query — exactly how someone would type it into Google.
+        NEVER include internal tool names like "Void Walker", "Artificer", "brain",
+        "void_walker", "Python script", or any system-internal terminology in the
+        search query. The search engine does not know these names.
+        BAD:  "Use Void Walker to search for Python crypto API"
+        GOOD: "cryptocurrency price API with JSON response"
+
         Return strictly JSON format:
         {{
             "steps": [
-                {{"step": 1, "tool": "void_walker", "action": "Research...", "details": "Search for..."}},
+                {{"step": 1, "tool": "void_walker", "action": "Research...", "details": "cryptocurrency price API with JSON response"}},
                 {{"step": 2, "tool": "artificer", "action": "Code...", "details": "Write a script to..."}}
             ]
         }}
