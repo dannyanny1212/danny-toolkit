@@ -52,6 +52,9 @@ data/met.pdf
 danny_toolkit/skills/forge/skill_*.py
 danny_toolkit/skills/forge/registry.json
 
+# Artificer workspace (sandboxed file I/O output)
+danny_toolkit/workspace/
+
 # Governor backups (runtime data)
 data/backups/
 

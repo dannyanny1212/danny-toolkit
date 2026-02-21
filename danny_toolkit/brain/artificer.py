@@ -39,6 +39,7 @@ class Artificer:
     def __init__(self):
         self.skills_dir = Config.BASE_DIR / "danny_toolkit" / "skills" / "forge"
         self.registry_path = self.skills_dir / "registry.json"
+        self.workspace_dir = Config.BASE_DIR / "danny_toolkit" / "workspace"
         self.client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
         self.model = "meta-llama/llama-4-scout-17b-16e-instruct"
         self._bus = get_bus() if HAS_BUS else None
@@ -46,6 +47,7 @@ class Artificer:
 
     def _ensure_setup(self):
         self.skills_dir.mkdir(parents=True, exist_ok=True)
+        self.workspace_dir.mkdir(parents=True, exist_ok=True)
         if not self.registry_path.exists():
             with open(self.registry_path, "w", encoding="utf-8") as f:
                 json.dump({}, f)
@@ -91,6 +93,7 @@ class Artificer:
         return result
 
     async def _write_script(self, task: str) -> Optional[str]:
+        workspace = str(self.workspace_dir).replace("\\", "/")
         prompt = (
             f"Write a STANDALONE Python script to: {task}.\n"
             "Rules:\n"
@@ -102,6 +105,12 @@ class Artificer:
             "(e.g. while True), ALWAYS add a safety limit so it exits "
             "after at most 5 iterations. Your code is executed immediately "
             "to verify it works; infinite loops cause a 30s timeout.\n"
+            f"- FILE I/O: If you need to read or write files, you may use open(). "
+            f"ALL file output MUST go to the workspace directory: {workspace}/ — "
+            f"use os.path.join(\"{workspace}\", \"filename\") for every file path. "
+            f"NEVER write files outside this directory.\n"
+            "- FORBIDDEN: os.remove, os.rmdir, shutil.rmtree, subprocess, "
+            "os.system, eval(), exec(), __import__.\n"
             "- Return ONLY raw Python source code.\n"
             "- Do NOT wrap in markdown fences (no ```python, no ```).\n"
             "- Do NOT add explanations, comments about the code, or text before/after.\n"
@@ -189,6 +198,7 @@ class Artificer:
                 capture_output=True,
                 text=True,
                 timeout=30,
+                cwd=str(self.workspace_dir),
             )
             if result.returncode == 0:
                 self._mark_skill_status(filename, error=None)
