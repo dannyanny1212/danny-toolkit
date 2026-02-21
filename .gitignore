@@ -57,6 +57,7 @@ data/cortical_stack.db-shm
 data/cortical_stack.db-wal
 
 # Generated output
+data/output/
 data/logs/
 data/plots/
 data/screenshots/
