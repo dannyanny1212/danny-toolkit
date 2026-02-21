@@ -30,6 +30,12 @@ try:
 except ImportError:
     HAS_VECTOR = False
 
+try:
+    from danny_toolkit.brain.cortex import TheCortex
+    HAS_CORTEX = True
+except ImportError:
+    HAS_CORTEX = False
+
 
 # Domains die meer ruis dan kennis opleveren
 _BLACKLIST = [
@@ -57,6 +63,7 @@ class VoidWalker:
         self.db_path = Config.DATA_DIR / "memory" / "knowledge_companion.json"
 
         self._store = None
+        self._cortex = None
         if HAS_VECTOR:
             try:
                 embedder = get_torch_embedder()
@@ -64,6 +71,12 @@ class VoidWalker:
                     embedding_provider=embedder,
                     db_file=self.db_path,
                 )
+            except Exception:
+                pass
+        # Fallback: TheCortex als VectorStore niet beschikbaar
+        if not self._store and HAS_CORTEX:
+            try:
+                self._cortex = TheCortex()
             except Exception:
                 pass
 
@@ -119,10 +132,21 @@ class VoidWalker:
                     "timestamp": time.time(),
                 },
             }])
-            print(f"{Kleur.GROEN}✨ Void Walker: Knowledge acquired. "
-                  f"'{topic}' is now known.{Kleur.RESET}")
+            print(f"{Kleur.GROEN}✨ Void Walker: Knowledge acquired "
+                  f"(VectorStore). '{topic}' is now known.{Kleur.RESET}")
+        elif self._cortex:
+            self._cortex.add_triple(
+                topic, "researched_by", "void_walker",
+                source="void_walker",
+            )
+            self._cortex.add_triple(
+                topic, "has_knowledge", clean_knowledge[:500],
+                source="void_walker",
+            )
+            print(f"{Kleur.GROEN}✨ Void Walker: Knowledge acquired "
+                  f"(Cortex). '{topic}' is now known.{Kleur.RESET}")
         else:
-            print(f"{Kleur.GEEL}🌌 Void Walker: Geen VectorStore — "
+            print(f"{Kleur.GEEL}🌌 Void Walker: Geen store — "
                   f"kennis niet opgeslagen.{Kleur.RESET}")
 
         return clean_knowledge
