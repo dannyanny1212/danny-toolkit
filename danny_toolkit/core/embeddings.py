@@ -631,6 +631,8 @@ def lijst_providers() -> List[str]:
 
 try:
     from transformers import AutoTokenizer, AutoModel
+    from transformers import logging as transformers_logging
+    transformers_logging.set_verbosity_error()
     import torch
     from danny_toolkit.core.gpu import get_device
     _HAS_TORCH_GPU = True
