@@ -14,10 +14,14 @@ except ImportError:
     HAS_SCRAPER = False
 
 try:
-    from duckduckgo_search import DDGS
+    from ddgs import DDGS
     HAS_DDGS = True
 except ImportError:
-    HAS_DDGS = False
+    try:
+        from duckduckgo_search import DDGS
+        HAS_DDGS = True
+    except ImportError:
+        HAS_DDGS = False
 
 try:
     from danny_toolkit.core.vector_store import VectorStore
@@ -126,7 +130,8 @@ class VoidWalker:
     def _search(self, query: str) -> List[Tuple[str, str]]:
         """Search DuckDuckGo for documentation pages."""
         try:
-            results = DDGS().text(query, max_results=5)
+            with DDGS() as ddgs:
+                results = list(ddgs.text(query, max_results=5))
             clean = []
             for r in results:
                 href = r.get("href", "")
