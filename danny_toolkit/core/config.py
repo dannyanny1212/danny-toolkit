@@ -8,6 +8,15 @@ import json
 from pathlib import Path
 from typing import Optional
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv(
+        Path(__file__).parent.parent.parent / ".env",
+        override=False,
+    )
+except ImportError:
+    pass
+
 
 class Thema:
     """Visuele thema's voor de toolkit."""
