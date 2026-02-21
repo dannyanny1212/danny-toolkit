@@ -48,6 +48,10 @@ data/.security_config_hash
 # Niet-code bestanden
 data/met.pdf
 
+# Artificer forge cache (runtime generated skills)
+danny_toolkit/skills/forge/skill_*.py
+danny_toolkit/skills/forge/registry.json
+
 # Governor backups (runtime data)
 data/backups/
 
@@ -68,6 +72,9 @@ data/rag/chromadb/
 
 # RAG documenten (user uploads)
 data/rag/documenten/*.txt
+
+# Runtime memory data
+data/memory/
 
 # Misc
 nul
