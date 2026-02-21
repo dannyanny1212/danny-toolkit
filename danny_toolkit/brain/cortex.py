@@ -412,7 +412,7 @@ class TheCortex:
             "has_stack": HAS_STACK,
         }
 
-        if self._graph:
+        if self._graph is not None:
             stats["graph_nodes"] = self._graph.number_of_nodes()
             stats["graph_edges"] = self._graph.number_of_edges()
 

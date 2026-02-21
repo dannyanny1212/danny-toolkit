@@ -14,10 +14,13 @@ Features:
 """
 
 import json
+import logging
 from datetime import datetime, timedelta
 from pathlib import Path
 from ..core.config import Config
 from ..core.utils import clear_scherm, kleur, Kleur, succes, fout, waarschuwing, info
+
+logger = logging.getLogger(__name__)
 
 
 class BoodschappenlijstApp:
@@ -210,8 +213,8 @@ class BoodschappenlijstApp:
                 event_type=event_type,
                 data=data
             )
-        except Exception:
-            pass  # Memory is optioneel
+        except Exception as e:
+            logger.debug("Memory event error: %s", e)
 
     def _get_huidige_lijst(self) -> dict:
         """Haalt de huidige actieve lijst op."""

@@ -114,8 +114,8 @@ class TestGhostWriter(unittest.TestCase):
               "danny_toolkit" in gw.watch_dir)
         check("client is AsyncGroq",
               type(gw.client).__name__ == "AsyncGroq")
-        check("model is 70b",
-              "70b" in gw.model)
+        check("model is llama-4-scout or qwen3",
+              "llama-4-scout" in gw.model or "qwen" in gw.model)
 
     def test_ghost_writer_ast_scan(self):
         """_inspect_file() vindt functies zonder docstring."""
@@ -291,30 +291,30 @@ class TestOracleEye(unittest.TestCase):
         eye._HIGH_CPU_THRESHOLD = 70.0
         eye._HIGH_QUERY_THRESHOLD = 50
 
-        # Lage belasting → 70b
+        # Lage belasting → primary (llama-4-scout)
         model_low = eye._kies_model(30.0, 10)
-        check("Low load -> 70b",
-              "70b" in model_low)
+        check("Low load -> llama-4-scout",
+              "llama-4-scout" in model_low)
 
-        # Hoge CPU → 8b
+        # Hoge CPU → fallback (qwen3-32b)
         model_high_cpu = eye._kies_model(80.0, 10)
-        check("High CPU -> 8b",
-              "8b" in model_high_cpu)
+        check("High CPU -> qwen3-32b",
+              "qwen3-32b" in model_high_cpu)
 
-        # Hoge queries → 8b
+        # Hoge queries → fallback (qwen3-32b)
         model_high_q = eye._kies_model(30.0, 60)
-        check("High queries -> 8b",
-              "8b" in model_high_q)
+        check("High queries -> qwen3-32b",
+              "qwen3-32b" in model_high_q)
 
-        # Beide hoog → 8b
+        # Beide hoog → fallback (qwen3-32b)
         model_both = eye._kies_model(90.0, 100)
-        check("Both high -> 8b",
-              "8b" in model_both)
+        check("Both high -> qwen3-32b",
+              "qwen3-32b" in model_both)
 
-        # Grenswaarden
+        # Grenswaarden (exact threshold = not exceeded → primary)
         model_edge = eye._kies_model(70.0, 50)
-        check("Edge case (exact threshold) -> 70b",
-              "70b" in model_edge)
+        check("Edge case (exact threshold) -> llama-4-scout",
+              "llama-4-scout" in model_edge)
 
     @patch(
         "danny_toolkit.brain.oracle_eye.get_cortical_stack",

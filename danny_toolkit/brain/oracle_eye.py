@@ -1,9 +1,12 @@
+import logging
 import os
 import time
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 from danny_toolkit.core.utils import Kleur
 
@@ -193,7 +196,7 @@ class TheOracleEye:
             or verwachte_queries > self._HIGH_QUERY_THRESHOLD
         ):
             return "qwen/qwen3-32b"
-        return "qwen/qwen3-32b"
+        return "meta-llama/llama-4-scout-17b-16e-instruct"
 
     def suggest_model(
         self,
@@ -213,11 +216,11 @@ class TheOracleEye:
         cpu = current_load.get("cpu", 0.0)
         queries = current_load.get("queries_last_hour", 0)
 
-        # Als huidige load al hoog is, direct 8B
+        # Als huidige load al hoog is, direct fallback
         if cpu > self._HIGH_CPU_THRESHOLD or queries > self._HIGH_QUERY_THRESHOLD:
             return "qwen/qwen3-32b"
 
-        # Check forecast — als piek verwacht, preventief 8B
+        # Check forecast — als piek verwacht, preventief fallback
         if forecast is None:
             forecast = self.forecast_next_hours(hours=2)
 
@@ -231,7 +234,7 @@ class TheOracleEye:
             ):
                 return "qwen/qwen3-32b"
 
-        return "qwen/qwen3-32b"
+        return "meta-llama/llama-4-scout-17b-16e-instruct"
 
     def get_peak_hours(self, days: int = 7) -> List[int]:
         """Top 5 uren met meeste activiteit."""
@@ -297,7 +300,7 @@ class TheOracleEye:
         if forecasts:
             lines.append("Komende uren:")
             for fc in forecasts:
-                indicator = "🔴" if fc.aanbevolen_model.endswith("8b-instant") else "🟢"
+                indicator = "🔴" if fc.aanbevolen_model.endswith("qwen3-32b") else "🟢"
                 lines.append(
                     f"  {indicator} {fc.uur:02d}:00 — "
                     f"CPU: {fc.verwachte_cpu:.0f}%, "
@@ -323,8 +326,8 @@ class TheOracleEye:
                     },
                     bron="oracle_eye",
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("NeuralBus publish error: %s", e)
 
         # Log naar CorticalStack
         if self._stack:
@@ -339,7 +342,7 @@ class TheOracleEye:
                     source="oracle_eye",
                 )
                 self._stack.flush()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("CorticalStack log error: %s", e)
 
         return forecast_text

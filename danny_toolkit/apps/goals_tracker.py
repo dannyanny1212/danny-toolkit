@@ -3,11 +3,14 @@ Goals Tracker v1.0 - Persoonlijke doelen en groei tracker.
 Track je doelen, visualiseer voortgang en blijf gemotiveerd.
 """
 
+import logging
 import random
 from datetime import datetime, timedelta
 from collections import Counter
 from ..core.utils import clear_scherm
 from .base_app import BaseApp
+
+logger = logging.getLogger(__name__)
 
 
 class GoalsTrackerApp(BaseApp):
@@ -67,8 +70,8 @@ class GoalsTrackerApp(BaseApp):
                 event_type=event_type,
                 data=data
             )
-        except Exception:
-            pass  # Memory is optioneel
+        except Exception as e:
+            logger.debug("Memory event error: %s", e)
 
     def run(self):
         """Start de goals tracker."""

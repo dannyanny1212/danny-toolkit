@@ -20,6 +20,7 @@ Integreert met:
 """
 
 import json
+import logging
 import time
 import random
 import re
@@ -28,6 +29,8 @@ from pathlib import Path
 
 from ..core.config import Config
 from ..core.utils import clear_scherm
+
+logger = logging.getLogger(__name__)
 
 # Lazy imports voor AI integratie (om circulaire imports te voorkomen)
 def _get_boodschappenlijst():
@@ -42,14 +45,16 @@ def _get_nieuws_agent():
     try:
         from ..ai.nieuws_agent import NieuwsAgentApp
         return NieuwsAgentApp()
-    except Exception:
+    except Exception as e:
+        logger.debug("NieuwsAgent import error: %s", e)
         return None
 
 def _get_weer_agent():
     try:
         from ..ai.weer_agent import WeerAgentApp
         return WeerAgentApp()
-    except Exception:
+    except Exception as e:
+        logger.debug("WeerAgent import error: %s", e)
         return None
 
 def _get_claude_chat():
@@ -60,7 +65,8 @@ def _get_claude_chat():
         if chat._init_client():
             return chat
         return None
-    except Exception:
+    except Exception as e:
+        logger.debug("ClaudeChat import error: %s", e)
         return None
 
 
@@ -69,7 +75,8 @@ def _get_mood_tracker():
     try:
         from ..apps.mood_tracker import MoodTrackerApp
         return MoodTrackerApp()
-    except Exception:
+    except Exception as e:
+        logger.debug("MoodTracker import error: %s", e)
         return None
 
 
@@ -78,7 +85,8 @@ def _get_habit_tracker():
     try:
         from ..apps.habit_tracker import HabitTrackerApp
         return HabitTrackerApp()
-    except Exception:
+    except Exception as e:
+        logger.debug("HabitTracker import error: %s", e)
         return None
 
 
@@ -87,7 +95,8 @@ def _get_expense_tracker():
     try:
         from ..apps.expense_tracker import ExpenseTrackerApp
         return ExpenseTrackerApp()
-    except Exception:
+    except Exception as e:
+        logger.debug("ExpenseTracker import error: %s", e)
         return None
 
 
@@ -96,7 +105,8 @@ def _get_agenda_planner():
     try:
         from ..apps.agenda_planner import AgendaPlannerApp
         return AgendaPlannerApp()
-    except Exception:
+    except Exception as e:
+        logger.debug("AgendaPlanner import error: %s", e)
         return None
 
 
@@ -105,7 +115,8 @@ def _get_pomodoro_timer():
     try:
         from ..apps.pomodoro_timer import PomodoroTimerApp
         return PomodoroTimerApp()
-    except Exception:
+    except Exception as e:
+        logger.debug("PomodoroTimer import error: %s", e)
         return None
 
 

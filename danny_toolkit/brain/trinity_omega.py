@@ -19,10 +19,13 @@ over 5 kosmische tiers:
 Gebaseerd op de Cosmic Family Quest VIII: Het Prometheus Protocol.
 """
 
+import logging
 from enum import Enum
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional, Callable
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 import json
 import os
 import time
@@ -473,17 +476,20 @@ class PrometheusBrain:
         try:
             from danny_toolkit.brain.black_box import BlackBox
             self._blackbox = BlackBox()
-        except Exception:
+        except Exception as e:
+            logger.debug("BlackBox init error: %s", e)
             self._blackbox = None
         try:
             from danny_toolkit.brain.void_walker import VoidWalker
             self._voidwalker = VoidWalker()
-        except Exception:
+        except Exception as e:
+            logger.debug("VoidWalker init error: %s", e)
             self._voidwalker = None
         try:
             from danny_toolkit.core.neural_bus import get_bus
             self._bus = get_bus()
-        except Exception:
+        except Exception as e:
+            logger.debug("NeuralBus init error: %s", e)
             self._bus = None
 
     def _trigger_learning_cycle(self, query: str, response: str, reason: str):
@@ -496,8 +502,8 @@ class PrometheusBrain:
             try:
                 self._blackbox.record_crash(query, response[:500], reason)
                 print(f"  [BLACKBOX] Knowledge gap recorded: {reason}")
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("BlackBox record error: %s", e)
 
         # 2. Publiceer LEARNING_CYCLE_STARTED op NeuralBus
         if self._bus:
@@ -508,8 +514,8 @@ class PrometheusBrain:
                     {"query": query[:200], "reason": reason},
                     bron="trinity_omega",
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("NeuralBus publish error: %s", e)
 
         # 3. VoidWalker research in achtergrond-thread
         if self._voidwalker:
@@ -522,8 +528,8 @@ class PrometheusBrain:
                     loop.close()
                     if result:
                         print(f"  [VOIDWALKER] Knowledge gap filled for: {query[:60]}...")
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("VoidWalker research error: %s", e)
 
             t = threading.Thread(target=_research, daemon=True)
             t.start()
@@ -1172,8 +1178,8 @@ class PrometheusBrain:
             from danny_toolkit.brain.black_box import BlackBox
             bb = BlackBox()
             bb_warning = bb.retrieve_warnings(task)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("BlackBox warning retrieval error: %s", e)
 
         try:
             from ingest import TheLibrarian
@@ -1192,8 +1198,8 @@ class PrometheusBrain:
                             "TruthAnchor rejected: RAG context below relevance threshold",
                         )
                         docs = None  # Context too weak, skip RAG
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("TruthAnchor verify error: %s", e)
 
             if docs:
                 context = "\n---\n".join(docs)
@@ -1223,8 +1229,8 @@ class PrometheusBrain:
                     if bb_warning:
                         task = f"{bb_warning}\n\n{task}"
                     return task
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Cortex hybrid search error: %s", e)
 
         # VoidWalker: last resort — autonomous research for unknown topics
         try:
@@ -1234,8 +1240,8 @@ class PrometheusBrain:
             knowledge = _aio2.run(walker.fill_knowledge_gap(task[:200]))
             if knowledge:
                 task = f"{task}\n\nONDERZOEK CONTEXT:\n{knowledge[:1500]}"
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("VoidWalker fill_knowledge_gap error: %s", e)
 
         if bb_warning:
             task = f"{bb_warning}\n\n{task}"

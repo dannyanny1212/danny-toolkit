@@ -1,9 +1,12 @@
 """Base klasse voor alle toolkit apps."""
 
 import json
+import logging
 import os
 from typing import Any, Callable, Dict, List, Optional
 from ..core.config import Config
+
+logger = logging.getLogger(__name__)
 
 try:
     from anthropic import Anthropic
@@ -45,7 +48,8 @@ class BaseApp:
             if api_key:
                 try:
                     self.client = Anthropic(api_key=api_key)
-                except Exception:
+                except Exception as e:
+                    logger.debug("Anthropic client init error: %s", e)
                     self.client = None
 
     def _ai_request(self, prompt: str,
@@ -62,7 +66,8 @@ class BaseApp:
                 ]
             )
             return response.content[0].text
-        except Exception:
+        except Exception as e:
+            logger.debug("AI request error: %s", e)
             return None
 
     # ==================== NEURAL BUS ====================

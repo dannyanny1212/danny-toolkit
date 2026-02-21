@@ -2,10 +2,13 @@
 Pomodoro Timer v2.0 - AI-Powered focus timer.
 """
 
+import logging
 import time
 from datetime import datetime, timedelta
 from ..core.utils import clear_scherm
 from .base_app import BaseApp
+
+logger = logging.getLogger(__name__)
 
 
 class PomodoroTimerApp(BaseApp):
@@ -35,8 +38,8 @@ class PomodoroTimerApp(BaseApp):
                 event_type=event_type,
                 data=data
             )
-        except Exception:
-            pass  # Memory is optioneel
+        except Exception as e:
+            logger.debug("Memory event error: %s", e)
 
     def run(self):
         """Start de pomodoro timer."""

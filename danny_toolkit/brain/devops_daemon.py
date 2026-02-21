@@ -16,6 +16,7 @@ Gebruik:
 """
 
 import json
+import logging
 import os
 import re
 import subprocess
@@ -23,6 +24,8 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 from typing import Dict, List, Optional
 
 from groq import AsyncGroq
@@ -93,26 +96,26 @@ class DevOpsDaemon:
         if HAS_BLACKBOX:
             try:
                 self._blackbox = BlackBox()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("BlackBox init error: %s", e)
 
         if HAS_BUS:
             try:
                 self._bus = get_bus()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("NeuralBus init error: %s", e)
 
         if HAS_GOVERNOR:
             try:
                 self._governor = OmegaGovernor()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Governor init error: %s", e)
 
         if HAS_STACK:
             try:
                 self._stack = get_cortical_stack()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("CorticalStack init error: %s", e)
 
     # =================================================================
     # Core: API Pre-Check
@@ -374,8 +377,8 @@ class DevOpsDaemon:
                         bad_response=error_text[:500],
                         critique=analyse[:500],
                     )
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("BlackBox record error: %s", e)
 
             # 5. CorticalStack — audit trail
             self._log_event("test_failure_analyzed", {
@@ -481,8 +484,8 @@ class DevOpsDaemon:
                     details=details,
                     source="devops_daemon",
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("CorticalStack log error: %s", e)
 
     def _publish_event(self, sub_type: str, data: dict):
         """Publiceer event op NeuralBus als beschikbaar."""
@@ -493,8 +496,8 @@ class DevOpsDaemon:
                     {"sub_type": f"devops_{sub_type}", **data},
                     bron="devops_daemon",
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("NeuralBus publish error: %s", e)
 
     def _save_report(self, rapport: dict) -> Path:
         """
@@ -527,8 +530,8 @@ class DevOpsDaemon:
                     data = json.load(f)
                 laatste = data.get("timestamp")
                 laatste_status = data.get("status")
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Stats read error: %s", e)
 
         return {
             "rapporten_totaal": len(rapporten),

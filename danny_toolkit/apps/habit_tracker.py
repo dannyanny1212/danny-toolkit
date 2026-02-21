@@ -2,9 +2,12 @@
 Habit Tracker v2.0 - AI-Powered gewoonte tracker.
 """
 
+import logging
 from datetime import datetime, timedelta
 from ..core.utils import clear_scherm
 from .base_app import BaseApp
+
+logger = logging.getLogger(__name__)
 
 
 class HabitTrackerApp(BaseApp):
@@ -32,8 +35,8 @@ class HabitTrackerApp(BaseApp):
                 event_type=event_type,
                 data=data
             )
-        except Exception:
-            pass  # Memory is optioneel
+        except Exception as e:
+            logger.debug("Memory event error: %s", e)
 
     def run(self):
         """Start de habit tracker."""

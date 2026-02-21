@@ -3,6 +3,7 @@ Dream Journal v1.0 - Log dromen, analyseer patronen, ontdek symbolen.
 """
 
 import json
+import logging
 import random
 from datetime import datetime, timedelta
 from collections import Counter
@@ -10,6 +11,8 @@ from pathlib import Path
 from typing import List, Dict, Optional
 from ..core.config import Config
 from ..core.utils import clear_scherm
+
+logger = logging.getLogger(__name__)
 
 
 class DreamJournalApp:
@@ -101,8 +104,8 @@ class DreamJournalApp:
                 event_type=event_type,
                 data=data
             )
-        except Exception:
-            pass  # Memory is optioneel
+        except Exception as e:
+            logger.debug("Memory event error: %s", e)
 
     def _log_droom(self):
         """Log een nieuwe droom."""

@@ -573,7 +573,7 @@ class MemexAgent(BrainAgent):
         plan_raw, _, _ = await asyncio.to_thread(
             brain._execute_with_brain,
             plan_prompt,
-            "llama-3.1-8b-instant",
+            "qwen/qwen3-32b",
             50,
         )
 

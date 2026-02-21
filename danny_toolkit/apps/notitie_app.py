@@ -2,9 +2,12 @@
 Notitie App v2.0 - AI-Powered Notities maken en organiseren.
 """
 
+import logging
 from datetime import datetime
 from ..core.utils import clear_scherm
 from .base_app import BaseApp
+
+logger = logging.getLogger(__name__)
 
 
 class NotitieApp(BaseApp):
@@ -35,8 +38,8 @@ class NotitieApp(BaseApp):
                 event_type=event_type,
                 data=data
             )
-        except Exception:
-            pass  # Memory is optioneel
+        except Exception as e:
+            logger.debug("Memory event error: %s", e)
 
     def run(self):
         """Start de notitie app."""

@@ -367,13 +367,15 @@ def test_void_walker_fill_gap():
     """Research pipeline met gemockte dependencies."""
     print("\n=== Test 8: VoidWalker — fill_knowledge_gap ===")
 
-    # Mock DDGS search
+    # Mock DDGS search (used as context manager: with DDGS() as ddgs)
     mock_ddgs_instance = MagicMock()
     mock_ddgs_instance.text.return_value = [
         {"title": "Test Article", "href": "https://example.com/test"},
         {"title": "Another Source", "href": "https://docs.example.com/ref"},
     ]
-    mock_ddgs_class = MagicMock(return_value=mock_ddgs_instance)
+    mock_ddgs_class = MagicMock()
+    mock_ddgs_class.return_value.__enter__ = MagicMock(return_value=mock_ddgs_instance)
+    mock_ddgs_class.return_value.__exit__ = MagicMock(return_value=False)
 
     # Mock scraper
     mock_scrape = MagicMock(return_value=[
@@ -396,13 +398,13 @@ def test_void_walker_fill_gap():
     mock_embedder = MagicMock()
 
     with patch("danny_toolkit.brain.void_walker.HAS_DDGS", True), \
-         patch("danny_toolkit.brain.void_walker.DDGS", mock_ddgs_class), \
+         patch("danny_toolkit.brain.void_walker.DDGS", mock_ddgs_class, create=True), \
          patch("danny_toolkit.brain.void_walker.HAS_SCRAPER", True), \
-         patch("danny_toolkit.brain.void_walker.scrape_url", mock_scrape), \
+         patch("danny_toolkit.brain.void_walker.scrape_url", mock_scrape, create=True), \
          patch("danny_toolkit.brain.void_walker.HAS_VECTOR", True), \
-         patch("danny_toolkit.brain.void_walker.get_torch_embedder", return_value=mock_embedder), \
-         patch("danny_toolkit.brain.void_walker.VectorStore", return_value=mock_store), \
-         patch("danny_toolkit.brain.void_walker.AsyncGroq", return_value=mock_groq_client):
+         patch("danny_toolkit.brain.void_walker.get_torch_embedder", return_value=mock_embedder, create=True), \
+         patch("danny_toolkit.brain.void_walker.VectorStore", return_value=mock_store, create=True), \
+         patch("danny_toolkit.brain.void_walker.AsyncGroq", return_value=mock_groq_client, create=True):
         from danny_toolkit.brain.void_walker import VoidWalker
         walker = VoidWalker()
         walker.client = mock_groq_client

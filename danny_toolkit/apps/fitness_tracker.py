@@ -3,11 +3,14 @@ Fitness Tracker v1.0 - Workouts, sets/reps, voortgang, calorieën.
 """
 
 import json
+import logging
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Dict, Optional
 from ..core.config import Config
 from ..core.utils import clear_scherm
+
+logger = logging.getLogger(__name__)
 
 try:
     from ..core.neural_bus import get_bus, EventTypes
@@ -79,8 +82,8 @@ class FitnessTrackerApp:
                 event_type=event_type,
                 data=data
             )
-        except Exception:
-            pass  # Memory is optioneel
+        except Exception as e:
+            logger.debug("Memory event error: %s", e)
 
     def _check_streak(self):
         """Check en update workout streak."""
