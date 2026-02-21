@@ -53,7 +53,7 @@ class Dreamer:
         # 4. Pre-Compute — anticipate tomorrow
         insight = await self._anticipate()
         if insight:
-            print(f"{Kleur.CYAN}✨ Morning Insight: {insight}{Kleur.RESET}")
+            print(f"{Kleur.CYAAN}✨ Morning Insight: {insight}{Kleur.RESET}")
 
         print(f"{Kleur.GROEN}🌙 REM cycle complete.{Kleur.RESET}")
 

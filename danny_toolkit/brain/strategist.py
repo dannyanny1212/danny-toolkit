@@ -44,7 +44,7 @@ class Strategist:
         """
         Full mission loop: plan → execute steps → synthesize.
         """
-        print(f"{Kleur.CYAN}♟️  Strategist: Analyzing mission "
+        print(f"{Kleur.CYAAN}♟️  Strategist: Analyzing mission "
               f"'{user_objective}'...{Kleur.RESET}")
 
         # 1. THE PLAN

@@ -8,7 +8,7 @@ class TruthAnchor:
     Uses CPU-friendly Cross-Encoder.
     """
     def __init__(self):
-        print(f"{Kleur.CYAN}⚓ Loading Truth Anchor...{Kleur.RESET}")
+        print(f"{Kleur.CYAAN}⚓ Loading Truth Anchor...{Kleur.RESET}")
         self.model = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
 
     def verify(self, answer: str, context_docs: list[str]) -> bool:
