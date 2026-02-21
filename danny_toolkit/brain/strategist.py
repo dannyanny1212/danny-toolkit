@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -138,6 +139,48 @@ class Strategist:
         print(f"\n{Kleur.GROEN}🏁 Mission Accomplished.{Kleur.RESET}")
         return context_buffer
 
+    @staticmethod
+    def _extract_json(raw: str) -> Optional[str]:
+        """
+        JSON Sniper — extracts the first valid JSON object from LLM output.
+
+        Handles: markdown fences, chatty intro/outro text, nested braces.
+        """
+        # 1. Try markdown ```json ... ``` block first (most reliable)
+        fence = re.search(r"```(?:json)?\s*\n?(.*?)```", raw, re.DOTALL)
+        if fence:
+            raw = fence.group(1).strip()
+
+        # 2. Find first { and match its closing } via brace counting
+        start = raw.find("{")
+        if start == -1:
+            return None
+
+        depth = 0
+        in_string = False
+        escape = False
+        for i in range(start, len(raw)):
+            ch = raw[i]
+            if escape:
+                escape = False
+                continue
+            if ch == "\\":
+                escape = True
+                continue
+            if ch == '"':
+                in_string = not in_string
+                continue
+            if in_string:
+                continue
+            if ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    return raw[start:i + 1]
+
+        return None
+
     async def _formulate_plan(self, objective: str) -> Optional[Dict]:
         """Asks Groq to decompose the objective into a JSON plan."""
         prompt = f"""
@@ -158,7 +201,7 @@ class Strategist:
         BAD:  "Use Void Walker to search for Python crypto API"
         GOOD: "cryptocurrency price API with JSON response"
 
-        Return strictly JSON format:
+        Return ONLY the raw JSON object below. NO markdown fences, NO intro text, NO outro text.
         {{
             "steps": [
                 {{"step": 1, "tool": "void_walker", "action": "Research...", "details": "cryptocurrency price API with JSON response"}},
@@ -170,18 +213,12 @@ class Strategist:
             response = await self._ask_groq(prompt)
             if not response:
                 return None
-            # Extract JSON from response (handle markdown fences)
-            text = response.strip()
-            if text.startswith("```"):
-                text = text.split("\n", 1)[1] if "\n" in text else text
-                if text.endswith("```"):
-                    text = text[:-3]
-                text = text.strip()
-            start = text.find("{")
-            end = text.rfind("}") + 1
-            if start == -1 or end == 0:
+            extracted = self._extract_json(response)
+            if not extracted:
+                print(f"{Kleur.ROOD}♟️  Planning failed: no JSON found "
+                      f"in response{Kleur.RESET}")
                 return None
-            return json.loads(text[start:end])
+            return json.loads(extracted)
         except (json.JSONDecodeError, Exception) as e:
             print(f"{Kleur.ROOD}♟️  Planning failed: {e}{Kleur.RESET}")
             return None
