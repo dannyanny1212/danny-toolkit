@@ -18,11 +18,14 @@ Gebruik: python cosmic_console.py
 """
 
 import asyncio
+import logging
 import sys
 import os
 import io
 import time
 from contextlib import redirect_stdout
+
+logger = logging.getLogger(__name__)
 
 # Windows UTF-8 fix
 if os.name == "nt":
@@ -133,7 +136,8 @@ def show_governor_status(brain):
             f" | Learning {cycles}/{max_cycles}/h"
             f" | State {healthy}/{total_sf} OK"
         )
-    except Exception:
+    except Exception as e:
+        logger.debug("Governor status ophalen mislukt: %s", e)
         console.print(
             "  [dim]Governor: status niet"
             " beschikbaar[/dim]"

@@ -6,6 +6,7 @@ Dit is de Finale Vorm.
 """
 
 import json
+import logging
 import time
 import threading
 import random
@@ -13,6 +14,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Callable, Any
 from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 from ..core.config import Config
 from ..core.utils import kleur, Kleur
@@ -182,8 +185,8 @@ class DigitalDaemon:
                     ProactiveEngine,
                 )
                 self._proactive = ProactiveEngine(self)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("ProactiveEngine lazy init failed: %s", e)
         return self._proactive
 
     def _load_data(self):
@@ -194,7 +197,8 @@ class DigitalDaemon:
                 with open(self._data_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     self.naam = data.get("naam", self.naam)
-            except Exception:
+            except Exception as e:
+                logger.debug("Daemon data load failed, attempting restore: %s", e)
                 self.governor.restore_state(self._data_file)
                 try:
                     with open(
@@ -202,8 +206,8 @@ class DigitalDaemon:
                     ) as f:
                         data = json.load(f)
                         self.naam = data.get("naam", self.naam)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("Daemon data restore fallback failed: %s", e)
 
     def _save_data(self):
         """Sla daemon data op."""
@@ -272,8 +276,8 @@ class DigitalDaemon:
                 if self._proactive is not None:
                     try:
                         self._proactive._check_timer_regels()
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug("Proactive timer check failed: %s", e)
 
             except Exception as e:
                 print(kleur(f"[DAEMON] Loop error: {e}", Kleur.ROOD))
@@ -364,8 +368,8 @@ class DigitalDaemon:
         for callback in self.message_callbacks:
             try:
                 callback(msg)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Message callback execution failed: %s", e)
 
         # Console output
         if priority >= 2:

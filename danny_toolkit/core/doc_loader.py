@@ -11,9 +11,12 @@ Ondersteunde formaten:
 Chunks bevatten metadata: bron, pagina/sectie, chunk nummer.
 """
 
+import logging
 import os
 import re
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 def load_directory(directory: str, chunk_size: int = 500, overlap: int = 50) -> list[dict]:
@@ -101,7 +104,8 @@ def _load_pdf(filepath: Path) -> list[dict]:
     """Load PDF with pdfplumber (tables + text), fallback to PyPDF2."""
     try:
         return _load_pdf_plumber(filepath)
-    except Exception:
+    except Exception as e:
+        logger.debug("pdfplumber mislukt, fallback naar PyPDF2: %s", e)
         return _load_pdf_pypdf2(filepath)
 
 

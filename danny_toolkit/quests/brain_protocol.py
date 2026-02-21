@@ -12,7 +12,11 @@ Spelers:
 - UNIFIED MEMORY (geheugen)   - Cross-app context
 """
 
+import logging
+
 from ..core.utils import kleur, Kleur, succes, fout, info
+
+logger = logging.getLogger(__name__)
 
 
 class BrainProtocol:
@@ -112,7 +116,8 @@ class BrainProtocol:
                 f"    Prioriteit tools: {len(prio_tools)}",
                 Kleur.WIT,
             ))
-        except Exception:
+        except Exception as e:
+            logger.debug("Failed to load app tools: %s", e)
             print(kleur(
                 "    Tools: niet geladen", Kleur.FEL_GEEL,
             ))

@@ -20,8 +20,11 @@ import hashlib
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional, Tuple
 from collections import deque
+import logging
 from ..core.config import Config
 from ..core.utils import clear_scherm
+
+logger = logging.getLogger(__name__)
 
 # AI Integration
 try:
@@ -947,8 +950,8 @@ class ArtificialLifeApp:
         if AI_BESCHIKBAAR and Config.has_anthropic_key():
             try:
                 self.client = Anthropic()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("AI client initialization failed: %s", e)
 
     def _ai_request(self, prompt: str, max_tokens: int = 300) -> Optional[str]:
         """Maak AI request."""
@@ -961,7 +964,8 @@ class ArtificialLifeApp:
                 messages=[{"role": "user", "content": prompt}]
             )
             return response.content[0].text
-        except Exception:
+        except Exception as e:
+            logger.debug("AI request failed: %s", e)
             return None
 
     def _laad_data(self) -> dict:

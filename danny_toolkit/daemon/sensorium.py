@@ -5,6 +5,7 @@ Luistert naar events van alle 35+ apps en voedt het brein.
 """
 
 import json
+import logging
 import time
 import threading
 from datetime import datetime, timedelta
@@ -13,6 +14,8 @@ from typing import Dict, List, Callable, Any, Optional
 from dataclasses import dataclass, field
 from enum import Enum
 from collections import deque
+
+logger = logging.getLogger(__name__)
 
 from ..core.config import Config
 
@@ -204,7 +207,8 @@ class Sensorium:
         try:
             stat = path.stat()
             return f"{stat.st_size}_{stat.st_mtime}"
-        except Exception:
+        except Exception as e:
+            logger.debug("File checksum calculation failed for %s: %s", path, e)
             return ""
 
     def _check_file_changes(self) -> List[SensoryEvent]:

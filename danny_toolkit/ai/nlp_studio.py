@@ -4,6 +4,7 @@ Een compleet systeem voor tekstanalyse, classificatie en begrip.
 """
 
 import json
+import logging
 import os
 import re
 import math
@@ -14,6 +15,8 @@ from collections import Counter, defaultdict
 from typing import List, Dict, Tuple, Optional
 from ..core.config import Config
 from ..core.utils import clear_scherm
+
+logger = logging.getLogger(__name__)
 
 # AI Integration
 try:
@@ -639,7 +642,8 @@ class NLPStudioApp:
             if api_key:
                 try:
                     self.client = Anthropic(api_key=api_key)
-                except Exception:
+                except Exception as e:
+                    logger.debug("AI client initialization failed: %s", e)
                     self.client = None
 
     def _ai_request(self, prompt: str, max_tokens: int = 500) -> str:
@@ -653,7 +657,8 @@ class NLPStudioApp:
                 messages=[{"role": "user", "content": prompt}]
             )
             return response.content[0].text
-        except Exception:
+        except Exception as e:
+            logger.debug("AI request failed: %s", e)
             return None
 
     def _laad_data(self) -> dict:

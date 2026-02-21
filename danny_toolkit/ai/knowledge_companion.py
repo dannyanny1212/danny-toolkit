@@ -13,10 +13,13 @@ XP Systeem:
 """
 
 import json
+import logging
 import random
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 from ..core.config import Config
 from ..core.utils import clear_scherm, kleur, Kleur
@@ -426,7 +429,7 @@ CONTEXT UIT KENNISBANK:
                 antwoord = self.generator.chat(berichten, systeem=system_prompt)
                 return antwoord
             except Exception as e:
-                pass
+                logger.debug("Persona answer generation failed: %s", e)
 
         # Fallback: eenvoudig antwoord zonder AI
         voorvoegsel = random.choice(persona["voorvoegsel"])
@@ -490,8 +493,8 @@ BRONNEN OM TE SYNTHETISEREN:
 
                 self._sla_op()
                 return synthese
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Knowledge synthesis failed: %s", e)
 
         # Fallback
         self._sla_op()

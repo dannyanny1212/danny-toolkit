@@ -3,7 +3,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 try:
     import numpy as np
@@ -178,8 +181,8 @@ class IndexStore:
                     domain = urlparse(src).netloc
                     if domain and domain not in domains:
                         domains.append(domain)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("URL parsing mislukt: %s", e)
 
         has_hashes = sum(1 for m in self.metadata if m.get("hash"))
 
@@ -189,8 +192,8 @@ class IndexStore:
             # IVF indices hebben een nlist attribuut via de quantizer
             if hasattr(self.index, "nlist"):
                 index_type = "IVFFlat"
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Index type detectie mislukt: %s", e)
 
         # Bestandsgroottes
         vectors_size_mb = 0.0

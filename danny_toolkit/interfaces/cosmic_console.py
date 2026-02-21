@@ -20,12 +20,15 @@ Gebruik: python -m danny_toolkit.interfaces.cosmic_console
 """
 
 import asyncio
+import logging
 import sys
 import os
 import io
 import time
 from contextlib import redirect_stdout
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 # Root toevoegen aan path
 _root = Path(__file__).parent.parent.parent
@@ -135,7 +138,8 @@ def show_governor_status(brain):
             f" | Learning {cycles}/{max_cycles}/h"
             f" | State {healthy}/{total_sf} OK"
         )
-    except Exception:
+    except Exception as e:
+        logger.debug("Failed to retrieve Governor health status: %s", e)
         console.print(
             "  [dim]Governor: status niet"
             " beschikbaar[/dim]"

@@ -25,6 +25,8 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 
+import logging
+
 from rich.align import Align
 from rich.console import Console
 from rich.layout import Layout
@@ -32,6 +34,8 @@ from rich.live import Live
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
+
+logger = logging.getLogger(__name__)
 
 # psutil optioneel (zelfde patroon als morning_protocol.py)
 try:
@@ -142,7 +146,8 @@ class HeartbeatDaemon:
                     get_cortical_stack,
                 )
                 self._stack = get_cortical_stack()
-            except Exception:
+            except Exception as e:
+                logger.debug("CorticalStack lazy init failed: %s", e)
                 self._stack = None
         return self._stack
 
@@ -154,7 +159,8 @@ class HeartbeatDaemon:
                 self._engine = SwarmEngine(
                     brain=self._brain
                 )
-            except Exception:
+            except Exception as e:
+                logger.debug("SwarmEngine lazy init failed: %s", e)
                 self._engine = None
         return self._engine
 
@@ -170,7 +176,8 @@ class HeartbeatDaemon:
                 self._proactive = ProactiveEngine(
                     self._daemon, self._brain
                 )
-            except Exception:
+            except Exception as e:
+                logger.debug("ProactiveEngine lazy init failed: %s", e)
                 self._proactive = None
         return self._proactive
 
@@ -185,7 +192,8 @@ class HeartbeatDaemon:
                     daemon=self._daemon,
                     brain=self._brain,
                 )
-            except Exception:
+            except Exception as e:
+                logger.debug("SingularityEngine lazy init failed: %s", e)
                 self._singularity = None
         return self._singularity
 
@@ -200,7 +208,8 @@ class HeartbeatDaemon:
                     brain=self._brain,
                     daemon=self._daemon,
                 )
-            except Exception:
+            except Exception as e:
+                logger.debug("SecurityResearchEngine lazy init failed: %s", e)
                 self._security = None
         return self._security
 
@@ -212,7 +221,8 @@ class HeartbeatDaemon:
                     DevOpsDaemon,
                 )
                 self._devops = DevOpsDaemon()
-            except Exception:
+            except Exception as e:
+                logger.debug("DevOpsDaemon lazy init failed: %s", e)
                 self._devops = None
         return self._devops
 
@@ -258,8 +268,8 @@ class HeartbeatDaemon:
                         },
                         source="daemon",
                     )
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("DevOps check stack log failed: %s", e)
         except Exception as e:
             self._log_activity(
                 "devops",
@@ -327,8 +337,8 @@ class HeartbeatDaemon:
                         },
                         source="daemon",
                     )
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("Swarm task stack log failed: %s", e)
         except Exception as e:
             self._log_activity(
                 "swarm",
@@ -415,8 +425,8 @@ class HeartbeatDaemon:
                 "ram_percent", self._ram,
                 tags={"source": "heartbeat"},
             )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Heartbeat stat logging failed: %s", e)
 
     # ─── Reflectie ───
 
@@ -464,7 +474,8 @@ class HeartbeatDaemon:
                 },
                 source="daemon",
             )
-        except Exception:
+        except Exception as e:
+            logger.debug("Reflection cycle failed: %s", e)
             self._log_activity(
                 "reflectie", "Fout bij lezen events"
             )
@@ -510,7 +521,8 @@ class HeartbeatDaemon:
 
             self._log_activity("groei", inzicht)
 
-        except Exception:
+        except Exception as e:
+            logger.debug("Autonomous growth failed: %s", e)
             self._log_activity("groei", "Fout bij groei")
 
     # ─── Display ───
@@ -523,8 +535,8 @@ class HeartbeatDaemon:
             advies = oracle.pre_warm_check()
             if advies:
                 self._log_activity("oracle", advies)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Oracle forecast check failed: %s", e)
 
     def _log_activity(self, type_: str, bericht: str):
         """Voeg toe aan activity log (max 8)."""
@@ -683,8 +695,8 @@ class HeartbeatDaemon:
                     details={"version": self.VERSION},
                     source="daemon",
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Daemon start event log failed: %s", e)
 
         self._log_activity("start", "Heartbeat Daemon gestart")
 
@@ -720,8 +732,8 @@ class HeartbeatDaemon:
                         if singularity:
                             try:
                                 singularity.tick()
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                logger.debug("Singularity tick failed: %s", e)
 
                     # Security scan (elke 3600 pulsen, background)
                     now_ts = time.time()
@@ -817,8 +829,8 @@ class HeartbeatDaemon:
                         source="daemon",
                     )
                     stack.flush()
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("Daemon stop event log/flush failed: %s", e)
 
             console.print(
                 "\n[bold magenta]Heartbeat Daemon gestopt."
@@ -847,8 +859,8 @@ def main():
                 PrometheusBrain,
             )
             brain = PrometheusBrain()
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("PrometheusBrain init for heartbeat failed: %s", e)
 
     daemon = HeartbeatDaemon(brain=brain)
     daemon.start()

@@ -11,8 +11,11 @@ if os.name == "nt":
     if hasattr(sys.stderr, "reconfigure"):
         sys.stderr.reconfigure(encoding="utf-8")
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 from .core.utils import (
     clear_scherm, fix_encoding, kleur, succes, fout, waarschuwing, info,
@@ -1062,7 +1065,8 @@ class HeartbeatApp:
                 "  Brain geladen voor Swarm taken.",
                 Kleur.GROEN,
             ))
-        except Exception:
+        except Exception as e:
+            logger.debug("Brain loading failed for heartbeat: %s", e)
             print(kleur(
                 "  Brain niet beschikbaar"
                 " (alleen monitoring).",
@@ -1469,8 +1473,8 @@ class Launcher:
         try:
             guard = FileGuard()
             guard.startup_check()
-        except Exception:
-            pass  # Nooit de launcher blokkeren
+        except Exception as e:
+            logger.debug("FileGuard startup check failed: %s", e)
 
     def _get_banner(self) -> str:
         """Haal de juiste banner op basis van thema."""

@@ -9,10 +9,13 @@ De Geest leert via Memory + Tracker + Patterns + Feedback + Performance.
 Omega bouwt de brug: emoties voeden leren, leren beinvloedt emoties.
 """
 
+import logging
 import sys
 import signal
 import asyncio
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 from .core.utils import (
     kleur, Kleur, succes, fout, waarschuwing, info,
@@ -362,8 +365,8 @@ class OmegaAI:
                     f"{stats['graph_nodes']} graph nodes",
                     Kleur.FEL_CYAAN,
                 ))
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Failed to retrieve Cortex stats: %s", e)
 
         # Oracle summary
         if HAS_ORACLE:
@@ -384,8 +387,8 @@ class OmegaAI:
                         f"  ORACLE: {advies}",
                         Kleur.FEL_GEEL,
                     ))
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Failed to retrieve Oracle forecast: %s", e)
 
         # Governor health
         self.governor.display_health()
@@ -534,8 +537,8 @@ class OmegaAI:
                                 f"  [PROACTIEF] {m}",
                                 Kleur.FEL_GEEL,
                             ))
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("Failed to fetch proactive notifications: %s", e)
 
                 commando = gebruiker_input.lower()
 
@@ -806,8 +809,8 @@ class OmegaAI:
                                     embedding_provider=embedder,
                                     db_file=strategist.walker.db_path,
                                 )
-                            except Exception:
-                                pass  # Geen embedder = geen opslag, niet fataal
+                            except Exception as e:
+                                logger.debug("Failed to wire VectorStore into VoidWalker: %s", e)
                         resultaat = asyncio.run(
                             strategist.execute_mission(gebruiker_input)
                         )
@@ -942,8 +945,8 @@ class OmegaAI:
         try:
             if self.governor.check_learning_rate():
                 self.learning.run_learning_cycle()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Failed to run final learning cycle on shutdown: %s", e)
 
         # Daemon slapen
         self.daemon.sleep()

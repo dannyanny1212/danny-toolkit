@@ -21,9 +21,12 @@ Gebruik:
     print(rapport["verdict"])
 """
 
+import logging
 import math
 import time
 import psutil
+
+logger = logging.getLogger(__name__)
 
 
 class CoherentieMonitor:
@@ -35,8 +38,8 @@ class CoherentieMonitor:
             from pynvml import nvmlInit
             nvmlInit()
             self._nvml_beschikbaar = True
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("NVML init failed (no GPU monitoring): %s", e)
 
     def _meet_cpu(self):
         """Meet huidig CPU-gebruik (percentage)."""
@@ -59,7 +62,8 @@ class CoherentieMonitor:
             handle = nvmlDeviceGetHandleByIndex(0)
             util = nvmlDeviceGetUtilizationRates(handle)
             return float(util.gpu)
-        except Exception:
+        except Exception as e:
+            logger.debug("GPU utilization read failed: %s", e)
             return 0.0
 
     def _bereken_correlatie(self, cpu_reeks, gpu_reeks):

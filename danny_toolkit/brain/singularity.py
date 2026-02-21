@@ -18,6 +18,9 @@ from typing import Any, Dict, List, Optional
 
 from ..core.utils import kleur, Kleur
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 class BewustzijnModus(Enum):
     """De 5 bewustzijns-modi van het systeem."""
@@ -90,8 +93,8 @@ class SingularityEngine:
             try:
                 from .governor import OmegaGovernor
                 self._governor = OmegaGovernor()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("OmegaGovernor init failed: %s", e)
         return self._governor
 
     @property
@@ -103,8 +106,8 @@ class SingularityEngine:
                     get_cortical_stack,
                 )
                 self._stack = get_cortical_stack()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("CorticalStack init failed: %s", e)
         return self._stack
 
     # --- Rate Limiting ---
@@ -162,8 +165,8 @@ class SingularityEngine:
                     for taak in self._brain.task_queue:
                         if taak.get("priority") == 1:
                             return BewustzijnModus.FOCUS
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Task queue check failed: %s", e)
 
         # Check idle via daemon
         idle_min = self._get_idle_minuten()
@@ -190,8 +193,8 @@ class SingularityEngine:
                     - sensorium.last_activity
                 )
                 return delta.total_seconds() / 60
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Idle detection failed: %s", e)
         return 0
 
     def _transitie_modus(self, nieuwe_modus):
@@ -220,8 +223,8 @@ class SingularityEngine:
                     },
                     source="singularity",
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Modus transitie logging failed: %s", e)
 
     # --- Reflectie (EVOLUTION rol) ---
 
@@ -243,7 +246,8 @@ class SingularityEngine:
 
         try:
             events = stack.get_recent_events(50)
-        except Exception:
+        except Exception as e:
+            logger.debug("Reflectie events fetch failed: %s", e)
             return
 
         if not events:
@@ -331,8 +335,8 @@ class SingularityEngine:
                 stack.remember_fact(
                     key, tekst, confidence=0.4
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Inzicht opslag failed: %s", e)
 
     def _voeg_proactive_regel_toe(
         self, actor: str, fout_count: int
@@ -371,8 +375,8 @@ class SingularityEngine:
                 prioriteit=2,
                 bron="singularity",
             ))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Proactive regel toevoegen failed: %s", e)
 
     # --- Droom (ANIMA rol) ---
 
@@ -406,7 +410,8 @@ class SingularityEngine:
             feiten = stack.recall_all(
                 min_confidence=0.1
             )
-        except Exception:
+        except Exception as e:
+            logger.debug("Droom feiten ophalen failed: %s", e)
             return
 
         if len(feiten) < 2:
@@ -465,8 +470,8 @@ class SingularityEngine:
                 },
                 source="singularity",
             )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Droom opslag failed: %s", e)
 
     # --- Nachtwacht (Subconscious Loop) ---
 
@@ -501,14 +506,16 @@ class SingularityEngine:
                 gisteren_str
             )
             resultaat["consolidatie"] = cons
-        except Exception:
+        except Exception as e:
+            logger.debug("Nachtwacht consolidatie failed: %s", e)
             resultaat["consolidatie"] = {"fout": True}
 
         # 2. Self-Optimization
         try:
             tuner = self._nachtwacht_tuner()
             resultaat["tuner"] = tuner
-        except Exception:
+        except Exception as e:
+            logger.debug("Nachtwacht tuner failed: %s", e)
             resultaat["tuner"] = {"fout": True}
 
         # 3. Pre-Fetch
@@ -517,7 +524,8 @@ class SingularityEngine:
                 gisteren_str
             )
             resultaat["voorspeller"] = voorsp
-        except Exception:
+        except Exception as e:
+            logger.debug("Nachtwacht voorspeller failed: %s", e)
             resultaat["voorspeller"] = {"fout": True}
 
         self._nachtwacht_log.append(resultaat)
@@ -538,8 +546,8 @@ class SingularityEngine:
                     details=resultaat,
                     source="singularity",
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Nachtwacht logging failed: %s", e)
 
     def _nachtwacht_consolideer(
         self, datum: str
@@ -578,7 +586,8 @@ class SingularityEngine:
                 ),
             )
             rows = cursor.fetchall()
-        except Exception:
+        except Exception as e:
+            logger.debug("Consolidatie query failed: %s", e)
             rows = []
 
         if not rows:
@@ -615,7 +624,8 @@ class SingularityEngine:
             )
             stats_rows = cursor.fetchall()
             stats_verwerkt = len(stats_rows)
-        except Exception:
+        except Exception as e:
+            logger.debug("Stats query failed: %s", e)
             stats_rows = []
 
         # Bouw samenvatting tekst
@@ -642,8 +652,8 @@ class SingularityEngine:
                 tekst,
                 confidence=0.8,
             )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Dag samenvatting opslag failed: %s", e)
 
         return {
             "events_verwerkt": len(rows),
@@ -671,7 +681,8 @@ class SingularityEngine:
                     "swarm_engine"
                 )
                 AdaptiveRouter = mod.AdaptiveRouter
-            except Exception:
+            except Exception as e:
+                logger.debug("AdaptiveRouter import failed: %s", e)
                 return {
                     "oude_drempel": None,
                     "nieuwe_drempel": None,
@@ -706,8 +717,8 @@ class SingularityEngine:
                                 )
                             except ValueError:
                                 pass
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Tuner samenvatting failed: %s", e)
 
         if avg_latency is None:
             return {
@@ -801,7 +812,8 @@ class SingularityEngine:
                 ),
             )
             rows = cursor.fetchall()
-        except Exception:
+        except Exception as e:
+            logger.debug("Voorspeller query failed: %s", e)
             rows = []
 
         if len(rows) < self.NACHTWACHT_MIN_EVENTS:
@@ -828,7 +840,8 @@ class SingularityEngine:
                 if key not in uur_actor_dagen:
                     uur_actor_dagen[key] = set()
                 uur_actor_dagen[key].add(dag)
-            except Exception:
+            except Exception as e:
+                logger.debug("Voorspeller row parse failed: %s", e)
                 continue
 
         # Detecteer patronen (>= 4 van 7 dagen)
@@ -879,8 +892,8 @@ class SingularityEngine:
                             )
                         )
                         regels_toegevoegd += 1
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Voorspeller regels toevoegen failed: %s", e)
 
         return {
             "patronen_gevonden": len(patronen),
@@ -1021,7 +1034,8 @@ class SingularityEngine:
                         result.result or ""
                     )[:200],
                 })
-            except Exception:
+            except Exception as e:
+                logger.debug("Synthese agent %s failed: %s", role.name, e)
                 resultaten.append({
                     "tier": tier_nr,
                     "agent": role.name,
@@ -1067,8 +1081,8 @@ class SingularityEngine:
                     f"{len(resultaten)} tiers",
                     confidence=0.5,
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Synthese logging failed: %s", e)
 
     # --- Bewustzijn Score ---
 
@@ -1102,7 +1116,8 @@ class SingularityEngine:
                 scores["semantic"] = min(
                     1.0, feiten / 50
                 )
-            except Exception:
+            except Exception as e:
+                logger.debug("Bewustzijn score stack failed: %s", e)
                 scores["episodic"] = 0.0
                 scores["semantic"] = 0.0
         else:
@@ -1121,8 +1136,8 @@ class SingularityEngine:
                 proactive = self._daemon.proactive
                 if proactive:
                     regel_count = len(proactive.regels)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Bewustzijn score regels failed: %s", e)
         scores["regels"] = min(1.0, regel_count / 15)
 
         # Synthese taken

@@ -526,8 +526,8 @@ class VirtueelHuisdierApp:
                 event_type=event_type,
                 data=data
             )
-        except Exception:
-            pass  # Memory is optioneel
+        except Exception as e:
+            logger.debug("Failed to store event in UnifiedMemory: %s", e)
 
     # ==================== AI PERSONALITY SYSTEM ====================
 
@@ -563,8 +563,8 @@ Antwoord in het Nederlands."""
                 berichten = [{"role": "user", "content": context}]
                 response = claude_chat._chat_conversatie(berichten, system_prompt)
                 return response[:200] if response else fallback
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("AI response generation failed: %s", e)
 
         # Fallback naar personality-based response
         if fallback:
@@ -836,8 +836,8 @@ Geef 1 korte tip wat te doen."""
                 ai_tip = self._ai_generate_response(context)
                 if ai_tip:
                     advies.append(f"🤖 AI Tip: {ai_tip}")
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("AI activity advisor tip failed: %s", e)
 
         return "\n".join(advies), prioriteit
 
@@ -875,8 +875,8 @@ Maak het dromerig en fantasierijk."""
                 dream = self._ai_generate_response(context)
                 if dream:
                     return dream
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("AI dream generation failed: %s", e)
 
         # Fallback droom
         theme = random.choice(dream_themes)
@@ -1249,8 +1249,8 @@ Maak het dromerig en fantasierijk."""
                         if woord in item.lower():
                             boodschap_suggesties.append(item)
                             break
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Failed to read grocery list for food suggestions: %s", e)
 
         print("\n+--------------------------------+")
         print("|     WAT WIL JE GEVEN?          |")
@@ -2102,8 +2102,8 @@ Maak het dromerig en fantasierijk."""
                         print(f"    - {item}")
                     if len(echte_lijst) > 3:
                         print(f"    ... en {len(echte_lijst) - 3} meer")
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Failed to read grocery list for shopping game: %s", e)
 
         print(f"\n  {geluid}")
         print(f"  {naam} pakt een winkelwagentje...")
@@ -2185,8 +2185,8 @@ Maak het dromerig en fantasierijk."""
                         f.write(f"{suggestie}\n")
                     print(f"  [OK] {suggestie} toegevoegd aan ECHTE boodschappenlijst!")
                     intel_bonus += 2
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("Failed to add suggestion to grocery list: %s", e)
 
         # Geef beloningen
         self.huisdier["munten"] += munt_beloning
@@ -2249,7 +2249,8 @@ Maak het dromerig en fantasierijk."""
             print(f"  {naam} opent de ECHTE Slimme Rekenmachine...")
             time.sleep(0.5)
             print(f"  [OK] Rekenmachine verbonden!")
-        except Exception:
+        except Exception as e:
+            logger.debug("Failed to load real calculator app: %s", e)
             print(f"\n  {geluid}")
             print(f"  {naam} pakt een rekenmachine...")
         time.sleep(0.5)
@@ -2300,7 +2301,8 @@ Maak het dromerig en fantasierijk."""
                         result = eval(expr)  # Veilig want we controleren de input
                         print(f"  {naam} (via Rekenmachine): \"{int(result)}!\"")
                         intel_bonus += 1
-                    except Exception:
+                    except Exception as e:
+                        logger.debug("Calculator verification failed: %s", e)
                         print(f"  {naam}: \"{antwoord}!\"")
                 else:
                     print(f"  {naam}: \"{antwoord}!\"")
@@ -3743,8 +3745,8 @@ Antwoord in het Nederlands."""
             if claude_chat:
                 echte_ai = True
                 print(f"\n  [OK] Verbonden met {claude_chat.provider.upper()} AI!")
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Failed to connect to Claude AI for coding lesson: %s", e)
 
         if keuze == "1":
             # Code uitleggen
@@ -4051,8 +4053,8 @@ Antwoord in het Nederlands."""
                 berichten = [{"role": "user", "content": prompt}]
                 verhaal = claude_chat._chat_conversatie(berichten, "Je bent een creatieve kinderverhalen schrijver.")
                 intel_bonus = 10
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("AI story generation failed: %s", e)
 
         if not verhaal:
             # Fallback verhalen
@@ -4165,8 +4167,8 @@ Antwoord in het Nederlands."""
                 berichten = [{"role": "user", "content": prompt}]
                 vertaling = claude_chat._chat_conversatie(berichten, "Je bent een professionele vertaler.")
                 intel_bonus = 6
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("AI translation failed: %s", e)
 
         if not vertaling:
             # Fallback: basis woordenboek
@@ -4267,8 +4269,8 @@ Antwoord in het Nederlands."""
             if claude_chat:
                 echte_ai = True
                 print(f"  [OK] ECHTE Claude AI genereert flashcards!")
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Failed to connect to Claude AI for flashcards: %s", e)
 
         # Flashcards - AI of fallback
         fallback_cards = {
@@ -4395,8 +4397,8 @@ Antwoord in het Nederlands."""
                 berichten = [{"role": "user", "content": prompt}]
                 notitie = claude_chat._chat_conversatie(berichten, f"Je bent de notitie-assistent van {naam}. Wees beknopt.")
                 intel_bonus = 8
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("AI note generation failed: %s", e)
 
         if not notitie:
             # Fallback
@@ -4561,8 +4563,8 @@ Code:
                 berichten = [{"role": "user", "content": prompt}]
                 review = claude_chat._chat_conversatie(berichten, f"Je bent {naam}'s code review mentor. Wees beknopt en educatief.")
                 intel_bonus = 12
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("AI code review failed: %s", e)
 
         if not review:
             # Basis fallback analyse
@@ -4757,8 +4759,8 @@ Code:
                 response = claude_chat._chat_conversatie(berichten, f"Je bent {naam}'s creatieve brainstorm partner. Wees origineel en innovatief.")
                 ideeen = [response]
                 intel_bonus = 12
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("AI brainstorm generation failed: %s", e)
 
         if not ideeen or not ideeen[0]:
             # Fallback ideeen
@@ -4854,8 +4856,8 @@ Code:
 Geef kort (2-3 zinnen) empathisch advies. Nederlands."""
                 ai_advies = mood_tracker._ai_request(prompt, max_tokens=150)
                 intel_bonus = 8
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("AI mood analysis failed: %s", e)
 
         # Huisdier reageert op basis van mood
         if mood_score >= 4:
@@ -4931,8 +4933,8 @@ Geef kort (2-3 zinnen) empathisch advies. Nederlands."""
 Geef 3 concrete tips om te beginnen. Kort en motiverend. Nederlands."""
                         ai_response = habit_tracker._ai_request(prompt, max_tokens=200)
                         intel_bonus = 10
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("Habit tracker AI request failed (start habit): %s", e)
 
                 if not ai_response:
                     ai_response = f"Tips voor '{gewoonte}':\n1. Begin klein\n2. Koppel aan bestaande routine\n3. Beloon jezelf na elke keer"
@@ -4946,8 +4948,8 @@ Geef 3 concrete tips om te beginnen. Kort en motiverend. Nederlands."""
                         prompt = f"""Geef een korte, krachtige motivatie boodschap voor iemand die moeite heeft met de gewoonte '{gewoonte}'. 2-3 zinnen. Nederlands."""
                         ai_response = habit_tracker._ai_request(prompt, max_tokens=100)
                         intel_bonus = 8
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("Habit tracker AI request failed (motivation): %s", e)
 
                 if not ai_response:
                     ai_response = f"Elke dag dat je '{gewoonte}' doet, word je sterker. Je hebt dit!"
@@ -4959,8 +4961,8 @@ Geef 3 concrete tips om te beginnen. Kort en motiverend. Nederlands."""
                     prompt = "Geef 5 praktische tips voor meer discipline bij het opbouwen van gewoontes. Nederlands, kort."
                     ai_response = habit_tracker._ai_request(prompt, max_tokens=250)
                     intel_bonus = 10
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Habit tracker AI request failed (discipline tips): %s", e)
 
             if not ai_response:
                 ai_response = "Discipline tips:\n1. Plan vooruit\n2. Maak het makkelijk\n3. Track je voortgang\n4. Wees geduldig\n5. Vier kleine overwinningen"
@@ -5022,8 +5024,8 @@ Geef 3 concrete tips om te beginnen. Kort en motiverend. Nederlands."""
                         prompt = f"""Geef 4 praktische bespaartips voor de categorie '{categorie}'. Concreet en direct toepasbaar. Nederlands."""
                         ai_response = expense_tracker._ai_request(prompt, max_tokens=200)
                         intel_bonus = 10
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("Expense tracker AI request failed (savings tips): %s", e)
 
                 if not ai_response:
                     ai_response = f"Tips voor {categorie}:\n1. Maak een budget\n2. Vergelijk prijzen\n3. Wacht 24 uur voor grote aankopen\n4. Zoek alternatieven"
@@ -5037,8 +5039,8 @@ Geef 3 concrete tips om te beginnen. Kort en motiverend. Nederlands."""
                         prompt = f"""Iemand wil sparen voor '{doel}'. Geef een motiverend en praktisch spaarplan in 3-4 punten. Nederlands."""
                         ai_response = expense_tracker._ai_request(prompt, max_tokens=200)
                         intel_bonus = 12
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("Expense tracker AI request failed (savings plan): %s", e)
 
                 if not ai_response:
                     ai_response = f"Spaarplan voor {doel}:\n1. Bepaal het benodigde bedrag\n2. Stel een deadline\n3. Automatiseer je sparen\n4. Track je voortgang"
@@ -5050,8 +5052,8 @@ Geef 3 concrete tips om te beginnen. Kort en motiverend. Nederlands."""
                     prompt = "Geef 5 slimme, praktische spaartips die direct toepasbaar zijn. Nederlands, kort en bondig."
                     ai_response = expense_tracker._ai_request(prompt, max_tokens=250)
                     intel_bonus = 8
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Expense tracker AI request failed (general tips): %s", e)
 
             if not ai_response:
                 ai_response = "Spaartips:\n1. Betaal jezelf eerst\n2. Track al je uitgaven\n3. Maak onderscheid tussen wensen en behoeften\n4. Zoek gratis alternatieven\n5. Meal prep in plaats van afhaal"
@@ -5115,8 +5117,8 @@ Geef 3 concrete tips om te beginnen. Kort en motiverend. Nederlands."""
 Geef een optimale volgorde en timing suggesties. Kort en praktisch. Nederlands."""
                         ai_response = agenda._ai_request(prompt, max_tokens=250)
                         intel_bonus = 12
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("Agenda planner AI request failed (day planning): %s", e)
 
                 if not ai_response:
                     taken_list = taken.split(",")
@@ -5136,8 +5138,8 @@ Geef een optimale volgorde en timing suggesties. Kort en praktisch. Nederlands."
 Geef een ranking op urgentie/belang met korte uitleg. Nederlands."""
                         ai_response = agenda._ai_request(prompt, max_tokens=200)
                         intel_bonus = 10
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("Agenda planner AI request failed (prioritization): %s", e)
 
                 if not ai_response:
                     ai_response = "Prioriteer op basis van:\n1. Deadlines (urgent eerst)\n2. Impact (belangrijk eerst)\n3. Afhankelijkheden (blokkerende taken eerst)"
@@ -5149,8 +5151,8 @@ Geef een ranking op urgentie/belang met korte uitleg. Nederlands."""
                     prompt = "Geef 5 concrete productiviteit tips voor een effectieve werkdag. Nederlands, praktisch."
                     ai_response = agenda._ai_request(prompt, max_tokens=250)
                     intel_bonus = 8
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Agenda planner AI request failed (productivity tips): %s", e)
 
             if not ai_response:
                 ai_response = "Productiviteit tips:\n1. Plan je dag de avond ervoor\n2. Doe eerst je moeilijkste taak\n3. Werk in blokken van 25-50 min\n4. Neem regelmatig pauzes\n5. Elimineer afleidingen"
@@ -5213,8 +5215,8 @@ Geef een ranking op urgentie/belang met korte uitleg. Nederlands."""
 Kort, praktisch, direct toepasbaar. Nederlands."""
                     ai_response = pomodoro._ai_request(prompt, max_tokens=150)
                     intel_bonus = 8
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Pomodoro AI request failed (focus tips): %s", e)
 
             if not ai_response:
                 ai_response = f"Focus tips voor {taak if taak else 'je taak'}:\n1. Zet je telefoon weg\n2. Werk in 25-min blokken\n3. Maak je bureau leeg"
@@ -5227,8 +5229,8 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                     ai_response = pomodoro._ai_request(prompt, max_tokens=100)
                     intel_bonus = 6
                     geluk_bonus = 5
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Pomodoro AI request failed (motivation): %s", e)
 
             if not ai_response:
                 ai_response = "Je bent verder dan je denkt! Elke minuut focus brengt je dichter bij je doel. Jij kan dit!"
@@ -5240,8 +5242,8 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                     prompt = "Geef 4 praktische tips om afleidingen te minimaliseren tijdens het werken. Nederlands, direct toepasbaar."
                     ai_response = pomodoro._ai_request(prompt, max_tokens=200)
                     intel_bonus = 7
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Pomodoro AI request failed (distraction tips): %s", e)
 
             if not ai_response:
                 ai_response = "Anti-afleiding tips:\n1. Notificaties uit\n2. Werk in een opgeruimde ruimte\n3. Gebruik website blockers\n4. Communiceer je focus-tijd"
@@ -6254,8 +6256,8 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
             if random.random() < 0.3:
                 try:
                     ai_droom = self._ai_generate_dream()
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("AI dream generation during sleep failed: %s", e)
 
             if ai_droom:
                 print(f"\n  ✨ AI DROOM ✨")
@@ -8553,7 +8555,8 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                     print(f"  De afgelopen tijd was vol met {list(by_type.keys())[0]}.")
                 else:
                     print(f"  {naam} begint net herinneringen te maken.")
-        except Exception:
+        except Exception as e:
+            logger.debug("AI memory summary generation failed: %s", e)
             print(f"  {naam} koestert alle herinneringen diep in het hart.")
 
         # Optie om favoriete herinnering te markeren
@@ -8679,8 +8682,8 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                 if claude_chat:
                     echte_ai = True
                     print(f"  [AI] ECHTE Claude AI geactiveerd!")
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Failed to activate Claude AI for turbo mode: %s", e)
 
         # Start de cycli
         for i in range(sessie["cycli"]):

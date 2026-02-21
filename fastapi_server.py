@@ -15,6 +15,7 @@ Docs:
 import asyncio
 import io
 import json
+import logging
 import os
 import sys
 import time
@@ -23,6 +24,8 @@ from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 from dotenv import load_dotenv
 from fastapi import (
@@ -189,8 +192,8 @@ async def _shutdown_event():
             get_cortical_stack,
         )
         get_cortical_stack().flush()
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("CorticalStack flush on shutdown failed: %s", e)
 
 
 # ─── ENDPOINTS ──────────────────────────────────────
@@ -341,7 +344,8 @@ async def health(
                 cb_status = "HALF_OPEN"
             else:
                 cb_status = "CLOSED"
-    except Exception:
+    except Exception as e:
+        logger.debug("Governor status ophalen mislukt: %s", e)
         gov_status = "NIET BESCHIKBAAR"
         cb_status = "ONBEKEND"
 
@@ -354,8 +358,8 @@ async def health(
         import psutil
         proc = psutil.Process(os.getpid())
         mem_mb = proc.memory_info().rss / (1024 * 1024)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("Memory usage ophalen mislukt: %s", e)
 
     # Active agents
     actief = 0

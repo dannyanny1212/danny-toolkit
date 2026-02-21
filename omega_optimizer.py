@@ -1,12 +1,15 @@
+import io
+import json
+import logging
 import os
+import shutil
+import sqlite3
+import subprocess
 import sys
 import time
-import sqlite3
-import shutil
-import subprocess
 import urllib.request
-import json
-import io
+
+logger = logging.getLogger(__name__)
 
 # Windows UTF-8 fix (project conventie)
 if sys.platform == "win32":
@@ -61,7 +64,8 @@ class OmegaOptimizer:
                         print(f"{Kleur.GROEN}✔ Ollama: Online (Llava is beschikbaar){Kleur.RESET}")
                     else:
                         print(f"{Kleur.GEEL}⚠ Ollama: Online, maar Llava ontbreekt! Run 'ollama pull llava'{Kleur.RESET}")
-        except Exception:
+        except Exception as e:
+            logger.debug("Ollama check mislukt: %s", e)
             print(f"{Kleur.ROOD}❌ Ollama: Offline of onbereikbaar.{Kleur.RESET}")
 
         # 3. VRAM Check via nvidia-smi
@@ -110,7 +114,8 @@ class OmegaOptimizer:
             req = urllib.request.Request("http://localhost:11434/api/generate", data=json.dumps({"model": "llava", "keep_alive": 0}).encode(), headers={'Content-Type': 'application/json'})
             urllib.request.urlopen(req, timeout=3)
             print(f"{Kleur.GROEN}✔ VRAM succesvol vrijgemaakt.{Kleur.RESET}")
-        except Exception:
+        except Exception as e:
+            logger.debug("VRAM flush mislukt: %s", e)
             print(f"{Kleur.MAGENTA}  > VRAM flush overgeslagen (Ollama reageerde niet).{Kleur.RESET}")
 
         # 3. Python Cache Cleanup

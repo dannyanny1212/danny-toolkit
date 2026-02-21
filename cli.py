@@ -18,11 +18,14 @@ Features:
 Gebruik: python cli.py
 """
 
+import logging
 import sys
 import time
 import os
 import io
 from contextlib import redirect_stdout
+
+logger = logging.getLogger(__name__)
 
 # Windows UTF-8 fix voor Unicode box-drawing chars
 if os.name == "nt":
@@ -117,7 +120,8 @@ def show_governor_status(brain):
             f" | Learning {cycles}/{max_cycles}/h"
             f" | State {healthy}/{total_sf} OK"
         )
-    except Exception:
+    except Exception as e:
+        logger.debug("Governor status ophalen mislukt: %s", e)
         console.print(
             "  [dim]Governor: status niet"
             " beschikbaar[/dim]"
@@ -675,8 +679,8 @@ def main():
                 get_cortical_stack,
             )
             get_cortical_stack().flush()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("CorticalStack flush on shutdown failed: %s", e)
         console.print(
             "\n[red]Shutting down...[/red]"
         )

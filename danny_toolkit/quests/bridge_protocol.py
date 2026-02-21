@@ -12,7 +12,12 @@ Spelers:
 - CENTRAL BRAIN    (AI orkestrator) - Intelligentie
 """
 
+import logging
+
 from ..core.utils import kleur, Kleur, succes, fout, info
+
+logger = logging.getLogger(__name__)
+
 from ..brain.nexus_bridge import (
     NexusBridge, NexusOracleMode, create_nexus_bridge,
 )
@@ -142,7 +147,8 @@ class BridgeProtocol:
                     "    Geen inzichten beschikbaar.",
                     Kleur.DIM,
                 ))
-        except Exception:
+        except Exception as e:
+            logger.debug("Failed to fetch proactive insights: %s", e)
             print(kleur(
                 "    Inzichten niet beschikbaar.",
                 Kleur.DIM,

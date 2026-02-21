@@ -13,9 +13,12 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os.environ["TQDM_DISABLE"] = "True"
 
 import json
+import logging
 import time
 from pathlib import Path
 from typing import List
+
+logger = logging.getLogger(__name__)
 
 from rich.console import Console
 from rich.panel import Panel
@@ -102,8 +105,8 @@ class TheLibrarian:
                     "[yellow]Database gereset."
                     "[/yellow]"
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Failed to delete collection on reset: %s", e)
 
         # Embedding model — Voyage AI of fallback
         from ..core.embeddings import get_chroma_embed_fn
@@ -330,8 +333,8 @@ class TheLibrarian:
                                         t.subject, t.predicaat, t.object,
                                         t.confidence, t.bron,
                                     )
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.debug("Failed to extract triples for Knowledge Graph: %s", e)
 
                 progress.advance(taak)
 
@@ -519,8 +522,8 @@ class TheLibrarian:
                     f"  {bron}",
                     f"{count} chunks",
                 )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Failed to retrieve source metadata for stats: %s", e)
 
         console.print(stats_table)
 
@@ -648,7 +651,8 @@ class TheLibrarian:
                     "distances",
                 ],
             )
-        except Exception:
+        except Exception as e:
+            logger.debug("Failed to query lessons learned: %s", e)
             lessen = {
                 "documents": [[]],
                 "metadatas": [[]],

@@ -57,8 +57,8 @@ def _shutdown():
             get_cortical_stack,
         )
         get_cortical_stack().flush()
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("CorticalStack flush on shutdown failed: %s", e)
 
 atexit.register(_shutdown)
 
@@ -153,7 +153,8 @@ async def cmd_status(update, context):
             cb_status = f"HALF_OPEN ({failures} fouten)"
         else:
             cb_status = "CLOSED (gezond)"
-    except Exception:
+    except Exception as e:
+        logger.debug("Governor status ophalen mislukt: %s", e)
         gov_status = "NIET BESCHIKBAAR"
 
     # Node stats

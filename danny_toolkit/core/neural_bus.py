@@ -103,7 +103,8 @@ class NeuralBus:
 
             self._memory = UnifiedMemory()
             self._persist = True
-        except Exception:
+        except Exception as e:
+            logger.debug("UnifiedMemory koppeling mislukt: %s", e)
             self._persist = False
 
     def subscribe(
@@ -180,7 +181,8 @@ class NeuralBus:
                 else:
                     cb(event)
                 self._stats["events_afgeleverd"] += 1
-            except Exception:
+            except Exception as e:
+                logger.debug("Event callback fout: %s", e)
                 self._stats["fouten"] += 1
 
         # Optioneel: persist naar UnifiedMemory
@@ -192,8 +194,8 @@ class NeuralBus:
                     data=data,
                     store_vector=False,
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Event persistentie mislukt: %s", e)
 
     def get_history(
         self,

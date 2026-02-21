@@ -12,12 +12,15 @@ Upgrades:
 """
 
 import json
+import logging
 import random
 import re
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional, Dict, List, Tuple
 from collections import Counter
+
+logger = logging.getLogger(__name__)
 
 from ..core.config import Config
 from ..core.utils import clear_scherm, kleur, Kleur
@@ -832,8 +835,8 @@ Antwoord in karakter, gebaseerd op de context."""
                 answer = self.generator.chat(berichten, systeem=system_prompt)
                 self._sla_op()
                 return answer
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Generator chat failed in ask: %s", e)
 
         # Fallback
         prefix = random.choice(personality["voorvoegsels"])
@@ -1045,8 +1048,8 @@ ANTWOORD: [het antwoord]"""
                         "antwoord": antwoord,
                         "days_old": item.get("interval", 1),
                     }
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Quiz generation failed: %s", e)
 
         return None
 

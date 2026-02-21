@@ -8,10 +8,13 @@ diepgaande Python import + structuur verificatie.
 Draai: python omega_integrity_check.py
 """
 
-import sys
 import importlib
+import logging
+import sys
 import time
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 # Zorg dat danny-toolkit in het pad zit
 sys.path.insert(0, str(Path(__file__).parent))
@@ -207,7 +210,8 @@ def check_launcher_app(app_nr):
     try:
         from danny_toolkit.launcher import Launcher
         return str(app_nr) in Launcher.APPS
-    except Exception:
+    except Exception as e:
+        logger.debug("Launcher app check mislukt: %s", e)
         return False
 
 

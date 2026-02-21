@@ -4,12 +4,15 @@ Versie 2.0 - Met TF-IDF, BM25, meerdere formaten, AI integratie en meer!
 """
 
 import json
+import logging
 import math
 import re
 import csv
 from pathlib import Path
 from collections import Counter
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 from ..core.config import Config
 from ..core.utils import clear_scherm, kleur, Kleur
@@ -114,8 +117,8 @@ class MiniRAG:
                 self.ai_client = anthropic.Anthropic(api_key=Config.ANTHROPIC_API_KEY)
                 self.ai_provider = "claude"
                 return True
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("AI client initialization failed: %s", e)
 
         return False
 

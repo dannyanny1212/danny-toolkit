@@ -41,6 +41,9 @@ except ImportError:
 from ..core.config import Config
 from ..core.utils import kleur, Kleur
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 # ── Config pad ────────────────────────────────────────
 
@@ -166,8 +169,8 @@ class SecurityConfig:
                 _CONFIG_HASH_PAD, "w", encoding="utf-8"
             ) as f:
                 f.write(h)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Config hash schrijven failed: %s", e)
 
     def _verifieer_hash(self, data: dict):
         """Controleer of config niet extern gewijzigd is."""
@@ -195,7 +198,8 @@ class SecurityConfig:
                 ))
             else:
                 self._hash_gewijzigd = False
-        except Exception:
+        except Exception as e:
+            logger.debug("Config hash verificatie failed: %s", e)
             self._hash_gewijzigd = False
 
     def herbereken_hash(self):
@@ -367,8 +371,8 @@ class SecurityResearchEngine:
             try:
                 from .governor import OmegaGovernor
                 self._governor = OmegaGovernor()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("OmegaGovernor init failed: %s", e)
         return self._governor
 
     @property
@@ -379,8 +383,8 @@ class SecurityResearchEngine:
                     get_cortical_stack,
                 )
                 self._stack = get_cortical_stack()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("CorticalStack init failed: %s", e)
         return self._stack
 
     @property
@@ -389,8 +393,8 @@ class SecurityResearchEngine:
             try:
                 from .file_guard import FileGuard
                 self._file_guard = FileGuard()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("FileGuard init failed: %s", e)
         return self._file_guard
 
     @property
@@ -401,8 +405,8 @@ class SecurityResearchEngine:
                     CoherentieMonitor,
                 )
                 self._coherentie = CoherentieMonitor()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("CoherentieMonitor init failed: %s", e)
         return self._coherentie
 
     # ══════════════════════════════════════════════════
@@ -472,8 +476,8 @@ class SecurityResearchEngine:
                         ),
                         "unit": "BTC",
                     }
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("BTC balance check failed: %s", e)
 
             # Transacties
             try:
@@ -529,8 +533,8 @@ class SecurityResearchEngine:
                         "balance": round(eth_bal, 6),
                         "unit": "ETH",
                     }
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("ETH balance check failed: %s", e)
 
             # Transacties met richting
             try:
@@ -642,8 +646,8 @@ class SecurityResearchEngine:
                             "token": symbool,
                             "richting": tok_richting,
                         })
-            except Exception:
-                pass  # Token transfers zijn optioneel
+            except Exception as e:
+                logger.debug("ETH token transfer check failed: %s", e)
 
         # SOL wallets via Solscan
         for adres in wallets.get("sol", []):
@@ -888,7 +892,8 @@ class SecurityResearchEngine:
                             rapport["ontbrekend"]
                         ),
                     })
-            except Exception:
+            except Exception as e:
+                logger.debug("FileGuard integriteit check failed: %s", e)
                 result["file_guard"] = {"status": "FOUT"}
 
         # Governor
@@ -909,7 +914,8 @@ class SecurityResearchEngine:
                             "circuit_breaker", {}
                         ).get("failures", 0),
                     })
-            except Exception:
+            except Exception as e:
+                logger.debug("Governor health check failed: %s", e)
                 result["governor"] = {"status": "FOUT"}
 
         # CoherentieMonitor — actieve scan
@@ -945,7 +951,8 @@ class SecurityResearchEngine:
                             "correlatie", 0
                         ),
                     })
-            except Exception:
+            except Exception as e:
+                logger.debug("Coherentie scan failed: %s", e)
                 result["coherentie"] = {"status": "FOUT"}
 
         return result
@@ -985,8 +992,8 @@ class SecurityResearchEngine:
                                     "term": term,
                                     "tekst": tekst,
                                 })
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug("RAG search for %s failed: %s", term, e)
         except Exception as e:
             fouten.append(
                 f"ChromaDB: {str(e)[:60]}"
@@ -1017,8 +1024,8 @@ class SecurityResearchEngine:
                                 "term": term,
                                 "tekst": str(f)[:120],
                             })
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug("Stack search for %s failed: %s", term, e)
             except Exception as e:
                 fouten.append(
                     f"CorticalStack: {str(e)[:60]}"
@@ -1127,8 +1134,8 @@ class SecurityResearchEngine:
                                 details[scrub][
                                     "tx_laatste_uur"
                                 ] = tx_laatste_uur
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                logger.debug("Velocity timestamp parse failed: %s", e)
 
                         # Contract interacties
                         contract_count = 0
@@ -1582,8 +1589,8 @@ class SecurityResearchEngine:
                 },
                 source="security",
             )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Scan logging failed: %s", e)
 
     def _bewaar_alert(self, bevinding):
         """Bewaar kritiek/hoog alert voor later."""
@@ -1606,8 +1613,8 @@ class SecurityResearchEngine:
                                ensure_ascii=False),
                     confidence=0.8,
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Alert opslag failed: %s", e)
 
     def get_alerts(self) -> list:
         """Haal opgeslagen alerts op."""
@@ -2078,7 +2085,8 @@ def _fetch_json(url, timeout=10) -> dict | list | None:
         )
         resp.raise_for_status()
         return resp.json()
-    except Exception:
+    except Exception as e:
+        logger.debug("JSON fetch failed for %s: %s", url[:80], e)
         return None
 
 

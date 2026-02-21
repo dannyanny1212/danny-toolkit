@@ -11,6 +11,7 @@ Geavanceerde ML concepten:
 """
 
 import json
+import logging
 import time
 import math
 import hashlib
@@ -20,6 +21,8 @@ from typing import List, Dict, Optional, Tuple
 from collections import Counter
 from ..core.config import Config
 from ..core.utils import clear_scherm
+
+logger = logging.getLogger(__name__)
 
 # Hugging Face Transformers
 try:
@@ -729,8 +732,8 @@ class MLStudioApp:
                 print("\n  GPT-2 Tokenizer (ter vergelijking):")
                 print(f"    Tokens: {len(gpt2_tokens)}")
                 print(f"    {' | '.join(gpt2_tokens[:10])}...")
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("GPT-2 tokenizer comparison failed: %s", e)
 
         input("\n  Druk op Enter...")
 

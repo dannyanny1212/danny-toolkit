@@ -14,10 +14,13 @@ Gebruik:
 
 import asyncio
 import json
+import logging
 import sys
 import time
 from datetime import datetime
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 from ..agents.base import Agent, AgentConfig
 from ..core.config import Config
@@ -213,7 +216,8 @@ class OracleAgent(Agent):
                 )
             )
             return self._collection
-        except Exception:
+        except Exception as e:
+            logger.debug("ChromaDB collectie laden mislukt: %s", e)
             return None
 
     def _zoek_kennis(self, zoekterm, n_results=5):
@@ -255,7 +259,8 @@ class OracleAgent(Agent):
                     "afstand": dist,
                 })
             return kennis
-        except Exception:
+        except Exception as e:
+            logger.debug("Kennis zoeken mislukt: %s", e)
             return []
 
     # ─── WAV-Loop Kern ───
@@ -314,8 +319,8 @@ class OracleAgent(Agent):
                     " bronnen gevonden",
                     Kleur.GROEN,
                 )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Kennis context ophalen mislukt: %s", e)
 
         prompt_tekst = (
             f"Maak een plan voor: {doelstelling}\n"
@@ -992,8 +997,8 @@ class OracleAgent(Agent):
             visueel_context = scherm.get(
                 "analyse", ""
             )[:300]
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Visuele context ophalen mislukt: %s", e)
 
         # Kennis context (optioneel)
         kennis_context = ""
@@ -1012,8 +1017,8 @@ class OracleAgent(Agent):
                 kennis_context = (
                     "\n".join(delen)[:400]
                 )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Kennis context voor repair mislukt: %s", e)
 
         # Bouw prompt met optionele secties
         extra_context = ""

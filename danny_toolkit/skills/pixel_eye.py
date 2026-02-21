@@ -6,9 +6,12 @@ Analyseert afbeeldingen, screenshots, vergelijkt
 beelden — alles lokaal zonder API rate limits.
 """
 
+import logging
 import os
 import time
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 from rich.console import Console
 from rich.panel import Panel
@@ -285,7 +288,8 @@ class PixelEye:
             vergelijking = self._vision_call(
                 pad1, vergelijk_prompt
             )
-        except Exception:
+        except Exception as e:
+            logger.debug("Vision comparison call failed, using fallback: %s", e)
             # Fallback: geef beide beschrijvingen
             vergelijking = (
                 f"Beeld 1: {beschrijving1}\n\n"
@@ -499,7 +503,8 @@ class PixelEye:
             analyse = self._vision_call(
                 huidig_pad, vergelijk_prompt
             )
-        except Exception:
+        except Exception as e:
+            logger.debug("Golden master comparison call failed: %s", e)
             analyse = (
                 f"Referentie: {beschrijving_golden}"
                 f"\n\nHuidig: {beschrijving_huidig}"
@@ -635,7 +640,8 @@ class PixelEye:
             analyse = self._vision_call(
                 na_pad, vergelijk_prompt
             )
-        except Exception:
+        except Exception as e:
+            logger.debug("Action verification vision call failed: %s", e)
             analyse = (
                 f"VOOR: {beschrijving_voor}\n\n"
                 f"NA: {beschrijving_na}"

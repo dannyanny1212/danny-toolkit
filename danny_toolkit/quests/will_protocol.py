@@ -30,8 +30,12 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import logging
+
 from ..core.config import Config
 from ..core.utils import kleur, Kleur, info, succes, fout
+
+logger = logging.getLogger(__name__)
 
 
 class OperationType(Enum):
@@ -255,8 +259,8 @@ class WillProtocol:
                     prioriteit=1,
                     data={"aantal": len(logs)},
                 ))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Failed to scan log directory: %s", e)
 
         # 4. Systeem idle >30 min? -> HEALTH_CHECK
         sensorium = self._get_sensorium()
@@ -332,8 +336,8 @@ class WillProtocol:
                     prioriteit=2,
                     data={"wezen": wezen},
                 ))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Failed to scan RAG orphan directories: %s", e)
 
         # 8. Nacht? -> Extra backup
         uur = datetime.now().hour
@@ -493,7 +497,8 @@ class WillProtocol:
         if fs_methode is not None:
             try:
                 return getattr(self, fs_methode)(operatie)
-            except Exception:
+            except Exception as e:
+                logger.debug("Filesystem verification failed for %s: %s", operatie.type.value, e)
                 return None
 
         # 2. Visuele verificatie (PixelEye kijkt)
@@ -507,7 +512,8 @@ class WillProtocol:
             eye = self._get_eye()
             result = eye.check_state(verwachting)
             return "OK" if result["match"] else "AFWIJKING"
-        except Exception:
+        except Exception as e:
+            logger.debug("Visual verification via PixelEye failed: %s", e)
             return None
 
     # ─── Operatie Executors ───
@@ -530,8 +536,8 @@ class WillProtocol:
                 try:
                     governor.backup_state(pad)
                     gebackupt.append(sf)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("Failed to backup state file %s: %s", sf, e)
 
         return f"Backup: {len(gebackupt)} bestanden"
 
@@ -543,7 +549,8 @@ class WillProtocol:
                 key=lambda p: p.stat().st_mtime,
                 reverse=True,
             )
-        except Exception:
+        except Exception as e:
+            logger.debug("Failed to list log files for cleanup: %s", e)
             return "Geen logs gevonden"
 
         # Bewaar 5 nieuwste
@@ -738,7 +745,8 @@ class WillProtocol:
             if not rest_wezen:
                 return "OK"
             return "AFWIJKING"
-        except Exception:
+        except Exception as e:
+            logger.debug("RAG cleanup verification failed: %s", e)
             return None
 
     def verifieer_intentie(

@@ -14,7 +14,11 @@ Dependencies (optioneel, graceful degrade):
   pip install vosk  (+ model download voor offline)
 """
 
+import logging
+
 from ..core.utils import kleur, Kleur, info, succes, fout
+
+logger = logging.getLogger(__name__)
 
 
 class ListenerProtocol:
@@ -264,8 +268,8 @@ class ListenerProtocol:
                                 f"\"Ik hoorde: {tekst}\"",
                                 Kleur.FEL_MAGENTA,
                             ))
-                    except Exception:
-                        pass  # Voice is optioneel
+                    except Exception as e:
+                        logger.debug("Voice playback failed during listener simulation: %s", e)
                 else:
                     print(info("      Niets gehoord."))
 

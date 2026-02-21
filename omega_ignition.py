@@ -1,13 +1,16 @@
+import asyncio
+import io
+import json
+import logging
 import os
+import shutil
+import sqlite3
+import subprocess
 import sys
 import time
-import asyncio
-import subprocess
 import urllib.request
-import json
-import sqlite3
-import shutil
-import io
+
+logger = logging.getLogger(__name__)
 
 # Windows UTF-8 fix (project conventie)
 if sys.platform == "win32":
@@ -72,7 +75,8 @@ class OmegaIgnition:
                         print(f"  {Kleur.GROEN}✔ Visual Cortex (Ollama/Llava): Online{Kleur.RESET}")
                     else:
                         print(f"  {Kleur.GEEL}⚠ Ollama draait, maar 'llava' ontbreekt.{Kleur.RESET}")
-        except Exception:
+        except Exception as e:
+            logger.debug("Ollama check mislukt: %s", e)
             print(f"  {Kleur.ROOD}❌ Visual Cortex (Ollama): Offline.{Kleur.RESET}")
             self.errors += 1
 

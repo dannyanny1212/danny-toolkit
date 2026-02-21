@@ -13,6 +13,7 @@ Fases:
 """
 
 import asyncio
+import logging
 import random
 import re
 import time
@@ -24,6 +25,8 @@ from dataclasses import dataclass, field
 
 from .config import Config
 from .utils import kleur, Kleur
+
+logger = logging.getLogger(__name__)
 
 
 # =============================================================================
@@ -405,7 +408,8 @@ class HuntRouter:
                 timestamp=datetime.now().isoformat()
             )]
 
-        except Exception:
+        except Exception as e:
+            logger.debug("News search failed: %s", e)
             return []
 
     async def _search_web(self, context: HuntContext) -> List[HuntResult]:
@@ -428,7 +432,8 @@ class HuntRouter:
                 timestamp=datetime.now().isoformat()
             )]
 
-        except Exception:
+        except Exception as e:
+            logger.debug("Code search failed: %s", e)
             return []
 
     async def _search_archive(self, context: HuntContext) -> List[HuntResult]:
@@ -439,7 +444,8 @@ class HuntRouter:
             # Simplified
             return []
 
-        except Exception:
+        except Exception as e:
+            logger.debug("Archive search failed: %s", e)
             return []
 
     async def _search_notes(self, context: HuntContext) -> List[HuntResult]:
@@ -450,7 +456,8 @@ class HuntRouter:
             # Simplified
             return []
 
-        except Exception:
+        except Exception as e:
+            logger.debug("Notes search failed: %s", e)
             return []
 
 

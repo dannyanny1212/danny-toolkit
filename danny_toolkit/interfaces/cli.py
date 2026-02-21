@@ -48,6 +48,7 @@ logging.getLogger("transformers").setLevel(
 logging.getLogger("sentence_transformers").setLevel(
     logging.ERROR
 )
+logger = logging.getLogger(__name__)
 
 # --- 2. SETUP PATHS ---
 ROOT_DIR = Path(__file__).parent.parent.parent
@@ -113,7 +114,8 @@ class CosmicConsole:
                 return "[yellow]CAUTION[/yellow]"
             else:
                 return "[red]LIMIT REACHED[/red]"
-        except Exception:
+        except Exception as e:
+            logger.debug("Governor status retrieval failed: %s", e)
             return "[dim]UNKNOWN[/dim]"
 
     def _render_header(self):

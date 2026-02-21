@@ -132,8 +132,8 @@ def _shutdown():
         try:
             stack = get_cortical_stack()
             stack.flush()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("CorticalStack flush on shutdown failed: %s", e)
 
 atexit.register(_shutdown)
 
@@ -495,7 +495,8 @@ class MemexAgent(BrainAgent):
                 [w[1] for w in top],
                 [w[2] for w in top],
             )
-        except Exception:
+        except Exception as e:
+            logger.debug("Memex search failed: %s", e)
             return [], []
 
     def _get_cortical_stack(self):
@@ -505,7 +506,8 @@ class MemexAgent(BrainAgent):
                 get_cortical_stack,
             )
             return get_cortical_stack()
-        except Exception:
+        except Exception as e:
+            logger.debug("CorticalStack laden mislukt: %s", e)
             return None
 
     def _search_cortical(self, query):
@@ -851,7 +853,8 @@ class StrategistAgent(Agent):
                     Strategist,
                 )
                 self._strategist = Strategist()
-            except Exception:
+            except Exception as e:
+                logger.debug("Strategist laden mislukt: %s", e)
                 self._strategist = None
         return self._strategist
 
@@ -885,7 +888,8 @@ class ArtificerAgent(Agent):
                     Artificer,
                 )
                 self._artificer = Artificer()
-            except Exception:
+            except Exception as e:
+                logger.debug("Artificer laden mislukt: %s", e)
                 self._artificer = None
         return self._artificer
 
@@ -1509,7 +1513,8 @@ class AdaptiveRouter:
                 sys.stderr = _old_err
             cls._embed_fn = model.encode
             return cls._embed_fn
-        except Exception:
+        except Exception as e:
+            logger.debug("SentenceTransformer laden mislukt: %s", e)
             return None
 
     @classmethod
@@ -2015,7 +2020,8 @@ class SwarmEngine:
                 self._tribunal_instance = (
                     AdversarialTribunal(brain=self.brain)
                 )
-            except Exception:
+            except Exception as e:
+                logger.debug("AdversarialTribunal laden mislukt: %s", e)
                 self._tribunal_instance = None
         return self._tribunal_instance
 
@@ -2152,7 +2158,8 @@ class SwarmEngine:
                             fragmenten.append(tekst)
 
             return fragmenten[:max_fragmenten]
-        except Exception:
+        except Exception as e:
+            logger.debug("Memex context ophalen mislukt: %s", e)
             return []
 
     @staticmethod
@@ -2361,7 +2368,8 @@ class SwarmEngine:
                     "payloads": payloads,
                     "analyse": "Rate limit retry",
                 }
-            except Exception:
+            except Exception as e:
+                logger.debug("Rate limit retry mislukt: %s", e)
                 return {
                     "geslaagd": False,
                     "plan": None,
@@ -2407,7 +2415,8 @@ class SwarmEngine:
             payloads = await self.run(
                 herstelde_input, callback,
             )
-        except Exception:
+        except Exception as e:
+            logger.debug("Heruitvoering mislukt: %s", e)
             return {
                 "geslaagd": False,
                 "plan": plan,

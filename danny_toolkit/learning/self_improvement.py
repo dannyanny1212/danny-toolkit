@@ -10,10 +10,13 @@ STATUS: CORE SELF-LEARNING
 """
 
 import json
+import logging
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Callable, Any
 from dataclasses import dataclass, asdict, field
+
+logger = logging.getLogger(__name__)
 
 try:
     from ..core.config import Config
@@ -156,8 +159,8 @@ class SelfImprovementEngine:
                         target="response_quality",
                         data={"interaction_id": int_id, "score": score}
                     ))
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Feedback signal collection failed: %s", e)
 
         # 2. Performance signals
         if self.performance:
@@ -187,8 +190,8 @@ class SelfImprovementEngine:
                         data=problem
                     ))
 
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Performance signal collection failed: %s", e)
 
         return signals
 

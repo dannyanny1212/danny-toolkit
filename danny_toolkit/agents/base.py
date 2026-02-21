@@ -3,11 +3,14 @@ Base Agent class voor het agent framework.
 Versie 6.0.0 - OMEGA_SOVEREIGN. Met multi-provider, memory system, reflection en meer!
 """
 
+import logging
 import os
 import json
 import asyncio
 import time
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Optional, Callable, Any
@@ -147,8 +150,8 @@ class Agent:
                 self.provider = AgentProvider.CLAUDE
                 self.model = self.config.model
                 return
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Failed to initialize Anthropic provider: %s", e)
 
         # Fallback: local mode (geen AI)
         self.provider = AgentProvider.LOCAL

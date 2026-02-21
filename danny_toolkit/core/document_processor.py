@@ -3,11 +3,14 @@ Document processor voor RAG systemen.
 Versie 2.0 - Met PDF/Markdown support en metadata extractie.
 """
 
+import logging
 import re
 from pathlib import Path
 from datetime import datetime
 from typing import List, Dict, Optional, Tuple
 from .config import Config
+
+logger = logging.getLogger(__name__)
 
 
 class DocumentProcessor:
@@ -288,8 +291,8 @@ class DocumentProcessor:
             metadata["aantal_code_blokken"] = len(parsed["code_blokken"])
             metadata["aantal_woorden"] = len(inhoud.split())
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Markdown metadata extractie mislukt: %s", e)
 
         return metadata
 
@@ -315,8 +318,8 @@ class DocumentProcessor:
             metadata["aantal_imports"] = len(re.findall(r"^(?:import|from)", inhoud, re.M))
             metadata["aantal_regels"] = inhoud.count("\n") + 1
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Python metadata extractie mislukt: %s", e)
 
         return metadata
 
@@ -340,8 +343,8 @@ class DocumentProcessor:
 
         except ImportError:
             pass
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("PDF metadata extractie mislukt: %s", e)
 
         return metadata
 

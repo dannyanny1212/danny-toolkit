@@ -13,11 +13,14 @@ Gebruik:
 
 import asyncio
 import io
+import logging
 import os
 import sys
 import time
 from datetime import datetime
 from contextlib import redirect_stdout
+
+logger = logging.getLogger(__name__)
 
 # Windows UTF-8 fix
 if os.name == "nt":
@@ -219,8 +222,8 @@ def main():
                 get_cortical_stack,
             )
             get_cortical_stack().flush()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("CorticalStack flush on shutdown failed: %s", e)
         console.print(
             "\n[red]Daemon gestopt.[/red]"
         )

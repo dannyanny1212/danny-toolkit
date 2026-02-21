@@ -21,6 +21,7 @@ Gebruik:
 """
 
 import io
+import logging
 import re
 import random
 from contextlib import redirect_stdout
@@ -28,6 +29,8 @@ from contextlib import redirect_stdout
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
+
+logger = logging.getLogger(__name__)
 
 from danny_toolkit.brain.trinity_omega import (
     CosmicRole,
@@ -58,8 +61,8 @@ def _log_to_cortical(
             details=details,
             source=source,
         )
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("Cortical log failed: %s", e)
 
 
 def _learn_from_input(prompt):
@@ -93,8 +96,8 @@ def _learn_from_input(prompt):
                         0.7,
                     )
                 break
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("Fact extraction failed: %s", e)
 
 
 # ── FAST-TRACK: voorgedefinieerde responses ──

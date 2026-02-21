@@ -19,6 +19,9 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Callable, Dict, List, Optional, Any
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 @dataclass
 class ProactiveRule:
@@ -89,8 +92,8 @@ class ProactiveEngine:
             try:
                 from .governor import OmegaGovernor
                 self._governor = OmegaGovernor()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("OmegaGovernor init failed: %s", e)
         return self._governor
 
     @property
@@ -102,8 +105,8 @@ class ProactiveEngine:
                     get_cortical_stack,
                 )
                 self._stack = get_cortical_stack()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("CorticalStack init failed: %s", e)
         return self._stack
 
     # ─── Standaard Regels ───
@@ -240,8 +243,8 @@ class ProactiveEngine:
                 sensorium.register_listener(
                     et, self._on_event
                 )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Sensorium binding failed: %s", e)
 
     # ─── Event Handler ───
 
@@ -294,7 +297,8 @@ class ProactiveEngine:
                 "exhausted", "zombie"
             )
             state["mood"] = limbic["state"]["mood"]
-        except Exception:
+        except Exception as e:
+            logger.debug("Limbic status failed: %s", e)
             state["energie_ok"] = True
             state["mood"] = "neutral"
 
@@ -313,7 +317,8 @@ class ProactiveEngine:
                 )
             else:
                 state["idle_min"] = 0
-        except Exception:
+        except Exception as e:
+            logger.debug("Idle detectie failed: %s", e)
             state["idle_min"] = 0
 
         # Governor status
@@ -326,7 +331,8 @@ class ProactiveEngine:
                 )
             else:
                 state["governor_status"] = "GREEN"
-        except Exception:
+        except Exception as e:
+            logger.debug("Governor status check failed: %s", e)
             state["governor_status"] = "GREEN"
 
         # Error tracking
@@ -350,8 +356,8 @@ class ProactiveEngine:
                             "skip"
                         )
                     )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Memex skips check failed: %s", e)
 
         # Heartbeat tracking
         state["geen_heartbeat_sec"] = (
@@ -399,8 +405,8 @@ class ProactiveEngine:
                 # Voer uit
                 self._voer_uit(regel, state)
 
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Regel %s evaluatie failed: %s", regel.naam, e)
 
     def _governor_check(self, regel) -> bool:
         """Check of Governor de actie toestaat.
@@ -419,8 +425,8 @@ class ProactiveEngine:
         try:
             if not gov.check_api_health():
                 return regel.prioriteit == 1
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Governor health check failed: %s", e)
 
         return True
 
@@ -447,8 +453,8 @@ class ProactiveEngine:
                 tekst = actie[8:]
                 self._voeg_melding_toe(tekst)
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Regel uitvoering failed: %s", e)
 
         # Registreer cooldown
         self._cooldowns[regel.naam] = time.time()
@@ -465,7 +471,8 @@ class ProactiveEngine:
         try:
             from swarm_engine import run_swarm_sync
             run_swarm_sync(prompt, self.brain)
-        except Exception:
+        except Exception as e:
+            logger.debug("Swarm taak failed: %s", e)
             self._voeg_melding_toe(
                 f"Swarm taak mislukt: {prompt[:50]}"
             )
@@ -493,7 +500,8 @@ class ProactiveEngine:
             # Reset error teller na repair
             self._recente_fouten.clear()
 
-        except Exception:
+        except Exception as e:
+            logger.debug("SelfRepair failed: %s", e)
             self._voeg_melding_toe(
                 "SelfRepair niet beschikbaar"
             )
@@ -536,8 +544,8 @@ class ProactiveEngine:
                 },
                 source="proactive",
             )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Actie logging failed: %s", e)
 
     # ─── Timer Regels ───
 

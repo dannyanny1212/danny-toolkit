@@ -16,12 +16,15 @@ Gebruik:
 
 import asyncio
 import json
+import logging
 import subprocess
 import time
 from datetime import datetime
 
 from ..core.utils import kleur, Kleur
 from ..core.config import Config
+
+logger = logging.getLogger(__name__)
 
 
 class SelfRepairProtocol:
@@ -427,7 +430,8 @@ class SelfRepairProtocol:
                 )
             )
             return self._collection
-        except Exception:
+        except Exception as e:
+            logger.debug("ChromaDB collectie laden mislukt: %s", e)
             return None
 
     # ─── Orchestratie Methodes ───
@@ -499,7 +503,8 @@ class SelfRepairProtocol:
                     "afstand": dist,
                 })
             return kennis
-        except Exception:
+        except Exception as e:
+            logger.debug("Kennis zoeken mislukt: %s", e)
             return []
 
     def _genereer_herstelplan(
@@ -579,7 +584,8 @@ class SelfRepairProtocol:
                 self.oracle._parse_plan_json(tekst)
             )
             return stappen
-        except Exception:
+        except Exception as e:
+            logger.debug("Herstelplan genereren mislukt: %s", e)
             return []
 
     def _voer_stap_uit(self, stap):

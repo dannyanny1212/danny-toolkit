@@ -465,7 +465,8 @@ class NexusOracleMode:
                 vraag, use_tools=False
             )
 
-        except Exception:
+        except Exception as e:
+            logger.debug("Pattern prediction failed: %s", e)
             return "Kon geen patronen detecteren."
 
 
