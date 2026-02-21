@@ -446,10 +446,8 @@ def log_fout(bericht: str):
 def fix_encoding():
     """Fix Windows encoding voor emoji's en speciale tekens."""
     if sys.platform == "win32":
-        try:
+        if hasattr(sys.stdout, "reconfigure"):
             sys.stdout.reconfigure(encoding="utf-8")
-        except AttributeError:
-            pass  # Python < 3.7
 
 
 def clear_scherm():

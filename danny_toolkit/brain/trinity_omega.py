@@ -210,7 +210,7 @@ class PrometheusBrain:
     """
 
     SYSTEM_NAME = "OMEGA_SOVEREIGN"
-    VERSION = "4.0.0"
+    VERSION = "6.0.0"
 
     # Domein-keywords voor chain_of_command() multi-domein
     # detectie. route_task() blijft ongewijzigd.

@@ -1,6 +1,6 @@
 """
 Danny Toolkit Launcher - Hoofdmenu.
-Versie 5.1.1 - OMEGA_SOVEREIGN Rich Dashboard met thema's, kleuren, statistieken en meer.
+Versie 6.0.0 - OMEGA_SOVEREIGN Rich Dashboard met thema's, kleuren, statistieken en meer.
 """
 
 import sys
@@ -1316,7 +1316,7 @@ class LauncherStats:
 class Launcher:
     """Hoofdlauncher voor Danny Toolkit."""
 
-    VERSIE = "4.0.0"
+    VERSIE = "6.0.0"
 
     # Alle beschikbare apps
     APPS = {

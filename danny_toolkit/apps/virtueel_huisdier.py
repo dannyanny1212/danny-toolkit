@@ -1,6 +1,6 @@
 """
 Virtueel Huisdier App.
-Versie 4.0 - VOLLEDIG AI-POWERED HUISDIER!
+Versie 6.0.0 - VOLLEDIG AI-POWERED HUISDIER!
 
 Nu met:
 - AI Personality System - Dynamische persoonlijkheid

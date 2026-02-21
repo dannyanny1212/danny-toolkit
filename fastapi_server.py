@@ -359,7 +359,7 @@ async def health(
         governor_status=gov_status,
         circuit_breaker=cb_status,
         timestamp=datetime.now().isoformat(),
-        version="5.1.1",
+        version="6.0.0",
         uptime_seconds=round(uptime, 1),
         memory_mb=round(mem_mb, 1),
         active_agents=actief,

@@ -1,6 +1,6 @@
 """
 Tool system voor agents.
-Versie 5.1.1 - OMEGA_SOVEREIGN. Met categorieën, permissions, caching, metrics en meer!
+Versie 6.0.0 - OMEGA_SOVEREIGN. Met categorieën, permissions, caching, metrics en meer!
 """
 
 import asyncio
