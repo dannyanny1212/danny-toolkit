@@ -99,31 +99,55 @@ class Artificer:
         return result
 
     async def _write_script(self, task: str) -> Optional[str]:
-        prompt = f"""
-        Write a STANDALONE Python script to: {task}.
-        - No external dependencies if possible (use standard library).
-        - If external needed, try 'requests', 'pillow', 'pandas'.
-        - Print the final result to stdout.
-        - Do NOT use input().
-        - Return ONLY the Python code, no markdown fences.
-        """
+        prompt = (
+            f"Write a STANDALONE Python script to: {task}.\n"
+            "Rules:\n"
+            "- Use ONLY standard library modules when possible.\n"
+            "- If external packages are needed, prefer: requests, pillow, pandas.\n"
+            "- Print the final result to stdout.\n"
+            "- Do NOT use input().\n"
+            "- Return ONLY raw Python source code.\n"
+            "- Do NOT wrap in markdown fences (no ```python, no ```).\n"
+            "- Do NOT add explanations, comments about the code, or text before/after.\n"
+            "- The very first character must be a Python statement (import, def, etc)."
+        )
         try:
             chat = await self.client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
                 model=self.model,
                 temperature=0.4,
             )
-            code = chat.choices[0].message.content
-            # Strip markdown fences if present
-            if code.startswith("```"):
-                code = code.split("\n", 1)[1] if "\n" in code else code
-                if code.endswith("```"):
-                    code = code[:-3]
-                code = code.strip()
+            code = self._clean_generated_code(chat.choices[0].message.content)
             return code
         except Exception as e:
             print(f"{Kleur.ROOD}🔥 Forge error: {e}{Kleur.RESET}")
             return None
+
+    @staticmethod
+    def _clean_generated_code(raw: str) -> str:
+        """Strip markdown fences, language tags, and surrounding prose."""
+        import re
+        code = raw.strip()
+        # Remove opening fence (```python, ```py, ```)
+        code = re.sub(r'^```(?:python|py)?\s*\n?', '', code)
+        # Remove closing fence
+        code = re.sub(r'\n?```\s*$', '', code)
+        # Strip any remaining leading/trailing backticks or quotes
+        code = code.strip('`\'"')
+        # Drop lines before the first Python statement
+        lines = code.split('\n')
+        start = 0
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+            if stripped and (
+                stripped.startswith(('import ', 'from ', 'def ', 'class ',
+                                    '#', 'if ', 'for ', 'while ', 'try:',
+                                    'with ', 'print(', 'async '))
+                or '=' in stripped
+            ):
+                start = i
+                break
+        return '\n'.join(lines[start:]).strip()
 
     def _safety_check(self, code: str) -> bool:
         """Static analysis to prevent destructive operations."""
