@@ -192,8 +192,8 @@ class TheOracleEye:
             verwachte_cpu > self._HIGH_CPU_THRESHOLD
             or verwachte_queries > self._HIGH_QUERY_THRESHOLD
         ):
-            return "llama-3.1-8b-instant"
-        return "llama-3.1-8b-instant"
+            return "qwen/qwen3-32b"
+        return "qwen/qwen3-32b"
 
     def suggest_model(
         self,
@@ -215,7 +215,7 @@ class TheOracleEye:
 
         # Als huidige load al hoog is, direct 8B
         if cpu > self._HIGH_CPU_THRESHOLD or queries > self._HIGH_QUERY_THRESHOLD:
-            return "llama-3.1-8b-instant"
+            return "qwen/qwen3-32b"
 
         # Check forecast — als piek verwacht, preventief 8B
         if forecast is None:
@@ -229,9 +229,9 @@ class TheOracleEye:
                     or fc.verwachte_queries > self._HIGH_QUERY_THRESHOLD
                 )
             ):
-                return "llama-3.1-8b-instant"
+                return "qwen/qwen3-32b"
 
-        return "llama-3.1-8b-instant"
+        return "qwen/qwen3-32b"
 
     def get_peak_hours(self, days: int = 7) -> List[int]:
         """Top 5 uren met meeste activiteit."""

@@ -252,8 +252,8 @@ class Config:
 
     # THE BRAIN (Cloud — High IQ, Zero VRAM)
     LLM_PROVIDER = "groq"
-    LLM_MODEL = "mixtral-8x7b-32768"
-    LLM_FALLBACK_MODEL = "llama-3.1-8b-instant"
+    LLM_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
+    LLM_FALLBACK_MODEL = "qwen/qwen3-32b"
 
     # THE EYES (Lokaal — RTX 3060 Ti, ~4.7 GB VRAM)
     VISION_PROVIDER = "ollama"
@@ -267,7 +267,7 @@ class Config:
     CLAUDE_MODEL = "claude-sonnet-4-20250514"
     MAX_TOKENS = 10000
     VOYAGE_MODEL = "voyage-4-large"
-    GROQ_MODEL = "mixtral-8x7b-32768"
+    GROQ_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
 
     # RAG Settings
     CHUNK_SIZE = 350

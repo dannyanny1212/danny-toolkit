@@ -40,7 +40,7 @@ class Artificer:
         self.skills_dir = Config.BASE_DIR / "danny_toolkit" / "skills" / "forge"
         self.registry_path = self.skills_dir / "registry.json"
         self.client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
-        self.model = "mixtral-8x7b-32768"
+        self.model = "meta-llama/llama-4-scout-17b-16e-instruct"
         self._bus = get_bus() if HAS_BUS else None
         self._ensure_setup()
 
