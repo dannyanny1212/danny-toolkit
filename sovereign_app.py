@@ -35,7 +35,12 @@ class SovereignDashboard(ctk.CTk):
         ctk.set_default_color_theme("blue")
 
         self.logo_path = os.path.join(PROJECT_ROOT, "image_50b93f.png")
+        self.ico_path = os.path.join(PROJECT_ROOT, "sovereign.ico")
         self.running = False
+
+        # Window icon (taskbar + titelbalk)
+        if os.path.exists(self.ico_path):
+            self.iconbitmap(self.ico_path)
 
         # --- UI Layout ---
         self.grid_columnconfigure(1, weight=3)
