@@ -1117,6 +1117,15 @@ class PulseProtocolApp:
         input("\n  Druk op Enter om terug te gaan...")
 
 
+class SovereignDashboardGUIApp:
+    """Wrapper voor Sovereign Dashboard (CustomTkinter GUI) in launcher."""
+
+    def run(self):
+        """Start de Sovereign Dashboard GUI."""
+        import sovereign_app
+        sovereign_app.main()
+
+
 class FastAPIApp:
     """Wrapper voor FastAPI Server in launcher."""
 
@@ -1379,6 +1388,7 @@ class Launcher:
         "57": ("Security Research", SecurityResearchApp, "brain"),
         "58": ("FastAPI Server", FastAPIApp, "brain"),
         "59": ("Telegram Bot", TelegramBotApp, "brain"),
+        "60": ("Sovereign Dashboard", SovereignDashboardGUIApp, "brain"),
     }
 
     # Sneltoetsen
@@ -1442,6 +1452,7 @@ class Launcher:
         "sr": "57", # Security Research
         "fa": "58", # FastAPI Server
         "tb": "59", # Telegram Bot
+        "sd": "60", # Sovereign Dashboard
     }
 
     def __init__(self):
@@ -1559,6 +1570,7 @@ class Launcher:
             "57": "BEWAKING",
             "58": "REST-API",
             "59": "TELEGRAM",
+            "60": "SOVEREIGN GUI",
         }
         OMEGA_PROTOCOLS = {
             "41": "CORE",
@@ -1620,7 +1632,7 @@ class Launcher:
             nexus_tbl,
             title="[bold cyan]NEXUS PRIME[/bold cyan]",
             border_style="cyan",
-            subtitle="[dim]15 systems[/dim]",
+            subtitle="[dim]16 systems[/dim]",
         )
 
         # Omega Protocols tabel
@@ -1737,6 +1749,7 @@ class Launcher:
         print(f"     {self._kleur_tekst('sr', 'nummer')} = Security Research")
         print(f"     {self._kleur_tekst('fa', 'nummer')} = FastAPI Server")
         print(f"     {self._kleur_tekst('tb', 'nummer')} = Telegram Bot")
+        print(f"     {self._kleur_tekst('sd', 'nummer')} = Sovereign Dashboard")
         print()
 
         print("  Systeem commando's:")
@@ -2026,7 +2039,7 @@ def main():
 
         if arg in ["--help", "-h"]:
             print("""
-Danny Toolkit v6.0.0 — 59 apps
+Danny Toolkit v6.0.0 — 60 apps
 
 Gebruik:
   python main.py              Start interactieve launcher
@@ -2078,6 +2091,7 @@ Central Brain Extra:
   sr = Security Research
   fa = FastAPI Server
   tb = Telegram Bot
+  sd = Sovereign Dashboard
 """)
             return
 
