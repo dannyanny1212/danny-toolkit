@@ -1,5 +1,19 @@
 import os
 import asyncio
+
+# Robuuste .env loader — vindt altijd de project root
+try:
+    from dotenv import load_dotenv
+    _root = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "..")
+    )
+    load_dotenv(
+        dotenv_path=os.path.join(_root, ".env"),
+        override=True,
+    )
+except ImportError:
+    pass
+
 from groq import AsyncGroq
 from danny_toolkit.core.utils import Kleur
 

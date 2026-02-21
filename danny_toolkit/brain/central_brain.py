@@ -16,6 +16,19 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Callable
 
+# Robuuste .env loader — vindt altijd de project root
+try:
+    from dotenv import load_dotenv
+    _root = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "..")
+    )
+    load_dotenv(
+        dotenv_path=os.path.join(_root, ".env"),
+        override=True,
+    )
+except ImportError:
+    pass
+
 from ..core.config import Config
 from ..core.utils import kleur, Kleur
 
