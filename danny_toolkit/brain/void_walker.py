@@ -21,7 +21,7 @@ except ImportError:
 
 try:
     from danny_toolkit.core.vector_store import VectorStore
-    from danny_toolkit.core.embeddings import TorchGPUEmbeddings
+    from danny_toolkit.core.embeddings import get_torch_embedder
     HAS_VECTOR = True
 except ImportError:
     HAS_VECTOR = False
@@ -55,7 +55,7 @@ class VoidWalker:
         self._store = None
         if HAS_VECTOR:
             try:
-                embedder = TorchGPUEmbeddings()
+                embedder = get_torch_embedder()
                 self._store = VectorStore(
                     embedding_provider=embedder,
                     db_file=self.db_path,

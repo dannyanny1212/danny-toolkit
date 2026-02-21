@@ -7,6 +7,7 @@ import logging
 import math
 import hashlib
 import json
+import threading
 import time
 from collections import Counter, OrderedDict
 from pathlib import Path
@@ -683,3 +684,23 @@ class TorchGPUEmbeddings(EmbeddingProvider):
             for i in range(0, len(texts), batch_size):
                 all_emb.append(self._embed_batch(texts[i:i + batch_size]))
             return torch.cat(all_emb, dim=0)
+
+
+# =============================================================================
+# SINGLETON FACTORY — TorchGPUEmbeddings
+# =============================================================================
+
+_torch_gpu_instance = None
+_torch_gpu_lock = threading.Lock()
+
+
+def get_torch_embedder(
+    model_name: str = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+) -> "TorchGPUEmbeddings":
+    """Singleton TorchGPUEmbeddings — laadt het model slechts één keer."""
+    global _torch_gpu_instance
+    if _torch_gpu_instance is None:
+        with _torch_gpu_lock:
+            if _torch_gpu_instance is None:
+                _torch_gpu_instance = TorchGPUEmbeddings(model_name)
+    return _torch_gpu_instance

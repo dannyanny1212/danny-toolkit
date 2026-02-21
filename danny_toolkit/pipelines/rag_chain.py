@@ -10,7 +10,7 @@ except ImportError:
 
 import torch
 
-from danny_toolkit.core.embeddings import TorchGPUEmbeddings
+from danny_toolkit.core.embeddings import TorchGPUEmbeddings, get_torch_embedder
 from danny_toolkit.core.faiss_index import FaissIndex
 from danny_toolkit.brain.citation_marshall import CitationMarshall
 
@@ -82,7 +82,7 @@ def run_rag_chain():
     ]
 
     # 2. Embeddings
-    embedder = TorchGPUEmbeddings()
+    embedder = get_torch_embedder()
     doc_vecs = embedder.embed(docs)
 
     print(f"Embeddings shape: {doc_vecs.shape}")

@@ -1,6 +1,6 @@
 # danny_toolkit/pipelines/rag_gpu.py
 
-from danny_toolkit.core.embeddings import TorchGPUEmbeddings
+from danny_toolkit.core.embeddings import get_torch_embedder
 from danny_toolkit.core.faiss_index import FaissIndex
 
 def run_demo():
@@ -15,7 +15,7 @@ def run_demo():
     ]
 
     # 2. Embeddings (GPU)
-    embedder = TorchGPUEmbeddings()
+    embedder = get_torch_embedder()
     doc_vecs = embedder.embed(docs)
 
     print(f"Embeddings shape: {doc_vecs.shape}")

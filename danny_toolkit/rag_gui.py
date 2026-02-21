@@ -292,7 +292,7 @@ class RagGUI:
 
         def work():
             self.root.after(0, lambda: self._print("Embeddings laden...", "info"))
-            from danny_toolkit.core.embeddings import TorchGPUEmbeddings
+            from danny_toolkit.core.embeddings import get_torch_embedder
             from danny_toolkit.core.faiss_index import FaissIndex
             from danny_toolkit.pipelines.rag_chain import load_llm, generate_answer
 
@@ -303,7 +303,7 @@ class RagGUI:
                 "RAG combineert retrieval en LLM-inference om contextuele antwoorden te genereren.",
             ]
 
-            embedder = TorchGPUEmbeddings()
+            embedder = get_torch_embedder()
             doc_vecs = embedder.embed(docs)
 
             self.root.after(0, lambda: self._print("FAISS index bouwen...", "info"))
@@ -339,7 +339,7 @@ class RagGUI:
         def work():
             self.root.after(0, lambda: self._print(f"Directory: {directory}", "info"))
             from danny_toolkit.core.doc_loader import load_directory
-            from danny_toolkit.core.embeddings import TorchGPUEmbeddings
+            from danny_toolkit.core.embeddings import get_torch_embedder
             from danny_toolkit.core.index_store import IndexStore
 
             chunks = load_directory(directory)
@@ -356,7 +356,7 @@ class RagGUI:
                 self.root.after(0, lambda b=b: self._print(f"  - {b}"))
 
             self.root.after(0, lambda: self._print("\nEmbeddings berekenen...", "info"))
-            embedder = TorchGPUEmbeddings()
+            embedder = get_torch_embedder()
             vectors = embedder.embed(texts).numpy().astype("float32")
 
             self.root.after(0, lambda: self._print("FAISS index bouwen...", "info"))
@@ -378,7 +378,7 @@ class RagGUI:
             return
 
         def work():
-            from danny_toolkit.core.embeddings import TorchGPUEmbeddings
+            from danny_toolkit.core.embeddings import get_torch_embedder
             from danny_toolkit.core.index_store import IndexStore
             from llama_cpp import Llama
 
@@ -389,7 +389,7 @@ class RagGUI:
                 return
 
             self.root.after(0, lambda: self._print("Query embedden...", "info"))
-            embedder = TorchGPUEmbeddings()
+            embedder = get_torch_embedder()
             q_vec = embedder.embed([vraag]).numpy().astype("float32")
 
             results = store.search(q_vec, k=5)

@@ -7,7 +7,7 @@ from danny_toolkit.core.utils import Kleur
 
 try:
     from danny_toolkit.core.vector_store import VectorStore
-    from danny_toolkit.core.embeddings import TorchGPUEmbeddings
+    from danny_toolkit.core.embeddings import get_torch_embedder
     HAS_VECTOR = True
 except ImportError:
     HAS_VECTOR = False
@@ -30,7 +30,7 @@ class BlackBox:
 
         if HAS_VECTOR:
             try:
-                self._embedder = TorchGPUEmbeddings()
+                self._embedder = get_torch_embedder()
                 self._store = VectorStore(
                     embedding_provider=self._embedder,
                     db_file=self.db_path,

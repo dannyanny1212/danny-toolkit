@@ -12,7 +12,7 @@ from typing import List, Dict, Optional
 try:
     import torch
     import numpy as np
-    from danny_toolkit.core.embeddings import TorchGPUEmbeddings
+    from danny_toolkit.core.embeddings import get_torch_embedder
     _HAS_DEPS = True
 except ImportError:
     _HAS_DEPS = False
@@ -43,7 +43,7 @@ class CitationMarshall:
                 "CitationMarshall vereist 'torch', 'numpy' en 'transformers'. "
                 "Installeer met: pip install torch numpy transformers"
             )
-        self.embedder = embedding_provider or TorchGPUEmbeddings()
+        self.embedder = embedding_provider or get_torch_embedder()
         self.threshold = threshold
         self.stats = {"verified": 0, "flagged": 0, "uncited": 0}
 
