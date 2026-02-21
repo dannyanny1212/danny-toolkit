@@ -23,22 +23,37 @@ except ImportError:
 VRAM_WARN_THRESHOLD_MB = 1500  # 1.5 GB
 
 
+def _systeembrede_vram() -> tuple:
+    """Lees systeembrede VRAM via torch.cuda.mem_get_info (niet per-proces).
+
+    Returns:
+        (vrij_mb, totaal_mb, in_gebruik_mb, gpu_naam) of None als niet beschikbaar.
+    """
+    if not _HAS_TORCH or not torch.cuda.is_available():
+        return None
+
+    vrij_bytes, totaal_bytes = torch.cuda.mem_get_info(0)
+    props = torch.cuda.get_device_properties(0)
+
+    totaal_mb = totaal_bytes / (1024 ** 2)
+    vrij_mb = vrij_bytes / (1024 ** 2)
+    in_gebruik_mb = totaal_mb - vrij_mb
+
+    return vrij_mb, totaal_mb, in_gebruik_mb, props.name
+
+
 def check_vram_status() -> bool:
     """Print VRAM diagnose naar terminal. Returns True als CUDA beschikbaar."""
-    if not _HAS_TORCH or not torch.cuda.is_available():
+    info = _systeembrede_vram()
+    if info is None:
         print("[VRAM] CUDA niet beschikbaar — draait op CPU")
         return False
 
-    props = torch.cuda.get_device_properties(0)
-    totaal_mb = props.total_memory / (1024 ** 2)
-    alloc_mb = torch.cuda.memory_allocated(0) / (1024 ** 2)
-    reserved_mb = torch.cuda.memory_reserved(0) / (1024 ** 2)
-    vrij_mb = totaal_mb - alloc_mb
+    vrij_mb, totaal_mb, in_gebruik_mb, gpu_naam = info
 
-    print(f"\n=== VRAM DIAGNOSE: {props.name} ===")
+    print(f"\n=== VRAM DIAGNOSE: {gpu_naam} ===")
     print(f"  Totaal:       {totaal_mb:,.0f} MB")
-    print(f"  In gebruik:   {alloc_mb:,.0f} MB")
-    print(f"  Gereserveerd: {reserved_mb:,.0f} MB")
+    print(f"  In gebruik:   {in_gebruik_mb:,.0f} MB")
     print(f"  Vrij:         {vrij_mb:,.0f} MB")
 
     if vrij_mb < VRAM_WARN_THRESHOLD_MB:
@@ -50,28 +65,27 @@ def check_vram_status() -> bool:
 
 
 def vram_rapport() -> dict:
-    """Retourneert VRAM status als dict (voor dashboard/NeuralBus).
+    """Retourneert systeembrede VRAM status als dict (voor dashboard/NeuralBus).
+
+    Gebruikt torch.cuda.mem_get_info() — meet alle processen (Ollama, embeddings, etc.),
+    niet alleen PyTorch geheugen van dit proces.
 
     Returns:
         Dict met keys: beschikbaar, gpu_naam, totaal_mb, in_gebruik_mb,
-        gereserveerd_mb, vrij_mb, gezond.
+        vrij_mb, gezond.
         Als CUDA niet beschikbaar: {"beschikbaar": False}.
     """
-    if not _HAS_TORCH or not torch.cuda.is_available():
+    info = _systeembrede_vram()
+    if info is None:
         return {"beschikbaar": False}
 
-    props = torch.cuda.get_device_properties(0)
-    totaal_mb = props.total_memory / (1024 ** 2)
-    alloc_mb = torch.cuda.memory_allocated(0) / (1024 ** 2)
-    reserved_mb = torch.cuda.memory_reserved(0) / (1024 ** 2)
-    vrij_mb = totaal_mb - alloc_mb
+    vrij_mb, totaal_mb, in_gebruik_mb, gpu_naam = info
 
     return {
         "beschikbaar": True,
-        "gpu_naam": props.name,
+        "gpu_naam": gpu_naam,
         "totaal_mb": round(totaal_mb),
-        "in_gebruik_mb": round(alloc_mb),
-        "gereserveerd_mb": round(reserved_mb),
+        "in_gebruik_mb": round(in_gebruik_mb),
         "vrij_mb": round(vrij_mb),
         "gezond": vrij_mb >= VRAM_WARN_THRESHOLD_MB,
     }
