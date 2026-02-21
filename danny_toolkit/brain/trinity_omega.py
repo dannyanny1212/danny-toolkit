@@ -1,5 +1,5 @@
 """
-PROMETHEUS PROTOCOL - TRINITY OMEGA v5.1.1
+PROMETHEUS PROTOCOL - TRINITY OMEGA v6.0.0
 =========================================
 De 17 Pilaren van de Realiteit.
 
@@ -209,7 +209,7 @@ class PrometheusBrain:
     - INFRASTRUCTURE (4): Legion, Navigator, Alchemist, Void
     """
 
-    SYSTEM_NAME = "COSMIC_OMEGA_V5"
+    SYSTEM_NAME = "OMEGA_SOVEREIGN"
     VERSION = "4.0.0"
 
     # Domein-keywords voor chain_of_command() multi-domein

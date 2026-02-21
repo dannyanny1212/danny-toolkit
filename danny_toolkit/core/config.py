@@ -1,6 +1,6 @@
 """
 Centrale configuratie voor Danny Toolkit.
-Versie 5.0.0 - COSMIC_OMEGA_V5. Met thema's, talen en validatie.
+Versie 5.0.0 - OMEGA_SOVEREIGN. Met thema's, talen en validatie.
 """
 
 import os

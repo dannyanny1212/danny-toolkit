@@ -8837,7 +8837,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
         """Start de app."""
         clear_scherm()
         print("+=======================================+")
-        print("|   VIRTUEEL HUISDIER SIMULATOR v5.1.1  |")
+        print("|   VIRTUEEL HUISDIER SIMULATOR v6.0.0  |")
         print("|   VOLLEDIG AI-POWERED HUISDIER!      |")
         print("+=======================================+")
         print("|   Features:                          |")

@@ -1,6 +1,6 @@
 
 """
-SANCTUARY INTERFACE — The Glass Box UI v5.1.1
+SANCTUARY INTERFACE — The Glass Box UI v6.0.0
 ============================================
 
 Mission Control Dashboard voor de Prometheus Federation.
@@ -9,7 +9,7 @@ Live Hub & Spoke pipeline visualisatie:
   Rechts:  Swarm Activity (LIVE pipeline log)
   Sidebar: System State (Governor, Chronos, Agents)
 
-v5.1.1: Rich Media Protocol — contextual charts en code
+v6.0.0: Rich Media Protocol — contextual charts en code
       blocks naast tekst-output. CRYPTO → line_chart,
       HEALTH → area_chart, DATA → bar_chart,
       CODE → code block.
@@ -450,7 +450,7 @@ with st.sidebar:
 # --- HOOFDSCHERM ---
 st.markdown(
     '<p class="hub-spoke-label">'
-    'Sanctuary // Nexus — The Glass Box UI v5.1.1</p>',
+    'Sanctuary // Nexus — The Glass Box UI v6.0.0</p>',
     unsafe_allow_html=True,
 )
 st.title("S A N C T U A R Y")

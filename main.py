@@ -15,7 +15,7 @@ if sys.platform == "win32":
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] in ("--version", "-V"):
         from danny_toolkit import __version__
-        print(f"Danny Toolkit v{__version__} — COSMIC_OMEGA_V5")
+        print(f"Danny Toolkit v{__version__} — OMEGA_SOVEREIGN")
         sys.exit(0)
 
     from danny_toolkit.launcher import main
