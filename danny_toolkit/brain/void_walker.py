@@ -63,7 +63,6 @@ class VoidWalker:
         self.db_path = Config.DATA_DIR / "memory" / "knowledge_companion.json"
 
         self._store = None
-        self._cortex = None
         if HAS_VECTOR:
             try:
                 embedder = get_torch_embedder()
@@ -76,7 +75,7 @@ class VoidWalker:
         # Fallback: TheCortex als VectorStore niet beschikbaar
         if not self._store and HAS_CORTEX:
             try:
-                self._cortex = TheCortex()
+                self._store = TheCortex()
             except Exception:
                 pass
 
@@ -121,7 +120,7 @@ class VoidWalker:
             return None
 
         # 4. INTEGRATE
-        if self._store:
+        if self._store and hasattr(self._store, "voeg_toe"):
             entry_id = f"voidwalker_{int(time.time())}"
             self._store.voeg_toe([{
                 "id": entry_id,
@@ -134,12 +133,12 @@ class VoidWalker:
             }])
             print(f"{Kleur.GROEN}✨ Void Walker: Knowledge acquired "
                   f"(VectorStore). '{topic}' is now known.{Kleur.RESET}")
-        elif self._cortex:
-            self._cortex.add_triple(
+        elif self._store and hasattr(self._store, "add_triple"):
+            self._store.add_triple(
                 topic, "researched_by", "void_walker",
                 source="void_walker",
             )
-            self._cortex.add_triple(
+            self._store.add_triple(
                 topic, "has_knowledge", clean_knowledge[:500],
                 source="void_walker",
             )
