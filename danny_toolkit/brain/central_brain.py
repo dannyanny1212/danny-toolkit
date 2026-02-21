@@ -109,6 +109,17 @@ class CentralBrain:
                 Kleur.GROEN,
             ))
 
+        # Per-provider circuit breakers (geïsoleerd)
+        import time as _time
+        self._provider_breakers = {
+            "groq_70b": {"fails": 0, "last_fail": 0},
+            "groq_8b": {"fails": 0, "last_fail": 0},
+            "anthropic": {"fails": 0, "last_fail": 0},
+            "ollama": {"fails": 0, "last_fail": 0},
+        }
+        self._breaker_max = 3
+        self._breaker_cooldown = 60  # seconden
+
         # App Registry
         self.app_registry: Dict[str, Any] = {}
         self.app_instances: Dict[str, Any] = {}
@@ -484,22 +495,40 @@ Belangrijke regels:
 
             except Exception as e:
                 # Fallback bij rate limit (429)
-                if "429" in str(e) or "rate_limit" in str(e):
-                    # Direct naar Ollama (skip 8b,
-                    # zelfde Groq account = zelfde limiet)
-                    if self._ollama_available:
+                is_rate_limit = (
+                    "429" in str(e) or "rate_limit" in str(e)
+                )
+                if is_rate_limit:
+                    # Registreer faal per provider
+                    breaker_key = (
+                        "groq_8b"
+                        if model == self.GROQ_MODEL_FALLBACK
+                        else "groq_70b"
+                    )
+                    self._provider_fail(breaker_key)
+
+                    # Stap 1: Groq 8b (ander model = ander
+                    # rate limit budget)
+                    if (
+                        model != self.GROQ_MODEL_FALLBACK
+                        and self._provider_ok("groq_8b")
+                    ):
                         print(kleur(
-                            "   [FALLBACK] Groq rate"
-                            f" limit -> {self.OLLAMA_MODEL}",
+                            "   [FALLBACK] Groq 70b rate"
+                            " limit -> Groq 8b",
                             Kleur.GEEL,
                         ))
-                        return self._process_ollama(
+                        return self._process_groq(
                             system_message,
                             use_tools,
                             max_turns,
+                            _model=self.GROQ_MODEL_FALLBACK,
                         )
-                    # Stap 3: probeer Anthropic
-                    if self._fallback_client:
+                    # Stap 2: Anthropic
+                    if (
+                        self._fallback_client
+                        and self._provider_ok("anthropic")
+                    ):
                         print(kleur(
                             "   [FALLBACK] Groq rate limit"
                             " -> Anthropic",
@@ -516,6 +545,35 @@ Belangrijke regels:
                             use_tools,
                             max_turns,
                         )
+                    # Stap 3: Ollama lokaal
+                    if (
+                        self._ollama_available
+                        and self._provider_ok("ollama")
+                    ):
+                        print(kleur(
+                            "   [FALLBACK] rate limit"
+                            f" -> {self.OLLAMA_MODEL}",
+                            Kleur.GEEL,
+                        ))
+                        return self._process_ollama(
+                            system_message,
+                            use_tools,
+                            max_turns,
+                        )
+                    # Stap 4: Emergency offline response
+                    print(kleur(
+                        "   [EMERGENCY] Alle providers"
+                        " onbereikbaar — offline modus",
+                        Kleur.ROOD,
+                    ))
+                    prompt = (
+                        self.conversation_history[-1]["content"]
+                        if self.conversation_history
+                        else ""
+                    )
+                    return self._emergency_offline_response(
+                        prompt
+                    )
                 self._sla_stats_op()
                 return f"Er is een fout opgetreden: {e}"
 
@@ -603,21 +661,88 @@ Belangrijke regels:
                     return final_response
 
             except Exception as e:
-                self._sla_stats_op()
-                return f"Er is een fout opgetreden: {e}"
+                self._provider_fail("anthropic")
+                # Emergency fallback bij Anthropic fout
+                prompt = (
+                    self.conversation_history[-1]["content"]
+                    if self.conversation_history
+                    else ""
+                )
+                return self._emergency_offline_response(prompt)
 
         self._sla_stats_op()
         return "Maximum aantal rondes bereikt. Probeer een specifiekere vraag."
 
+    # ----------------------------------------------------------
+    # Per-provider circuit breaker helpers
+    # ----------------------------------------------------------
+    def _provider_ok(self, key: str) -> bool:
+        """Check of provider beschikbaar is (per-provider breaker)."""
+        import time as _time
+        cb = self._provider_breakers.get(key)
+        if cb is None:
+            return True
+        if cb["fails"] < self._breaker_max:
+            return True
+        if _time.time() - cb["last_fail"] >= self._breaker_cooldown:
+            cb["fails"] = 0  # half-open → reset
+            return True
+        return False
+
+    def _provider_fail(self, key: str):
+        """Registreer faal voor specifieke provider."""
+        import time as _time
+        cb = self._provider_breakers.get(key)
+        if cb is not None:
+            cb["fails"] = min(cb["fails"] + 1, self._breaker_max)
+            cb["last_fail"] = _time.time()
+
+    def _provider_success(self, key: str):
+        """Registreer succes — reset provider breaker."""
+        cb = self._provider_breakers.get(key)
+        if cb is not None:
+            cb["fails"] = 0
+
+    def _emergency_offline_response(self, prompt: str) -> str:
+        """Keyword-gebaseerde noodrouting als alle LLM providers falen.
+
+        Retourneert een valide response zodat de Governor circuit
+        breaker niet getriggerd wordt door lege/error strings.
+        """
+        p = prompt.lower() if prompt else ""
+
+        if any(w in p for w in ["bitcoin", "crypto", "wallet", "eth"]):
+            return ("Ik kan momenteel geen live data ophalen "
+                    "(alle AI providers zijn tijdelijk onbereikbaar). "
+                    "Probeer het over een minuut opnieuw.")
+        if any(w in p for w in ["hoi", "hallo", "hey", "goedemorgen"]):
+            return "Hallo! Ik draai tijdelijk in offline modus."
+        if any(w in p for w in ["code", "debug", "script", "fix"]):
+            return ("Code-analyse is tijdelijk niet beschikbaar "
+                    "(rate limit). Probeer het over een minuut.")
+        return ("Ik ben tijdelijk offline — alle AI providers "
+                "zijn op dit moment onbereikbaar. Probeer het "
+                "over een minuut opnieuw.")
+
     def _check_ollama(self) -> bool:
-        """Check of Ollama lokaal draait."""
+        """Check of Ollama lokaal draait EN het text model beschikbaar is."""
         try:
             import requests
             resp = requests.get(
                 "http://localhost:11434/api/tags",
                 timeout=2,
             )
-            return resp.status_code == 200
+            if resp.status_code != 200:
+                return False
+            # Check of het text model daadwerkelijk geïnstalleerd is
+            models = [
+                m.get("name", "")
+                for m in resp.json().get("models", [])
+            ]
+            target = self.OLLAMA_MODEL
+            return any(
+                target in m for m in models
+            )
         except Exception:
             return False
 

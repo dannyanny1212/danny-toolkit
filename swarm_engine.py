@@ -2113,12 +2113,16 @@ class SwarmEngine:
                 callback(msg)
 
         # Rate limit shortcut: wacht + retry
+        # NB: central_brain handelt rate limits intern
+        # af via per-provider circuit breakers en
+        # fallback chain. Geen Governor failure
+        # registreren — dat zou de global breaker
+        # trippen en trinity_omega blokkeren.
         if self._is_rate_limit_error(error):
             log(
                 "\u23f3 Rate limit gedetecteerd,"
                 " wachten op cooldown..."
             )
-            self._governor.record_api_failure()
             cooldown = min(
                 self._governor._circuit_breaker.get(
                     "cooldown", 60
@@ -2126,22 +2130,6 @@ class SwarmEngine:
                 65,
             )
             await asyncio.sleep(cooldown)
-
-            if not self._governor.check_api_health():
-                log(
-                    "\u274c API nog steeds"
-                    " onbeschikbaar"
-                )
-                return {
-                    "geslaagd": False,
-                    "plan": None,
-                    "payloads": [],
-                    "analyse": (
-                        "Rate limit: API"
-                        " onbeschikbaar na"
-                        " cooldown"
-                    ),
-                }
 
             try:
                 payloads = await self.run(

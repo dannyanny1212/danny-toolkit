@@ -787,11 +787,19 @@ class PrometheusBrain:
         """Stap 1: Governor valideert de input.
 
         Checks:
-        1. Circuit breaker (API health)
+        1. Circuit breaker (API health) — waarschuwing,
+           central_brain heeft per-provider breakers
         2. Input validatie (injectie + lengte)
         """
         if not self.governor.check_api_health():
-            return False, "API geblokkeerd (circuit breaker)"
+            # Niet blokkeren — central_brain handelt
+            # provider-selectie af via eigen breakers
+            print(
+                "  [GOVERNOR] WAARSCHUWING:"
+                " global breaker actief, laat"
+                " central_brain fallback chain"
+                " beslissen"
+            )
 
         veilig, reden = self.governor.valideer_input(task)
         if not veilig:
@@ -903,12 +911,14 @@ class PrometheusBrain:
         if not self.brain:
             return None, 0.0, None
 
-        # Governor: circuit breaker check
+        # Governor: circuit breaker check — waarschuwing
+        # maar niet blokkeren; central_brain heeft
+        # per-provider breakers + emergency fallback
         if not self.governor.check_api_health():
-            return (
-                "API tijdelijk geblokkeerd (circuit breaker)",
-                0.0,
-                "FAIL",
+            print(
+                "  [GOVERNOR] WAARSCHUWING:"
+                " global breaker actief, probeer"
+                " toch via fallback chain"
             )
 
         start = time.time()
