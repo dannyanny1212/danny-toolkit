@@ -28,6 +28,7 @@ try:
     from .the_mirror import TheMirror
     from .ghost_writer import GhostWriter
     from .dreamer import Dreamer
+    from .devops_daemon import DevOpsDaemon
 except ImportError:
     pass
 
@@ -56,7 +57,7 @@ __all__ = [
     # v6.0 Inventions
     "Strategist", "Tribunal", "AdversarialTribunal",
     "VoidWalker", "Artificer", "BlackBox",
-    "TheMirror", "GhostWriter", "Dreamer",
+    "TheMirror", "GhostWriter", "Dreamer", "DevOpsDaemon",
     # Anti-Hallucination
     "CitationMarshall", "RealityAnchor", "TruthAnchor",
     # Subsystems
