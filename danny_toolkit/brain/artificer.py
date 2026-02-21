@@ -54,11 +54,15 @@ class Artificer:
         """
         Full Artificer loop: search → forge → verify → execute → learn.
         """
-        # 1. Check Registry (cached skills)
+        # 1. Check Registry (cached skills) — skip failed ones
         registry = self._load_registry()
         for name, meta in registry.items():
             keywords = meta.get("keywords", [])
             if any(kw.lower() in request.lower() for kw in keywords):
+                if meta.get("last_error"):
+                    print(f"{Kleur.GEEL}🔥 Artificer: Skill '{name}' "
+                          f"failed previously, forging new...{Kleur.RESET}")
+                    break
                 print(f"{Kleur.GROEN}🛠️  Artificer: Using existing "
                       f"skill '{name}'...{Kleur.RESET}")
                 return self._run_script(name)
@@ -167,11 +171,16 @@ class Artificer:
                 timeout=30,
             )
             if result.returncode == 0:
+                self._mark_skill_status(filename, error=None)
                 return result.stdout or "(no output)"
-            return f"Script error:\n{result.stderr}"
+            error_msg = result.stderr
+            self._mark_skill_status(filename, error=error_msg[:500])
+            return f"Script error:\n{error_msg}"
         except subprocess.TimeoutExpired:
+            self._mark_skill_status(filename, error="timeout")
             return "❌ Script timed out (30s limit)."
         except Exception as e:
+            self._mark_skill_status(filename, error=str(e))
             return f"❌ Execution error: {e}"
 
     def _publish_event(self, event_type, data: dict):
@@ -181,6 +190,17 @@ class Artificer:
                 self._bus.publish(event_type, data, bron="artificer")
             except Exception as e:
                 logger.debug("NeuralBus publish error: %s", e)
+
+    def _mark_skill_status(self, filename: str, error: Optional[str]):
+        """Record success/failure in the registry so stale skills get re-forged."""
+        reg = self._load_registry()
+        if filename in reg:
+            reg[filename]["last_error"] = error
+            try:
+                with open(self.registry_path, "w", encoding="utf-8") as f:
+                    json.dump(reg, f, indent=2, ensure_ascii=False)
+            except (IOError, OSError):
+                pass
 
     def _load_registry(self) -> Dict:
         try:
