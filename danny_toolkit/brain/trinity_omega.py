@@ -1101,6 +1101,16 @@ class PrometheusBrain:
             results = lib.query(task, n_results=5)
             docs = results.get("documents", [[]])[0]
             if docs:
+                # TruthAnchor: verify relevance before injecting
+                try:
+                    from danny_toolkit.brain.truth_anchor import TruthAnchor
+                    anchor = TruthAnchor()
+                    if not anchor.verify(task, docs[:3]):
+                        docs = None  # Context too weak, skip RAG
+                except Exception:
+                    pass
+
+            if docs:
                 context = "\n---\n".join(docs)
                 return (
                     f"KENNISBANK CONTEXT:\n{context}\n\n"
@@ -1110,28 +1120,17 @@ class PrometheusBrain:
         except Exception as e:
             print(f"   [RAG] Fout: {e}")
 
-        # Cortex Graph RAG — voeg associatief geheugen toe
+        # Cortex Graph RAG — hybrid search (vector + graph expansion)
         try:
             from danny_toolkit.brain.cortex import TheCortex
+            import asyncio as _aio
             cortex = TheCortex()
-            # Zoek entiteiten uit query in de kennisgraaf
-            stats = cortex.get_stats()
-            if stats.get("db_entities", 0) > 0:
-                # Zoek welke bekende entiteiten in de taak voorkomen
-                all_ents = cortex._stack._conn.execute(
-                    "SELECT naam FROM entities ORDER BY mention_count DESC LIMIT 100"
-                ).fetchall()
-                matched = [
-                    row[0] for row in all_ents
-                    if row[0].lower() in task.lower()
-                ]
-                graph_parts = []
-                for ent in matched[:3]:
-                    ctx = cortex.get_entity_context(ent)
-                    if ctx:
-                        graph_parts.append(ctx)
-                if graph_parts:
-                    graph_context = "\n\n".join(graph_parts)
+            graph_results = _aio.run(cortex.hybrid_search(task, top_k=3))
+            if graph_results:
+                graph_context = "\n\n".join(
+                    r.get("content", "") for r in graph_results if r.get("content")
+                )
+                if graph_context:
                     task = f"{task}\n\nGRAAF CONTEXT:\n{graph_context}"
         except Exception:
             pass

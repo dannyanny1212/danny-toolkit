@@ -16,9 +16,9 @@ import asyncio
 import logging
 import threading
 import time
-from collections import defaultdict
+from collections import defaultdict, deque
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Deque, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -77,8 +77,10 @@ class NeuralBus:
         self._lock = threading.Lock()
         # event_type -> [callback, ...]
         self._subscribers: Dict[str, List[Callable]] = defaultdict(list)
-        # event_type -> [BusEvent, ...] (ringbuffer per type)
-        self._history: Dict[str, List[BusEvent]] = defaultdict(list)
+        # event_type -> deque[BusEvent] (ringbuffer per type)
+        self._history: Dict[str, Deque[BusEvent]] = defaultdict(
+            lambda: deque(maxlen=self._MAX_HISTORY)
+        )
         # Globale wildcard subscribers (* = alle events)
         self._wildcard_subscribers: List[Callable] = []
         # Optionele UnifiedMemory koppeling
@@ -151,11 +153,8 @@ class NeuralBus:
         event = BusEvent(event_type, data, bron)
 
         with self._lock:
-            # Voeg toe aan history (ringbuffer)
-            history = self._history[event_type]
-            history.append(event)
-            if len(history) > self._MAX_HISTORY:
-                self._history[event_type] = history[-self._MAX_HISTORY:]
+            # Voeg toe aan history (deque maxlen handelt overflow af)
+            self._history[event_type].append(event)
 
             self._stats["events_gepubliceerd"] += 1
 

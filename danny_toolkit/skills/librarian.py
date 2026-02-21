@@ -40,9 +40,20 @@ from config import CHROMA_DIR, DOCS_DIR
 # ─── Constanten ───
 
 COLLECTION_NAME = "danny_knowledge"
-CHUNK_SIZE = 400
+try:
+    from danny_toolkit.core.config import Config as _Cfg
+    CHUNK_SIZE = getattr(_Cfg, 'CHUNK_SIZE', 350)
+except ImportError:
+    CHUNK_SIZE = 350
 CHUNK_OVERLAP = 50
 EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
+
+# Lazy import TheCortex voor Knowledge Graph population
+try:
+    from danny_toolkit.brain.cortex import TheCortex
+    _HAS_CORTEX = True
+except ImportError:
+    _HAS_CORTEX = False
 
 REPAIR_LOG_PAD = _root / "data" / "repair_logs.json"
 
@@ -306,6 +317,21 @@ class TheLibrarian:
                         metadatas=metadatas,
                     )
                     totaal_chunks += len(ids)
+
+                    # Auto-extract triples voor Knowledge Graph
+                    if _HAS_CORTEX and documents:
+                        try:
+                            import asyncio as _aio
+                            cortex = TheCortex()
+                            for chunk in documents[:3]:
+                                triples = _aio.run(cortex.extract_triples(chunk))
+                                for t in triples:
+                                    cortex.add_triple(
+                                        t.subject, t.predicaat, t.object,
+                                        t.confidence, t.bron,
+                                    )
+                        except Exception:
+                            pass
 
                 progress.advance(taak)
 

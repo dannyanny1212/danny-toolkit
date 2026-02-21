@@ -50,12 +50,20 @@ class Dreamer:
             mirror = TheMirror()
             await mirror.reflect()
 
-        # 4. Pre-Compute — anticipate tomorrow
+        # 4. Self-document — GhostWriter haunt
+        try:
+            from danny_toolkit.brain.ghost_writer import GhostWriter
+            writer = GhostWriter()
+            await writer.haunt()
+        except Exception:
+            pass
+
+        # 5. Pre-Compute — anticipate tomorrow
         insight = await self._anticipate()
         if insight:
             print(f"{Kleur.CYAAN}✨ Morning Insight: {insight}{Kleur.RESET}")
 
-        # 5. Oracle Eye — dagelijkse resource forecast
+        # 6. Oracle Eye — dagelijkse resource forecast
         try:
             from danny_toolkit.brain.oracle_eye import TheOracleEye
             oracle = TheOracleEye()

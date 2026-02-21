@@ -12,6 +12,7 @@ import os
 import json
 import asyncio
 import importlib
+import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Callable
@@ -69,6 +70,7 @@ class CentralBrain:
     """
 
     VERSIE = "1.1.0"
+    MAX_HISTORY = 50
 
     def __init__(self, use_memory: bool = True):
         """
@@ -78,6 +80,10 @@ class CentralBrain:
             use_memory: Of unified memory gebruikt moet worden
         """
         Config.ensure_dirs()
+
+        # Thread-safety locks
+        self._history_lock = threading.Lock()
+        self._client_lock = threading.Lock()
 
         # Data directory
         self.data_dir = Config.DATA_DIR / "brain"
@@ -359,10 +365,13 @@ Belangrijke regels:
 4. Combineer informatie uit meerdere apps voor een compleet antwoord"""
 
         # Voeg user message toe aan history
-        self.conversation_history.append({
-            "role": "user",
-            "content": user_input
-        })
+        with self._history_lock:
+            self.conversation_history.append({
+                "role": "user",
+                "content": user_input
+            })
+            if len(self.conversation_history) > self.MAX_HISTORY:
+                self.conversation_history = self.conversation_history[-self.MAX_HISTORY:]
 
         # Route naar juiste provider
         if self.ai_provider == "groq":
@@ -498,10 +507,13 @@ Belangrijke regels:
                     # Geen tool calls, return antwoord
                     final_response = message.content or ""
 
-                    self.conversation_history.append({
-                        "role": "assistant",
-                        "content": final_response
-                    })
+                    with self._history_lock:
+                        self.conversation_history.append({
+                            "role": "assistant",
+                            "content": final_response
+                        })
+                        if len(self.conversation_history) > self.MAX_HISTORY:
+                            self.conversation_history = self.conversation_history[-self.MAX_HISTORY:]
 
                     self._sla_stats_op()
                     return final_response
@@ -547,12 +559,14 @@ Belangrijke regels:
                             " -> Anthropic",
                             Kleur.GEEL,
                         ))
-                        self.client = self._fallback_client
-                        self.ai_provider = (
-                            self._fallback_provider
-                        )
-                        self._fallback_client = None
-                        self._fallback_provider = None
+                        with self._client_lock:
+                            if self._fallback_client:
+                                self.client = self._fallback_client
+                                self.ai_provider = (
+                                    self._fallback_provider
+                                )
+                                self._fallback_client = None
+                                self._fallback_provider = None
                         return self._process_anthropic(
                             system_message,
                             use_tools,
@@ -665,10 +679,13 @@ Belangrijke regels:
                         if hasattr(block, "text"):
                             final_response += block.text
 
-                    self.conversation_history.append({
-                        "role": "assistant",
-                        "content": final_response
-                    })
+                    with self._history_lock:
+                        self.conversation_history.append({
+                            "role": "assistant",
+                            "content": final_response
+                        })
+                        if len(self.conversation_history) > self.MAX_HISTORY:
+                            self.conversation_history = self.conversation_history[-self.MAX_HISTORY:]
 
                     self._sla_stats_op()
                     return final_response
@@ -788,10 +805,13 @@ Belangrijke regels:
                     "message", {}
                 ).get("content", "")
 
-                self.conversation_history.append({
-                    "role": "assistant",
-                    "content": content,
-                })
+                with self._history_lock:
+                    self.conversation_history.append({
+                        "role": "assistant",
+                        "content": content,
+                    })
+                    if len(self.conversation_history) > self.MAX_HISTORY:
+                        self.conversation_history = self.conversation_history[-self.MAX_HISTORY:]
                 self._sla_stats_op()
                 return content
             else:
@@ -837,6 +857,15 @@ Belangrijke regels:
                 context.update(user_context)
             except Exception:
                 pass
+
+        # NeuralBus real-time state (grounding)
+        try:
+            from ..core.neural_bus import get_bus
+            stream = get_bus().get_context_stream(count=10)
+            if stream:
+                context["real_time_state"] = stream
+        except Exception:
+            pass
 
         return context
 
@@ -948,7 +977,8 @@ Belangrijke regels:
 
     def clear_conversation(self):
         """Wis conversation history."""
-        self.conversation_history = []
+        with self._history_lock:
+            self.conversation_history = []
         print(kleur("   [OK] Conversatie gewist", Kleur.GROEN))
 
     def memory_stats(self) -> dict:

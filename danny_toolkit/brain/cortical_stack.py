@@ -119,6 +119,16 @@ class CorticalStack:
                     idx_stats_metric_ts
                 ON system_stats(metric, timestamp)
             """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS
+                    idx_semantic_access
+                ON semantic_memory(access_count DESC)
+            """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS
+                    idx_stats_ts_only
+                ON system_stats(timestamp)
+            """)
 
             self._conn.commit()
 

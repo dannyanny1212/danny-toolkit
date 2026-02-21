@@ -2694,6 +2694,22 @@ class SwarmEngine:
         except Exception:
             pass
 
+        # Best-effort triple extraction uit tekst resultaten
+        try:
+            from danny_toolkit.brain.cortex import TheCortex
+            cortex = TheCortex()
+            for r in results:
+                txt = str(r.display_text) if r.display_text else ""
+                if len(txt) > 50 and r.type == "text":
+                    triples = asyncio.run(cortex.extract_triples(txt))
+                    for t in triples:
+                        cortex.add_triple(
+                            t.subject, t.predicaat, t.object,
+                            t.confidence, t.bron,
+                        )
+        except Exception:
+            pass
+
         log("\u2705 SWARM COMPLETE")
         self._query_count += 1
         self._total_time += sum(

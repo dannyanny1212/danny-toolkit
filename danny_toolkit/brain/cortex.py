@@ -130,6 +130,19 @@ class TheCortex:
                     UNIQUE(entity_a, relatie, entity_b)
                 )
             """)
+            # Indexes voor snelle graph traversal
+            self._stack._conn.execute("""
+                CREATE INDEX IF NOT EXISTS idx_kg_entity_a
+                ON knowledge_graph(entity_a)
+            """)
+            self._stack._conn.execute("""
+                CREATE INDEX IF NOT EXISTS idx_kg_entity_b
+                ON knowledge_graph(entity_b)
+            """)
+            self._stack._conn.execute("""
+                CREATE INDEX IF NOT EXISTS idx_entities_mention
+                ON entities(mention_count DESC)
+            """)
             self._stack._conn.commit()
         except Exception as e:
             print(f"{Kleur.ROOD}[Cortex] Tabel-fout: {e}{Kleur.RESET}")

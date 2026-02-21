@@ -122,6 +122,7 @@ class HeartbeatDaemon:
         self._last_swarm_check = {}
         self._last_proactive_check = 0.0
         self._last_security_scan = 0.0
+        self._last_rem_date = None
 
         # Background worker for heavy tasks (swarm, security)
         self._task_queue = queue.Queue()
@@ -679,6 +680,30 @@ class HeartbeatDaemon:
                         proactive = self._get_proactive()
                         if proactive:
                             proactive._check_timer_regels()
+
+                    # Dreamer REM cycle at 04:00 (once per night)
+                    now_dt = datetime.now()
+                    if (
+                        now_dt.hour == 4
+                        and self._last_rem_date != now_dt.date()
+                    ):
+                        self._last_rem_date = now_dt.date()
+                        self._log_activity(
+                            "dreamer", "REM cycle gestart"
+                        )
+                        try:
+                            from ..brain.dreamer import Dreamer
+                            dreamer = Dreamer()
+                            self._worker_pool.submit(
+                                lambda: asyncio.run(
+                                    dreamer.rem_cycle()
+                                )
+                            )
+                        except Exception as _e:
+                            self._log_activity(
+                                "dreamer",
+                                f"REM fout: {str(_e)[:50]}",
+                            )
 
                     # Oracle Eye forecast check (~300 pulsen)
                     if self._pulse_count % 300 == 0:
