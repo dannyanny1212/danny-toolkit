@@ -1,7 +1,10 @@
 import asyncio
 import json
+import logging
 import os
 from typing import Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 # Robuuste .env loader — vindt altijd de project root
 try:
@@ -192,8 +195,8 @@ class Strategist:
         if self._bus and event_type:
             try:
                 self._bus.publish(event_type, data, bron="strategist")
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("NeuralBus publish error: %s", e)
 
     def _log_event(self, action: str, details: Optional[dict] = None):
         """Log naar CorticalStack als beschikbaar."""
@@ -205,5 +208,5 @@ class Strategist:
                     details=details,
                     source="strategist",
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("CorticalStack log error: %s", e)

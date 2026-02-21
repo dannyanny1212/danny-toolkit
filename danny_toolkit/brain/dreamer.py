@@ -1,7 +1,10 @@
 import json
+import logging
 import os
 from datetime import datetime, timedelta
 from typing import List, Optional
+
+logger = logging.getLogger(__name__)
 
 from groq import AsyncGroq
 from danny_toolkit.core.config import Config
@@ -186,5 +189,5 @@ class Dreamer:
                 for topic in list(topics)[:3]:
                     await walker.fill_knowledge_gap(topic)
             print(f"{Kleur.GROEN}🔬 Failure research complete.{Kleur.RESET}")
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Failure research error: %s", e)

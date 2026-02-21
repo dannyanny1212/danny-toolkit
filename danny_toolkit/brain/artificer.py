@@ -1,9 +1,12 @@
-import os
-import json
 import ast
+import json
+import logging
+import os
 import subprocess
 from datetime import datetime
 from typing import Optional, Dict
+
+logger = logging.getLogger(__name__)
 
 from groq import AsyncGroq
 from danny_toolkit.core.config import Config
@@ -176,8 +179,8 @@ class Artificer:
         if self._bus and event_type:
             try:
                 self._bus.publish(event_type, data, bron="artificer")
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("NeuralBus publish error: %s", e)
 
     def _load_registry(self) -> Dict:
         try:

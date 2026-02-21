@@ -21,6 +21,7 @@ Gebruik:
 import asyncio
 import base64
 import json
+import logging
 import math
 import re
 import random
@@ -37,6 +38,8 @@ from datetime import datetime
 
 import numpy as np
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 
 # ── CUSTOM EXCEPTIONS ──
@@ -1868,6 +1871,14 @@ class SwarmEngine:
         self.on_failure = []
         self._query_count = 0
         self._total_time = 0.0
+        self._swarm_metrics = {
+            "fast_track_hits": 0,
+            "governor_blocks": 0,
+            "triples_extracted": 0,
+            "tribunal_verified": 0,
+            "tribunal_warnings": 0,
+            "tribunal_errors": 0,
+        }
 
     def get_stats(self) -> Dict[str, Any]:
         """Statistieken: verwerkte queries, agents, gem. responstijd."""
@@ -1880,7 +1891,10 @@ class SwarmEngine:
             "queries_processed": self._query_count,
             "active_agents": len(self.agents),
             "avg_response_ms": round(avg_ms, 1),
-            "registered_agents": list(self.agents.keys()),
+            "registered_agents": list(
+                self.agents.keys()
+            ),
+            **self._swarm_metrics,
         }
 
     @property
@@ -2019,7 +2033,14 @@ class SwarmEngine:
                 payload.metadata["tribunal_rounds"] = (
                     verdict.rounds
                 )
-                if not verdict.accepted:
+                if verdict.accepted:
+                    self._swarm_metrics[
+                        "tribunal_verified"
+                    ] += 1
+                else:
+                    self._swarm_metrics[
+                        "tribunal_warnings"
+                    ] += 1
                     payload.metadata["tribunal_warning"] = (
                         "Niet gevalideerd door Tribunal"
                     )
@@ -2028,7 +2049,14 @@ class SwarmEngine:
                             "\u2696\ufe0f TRIBUNAL: output niet"
                             " gevalideerd"
                         )
-            except Exception:
+            except Exception as e:
+                self._swarm_metrics[
+                    "tribunal_errors"
+                ] += 1
+                logger.debug(
+                    "Tribunal verification failed: %s",
+                    e,
+                )
                 payload.metadata["tribunal_warning"] = (
                     "Tribunal verificatie mislukt"
                 )
@@ -2640,6 +2668,9 @@ class SwarmEngine:
                     f"\u274c Governor: BLOCKED"
                     f" \u2014 {reason}"
                 )
+                self._swarm_metrics[
+                    "governor_blocks"
+                ] += 1
                 blocked = f"BLOCKED: {reason}"
                 return [SwarmPayload(
                     agent="Governor", type="text",
@@ -2671,6 +2702,7 @@ class SwarmEngine:
                  "prompt": user_input[:200]},
             )
             log("\u2705 SWARM COMPLETE (fast-track)")
+            self._swarm_metrics["fast_track_hits"] += 1
             self._query_count += 1
             return [fast]
 
@@ -2866,8 +2898,11 @@ class SwarmEngine:
                     },
                     importance=0.6,
                 )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(
+                "Sensorium event emission failed: %s",
+                e,
+            )
 
         # Best-effort triple extraction uit tekst resultaten
         try:
@@ -2876,14 +2911,20 @@ class SwarmEngine:
             for r in results:
                 txt = str(r.display_text) if r.display_text else ""
                 if len(txt) > 50 and r.type == "text":
-                    triples = asyncio.run(cortex.extract_triples(txt))
-                    for t in triples:
+                    triples = await cortex.extract_triples(txt)
+                    for triple in triples:
                         cortex.add_triple(
-                            t.subject, t.predicaat, t.object,
-                            t.confidence, t.bron,
+                            triple.subject, triple.predicaat,
+                            triple.object,
+                            triple.confidence, triple.bron,
                         )
-        except Exception:
-            pass
+                        self._swarm_metrics[
+                            "triples_extracted"
+                        ] += 1
+        except Exception as e:
+            logger.debug(
+                "Triple extraction failed: %s", e
+            )
 
         log("\u2705 SWARM COMPLETE")
         self._query_count += 1

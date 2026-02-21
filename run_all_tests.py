@@ -1,6 +1,6 @@
 """
 Danny Toolkit — Master Test Runner
-Draait alle 9 test suites in volgorde en geeft een totaaloverzicht.
+Draait alle 10 test suites in volgorde en geeft een totaaloverzicht.
 
 Gebruik: python run_all_tests.py
 """
@@ -39,6 +39,7 @@ TESTS = [
     {"naam": "Full Chain",        "cmd": [PYTHON, "-m", "danny_toolkit.test_full_chain"], "cwd": PROJECT_ROOT},
     {"naam": "Cosmic Awareness",  "cmd": [PYTHON, "-m", "danny_toolkit.test_cosmic_awareness"], "cwd": PROJECT_ROOT},
     {"naam": "RAG Pipeline",      "cmd": [PYTHON, f"{PROJECT_ROOT}/test_rag_pipeline.py"]},
+    {"naam": "Brain Integrations", "cmd": [PYTHON, f"{PROJECT_ROOT}/test_brain_integrations.py"]},
 ]
 
 BREEDTE = 60
