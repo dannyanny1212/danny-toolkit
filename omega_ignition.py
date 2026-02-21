@@ -79,12 +79,20 @@ class OmegaIgnition:
     async def fase_2_neural_link(self):
         print(f"\n{Kleur.GEEL}[2/3] NEURAL LINK CHECK (v6.0 Modules){Kleur.RESET}")
         try:
-            from danny_toolkit.brain import Strategist, Tribunal, VoidWalker
-            print(f"  {Kleur.GROEN}✔ Neural Pathways: Geimporteerd (Strategist, Tribunal, VoidWalker){Kleur.RESET}")
+            # Onderdruk stdout tijdens import — voorkomt dat Daemon/Governor
+            # banners door de diagnostics heen schieten
+            _real_stdout = sys.stdout
+            _devnull = open(os.devnull, "w", encoding="utf-8")
+            sys.stdout = _devnull
+            try:
+                from danny_toolkit.brain import Strategist, Tribunal, VoidWalker
+                from danny_toolkit.core.neural_bus import get_bus
+                bus = get_bus()
+            finally:
+                sys.stdout = _real_stdout
+                _devnull.close()
 
-            # Ping de NeuralBus (Synapse zit in neural_bus.py)
-            from danny_toolkit.core.neural_bus import get_bus
-            bus = get_bus()
+            print(f"  {Kleur.GROEN}✔ Neural Pathways: Geimporteerd (Strategist, Tribunal, VoidWalker){Kleur.RESET}")
             print(f"  {Kleur.GROEN}✔ NeuralBus: Actief (Event Bus online){Kleur.RESET}")
 
         except ImportError as e:
