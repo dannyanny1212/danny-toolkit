@@ -28,6 +28,12 @@ try:
 except ImportError:
     HAS_MIRROR = False
 
+try:
+    from danny_toolkit.core.alerter import get_alerter, AlertLevel
+    HAS_ALERTER = True
+except ImportError:
+    HAS_ALERTER = False
+
 
 class Dreamer:
     """
@@ -60,6 +66,9 @@ class Dreamer:
 
         # 1.5. Retention — prune old rows, then vacuum reclaims space
         self._apply_retention()
+
+        # 1.6. Log rotation — verwijder oude log bestanden
+        self._rotate_logs()
 
         # 2. Compress — daily summary
         await self._compress()
@@ -126,6 +135,15 @@ class Dreamer:
             print(f"{Kleur.GROEN}💾 Backup created: {backup_path.name}{Kleur.RESET}")
         except Exception as e:
             print(f"{Kleur.ROOD}💾 Backup error: {e}{Kleur.RESET}")
+            if HAS_ALERTER:
+                try:
+                    get_alerter().alert(
+                        AlertLevel.KRITIEK,
+                        f"CorticalStack backup mislukt: {e}",
+                        bron="dreamer",
+                    )
+                except Exception:
+                    pass
 
     def _apply_retention(self):
         """Apply data retention policy to prune old rows."""
@@ -143,6 +161,16 @@ class Dreamer:
                 print(f"{Kleur.GROEN}🗑️ Retention: no old data to prune.{Kleur.RESET}")
         except Exception as e:
             print(f"{Kleur.ROOD}🗑️ Retention error: {e}{Kleur.RESET}")
+
+    def _rotate_logs(self):
+        """Verwijder oude log bestanden uit data/logs/."""
+        try:
+            from danny_toolkit.core.log_rotation import roteer_logs
+            verwijderd = roteer_logs(Config.DATA_DIR / "logs", max_leeftijd_dagen=30)
+            if verwijderd > 0:
+                print(f"{Kleur.GROEN}🗂️ Log rotation: {verwijderd} bestand(en) verwijderd.{Kleur.RESET}")
+        except Exception as e:
+            logger.debug("Log rotation error: %s", e)
 
     def _vacuum(self):
         """Optimize the CorticalStack SQLite database."""

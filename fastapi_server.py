@@ -131,6 +131,11 @@ class HealthResponse(BaseModel):
     uptime_seconds: float = 0.0
     memory_mb: float = 0.0
     active_agents: int = 0
+    # Deep probes (Phase 25)
+    groq_reachable: bool = False
+    cortical_stack_writable: bool = False
+    disk_free_gb: float = 0.0
+    agents_in_cooldown: int = 0
 
 
 class AgentInfo(BaseModel):
@@ -364,6 +369,65 @@ async def health(
             if n.status == "ACTIVE"
         )
 
+    # Deep probe: Groq reachable (1-token call, 10s timeout)
+    groq_ok = False
+    try:
+        from danny_toolkit.core.key_manager import get_key_manager as _gkm
+        _km = _gkm()
+        _probe_client = _km.create_async_client("HealthProbe")
+        if _probe_client:
+            from danny_toolkit.core.config import Config as _ProbeCfg
+            await asyncio.wait_for(
+                _probe_client.chat.completions.create(
+                    model=_ProbeCfg.LLM_FALLBACK_MODEL,
+                    messages=[{"role": "user", "content": "ok"}],
+                    max_tokens=1,
+                ),
+                timeout=10,
+            )
+            groq_ok = True
+    except Exception as e:
+        logger.debug("Groq health probe mislukt: %s", e)
+
+    # Deep probe: CorticalStack writable
+    stack_ok = False
+    try:
+        from danny_toolkit.brain.cortical_stack import (
+            get_cortical_stack as _gcs,
+        )
+        _stack = _gcs()
+        _stack.log_event(
+            actor="health_probe",
+            action="ping",
+            source="fastapi",
+        )
+        _stack.flush()
+        stack_ok = True
+    except Exception as e:
+        logger.debug("CorticalStack health probe mislukt: %s", e)
+
+    # Deep probe: Disk free
+    disk_free = 0.0
+    try:
+        import shutil as _shutil
+        from danny_toolkit.core.config import Config as _DiskCfg
+        usage = _shutil.disk_usage(str(_DiskCfg.DATA_DIR))
+        disk_free = round(usage.free / (1024 ** 3), 2)
+    except Exception as e:
+        logger.debug("Disk usage probe mislukt: %s", e)
+
+    # Deep probe: Agents in cooldown
+    cooldown_count = 0
+    try:
+        from danny_toolkit.core.key_manager import get_key_manager as _gkm2
+        _km2_status = _gkm2().get_status()
+        cooldown_count = sum(
+            1 for a in _km2_status.get("agents", {}).values()
+            if a.get("in_cooldown", False)
+        )
+    except Exception as e:
+        logger.debug("Cooldown probe mislukt: %s", e)
+
     return HealthResponse(
         status="ONLINE",
         brain_online=brain.is_online,
@@ -374,6 +438,10 @@ async def health(
         uptime_seconds=round(uptime, 1),
         memory_mb=round(mem_mb, 1),
         active_agents=actief,
+        groq_reachable=groq_ok,
+        cortical_stack_writable=stack_ok,
+        disk_free_gb=disk_free,
+        agents_in_cooldown=cooldown_count,
     )
 
 

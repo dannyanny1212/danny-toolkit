@@ -19,6 +19,7 @@ Gebruik:
 
 import asyncio
 import logging
+import random
 import time
 
 logger = logging.getLogger(__name__)
@@ -26,6 +27,7 @@ logger = logging.getLogger(__name__)
 # Defaults
 MAX_RETRIES = 3
 BASE_DELAY = 2.0  # seconden
+API_TIMEOUT = 30  # seconden — voorkomt hang bij Groq outage
 
 try:
     from danny_toolkit.core.key_manager import get_key_manager
@@ -98,7 +100,10 @@ async def groq_call_async(
             if max_tokens:
                 create_kwargs["max_tokens"] = max_tokens
 
-            chat = await client.chat.completions.create(**create_kwargs)
+            chat = await asyncio.wait_for(
+                client.chat.completions.create(**create_kwargs),
+                timeout=API_TIMEOUT,
+            )
             tekst = chat.choices[0].message.content
 
             # Registreer verbruik
@@ -111,13 +116,24 @@ async def groq_call_async(
 
             return tekst
 
+        except asyncio.TimeoutError:
+            logger.warning(
+                f"{agent_naam}: timeout ({API_TIMEOUT}s) "
+                f"(poging {poging + 1}/{max_retries})"
+            )
+            if poging < max_retries - 1:
+                wacht = BASE_DELAY * (2 ** poging) * random.uniform(0.5, 1.5)
+                await asyncio.sleep(wacht)
+                continue
+            return None
+
         except Exception as e:
             if _is_rate_limit(e):
                 if km:
                     km.registreer_429(agent_naam)
 
                 if poging < max_retries - 1:
-                    wacht = BASE_DELAY * (2 ** poging)
+                    wacht = BASE_DELAY * (2 ** poging) * random.uniform(0.5, 1.5)
                     logger.warning(
                         f"{agent_naam}: 429 rate limit — "
                         f"wacht {wacht:.1f}s (poging {poging + 1}/{max_retries})"
@@ -169,6 +185,7 @@ def groq_call_sync(
                 "messages": messages,
                 "model": model,
                 "temperature": temperature,
+                "timeout": API_TIMEOUT,
                 **kwargs,
             }
             if max_tokens:
@@ -188,7 +205,7 @@ def groq_call_sync(
                     km.registreer_429(agent_naam)
 
                 if poging < max_retries - 1:
-                    wacht = BASE_DELAY * (2 ** poging)
+                    wacht = BASE_DELAY * (2 ** poging) * random.uniform(0.5, 1.5)
                     logger.warning(
                         f"{agent_naam}: 429 rate limit — "
                         f"wacht {wacht:.1f}s (poging {poging + 1}/{max_retries})"

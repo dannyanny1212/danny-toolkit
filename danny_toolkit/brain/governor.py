@@ -26,6 +26,13 @@ from pathlib import Path
 from typing import Dict, Any, Tuple
 
 
+try:
+    from danny_toolkit.core.alerter import get_alerter, AlertLevel
+    HAS_ALERTER = True
+except ImportError:
+    HAS_ALERTER = False
+
+
 class OmegaGovernor:
     """Niveau 2: De Governor (Omega-0) - Autonome Bewaker."""
 
@@ -660,6 +667,15 @@ class OmegaGovernor:
             self._log("circuit_breaker_open", {
                 "failures": self._api_failures,
             })
+            if HAS_ALERTER:
+                try:
+                    get_alerter().alert(
+                        AlertLevel.KRITIEK,
+                        f"Circuit breaker OPEN na {self._api_failures} failures",
+                        bron="governor",
+                    )
+                except Exception as e:
+                    logger.debug("Alerter error: %s", e)
 
     def record_api_success(self):
         """Registreer een API succes (geleidelijke reset).
@@ -998,6 +1014,15 @@ class OmegaGovernor:
         # Token budget check
         budget_ok, budget_reden = self._check_token_budget()
         if not budget_ok:
+            if HAS_ALERTER:
+                try:
+                    get_alerter().alert(
+                        AlertLevel.WAARSCHUWING,
+                        budget_reden,
+                        bron="governor",
+                    )
+                except Exception as e:
+                    logger.debug("Alerter error: %s", e)
             return False, budget_reden
 
         # Lengte check

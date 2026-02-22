@@ -69,6 +69,13 @@ try:
 except ImportError:
     pass
 
+HAS_ALERTER = False
+try:
+    from danny_toolkit.core.alerter import get_alerter, AlertLevel
+    HAS_ALERTER = True
+except ImportError:
+    pass
+
 
 class DevOpsDaemon:
     """
@@ -353,6 +360,7 @@ class DevOpsDaemon:
 
             rapport["status"] = "GROEN"
             self._save_report(rapport)
+            self._prune_old_reports()
             return rapport
 
         # 3. Failures gevonden — analyseer
@@ -396,7 +404,19 @@ class DevOpsDaemon:
                 "diagnose_preview": analyse[:200],
             })
 
-        # 6. NeuralBus — cross-app awareness
+        # 6. Alerter — meld failures via Telegram
+        if HAS_ALERTER:
+            try:
+                namen = ", ".join(f["suite"] for f in health["failures"])
+                get_alerter().alert(
+                    AlertLevel.WAARSCHUWING,
+                    f"CI rood: {len(health['failures'])} suite(s) gefaald ({namen})",
+                    bron="devops_daemon",
+                )
+            except Exception as e:
+                logger.debug("Alerter error: %s", e)
+
+        # 7. NeuralBus — cross-app awareness
         self._publish_event("health_check", {
             "status": "rood",
             "failures": [f["suite"] for f in health["failures"]],
@@ -406,6 +426,7 @@ class DevOpsDaemon:
 
         rapport["status"] = "ROOD"
         pad = self._save_report(rapport)
+        self._prune_old_reports()
 
         print(f"\n{Kleur.MAGENTA}{'─' * 50}{Kleur.RESET}")
         print(f"{Kleur.GEEL}📄 Rapport opgeslagen: {pad}{Kleur.RESET}")
@@ -526,6 +547,22 @@ class DevOpsDaemon:
             print(f"{Kleur.ROOD}⚠ Rapport opslaan mislukt: {e}{Kleur.RESET}")
 
         return pad
+
+    def _prune_old_reports(self, max_reports: int = 50):
+        """Verwijder oude rapporten, bewaar max_reports nieuwste."""
+        try:
+            rapporten = sorted(
+                self.log_dir.glob("devops_*.json"),
+                key=lambda p: p.stat().st_mtime,
+            )
+            if len(rapporten) > max_reports:
+                for pad in rapporten[:len(rapporten) - max_reports]:
+                    try:
+                        pad.unlink()
+                    except Exception as e:
+                        logger.debug("Prune report error: %s", e)
+        except Exception as e:
+            logger.debug("Prune old reports error: %s", e)
 
     def get_stats(self) -> dict:
         """Statistieken van opgeslagen rapporten."""

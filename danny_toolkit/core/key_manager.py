@@ -16,12 +16,18 @@ import os
 import time
 import logging
 import threading
-from collections import defaultdict
+from collections import defaultdict, deque
 from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
 
 # Groq rate limits per model familie (free tier)
+try:
+    from danny_toolkit.core.alerter import get_alerter, AlertLevel
+    HAS_ALERTER = True
+except ImportError:
+    HAS_ALERTER = False
+
 try:
     from danny_toolkit.core.config import Config as _Cfg
     _PRIMARY = _Cfg.LLM_MODEL
@@ -75,7 +81,7 @@ class AgentMetrics:
     naam: str
     prioriteit: int = 5
     # Sliding window requests (timestamps)
-    request_timestamps: list = field(default_factory=list)
+    request_timestamps: deque = field(default_factory=lambda: deque(maxlen=120))
     # Token tellers
     tokens_deze_minuut: int = 0
     tokens_dit_uur: int = 0
@@ -208,9 +214,10 @@ class SmartKeyManager:
             agent.minuut_start = now
             # Verwijder oude request timestamps
             cutoff = now - 60
-            agent.request_timestamps = [
-                t for t in agent.request_timestamps if t > cutoff
-            ]
+            agent.request_timestamps = deque(
+                (t for t in agent.request_timestamps if t > cutoff),
+                maxlen=120,
+            )
 
         # Uur-venster (3600s)
         if now - agent.uur_start >= 3600:
@@ -333,6 +340,15 @@ class SmartKeyManager:
                 logger.warning(
                     f"SmartKeyManager: 5+ rate limits — globale cooldown 60s"
                 )
+                if HAS_ALERTER:
+                    try:
+                        get_alerter().alert(
+                            AlertLevel.KRITIEK,
+                            f"Globale rate limit: {self._global_429_count}x 429 — 60s cooldown",
+                            bron="key_manager",
+                        )
+                    except Exception as e:
+                        logger.debug("Alerter error: %s", e)
             elif self._global_429_count >= 3:
                 self._global_cooldown_tot = now + 15.0
 
