@@ -106,6 +106,10 @@ class HeartbeatDaemon:
         self._airlock_interval = 60  # seconden
         self._airlock_last_run = 0.0
 
+        # Token Dividend — periodieke shadow summarization
+        self._summarization_interval = 600  # elke 10 minuten
+        self._summarization_last_run = 0.0
+
         # Geplande taken
         self.schedule = [
             {
@@ -327,6 +331,17 @@ class HeartbeatDaemon:
                             )
                     except Exception as e:
                         logger.debug("Airlock scan fout: %s", e)
+
+            # Token Dividend — periodieke shadow summarization
+            now_sum = time.time()
+            if now_sum - self._summarization_last_run > self._summarization_interval:
+                self._summarization_last_run = now_sum
+                try:
+                    from danny_toolkit.brain.dreamer import Dreamer
+                    dreamer = Dreamer()
+                    await dreamer._shadow_summarization(max_docs=5)
+                except Exception as e:
+                    logger.debug("Token Dividend summarization fout: %s", e)
 
             # Heartbeat indicator + bestand
             self._schrijf_heartbeat()

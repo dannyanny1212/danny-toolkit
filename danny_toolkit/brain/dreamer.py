@@ -260,54 +260,56 @@ class Dreamer:
             print(f"{Kleur.ROOD}🔮 Anticipation error: {e}{Kleur.RESET}")
             return None
 
-    async def _shadow_summarization(self):
+    async def _shadow_summarization(self, max_docs: int = 10):
         """REM Fase 5.7: Shadow pre-summarization of RAG documents.
 
-        Reads top-50 documents from ChromaDB, filters already-summarized
-        or too-short documents, and summarizes the largest ones first.
-        Max 10 docs per REM cycle, 3s interval (respects 30 RPM).
+        Gebruikt de Dreamer's eigen Groq client (GROQ_API_KEY_OVERNIGHT)
+        i.p.v. ShadowKeyVault, zodat batch summarization niet geblokkeerd
+        wordt door de shadow throttle.
+
+        Args:
+            max_docs: Max documenten per cyclus (standaard 10).
         """
         print(f"{Kleur.GEEL}📑 Shadow summarization starting...{Kleur.RESET}")
         try:
-            from danny_toolkit.brain.virtual_twin import ShadowCortex, ShadowKeyVault
+            from danny_toolkit.brain.virtual_twin import ShadowCortex
         except ImportError:
-            logger.debug("ShadowCortex/ShadowKeyVault not available")
+            logger.debug("ShadowCortex not available")
             return
 
+        # ChromaDB toegang
         try:
-            # Get MEMEX agent for ChromaDB access
-            # Use a fresh import to avoid circular deps
-            from danny_toolkit.core.vector_store import VectorStore
-            vs = VectorStore()
-            collection = vs._collection if hasattr(vs, "_collection") else None
-            if collection is None and hasattr(vs, "_get_collection"):
-                collection = vs._get_collection()
-            if collection is None:
-                logger.debug("Shadow summarization: no ChromaDB collection")
+            import chromadb
+            db_pad = str(Config.RAG_DATA_DIR / "chromadb")
+            chroma_client = chromadb.PersistentClient(path=db_pad)
+            collections = chroma_client.list_collections()
+            if not collections:
+                logger.debug("Shadow summarization: geen ChromaDB collections")
                 return
         except Exception as e:
-            logger.debug("Shadow summarization: ChromaDB access failed: %s", e)
+            logger.debug("Shadow summarization: ChromaDB mislukt: %s", e)
             return
 
         try:
-            # Peek top-50 documents
-            peek = collection.peek(limit=50)
-            if not peek or not peek.get("documents") or not peek.get("ids"):
-                logger.debug("Shadow summarization: no documents in ChromaDB")
-                return
-
-            docs = peek["documents"]
-            ids = peek["ids"]
-
             sc = ShadowCortex()
-            vault = ShadowKeyVault()
 
-            # Build candidate list: (doc_id, tekst, length)
+            # Verzamel alle chunks uit alle collections
+            alle_ids = []
+            alle_texts = []
+            for col in collections:
+                collection = chroma_client.get_collection(col.name)
+                count = collection.count()
+                if count == 0:
+                    continue
+                peek = collection.peek(limit=min(50, count))
+                alle_ids.extend(peek.get("ids", []))
+                alle_texts.extend(peek.get("documents", []))
+
+            # Filter kandidaten: niet te kort, niet al samengevat
             candidates = []
-            for doc_id, tekst in zip(ids, docs):
+            for doc_id, tekst in zip(alle_ids, alle_texts):
                 if not tekst or len(tekst) < 200:
                     continue
-                # Check if already summarized with fresh hash
                 doc_hash = sc._doc_hash(tekst)
                 try:
                     conn = sc._get_summary_conn()
@@ -317,37 +319,76 @@ class Dreamer:
                     ).fetchone()
                     conn.close()
                     if row and row[0] == doc_hash:
-                        continue  # Already fresh
+                        continue
                 except Exception:
                     pass
                 candidates.append((doc_id, tekst, len(tekst)))
 
             if not candidates:
-                print(f"{Kleur.GROEN}📑 Shadow summarization: all documents up to date.{Kleur.RESET}")
+                print(f"{Kleur.GROEN}📑 Shadow summarization: alle documenten up to date.{Kleur.RESET}")
                 return
 
-            # Sort by size descending (biggest savings first)
+            print(f"{Kleur.CYAAN}📑 {len(candidates)} kandidaten gevonden, verwerken...{Kleur.RESET}")
+
+            # Sorteer op grootte (grootste besparing eerst)
             candidates.sort(key=lambda x: x[2], reverse=True)
 
-            # Process max 10 per cycle
+            # Verwerk met Dreamer's eigen client (geen ShadowKeyVault throttle)
             samengevat = 0
             totaal_bespaard = 0
-            for doc_id, tekst, length in candidates[:10]:
-                try:
-                    result = await sc.summarize_document(doc_id, tekst, vault)
-                    if result:
-                        samengevat += 1
-                        orig = sc._estimate_tokens(tekst)
-                        sam = sc._estimate_tokens(result)
-                        totaal_bespaard += (orig - sam)
-                except Exception as e:
-                    logger.debug("Shadow summary failed for %s: %s", doc_id[:20], e)
 
-                # 3s interval to respect 30 RPM on GROQ_API_KEY_OVERNIGHT
+            for doc_id, tekst, length in candidates[:max_docs]:
+                prompt = (
+                    "Vat de volgende tekst samen in maximaal 3 korte zinnen.\n"
+                    "Bewaar alle feiten, namen, cijfers en technische termen.\n"
+                    "Laat meningen, herhaling en opvulwoorden weg.\n"
+                    "Antwoord ALLEEN met de samenvatting, geen inleiding.\n\n"
+                    f"TEKST:\n{tekst[:4000]}\n\nSAMENVATTING:"
+                )
+
+                try:
+                    chat = await self.client.chat.completions.create(
+                        messages=[{"role": "user", "content": prompt}],
+                        model=self.model,
+                        temperature=0.2,
+                    )
+                    samenvatting = chat.choices[0].message.content
+
+                    if samenvatting and samenvatting.strip():
+                        doc_hash = sc._doc_hash(tekst)
+                        orig_tokens = sc._estimate_tokens(tekst)
+                        sam_tokens = sc._estimate_tokens(samenvatting)
+
+                        # Opslaan in shadow_summaries
+                        conn = sc._get_summary_conn()
+                        conn.execute(
+                            """INSERT INTO shadow_summaries
+                               (doc_id, doc_hash, samenvatting, origineel_tokens, samenvatting_tokens)
+                               VALUES (?, ?, ?, ?, ?)
+                               ON CONFLICT(doc_id)
+                               DO UPDATE SET doc_hash = ?, samenvatting = ?,
+                                            origineel_tokens = ?, samenvatting_tokens = ?,
+                                            aangemaakt = datetime('now')""",
+                            (doc_id, doc_hash, samenvatting, orig_tokens, sam_tokens,
+                             doc_hash, samenvatting, orig_tokens, sam_tokens),
+                        )
+                        conn.commit()
+                        conn.close()
+
+                        bespaard = orig_tokens - sam_tokens
+                        totaal_bespaard += bespaard
+                        samengevat += 1
+                        print(f"  {Kleur.GROEN}✓ {doc_id[:45]} ({orig_tokens}→{sam_tokens} tok){Kleur.RESET}")
+                    else:
+                        print(f"  {Kleur.GEEL}⊘ {doc_id[:45]} (leeg antwoord){Kleur.RESET}")
+
+                except Exception as e:
+                    print(f"  {Kleur.ROOD}✗ {doc_id[:45]}: {e}{Kleur.RESET}")
+
+                # 3s interval (30 RPM op GROQ_API_KEY_OVERNIGHT)
                 await asyncio.sleep(3)
 
-            # Flush dividend + log results
-            vault.flush_dividend()
+            # Log resultaten
             roi = sc.get_dividend_roi()
 
             if HAS_STACK:
