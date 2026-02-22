@@ -25,6 +25,11 @@ sys.stdout = io.TextIOWrapper(
     sys.stdout.buffer, encoding="utf-8", errors="replace"
 )
 
+# Test-mode env
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
+os.environ.setdefault("DANNY_TEST_MODE", "1")
+os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
+
 # Zorg dat project root op sys.path staat
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 

@@ -19,6 +19,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 # Windows UTF-8
 sys.stdout.reconfigure(encoding="utf-8")
 
+# Test-mode env
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
+os.environ.setdefault("DANNY_TEST_MODE", "1")
+os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
+
 # Zorg dat project root op sys.path staat
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 if PROJECT_ROOT not in sys.path:
@@ -326,7 +331,7 @@ def test_black_box_record_and_retrieve():
 
         # Retrieve warnings
         warning = bb.retrieve_warnings("similar prompt")
-        check("Warning bevat LEARNED BEHAVIOR", "LEARNED BEHAVIOR" in warning)
+        check("Warning bevat PAST MISTAKE of IMMUNE", "PAST MISTAKE" in warning or "IMMUNE" in warning)
         check("Warning bevat lesson tekst", "hallucinated facts" in warning)
 
 

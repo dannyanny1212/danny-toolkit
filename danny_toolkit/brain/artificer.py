@@ -3,7 +3,9 @@ import json
 import logging
 import os
 import subprocess
+import sys
 from datetime import datetime
+from pathlib import Path
 from typing import Optional, Dict
 
 logger = logging.getLogger(__name__)
@@ -41,6 +43,18 @@ try:
     HAS_SANITIZER = True
 except ImportError:
     HAS_SANITIZER = False
+
+try:
+    from danny_toolkit.core.env_bootstrap import VENV_PYTHON as _VENV_PYTHON
+    from danny_toolkit.core.env_bootstrap import get_subprocess_env as _get_env
+    _sandbox_env = lambda: _get_env(test_mode=False)  # noqa: E731
+except ImportError:
+    _VENV_PYTHON = sys.executable
+    def _sandbox_env():
+        env = os.environ.copy()
+        env.update({"CUDA_VISIBLE_DEVICES": "-1",
+                     "ANONYMIZED_TELEMETRY": "False", "PYTHONIOENCODING": "utf-8"})
+        return env
 
 try:
     from danny_toolkit.core.sandbox import get_sandbox
@@ -310,11 +324,12 @@ class Artificer:
         # Fallback: direct subprocess.run (als sandbox import faalt)
         try:
             result = subprocess.run(
-                ["python", path],
+                [_VENV_PYTHON, path],
                 capture_output=True,
                 text=True,
                 timeout=30,
                 cwd=workspace,
+                env=_sandbox_env(),
             )
             if result.returncode == 0:
                 self._mark_skill_status(filename, error=None)

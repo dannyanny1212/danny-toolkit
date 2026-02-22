@@ -25,6 +25,11 @@ if os.name == "nt":
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 
+# Test-mode env
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
+os.environ.setdefault("DANNY_TEST_MODE", "1")
+os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
+
 # Voeg project root toe aan path
 sys.path.insert(0, os.path.dirname(__file__))
 

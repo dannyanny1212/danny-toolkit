@@ -33,6 +33,9 @@ try:
     from .oracle_eye import TheOracleEye
     from .synapse import TheSynapse
     from .phantom import ThePhantom
+    from .virtual_twin import VirtualTwin, ShadowCortex
+    from .shadow_governance import ShadowGovernance
+    from .shadow_permissions import ShadowPermissions
 except ImportError:
     pass
 
@@ -63,6 +66,8 @@ __all__ = [
     "VoidWalker", "Artificer", "BlackBox",
     "TheMirror", "GhostWriter", "Dreamer", "DevOpsDaemon",
     "TheCortex", "TheOracleEye", "TheSynapse", "ThePhantom",
+    "VirtualTwin", "ShadowCortex",
+    "ShadowGovernance", "ShadowPermissions",
     # Anti-Hallucination
     "CitationMarshall", "RealityAnchor", "TruthAnchor",
     # Subsystems

@@ -18,9 +18,9 @@ from pathlib import Path
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
-os.environ["DANNY_TEST_MODE"] = "1"
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
-os.environ["ANONYMIZED_TELEMETRY"] = "False"
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
+os.environ.setdefault("DANNY_TEST_MODE", "1")
+os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
 
 sys.path.insert(0, os.path.dirname(__file__))
 

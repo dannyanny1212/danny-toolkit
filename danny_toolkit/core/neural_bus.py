@@ -44,6 +44,8 @@ class EventTypes:
     PHANTOM_PREDICTION = "phantom_prediction"
     PHANTOM_HIT = "phantom_hit"
     SANDBOX_EXECUTION = "sandbox_execution"
+    TWIN_CONSULTATION = "twin_consultation"
+    IMMUNE_RESPONSE = "immune_response"
 
 
 class BusEvent:

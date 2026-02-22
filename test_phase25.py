@@ -26,7 +26,9 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="repla
 PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
 os.environ.setdefault("DANNY_TEST_MODE", "1")
+os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
 
 geslaagd = 0
 mislukt = 0

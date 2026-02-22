@@ -1,6 +1,6 @@
 """
 Danny Toolkit — Master Test Runner
-Draait alle 25 test suites in volgorde en geeft een totaaloverzicht.
+Draait alle 26 test suites in volgorde en geeft een totaaloverzicht.
 
 Gebruik: python run_all_tests.py
 """
@@ -55,6 +55,7 @@ TESTS = [
     {"naam": "Phase 27 Resilience", "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase27.py"]},
     {"naam": "Phase 28 Observability", "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase28.py"]},
     {"naam": "Embeddings MRL",       "cmd": [PYTHON, f"{PROJECT_ROOT}/test_embeddings_mrl.py"]},
+    {"naam": "Phase 29 VirtualTwin", "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase29.py"]},
 ]
 
 BREEDTE = 60
@@ -70,7 +71,7 @@ def run_test(test: dict) -> dict:
     # Tests draaien op CPU; productie gebruikt GPU
     clean_env = os.environ.copy()
     clean_env["PYTHONIOENCODING"] = "utf-8"
-    clean_env["CUDA_VISIBLE_DEVICES"] = "-1"
+    clean_env["CUDA_VISIBLE_DEVICES"] = "0"
     clean_env["ANONYMIZED_TELEMETRY"] = "False"  # ChromaDB posthog crash preventie
     clean_env["DANNY_TEST_MODE"] = "1"  # Skip ChromaDB PersistentClient (Rust FFI crash in subprocess)
 
@@ -90,7 +91,7 @@ def run_test(test: dict) -> dict:
         for line in proc.stdout:
             print(line, end="", flush=True)
         proc.stdout.close()
-        proc.wait(timeout=600)
+        proc.wait(timeout=150)
         duur = time.time() - start
         geslaagd = proc.returncode == 0
     except subprocess.TimeoutExpired:

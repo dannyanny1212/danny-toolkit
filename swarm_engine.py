@@ -948,6 +948,41 @@ class ArtificerAgent(Agent):
         )
 
 
+class VirtualTwinAgent(Agent):
+    """Virtuele Tweeling: sandboxed system duplicate with Mirror + VoidWalker."""
+
+    def _get_twin(self):
+        if not hasattr(self, "_twin"):
+            try:
+                from danny_toolkit.brain.virtual_twin import (
+                    VirtualTwin,
+                )
+                self._twin = VirtualTwin()
+            except Exception as e:
+                logger.debug("VirtualTwin laden mislukt: %s", e)
+                self._twin = None
+        return self._twin
+
+    async def process(self, task, brain=None):
+        start_t = time.time()
+        twin = self._get_twin()
+        if twin is None:
+            return SwarmPayload(
+                agent=self.name, type="text",
+                content="VirtualTwin niet beschikbaar",
+                display_text="VirtualTwin niet beschikbaar",
+            )
+        result = await twin.consult(task)
+        elapsed = time.time() - start_t
+        return SwarmPayload(
+            agent=self.name,
+            type="text",
+            content=result or "",
+            display_text=result or "",
+            metadata={"execution_time": elapsed},
+        )
+
+
 class PixelAgent(Agent):
     """THE EYES: Multimodal Vision Agent.
 
@@ -1510,6 +1545,15 @@ class AdaptiveRouter:
                 " skill forge nieuw programma"
             ),
         ],
+        "VIRTUAL_TWIN": [
+            (
+                "deep analysis research twin mirror"
+                " system analysis profile analyse"
+                " diepte onderzoek tweeling spiegel"
+                " achtergrond context verrijking"
+                " kennisverrijking systeem overzicht"
+            ),
+        ],
     }
 
     @classmethod
@@ -1921,6 +1965,11 @@ class SwarmEngine:
             "bouw een tool", "skill", "genereer script",
             "utility", "maak een script",
         ],
+        "VIRTUAL_TWIN": [
+            "twin", "tweeling", "mirror analyse",
+            "diepte analyse", "systeem analyse",
+            "profiel analyse", "deep analysis",
+        ],
     }
 
     def __init__(self, brain=None, oracle=None):
@@ -1947,6 +1996,7 @@ class SwarmEngine:
             "phantom_predictions": 0,
             "phantom_hits": 0,
             "agent_errors": 0,
+            "twin_consultations": 0,
         }
 
         # Echo Guard — dedup gate (hash, timestamp)
@@ -2112,6 +2162,9 @@ class SwarmEngine:
             "ARTIFICER": ArtificerAgent(
                 "Artificer", "Forge",
             ),
+            "VIRTUAL_TWIN": VirtualTwinAgent(
+                "#@*VirtualTwin", "Analysis",
+            ),
             # LEGION: disabled
 
         }
@@ -2175,6 +2228,22 @@ class SwarmEngine:
                 )
                 self._phantom_instance = None
         return self._phantom_instance
+
+    @property
+    def virtual_twin(self):
+        """Lazy VirtualTwin — sandboxed system duplicate."""
+        if not hasattr(self, "_virtual_twin_instance"):
+            try:
+                from danny_toolkit.brain.virtual_twin import (
+                    VirtualTwin,
+                )
+                self._virtual_twin_instance = VirtualTwin()
+            except Exception as e:
+                logger.debug(
+                    "VirtualTwin laden mislukt: %s", e,
+                )
+                self._virtual_twin_instance = None
+        return self._virtual_twin_instance
 
     async def _tribunal_verify(
         self, results, user_input, callback=None,
@@ -3078,6 +3147,30 @@ class SwarmEngine:
                     non_error, user_input, callback,
                 )
             results = list(non_error) + error_results
+
+        # 6.6 VirtualTwin NeuralBus publish
+        if any(r.agent == "#@*VirtualTwin" for r in results):
+            self._swarm_metrics[
+                "twin_consultations"
+            ] += 1
+            try:
+                from danny_toolkit.core.neural_bus import (
+                    get_bus, EventTypes,
+                )
+                get_bus().publish(
+                    EventTypes.TWIN_CONSULTATION,
+                    {
+                        "query": user_input[:200],
+                        "agents": [
+                            r.agent for r in results
+                        ],
+                    },
+                    bron="swarm_engine",
+                )
+            except Exception as e:
+                logger.debug(
+                    "Twin NeuralBus publish: %s", e,
+                )
 
         # 7. SENTINEL Validate (tunable)
         if not t.mag_skippen("sentinel"):

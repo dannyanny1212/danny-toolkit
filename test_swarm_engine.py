@@ -26,6 +26,11 @@ if os.name == "nt":
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 
+# Test-mode env
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
+os.environ.setdefault("DANNY_TEST_MODE", "1")
+os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
+
 # Voeg project root toe aan path
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -994,8 +999,8 @@ def test_backward_compat():
         "MEMEX" in engine.ROUTE_MAP,
     ))
     checks.append((
-        "17 agents geregistreerd",
-        len(engine.agents) == 17,
+        "18 agents geregistreerd",
+        len(engine.agents) == 18,
     ))
 
     # Fast-track werkt nog
@@ -1019,8 +1024,8 @@ def test_adaptive_router():
 
     # Agent profielen zijn gedefinieerd
     checks.append((
-        "15 agent profielen",
-        len(AdaptiveRouter.AGENT_PROFIELEN) == 15,
+        "16 agent profielen",
+        len(AdaptiveRouter.AGENT_PROFIELEN) == 16,
     ))
 
     # Profielen bevatten verwachte agents
@@ -1054,7 +1059,7 @@ def test_adaptive_router():
     checks.append((
         "profielen berekend",
         profielen is not None
-        and len(profielen) == 15,
+        and len(profielen) == 16,
     ))
 
     # Multi-vector structuur

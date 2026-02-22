@@ -4,9 +4,15 @@ Tests voor SingularityEngine v1.1 — 22 tests.
 Draai: python test_singularity.py
 """
 
+import os
 import sys
 import time
 from unittest.mock import MagicMock, patch
+
+# Test-mode env
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
+os.environ.setdefault("DANNY_TEST_MODE", "1")
+os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
 
 
 # ── Helpers ──

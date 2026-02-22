@@ -17,6 +17,11 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
+# Test-mode env
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
+os.environ.setdefault("DANNY_TEST_MODE", "1")
+os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
+
 # Windows UTF-8
 if os.name == "nt":
     sys.stdout = open(

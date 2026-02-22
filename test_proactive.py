@@ -5,10 +5,16 @@ Draai:
     python test_proactive.py
 """
 
+import os
 import sys
 import time
 from unittest.mock import MagicMock, patch
 from datetime import datetime, timedelta
+
+# Test-mode env
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
+os.environ.setdefault("DANNY_TEST_MODE", "1")
+os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
 
 
 # ── Helpers ──

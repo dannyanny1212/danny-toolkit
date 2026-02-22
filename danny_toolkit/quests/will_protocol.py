@@ -35,6 +35,12 @@ import logging
 from ..core.config import Config
 from ..core.utils import kleur, Kleur, info, succes, fout
 
+try:
+    from ..core.env_bootstrap import VENV_PYTHON as _VENV_PYTHON
+except ImportError:
+    import sys as _sys
+    _VENV_PYTHON = _sys.executable
+
 logger = logging.getLogger(__name__)
 
 
@@ -631,7 +637,7 @@ class WillProtocol:
 
         try:
             result = subprocess.run(
-                ["python", str(pad)],
+                [_VENV_PYTHON, str(pad)],
                 timeout=30,
                 capture_output=True,
                 text=True,

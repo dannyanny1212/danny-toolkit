@@ -4,12 +4,18 @@ Tests voor NeuralBus - Pub/Sub Event Systeem.
 Voer uit: python test_neural_bus.py
 """
 
+import os
 import sys
 import threading
 import time
 
 # Windows UTF-8
 sys.stdout.reconfigure(encoding="utf-8")
+
+# Test-mode env
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
+os.environ.setdefault("DANNY_TEST_MODE", "1")
+os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
 
 # Reset singleton voor elke test
 import danny_toolkit.core.neural_bus as bus_module

@@ -17,11 +17,21 @@ import logging
 import os
 import shutil
 import subprocess
+import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+# Centralized env bootstrap — single source of truth
+from danny_toolkit.core.env_bootstrap import VENV_PYTHON as _VENV_PYTHON
+from danny_toolkit.core.env_bootstrap import get_subprocess_env
+
+
+def _sandbox_env() -> dict:
+    """Bouw een schone env dict met isolatie-vars (production: geen test_mode)."""
+    return get_subprocess_env(test_mode=False)
 
 
 @dataclass
@@ -70,11 +80,12 @@ class LocalSandbox(BaseSandbox):
     ) -> SandboxResult:
         try:
             result = subprocess.run(
-                ["python", script_path],
+                [_VENV_PYTHON, script_path],
                 capture_output=True,
                 text=True,
                 timeout=timeout,
                 cwd=workspace,
+                env=_sandbox_env(),
             )
             return SandboxResult(
                 stdout=result.stdout or "",
