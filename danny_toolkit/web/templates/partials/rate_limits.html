@@ -1,0 +1,29 @@
+<table class="rate-table">
+<thead>
+    <tr><th>Agent</th><th>RPM</th><th>TPM</th></tr>
+</thead>
+<tbody>
+{% for agent in limits %}
+<tr>
+    <td>{{ agent.name }}</td>
+    <td>
+        {{ agent.rpm_used }}/{{ agent.rpm_max }}
+        <div class="rate-bar">
+            <div class="rate-bar-fill {{ 'low' if agent.rpm_pct < 50 else 'medium' if agent.rpm_pct < 80 else 'high' }}"
+                 style="width: {{ agent.rpm_pct }}%"></div>
+        </div>
+    </td>
+    <td>
+        {{ agent.tpm_used }}/{{ agent.tpm_max }}
+        <div class="rate-bar">
+            <div class="rate-bar-fill {{ 'low' if agent.tpm_pct < 50 else 'medium' if agent.tpm_pct < 80 else 'high' }}"
+                 style="width: {{ agent.tpm_pct }}%"></div>
+        </div>
+    </td>
+</tr>
+{% endfor %}
+{% if not limits %}
+<tr><td colspan="3" style="color: var(--text-secondary);">Geen rate limit data.</td></tr>
+{% endif %}
+</tbody>
+</table>

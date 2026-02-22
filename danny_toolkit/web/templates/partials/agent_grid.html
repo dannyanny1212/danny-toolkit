@@ -1,0 +1,16 @@
+<div class="agent-grid">
+{% for agent in agents %}
+<div class="agent-card">
+    <div class="agent-name">
+        <span class="status-dot {{ 'green' if agent.status == 'ACTIVE' else 'yellow' if agent.status == 'IDLE' else 'red' }}"></span>
+        {{ agent.name }}
+    </div>
+    <div class="agent-status {{ agent.status|lower }}">
+        {{ agent.tier }} | E:{{ agent.energy }} | T:{{ agent.tasks_completed }}
+    </div>
+</div>
+{% endfor %}
+{% if not agents %}
+<p style="color: var(--text-secondary);">Geen agents beschikbaar.</p>
+{% endif %}
+</div>

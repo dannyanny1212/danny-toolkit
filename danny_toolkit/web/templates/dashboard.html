@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}OMEGA Dashboard{% endblock %}
+{% block content %}
+<div class="dashboard">
+    <!-- Agent Grid -->
+    <div class="card" style="grid-column: span 2;">
+        <div class="card-header">
+            Agents
+            <span class="htmx-indicator">laden...</span>
+        </div>
+        <div class="card-body"
+             hx-get="/ui/partials/agents"
+             hx-trigger="load, every 10s"
+             hx-indicator="closest .card">
+            <p style="color: var(--text-secondary);">Agents laden...</p>
+        </div>
+    </div>
+
+    <!-- Governor Status -->
+    <div class="card">
+        <div class="card-header">
+            Governor
+            <span class="htmx-indicator">laden...</span>
+        </div>
+        <div class="card-body"
+             hx-get="/ui/partials/governor"
+             hx-trigger="load, every 15s"
+             hx-indicator="closest .card">
+            <p style="color: var(--text-secondary);">Governor laden...</p>
+        </div>
+    </div>
+
+    <!-- Rate Limits -->
+    <div class="card">
+        <div class="card-header">
+            Rate Limits
+            <span class="htmx-indicator">laden...</span>
+        </div>
+        <div class="card-body"
+             hx-get="/ui/partials/rate-limits"
+             hx-trigger="load, every 5s"
+             hx-indicator="closest .card">
+            <p style="color: var(--text-secondary);">Rate limits laden...</p>
+        </div>
+    </div>
+
+    <!-- Cortex Stats -->
+    <div class="card">
+        <div class="card-header">
+            Knowledge Graph
+            <span class="htmx-indicator">laden...</span>
+        </div>
+        <div class="card-body"
+             hx-get="/ui/partials/cortex"
+             hx-trigger="load, every 30s"
+             hx-indicator="closest .card">
+            <p style="color: var(--text-secondary);">Cortex laden...</p>
+        </div>
+    </div>
+
+    <!-- Event Feed (SSE) -->
+    <div class="card">
+        <div class="card-header">
+            Live Events
+        </div>
+        <div class="card-body event-feed"
+             hx-ext="sse"
+             sse-connect="/ui/events"
+             sse-swap="message"
+             hx-swap="afterbegin">
+            <p style="color: var(--text-secondary);">Wachten op events...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

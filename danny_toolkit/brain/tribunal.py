@@ -14,6 +14,7 @@ except ImportError:
     pass
 
 from groq import AsyncGroq
+from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import Kleur
 
 try:
@@ -41,8 +42,8 @@ class Tribunal:
             self.client = km.create_async_client("Tribunal") or AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
         else:
             self.client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
-        self.worker_model = "meta-llama/llama-4-scout-17b-16e-instruct"
-        self.auditor_model = "qwen/qwen3-32b"
+        self.worker_model = Config.LLM_MODEL
+        self.auditor_model = Config.LLM_FALLBACK_MODEL
 
     async def deliberate(self, user_prompt: str) -> str:
         """

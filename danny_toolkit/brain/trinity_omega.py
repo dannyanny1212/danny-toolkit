@@ -35,6 +35,7 @@ import asyncio
 import threading
 
 from .governor import OmegaGovernor
+from danny_toolkit.core.config import Config
 
 
 # --- STAP 1: HET NIEUWE DNA (17 NODES) ---
@@ -834,10 +835,10 @@ class PrometheusBrain:
     # Routers/simpele rollen → 8b (snel, spaart rate limit)
     # Specialisten → None (= 70b primary, default)
     MODEL_TIER = {
-        CosmicRole.NEXUS: "meta-llama/llama-4-scout-17b-16e-instruct",
-        CosmicRole.ECHO: "meta-llama/llama-4-scout-17b-16e-instruct",
-        CosmicRole.CHRONOS: "meta-llama/llama-4-scout-17b-16e-instruct",
-        CosmicRole.WEAVER: "meta-llama/llama-4-scout-17b-16e-instruct",
+        CosmicRole.NEXUS: Config.LLM_MODEL,
+        CosmicRole.ECHO: Config.LLM_MODEL,
+        CosmicRole.CHRONOS: Config.LLM_MODEL,
+        CosmicRole.WEAVER: Config.LLM_MODEL,
     }
 
     def _execute_with_role(

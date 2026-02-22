@@ -92,7 +92,7 @@ class DevOpsDaemon:
             self.client = km.create_async_client("DevOpsDaemon") or AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
         else:
             self.client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
-        self.model = "meta-llama/llama-4-scout-17b-16e-instruct"
+        self.model = Config.LLM_MODEL
         self.test_runner = Config.BASE_DIR / "run_all_tests.py"
         self.log_dir = Config.DATA_DIR / "logs" / "devops"
         self.log_dir.mkdir(parents=True, exist_ok=True)
@@ -142,7 +142,7 @@ class DevOpsDaemon:
         start = time.time()
         try:
             await self.client.chat.completions.create(
-                model="qwen/qwen3-32b",
+                model=Config.LLM_FALLBACK_MODEL,
                 messages=[{"role": "user", "content": "ok"}],
                 max_tokens=1,
             )

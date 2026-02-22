@@ -7,6 +7,7 @@ from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import Kleur
 
 try:
@@ -194,8 +195,8 @@ class TheOracleEye:
             verwachte_cpu > self._HIGH_CPU_THRESHOLD
             or verwachte_queries > self._HIGH_QUERY_THRESHOLD
         ):
-            return "qwen/qwen3-32b"
-        return "meta-llama/llama-4-scout-17b-16e-instruct"
+            return Config.LLM_FALLBACK_MODEL
+        return Config.LLM_MODEL
 
     def suggest_model(
         self,
@@ -217,7 +218,7 @@ class TheOracleEye:
 
         # Als huidige load al hoog is, direct fallback
         if cpu > self._HIGH_CPU_THRESHOLD or queries > self._HIGH_QUERY_THRESHOLD:
-            return "qwen/qwen3-32b"
+            return Config.LLM_FALLBACK_MODEL
 
         # Check forecast — als piek verwacht, preventief fallback
         if forecast is None:
@@ -231,9 +232,9 @@ class TheOracleEye:
                     or fc.verwachte_queries > self._HIGH_QUERY_THRESHOLD
                 )
             ):
-                return "qwen/qwen3-32b"
+                return Config.LLM_FALLBACK_MODEL
 
-        return "meta-llama/llama-4-scout-17b-16e-instruct"
+        return Config.LLM_MODEL
 
     def get_peak_hours(self, days: int = 7) -> List[int]:
         """Top 5 uren met meeste activiteit."""

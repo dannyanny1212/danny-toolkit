@@ -43,6 +43,12 @@ except ImportError:
     HAS_SANITIZER = False
 
 try:
+    from danny_toolkit.core.sandbox import get_sandbox
+    HAS_SANDBOX = True
+except ImportError:
+    HAS_SANDBOX = False
+
+try:
     from danny_toolkit.core.groq_retry import groq_call_async
     HAS_RETRY = True
 except ImportError:
@@ -65,7 +71,7 @@ class Artificer:
             self.client = km.create_async_client("Artificer") or AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
         else:
             self.client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
-        self.model = "meta-llama/llama-4-scout-17b-16e-instruct"
+        self.model = Config.LLM_MODEL
         self._bus = get_bus() if HAS_BUS else None
         self._ensure_setup()
 
@@ -272,18 +278,47 @@ class Artificer:
 
     def _run_script(self, filename: str) -> str:
         path = str(self.skills_dir / filename)
+        workspace = str(self.workspace_dir)
+
+        if HAS_SANDBOX:
+            sandbox = get_sandbox()
+            result = sandbox.run_script(path, workspace, timeout=30)
+
+            # Publiceer sandbox event
+            self._publish_event(
+                EventTypes.SANDBOX_EXECUTION if HAS_BUS else None,
+                {
+                    "skill": filename,
+                    "sandbox_type": type(sandbox).__name__,
+                    "returncode": result.returncode,
+                    "timed_out": result.timed_out,
+                },
+            )
+
+            if result.timed_out:
+                self._mark_skill_status(filename, error="timeout")
+                return "❌ Script timed out (30s limit)."
+            if result.returncode == 0:
+                self._mark_skill_status(filename, error=None)
+                output = result.stdout or "(no output)"
+                if HAS_SANITIZER:
+                    output = sanitize_for_llm(output, max_chars=3000)
+                return output
+            self._mark_skill_status(filename, error=result.stderr[:500])
+            return f"Script error:\n{result.stderr}"
+
+        # Fallback: direct subprocess.run (als sandbox import faalt)
         try:
             result = subprocess.run(
                 ["python", path],
                 capture_output=True,
                 text=True,
                 timeout=30,
-                cwd=str(self.workspace_dir),
+                cwd=workspace,
             )
             if result.returncode == 0:
                 self._mark_skill_status(filename, error=None)
                 output = result.stdout or "(no output)"
-                # Sanitize: voorkom dat ASCII art/formatting als AI input terugkomt
                 if HAS_SANITIZER:
                     output = sanitize_for_llm(output, max_chars=3000)
                 return output

@@ -33,10 +33,23 @@ from fastapi import (
     File,
     Header,
     HTTPException,
+    Request,
     UploadFile,
 )
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
+
+try:
+    from fastapi.staticfiles import StaticFiles
+    from jinja2 import Environment, FileSystemLoader
+    _WEB_DIR = Path(__file__).parent / "danny_toolkit" / "web"
+    _templates = Environment(
+        loader=FileSystemLoader(str(_WEB_DIR / "templates")),
+        autoescape=True,
+    )
+    HAS_DASHBOARD = True
+except ImportError:
+    HAS_DASHBOARD = False
 from pydantic import BaseModel, Field
 
 import uvicorn
@@ -215,7 +228,7 @@ async def query(
     brain = _get_brain()
 
     if req.stream:
-        return _stream_response(req.message, brain)
+        return await _stream_response(req.message, brain)
 
     start = time.time()
     engine = SwarmEngine(brain=brain)
@@ -247,8 +260,8 @@ async def query(
     )
 
 
-def _stream_response(message: str, brain):
-    """SSE streaming generator voor live updates."""
+async def _stream_response(message: str, brain):
+    """SSE streaming via async generator (fix: was sync wrapper)."""
     from swarm_engine import SwarmEngine
 
     async def _generate():
@@ -269,14 +282,12 @@ def _stream_response(message: str, brain):
             )
             return
 
-        # Stuur callback updates als SSE events
         for update in updates:
             yield (
                 f"data: {json.dumps({'update': update})}"
                 "\n\n"
             )
 
-        # Stuur uiteindelijke payloads
         for p in payloads:
             payload_data = {
                 "agent": p.agent,
@@ -294,23 +305,8 @@ def _stream_response(message: str, brain):
 
         yield "data: {\"done\": true}\n\n"
 
-    # Wrap async generator in sync generator
-    async def _run():
-        results = []
-        async for chunk in _generate():
-            results.append(chunk)
-        return results
-
-    loop = asyncio.new_event_loop()
-    chunks = loop.run_until_complete(_run())
-    loop.close()
-
-    def _sync_gen():
-        for chunk in chunks:
-            yield chunk
-
     return StreamingResponse(
-        _sync_gen(),
+        _generate(),
         media_type="text/event-stream",
     )
 
@@ -535,6 +531,181 @@ async def heartbeat(
             status_code=500,
             detail=f"HeartbeatDaemon fout: {e}",
         )
+
+
+# ─── WEB DASHBOARD (HTMX) ─────────────────────────
+
+if HAS_DASHBOARD:
+    app.mount(
+        "/static",
+        StaticFiles(directory=str(_WEB_DIR / "static")),
+        name="static",
+    )
+
+    @app.get("/", include_in_schema=False)
+    async def root_redirect():
+        return RedirectResponse(url="/ui/")
+
+    @app.get("/ui/", response_class=HTMLResponse, include_in_schema=False)
+    async def dashboard():
+        tmpl = _templates.get_template("dashboard.html")
+        return HTMLResponse(tmpl.render())
+
+    @app.get("/ui/partials/agents", response_class=HTMLResponse, include_in_schema=False)
+    async def partial_agents():
+        brain = _get_brain()
+        agents = []
+        if hasattr(brain, "nodes"):
+            for role, node in brain.nodes.items():
+                agents.append({
+                    "name": node.name,
+                    "status": node.status,
+                    "tier": node.tier.value if hasattr(node.tier, "value") else str(node.tier),
+                    "energy": node.energy,
+                    "tasks_completed": node.tasks_completed,
+                })
+        tmpl = _templates.get_template("partials/agent_grid.html")
+        return HTMLResponse(tmpl.render(agents=agents))
+
+    @app.get("/ui/partials/governor", response_class=HTMLResponse, include_in_schema=False)
+    async def partial_governor():
+        brain = _get_brain()
+        stats = {}
+        try:
+            gov = brain.governor
+            stats["Status"] = "ACTIEF"
+            if hasattr(gov, "_api_failures"):
+                failures = gov._api_failures
+                if failures >= gov.MAX_API_FAILURES:
+                    stats["Circuit Breaker"] = "OPEN"
+                elif failures > 0:
+                    stats["Circuit Breaker"] = "HALF_OPEN"
+                else:
+                    stats["Circuit Breaker"] = "CLOSED"
+                stats["Failures"] = failures
+            if hasattr(gov, "_tokens_used_hour"):
+                stats["Tokens/uur"] = gov._tokens_used_hour
+            if hasattr(gov, "MAX_TOKENS_PER_HOUR"):
+                stats["Max tokens/uur"] = gov.MAX_TOKENS_PER_HOUR
+        except Exception:
+            stats["Status"] = "NIET BESCHIKBAAR"
+        tmpl = _templates.get_template("partials/governor.html")
+        return HTMLResponse(tmpl.render(stats=stats))
+
+    @app.get("/ui/partials/rate-limits", response_class=HTMLResponse, include_in_schema=False)
+    async def partial_rate_limits():
+        limits = []
+        try:
+            from danny_toolkit.core.key_manager import get_key_manager
+            km = get_key_manager()
+            if hasattr(km, "get_status"):
+                status = km.get_status()
+                for agent_name, info in status.items():
+                    rpm_max = info.get("rpm_limit", 30)
+                    tpm_max = info.get("tpm_limit", 6000)
+                    rpm_used = info.get("rpm_used", 0)
+                    tpm_used = info.get("tpm_used", 0)
+                    limits.append({
+                        "name": agent_name,
+                        "rpm_used": rpm_used,
+                        "rpm_max": rpm_max,
+                        "rpm_pct": min(100, int(rpm_used / max(rpm_max, 1) * 100)),
+                        "tpm_used": tpm_used,
+                        "tpm_max": tpm_max,
+                        "tpm_pct": min(100, int(tpm_used / max(tpm_max, 1) * 100)),
+                    })
+        except Exception:
+            pass
+        tmpl = _templates.get_template("partials/rate_limits.html")
+        return HTMLResponse(tmpl.render(limits=limits))
+
+    @app.get("/ui/partials/cortex", response_class=HTMLResponse, include_in_schema=False)
+    async def partial_cortex():
+        stats = {"nodes": 0, "edges": 0, "entities": 0, "triples": 0}
+        try:
+            from danny_toolkit.brain.cortex import TheCortex
+            cortex = TheCortex()
+            if hasattr(cortex, "get_stats"):
+                stats.update(cortex.get_stats())
+            else:
+                if cortex._graph is not None:
+                    stats["nodes"] = cortex._graph.number_of_nodes()
+                    stats["edges"] = cortex._graph.number_of_edges()
+        except Exception:
+            pass
+        tmpl = _templates.get_template("partials/cortex_stats.html")
+        return HTMLResponse(tmpl.render(stats=stats))
+
+    @app.get("/ui/events", include_in_schema=False)
+    async def sse_events():
+        """SSE stream — polls NeuralBus elke 2s voor nieuwe events."""
+        async def _event_generator():
+            last_seen = 0
+            while True:
+                try:
+                    from danny_toolkit.core.neural_bus import get_bus
+                    bus = get_bus()
+                    all_events = []
+                    for event_type, history in bus._history.items():
+                        for evt in history:
+                            all_events.append(evt)
+                    # Sort by timestamp, newest first
+                    all_events.sort(
+                        key=lambda e: e.timestamp if hasattr(e, "timestamp") else "",
+                        reverse=True,
+                    )
+                    for evt in all_events[:5]:
+                        evt_hash = hash(
+                            (evt.event_type, str(evt.timestamp))
+                        )
+                        if evt_hash != last_seen:
+                            last_seen = evt_hash
+                            data = {
+                                "event_type": evt.event_type,
+                                "bron": evt.bron,
+                                "timestamp": evt.timestamp.strftime("%H:%M:%S")
+                                if hasattr(evt.timestamp, "strftime")
+                                else str(evt.timestamp),
+                                "summary": str(evt.data)[:120],
+                            }
+                            tmpl = _templates.get_template(
+                                "partials/event_feed.html"
+                            )
+                            html = tmpl.render(event=data)
+                            yield f"data: {html}\n\n"
+                except Exception:
+                    pass
+                await asyncio.sleep(2)
+
+        return StreamingResponse(
+            _event_generator(),
+            media_type="text/event-stream",
+        )
+
+    @app.get(
+        "/api/v1/metrics",
+        summary="Systeem metrics (JSON)",
+        tags=["Systeem"],
+    )
+    async def metrics(
+        _key: str = Depends(verify_api_key),
+    ):
+        """JSON metrics endpoint — auth-protected."""
+        brain = _get_brain()
+        result = {"agents": 0, "uptime": 0.0}
+        if hasattr(brain, "nodes"):
+            result["agents"] = len(brain.nodes)
+        result["uptime"] = round(time.time() - _SERVER_START_TIME, 1)
+        try:
+            import psutil
+            proc = psutil.Process(os.getpid())
+            result["memory_mb"] = round(
+                proc.memory_info().rss / (1024 * 1024), 1
+            )
+            result["cpu_percent"] = proc.cpu_percent()
+        except Exception:
+            pass
+        return result
 
 
 # ─── ENTRY POINT ───────────────────────────────────

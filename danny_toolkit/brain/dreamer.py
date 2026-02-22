@@ -7,6 +7,7 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 from groq import AsyncGroq
+from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import Kleur
 
 try:
@@ -45,7 +46,7 @@ class Dreamer:
             self.client = km.create_async_client("Dreamer") or AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
         else:
             self.client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
-        self.model = "meta-llama/llama-4-scout-17b-16e-instruct"
+        self.model = Config.LLM_MODEL
 
     async def rem_cycle(self):
         """Full REM cycle — run at 04:00 via daemon_heartbeat."""

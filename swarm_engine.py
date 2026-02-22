@@ -58,6 +58,9 @@ class TaskVerificationError(Exception):
         self.payload = payload
 
 
+# ── CONFIG ──
+from danny_toolkit.core.config import Config
+
 # ── CORTICAL STACK LOGGING ──
 
 try:
@@ -575,7 +578,7 @@ class MemexAgent(BrainAgent):
         plan_raw, _, _ = await asyncio.to_thread(
             brain._execute_with_brain,
             plan_prompt,
-            "qwen/qwen3-32b",
+            Config.LLM_FALLBACK_MODEL,
             50,
         )
 

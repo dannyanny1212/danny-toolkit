@@ -43,6 +43,7 @@ class EventTypes:
     SYNAPSE_FEEDBACK = "synapse_feedback"
     PHANTOM_PREDICTION = "phantom_prediction"
     PHANTOM_HIT = "phantom_hit"
+    SANDBOX_EXECUTION = "sandbox_execution"
 
 
 class BusEvent:

@@ -20,6 +20,7 @@ except ImportError:
     pass
 
 from groq import AsyncGroq
+from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import Kleur
 
 try:
@@ -104,7 +105,7 @@ class TheCortex:
             self.client = km.create_async_client("TheCortex") or AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
         else:
             self.client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
-        self.model = "meta-llama/llama-4-scout-17b-16e-instruct"
+        self.model = Config.LLM_MODEL
 
         # In-memory graaf (NetworkX)
         self._graph = nx.DiGraph() if HAS_NETWORKX else None

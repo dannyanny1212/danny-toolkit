@@ -44,6 +44,9 @@ TESTS = [
     {"naam": "Synapse & Phantom",  "cmd": [PYTHON, f"{PROJECT_ROOT}/test_synapse.py"]},
     {"naam": "Phase 17 Stability", "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase17.py"]},
     {"naam": "SmartKeyManager",    "cmd": [PYTHON, f"{PROJECT_ROOT}/test_key_manager.py"]},
+    {"naam": "Phase 19 Config",    "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase19.py"]},
+    {"naam": "Phase 20 WebGUI",    "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase20.py"]},
+    {"naam": "Phase 21 Sandbox",   "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase21.py"]},
 ]
 
 BREEDTE = 60
@@ -100,7 +103,7 @@ def run_test(test: dict) -> dict:
 def main():
     print(f"{'=' * BREEDTE}")
     print(f"  DANNY TOOLKIT — MASTER TEST RUNNER")
-    print(f"  {len(TESTS)} test suites")  # 13 suites
+    print(f"  {len(TESTS)} test suites")
     print(f"{'=' * BREEDTE}")
 
     totaal_start = time.time()

@@ -392,8 +392,9 @@ Belangrijke regels:
             return self._process_anthropic(system_message, use_tools, max_turns)
 
     # Groq modellen: primair (groot) en fallback (klein)
-    GROQ_MODEL_PRIMARY = "meta-llama/llama-4-scout-17b-16e-instruct"
-    GROQ_MODEL_FALLBACK = "qwen/qwen3-32b"
+    from danny_toolkit.core.config import Config as _Cfg
+    GROQ_MODEL_PRIMARY = _Cfg.LLM_MODEL
+    GROQ_MODEL_FALLBACK = _Cfg.LLM_FALLBACK_MODEL
     # Ollama lokaal model
     OLLAMA_MODEL = "gemma3:4b"
 

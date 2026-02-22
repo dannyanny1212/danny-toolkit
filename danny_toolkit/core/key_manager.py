@@ -21,11 +21,19 @@ from dataclasses import dataclass, field
 logger = logging.getLogger(__name__)
 
 # Groq rate limits per model familie (free tier)
+try:
+    from danny_toolkit.core.config import Config as _Cfg
+    _PRIMARY = _Cfg.LLM_MODEL
+    _FALLBACK = _Cfg.LLM_FALLBACK_MODEL
+except ImportError:
+    _PRIMARY = "meta-llama/llama-4-scout-17b-16e-instruct"
+    _FALLBACK = "qwen/qwen3-32b"
+
 MODEL_LIMITS = {
-    "meta-llama/llama-4-scout-17b-16e-instruct": {
+    _PRIMARY: {
         "rpm": 30, "tpm": 30_000, "tpd": 500_000,
     },
-    "qwen/qwen3-32b": {
+    _FALLBACK: {
         "rpm": 60, "tpm": 6_000, "tpd": 500_000,
     },
 }
