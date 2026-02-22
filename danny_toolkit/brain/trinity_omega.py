@@ -1193,7 +1193,8 @@ class PrometheusBrain:
                 try:
                     from danny_toolkit.brain.truth_anchor import TruthAnchor
                     anchor = TruthAnchor()
-                    if not anchor.verify(task, docs[:3]):
+                    grounded, _score = anchor.verify(task, docs[:3])
+                    if not grounded:
                         # Phase 6: Feedback loop — record + research
                         self._trigger_learning_cycle(
                             task, str(docs[:3])[:500],

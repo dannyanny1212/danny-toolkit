@@ -97,6 +97,22 @@ class OmegaGovernor:
     # Token budget (char-based estimation: 1 token ≈ 4 chars)
     MAX_TOKENS_PER_HOUR = 250_000
 
+    # Foutclassificatie mapping
+    _FOUT_CLASSIFICATIE = {
+        "TimeoutError": "VOORBIJGAAND",
+        "asyncio.TimeoutError": "VOORBIJGAAND",
+        "ConnectionError": "VOORBIJGAAND",
+        "ConnectionResetError": "VOORBIJGAAND",
+        "OSError": "VOORBIJGAAND",
+        "ValueError": "HERSTELBAAR",
+        "KeyError": "HERSTELBAAR",
+        "TypeError": "HERSTELBAAR",
+        "AttributeError": "HERSTELBAAR",
+        "RuntimeError": "KRITIEK",
+        "PermissionError": "KRITIEK",
+        "MemoryError": "KRITIEK",
+    }
+
     def __init__(self):
         self._data_dir = (
             Path(__file__).parent.parent.parent / "data" / "apps"
@@ -105,10 +121,13 @@ class OmegaGovernor:
             Path(__file__).parent.parent.parent / "data" / "backups"
         )
 
-        # Circuit breaker state
+        # Circuit breaker state (globaal — backward compat)
         self._api_failures = 0
         self._last_failure_time = 0.0
         self._consecutive_successes = 0
+
+        # Per-provider circuit breakers
+        self._provider_breakers: Dict[str, Dict] = {}
 
         # Learning cycle tracking
         self._learning_cycles_this_hour = 0
@@ -1050,6 +1069,89 @@ class OmegaGovernor:
                 return False, "Prompt injectie gedetecteerd"
 
         return True, "OK"
+
+    # =================================================================
+    # G. Per-Provider Circuit Breakers
+    # =================================================================
+
+    def _get_provider_breaker(self, provider: str) -> Dict:
+        """Verkrijg of maak per-provider circuit breaker state."""
+        if provider not in self._provider_breakers:
+            self._provider_breakers[provider] = {
+                "failures": 0,
+                "last_failure_time": 0.0,
+                "consecutive_successes": 0,
+            }
+        return self._provider_breakers[provider]
+
+    def record_provider_failure(self, provider: str):
+        """Registreer een failure voor een specifieke provider."""
+        breaker = self._get_provider_breaker(provider)
+        breaker["failures"] = min(
+            breaker["failures"] + 1, self.MAX_API_FAILURES,
+        )
+        breaker["last_failure_time"] = time.time()
+        breaker["consecutive_successes"] = 0
+        if breaker["failures"] >= self.MAX_API_FAILURES:
+            self._log("provider_breaker_open", {
+                "provider": provider,
+                "failures": breaker["failures"],
+            })
+            if HAS_ALERTER:
+                try:
+                    get_alerter().alert(
+                        AlertLevel.KRITIEK,
+                        f"Provider {provider} circuit breaker OPEN",
+                        bron="governor",
+                    )
+                except Exception as e:
+                    logger.debug("Alerter error: %s", e)
+        # Backward compat: ook globale breaker bijwerken
+        self.record_api_failure()
+
+    def record_provider_success(self, provider: str):
+        """Registreer een succes voor een specifieke provider."""
+        breaker = self._get_provider_breaker(provider)
+        if breaker["failures"] > 0:
+            breaker["consecutive_successes"] += 1
+            if breaker["consecutive_successes"] >= 2:
+                breaker["failures"] = max(0, breaker["failures"] - 1)
+                breaker["consecutive_successes"] = 0
+                if breaker["failures"] == 0:
+                    breaker["last_failure_time"] = 0.0
+                    self._log("provider_breaker_reset", {
+                        "provider": provider,
+                    })
+        else:
+            breaker["consecutive_successes"] = 0
+        # Backward compat: ook globale breaker bijwerken
+        self.record_api_success()
+
+    def check_provider_health(self, provider: str) -> bool:
+        """Check of een specifieke provider gezond is.
+
+        Returns:
+            True als provider calls toegestaan zijn.
+        """
+        breaker = self._get_provider_breaker(provider)
+        if breaker["failures"] < self.MAX_API_FAILURES:
+            return True
+        elapsed = time.time() - breaker["last_failure_time"]
+        if elapsed >= self.API_COOLDOWN_SECONDS:
+            return True  # Half-open
+        return False
+
+    def classificeer_fout(self, error: Exception) -> str:
+        """Classificeer een fout als KRITIEK, HERSTELBAAR, of VOORBIJGAAND.
+
+        Args:
+            error: De opgetreden Exception.
+
+        Returns:
+            Een van: "KRITIEK", "HERSTELBAAR", "VOORBIJGAAND".
+        """
+        error_name = type(error).__name__
+        return self._FOUT_CLASSIFICATIE.get(error_name, "HERSTELBAAR")
 
     def scrub_pii(self, tekst: str) -> str:
         """Vervang PII in tekst door placeholders.

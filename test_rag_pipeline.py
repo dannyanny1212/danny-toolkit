@@ -275,19 +275,22 @@ def test_truth_anchor_verify():
         from danny_toolkit.brain.truth_anchor import TruthAnchor
         anchor = TruthAnchor()
 
-        # Hoge score -> True
+        # Hoge score -> True (verify retourneert (bool, float) tuple)
         mock_model.predict.return_value = [0.8]
-        result_good = anchor.verify("Python is a language", ["Python is a programming language"])
-        check("Hoge score -> True", result_good is True)
+        grounded_good, score_good = anchor.verify("Python is a language", ["Python is a programming language"])
+        check("Hoge score -> True", grounded_good is True)
+        check("Hoge score waarde", score_good >= 0.45)
 
         # Lage score -> False
         mock_model.predict.return_value = [0.1]
-        result_bad = anchor.verify("Python is a language", ["Cats are fluffy animals"])
-        check("Lage score -> False", result_bad is False)
+        grounded_bad, score_bad = anchor.verify("Python is a language", ["Cats are fluffy animals"])
+        check("Lage score -> False", grounded_bad is False)
+        check("Lage score waarde", score_bad < 0.45)
 
         # Lege context -> False
-        result_empty = anchor.verify("anything", [])
-        check("Lege context -> False", result_empty is False)
+        grounded_empty, score_empty = anchor.verify("anything", [])
+        check("Lege context -> False", grounded_empty is False)
+        check("Lege context score", score_empty == 0.0)
 
 
 # ═══════════════════════════════════════════════════

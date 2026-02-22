@@ -7,25 +7,31 @@ class TruthAnchor:
     Verifies if an answer is actually supported by the documents.
     Uses CPU-friendly Cross-Encoder.
     """
-    def __init__(self):
+
+    DEFAULT_DREMPEL = 0.45
+
+    def __init__(self, drempel=None):
         print(f"{Kleur.CYAAN}⚓ Loading Truth Anchor...{Kleur.RESET}")
         self.model = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
+        self.drempel = drempel if drempel is not None else self.DEFAULT_DREMPEL
 
-    def verify(self, answer: str, context_docs: list[str]) -> bool:
+    def verify(self, answer: str, context_docs: list[str]) -> tuple[bool, float]:
         """
-        Returns True if the answer is grounded in context.
+        Returns (grounded: bool, score: float) tuple.
+
+        grounded is True if the answer is supported by context above threshold.
+        score is the best cross-encoder similarity score.
         """
         if not context_docs:
-            return False  # No context to support the claim
+            return (False, 0.0)
 
         # Prepare pairs: (Answer, Doc1), (Answer, Doc2)...
         pairs = [[answer, doc] for doc in context_docs]
 
         # Score similarity
         scores = self.model.predict(pairs)
-        best_score = max(scores)
+        best_score = float(max(scores))
 
         print(f"⚓ Truth Confidence: {best_score:.2f}")
 
-        # Threshold: < 0.2 usually means "I'm just guessing"
-        return best_score > 0.2
+        return (best_score > self.drempel, best_score)

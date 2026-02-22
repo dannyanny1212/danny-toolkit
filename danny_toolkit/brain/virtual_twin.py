@@ -511,7 +511,7 @@ class VirtualTwin:
             return f"[TWIN:SPECULATIVE] {output}"
 
         try:
-            grounded = anchor.verify(output[:500], context_docs)
+            grounded, _score = anchor.verify(output[:500], context_docs)
             if grounded:
                 return f"[TWIN:VERIFIED] {output}"
             else:
@@ -779,7 +779,7 @@ class VirtualTwin:
         anchor = self._get_truth_anchor()
         if anchor:
             try:
-                verified = anchor.verify(query, rag_context)
+                verified, _score = anchor.verify(query, rag_context)
             except Exception as e:
                 logger.debug("%sTruthAnchor verify failed: %s", SHADOW_PREFIX, e)
 

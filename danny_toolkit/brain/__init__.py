@@ -36,6 +36,8 @@ try:
     from .virtual_twin import VirtualTwin, ShadowCortex
     from .shadow_governance import ShadowGovernance
     from .shadow_permissions import ShadowPermissions
+    from .waakhuis import WaakhuisMonitor, get_waakhuis
+    from .hallucination_shield import HallucinatieSchild
 except ImportError:
     pass
 
@@ -68,6 +70,7 @@ __all__ = [
     "TheCortex", "TheOracleEye", "TheSynapse", "ThePhantom",
     "VirtualTwin", "ShadowCortex",
     "ShadowGovernance", "ShadowPermissions",
+    "WaakhuisMonitor", "get_waakhuis", "HallucinatieSchild",
     # Anti-Hallucination
     "CitationMarshall", "RealityAnchor", "TruthAnchor",
     # Subsystems
@@ -77,5 +80,5 @@ __all__ = [
     "ProjectMap", "BrainCLI",
 ]
 
-__version__ = "6.0.0"
+__version__ = "6.1.0"
 __author__ = "Danny"

@@ -46,6 +46,10 @@ class EventTypes:
     SANDBOX_EXECUTION = "sandbox_execution"
     TWIN_CONSULTATION = "twin_consultation"
     IMMUNE_RESPONSE = "immune_response"
+    HALLUCINATION_BLOCKED = "hallucination_blocked"
+    WAAKHUIS_ALERT = "waakhuis_alert"
+    WAAKHUIS_HEALTH = "waakhuis_health"
+    ERROR_ESCALATED = "error_escalated"
 
 
 class BusEvent:

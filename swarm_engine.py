@@ -1997,6 +1997,7 @@ class SwarmEngine:
             "phantom_hits": 0,
             "agent_errors": 0,
             "twin_consultations": 0,
+            "schild_blocks": 0,
         }
 
         # Echo Guard — dedup gate (hash, timestamp)
@@ -2065,11 +2066,23 @@ class SwarmEngine:
             result = await agent.process(agent_input, self.brain)
             elapsed_ms = (time.time() - t0) * 1000
             self._record_agent_metric(agent.name, elapsed_ms)
+            # Waakhuis: registreer succesvolle dispatch
+            try:
+                from danny_toolkit.brain.waakhuis import get_waakhuis
+                get_waakhuis().registreer_dispatch(agent.name, elapsed_ms)
+            except Exception:
+                pass
             return result
         except Exception as e:
             elapsed_ms = (time.time() - t0) * 1000
             self._record_agent_metric(agent.name, elapsed_ms, error=e)
             logger.warning("Agent %s fout: %s", agent.name, e)
+            # Waakhuis: registreer fout
+            try:
+                from danny_toolkit.brain.waakhuis import get_waakhuis
+                get_waakhuis().registreer_fout(agent.name, type(e).__name__, str(e)[:200])
+            except Exception:
+                pass
             _log_to_cortical(
                 agent.name, "agent_error",
                 {"error": str(e)[:200],
@@ -2263,8 +2276,11 @@ class SwarmEngine:
                 payload.display_text or payload.content
             )[:3000]
             try:
-                verdict = await tribunal.adeliberate(
-                    user_input, content,
+                verdict = await asyncio.wait_for(
+                    tribunal.adeliberate(
+                        user_input, content,
+                    ),
+                    timeout=30.0,
                 )
                 payload.metadata["tribunal_verified"] = (
                     verdict.accepted
@@ -2288,6 +2304,17 @@ class SwarmEngine:
                             "\u2696\ufe0f TRIBUNAL: output niet"
                             " gevalideerd"
                         )
+            except asyncio.TimeoutError:
+                self._swarm_metrics[
+                    "tribunal_errors"
+                ] += 1
+                logger.warning(
+                    "Tribunal timeout na 30s voor %s",
+                    payload.agent,
+                )
+                payload.metadata["tribunal_warning"] = (
+                    "Tribunal verificatie timeout (30s)"
+                )
             except Exception as e:
                 self._swarm_metrics[
                     "tribunal_errors"
@@ -3222,6 +3249,63 @@ class SwarmEngine:
             log(
                 "\u23ed\ufe0f SENTINEL:"
                 " sampling (tuning)"
+            )
+
+        # 7.5 HallucinatieSchild — finale anti-hallucinatie gate
+        try:
+            from danny_toolkit.brain.hallucination_shield import (
+                HallucinatieSchild,
+            )
+            schild = HallucinatieSchild()
+            schild_non_error = [
+                r for r in results if r.type != "error"
+            ]
+            if schild_non_error:
+                schild_rapport = schild.beoordeel(
+                    schild_non_error,
+                    user_input,
+                )
+                if schild_rapport.geblokkeerd:
+                    self._swarm_metrics[
+                        "schild_blocks"
+                    ] += 1
+                    log(
+                        "\U0001f6ab SCHILD: output"
+                        " geblokkeerd"
+                        f" (score {schild_rapport.totaal_score:.2f})"
+                    )
+                    blocked_payload = SwarmPayload(
+                        agent="HallucinatieSchild",
+                        type="text",
+                        content=(
+                            "Antwoord geblokkeerd door"
+                            " HallucinatieSchild"
+                            f" (score:"
+                            f" {schild_rapport.totaal_score:.2f})"
+                        ),
+                        display_text=(
+                            "\u26a0\ufe0f Antwoord niet"
+                            " betrouwbaar genoeg."
+                            " Probeer de vraag"
+                            " specifieker te stellen."
+                        ),
+                        metadata={
+                            "schild_blocked": True,
+                            "schild_score": (
+                                schild_rapport.totaal_score
+                            ),
+                        },
+                    )
+                    error_only = [
+                        r for r in results
+                        if r.type == "error"
+                    ]
+                    results = [blocked_payload] + error_only
+        except ImportError:
+            pass
+        except Exception as e:
+            logger.debug(
+                "HallucinatieSchild fout: %s", e,
             )
 
         # Callback per resultaat
