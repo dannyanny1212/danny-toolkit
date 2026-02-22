@@ -47,6 +47,7 @@ data/.security_config_hash
 
 # Niet-code bestanden
 data/met.pdf
+kennisbank/*.mhtml
 
 # Artificer forge cache (runtime generated skills)
 danny_toolkit/skills/forge/skill_*.py
@@ -65,6 +66,9 @@ data/daemon_heartbeat.txt
 data/cortical_stack.db
 data/cortical_stack.db-shm
 data/cortical_stack.db-wal
+data/waakhuis_metrics.db
+data/waakhuis_metrics.db-shm
+data/waakhuis_metrics.db-wal
 
 # Generated output
 data/output/
