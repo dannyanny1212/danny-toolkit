@@ -104,3 +104,6 @@ desktop.ini
 htmlcov/
 .coverage
 .pytest_cache/
+
+# Omega Sovereign Core workspace (runtime)
+Omega_Sovereign_Core/
