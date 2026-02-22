@@ -252,7 +252,8 @@ class Config:
     # NVIDIA NIM (OpenAI-compatible endpoint)
     NVIDIA_NIM_API_KEY = os.environ.get("NVIDIA_NIM_API_KEY", "")
     NVIDIA_NIM_BASE_URL = os.environ.get("NVIDIA_NIM_BASE_URL", "https://integrate.api.nvidia.com/v1")
-    NVIDIA_NIM_MODEL = os.environ.get("NVIDIA_NIM_MODEL", "nvidia/nemotron-mini-4b-instruct")
+    NVIDIA_NIM_MODEL = os.environ.get("NVIDIA_NIM_MODEL", "qwen/qwen2.5-coder-32b-instruct")
+    NIM_REPOSITORY_OVERRIDE = os.environ.get("NIM_REPOSITORY_OVERRIDE", "")
 
     # THE BRAIN (Cloud — High IQ, Zero VRAM)
     LLM_PROVIDER = "groq"
