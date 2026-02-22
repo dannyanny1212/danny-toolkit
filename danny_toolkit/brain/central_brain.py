@@ -58,6 +58,12 @@ except ImportError:
     GROQ_BESCHIKBAAR = False
 
 try:
+    from openai import OpenAI as NvidiaClient
+    NVIDIA_NIM_BESCHIKBAAR = True
+except ImportError:
+    NVIDIA_NIM_BESCHIKBAAR = False
+
+try:
     from ..core.key_manager import get_key_manager
     HAS_KEY_MANAGER = True
 except ImportError:
@@ -139,11 +145,22 @@ class CentralBrain:
                 Kleur.GROEN,
             ))
 
+        # NVIDIA NIM als cloud fallback
+        self._nvidia_nim_available = (
+            NVIDIA_NIM_BESCHIKBAAR and Config.has_nvidia_nim_key()
+        )
+        if self._nvidia_nim_available:
+            print(kleur(
+                "   [OK] Fallback: NVIDIA NIM beschikbaar",
+                Kleur.GROEN,
+            ))
+
         # Per-provider circuit breakers (geïsoleerd)
         self._provider_breakers = {
             "groq_70b": {"fails": 0, "last_fail": 0},
             "groq_8b": {"fails": 0, "last_fail": 0},
             "anthropic": {"fails": 0, "last_fail": 0},
+            "nvidia_nim": {"fails": 0, "last_fail": 0},
             "ollama": {"fails": 0, "last_fail": 0},
         }
         self._breaker_max = 3
@@ -403,6 +420,9 @@ Belangrijke regels:
     GROQ_MODEL_FALLBACK = _Cfg.LLM_FALLBACK_MODEL
     # Ollama lokaal model
     OLLAMA_MODEL = "gemma3:4b"
+    # NVIDIA NIM cloud model
+    NVIDIA_NIM_MODEL = Config.NVIDIA_NIM_MODEL
+    NVIDIA_NIM_BASE_URL = Config.NVIDIA_NIM_BASE_URL
 
     def _process_groq(
         self,
@@ -588,6 +608,20 @@ Belangrijke regels:
                                 self._fallback_client = None
                                 self._fallback_provider = None
                         return self._process_anthropic(
+                            system_message,
+                            use_tools,
+                            max_turns,
+                        )
+                    # Stap 2.5: NVIDIA NIM
+                    if (
+                        self._nvidia_nim_available
+                        and self._provider_ok("nvidia_nim")
+                    ):
+                        print(kleur(
+                            "   [FALLBACK] -> NVIDIA NIM",
+                            Kleur.GEEL,
+                        ))
+                        return self._process_nvidia_nim(
                             system_message,
                             use_tools,
                             max_turns,
@@ -851,6 +885,71 @@ Belangrijke regels:
                 return f"Ollama fout: {resp.status_code}"
         except Exception as e:
             return f"Ollama fout: {e}"
+
+    def _process_nvidia_nim(
+        self,
+        system_message: str,
+        use_tools: bool,
+        max_turns: int,
+    ) -> str:
+        """Verwerk request via NVIDIA NIM (OpenAI-compatible API)."""
+        client = NvidiaClient(
+            base_url=self.NVIDIA_NIM_BASE_URL,
+            api_key=Config.NVIDIA_NIM_API_KEY,
+        )
+
+        messages = [{"role": "system", "content": system_message}]
+        messages.extend(self.conversation_history)
+
+        try:
+            resp = client.chat.completions.create(
+                model=self.NVIDIA_NIM_MODEL,
+                messages=messages,
+                temperature=0.2,
+                max_tokens=4096,
+            )
+
+            content = resp.choices[0].message.content or ""
+
+            # Token budget registratie
+            try:
+                from .governor import OmegaGovernor
+                OmegaGovernor().registreer_tokens(content)
+            except Exception as e:
+                logger.debug("Token registratie error: %s", e)
+
+            with self._history_lock:
+                self.conversation_history.append({
+                    "role": "assistant",
+                    "content": content,
+                })
+
+            self._provider_success("nvidia_nim")
+            self._sla_stats_op()
+            return content
+
+        except Exception as e:
+            logger.debug("NVIDIA NIM fout: %s", e)
+            self._provider_fail("nvidia_nim")
+            # Doorvallen naar volgende provider in de chain
+            if (
+                self._ollama_available
+                and self._provider_ok("ollama")
+            ):
+                print(kleur(
+                    f"   [FALLBACK] NVIDIA NIM -> {self.OLLAMA_MODEL}",
+                    Kleur.GEEL,
+                ))
+                return self._process_ollama(
+                    system_message, use_tools, max_turns,
+                )
+            # Emergency offline
+            prompt = (
+                self.conversation_history[-1]["content"]
+                if self.conversation_history
+                else ""
+            )
+            return self._emergency_offline_response(prompt)
 
     def _process_offline(self, user_input: str) -> str:
         """Verwerk request zonder AI (offline modus)."""

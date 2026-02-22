@@ -249,6 +249,11 @@ class Config:
     ELEVENLABS_API_KEY = os.environ.get("ELEVENLABS_API_KEY", "")
     OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
+    # NVIDIA NIM (OpenAI-compatible endpoint)
+    NVIDIA_NIM_API_KEY = os.environ.get("NVIDIA_NIM_API_KEY", "")
+    NVIDIA_NIM_BASE_URL = os.environ.get("NVIDIA_NIM_BASE_URL", "https://integrate.api.nvidia.com/v1")
+    NVIDIA_NIM_MODEL = os.environ.get("NVIDIA_NIM_MODEL", "nvidia/nemotron-mini-4b-instruct")
+
     # THE BRAIN (Cloud — High IQ, Zero VRAM)
     LLM_PROVIDER = "groq"
     LLM_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
@@ -344,6 +349,11 @@ class Config:
         return bool(cls.OPENAI_API_KEY)
 
     @classmethod
+    def has_nvidia_nim_key(cls) -> bool:
+        """Check of NVIDIA NIM API key beschikbaar is."""
+        return bool(cls.NVIDIA_NIM_API_KEY)
+
+    @classmethod
     def laad_env_bestand(cls, pad: Path = None) -> dict:
         """
         Laad environment variables uit .env bestand.
@@ -371,6 +381,7 @@ class Config:
         cls.GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
         cls.ELEVENLABS_API_KEY = os.environ.get("ELEVENLABS_API_KEY", "")
         cls.OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+        cls.NVIDIA_NIM_API_KEY = os.environ.get("NVIDIA_NIM_API_KEY", "")
 
         # Hoofdgebruiker
         cls.HOOFDGEBRUIKER_NAAM = os.environ.get("HOOFDGEBRUIKER_NAAM", "")
@@ -521,6 +532,7 @@ class Config:
             ("Voyage", cls.VOYAGE_API_KEY, cls.has_voyage_key()),
             ("OpenAI", cls.OPENAI_API_KEY, cls.has_openai_key()),
             ("ElevenLabs", cls.ELEVENLABS_API_KEY, cls.has_elevenlabs_key()),
+            ("NVIDIA NIM", cls.NVIDIA_NIM_API_KEY, cls.has_nvidia_nim_key()),
         ]
 
         for naam, key, beschikbaar in providers:

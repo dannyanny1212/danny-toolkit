@@ -56,5 +56,8 @@ python-multipart>=0.0.6
 # Telegram Bot
 python-telegram-bot>=20.7
 
+# NVIDIA NIM (OpenAI-compatible)
+openai>=1.0.0
+
 # Environment
 python-dotenv>=1.0.0
