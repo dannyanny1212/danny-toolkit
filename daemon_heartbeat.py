@@ -12,9 +12,11 @@ Gebruik:
 """
 
 import asyncio
+import atexit
 import io
 import logging
 import os
+import signal
 import sys
 import time
 from datetime import datetime
@@ -33,6 +35,23 @@ from rich.table import Table
 from swarm_engine import SwarmEngine
 
 console = Console()
+
+
+# ── CLEAN SHUTDOWN ──
+
+def _flush_cortical():
+    """Flush CorticalStack bij shutdown (atexit/signal)."""
+    try:
+        from danny_toolkit.brain.cortical_stack import (
+            get_cortical_stack,
+        )
+        get_cortical_stack().flush()
+    except Exception as e:
+        logger.debug(
+            "CorticalStack flush bij shutdown: %s", e,
+        )
+
+atexit.register(_flush_cortical)
 
 
 # ── BRAIN LADEN ──
@@ -69,6 +88,12 @@ class HeartbeatDaemon:
         self.is_awake = True
         self.last_check = {}
         self.pulse_count = 0
+
+        # Circuit breaker per taak
+        self._task_failures: dict = {}
+        self._CIRCUIT_BREAKER_THRESHOLD = 3
+        self._CIRCUIT_BREAKER_COOL_CYCLES = 12
+        self._task_skip_until: dict = {}
 
         # Geplande taken
         self.schedule = [
@@ -149,6 +174,23 @@ class HeartbeatDaemon:
                 f" {e}[/red]"
             )
 
+    def _schrijf_heartbeat(self):
+        """Schrijf heartbeat status naar bestand voor externe monitors."""
+        try:
+            from danny_toolkit.core.config import Config
+            hb_path = os.path.join(
+                Config.DATA_DIR, "daemon_heartbeat.txt",
+            )
+            os.makedirs(os.path.dirname(hb_path), exist_ok=True)
+            with open(hb_path, "w", encoding="utf-8") as f:
+                f.write(
+                    f"ts={datetime.now().isoformat()}\n"
+                    f"pulse={self.pulse_count}\n"
+                    f"taken={len(self.schedule)}\n"
+                )
+        except Exception as e:
+            logger.debug("Heartbeat schrijven mislukt: %s", e)
+
     async def pulse(self):
         """Hoofdloop: periodiek taken uitvoeren."""
         console.print(Panel(
@@ -188,14 +230,79 @@ class HeartbeatDaemon:
             self.pulse_count += 1
 
             for task in self.schedule:
-                last_run = self.last_check.get(
-                    task["name"], 0
-                )
-                if now - last_run > task["interval"]:
-                    self.last_check[task["name"]] = now
-                    await self.run_task(task)
+                name = task["name"]
 
-            # Heartbeat indicator
+                # Circuit breaker: skip als in cooldown
+                skip_until = self._task_skip_until.get(
+                    name, 0,
+                )
+                if self.pulse_count < skip_until:
+                    continue
+
+                last_run = self.last_check.get(name, 0)
+                if now - last_run > task["interval"]:
+                    self.last_check[name] = now
+                    try:
+                        await self.run_task(task)
+                        # Reset failures bij succes
+                        self._task_failures[name] = 0
+                    except Exception as e:
+                        # Tel fout op
+                        count = self._task_failures.get(
+                            name, 0,
+                        ) + 1
+                        self._task_failures[name] = count
+                        logger.warning(
+                            "Daemon taak %s crash #%d: %s",
+                            name, count, e,
+                        )
+                        console.print(
+                            f"[red]  ⚠ {name} crash"
+                            f" #{count}: {e}[/red]"
+                        )
+                        # Log naar CorticalStack
+                        try:
+                            from danny_toolkit.brain.cortical_stack import (
+                                get_cortical_stack,
+                            )
+                            get_cortical_stack().log_event(
+                                actor="daemon",
+                                action="task_crash",
+                                details={
+                                    "task": name,
+                                    "error": str(e)[:200],
+                                    "count": count,
+                                },
+                            )
+                        except Exception:
+                            pass
+                        # Threshold: circuit breaker open
+                        if count >= self._CIRCUIT_BREAKER_THRESHOLD:
+                            self._task_skip_until[name] = (
+                                self.pulse_count
+                                + self._CIRCUIT_BREAKER_COOL_CYCLES
+                            )
+                            console.print(
+                                f"[bold red]  ⛔ {name}"
+                                f" uitgeschakeld voor"
+                                f" {self._CIRCUIT_BREAKER_COOL_CYCLES}"
+                                f" cycli[/bold red]"
+                            )
+                            try:
+                                from danny_toolkit.core.alerter import (
+                                    get_alerter, AlertLevel,
+                                )
+                                get_alerter().fire(
+                                    AlertLevel.KRITIEK,
+                                    f"Daemon taak {name}"
+                                    f" circuit breaker open"
+                                    f" na {count} crashes",
+                                )
+                            except ImportError:
+                                pass
+
+            # Heartbeat indicator + bestand
+            self._schrijf_heartbeat()
             ts = datetime.now().strftime("%H:%M:%S")
             console.print(
                 f"[dim]♥ {ts}"
@@ -211,6 +318,15 @@ class HeartbeatDaemon:
 
 def main():
     """Start de Heartbeat Daemon."""
+    # Signal handlers voor clean shutdown
+    def _signal_handler(signum, frame):
+        _flush_cortical()
+        sys.exit(0)
+
+    signal.signal(signal.SIGTERM, _signal_handler)
+    if hasattr(signal, "SIGBREAK"):
+        signal.signal(signal.SIGBREAK, _signal_handler)
+
     # Startup validatie (Phase 26)
     try:
         from danny_toolkit.core.startup_validator import valideer_opstart
@@ -224,16 +340,19 @@ def main():
     try:
         asyncio.run(daemon.pulse())
     except KeyboardInterrupt:
-        try:
-            from danny_toolkit.brain.cortical_stack import (
-                get_cortical_stack,
-            )
-            get_cortical_stack().flush()
-        except Exception as e:
-            logger.debug("CorticalStack flush on shutdown failed: %s", e)
+        _flush_cortical()
         console.print(
             "\n[red]Daemon gestopt.[/red]"
         )
+    except Exception as e:
+        _flush_cortical()
+        logger.exception(
+            "Daemon onverwacht gestopt: %s", e,
+        )
+        console.print(
+            f"\n[bold red]Daemon crash: {e}[/bold red]"
+        )
+        sys.exit(1)
 
 
 if __name__ == "__main__":

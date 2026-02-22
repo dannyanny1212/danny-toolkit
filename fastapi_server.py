@@ -125,6 +125,7 @@ class QueryResponse(BaseModel):
     """Response van /api/v1/query."""
     payloads: List[PayloadResponse]
     execution_time: float
+    error_count: int = 0
 
 
 class HealthResponse(BaseModel):
@@ -257,6 +258,7 @@ async def query(
         )
 
     elapsed = round(time.time() - start, 2)
+    errors = sum(1 for p in payloads if p.type == "error")
 
     return QueryResponse(
         payloads=[
@@ -272,6 +274,7 @@ async def query(
             for p in payloads
         ],
         execution_time=elapsed,
+        error_count=errors,
     )
 
 

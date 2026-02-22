@@ -201,6 +201,121 @@ def show_status(brain):
         console.print()
 
 
+# --- COMMANDO: METRICS ---
+
+def show_metrics():
+    """Toon pipeline metrics, cache stats, key manager status."""
+    # Pipeline Metrics tabel
+    try:
+        from swarm_engine import get_pipeline_metrics
+        metrics = get_pipeline_metrics()
+        if metrics:
+            table = Table(
+                title="Pipeline Metrics",
+                border_style="cyan",
+            )
+            table.add_column("Agent", style="bold white")
+            table.add_column(
+                "Calls", justify="right", style="yellow",
+            )
+            table.add_column(
+                "Errors", justify="right", style="red",
+            )
+            table.add_column(
+                "Succes%", justify="right", style="green",
+            )
+            table.add_column(
+                "Gem. ms", justify="right", style="cyan",
+            )
+            table.add_column(
+                "Laatste fout", style="dim",
+            )
+            for agent, m in metrics.items():
+                table.add_row(
+                    agent,
+                    str(m["calls"]),
+                    str(m["errors"]),
+                    f"{m['success_rate']}%",
+                    f"{m['avg_ms']}",
+                    str(m["last_error"] or "-")[:40],
+                )
+            console.print(table)
+        else:
+            console.print(
+                "[dim]  Geen pipeline metrics"
+                " beschikbaar[/dim]"
+            )
+    except ImportError:
+        console.print(
+            "[dim]  Pipeline metrics niet"
+            " beschikbaar[/dim]"
+        )
+
+    # Response cache stats
+    try:
+        from danny_toolkit.core.response_cache import (
+            get_response_cache,
+        )
+        cs = get_response_cache().stats()
+        hits = cs.get("hits", 0)
+        misses = cs.get("misses", 0)
+        total = hits + misses
+        rate = (
+            f"{hits / total * 100:.0f}%"
+            if total > 0 else "n/a"
+        )
+        console.print(
+            f"  [dim]Cache:[/dim]"
+            f" {cs.get('entries', 0)}"
+            f"/{cs.get('max_entries', '?')} entries"
+            f" | hit rate {rate}"
+            f" ({hits} hits, {misses} misses)"
+        )
+    except ImportError:
+        pass
+
+    # Key manager status
+    try:
+        from danny_toolkit.core.key_manager import (
+            get_key_manager,
+        )
+        km = get_key_manager().get_status()
+        agents = km.get("agents", {})
+        in_cd = sum(
+            1 for a in agents.values()
+            if a.get("in_cooldown")
+        )
+        console.print(
+            f"  [dim]Keys:[/dim]"
+            f" {km.get('keys_beschikbaar', '?')}"
+            f" beschikbaar"
+            f" | 429s: {km.get('globale_429s', 0)}"
+            f" | cooldown:"
+            f" {'JA' if km.get('in_globale_cooldown') else 'nee'}"
+            f" | agents in cooldown: {in_cd}"
+        )
+    except ImportError:
+        pass
+
+    # CorticalStack status
+    try:
+        from danny_toolkit.brain.cortical_stack import (
+            get_cortical_stack,
+        )
+        stack = get_cortical_stack()
+        console.print(
+            f"  [dim]CorticalStack:[/dim]"
+            f" operationeel"
+        )
+    except ImportError:
+        console.print(
+            "  [dim]CorticalStack: niet"
+            " beschikbaar[/dim]"
+        )
+
+    console.print()
+
+
 # --- VISUALISATIE FUNCTIES ---
 
 def render_metrics(media):
@@ -439,6 +554,16 @@ def render_payload(p, header=""):
                 border_style="dim yellow",
             ))
 
+    elif p.type == "error":
+        error_text = str(
+            p.display_text or p.content or "Onbekende fout"
+        )
+        console.print(Panel(
+            f"[bold red]{error_text}[/bold red]",
+            title=f"FOUT {p.agent}",
+            border_style="red",
+        ))
+
     else:
         console.print(Panel(
             Markdown(str(p.display_text)),
@@ -526,7 +651,7 @@ def main():
     )
     console.print(
         "[dim]Commando's: exit | chain | clear"
-        " | status | boot[/dim]"
+        " | status | metrics | boot[/dim]"
     )
 
     chain_mode = False
@@ -581,6 +706,10 @@ def main():
             # 2.6: Commando boot
             if cmd == "boot":
                 show_boot_log(boot_log)
+                continue
+            # 2.7: Commando metrics
+            if cmd == "metrics":
+                show_metrics()
                 continue
             if not cmd:
                 continue

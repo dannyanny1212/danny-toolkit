@@ -467,6 +467,15 @@ class SmartKeyManager:
                 f"{agent.totaal_429s} rate limits"
             )
 
+    def get_agents_in_cooldown(self) -> set:
+        """Retourneer set van agent-namen die in cooldown staan."""
+        now = time.time()
+        with self._metrics_lock:
+            return {
+                naam for naam, agent in self._agents.items()
+                if now < agent.cooldown_tot
+            }
+
     def reset_counters(self):
         """Reset alle tellers (voor tests of dagelijkse reset)."""
         with self._metrics_lock:

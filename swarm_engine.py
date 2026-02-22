@@ -1583,6 +1583,7 @@ class AdaptiveRouter:
         self,
         user_input: str,
         synapse_bias: Dict[str, float] = None,
+        exclude_agents: set = None,
     ) -> List[str]:
         """Semantische routing via cosine similarity.
 
@@ -1590,6 +1591,8 @@ class AdaptiveRouter:
             user_input: Tekst van de gebruiker.
             synapse_bias: Optionele bias multipliers
                 per agent van TheSynapse.
+            exclude_agents: Agents om uit te sluiten
+                (bv. in cooldown).
 
         Returns:
             Lijst van agent keys, gesorteerd op
@@ -1647,6 +1650,13 @@ class AdaptiveRouter:
         targets = [
             s[0] for s in scores[:self.MAX_AGENTS]
         ]
+
+        # Filter throttled agents
+        if exclude_agents:
+            targets = [
+                t for t in targets
+                if t not in exclude_agents
+            ]
 
         # Bij overlap: hoogste score wint
         if "MEMEX" in targets and "IOLAAX" in targets:
@@ -1936,6 +1946,7 @@ class SwarmEngine:
             "synapse_adjustments": 0,
             "phantom_predictions": 0,
             "phantom_hits": 0,
+            "agent_errors": 0,
         }
 
         # Echo Guard — dedup gate (hash, timestamp)
@@ -2009,10 +2020,18 @@ class SwarmEngine:
             elapsed_ms = (time.time() - t0) * 1000
             self._record_agent_metric(agent.name, elapsed_ms, error=e)
             logger.warning("Agent %s fout: %s", agent.name, e)
+            _log_to_cortical(
+                agent.name, "agent_error",
+                {"error": str(e)[:200],
+                 "error_type": type(e).__name__,
+                 "elapsed_ms": round(elapsed_ms, 1)},
+            )
             return SwarmPayload(
                 agent=agent.name,
                 type="error",
                 content=f"[{agent.name}] Fout: {e}",
+                display_text=f"Agent {agent.name} fout: {e}",
+                metadata={"error_type": type(e).__name__},
             )
 
     @property
@@ -2750,10 +2769,21 @@ class SwarmEngine:
                     "Synapse bias failed: %s", e,
                 )
 
+        # Query cooldowns voor rate-aware routing
+        throttled = set()
+        try:
+            from danny_toolkit.core.key_manager import (
+                get_key_manager,
+            )
+            throttled = get_key_manager().get_agents_in_cooldown()
+        except ImportError:
+            pass
+
         # Probeer embedding-based routing
         try:
             targets = self._router.route(
                 user_input, synapse_bias=bias,
+                exclude_agents=throttled,
             )
             _log_to_cortical(
                 "router", "adaptive",
@@ -2773,6 +2803,13 @@ class SwarmEngine:
         ):
             if any(kw in lower for kw in keywords):
                 targets.append(agent_key)
+
+        # Filter throttled agents (keyword fallback)
+        if throttled:
+            targets = [
+                t for t in targets
+                if t not in throttled
+            ]
 
         # MEMEX wint van IOLAAX bij kennisvragen
         if "MEMEX" in targets and "IOLAAX" in targets:
@@ -3017,11 +3054,30 @@ class SwarmEngine:
             (time.time() - t0) * 1000,
         )
 
-        # 6.5 Tribunal Verification (alleen STRATEGIST)
-        if any(r.agent == "Strategist" for r in results):
-            results = await self._tribunal_verify(
-                list(results), user_input, callback,
+        # Tel agent errors
+        error_count = sum(
+            1 for r in results if r.type == "error"
+        )
+        if error_count:
+            self._swarm_metrics["agent_errors"] += error_count
+            logger.warning(
+                "%d agent error(s) in pipeline", error_count,
             )
+
+        # 6.5 Tribunal Verification (alleen STRATEGIST)
+        # Filter error payloads uit tribunal verificatie
+        if any(r.agent == "Strategist" for r in results):
+            non_error = [
+                r for r in results if r.type != "error"
+            ]
+            error_results = [
+                r for r in results if r.type == "error"
+            ]
+            if non_error:
+                non_error = await self._tribunal_verify(
+                    non_error, user_input, callback,
+                )
+            results = list(non_error) + error_results
 
         # 7. SENTINEL Validate (tunable)
         if not t.mag_skippen("sentinel"):
