@@ -24,6 +24,7 @@ import hashlib
 import json
 import logging
 import math
+import os
 import re
 import random
 import sys
@@ -2043,7 +2044,11 @@ class SwarmEngine:
             "circuit_breaker_trips": 0,
             "agent_timeouts": 0,
             "summary_hits": 0,
+            "sentinel_warnings": 0,
         }
+
+        # Cached ShadowCortex instance (lazy init)
+        self._shadow_cortex = None
 
         # Echo Guard — dedup gate (hash, timestamp)
         self._recent_queries: deque = deque(maxlen=50)
@@ -2143,8 +2148,8 @@ class SwarmEngine:
                         "agent": agent_naam,
                         "failures": state["failures"],
                     }, bron="swarm_engine")
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("NeuralBus circuit open publish: %s", e)
 
     def _record_circuit_success(self, agent_naam: str):
         """Reset opeenvolgende fouten na succesvolle dispatch."""
@@ -2161,8 +2166,8 @@ class SwarmEngine:
                         get_bus().publish(EventTypes.AGENT_CIRCUIT_CLOSED, {
                             "agent": agent_naam,
                         }, bron="swarm_engine")
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug("NeuralBus circuit closed publish: %s", e)
 
     def _tick_circuit_cooldowns(self):
         """Verlaag circuit breaker cooldowns met 1 (per query cycle)."""
@@ -2204,8 +2209,8 @@ class SwarmEngine:
             try:
                 from danny_toolkit.brain.waakhuis import get_waakhuis
                 get_waakhuis().registreer_dispatch(agent_naam, elapsed_ms)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Waakhuis dispatch: %s", e)
             # Propageer trace_id naar payload
             if hasattr(result, "trace_id"):
                 result.trace_id = trace_id
@@ -2221,8 +2226,8 @@ class SwarmEngine:
             try:
                 from danny_toolkit.brain.waakhuis import get_waakhuis
                 get_waakhuis().registreer_fout(agent_naam, "TimeoutError", err)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Waakhuis timeout fout: %s", e)
             _log_to_cortical(
                 agent_naam, "agent_timeout",
                 {"timeout_s": timeout, "elapsed_ms": round(elapsed_ms, 1)},
@@ -2244,8 +2249,8 @@ class SwarmEngine:
             try:
                 from danny_toolkit.brain.waakhuis import get_waakhuis
                 get_waakhuis().registreer_fout(agent_naam, type(e).__name__, str(e)[:200])
-            except Exception:
-                pass
+            except Exception as e2:
+                logger.debug("Waakhuis agent fout: %s", e2)
             _log_to_cortical(
                 agent_naam, "agent_error",
                 {"error": str(e)[:200],
@@ -2562,19 +2567,24 @@ class SwarmEngine:
             fragmenten = []
             if (resultaten
                     and resultaten.get("documents")):
-                # Try shadow summary lookup
+                # Try shadow summary lookup (cached instance)
                 summary_map = {}
                 try:
-                    doc_ids = []
-                    if resultaten.get("ids"):
-                        for id_list in resultaten["ids"]:
-                            doc_ids.extend(id_list)
+                    doc_ids = [
+                        did for ids in resultaten.get("ids", [])
+                        for did in ids
+                    ]
                     if doc_ids:
-                        from danny_toolkit.brain.virtual_twin import ShadowCortex
-                        sc = ShadowCortex()
-                        summary_map = sc.lookup_summaries(doc_ids)
-                        if summary_map:
-                            self._swarm_metrics["summary_hits"] += len(summary_map)
+                        if self._shadow_cortex is None:
+                            try:
+                                from danny_toolkit.brain.virtual_twin import ShadowCortex
+                                self._shadow_cortex = ShadowCortex()
+                            except ImportError:
+                                pass
+                        if self._shadow_cortex:
+                            summary_map = self._shadow_cortex.lookup_summaries(doc_ids) or {}
+                            if summary_map:
+                                self._swarm_metrics["summary_hits"] += 1
                 except Exception as e:
                     logger.debug("Shadow summary lookup failed: %s", e)
 
@@ -3133,12 +3143,14 @@ class SwarmEngine:
             if callback:
                 callback(msg)
 
-        # Beperk thread pool voor deze event loop
+        # Beperk thread pool voor deze event loop (hergebruik executor)
         loop = asyncio.get_running_loop()
-        loop.set_default_executor(ThreadPoolExecutor(
-            max_workers=_SWARM_MAX_WORKERS,
-            thread_name_prefix="swarm",
-        ))
+        if not hasattr(self, "_executor"):
+            self._executor = ThreadPoolExecutor(
+                max_workers=_SWARM_MAX_WORKERS,
+                thread_name_prefix="swarm",
+            )
+        loop.set_default_executor(self._executor)
 
         t = self._tuner
 

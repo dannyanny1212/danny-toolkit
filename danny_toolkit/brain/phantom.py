@@ -115,6 +115,13 @@ class ThePhantom:
         """)
         self._conn.commit()
 
+    def close(self):
+        """Sluit de SQLite connectie."""
+        try:
+            self._conn.close()
+        except Exception:
+            pass
+
     def update_patterns(self):
         """Rebuild temporal patterns from interaction_trace.
 
@@ -123,13 +130,17 @@ class ThePhantom:
         """
         logger.info("Phantom: rebuilding temporal patterns...")
 
-        # Fetch all resolved traces with timestamps
-        rows = self._conn.execute(
-            """SELECT category, timestamp
-               FROM interaction_trace
-               WHERE category != 'UNKNOWN'
-               ORDER BY timestamp ASC"""
-        ).fetchall()
+        # Guard: interaction_trace may not exist yet (created by TheSynapse)
+        try:
+            rows = self._conn.execute(
+                """SELECT category, timestamp
+                   FROM interaction_trace
+                   WHERE category != 'UNKNOWN'
+                   ORDER BY timestamp ASC"""
+            ).fetchall()
+        except Exception as e:
+            logger.warning("Phantom: interaction_trace not ready: %s", e)
+            return
 
         if len(rows) < self.MIN_SAMPLES:
             logger.info("Phantom: insufficient data (%d traces)", len(rows))
@@ -510,30 +521,21 @@ class ThePhantom:
         self._conn.commit()
 
     def get_accuracy(self) -> Dict:
-        """Self-measurement: prediction accuracy stats."""
+        """Self-measurement: prediction accuracy stats (single query)."""
         row = self._conn.execute(
-            """SELECT COUNT(*) FROM phantom_predictions
+            """SELECT
+                COUNT(*) as total,
+                COALESCE(SUM(hit), 0) as hits,
+                COALESCE(SUM(CASE WHEN pre_warmed = 1 THEN 1 ELSE 0 END), 0) as pre_warmed,
+                COALESCE(SUM(CASE WHEN pre_warmed = 1 AND hit = 1 THEN 1 ELSE 0 END), 0) as warm_hits
+               FROM phantom_predictions
                WHERE resolved = 1"""
         ).fetchone()
+
         total = row[0] if row else 0
-
-        row = self._conn.execute(
-            """SELECT COUNT(*) FROM phantom_predictions
-               WHERE resolved = 1 AND hit = 1"""
-        ).fetchone()
-        hits = row[0] if row else 0
-
-        row = self._conn.execute(
-            """SELECT COUNT(*) FROM phantom_predictions
-               WHERE pre_warmed = 1 AND resolved = 1"""
-        ).fetchone()
-        pre_warmed = row[0] if row else 0
-
-        row = self._conn.execute(
-            """SELECT COUNT(*) FROM phantom_predictions
-               WHERE pre_warmed = 1 AND hit = 1 AND resolved = 1"""
-        ).fetchone()
-        warm_hits = row[0] if row else 0
+        hits = row[1] if row else 0
+        pre_warmed = row[2] if row else 0
+        warm_hits = row[3] if row else 0
 
         return {
             "total_predictions": total,

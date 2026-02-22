@@ -1045,12 +1045,15 @@ class ShadowCortex:
             logger.debug("%sShadow summary table creation failed: %s", SHADOW_PREFIX, e)
 
     def _get_summary_conn(self) -> sqlite3.Connection:
-        """Get a connection to the CorticalStack DB for summary operations."""
-        db_path = str(Config.DATA_DIR / "cortical_stack.db")
-        conn = sqlite3.connect(db_path, timeout=10, check_same_thread=False)
-        conn.execute("PRAGMA journal_mode=WAL")
-        conn.execute("PRAGMA busy_timeout=5000")
-        return conn
+        """Get a cached connection to the CorticalStack DB for summary operations."""
+        if not hasattr(self, "_summary_conn") or self._summary_conn is None:
+            db_path = str(Config.DATA_DIR / "cortical_stack.db")
+            self._summary_conn = sqlite3.connect(
+                db_path, timeout=10, check_same_thread=False,
+            )
+            self._summary_conn.execute("PRAGMA journal_mode=WAL")
+            self._summary_conn.execute("PRAGMA busy_timeout=5000")
+        return self._summary_conn
 
     @staticmethod
     def _doc_hash(tekst: str) -> str:
@@ -1136,28 +1139,29 @@ class ShadowCortex:
                 )
                 samenvatting = chat.choices[0].message.content
 
-            if not samenvatting:
+            if not samenvatting or not samenvatting.strip():
                 return None
+            samenvatting = samenvatting.strip()
 
             # Track token usage
             samenvatting_tokens = self._estimate_tokens(samenvatting)
             vault.registreer_shadow_tokens(samenvatting_tokens + origineel_tokens // 4)
 
-            # Store in shadow_summaries
+            # Store in shadow_summaries (use excluded.* for ON CONFLICT)
             conn = self._get_summary_conn()
             conn.execute(
                 """INSERT INTO shadow_summaries
                    (doc_id, doc_hash, samenvatting, origineel_tokens, samenvatting_tokens)
                    VALUES (?, ?, ?, ?, ?)
                    ON CONFLICT(doc_id)
-                   DO UPDATE SET doc_hash = ?, samenvatting = ?,
-                                origineel_tokens = ?, samenvatting_tokens = ?,
+                   DO UPDATE SET doc_hash = excluded.doc_hash,
+                                samenvatting = excluded.samenvatting,
+                                origineel_tokens = excluded.origineel_tokens,
+                                samenvatting_tokens = excluded.samenvatting_tokens,
                                 aangemaakt = datetime('now')""",
-                (doc_id, doc_hash, samenvatting, origineel_tokens, samenvatting_tokens,
-                 doc_hash, samenvatting, origineel_tokens, samenvatting_tokens),
+                (doc_id, doc_hash, samenvatting, origineel_tokens, samenvatting_tokens),
             )
             conn.commit()
-            conn.close()
 
             # Log ROI
             bespaard = origineel_tokens - samenvatting_tokens
@@ -1217,16 +1221,17 @@ class ShadowCortex:
             for doc_id, samenvatting, orig, sam in rows:
                 result[doc_id] = samenvatting
                 total_bespaard += (orig - sam)
-                # Update usage stats
-                conn.execute(
-                    """UPDATE shadow_summaries
-                       SET gebruik_count = gebruik_count + 1,
-                           laatst_gebruikt = datetime('now')
-                       WHERE doc_id = ?""",
-                    (doc_id,),
-                )
 
+            # Batch update usage stats
             if result:
+                for doc_id in result:
+                    conn.execute(
+                        """UPDATE shadow_summaries
+                           SET gebruik_count = gebruik_count + 1,
+                               laatst_gebruikt = datetime('now')
+                           WHERE doc_id = ?""",
+                        (doc_id,),
+                    )
                 conn.commit()
                 logger.info(
                     "%sSummary lookup: %d/%d hits, ~%d tokens bespaard",
@@ -1245,7 +1250,6 @@ class ShadowCortex:
                     except Exception as e:
                         logger.debug("CorticalStack log failed: %s", e)
 
-            conn.close()
         except Exception as e:
             logger.debug("%sSummary lookup failed: %s", SHADOW_PREFIX, e)
 

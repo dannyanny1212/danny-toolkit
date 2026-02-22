@@ -135,6 +135,11 @@ class CorticalStack:
                     idx_stats_ts_only
                 ON system_stats(timestamp)
             """)
+            cur.execute("""
+                CREATE INDEX IF NOT EXISTS
+                    idx_episodic_actor_action
+                ON episodic_memory(actor, action)
+            """)
 
             self._conn.commit()
 
@@ -154,12 +159,19 @@ class CorticalStack:
             self._last_flush = now
 
     def flush(self):
-        """Forceer commit van alle pending writes."""
+        """Forceer commit van alle pending writes + WAL checkpoint."""
         with self._lock:
             if self._pending_writes > 0:
                 self._conn.commit()
                 self._pending_writes = 0
                 self._last_flush = time.time()
+            # WAL checkpoint om -wal bestand compact te houden
+            try:
+                self._conn.execute(
+                    "PRAGMA wal_checkpoint(TRUNCATE)"
+                )
+            except Exception as e:
+                logger.debug("WAL checkpoint: %s", e)
 
     # ─── Episodic Memory ───
 
@@ -287,20 +299,21 @@ class CorticalStack:
         Returns:
             Dict met key/value/confidence of None.
         """
-        row = self._conn.execute(
-            """
-            SELECT * FROM semantic_memory
-            WHERE key = ?
-            """,
-            (key,),
-        ).fetchone()
-
-        if row is None:
-            return None
-
-        # Update access stats
-        now = datetime.now().isoformat()
+        # Lock for entire read+update to prevent race conditions
         with self._lock:
+            row = self._conn.execute(
+                """
+                SELECT * FROM semantic_memory
+                WHERE key = ?
+                """,
+                (key,),
+            ).fetchone()
+
+            if row is None:
+                return None
+
+            # Update access stats atomically
+            now = datetime.now().isoformat()
             self._conn.execute(
                 """
                 UPDATE semantic_memory

@@ -134,7 +134,7 @@ class DocumentForge:
             for key, value in extra.items():
                 if key.lower() not in verboden:
                     # Sanitize: geen newlines of YAML-brekers in waarden
-                    waarde = str(value).replace("\n", " ").strip()
+                    waarde = str(value).replace("\n", " ").strip()[:500]
                     regels.append(f"{key}: \"{waarde}\"")
 
         regels.append("---")
@@ -228,13 +228,24 @@ class DocumentForge:
         # Stap 4: Combineer header + tekst
         volledig_document = header + schone_tekst + "\n"
 
-        # Stap 5: Opslaan in staging-map
+        # Stap 5: Opslaan in staging-map (atomic write via tempfile)
         staging_dir = cls._get_staging_dir()
         staging_dir.mkdir(parents=True, exist_ok=True)
         pad = staging_dir / bestandsnaam
 
-        with open(pad, "w", encoding="utf-8") as f:
-            f.write(volledig_document)
+        import tempfile
+        try:
+            fd, tmp_path = tempfile.mkstemp(
+                dir=str(staging_dir), suffix=".tmp",
+            )
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                f.write(volledig_document)
+            # Atomic rename (Windows: os.replace overwrites existing)
+            os.replace(tmp_path, str(pad))
+        except Exception:
+            # Fallback: direct write als atomic faalt
+            with open(pad, "w", encoding="utf-8") as f:
+                f.write(volledig_document)
 
         logger.info(
             "DocumentForge: '%s' opgeslagen in staging (%d bytes, auteur=%s)",

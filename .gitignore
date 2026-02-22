@@ -48,6 +48,8 @@ data/.security_config_hash
 # Niet-code bestanden
 data/met.pdf
 kennisbank/*.mhtml
+kennisbank/*.pdf
+kennisbank/*.md
 
 # Artificer forge cache (runtime generated skills)
 danny_toolkit/skills/forge/skill_*.py
@@ -80,8 +82,9 @@ data/screenshot_*.png
 # ChromaDB vector store
 data/rag/chromadb/
 
-# RAG documenten (user uploads)
+# RAG documenten (user uploads + generated)
 data/rag/documenten/*.txt
+data/rag/documenten/*.md
 
 # Runtime memory data
 data/memory/
@@ -89,8 +92,15 @@ data/memory/
 # Misc
 nul
 
+# Shadow RAG staging (runtime)
+data/shadow_rag/documenten/*.md
+data/shadow_rag/documenten/*.txt
+data/shadow_rag/vector_db/
+
 # Keep directory structure
 !data/rag/documenten/.gitkeep
+!data/shadow_rag/documenten/.gitkeep
+!data/shadow_rag/vector_db/.gitkeep
 
 # OS
 .DS_Store

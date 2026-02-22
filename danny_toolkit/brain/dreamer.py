@@ -309,22 +309,31 @@ class Dreamer:
                 alle_texts.extend(peek.get("documents", []))
 
             # Filter kandidaten: niet te kort, niet al samengevat
+            # Haal alle bestaande hashes in één query (batch i.p.v. N+1)
+            filter_conn = sc._get_summary_conn()
+            bestaande_hashes = {}
+            try:
+                if alle_ids:
+                    placeholders = ",".join("?" for _ in alle_ids)
+                    rows = filter_conn.execute(
+                        f"SELECT doc_id, doc_hash FROM shadow_summaries WHERE doc_id IN ({placeholders})",
+                        alle_ids,
+                    ).fetchall()
+                    bestaande_hashes = {r[0]: r[1] for r in rows}
+            except Exception as e:
+                logger.debug("Batch hash lookup failed: %s", e)
+
             candidates = []
+            gezien_ids = set()
             for doc_id, tekst in zip(alle_ids, alle_texts):
                 if not tekst or len(tekst) < 200:
                     continue
+                if doc_id in gezien_ids:
+                    continue
+                gezien_ids.add(doc_id)
                 doc_hash = sc._doc_hash(tekst)
-                try:
-                    conn = sc._get_summary_conn()
-                    row = conn.execute(
-                        "SELECT doc_hash FROM shadow_summaries WHERE doc_id = ?",
-                        (doc_id,),
-                    ).fetchone()
-                    conn.close()
-                    if row and row[0] == doc_hash:
-                        continue
-                except Exception:
-                    pass
+                if bestaande_hashes.get(doc_id) == doc_hash:
+                    continue
                 candidates.append((doc_id, tekst, len(tekst)))
 
             if not candidates:
@@ -340,59 +349,70 @@ class Dreamer:
             samengevat = 0
             totaal_bespaard = 0
 
-            for doc_id, tekst, length in candidates[:max_docs]:
-                prompt = (
-                    "Comprimeer de volgende tekst tot maximaal 30% van het origineel.\n"
-                    "REGELS:\n"
-                    "- Maximaal 2 zinnen.\n"
-                    "- Bewaar ALLEEN: feiten, namen, cijfers, technische termen.\n"
-                    "- Verwijder: meningen, voorbeelden, herhaling, opvulwoorden, inleidingen.\n"
-                    "- Gebruik telegramstijl: kort, direct, geen bijzinnen.\n"
-                    "- Antwoord ALLEEN met de compressie, geen uitleg.\n\n"
-                    f"TEKST:\n{tekst[:4000]}\n\nCOMPRESSIE:"
-                )
+            # Deduplicatie op doc_id
+            gezien = set()
+            unieke_candidates = []
+            for c in candidates[:max_docs]:
+                if c[0] not in gezien:
+                    gezien.add(c[0])
+                    unieke_candidates.append(c)
 
-                try:
-                    chat = await self.client.chat.completions.create(
-                        messages=[{"role": "user", "content": prompt}],
-                        model=self.model,
-                        temperature=0.2,
+            conn = sc._get_summary_conn()
+            try:
+                for doc_id, tekst, length in unieke_candidates:
+                    prompt = (
+                        "Comprimeer de volgende tekst tot maximaal 30% van het origineel.\n"
+                        "REGELS:\n"
+                        "- Maximaal 2 zinnen.\n"
+                        "- Bewaar ALLEEN: feiten, namen, cijfers, technische termen.\n"
+                        "- Verwijder: meningen, voorbeelden, herhaling, opvulwoorden, inleidingen.\n"
+                        "- Gebruik telegramstijl: kort, direct, geen bijzinnen.\n"
+                        "- Antwoord ALLEEN met de compressie, geen uitleg.\n\n"
+                        f"TEKST:\n{tekst[:4000]}\n\nCOMPRESSIE:"
                     )
-                    samenvatting = chat.choices[0].message.content
 
-                    if samenvatting and samenvatting.strip():
-                        doc_hash = sc._doc_hash(tekst)
-                        orig_tokens = sc._estimate_tokens(tekst)
-                        sam_tokens = sc._estimate_tokens(samenvatting)
-
-                        # Opslaan in shadow_summaries
-                        conn = sc._get_summary_conn()
-                        conn.execute(
-                            """INSERT INTO shadow_summaries
-                               (doc_id, doc_hash, samenvatting, origineel_tokens, samenvatting_tokens)
-                               VALUES (?, ?, ?, ?, ?)
-                               ON CONFLICT(doc_id)
-                               DO UPDATE SET doc_hash = ?, samenvatting = ?,
-                                            origineel_tokens = ?, samenvatting_tokens = ?,
-                                            aangemaakt = datetime('now')""",
-                            (doc_id, doc_hash, samenvatting, orig_tokens, sam_tokens,
-                             doc_hash, samenvatting, orig_tokens, sam_tokens),
+                    try:
+                        chat = await self.client.chat.completions.create(
+                            messages=[{"role": "user", "content": prompt}],
+                            model=self.model,
+                            temperature=0.2,
                         )
-                        conn.commit()
-                        conn.close()
+                        samenvatting = (chat.choices[0].message.content or "").strip()
 
-                        bespaard = orig_tokens - sam_tokens
-                        totaal_bespaard += bespaard
-                        samengevat += 1
-                        print(f"  {Kleur.GROEN}✓ {doc_id[:45]} ({orig_tokens}→{sam_tokens} tok){Kleur.RESET}")
-                    else:
-                        print(f"  {Kleur.GEEL}⊘ {doc_id[:45]} (leeg antwoord){Kleur.RESET}")
+                        if samenvatting and len(samenvatting) >= 10:
+                            doc_hash = sc._doc_hash(tekst)
+                            orig_tokens = sc._estimate_tokens(tekst)
+                            sam_tokens = sc._estimate_tokens(samenvatting)
 
-                except Exception as e:
-                    print(f"  {Kleur.ROOD}✗ {doc_id[:45]}: {e}{Kleur.RESET}")
+                            # Opslaan in shadow_summaries (excluded.* syntax)
+                            conn.execute(
+                                """INSERT INTO shadow_summaries
+                                   (doc_id, doc_hash, samenvatting, origineel_tokens, samenvatting_tokens)
+                                   VALUES (?, ?, ?, ?, ?)
+                                   ON CONFLICT(doc_id)
+                                   DO UPDATE SET doc_hash = excluded.doc_hash,
+                                                samenvatting = excluded.samenvatting,
+                                                origineel_tokens = excluded.origineel_tokens,
+                                                samenvatting_tokens = excluded.samenvatting_tokens,
+                                                aangemaakt = datetime('now')""",
+                                (doc_id, doc_hash, samenvatting, orig_tokens, sam_tokens),
+                            )
+                            conn.commit()
 
-                # 3s interval (30 RPM op GROQ_API_KEY_OVERNIGHT)
-                await asyncio.sleep(3)
+                            bespaard = orig_tokens - sam_tokens
+                            totaal_bespaard += bespaard
+                            samengevat += 1
+                            print(f"  {Kleur.GROEN}✓ {doc_id[:45]} ({orig_tokens}→{sam_tokens} tok){Kleur.RESET}")
+                        else:
+                            print(f"  {Kleur.GEEL}⊘ {doc_id[:45]} (leeg antwoord){Kleur.RESET}")
+
+                    except Exception as e:
+                        print(f"  {Kleur.ROOD}✗ {doc_id[:45]}: {e}{Kleur.RESET}")
+
+                    # 3s interval (30 RPM op GROQ_API_KEY_OVERNIGHT)
+                    await asyncio.sleep(3)
+            finally:
+                pass  # Connection reused via sc._get_summary_conn()
 
             # Log resultaten
             roi = sc.get_dividend_roi()
@@ -436,6 +456,7 @@ class Dreamer:
         """
         print(f"{Kleur.GEEL}🔩 Recursive Refiner (dubbele pers)...{Kleur.RESET}")
 
+        conn = None
         try:
             import sqlite3
             db_pad = str(Config.DATA_DIR / "cortical_stack.db")
@@ -454,7 +475,6 @@ class Dreamer:
 
             if not kandidaten:
                 print(f"{Kleur.GROEN}🔩 Recursive Refiner: alle samenvattingen al compact.{Kleur.RESET}")
-                conn.close()
                 return
 
             print(f"{Kleur.CYAAN}🔩 {len(kandidaten)} samenvattingen boven {drempel} tokens{Kleur.RESET}")
@@ -479,11 +499,10 @@ class Dreamer:
                         model=self.model,
                         temperature=0.1,
                     )
-                    super_token = chat.choices[0].message.content
+                    super_token = (chat.choices[0].message.content or "").strip()
 
-                    if super_token and super_token.strip():
-                        super_token = super_token.strip()
-                        nieuwe_tokens = len(super_token) // 4
+                    if super_token and len(super_token) >= 5:
+                        nieuwe_tokens = max(1, len(super_token.split()))
                         bespaard = sam_tokens - nieuwe_tokens
 
                         # Alleen opslaan als het echt korter is
@@ -510,7 +529,6 @@ class Dreamer:
                 await asyncio.sleep(3)
 
             conn.commit()
-            conn.close()
 
             # Log naar CorticalStack
             if HAS_STACK and verfijnd > 0:
@@ -537,6 +555,12 @@ class Dreamer:
         except Exception as e:
             logger.debug("Recursive Refiner error: %s", e)
             print(f"{Kleur.ROOD}🔩 Recursive Refiner error: {e}{Kleur.RESET}")
+        finally:
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
 
     async def _research_failures(self):
         """Research top failure topics via VoidWalker."""

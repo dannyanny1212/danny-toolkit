@@ -455,8 +455,9 @@ class ShadowGovernance:
             "ShadowCortex", "ShadowKeyVault",
         ]
         for name in agent_names:
+            # Match agent name maar niet als prefixed met #@*
             pattern = re.compile(
-                rf'(?<!\w)(?<!#@\*)(?<!#@\*\w){re.escape(name)}(?!\w)'
+                rf'(?<!#@\*){re.escape(name)}(?!\w)'
             )
             if pattern.search(output):
                 prefixed = f"{SHADOW_PREFIX}{name}"
