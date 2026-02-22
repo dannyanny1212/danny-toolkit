@@ -285,6 +285,7 @@ class Config:
     DATA_DIR = BASE_DIR / "data"
     APPS_DATA_DIR = DATA_DIR / "apps"
     RAG_DATA_DIR = DATA_DIR / "rag"
+    SHADOW_RAG_DIR = DATA_DIR / "shadow_rag" / "documenten"
     OUTPUT_DIR = DATA_DIR / "output"
     CONFIG_FILE = DATA_DIR / "toolkit_config.json"
 
@@ -319,7 +320,8 @@ class Config:
             cls.DOCUMENTEN_DIR,
             cls.RAPPORTEN_DIR,
             cls.BACKUP_DIR,
-            cls.LOG_DIR
+            cls.LOG_DIR,
+            cls.SHADOW_RAG_DIR,
         ]
         for d in dirs:
             d.mkdir(exist_ok=True, parents=True)

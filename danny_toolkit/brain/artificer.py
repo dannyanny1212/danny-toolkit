@@ -68,6 +68,12 @@ try:
 except ImportError:
     HAS_RETRY = False
 
+try:
+    from danny_toolkit.core.document_forge import DocumentForge
+    HAS_FORGE = True
+except ImportError:
+    HAS_FORGE = False
+
 
 class Artificer:
     """
@@ -134,6 +140,9 @@ class Artificer:
         print(f"{Kleur.GROEN}🚀 Artificer: Executing...{Kleur.RESET}")
         result = self._run_script(skill_name)
 
+        # 6. Promoveer .md bestanden uit workspace naar DocumentForge staging
+        self._promoveer_workspace_docs(skill_name)
+
         # Publish forge success
         self._publish_event(EventTypes.FORGE_SUCCESS if HAS_BUS else None, {
             "skill": skill_name,
@@ -141,6 +150,146 @@ class Artificer:
         })
 
         return result
+
+    async def forge_document(self, onderwerp: str, categorie: str = "research",
+                             tags: Optional[list] = None) -> str:
+        """Genereer een RAG-document via LLM en sla op via DocumentForge.
+
+        In tegenstelling tot execute_task() (dat scripts smeedt en uitvoert),
+        genereert forge_document() direct een markdown-document en routeert
+        het door de Shadow Airlock pipeline.
+
+        Agenten mogen NIET meer met open() naar de RAG-map schrijven.
+        Alle documenten gaan via DocumentForge → staging → airlock → productie.
+
+        Args:
+            onderwerp: Het onderwerp/de opdracht voor het document.
+            categorie: DocumentForge categorie (research, rapport, etc.).
+            tags: Optionele tags voor metadata.
+
+        Returns:
+            Statusmelding met pad naar staging-bestand.
+        """
+        if not HAS_FORGE:
+            return "❌ DocumentForge niet beschikbaar (import mislukt)."
+
+        print(f"{Kleur.GEEL}📄 Artificer: Document smeden over "
+              f"'{onderwerp[:60]}'...{Kleur.RESET}")
+
+        # LLM-prompt: genereer alleen de body (DocumentForge maakt de header)
+        prompt = (
+            f"Schrijf een beknopt, feitelijk document over: {onderwerp}\n\n"
+            "REGELS:\n"
+            "- Schrijf in het Nederlands.\n"
+            "- Gebruik Markdown-opmaak (headers, lijsten, code blocks).\n"
+            "- Focus op feiten, namen, cijfers en technische details.\n"
+            "- Geen YAML-frontmatter toevoegen (wordt automatisch gegenereerd).\n"
+            "- Geen inleidende tekst als 'Hier is het document'.\n"
+            "- Begin direct met een ## header.\n"
+            "- Maximaal 500 woorden.\n"
+        )
+
+        # Genereer via LLM
+        ruwe_tekst = None
+        if HAS_RETRY:
+            ruwe_tekst = await groq_call_async(
+                self.client, "Artificer", self.model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.4,
+            )
+        else:
+            try:
+                chat = await self.client.chat.completions.create(
+                    messages=[{"role": "user", "content": prompt}],
+                    model=self.model,
+                    temperature=0.4,
+                )
+                ruwe_tekst = chat.choices[0].message.content
+            except Exception as e:
+                print(f"{Kleur.ROOD}📄 Forge document fout: {e}{Kleur.RESET}")
+                return f"❌ LLM-generatie mislukt: {e}"
+
+        if not ruwe_tekst or not ruwe_tekst.strip():
+            return "❌ LLM genereerde lege tekst."
+
+        # Bestandsnaam afleiden uit onderwerp
+        naam = onderwerp.lower().strip()[:60]
+        naam = "".join(c if c.isalnum() or c in " _-" else "_" for c in naam)
+        naam = "_".join(naam.split()) + ".md"
+
+        # Opslaan via DocumentForge → staging (shadow_rag)
+        try:
+            pad = DocumentForge.sla_document_op(
+                bestandsnaam=naam,
+                ruwe_tekst=ruwe_tekst,
+                auteur="Artificer",
+                categorie=categorie,
+                tags=tags or [],
+            )
+            print(f"{Kleur.GROEN}📄 Document gesmeed: {pad.name}{Kleur.RESET}")
+            print(f"   → Staging: {pad}")
+            print(f"   → ShadowAirlock zal valideren en promoveren naar productie.")
+
+            # NeuralBus event
+            self._publish_event(EventTypes.FORGE_SUCCESS if HAS_BUS else None, {
+                "type": "document",
+                "bestand": pad.name,
+                "onderwerp": onderwerp[:200],
+                "categorie": categorie,
+            })
+
+            return f"📄 Document '{pad.name}' opgeslagen in staging. ShadowAirlock zal valideren."
+
+        except Exception as e:
+            print(f"{Kleur.ROOD}📄 DocumentForge opslag mislukt: {e}{Kleur.RESET}")
+            return f"❌ DocumentForge fout: {e}"
+
+    def _promoveer_workspace_docs(self, skill_name: str):
+        """Scan workspace voor .md bestanden en routeer via DocumentForge.
+
+        Na script-executie kunnen er .md bestanden in de workspace staan
+        die door het script zijn gegenereerd. Deze worden automatisch
+        opgepakt en via de Shadow Airlock pipeline gerouteerd.
+
+        Args:
+            skill_name: Naam van het uitgevoerde script (voor tags).
+        """
+        if not HAS_FORGE:
+            return
+
+        try:
+            for pad in self.workspace_dir.iterdir():
+                if not pad.is_file():
+                    continue
+                if pad.suffix.lower() not in (".md", ".txt"):
+                    continue
+                if pad.stat().st_size == 0:
+                    continue
+
+                # Lees de inhoud
+                with open(pad, "r", encoding="utf-8") as f:
+                    inhoud = f.read()
+
+                # Routeer door DocumentForge
+                staging_pad = DocumentForge.sla_document_op(
+                    bestandsnaam=pad.name,
+                    ruwe_tekst=inhoud,
+                    auteur="Artificer",
+                    categorie="intern",
+                    tags=["forge", skill_name.replace(".py", "")],
+                )
+
+                # Verwijder origineel uit workspace (nu veilig in staging)
+                pad.unlink()
+
+                print(f"{Kleur.CYAAN}   📋 Workspace doc → staging: "
+                      f"{staging_pad.name}{Kleur.RESET}")
+                logger.info(
+                    "Artificer: workspace doc '%s' gerouteerd via DocumentForge",
+                    pad.name,
+                )
+        except Exception as e:
+            logger.debug("Workspace doc promotie fout: %s", e)
 
     async def _write_script(self, task: str) -> Optional[str]:
         workspace = str(self.workspace_dir).replace("\\", "/")

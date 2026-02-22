@@ -24,13 +24,15 @@ Architectuur:
                             └── _scrub_output()       ← strip leaked key material
 """
 
+import hashlib
 import logging
 import os
 import re
+import sqlite3
 import time
 import threading
 from collections import deque
-from typing import Optional
+from typing import Dict, List, Optional
 
 from groq import AsyncGroq
 from danny_toolkit.core.config import Config
@@ -871,6 +873,8 @@ class ShadowCortex:
         self._phantom_primes = 0
         # Rolling window of recent shadow insights (dedup)
         self._recent_topics = deque(maxlen=50)
+        # Shadow summary table for Token Dividend Engine
+        self._ensure_summary_table()
 
     def absorb(self, query: str, result: str):
         """Absorb a shadow consult result and transfer intelligence.
@@ -1012,12 +1016,286 @@ class ShadowCortex:
         except Exception as e:
             logger.debug("%sBus broadcast failed: %s", SHADOW_PREFIX, e)
 
+    # ── Token Dividend Engine — Shadow Pre-Summarization ──
+
+    def _ensure_summary_table(self):
+        """Create shadow_summaries table on CorticalStack DB."""
+        try:
+            db_path = str(Config.DATA_DIR / "cortical_stack.db")
+            conn = sqlite3.connect(db_path, timeout=10)
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA busy_timeout=5000")
+            conn.executescript("""
+                CREATE TABLE IF NOT EXISTS shadow_summaries (
+                    doc_id TEXT PRIMARY KEY,
+                    doc_hash TEXT NOT NULL,
+                    samenvatting TEXT NOT NULL,
+                    origineel_tokens INTEGER NOT NULL DEFAULT 0,
+                    samenvatting_tokens INTEGER NOT NULL DEFAULT 0,
+                    gebruik_count INTEGER NOT NULL DEFAULT 0,
+                    laatst_gebruikt TEXT,
+                    aangemaakt TEXT NOT NULL DEFAULT (datetime('now'))
+                );
+                CREATE INDEX IF NOT EXISTS idx_shadow_summaries_hash
+                    ON shadow_summaries(doc_hash);
+            """)
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            logger.debug("%sShadow summary table creation failed: %s", SHADOW_PREFIX, e)
+
+    def _get_summary_conn(self) -> sqlite3.Connection:
+        """Get a connection to the CorticalStack DB for summary operations."""
+        db_path = str(Config.DATA_DIR / "cortical_stack.db")
+        conn = sqlite3.connect(db_path, timeout=10, check_same_thread=False)
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=5000")
+        return conn
+
+    @staticmethod
+    def _doc_hash(tekst: str) -> str:
+        """SHA-256 hash of document text for stale-detection."""
+        return hashlib.sha256(tekst.encode("utf-8", errors="replace")).hexdigest()[:32]
+
+    @staticmethod
+    def _estimate_tokens(tekst: str) -> int:
+        """Rough token estimate (~4 chars per token)."""
+        return len(tekst) // 4 if tekst else 0
+
+    async def summarize_document(
+        self, doc_id: str, tekst: str, vault: "ShadowKeyVault",
+    ) -> Optional[str]:
+        """Compress a RAG document into an ultra-compact summary.
+
+        Respects ShadowKeyVault rate limits. Skips if summary exists and
+        document hash hasn't changed (stale-detection).
+
+        Args:
+            doc_id: ChromaDB document ID.
+            tekst: Full document text.
+            vault: ShadowKeyVault instance for throttle + client.
+
+        Returns:
+            Summary text, or None if skipped/failed.
+        """
+        if not tekst or len(tekst) < 200:
+            return None
+
+        doc_hash = self._doc_hash(tekst)
+        origineel_tokens = self._estimate_tokens(tekst)
+
+        # Check if fresh summary already exists
+        try:
+            conn = self._get_summary_conn()
+            row = conn.execute(
+                "SELECT doc_hash, samenvatting FROM shadow_summaries WHERE doc_id = ?",
+                (doc_id,),
+            ).fetchone()
+            conn.close()
+            if row and row[0] == doc_hash:
+                logger.debug("%sSummary already fresh for %s", SHADOW_PREFIX, doc_id)
+                return row[1]
+        except Exception as e:
+            logger.debug("%sSummary lookup failed: %s", SHADOW_PREFIX, e)
+
+        # Shadow throttle gate
+        allowed, reason = vault.check_shadow_throttle()
+        if not allowed:
+            logger.debug("%sSummary throttled: %s", SHADOW_PREFIX, reason)
+            return None
+
+        vault.registreer_shadow_request()
+
+        # Ultra-compact summarization via Groq
+        prompt = (
+            "Vat de volgende tekst samen in maximaal 3 korte zinnen.\n"
+            "Bewaar alle feiten, namen, cijfers en technische termen.\n"
+            "Laat meningen, herhaling en opvulwoorden weg.\n"
+            "Antwoord ALLEEN met de samenvatting, geen inleiding.\n\n"
+            f"TEKST:\n{tekst[:4000]}\n\n"
+            "SAMENVATTING:"
+        )
+
+        try:
+            if HAS_RETRY:
+                from danny_toolkit.core.groq_retry import groq_call_async
+                samenvatting = await groq_call_async(
+                    vault.client, f"{SHADOW_PREFIX}ShadowSummarizer",
+                    Config.LLM_MODEL,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.2,
+                )
+            else:
+                chat = await vault.client.chat.completions.create(
+                    messages=[{"role": "user", "content": prompt}],
+                    model=Config.LLM_MODEL,
+                    temperature=0.2,
+                )
+                samenvatting = chat.choices[0].message.content
+
+            if not samenvatting:
+                return None
+
+            # Track token usage
+            samenvatting_tokens = self._estimate_tokens(samenvatting)
+            vault.registreer_shadow_tokens(samenvatting_tokens + origineel_tokens // 4)
+
+            # Store in shadow_summaries
+            conn = self._get_summary_conn()
+            conn.execute(
+                """INSERT INTO shadow_summaries
+                   (doc_id, doc_hash, samenvatting, origineel_tokens, samenvatting_tokens)
+                   VALUES (?, ?, ?, ?, ?)
+                   ON CONFLICT(doc_id)
+                   DO UPDATE SET doc_hash = ?, samenvatting = ?,
+                                origineel_tokens = ?, samenvatting_tokens = ?,
+                                aangemaakt = datetime('now')""",
+                (doc_id, doc_hash, samenvatting, origineel_tokens, samenvatting_tokens,
+                 doc_hash, samenvatting, origineel_tokens, samenvatting_tokens),
+            )
+            conn.commit()
+            conn.close()
+
+            # Log ROI
+            bespaard = origineel_tokens - samenvatting_tokens
+            logger.info(
+                "%sShadow summary: %s → %d→%d tokens (bespaard: %d)",
+                SHADOW_PREFIX, doc_id[:30], origineel_tokens,
+                samenvatting_tokens, bespaard,
+            )
+
+            # Log stats to CorticalStack
+            if HAS_STACK:
+                try:
+                    stack = get_cortical_stack()
+                    stack.log_event(
+                        actor=self.NAME,
+                        action="shadow_summary",
+                        details={
+                            "doc_id": doc_id,
+                            "origineel_tokens": origineel_tokens,
+                            "samenvatting_tokens": samenvatting_tokens,
+                            "bespaard": bespaard,
+                        },
+                    )
+                except Exception as e:
+                    logger.debug("CorticalStack log failed: %s", e)
+
+            return samenvatting
+
+        except Exception as e:
+            err_str = str(e).lower()
+            if "429" in err_str or "rate" in err_str:
+                vault.registreer_shadow_429()
+            logger.debug("%sSummary LLM call failed: %s", SHADOW_PREFIX, e)
+            return None
+
+    def lookup_summaries(self, doc_ids: List[str]) -> Dict[str, str]:
+        """Batch-lookup summaries for a list of document IDs.
+
+        Updates gebruik_count and laatst_gebruikt for each hit.
+        Returns dict of {doc_id: samenvatting}.
+        """
+        if not doc_ids:
+            return {}
+
+        result = {}
+        try:
+            conn = self._get_summary_conn()
+            placeholders = ",".join("?" for _ in doc_ids)
+            rows = conn.execute(
+                f"""SELECT doc_id, samenvatting, origineel_tokens, samenvatting_tokens
+                    FROM shadow_summaries
+                    WHERE doc_id IN ({placeholders})""",
+                doc_ids,
+            ).fetchall()
+
+            total_bespaard = 0
+            for doc_id, samenvatting, orig, sam in rows:
+                result[doc_id] = samenvatting
+                total_bespaard += (orig - sam)
+                # Update usage stats
+                conn.execute(
+                    """UPDATE shadow_summaries
+                       SET gebruik_count = gebruik_count + 1,
+                           laatst_gebruikt = datetime('now')
+                       WHERE doc_id = ?""",
+                    (doc_id,),
+                )
+
+            if result:
+                conn.commit()
+                logger.info(
+                    "%sSummary lookup: %d/%d hits, ~%d tokens bespaard",
+                    SHADOW_PREFIX, len(result), len(doc_ids), total_bespaard,
+                )
+
+                # Log cumulative savings to CorticalStack
+                if HAS_STACK and total_bespaard > 0:
+                    try:
+                        stack = get_cortical_stack()
+                        stack.log_event(
+                            actor=self.NAME,
+                            action="shadow_tokens_saved",
+                            details={"tokens_saved": total_bespaard, "hits": len(result)},
+                        )
+                    except Exception as e:
+                        logger.debug("CorticalStack log failed: %s", e)
+
+            conn.close()
+        except Exception as e:
+            logger.debug("%sSummary lookup failed: %s", SHADOW_PREFIX, e)
+
+        return result
+
+    def get_dividend_roi(self) -> dict:
+        """Calculate Token Dividend Engine ROI.
+
+        Returns:
+            Dict with invested, saved, net_savings, roi_ratio,
+            summaries_count, summaries_served.
+        """
+        try:
+            conn = self._get_summary_conn()
+            row = conn.execute(
+                """SELECT
+                    COALESCE(SUM(samenvatting_tokens), 0) as invested,
+                    COALESCE(SUM((origineel_tokens - samenvatting_tokens) * gebruik_count), 0) as saved,
+                    COUNT(*) as summaries_count,
+                    COALESCE(SUM(gebruik_count), 0) as summaries_served
+                   FROM shadow_summaries"""
+            ).fetchone()
+            conn.close()
+
+            invested = row[0]
+            saved = row[1]
+            net = saved - invested
+            ratio = round(saved / invested, 2) if invested > 0 else 0.0
+
+            return {
+                "invested": invested,
+                "saved": saved,
+                "net_savings": net,
+                "roi_ratio": ratio,
+                "summaries_count": row[2],
+                "summaries_served": row[3],
+            }
+        except Exception as e:
+            logger.debug("%sROI calculation failed: %s", SHADOW_PREFIX, e)
+            return {
+                "invested": 0, "saved": 0, "net_savings": 0,
+                "roi_ratio": 0.0, "summaries_count": 0, "summaries_served": 0,
+            }
+
     def get_stats(self) -> dict:
         """Shadow intelligence transfer statistics."""
         with self._lock:
-            return {
+            stats = {
                 "absorptions": self._absorptions,
                 "synapse_boosts": self._synapse_boosts,
                 "cortical_injections": self._cortical_injections,
                 "phantom_primes": self._phantom_primes,
             }
+        # Add Token Dividend ROI
+        stats["dividend_roi"] = self.get_dividend_roi()
+        return stats

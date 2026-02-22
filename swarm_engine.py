@@ -2042,6 +2042,7 @@ class SwarmEngine:
             "schild_blocks": 0,
             "circuit_breaker_trips": 0,
             "agent_timeouts": 0,
+            "summary_hits": 0,
         }
 
         # Echo Guard — dedup gate (hash, timestamp)
@@ -2214,6 +2215,7 @@ class SwarmEngine:
             err = f"Timeout na {timeout}s"
             self._record_agent_metric(agent_naam, elapsed_ms, error=err)
             self._record_circuit_failure(agent_naam)
+            self._swarm_metrics["agent_timeouts"] += 1
             logger.warning("Agent %s timeout na %ss (trace=%s)",
                            agent_naam, timeout, trace_id)
             try:
@@ -2560,9 +2562,35 @@ class SwarmEngine:
             fragmenten = []
             if (resultaten
                     and resultaten.get("documents")):
-                for doc_list in resultaten["documents"]:
-                    for doc in doc_list:
-                        tekst = str(doc)[:max_chars]
+                # Try shadow summary lookup
+                summary_map = {}
+                try:
+                    doc_ids = []
+                    if resultaten.get("ids"):
+                        for id_list in resultaten["ids"]:
+                            doc_ids.extend(id_list)
+                    if doc_ids:
+                        from danny_toolkit.brain.virtual_twin import ShadowCortex
+                        sc = ShadowCortex()
+                        summary_map = sc.lookup_summaries(doc_ids)
+                        if summary_map:
+                            self._swarm_metrics["summary_hits"] += len(summary_map)
+                except Exception as e:
+                    logger.debug("Shadow summary lookup failed: %s", e)
+
+                for i, doc_list in enumerate(resultaten["documents"]):
+                    id_list = (
+                        resultaten["ids"][i]
+                        if resultaten.get("ids") and i < len(resultaten["ids"])
+                        else []
+                    )
+                    for j, doc in enumerate(doc_list):
+                        doc_id = id_list[j] if j < len(id_list) else None
+                        # Use summary if available, otherwise full text
+                        if doc_id and doc_id in summary_map:
+                            tekst = summary_map[doc_id][:max_chars]
+                        else:
+                            tekst = str(doc)[:max_chars]
                         if tekst.strip():
                             fragmenten.append(tekst)
 

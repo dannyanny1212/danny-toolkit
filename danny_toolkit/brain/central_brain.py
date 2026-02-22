@@ -116,10 +116,7 @@ class CentralBrain:
             else:
                 self.client = Groq()
             self.ai_provider = "groq"
-            print(kleur(
-                "   [OK] Central Brain AI actief (Groq)",
-                Kleur.GROEN,
-            ))
+            logger.info("[OK] Central Brain AI actief (Groq)")
             # Anthropic als fallback
             if ANTHROPIC_BESCHIKBAAR and Config.has_anthropic_key():
                 self._fallback_client = Anthropic()
@@ -127,10 +124,7 @@ class CentralBrain:
         elif ANTHROPIC_BESCHIKBAAR and Config.has_anthropic_key():
             self.client = Anthropic()
             self.ai_provider = "anthropic"
-            print(kleur(
-                "   [OK] Central Brain AI actief (Anthropic)",
-                Kleur.GROEN,
-            ))
+            logger.info("[OK] Central Brain AI actief (Anthropic)")
         else:
             print(kleur(
                 "   [!] Central Brain in offline modus",

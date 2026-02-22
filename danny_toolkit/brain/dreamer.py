@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import os
@@ -56,7 +57,7 @@ class Dreamer:
 
     async def rem_cycle(self):
         """Full REM cycle — run at 04:00 via daemon_heartbeat."""
-        print(f"{Kleur.MAGENTA}🌙 Entering REM cycle (System Optimization)...{Kleur.RESET}")
+        logger.info("🌙 Entering REM cycle (System Optimization)...")
 
         # 0. Backup — before any destructive operations
         self._backup_cortical_stack()
@@ -94,7 +95,7 @@ class Dreamer:
             from danny_toolkit.brain.synapse import TheSynapse
             synapse = TheSynapse()
             synapse.decay_unused(days_threshold=7)
-            print(f"{Kleur.GROEN}🧠 Synapse pruning complete.{Kleur.RESET}")
+            logger.info("🧠 Synapse pruning complete.")
         except Exception as e:
             logger.debug("Synapse pruning error: %s", e)
 
@@ -106,6 +107,9 @@ class Dreamer:
             print(f"{Kleur.GROEN}👻 Phantom patterns rebuilt.{Kleur.RESET}")
         except Exception as e:
             logger.debug("Phantom rebuild error: %s", e)
+
+        # 5.7 Shadow Summarization — pre-summarize RAG documents
+        await self._shadow_summarization()
 
         # 6. Pre-Compute — anticipate tomorrow
         insight = await self._anticipate()
@@ -255,6 +259,122 @@ class Dreamer:
         except Exception as e:
             print(f"{Kleur.ROOD}🔮 Anticipation error: {e}{Kleur.RESET}")
             return None
+
+    async def _shadow_summarization(self):
+        """REM Fase 5.7: Shadow pre-summarization of RAG documents.
+
+        Reads top-50 documents from ChromaDB, filters already-summarized
+        or too-short documents, and summarizes the largest ones first.
+        Max 10 docs per REM cycle, 3s interval (respects 30 RPM).
+        """
+        print(f"{Kleur.GEEL}📑 Shadow summarization starting...{Kleur.RESET}")
+        try:
+            from danny_toolkit.brain.virtual_twin import ShadowCortex, ShadowKeyVault
+        except ImportError:
+            logger.debug("ShadowCortex/ShadowKeyVault not available")
+            return
+
+        try:
+            # Get MEMEX agent for ChromaDB access
+            # Use a fresh import to avoid circular deps
+            from danny_toolkit.core.vector_store import VectorStore
+            vs = VectorStore()
+            collection = vs._collection if hasattr(vs, "_collection") else None
+            if collection is None and hasattr(vs, "_get_collection"):
+                collection = vs._get_collection()
+            if collection is None:
+                logger.debug("Shadow summarization: no ChromaDB collection")
+                return
+        except Exception as e:
+            logger.debug("Shadow summarization: ChromaDB access failed: %s", e)
+            return
+
+        try:
+            # Peek top-50 documents
+            peek = collection.peek(limit=50)
+            if not peek or not peek.get("documents") or not peek.get("ids"):
+                logger.debug("Shadow summarization: no documents in ChromaDB")
+                return
+
+            docs = peek["documents"]
+            ids = peek["ids"]
+
+            sc = ShadowCortex()
+            vault = ShadowKeyVault()
+
+            # Build candidate list: (doc_id, tekst, length)
+            candidates = []
+            for doc_id, tekst in zip(ids, docs):
+                if not tekst or len(tekst) < 200:
+                    continue
+                # Check if already summarized with fresh hash
+                doc_hash = sc._doc_hash(tekst)
+                try:
+                    conn = sc._get_summary_conn()
+                    row = conn.execute(
+                        "SELECT doc_hash FROM shadow_summaries WHERE doc_id = ?",
+                        (doc_id,),
+                    ).fetchone()
+                    conn.close()
+                    if row and row[0] == doc_hash:
+                        continue  # Already fresh
+                except Exception:
+                    pass
+                candidates.append((doc_id, tekst, len(tekst)))
+
+            if not candidates:
+                print(f"{Kleur.GROEN}📑 Shadow summarization: all documents up to date.{Kleur.RESET}")
+                return
+
+            # Sort by size descending (biggest savings first)
+            candidates.sort(key=lambda x: x[2], reverse=True)
+
+            # Process max 10 per cycle
+            samengevat = 0
+            totaal_bespaard = 0
+            for doc_id, tekst, length in candidates[:10]:
+                try:
+                    result = await sc.summarize_document(doc_id, tekst, vault)
+                    if result:
+                        samengevat += 1
+                        orig = sc._estimate_tokens(tekst)
+                        sam = sc._estimate_tokens(result)
+                        totaal_bespaard += (orig - sam)
+                except Exception as e:
+                    logger.debug("Shadow summary failed for %s: %s", doc_id[:20], e)
+
+                # 3s interval to respect 30 RPM on GROQ_API_KEY_OVERNIGHT
+                await asyncio.sleep(3)
+
+            # Flush dividend + log results
+            vault.flush_dividend()
+            roi = sc.get_dividend_roi()
+
+            if HAS_STACK:
+                try:
+                    stack = get_cortical_stack()
+                    stack.log_event(
+                        actor="dreamer",
+                        action="shadow_summarization_rem",
+                        details={
+                            "samengevat": samengevat,
+                            "kandidaten": len(candidates),
+                            "totaal_bespaard": totaal_bespaard,
+                            "roi": roi,
+                        },
+                    )
+                    stack.flush()
+                except Exception as e:
+                    logger.debug("CorticalStack log failed: %s", e)
+
+            print(
+                f"{Kleur.GROEN}📑 Shadow summarization: {samengevat}/{len(candidates)} docs, "
+                f"~{totaal_bespaard} tokens bespaard (ROI: {roi.get('roi_ratio', 0)}x){Kleur.RESET}"
+            )
+
+        except Exception as e:
+            logger.debug("Shadow summarization error: %s", e)
+            print(f"{Kleur.ROOD}📑 Shadow summarization error: {e}{Kleur.RESET}")
 
     async def _research_failures(self):
         """Research top failure topics via VoidWalker."""

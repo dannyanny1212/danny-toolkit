@@ -174,7 +174,7 @@ class DigitalDaemon:
         self._data_file = Config.APPS_DATA_DIR / "digital_daemon.json"
         self._load_data()
 
-        print(kleur(f"\n[DAEMON] {naam} ontwaakt...", Kleur.MAGENTA))
+        logger.info("[DAEMON] %s ontwaakt...", naam)
 
     @property
     def proactive(self):
@@ -240,7 +240,7 @@ class DigitalDaemon:
         # Greeting
         self._morning_or_return_greeting()
 
-        print(kleur(f"[DAEMON] {self.naam} is LEVEND!", Kleur.FEL_GROEN))
+        logger.info("[DAEMON] %s is LEVEND!", self.naam)
 
     def sleep(self):
         """Laat de daemon slapen."""

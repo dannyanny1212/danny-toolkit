@@ -36,6 +36,12 @@ from swarm_engine import SwarmEngine
 
 console = Console()
 
+try:
+    from danny_toolkit.core.shadow_airlock import ShadowAirlock
+    HAS_AIRLOCK = True
+except ImportError:
+    HAS_AIRLOCK = False
+
 
 # ── CLEAN SHUTDOWN ──
 
@@ -94,6 +100,11 @@ class HeartbeatDaemon:
         self._CIRCUIT_BREAKER_THRESHOLD = 3
         self._CIRCUIT_BREAKER_COOL_CYCLES = 12
         self._task_skip_until: dict = {}
+
+        # Shadow Airlock — periodieke staging scan
+        self._airlock = ShadowAirlock() if HAS_AIRLOCK else None
+        self._airlock_interval = 60  # seconden
+        self._airlock_last_run = 0.0
 
         # Geplande taken
         self.schedule = [
@@ -300,6 +311,22 @@ class HeartbeatDaemon:
                                 )
                             except ImportError:
                                 pass
+
+            # Shadow Airlock — periodieke staging scan
+            if self._airlock:
+                now_airlock = time.time()
+                if now_airlock - self._airlock_last_run > self._airlock_interval:
+                    self._airlock_last_run = now_airlock
+                    try:
+                        resultaat = self._airlock.scan_en_verwerk()
+                        if resultaat["bestanden"] > 0:
+                            console.print(
+                                f"[cyan]🔒 Airlock:"
+                                f" {resultaat['gepromoveerd']} gepromoveerd,"
+                                f" {resultaat['quarantaine']} quarantaine[/cyan]"
+                            )
+                    except Exception as e:
+                        logger.debug("Airlock scan fout: %s", e)
 
             # Heartbeat indicator + bestand
             self._schrijf_heartbeat()

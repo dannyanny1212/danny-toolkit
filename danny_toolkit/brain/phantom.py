@@ -256,6 +256,19 @@ class ThePhantom:
                 freq * self.DAILY_WEIGHT
             )
 
+        # Extern signal (shadow-verified patterns)
+        extern = self._conn.execute(
+            """SELECT category, frequency
+               FROM temporal_patterns
+               WHERE pattern_type = 'extern'
+               AND sample_count >= 1""",
+        ).fetchall()
+
+        for pattern, freq in extern:
+            category_scores[pattern] = category_scores.get(pattern, 0) + (
+                freq * self.HOURLY_WEIGHT
+            )
+
         # Sequential signal
         if last_category:
             sequential = self._conn.execute(
@@ -324,6 +337,72 @@ class ThePhantom:
                 logger.debug("NeuralBus publish failed: %s", e)
 
         return predictions
+
+    def registreer_patroon(self, pattern: str, bron: str = "extern"):
+        """Register an external shadow pattern for Phantom prediction.
+
+        Called by ShadowCortex Channel 3 to prime Phantom with shadow-explored
+        topics. Patterns are stored with pattern_type='extern' and a high
+        starting confidence (0.6) since they are shadow-verified.
+
+        Args:
+            pattern: Space-separated keywords from shadow consult.
+            bron: Source identifier (default: 'extern').
+        """
+        if not pattern or not pattern.strip():
+            return
+
+        pattern = pattern.strip()[:200]
+        try:
+            self._conn.execute(
+                """INSERT INTO temporal_patterns
+                   (pattern_type, time_slot, category, frequency, sample_count)
+                   VALUES ('extern', ?, ?, 0.6, 1)
+                   ON CONFLICT(pattern_type, time_slot, category)
+                   DO UPDATE SET frequency = MIN(frequency + 0.05, 1.0),
+                                sample_count = sample_count + 1,
+                                updated_at = datetime('now')""",
+                (bron, pattern),
+            )
+            self._conn.commit()
+            logger.debug("Phantom: extern patroon geregistreerd: '%s' (bron=%s)", pattern[:40], bron)
+        except Exception as e:
+            logger.debug("Phantom registreer_patroon failed: %s", e)
+
+    def get_predictions(self, max_results: int = 5) -> List[Dict]:
+        """Get unresolved predictions for snapshot/status reporting.
+
+        Called by VirtualTwin.snapshot_state() to include Phantom predictions
+        in the system state snapshot.
+
+        Args:
+            max_results: Maximum predictions to return (default 5).
+
+        Returns:
+            List of prediction dicts with category, confidence, basis.
+        """
+        try:
+            rows = self._conn.execute(
+                """SELECT predicted_category, confidence, basis, timestamp
+                   FROM phantom_predictions
+                   WHERE resolved = 0
+                   ORDER BY confidence DESC
+                   LIMIT ?""",
+                (max_results,),
+            ).fetchall()
+
+            return [
+                {
+                    "category": r[0],
+                    "confidence": r[1],
+                    "basis": r[2],
+                    "timestamp": r[3],
+                }
+                for r in rows
+            ]
+        except Exception as e:
+            logger.debug("Phantom get_predictions failed: %s", e)
+            return []
 
     def pre_warm_context(self, engine=None):
         """Pre-fetch MEMEX context for top prediction.
