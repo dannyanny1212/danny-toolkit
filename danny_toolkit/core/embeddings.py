@@ -17,6 +17,27 @@ from .config import Config
 logger = logging.getLogger(__name__)
 
 
+def mrl_truncate(embeddings: list, dim: int) -> list:
+    """MRL truncatie + L2 hernormalisatie."""
+    if not embeddings or dim >= len(embeddings[0]):
+        return embeddings
+    try:
+        import numpy as np
+        arr = np.array(embeddings)[:, :dim]
+        norms = np.linalg.norm(arr, axis=1, keepdims=True)
+        norms = np.where(norms == 0, 1.0, norms)
+        return (arr / norms).tolist()
+    except ImportError:
+        result = []
+        for vec in embeddings:
+            trunc = vec[:dim]
+            norm = math.sqrt(sum(v ** 2 for v in trunc))
+            if norm > 0:
+                trunc = [v / norm for v in trunc]
+            result.append(trunc)
+        return result
+
+
 class EmbeddingProvider:
     """Basis klasse voor embedding providers."""
     dimensies: int = 0
@@ -40,8 +61,9 @@ class VoyageEmbeddings(EmbeddingProvider):
         import voyageai
         self.client = voyageai.Client(api_key=api_key or Config.VOYAGE_API_KEY)
         self.model = Config.VOYAGE_MODEL
-        self.dimensies = 1024
-        print(f"   [OK] Voyage AI ({self.model}, {self.dimensies}d)")
+        self.dimensies = Config.EMBEDDING_DIM
+        mrl_tag = f" MRL {self.dimensies}d" if self.dimensies < Config.VOYAGE_NATIVE_DIM else ""
+        print(f"   [OK] Voyage AI ({self.model}, {self.dimensies}d{mrl_tag})")
 
     def embed(self, teksten: list) -> list:
         """Embed teksten met Voyage AI."""
@@ -50,7 +72,7 @@ class VoyageEmbeddings(EmbeddingProvider):
             model=self.model,
             input_type="document"
         )
-        return result.embeddings
+        return mrl_truncate(result.embeddings, self.dimensies)
 
     def embed_query(self, query: str) -> list:
         """Embed query met Voyage AI."""
@@ -59,7 +81,7 @@ class VoyageEmbeddings(EmbeddingProvider):
             model=self.model,
             input_type="query"
         )
-        return result.embeddings[0]
+        return mrl_truncate(result.embeddings, self.dimensies)[0]
 
 
 class HashEmbeddings(EmbeddingProvider):
@@ -259,7 +281,7 @@ class EmbeddingCache:
 
     def _hash_tekst(self, tekst: str, provider: str) -> str:
         """Genereer hash voor tekst + provider."""
-        content = f"{provider}:{tekst}"
+        content = f"{provider}:{Config.EMBEDDING_DIM}:{tekst}"
         return hashlib.sha256(content.encode()).hexdigest()
 
     def _laad(self):
@@ -422,6 +444,7 @@ class VoyageChromaEmbedding:
             api_key=Config.VOYAGE_API_KEY
         )
         self.model = Config.VOYAGE_MODEL
+        self._target_dim = Config.EMBEDDING_DIM
 
     def name(self):
         """ChromaDB protocol: unieke naam."""
@@ -439,7 +462,7 @@ class VoyageChromaEmbedding:
                     model=self.model,
                     input_type="document",
                 )
-                return result.embeddings
+                return mrl_truncate(result.embeddings, self._target_dim)
             except (ConnectionError, TimeoutError, OSError) as e:
                 logger.warning("Voyage API netwerk fout (poging %d): %s", poging + 1, e)
                 time.sleep(5 * (poging + 1))

@@ -15,7 +15,7 @@ import hashlib
 import logging
 import threading
 import time
-from collections import OrderedDict
+from collections import OrderedDict, deque
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +51,14 @@ class Alerter:
         self._lock = threading.Lock()
         # OrderedDict: dedup_key -> timestamp van laatste verzending
         self._dedup: OrderedDict[str, float] = OrderedDict()
+        # Alert history voor query/analyse
+        self._history: deque = deque(maxlen=500)
+        self._alert_stats = {
+            "info": 0,
+            "waarschuwing": 0,
+            "kritiek": 0,
+            "mislukt": 0,
+        }
 
     def _dedup_key(self, niveau: str, bericht: str) -> str:
         """Genereer dedup hash van (niveau, bericht)."""
@@ -93,6 +101,8 @@ class Alerter:
             notify_sync(formatted)
         except Exception as e:
             logger.debug("Telegram alert mislukt: %s", e)
+            with self._lock:
+                self._alert_stats["mislukt"] += 1
 
         # 2. CorticalStack audit
         try:
@@ -119,6 +129,18 @@ class Alerter:
             logger.debug("NeuralBus alert publish mislukt: %s", e)
 
         logger.info("Alert verzonden: %s", formatted)
+
+        # Record in history
+        with self._lock:
+            self._history.append({
+                "timestamp": time.time(),
+                "niveau": niveau,
+                "bericht": bericht,
+                "bron": bron,
+            })
+            if niveau in self._alert_stats:
+                self._alert_stats[niveau] += 1
+
         return True
 
     async def alert_async(self, niveau: str, bericht: str, bron: str = "systeem") -> bool:
@@ -142,6 +164,8 @@ class Alerter:
             await notify(formatted)
         except Exception as e:
             logger.debug("Telegram alert mislukt: %s", e)
+            with self._lock:
+                self._alert_stats["mislukt"] += 1
 
         # 2. CorticalStack audit
         try:
@@ -168,7 +192,58 @@ class Alerter:
             logger.debug("NeuralBus alert publish mislukt: %s", e)
 
         logger.info("Alert verzonden: %s", formatted)
+
+        # Record in history
+        with self._lock:
+            self._history.append({
+                "timestamp": time.time(),
+                "niveau": niveau,
+                "bericht": bericht,
+                "bron": bron,
+            })
+            if niveau in self._alert_stats:
+                self._alert_stats[niveau] += 1
+
         return True
+
+
+    # ─── Query Methods ─────────────────────────────────
+
+    def get_history(
+        self, count: int = 50, niveau: str = None,
+    ) -> list:
+        """Haal recente alerts op.
+
+        Args:
+            count: Maximum aantal alerts.
+            niveau: Optioneel filter op niveau.
+
+        Returns:
+            Lijst van alert dicts (nieuwste eerst).
+        """
+        with self._lock:
+            items = list(self._history)
+        # Nieuwste eerst
+        items.reverse()
+        if niveau:
+            items = [a for a in items if a["niveau"] == niveau]
+        return items[:count]
+
+    def get_alert_stats(self) -> dict:
+        """Retourneer alert tellingen per niveau.
+
+        Returns:
+            Dict met info, waarschuwing, kritiek, mislukt counts.
+        """
+        with self._lock:
+            return dict(self._alert_stats)
+
+    def clear_history(self):
+        """Wis alert history en reset stats."""
+        with self._lock:
+            self._history.clear()
+            for key in self._alert_stats:
+                self._alert_stats[key] = 0
 
 
 # ------------------------------------------------------------------

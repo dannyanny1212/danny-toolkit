@@ -142,8 +142,8 @@ class Dreamer:
                         f"CorticalStack backup mislukt: {e}",
                         bron="dreamer",
                     )
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("REM taak mislukt: %s", e)
 
     def _apply_retention(self):
         """Apply data retention policy to prune old rows."""

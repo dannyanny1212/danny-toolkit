@@ -112,6 +112,9 @@ async def cmd_start(update, context):
         "  /status    — Systeem gezondheid\n"
         "  /agents    — Beschikbare agents\n"
         "  /heartbeat — Daemon status\n"
+        "  /health    — Systeem health check\n"
+        "  /metrics   — Pipeline metrics\n"
+        "  /logs [N]  — Recente events\n"
         "  /help      — Dit bericht\n"
     )
 
@@ -250,6 +253,150 @@ async def cmd_heartbeat(update, context):
         "  python daemon_heartbeat.py\n"
         "  Of: kies #52 in de launcher\n"
     )
+    await update.message.reply_text(tekst)
+
+
+async def cmd_health(update, context):
+    """Handler voor /health command — systeem health check."""
+    user = update.effective_user
+    if not _is_admin(user.id):
+        await update.message.reply_text("Geen toegang.")
+        return
+
+    brain = _get_brain()
+
+    # Memory usage
+    mem_mb = 0.0
+    cpu_pct = 0.0
+    try:
+        import psutil
+        proc = psutil.Process(os.getpid())
+        mem_mb = proc.memory_info().rss / (1024 * 1024)
+        cpu_pct = proc.cpu_percent()
+    except Exception as e:
+        logger.debug("psutil health: %s", e)
+
+    # Active agents
+    actief = 0
+    totaal = 0
+    if hasattr(brain, "nodes"):
+        totaal = len(brain.nodes)
+        actief = sum(
+            1 for n in brain.nodes.values()
+            if n.status == "ACTIVE"
+        )
+
+    # DB metrics
+    db_size = "n/a"
+    pending = 0
+    try:
+        from danny_toolkit.brain.cortical_stack import (
+            get_cortical_stack,
+        )
+        db_metrics = get_cortical_stack().get_db_metrics()
+        db_size = f"{db_metrics.get('db_size_mb', 0)} MB"
+        pending = db_metrics.get("pending_writes", 0)
+    except Exception as e:
+        logger.debug("DB metrics health: %s", e)
+
+    tekst = (
+        "HEALTH CHECK\n"
+        "━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"Brain: {'ONLINE' if brain.is_online else 'OFFLINE'}\n"
+        f"Agents: {actief}/{totaal} actief\n"
+        f"Memory: {mem_mb:.1f} MB\n"
+        f"CPU: {cpu_pct:.1f}%\n"
+        f"DB grootte: {db_size}\n"
+        f"Pending writes: {pending}\n"
+    )
+    await update.message.reply_text(tekst)
+
+
+async def cmd_metrics(update, context):
+    """Handler voor /metrics command — pipeline metrics."""
+    user = update.effective_user
+    if not _is_admin(user.id):
+        await update.message.reply_text("Geen toegang.")
+        return
+
+    regels = ["PIPELINE METRICS\n━━━━━━━━━━━━━━━━━━━━\n"]
+
+    try:
+        from swarm_engine import get_pipeline_metrics
+        metrics = get_pipeline_metrics()
+        if not metrics:
+            regels.append("Geen metrics beschikbaar.")
+        else:
+            for agent_name, data in metrics.items():
+                calls = data.get("calls", 0)
+                errors = data.get("errors", 0)
+                avg_ms = data.get("avg_ms", 0)
+                success_pct = (
+                    round((calls - errors) / calls * 100, 1)
+                    if calls > 0
+                    else 0
+                )
+                regels.append(
+                    f"{agent_name}:\n"
+                    f"  Calls: {calls} | "
+                    f"Errors: {errors} | "
+                    f"Success: {success_pct}%\n"
+                    f"  Avg: {avg_ms:.0f}ms\n"
+                )
+    except ImportError:
+        regels.append("Pipeline metrics niet beschikbaar.")
+    except Exception as e:
+        logger.debug("Metrics ophalen mislukt: %s", e)
+        regels.append(f"Fout: {e}")
+
+    tekst = "\n".join(regels)
+    if len(tekst) > 4000:
+        tekst = tekst[:4000] + "\n\n...(afgekapt)"
+    await update.message.reply_text(tekst)
+
+
+async def cmd_logs(update, context):
+    """Handler voor /logs command — recente CorticalStack events."""
+    user = update.effective_user
+    if not _is_admin(user.id):
+        await update.message.reply_text("Geen toegang.")
+        return
+
+    # Parse optionele count arg
+    count = 10
+    if context.args:
+        try:
+            count = min(int(context.args[0]), 25)
+        except (ValueError, IndexError):
+            pass
+
+    regels = [f"RECENTE EVENTS (laatste {count})\n━━━━━━━━━━━━━━━━━━━━\n"]
+
+    try:
+        from danny_toolkit.brain.cortical_stack import (
+            get_cortical_stack,
+        )
+        events = get_cortical_stack().get_recent_events(
+            count=count,
+        )
+        if not events:
+            regels.append("Geen events gevonden.")
+        else:
+            for evt in events:
+                ts = evt.get("timestamp", "")
+                # Extract HH:MM:SS from ISO timestamp
+                if "T" in ts:
+                    ts = ts.split("T")[1][:8]
+                actor = evt.get("actor", "?")
+                action = evt.get("action", "?")
+                regels.append(f"[{ts}] {actor}: {action}")
+    except Exception as e:
+        logger.debug("Logs ophalen mislukt: %s", e)
+        regels.append(f"Fout: {e}")
+
+    tekst = "\n".join(regels)
+    if len(tekst) > 4000:
+        tekst = tekst[:4000] + "\n\n...(afgekapt)"
     await update.message.reply_text(tekst)
 
 
@@ -464,6 +611,15 @@ def main():
     )
     application.add_handler(
         CommandHandler("heartbeat", cmd_heartbeat)
+    )
+    application.add_handler(
+        CommandHandler("health", cmd_health)
+    )
+    application.add_handler(
+        CommandHandler("metrics", cmd_metrics)
+    )
+    application.add_handler(
+        CommandHandler("logs", cmd_logs)
     )
 
     # Gewone berichten

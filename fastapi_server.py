@@ -685,7 +685,8 @@ if HAS_DASHBOARD:
                 stats["Tokens/uur"] = gov._tokens_used_hour
             if hasattr(gov, "MAX_TOKENS_PER_HOUR"):
                 stats["Max tokens/uur"] = gov.MAX_TOKENS_PER_HOUR
-        except Exception:
+        except Exception as e:
+            logger.debug("Governor stats: %s", e)
             stats["Status"] = "NIET BESCHIKBAAR"
         tmpl = _templates.get_template("partials/governor.html")
         return HTMLResponse(tmpl.render(stats=stats))
@@ -712,8 +713,8 @@ if HAS_DASHBOARD:
                         "tpm_max": tpm_max,
                         "tpm_pct": min(100, int(tpm_used / max(tpm_max, 1) * 100)),
                     })
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Rate limits: %s", e)
         tmpl = _templates.get_template("partials/rate_limits.html")
         return HTMLResponse(tmpl.render(limits=limits))
 
@@ -729,8 +730,8 @@ if HAS_DASHBOARD:
                 if cortex._graph is not None:
                     stats["nodes"] = cortex._graph.number_of_nodes()
                     stats["edges"] = cortex._graph.number_of_edges()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Cortex stats: %s", e)
         tmpl = _templates.get_template("partials/cortex_stats.html")
         return HTMLResponse(tmpl.render(stats=stats))
 
@@ -788,8 +789,8 @@ if HAS_DASHBOARD:
                             )
                             html = tmpl.render(event=data)
                             yield f"data: {html}\n\n"
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("SSE event: %s", e)
                 await asyncio.sleep(2)
 
         return StreamingResponse(
@@ -818,8 +819,8 @@ if HAS_DASHBOARD:
                 proc.memory_info().rss / (1024 * 1024), 1
             )
             result["cpu_percent"] = proc.cpu_percent()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("CPU metrics: %s", e)
         return result
 
 

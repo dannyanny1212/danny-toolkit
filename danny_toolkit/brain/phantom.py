@@ -350,7 +350,8 @@ class ThePhantom:
                     words = profielen[0].split()[:5]
                     query_parts.extend(words)
             synthetic_query = " ".join(query_parts)
-        except Exception:
+        except Exception as e:
+            logger.debug("Synthetic query generatie: %s", e)
             synthetic_query = " ".join(agents)
 
         if not synthetic_query:

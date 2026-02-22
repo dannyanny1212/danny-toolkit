@@ -372,6 +372,11 @@ class TheLibrarian:
             "Embedding model",
             f"[cyan]{model_naam}[/cyan]",
         )
+        dim_info = getattr(self.embed_fn, '_target_dim', None)
+        if dim_info and dim_info < 1024:
+            result_table.add_row("Dimensie", f"[green]{dim_info}d (MRL)[/green]")
+        else:
+            result_table.add_row("Dimensie", f"[cyan]{dim_info or 1024}d[/cyan]")
         result_table.add_row(
             "Database locatie",
             f"[dim]{CHROMA_DIR}[/dim]",
@@ -490,6 +495,11 @@ class TheLibrarian:
             "Embedding model",
             f"[cyan]{model_naam}[/cyan]",
         )
+        dim_info = getattr(self.embed_fn, '_target_dim', None)
+        if dim_info and dim_info < 1024:
+            stats_table.add_row("Dimensie", f"[green]{dim_info}d (MRL)[/green]")
+        else:
+            stats_table.add_row("Dimensie", f"[cyan]{dim_info or 1024}d[/cyan]")
         stats_table.add_row(
             "Database locatie",
             f"[dim]{CHROMA_DIR}[/dim]",

@@ -4,12 +4,15 @@ Versie 2.0 - Met backup/restore, statistieken en filtering.
 """
 
 import json
+import logging
 import math
 from pathlib import Path
 from datetime import datetime
 from typing import List, Dict, Optional, Callable
 from .config import Config
 from .embeddings import EmbeddingProvider
+
+logger = logging.getLogger(__name__)
 
 
 class VectorStore:
@@ -101,6 +104,18 @@ class VectorStore:
             return []
 
         query_emb = self.embedder.embed_query(query)
+
+        if self.documenten:
+            eerste = next(iter(self.documenten.values()))
+            opgeslagen_dim = len(eerste.get("embedding", []))
+            query_dim = len(query_emb)
+            if opgeslagen_dim != query_dim:
+                logger.warning(
+                    "Dimensie mismatch: opgeslagen=%dd, query=%dd. "
+                    "Herindexeer met ingest.py --reset",
+                    opgeslagen_dim, query_dim,
+                )
+
         scores = []
 
         for doc_id, data in self.documenten.items():

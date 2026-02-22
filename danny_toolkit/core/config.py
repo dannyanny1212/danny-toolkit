@@ -266,6 +266,8 @@ class Config:
     CLAUDE_MODEL = "claude-sonnet-4-20250514"
     MAX_TOKENS = 10000
     VOYAGE_MODEL = "voyage-4-large"
+    VOYAGE_NATIVE_DIM = 1024              # voyage-4-large native output
+    EMBEDDING_DIM = int(os.environ.get("EMBEDDING_DIM", "256"))
 
     # RAG Settings
     CHUNK_SIZE = 350
@@ -496,6 +498,7 @@ class Config:
         lijnen.append(f"  Taal:  {Taal.get(cls._taal)['naam']} ({cls._taal})")
         lijnen.append(f"  Thema: {Thema.get(cls._thema)['naam']}")
         lijnen.append(f"  Debug: {'Aan' if cls._debug_mode else 'Uit'}")
+        lijnen.append(f"  Embedding dim: {cls.EMBEDDING_DIM} (native: {cls.VOYAGE_NATIVE_DIM})")
 
         # Paths
         lijnen.append("\n[Directories]")

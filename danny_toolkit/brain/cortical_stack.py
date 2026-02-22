@@ -32,6 +32,10 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 from ..core.config import Config
 
 
@@ -432,13 +436,59 @@ class CorticalStack:
             "SELECT COUNT(*) as c FROM system_stats"
         ).fetchone()["c"]
 
-        return {
+        result = {
             "episodic_events": episodic,
             "semantic_facts": semantic,
             "system_stats": stats,
             "total": episodic + semantic + stats,
             "db_path": str(self._db_path),
         }
+        result.update(self.get_db_metrics())
+        return result
+
+    def get_db_metrics(self) -> dict:
+        """Database-level metrics voor monitoring.
+
+        Returns:
+            Dict met db_size_bytes, db_size_mb, wal_size_bytes,
+            pending_writes, batch_size, last_flush_ago_s.
+        """
+        metrics = {
+            "db_size_bytes": 0,
+            "db_size_mb": 0.0,
+            "wal_size_bytes": 0,
+            "pending_writes": self._pending_writes,
+            "batch_size": self._BATCH_SIZE,
+            "last_flush_ago_s": round(
+                time.time() - self._last_flush, 1
+            ),
+        }
+
+        # DB file size via PRAGMA
+        try:
+            row = self._conn.execute(
+                "SELECT page_count * page_size AS size "
+                "FROM pragma_page_count(), pragma_page_size()"
+            ).fetchone()
+            if row:
+                metrics["db_size_bytes"] = row[0]
+                metrics["db_size_mb"] = round(
+                    row[0] / (1024 * 1024), 2
+                )
+        except Exception as e:
+            logger.debug("DB size query mislukt: %s", e)
+
+        # WAL file size
+        try:
+            wal_path = Path(str(self._db_path) + "-wal")
+            if wal_path.exists():
+                metrics["wal_size_bytes"] = (
+                    wal_path.stat().st_size
+                )
+        except Exception as e:
+            logger.debug("WAL size check mislukt: %s", e)
+
+        return metrics
 
     def prune_old_stats(self, days: int = 30):
         """Verwijder system_stats ouder dan X dagen."""
@@ -546,7 +596,8 @@ class CorticalStack:
             self._pending_writes = 0
             self._last_flush = time.time()
             return True
-        except Exception:
+        except Exception as e:
+            logger.debug("CorticalStack reconnect mislukt: %s", e)
             return False
 
     # ─── Data Retention Policy ───

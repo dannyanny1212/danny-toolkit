@@ -67,8 +67,8 @@ def roteer_logs(
         # Sorteer op mtime (oudste eerst)
         try:
             overgebleven.sort(key=lambda p: p.stat().st_mtime)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Log sort mislukt: %s", e)
         te_verwijderen = overgebleven[:len(overgebleven) - max_bestanden]
         for pad in te_verwijderen:
             try:

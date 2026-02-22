@@ -274,8 +274,8 @@ class HeartbeatDaemon:
                                     "count": count,
                                 },
                             )
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.debug("CorticalStack crash log: %s", e)
                         # Threshold: circuit breaker open
                         if count >= self._CIRCUIT_BREAKER_THRESHOLD:
                             self._task_skip_until[name] = (
