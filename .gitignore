@@ -58,6 +58,9 @@ danny_toolkit/workspace/
 # Governor backups (runtime data)
 data/backups/
 
+# Daemon heartbeat (runtime)
+data/daemon_heartbeat.txt
+
 # SQLite databases (runtime)
 data/cortical_stack.db
 data/cortical_stack.db-shm
