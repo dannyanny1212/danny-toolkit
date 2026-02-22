@@ -196,8 +196,38 @@ MODULE_ZONES = {
         "limiet": {"max_searches_per_uur": 1},
     },
 
+    # ── RODE ZONE — RAG Ingestie-blokkade ──
+    "Librarian_Ingest": {
+        "zone": ZONE_ROOD,
+        "reden": "Klonen mogen NOOIT ingest.py draaien of bestanden in de "
+                 "hoofd-ChromaDB pompen. De originele bibliotheek mag niet "
+                 "vervuild worden met shadow-gedachten.",
+        "regel": "NO_HARDWARE_ACCESS",
+    },
+    "VectorStore_Write": {
+        "zone": ZONE_ROOD,
+        "reden": "Klonen mogen NOOIT voeg_toe() aanroepen op de VectorStore. "
+                 "Schrijffuncties van de Bibliothecaris zijn vergrendeld. "
+                 "Shadow-inzichten gaan via ShadowCortex, niet via ChromaDB.",
+        "regel": "NO_HARDWARE_ACCESS",
+    },
+
     # ── GELE ZONE — Read-Only voor klonen ──
     # Klonen hebben deze data nodig, maar mogen de originelen niet aanpassen.
+    "VectorStore_Read": {
+        "zone": ZONE_GEEL,
+        "reden": "Klonen mogen VectorStore.zoek() gebruiken om de ChromaDB "
+                 "te doorzoeken. Read-only — Voyage-embeddings ophalen mag, "
+                 "schrijven nooit.",
+        "schrijf_via": "ShadowCortex",
+    },
+    "TheLibrarian": {
+        "zone": ZONE_GEEL,
+        "reden": "Klonen mogen TheLibrarian.query() gebruiken voor RAG search. "
+                 "Read-only — ingest, ingest_file en voeg_toe zijn vergrendeld. "
+                 "Resultaten worden via ShadowCortex verwerkt.",
+        "schrijf_via": "ShadowCortex",
+    },
     "TheCortex": {
         "zone": ZONE_GEEL,
         "reden": "Klonen mogen het vectorgeheugen en knowledge graph "

@@ -418,11 +418,19 @@ class VirtualTwin:
             except Exception as e:
                 logger.debug("VirtualTwin research failed: %s", e)
 
-        # 5. Synthesize (with BlackBox warning injected)
+        # 4b. Shadow RAG search (GEEL zone — read-only)
+        rag_context = ""
+        try:
+            rag_context = await self.shadow_rag_search(query) or ""
+        except Exception as e:
+            logger.debug("Shadow RAG search failed: %s", e)
+
+        # 5. Synthesize (with BlackBox warning + RAG context injected)
         try:
             result = await self.synthesize(
                 query, state, profile, research_result,
                 blackbox_warning=blackbox_warning,
+                rag_context=rag_context,
             )
         except Exception as e:
             logger.debug("VirtualTwin synthesize failed: %s", e)
@@ -619,6 +627,7 @@ class VirtualTwin:
         profile: str,
         research: str,
         blackbox_warning: str = "",
+        rag_context: str = "",
     ) -> str:
         """Groq synthesis: combine state + profile + research into insight.
 
@@ -669,6 +678,8 @@ class VirtualTwin:
             prompt += "SYSTEEMSTAAT:\n" + "\n".join(state_summary) + "\n\n"
         if research:
             prompt += f"ONDERZOEKSRESULTAAT:\n{research[:2000]}\n\n"
+        if rag_context:
+            prompt += f"RAG CONTEXT (read-only uit ChromaDB):\n{rag_context[:2000]}\n\n"
 
         prompt += "INZICHT:"
 
@@ -721,6 +732,89 @@ class VirtualTwin:
             "actueel", "recent", "nieuws", "update over",
         ]
         return any(trigger in lower for trigger in research_triggers)
+
+    async def shadow_rag_search(self, query: str) -> Optional[str]:
+        """Veilige RAG-raadpleging voor Shadow Klonen.
+
+        Respecteert de GELE (Read-Only) zone restricties:
+        - VectorStore.zoek() → GEEL (read OK)
+        - TruthAnchor.verify() → GROEN (vrij)
+        - BlackBox.retrieve_warnings() → GROEN (vrij)
+        - TheMirror.get_context_injection() → GEEL (read OK)
+
+        Schrijven (voeg_toe, ingest) is ROOD zone → geblokkeerd.
+        Shadow-inzichten gaan via ShadowCortex, niet via ChromaDB.
+        """
+        # 1. Governance check — mag de kloon de RAG lezen?
+        if self._governance and not self._governance.is_module_allowed(
+            "VectorStore_Read", write=False,
+        ):
+            return f"{SHADOW_PREFIX}RAG_ACCESS_DENIED door Governance"
+
+        # 2. Permission check — RAG_SEARCH actief?
+        if self._permissions and not self._permissions.is_allowed("RAG_SEARCH"):
+            return f"{SHADOW_PREFIX}RAG_SEARCH niet toegestaan buiten shadow zone"
+
+        rag_context = []
+
+        # 3. VectorStore zoek (GEEL — read-only)
+        try:
+            from danny_toolkit.core.config import Config
+            from danny_toolkit.core.vector_store import VectorStore
+            vs = VectorStore()
+            resultaten = vs.zoek(query, top_k=3)
+            if resultaten:
+                for r in resultaten:
+                    tekst = r.get("tekst", "")
+                    if tekst:
+                        rag_context.append(tekst[:500])
+        except Exception as e:
+            logger.debug("%sShadow RAG search failed: %s", SHADOW_PREFIX, e)
+
+        if not rag_context:
+            return None
+
+        # 4. TruthAnchor verificatie (GROEN — vrij)
+        verified = True
+        anchor = self._get_truth_anchor()
+        if anchor:
+            try:
+                verified = anchor.verify(query, rag_context)
+            except Exception as e:
+                logger.debug("%sTruthAnchor verify failed: %s", SHADOW_PREFIX, e)
+
+        # 5. BlackBox warnings (GROEN — vrij)
+        warnings = ""
+        bb = self._get_black_box()
+        if bb:
+            try:
+                warnings = bb.retrieve_warnings(query)
+            except Exception as e:
+                logger.debug("%sBlackBox warnings failed: %s", SHADOW_PREFIX, e)
+
+        # 6. TheMirror context (GEEL — read-only)
+        user_context = self.get_mirror_context()
+
+        # 7. Compileer shadow MEMEX context
+        context_parts = []
+        if rag_context:
+            context_parts.append(
+                f"RAG ({len(rag_context)} docs, "
+                f"{'verified' if verified else 'unverified'}):\n"
+                + "\n---\n".join(rag_context)
+            )
+        if warnings:
+            context_parts.append(f"BlackBox:\n{warnings}")
+        if user_context:
+            context_parts.append(f"UserProfile:\n{user_context[:300]}")
+
+        result = "\n\n".join(context_parts)
+
+        logger.debug(
+            "%sShadow RAG search: %d docs, verified=%s, warnings=%s",
+            SHADOW_PREFIX, len(rag_context), verified, bool(warnings),
+        )
+        return result
 
     def _distill_to_physical(self, query: str, result: str):
         """Shadow→Physical intelligence transfer via ShadowCortex.

@@ -68,6 +68,22 @@ ALLOWED_PERMISSIONS = [
         "shadow",
     ),
 
+    # ── RAG Read-Only ──
+    ShadowPermission(
+        "RAG_SEARCH",
+        "Shadows mogen VectorStore.zoek() en TheLibrarian.query() "
+        "gebruiken om de ChromaDB te doorzoeken. Read-only — "
+        "ingest, ingest_file en voeg_toe zijn streng verboden.",
+        "shadow",
+    ),
+    ShadowPermission(
+        "RAG_VERIFY",
+        "Shadows mogen TruthAnchor.verify() gebruiken om RAG-resultaten "
+        "te controleren tegen de query. CPU cross-encoder, kost geen "
+        "API-tokens. Verplicht voor elke RAG-query.",
+        "shadow",
+    ),
+
     # ── Verwerken & Analyseren ──
     ShadowPermission(
         "LLM_INFERENCE",
