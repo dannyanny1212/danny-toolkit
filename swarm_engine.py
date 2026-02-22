@@ -28,9 +28,10 @@ import re
 import random
 import sys
 import time
+import uuid
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 # Max workers voor de per-loop thread pool.
 _SWARM_MAX_WORKERS = 6
@@ -48,6 +49,38 @@ import threading as _threading
 
 _AGENT_PIPELINE_METRICS: Dict[str, Dict[str, Any]] = {}
 _METRICS_LOCK = _threading.Lock()
+
+# ── Phase 31: PER-AGENT TIMEOUTS (seconden) ──
+
+_DEFAULT_AGENT_TIMEOUT = 20  # seconden
+_AGENT_TIMEOUTS: Dict[str, float] = {
+    "MEMEX": 15,
+    "Strategist": 30,
+    "Artificer": 30,
+    "VirtualTwin": 25,
+    "CentralBrain": 25,
+    "VoidWalker": 30,
+}
+
+# ── Phase 31: PER-AGENT CIRCUIT BREAKER ──
+
+_CIRCUIT_BREAKER_THRESHOLD = 3   # opeenvolgende fouten → open
+_CIRCUIT_BREAKER_COOLDOWN = 12   # cycli (queries) dat agent uitgeschakeld is
+_AGENT_CIRCUIT_STATE: Dict[str, Dict[str, Any]] = {}
+_CIRCUIT_LOCK = _threading.Lock()
+
+
+def get_circuit_state() -> Dict[str, Any]:
+    """Geeft huidige circuit breaker status per agent."""
+    with _CIRCUIT_LOCK:
+        return {
+            naam: {
+                "consecutive_failures": s["failures"],
+                "is_open": s["failures"] >= _CIRCUIT_BREAKER_THRESHOLD,
+                "cooldown_remaining": max(0, s.get("cooldown", 0)),
+            }
+            for naam, s in _AGENT_CIRCUIT_STATE.items()
+        }
 
 
 def get_pipeline_metrics() -> Dict[str, Any]:
@@ -97,12 +130,20 @@ except ImportError:
 
 
 def _log_to_cortical(
-    actor, action, details=None, source="swarm_engine"
+    actor, action, details=None, source="swarm_engine",
+    trace_id=None,
 ):
     """Log naar CorticalStack als beschikbaar."""
     if not HAS_CORTICAL:
         return
     try:
+        if trace_id and details is not None:
+            if isinstance(details, dict):
+                details["trace_id"] = trace_id
+            else:
+                details = {"original": details, "trace_id": trace_id}
+        elif trace_id:
+            details = {"trace_id": trace_id}
         stack = get_cortical_stack()
         stack.log_event(
             actor=actor,
@@ -181,6 +222,7 @@ class SwarmPayload:
     metadata: Dict[str, Any] = field(
         default_factory=dict
     )
+    trace_id: str = ""  # Phase 31: request correlation ID
 
 
 # ── MEDIA GENERATORS ──
@@ -1998,6 +2040,8 @@ class SwarmEngine:
             "agent_errors": 0,
             "twin_consultations": 0,
             "schild_blocks": 0,
+            "circuit_breaker_trips": 0,
+            "agent_timeouts": 0,
         }
 
         # Echo Guard — dedup gate (hash, timestamp)
@@ -2059,42 +2103,160 @@ class SwarmEngine:
                 m["errors"] += 1
                 m["last_error"] = str(error)[:200]
 
-    async def _timed_dispatch(self, agent, agent_input):
-        """Wrap agent.process() met timing + error handling."""
+    # ── Phase 31: Per-agent circuit breaker helpers ──
+
+    def _is_circuit_open(self, agent_naam: str) -> bool:
+        """Check of agent circuit breaker open is."""
+        with _CIRCUIT_LOCK:
+            state = _AGENT_CIRCUIT_STATE.get(agent_naam)
+            if not state:
+                return False
+            if state["failures"] >= _CIRCUIT_BREAKER_THRESHOLD:
+                if state.get("cooldown", 0) > 0:
+                    return True
+                # Cooldown verlopen — reset
+                state["failures"] = 0
+                return False
+            return False
+
+    def _record_circuit_failure(self, agent_naam: str):
+        """Registreer opeenvolgende fout voor circuit breaker."""
+        with _CIRCUIT_LOCK:
+            if agent_naam not in _AGENT_CIRCUIT_STATE:
+                _AGENT_CIRCUIT_STATE[agent_naam] = {
+                    "failures": 0, "cooldown": 0,
+                }
+            state = _AGENT_CIRCUIT_STATE[agent_naam]
+            state["failures"] += 1
+            if state["failures"] >= _CIRCUIT_BREAKER_THRESHOLD:
+                state["cooldown"] = _CIRCUIT_BREAKER_COOLDOWN
+                self._swarm_metrics["circuit_breaker_trips"] += 1
+                logger.warning(
+                    "Circuit breaker OPEN voor %s na %d fouten",
+                    agent_naam, state["failures"],
+                )
+                # NeuralBus event
+                try:
+                    from danny_toolkit.core.neural_bus import get_bus, EventTypes
+                    get_bus().publish(EventTypes.AGENT_CIRCUIT_OPEN, {
+                        "agent": agent_naam,
+                        "failures": state["failures"],
+                    }, bron="swarm_engine")
+                except Exception:
+                    pass
+
+    def _record_circuit_success(self, agent_naam: str):
+        """Reset opeenvolgende fouten na succesvolle dispatch."""
+        with _CIRCUIT_LOCK:
+            state = _AGENT_CIRCUIT_STATE.get(agent_naam)
+            if state and state["failures"] > 0:
+                was_open = state["failures"] >= _CIRCUIT_BREAKER_THRESHOLD
+                state["failures"] = 0
+                state["cooldown"] = 0
+                if was_open:
+                    logger.info("Circuit breaker CLOSED voor %s", agent_naam)
+                    try:
+                        from danny_toolkit.core.neural_bus import get_bus, EventTypes
+                        get_bus().publish(EventTypes.AGENT_CIRCUIT_CLOSED, {
+                            "agent": agent_naam,
+                        }, bron="swarm_engine")
+                    except Exception:
+                        pass
+
+    def _tick_circuit_cooldowns(self):
+        """Verlaag circuit breaker cooldowns met 1 (per query cycle)."""
+        with _CIRCUIT_LOCK:
+            for state in _AGENT_CIRCUIT_STATE.values():
+                if state.get("cooldown", 0) > 0:
+                    state["cooldown"] -= 1
+
+    async def _timed_dispatch(self, agent, agent_input,
+                              trace_id=""):
+        """Wrap agent.process() met timing, timeout + error handling."""
+        agent_naam = agent.name
         t0 = time.time()
+
+        # Phase 31: per-agent circuit breaker — skip als open
+        if self._is_circuit_open(agent_naam):
+            logger.info("Circuit open voor %s, overgeslagen (trace=%s)",
+                        agent_naam, trace_id)
+            return SwarmPayload(
+                agent=agent_naam, type="error",
+                content=f"[{agent_naam}] Circuit breaker open",
+                display_text=f"Agent {agent_naam} tijdelijk uitgeschakeld",
+                metadata={"error_type": "CircuitBreakerOpen"},
+                trace_id=trace_id,
+            )
+
+        # Per-agent timeout (default 20s)
+        timeout = _AGENT_TIMEOUTS.get(agent_naam, _DEFAULT_AGENT_TIMEOUT)
+
         try:
-            result = await agent.process(agent_input, self.brain)
+            result = await asyncio.wait_for(
+                agent.process(agent_input, self.brain),
+                timeout=timeout,
+            )
             elapsed_ms = (time.time() - t0) * 1000
-            self._record_agent_metric(agent.name, elapsed_ms)
+            self._record_agent_metric(agent_naam, elapsed_ms)
+            self._record_circuit_success(agent_naam)
             # Waakhuis: registreer succesvolle dispatch
             try:
                 from danny_toolkit.brain.waakhuis import get_waakhuis
-                get_waakhuis().registreer_dispatch(agent.name, elapsed_ms)
+                get_waakhuis().registreer_dispatch(agent_naam, elapsed_ms)
             except Exception:
                 pass
+            # Propageer trace_id naar payload
+            if hasattr(result, "trace_id"):
+                result.trace_id = trace_id
             return result
-        except Exception as e:
+        except asyncio.TimeoutError:
             elapsed_ms = (time.time() - t0) * 1000
-            self._record_agent_metric(agent.name, elapsed_ms, error=e)
-            logger.warning("Agent %s fout: %s", agent.name, e)
-            # Waakhuis: registreer fout
+            err = f"Timeout na {timeout}s"
+            self._record_agent_metric(agent_naam, elapsed_ms, error=err)
+            self._record_circuit_failure(agent_naam)
+            logger.warning("Agent %s timeout na %ss (trace=%s)",
+                           agent_naam, timeout, trace_id)
             try:
                 from danny_toolkit.brain.waakhuis import get_waakhuis
-                get_waakhuis().registreer_fout(agent.name, type(e).__name__, str(e)[:200])
+                get_waakhuis().registreer_fout(agent_naam, "TimeoutError", err)
             except Exception:
                 pass
             _log_to_cortical(
-                agent.name, "agent_error",
+                agent_naam, "agent_timeout",
+                {"timeout_s": timeout, "elapsed_ms": round(elapsed_ms, 1)},
+                trace_id=trace_id,
+            )
+            return SwarmPayload(
+                agent=agent_naam, type="error",
+                content=f"[{agent_naam}] {err}",
+                display_text=f"Agent {agent_naam} timeout ({timeout}s)",
+                metadata={"error_type": "TimeoutError"},
+                trace_id=trace_id,
+            )
+        except Exception as e:
+            elapsed_ms = (time.time() - t0) * 1000
+            self._record_agent_metric(agent_naam, elapsed_ms, error=e)
+            self._record_circuit_failure(agent_naam)
+            logger.warning("Agent %s fout: %s (trace=%s)", agent_naam, e, trace_id)
+            # Waakhuis: registreer fout
+            try:
+                from danny_toolkit.brain.waakhuis import get_waakhuis
+                get_waakhuis().registreer_fout(agent_naam, type(e).__name__, str(e)[:200])
+            except Exception:
+                pass
+            _log_to_cortical(
+                agent_naam, "agent_error",
                 {"error": str(e)[:200],
                  "error_type": type(e).__name__,
                  "elapsed_ms": round(elapsed_ms, 1)},
+                trace_id=trace_id,
             )
             return SwarmPayload(
-                agent=agent.name,
-                type="error",
-                content=f"[{agent.name}] Fout: {e}",
-                display_text=f"Agent {agent.name} fout: {e}",
+                agent=agent_naam, type="error",
+                content=f"[{agent_naam}] Fout: {e}",
+                display_text=f"Agent {agent_naam} fout: {e}",
                 metadata={"error_type": type(e).__name__},
+                trace_id=trace_id,
             )
 
     @property
@@ -2952,6 +3114,13 @@ class SwarmEngine:
 
         t = self._tuner
 
+        # Phase 31: genereer trace_id voor request correlatie
+        trace_id = uuid.uuid4().hex[:8]
+        log(f"\U0001f50d Trace {trace_id}")
+
+        # Phase 31: tick circuit breaker cooldowns
+        self._tick_circuit_cooldowns()
+
         # 0. Echo Guard — dedup gate (voorkom feedback loops)
         try:
             q_hash = hashlib.md5(
@@ -3141,6 +3310,7 @@ class SwarmEngine:
             tasks.append(
                 self._timed_dispatch(
                     agent, agent_input,
+                    trace_id=trace_id,
                 )
             )
 
@@ -3321,6 +3491,11 @@ class SwarmEngine:
         # Pipeline samenvatting
         log(f"\U0001f4ca {t.get_samenvatting()}")
 
+        # Phase 31: zorg dat alle payloads trace_id hebben
+        for r in results:
+            if hasattr(r, "trace_id") and not r.trace_id:
+                r.trace_id = trace_id
+
         # Cortical Stack logging
         _log_to_cortical(
             "swarm", "response",
@@ -3331,6 +3506,7 @@ class SwarmEngine:
                 )[:300],
                 "tuning": t.get_samenvatting(),
             },
+            trace_id=trace_id,
         )
 
         # Emit TASK_COMPLETE naar Sensorium

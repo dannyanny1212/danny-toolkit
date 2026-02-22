@@ -34,6 +34,7 @@ from fastapi import (
     Header,
     HTTPException,
     Request,
+    Response,
     UploadFile,
 )
 from fastapi.middleware.cors import CORSMiddleware
@@ -126,6 +127,7 @@ class QueryResponse(BaseModel):
     payloads: List[PayloadResponse]
     execution_time: float
     error_count: int = 0
+    trace_id: str = ""  # Phase 31: request correlation ID
 
 
 class HealthResponse(BaseModel):
@@ -147,6 +149,9 @@ class HealthResponse(BaseModel):
     # Pipeline metrics (Phase 26)
     agent_metrics: Dict[str, Any] = {}
     response_cache: Dict[str, Any] = {}
+    # Phase 31: Waakhuis health + circuit breakers
+    waakhuis_health: Dict[str, Any] = {}
+    circuit_breakers: Dict[str, Any] = {}
 
 
 class AgentInfo(BaseModel):
@@ -234,6 +239,7 @@ async def _shutdown_event():
 )
 async def query(
     req: QueryRequest,
+    response: Response,
     _key: str = Depends(verify_api_key),
 ):
     """Verwerk een prompt via de SwarmEngine en
@@ -260,6 +266,13 @@ async def query(
     elapsed = round(time.time() - start, 2)
     errors = sum(1 for p in payloads if p.type == "error")
 
+    # Phase 31: trace_id uit eerste payload + response header
+    trace_id = ""
+    if payloads and hasattr(payloads[0], "trace_id"):
+        trace_id = payloads[0].trace_id or ""
+    if trace_id:
+        response.headers["X-Trace-Id"] = trace_id
+
     return QueryResponse(
         payloads=[
             PayloadResponse(
@@ -275,6 +288,7 @@ async def query(
         ],
         execution_time=elapsed,
         error_count=errors,
+        trace_id=trace_id,
     )
 
 
@@ -456,6 +470,21 @@ async def health(
     except ImportError:
         pass
 
+    # Phase 31: WaakhuisMonitor health + circuit breakers
+    waakhuis_data = {}
+    try:
+        from danny_toolkit.brain.waakhuis import get_waakhuis
+        waakhuis_data = get_waakhuis().gezondheidsrapport()
+    except Exception:
+        pass
+
+    circuit_data = {}
+    try:
+        from swarm_engine import get_circuit_state
+        circuit_data = get_circuit_state()
+    except ImportError:
+        pass
+
     return HealthResponse(
         status="ONLINE",
         brain_online=brain.is_online,
@@ -472,6 +501,8 @@ async def health(
         agents_in_cooldown=cooldown_count,
         agent_metrics=agent_m,
         response_cache=cache_stats,
+        waakhuis_health=waakhuis_data,
+        circuit_breakers=circuit_data,
     )
 
 

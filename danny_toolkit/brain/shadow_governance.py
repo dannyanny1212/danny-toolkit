@@ -22,6 +22,7 @@ worden gewist zonder de 15 hoofdmodules te beschadigen.
 
 import logging
 import re
+import threading
 import time
 from typing import Optional
 
@@ -290,8 +291,9 @@ MODULE_ZONES = {
     },
 }
 
-# VoidWalker shadow rate tracking
+# VoidWalker shadow rate tracking (Phase 31: thread-safe)
 _shadow_voidwalker_calls = {}  # {hour_key: count}
+_shadow_voidwalker_lock = threading.Lock()
 
 
 class ShadowGovernance:
@@ -381,25 +383,27 @@ class ShadowGovernance:
             True als de kloon nog mag zoeken.
         """
         hour_key = int(time.time() // 3600)
-        count = _shadow_voidwalker_calls.get(hour_key, 0)
 
-        limiet = self.module_zones.get("VoidWalker", {}).get(
-            "limiet", {},
-        ).get("max_searches_per_uur", 1)
+        with _shadow_voidwalker_lock:
+            count = _shadow_voidwalker_calls.get(hour_key, 0)
 
-        if count >= limiet:
-            logger.warning(
-                "%sRODE ZONE: VoidWalker shadow limiet bereikt "
-                "(%d/%d per uur)",
-                SHADOW_PREFIX, count, limiet,
-            )
-            return False
+            limiet = self.module_zones.get("VoidWalker", {}).get(
+                "limiet", {},
+            ).get("max_searches_per_uur", 1)
 
-        _shadow_voidwalker_calls[hour_key] = count + 1
-        # Cleanup oude entries
-        for k in list(_shadow_voidwalker_calls):
-            if k < hour_key:
-                del _shadow_voidwalker_calls[k]
+            if count >= limiet:
+                logger.warning(
+                    "%sRODE ZONE: VoidWalker shadow limiet bereikt "
+                    "(%d/%d per uur)",
+                    SHADOW_PREFIX, count, limiet,
+                )
+                return False
+
+            _shadow_voidwalker_calls[hour_key] = count + 1
+            # Cleanup oude entries
+            for k in list(_shadow_voidwalker_calls):
+                if k < hour_key:
+                    del _shadow_voidwalker_calls[k]
 
         return True
 
@@ -553,6 +557,10 @@ class ShadowGovernance:
 
     def get_stats(self) -> dict:
         """Governance enforcement statistieken."""
+        with _shadow_voidwalker_lock:
+            vw_calls = _shadow_voidwalker_calls.get(
+                int(time.time() // 3600), 0,
+            )
         return {
             "total_rules": len(self.rules),
             "lockdown_rules": sum(1 for r in self.rules if r.niveau == LOCKDOWN),
@@ -565,9 +573,7 @@ class ShadowGovernance:
                 "geel": self.get_zone_modules(ZONE_GEEL),
                 "groen": self.get_zone_modules(ZONE_GROEN),
             },
-            "voidwalker_calls_this_hour": _shadow_voidwalker_calls.get(
-                int(time.time() // 3600), 0,
-            ),
+            "voidwalker_calls_this_hour": vw_calls,
         }
 
     def __repr__(self):

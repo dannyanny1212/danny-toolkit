@@ -50,6 +50,9 @@ class EventTypes:
     WAAKHUIS_ALERT = "waakhuis_alert"
     WAAKHUIS_HEALTH = "waakhuis_health"
     ERROR_ESCALATED = "error_escalated"
+    # Phase 31: circuit breaker events
+    AGENT_CIRCUIT_OPEN = "agent_circuit_open"
+    AGENT_CIRCUIT_CLOSED = "agent_circuit_closed"
 
 
 class BusEvent:

@@ -57,6 +57,7 @@ TESTS = [
     {"naam": "Embeddings MRL",       "cmd": [PYTHON, f"{PROJECT_ROOT}/test_embeddings_mrl.py"]},
     {"naam": "Phase 29 VirtualTwin", "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase29.py"]},
     {"naam": "Phase 30 Schild&Vriend", "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase30.py"]},
+    {"naam": "Phase 31 Trace&Tolerantie", "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase31.py"]},
 ]
 
 BREEDTE = 60
