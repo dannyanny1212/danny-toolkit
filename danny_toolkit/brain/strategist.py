@@ -29,6 +29,12 @@ except ImportError:
     HAS_KEY_MANAGER = False
 
 try:
+    from danny_toolkit.core.groq_retry import groq_call_async
+    HAS_RETRY = True
+except ImportError:
+    HAS_RETRY = False
+
+try:
     from danny_toolkit.brain.void_walker import VoidWalker
     HAS_WALKER = True
 except ImportError:
@@ -239,7 +245,13 @@ class Strategist:
             return None
 
     async def _ask_groq(self, prompt: str) -> Optional[str]:
-        """Direct Groq call for brain-type tasks."""
+        """Direct Groq call met retry + throttle."""
+        if HAS_RETRY:
+            return await groq_call_async(
+                self.client, "Strategist", self.model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.4,
+            )
         try:
             chat = await self.client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],

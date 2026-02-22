@@ -22,6 +22,12 @@ try:
 except ImportError:
     HAS_KEY_MANAGER = False
 
+try:
+    from danny_toolkit.core.groq_retry import groq_call_async
+    HAS_RETRY = True
+except ImportError:
+    HAS_RETRY = False
+
 
 class Tribunal:
     """
@@ -72,6 +78,13 @@ class Tribunal:
         return final_answer
 
     async def _ask_groq(self, model, text):
+        if HAS_RETRY:
+            result = await groq_call_async(
+                self.client, "Tribunal", model,
+                messages=[{"role": "user", "content": text}],
+                temperature=0.6,
+            )
+            return result or "Tribunal Error: rate limited or unavailable"
         try:
             chat_completion = await self.client.chat.completions.create(
                 messages=[{"role": "user", "content": text}],

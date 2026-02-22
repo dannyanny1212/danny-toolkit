@@ -13,6 +13,12 @@ try:
 except ImportError:
     HAS_KEY_MANAGER = False
 
+try:
+    from danny_toolkit.core.groq_retry import groq_call_async
+    HAS_RETRY = True
+except ImportError:
+    HAS_RETRY = False
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -199,6 +205,12 @@ class VoidWalker:
             f"Ignore ads and fluff.\n\n"
             f"RAW TEXT:\n{raw_text}"
         )
+        if HAS_RETRY:
+            return await groq_call_async(
+                self.client, "VoidWalker", self.model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.3,
+            )
         try:
             chat = await self.client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],

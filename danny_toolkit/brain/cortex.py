@@ -28,6 +28,12 @@ try:
 except ImportError:
     HAS_KEY_MANAGER = False
 
+try:
+    from danny_toolkit.core.groq_retry import groq_call_async
+    HAS_RETRY = True
+except ImportError:
+    HAS_RETRY = False
+
 # Optionele dependencies
 try:
     import networkx as nx
@@ -190,12 +196,21 @@ class TheCortex:
             f"Text: {text[:2000]}"
         )
         try:
-            chat = await self.client.chat.completions.create(
-                messages=[{"role": "user", "content": prompt}],
-                model=self.model,
-                temperature=0.2,
-            )
-            raw = chat.choices[0].message.content
+            if HAS_RETRY:
+                raw = await groq_call_async(
+                    self.client, "TheCortex", self.model,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.2,
+                )
+                if not raw:
+                    return []
+            else:
+                chat = await self.client.chat.completions.create(
+                    messages=[{"role": "user", "content": prompt}],
+                    model=self.model,
+                    temperature=0.2,
+                )
+                raw = chat.choices[0].message.content
 
             # Parse JSON uit response
             import json

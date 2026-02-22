@@ -29,10 +29,24 @@ except ImportError:
 # Forbidden patterns — static analysis blocklist
 _FORBIDDEN = [
     "shutil.rmtree", "os.remove", "os.rmdir", "os.unlink",
-    "subprocess.call", "subprocess.Popen", "os.system",
+    "subprocess.call", "subprocess.Popen", "subprocess.run", "os.system",
     "format_drive", "rm -rf", "deltree",
     "__import__", "eval(", "exec(",
+    "importlib", "getattr(os", "setattr(",
+    "open('/", 'open("/', "open('C:", 'open("C:',
 ]
+
+try:
+    from danny_toolkit.core.output_sanitizer import sanitize_for_llm
+    HAS_SANITIZER = True
+except ImportError:
+    HAS_SANITIZER = False
+
+try:
+    from danny_toolkit.core.groq_retry import groq_call_async
+    HAS_RETRY = True
+except ImportError:
+    HAS_RETRY = False
 
 
 class Artificer:
@@ -86,6 +100,12 @@ class Artificer:
         if not self._syntax_check(code):
             return "❌ Artificer blocked code with syntax errors."
 
+        # Pre-flight: check of alle imports beschikbaar zijn
+        missing = self._preflight_imports(code)
+        if missing:
+            print(f"{Kleur.ROOD}⚠️  Missing modules: {', '.join(missing)}{Kleur.RESET}")
+            return f"❌ Artificer: ontbrekende modules: {', '.join(missing)}. Installeer met: pip install {' '.join(missing)}"
+
         # Save & Register (incrementing skill number)
         skill_name = f"skill_{len(registry) + 1}.py"
         self._save_script(skill_name, code, request)
@@ -126,6 +146,13 @@ class Artificer:
             "- Do NOT add explanations, comments about the code, or text before/after.\n"
             "- The very first character must be a Python statement (import, def, etc)."
         )
+        if HAS_RETRY:
+            raw = await groq_call_async(
+                self.client, "Artificer", self.model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.4,
+            )
+            return self._clean_generated_code(raw) if raw else None
         try:
             chat = await self.client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
@@ -182,6 +209,49 @@ class Artificer:
             print(f"{Kleur.ROOD}⚠️  Syntax error: {e}{Kleur.RESET}")
             return False
 
+    @staticmethod
+    def _preflight_imports(code: str) -> list[str]:
+        """
+        Pre-flight check: extract imports en controleer beschikbaarheid.
+        Returns lijst van ontbrekende modules.
+        """
+        import importlib
+        missing = []
+        try:
+            tree = ast.parse(code)
+        except SyntaxError:
+            return missing
+
+        stdlib_always = {
+            "os", "sys", "json", "re", "math", "time", "datetime",
+            "pathlib", "collections", "itertools", "functools",
+            "hashlib", "random", "string", "io", "csv", "logging",
+            "threading", "subprocess", "ast", "textwrap", "shutil",
+            "typing", "dataclasses", "enum", "abc", "copy",
+            "urllib", "http", "socket", "email", "html",
+        }
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    mod = alias.name.split(".")[0]
+                    if mod in stdlib_always:
+                        continue
+                    try:
+                        importlib.import_module(mod)
+                    except ImportError:
+                        missing.append(mod)
+            elif isinstance(node, ast.ImportFrom):
+                if node.module:
+                    mod = node.module.split(".")[0]
+                    if mod in stdlib_always:
+                        continue
+                    try:
+                        importlib.import_module(mod)
+                    except ImportError:
+                        missing.append(mod)
+        return missing
+
     def _save_script(self, filename: str, code: str, description: str):
         path = self.skills_dir / filename
         with open(path, "w", encoding="utf-8") as f:
@@ -212,7 +282,11 @@ class Artificer:
             )
             if result.returncode == 0:
                 self._mark_skill_status(filename, error=None)
-                return result.stdout or "(no output)"
+                output = result.stdout or "(no output)"
+                # Sanitize: voorkom dat ASCII art/formatting als AI input terugkomt
+                if HAS_SANITIZER:
+                    output = sanitize_for_llm(output, max_chars=3000)
+                return output
             error_msg = result.stderr
             self._mark_skill_status(filename, error=error_msg[:500])
             return f"Script error:\n{error_msg}"
