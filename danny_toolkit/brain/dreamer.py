@@ -111,6 +111,9 @@ class Dreamer:
         # 5.7 Shadow Summarization — pre-summarize RAG documents
         await self._shadow_summarization()
 
+        # 5.8 Recursive Refiner — dubbele pers naar Super-Tokens
+        await self._recursive_refine()
+
         # 6. Pre-Compute — anticipate tomorrow
         insight = await self._anticipate()
         if insight:
@@ -419,6 +422,121 @@ class Dreamer:
         except Exception as e:
             logger.debug("Shadow summarization error: %s", e)
             print(f"{Kleur.ROOD}📑 Shadow summarization error: {e}{Kleur.RESET}")
+
+    async def _recursive_refine(self, drempel: int = 25, max_docs: int = 20):
+        """Fase 31: Recursive Refiner — dubbele pers naar Super-Tokens.
+
+        Samenvattingen die nog te veel tokens bevatten (>drempel) worden
+        een tweede keer gecomprimeerd tot ~10 ultra-compacte Super-Tokens.
+        Dit is de "dubbele pers" die ruis elimineert.
+
+        Args:
+            drempel: Samenvattingen boven deze tokengrens worden hergeperst.
+            max_docs: Max documenten per cyclus.
+        """
+        print(f"{Kleur.GEEL}🔩 Recursive Refiner (dubbele pers)...{Kleur.RESET}")
+
+        try:
+            import sqlite3
+            db_pad = str(Config.DATA_DIR / "cortical_stack.db")
+            conn = sqlite3.connect(db_pad, timeout=10)
+            conn.execute("PRAGMA busy_timeout=5000")
+
+            # Zoek samenvattingen die nog te lang zijn
+            kandidaten = conn.execute(
+                """SELECT doc_id, samenvatting, samenvatting_tokens, origineel_tokens
+                   FROM shadow_summaries
+                   WHERE samenvatting_tokens > ?
+                   ORDER BY samenvatting_tokens DESC
+                   LIMIT ?""",
+                (drempel, max_docs),
+            ).fetchall()
+
+            if not kandidaten:
+                print(f"{Kleur.GROEN}🔩 Recursive Refiner: alle samenvattingen al compact.{Kleur.RESET}")
+                conn.close()
+                return
+
+            print(f"{Kleur.CYAAN}🔩 {len(kandidaten)} samenvattingen boven {drempel} tokens{Kleur.RESET}")
+
+            verfijnd = 0
+            totaal_bespaard = 0
+
+            for doc_id, samenvatting, sam_tokens, orig_tokens in kandidaten:
+                prompt = (
+                    "Comprimeer deze samenvatting tot MAXIMAAL 10 woorden.\n"
+                    "REGELS:\n"
+                    "- Eén enkele zin, telegramstijl.\n"
+                    "- Bewaar alleen kernfeiten en cijfers.\n"
+                    "- Geen werkwoorden als het kan, geen lidwoorden.\n"
+                    "- Antwoord ALLEEN met de super-compressie.\n\n"
+                    f"SAMENVATTING:\n{samenvatting}\n\nSUPER-TOKEN:"
+                )
+
+                try:
+                    chat = await self.client.chat.completions.create(
+                        messages=[{"role": "user", "content": prompt}],
+                        model=self.model,
+                        temperature=0.1,
+                    )
+                    super_token = chat.choices[0].message.content
+
+                    if super_token and super_token.strip():
+                        super_token = super_token.strip()
+                        nieuwe_tokens = len(super_token) // 4
+                        bespaard = sam_tokens - nieuwe_tokens
+
+                        # Alleen opslaan als het echt korter is
+                        if nieuwe_tokens < sam_tokens:
+                            conn.execute(
+                                """UPDATE shadow_summaries
+                                   SET samenvatting = ?,
+                                       samenvatting_tokens = ?,
+                                       aangemaakt = datetime('now')
+                                   WHERE doc_id = ?""",
+                                (super_token, nieuwe_tokens, doc_id),
+                            )
+                            totaal_bespaard += bespaard
+                            verfijnd += 1
+                            print(f"  {Kleur.GROEN}⚡ {doc_id[:45]} ({sam_tokens}→{nieuwe_tokens} tok){Kleur.RESET}")
+                        else:
+                            print(f"  {Kleur.GEEL}⊘ {doc_id[:45]} (al compact){Kleur.RESET}")
+                    else:
+                        print(f"  {Kleur.GEEL}⊘ {doc_id[:45]} (leeg antwoord){Kleur.RESET}")
+
+                except Exception as e:
+                    print(f"  {Kleur.ROOD}✗ {doc_id[:45]}: {e}{Kleur.RESET}")
+
+                await asyncio.sleep(3)
+
+            conn.commit()
+            conn.close()
+
+            # Log naar CorticalStack
+            if HAS_STACK and verfijnd > 0:
+                try:
+                    stack = get_cortical_stack()
+                    stack.log_event(
+                        actor="dreamer",
+                        action="recursive_refine",
+                        details={
+                            "verfijnd": verfijnd,
+                            "kandidaten": len(kandidaten),
+                            "totaal_bespaard": totaal_bespaard,
+                        },
+                    )
+                    stack.flush()
+                except Exception as e:
+                    logger.debug("CorticalStack log failed: %s", e)
+
+            print(
+                f"{Kleur.GROEN}🔩 Recursive Refiner: {verfijnd}/{len(kandidaten)} "
+                f"hergeperst, ~{totaal_bespaard} extra tokens bespaard{Kleur.RESET}"
+            )
+
+        except Exception as e:
+            logger.debug("Recursive Refiner error: %s", e)
+            print(f"{Kleur.ROOD}🔩 Recursive Refiner error: {e}{Kleur.RESET}")
 
     async def _research_failures(self):
         """Research top failure topics via VoidWalker."""
