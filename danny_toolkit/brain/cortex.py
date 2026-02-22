@@ -22,6 +22,12 @@ except ImportError:
 from groq import AsyncGroq
 from danny_toolkit.core.utils import Kleur
 
+try:
+    from danny_toolkit.core.key_manager import get_key_manager
+    HAS_KEY_MANAGER = True
+except ImportError:
+    HAS_KEY_MANAGER = False
+
 # Optionele dependencies
 try:
     import networkx as nx
@@ -87,7 +93,11 @@ class TheCortex:
     """
 
     def __init__(self):
-        self.client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
+        if HAS_KEY_MANAGER:
+            km = get_key_manager()
+            self.client = km.create_async_client("TheCortex") or AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
+        else:
+            self.client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
         self.model = "meta-llama/llama-4-scout-17b-16e-instruct"
 
         # In-memory graaf (NetworkX)

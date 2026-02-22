@@ -13,6 +13,12 @@ from .vector_store import VectorStore
 from .document_processor import DocumentProcessor
 from .generator import Generator
 
+try:
+    from .key_manager import SmartKeyManager, get_key_manager
+    _HAS_KEY_MANAGER = True
+except ImportError:
+    _HAS_KEY_MANAGER = False
+
 __all__ = [
     "Config",
     "clear_scherm",
@@ -26,3 +32,6 @@ __all__ = [
     "DocumentProcessor",
     "Generator",
 ]
+
+if _HAS_KEY_MANAGER:
+    __all__.extend(["SmartKeyManager", "get_key_manager"])

@@ -56,6 +56,12 @@ try:
 except ImportError:
     GROQ_BESCHIKBAAR = False
 
+try:
+    from ..core.key_manager import get_key_manager
+    HAS_KEY_MANAGER = True
+except ImportError:
+    HAS_KEY_MANAGER = False
+
 
 class CentralBrain:
     """
@@ -96,7 +102,11 @@ class CentralBrain:
         self._fallback_provider = None
 
         if GROQ_BESCHIKBAAR and Config.has_groq_key():
-            self.client = Groq()
+            if HAS_KEY_MANAGER:
+                km = get_key_manager()
+                self.client = km.create_sync_client("CentralBrain") or Groq()
+            else:
+                self.client = Groq()
             self.ai_provider = "groq"
             print(kleur(
                 "   [OK] Central Brain AI actief (Groq)",
