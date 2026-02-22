@@ -53,6 +53,12 @@ class EventTypes:
     # Phase 31: circuit breaker events
     AGENT_CIRCUIT_OPEN = "agent_circuit_open"
     AGENT_CIRCUIT_CLOSED = "agent_circuit_closed"
+    # Phase 33: config audit events
+    CONFIG_DRIFT_DETECTED = "config_drift_detected"
+    CONFIG_AUDIT_COMPLETE = "config_audit_complete"
+    # Phase 34: shard routing events
+    SHARD_MIGRATION_COMPLETE = "shard_migration_complete"
+    SHARD_QUERY_ROUTED = "shard_query_routed"
 
 
 class BusEvent:

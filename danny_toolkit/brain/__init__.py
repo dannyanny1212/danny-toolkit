@@ -38,6 +38,7 @@ try:
     from .shadow_permissions import ShadowPermissions
     from .waakhuis import WaakhuisMonitor, get_waakhuis
     from .hallucination_shield import HallucinatieSchild
+    from .config_auditor import ConfigAuditor, get_config_auditor
 except ImportError:
     pass
 
@@ -71,6 +72,7 @@ __all__ = [
     "VirtualTwin", "ShadowCortex",
     "ShadowGovernance", "ShadowPermissions",
     "WaakhuisMonitor", "get_waakhuis", "HallucinatieSchild",
+    "ConfigAuditor", "get_config_auditor",
     # Anti-Hallucination
     "CitationMarshall", "RealityAnchor", "TruthAnchor",
     # Subsystems

@@ -862,7 +862,51 @@ class OmegaGovernor:
         self._log("startup_check", {
             "status": rapport["status"],
         })
+
+        # Phase 33: ConfigAuditor validatie bij startup
+        try:
+            from danny_toolkit.brain.config_auditor import (
+                get_config_auditor,
+            )
+            auditor = get_config_auditor()
+            audit_rapport = auditor.audit()
+            rapport["config_audit"] = {
+                "veilig": audit_rapport.veilig,
+                "schendingen": len(audit_rapport.schendingen),
+                "gecontroleerd": audit_rapport.gecontroleerd,
+            }
+            if not audit_rapport.veilig:
+                rapport["status"] = "WAARSCHUWING"
+                print(
+                    f"  [GOVERNOR] ConfigAudit: "
+                    f"{len(audit_rapport.schendingen)} schendingen"
+                )
+        except Exception as e:
+            logger.debug("Governor ConfigAuditor fout: %s", e)
+
         return rapport
+
+    def periodieke_audit(self) -> Dict[str, Any]:
+        """Voer periodieke ConfigAuditor check uit.
+
+        Returns:
+            Dict met audit resultaten.
+        """
+        try:
+            from danny_toolkit.brain.config_auditor import (
+                get_config_auditor,
+            )
+            auditor = get_config_auditor()
+            rapport = auditor.audit()
+            return {
+                "veilig": rapport.veilig,
+                "schendingen": len(rapport.schendingen),
+                "drift": rapport.drift_gedetecteerd,
+                "gecontroleerd": rapport.gecontroleerd,
+            }
+        except Exception as e:
+            logger.debug("Governor periodieke audit fout: %s", e)
+            return {"error": str(e)}
 
     # =================================================================
     # E. Health Report

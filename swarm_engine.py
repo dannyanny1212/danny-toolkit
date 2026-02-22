@@ -522,6 +522,44 @@ class MemexAgent(BrainAgent):
         ".log": 0.20,
     }
 
+    @staticmethod
+    def _bepaal_query_shards(query: str):
+        """Bepaal welke shards relevant zijn op basis van query.
+
+        Heuristiek:
+        - Code-gerelateerde termen → danny_code
+        - Config/data termen → danny_data
+        - Standaard → alle shards
+        """
+        q = query.lower()
+        shards = []
+
+        code_hints = [
+            "code", "functie", "class", "def ",
+            "import", "python", "javascript",
+            "bug", "error", "traceback", "fix",
+            "method", "function", "implementa",
+        ]
+        data_hints = [
+            "config", "json", "csv", "yaml",
+            "toml", "xml", "instelling", "setting",
+            "data", "log", "logs",
+        ]
+        doc_hints = [
+            "documentatie", "readme", "handleiding",
+            "tutorial", "uitleg", "manual", "docs",
+        ]
+
+        if any(h in q for h in code_hints):
+            shards.append("danny_code")
+        if any(h in q for h in data_hints):
+            shards.append("danny_data")
+        if any(h in q for h in doc_hints):
+            shards.append("danny_docs")
+
+        # Geen match of mix → alle shards
+        return shards if shards else None
+
     def _search_chromadb(self, query, n_results=10):
         """Doorzoek ChromaDB met bronweging.
 
@@ -529,7 +567,29 @@ class MemexAgent(BrainAgent):
         herwaardeert scores (.py krijgt bonus,
         .json krijgt penalty), en retourneert
         de top 5.
+
+        Phase 34: Als SHARD_ENABLED, gebruik ShardRouter.
         """
+        # Phase 34: ShardRouter pad
+        try:
+            from danny_toolkit.core.config import Config as _Cfg
+            if getattr(_Cfg, "SHARD_ENABLED", False):
+                from danny_toolkit.core.shard_router import (
+                    get_shard_router,
+                )
+                router = get_shard_router()
+                shards = self._bepaal_query_shards(query)
+                resultaten = router.zoek(
+                    query, top_k=5, shards=shards,
+                )
+                if resultaten:
+                    docs = [r["tekst"] for r in resultaten]
+                    metas = [r["metadata"] for r in resultaten]
+                    return docs, metas
+        except Exception as e:
+            logger.debug("ShardRouter zoek fallback: %s", e)
+
+        # Legacy pad
         collection = self._get_collection()
         if not collection:
             return [], []

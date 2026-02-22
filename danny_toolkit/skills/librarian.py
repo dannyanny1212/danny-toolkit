@@ -133,6 +133,26 @@ class TheLibrarian:
             )
         )
 
+        # Phase 34: Lazy ShardRouter
+        self._shard_router = None
+
+    def _get_shard_router(self):
+        """Lazy init ShardRouter (Phase 34)."""
+        if self._shard_router is not None:
+            return self._shard_router
+        try:
+            from danny_toolkit.core.config import Config as _Cfg
+            if not getattr(_Cfg, "SHARD_ENABLED", False):
+                return None
+            from danny_toolkit.core.shard_router import (
+                get_shard_router,
+            )
+            self._shard_router = get_shard_router()
+            return self._shard_router
+        except Exception as e:
+            logger.debug("ShardRouter init fout: %s", e)
+            return None
+
     # ─── Bestandslezers ───
 
     def _lees_pdf(self, pad):
@@ -320,6 +340,18 @@ class TheLibrarian:
                         metadatas=metadatas,
                     )
                     totaal_chunks += len(ids)
+
+                    # Phase 34: ShardRouter parallel ingest
+                    shard_router = self._get_shard_router()
+                    if shard_router is not None:
+                        try:
+                            shard_docs = [
+                                {"id": i, "tekst": d, "metadata": m}
+                                for i, d, m in zip(ids, documents, metadatas)
+                            ]
+                            shard_router.ingest(shard_docs)
+                        except Exception as e:
+                            logger.debug("ShardRouter ingest fout: %s", e)
 
                     # Auto-extract triples voor Knowledge Graph
                     if _HAS_CORTEX and documents:

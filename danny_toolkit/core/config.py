@@ -279,6 +279,7 @@ class Config:
     CHUNK_SIZE = 350
     CHUNK_OVERLAP = 50
     TOP_K = 5
+    SHARD_ENABLED = os.environ.get("SHARD_ENABLED", "").lower() in ("1", "true", "yes")
 
     # Paths
     BASE_DIR = Path(__file__).parent.parent.parent

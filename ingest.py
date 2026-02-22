@@ -158,6 +158,28 @@ def main():
         chunk_size=args.chunk_size,
     )
 
+    # Phase 34: Shard statistieken tonen
+    try:
+        from danny_toolkit.core.config import Config as _Cfg
+        if getattr(_Cfg, "SHARD_ENABLED", False):
+            from danny_toolkit.core.shard_router import (
+                get_shard_router,
+            )
+            router = get_shard_router()
+            stats = router.statistieken()
+            console.print(
+                "\n[bold cyan]SHARD STATISTIEKEN"
+                "[/bold cyan]"
+            )
+            for s in stats:
+                console.print(
+                    f"  {s.naam}: "
+                    f"[green]{s.aantal_chunks}[/green]"
+                    " chunks"
+                )
+    except Exception:
+        pass
+
 
 if __name__ == "__main__":
     main()

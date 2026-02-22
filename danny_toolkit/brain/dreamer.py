@@ -126,6 +126,41 @@ class Dreamer:
         except Exception as e:
             logger.debug("SemanticCache REM maintenance failed: %s", e)
 
+        # 5.10 ConfigAuditor REM check — drift detectie
+        try:
+            from danny_toolkit.brain.config_auditor import get_config_auditor
+            auditor = get_config_auditor()
+            audit_rapport = auditor.audit()
+            if audit_rapport.drift_gedetecteerd:
+                print(f"{Kleur.GEEL}🔍 Config drift gedetecteerd: "
+                      f"{len([s for s in audit_rapport.schendingen if s.categorie == 'drift'])} "
+                      f"wijzigingen{Kleur.RESET}")
+            elif not audit_rapport.veilig:
+                print(f"{Kleur.ROOD}🔍 Config audit: "
+                      f"{len(audit_rapport.schendingen)} schendingen{Kleur.RESET}")
+            else:
+                print(f"{Kleur.GROEN}🔍 Config audit: veilig{Kleur.RESET}")
+        except Exception as e:
+            logger.debug("ConfigAuditor REM check failed: %s", e)
+
+        # 5.11 ShardRouter auto-migratie check
+        try:
+            from danny_toolkit.core.config import Config as _Cfg
+            if getattr(_Cfg, "SHARD_ENABLED", False):
+                from danny_toolkit.core.shard_router import get_shard_router
+                router = get_shard_router()
+                stats = router.statistieken()
+                totaal_shards = sum(s.aantal_chunks for s in stats)
+                if totaal_shards == 0:
+                    print(f"{Kleur.GEEL}🔀 Shard migratie gestart...{Kleur.RESET}")
+                    resultaat = router.migreer()
+                    gemigreerd = sum(resultaat.values())
+                    print(f"{Kleur.GROEN}🔀 Shard migratie: {gemigreerd} chunks verdeeld{Kleur.RESET}")
+                else:
+                    print(f"{Kleur.GROEN}🔀 Shards actief: {totaal_shards} chunks{Kleur.RESET}")
+        except Exception as e:
+            logger.debug("ShardRouter REM migratie check failed: %s", e)
+
         # 6. Pre-Compute — anticipate tomorrow
         insight = await self._anticipate()
         if insight:
