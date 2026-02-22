@@ -339,11 +339,14 @@ class Dreamer:
 
             for doc_id, tekst, length in candidates[:max_docs]:
                 prompt = (
-                    "Vat de volgende tekst samen in maximaal 3 korte zinnen.\n"
-                    "Bewaar alle feiten, namen, cijfers en technische termen.\n"
-                    "Laat meningen, herhaling en opvulwoorden weg.\n"
-                    "Antwoord ALLEEN met de samenvatting, geen inleiding.\n\n"
-                    f"TEKST:\n{tekst[:4000]}\n\nSAMENVATTING:"
+                    "Comprimeer de volgende tekst tot maximaal 30% van het origineel.\n"
+                    "REGELS:\n"
+                    "- Maximaal 2 zinnen.\n"
+                    "- Bewaar ALLEEN: feiten, namen, cijfers, technische termen.\n"
+                    "- Verwijder: meningen, voorbeelden, herhaling, opvulwoorden, inleidingen.\n"
+                    "- Gebruik telegramstijl: kort, direct, geen bijzinnen.\n"
+                    "- Antwoord ALLEEN met de compressie, geen uitleg.\n\n"
+                    f"TEKST:\n{tekst[:4000]}\n\nCOMPRESSIE:"
                 )
 
                 try:
