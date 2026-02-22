@@ -15,7 +15,6 @@ Gebruik:
 import asyncio
 import logging
 import threading
-import time
 from collections import defaultdict, deque
 from datetime import datetime
 from typing import Any, Callable, Deque, Dict, List, Optional
@@ -40,6 +39,10 @@ class EventTypes:
     STEP_COMPLETED = "step_completed"
     FORGE_SUCCESS = "forge_success"
     LEARNING_CYCLE_STARTED = "learning_cycle_started"
+    SYNAPSE_UPDATED = "synapse_updated"
+    SYNAPSE_FEEDBACK = "synapse_feedback"
+    PHANTOM_PREDICTION = "phantom_prediction"
+    PHANTOM_HIT = "phantom_hit"
 
 
 class BusEvent:

@@ -20,7 +20,6 @@ Gebruik:
 
 import atexit
 import asyncio
-import base64
 import json
 import logging
 import math
@@ -30,7 +29,7 @@ import sys
 import time
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 
 # Max workers voor de per-loop thread pool.
 _SWARM_MAX_WORKERS = 6
@@ -1552,11 +1551,17 @@ class AdaptiveRouter:
             return 0.0
         return dot / (mag_a * mag_b)
 
-    def route(self, user_input: str) -> List[str]:
+    def route(
+        self,
+        user_input: str,
+        synapse_bias: Dict[str, float] = None,
+    ) -> List[str]:
         """Semantische routing via cosine similarity.
 
         Args:
             user_input: Tekst van de gebruiker.
+            synapse_bias: Optionele bias multipliers
+                per agent van TheSynapse.
 
         Returns:
             Lijst van agent keys, gesorteerd op
@@ -1604,6 +1609,9 @@ class AdaptiveRouter:
                 self._cosine_sim(input_vec, sv)
                 for sv in sub_vecs
             )
+            # Apply Synapse bias multiplier
+            if synapse_bias and agent in synapse_bias:
+                best *= synapse_bias[agent]
             if best >= self.DREMPEL:
                 scores.append((agent, best))
 
@@ -1896,6 +1904,9 @@ class SwarmEngine:
             "tribunal_verified": 0,
             "tribunal_warnings": 0,
             "tribunal_errors": 0,
+            "synapse_adjustments": 0,
+            "phantom_predictions": 0,
+            "phantom_hits": 0,
         }
 
     def get_stats(self) -> Dict[str, Any]:
@@ -2024,6 +2035,38 @@ class SwarmEngine:
                 logger.debug("AdversarialTribunal laden mislukt: %s", e)
                 self._tribunal_instance = None
         return self._tribunal_instance
+
+    @property
+    def synapse(self):
+        """Lazy TheSynapse — synaptic pathway plasticity."""
+        if not hasattr(self, "_synapse_instance"):
+            try:
+                from danny_toolkit.brain.synapse import (
+                    TheSynapse,
+                )
+                self._synapse_instance = TheSynapse()
+            except Exception as e:
+                logger.debug(
+                    "TheSynapse laden mislukt: %s", e,
+                )
+                self._synapse_instance = None
+        return self._synapse_instance
+
+    @property
+    def phantom(self):
+        """Lazy ThePhantom — anticipatory intelligence."""
+        if not hasattr(self, "_phantom_instance"):
+            try:
+                from danny_toolkit.brain.phantom import (
+                    ThePhantom,
+                )
+                self._phantom_instance = ThePhantom()
+            except Exception as e:
+                logger.debug(
+                    "ThePhantom laden mislukt: %s", e,
+                )
+                self._phantom_instance = None
+        return self._phantom_instance
 
     async def _tribunal_verify(
         self, results, user_input, callback=None,
@@ -2596,19 +2639,38 @@ class SwarmEngine:
     async def route(self, user_input: str) -> List[str]:
         """Adaptive routing: embedding-first, keyword-fallback.
 
-        1. Probeer AdaptiveRouter (cosine similarity)
+        1. Probeer AdaptiveRouter (cosine similarity + Synapse bias)
         2. Fallback naar ROUTE_MAP (keyword matching)
         3. Fallback naar ECHO
 
         MEMEX wint van IOLAAX bij kennisvragen.
         """
+        # Get Synapse routing bias
+        bias = {}
+        if self.synapse:
+            try:
+                bias = self.synapse.get_routing_bias(
+                    user_input,
+                )
+                if bias:
+                    self._swarm_metrics[
+                        "synapse_adjustments"
+                    ] += 1
+            except Exception as e:
+                logger.debug(
+                    "Synapse bias failed: %s", e,
+                )
+
         # Probeer embedding-based routing
         try:
-            targets = self._router.route(user_input)
+            targets = self._router.route(
+                user_input, synapse_bias=bias,
+            )
             _log_to_cortical(
                 "router", "adaptive",
                 {"targets": targets,
-                 "input": user_input[:200]},
+                 "input": user_input[:200],
+                 "synapse_bias": bool(bias)},
             )
             return targets
         except Exception as e:
@@ -2748,8 +2810,44 @@ class SwarmEngine:
             (time.time() - t0) * 1000,
         )
 
+        # 3.5 Phantom: check pre-warmed context
+        phantom_category = None
+        phantom_ctx = []
+        if self.synapse and self.phantom:
+            try:
+                phantom_category = (
+                    self.synapse.categorize_query(
+                        user_input,
+                    )
+                )
+                phantom_ctx = (
+                    self.phantom.get_pre_warmed(
+                        phantom_category,
+                    )
+                )
+                if phantom_ctx:
+                    self._swarm_metrics[
+                        "phantom_hits"
+                    ] += 1
+                    log(
+                        "\U0001f47b Phantom:"
+                        f" {len(phantom_ctx)}"
+                        " pre-warmed fragmenten"
+                    )
+            except Exception as e:
+                logger.debug(
+                    "Phantom pre-warm check: %s", e,
+                )
+
         # 4. MEMEX Context (tunable)
-        if not t.mag_skippen("memex"):
+        if phantom_ctx:
+            # Phantom cache hit — skip MEMEX fetch
+            memex_ctx = phantom_ctx
+            log(
+                "\u23ed\ufe0f MEMEX:"
+                " phantom cache hit"
+            )
+        elif not t.mag_skippen("memex"):
             t0 = time.time()
             memex_ctx = self._ophalen_memex_context(
                 user_input,
@@ -2947,6 +3045,42 @@ class SwarmEngine:
             logger.debug(
                 "Triple extraction failed: %s", e
             )
+
+        # Synapse: record interaction trace
+        if self.synapse:
+            try:
+                total_len = sum(
+                    len(str(r.display_text or r.content))
+                    for r in results
+                )
+                exec_ms = sum(
+                    r.metadata.get("execution_time", 0)
+                    for r in results
+                ) * 1000
+                self.synapse.record_interaction(
+                    user_input,
+                    [r.agent for r in results],
+                    execution_ms=exec_ms,
+                    response_length=total_len,
+                )
+            except Exception as e:
+                logger.debug(
+                    "Synapse record failed: %s", e,
+                )
+
+        # Phantom: resolve predictions
+        if self.phantom and phantom_category:
+            try:
+                self.phantom.resolve_predictions(
+                    phantom_category,
+                )
+                self._swarm_metrics[
+                    "phantom_predictions"
+                ] += 1
+            except Exception as e:
+                logger.debug(
+                    "Phantom resolve failed: %s", e,
+                )
 
         log("\u2705 SWARM COMPLETE")
         self._query_count += 1

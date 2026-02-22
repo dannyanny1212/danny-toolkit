@@ -2,12 +2,11 @@ import json
 import logging
 import os
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 from groq import AsyncGroq
-from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import Kleur
 
 try:
@@ -63,6 +62,24 @@ class Dreamer:
 
         # 5. Research failures — fill knowledge gaps overnight
         await self._research_failures()
+
+        # 5.5 Synapse pruning — decay unused pathways
+        try:
+            from danny_toolkit.brain.synapse import TheSynapse
+            synapse = TheSynapse()
+            synapse.decay_unused(days_threshold=7)
+            print(f"{Kleur.GROEN}🧠 Synapse pruning complete.{Kleur.RESET}")
+        except Exception as e:
+            logger.debug("Synapse pruning error: %s", e)
+
+        # 5.6 Phantom rebuild — temporal pattern analysis
+        try:
+            from danny_toolkit.brain.phantom import ThePhantom
+            phantom = ThePhantom()
+            phantom.update_patterns()
+            print(f"{Kleur.GROEN}👻 Phantom patterns rebuilt.{Kleur.RESET}")
+        except Exception as e:
+            logger.debug("Phantom rebuild error: %s", e)
 
         # 6. Pre-Compute — anticipate tomorrow
         insight = await self._anticipate()
