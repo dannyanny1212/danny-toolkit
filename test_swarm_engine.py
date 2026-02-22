@@ -1490,6 +1490,7 @@ def main():
         sys.exit(1)
     else:
         print("\n  ALLE TESTS GESLAAGD!")
+        sys.exit(0)
 
 
 if __name__ == "__main__":

@@ -114,6 +114,18 @@ class Dreamer:
         # 5.8 Recursive Refiner — dubbele pers naar Super-Tokens
         await self._recursive_refine()
 
+        # 5.9 Semantic Cache eviction — verwijder verlopen entries
+        try:
+            from danny_toolkit.core.semantic_cache import get_semantic_cache
+            sc = get_semantic_cache()
+            sc.evict_expired()
+            sc_stats = sc.stats()
+            logger.info("SemanticCache maintenance: %d entries, %d hits",
+                        sc_stats.get("total_entries", 0),
+                        sc_stats.get("total_hits", 0))
+        except Exception as e:
+            logger.debug("SemanticCache REM maintenance failed: %s", e)
+
         # 6. Pre-Compute — anticipate tomorrow
         insight = await self._anticipate()
         if insight:

@@ -2045,10 +2045,15 @@ class SwarmEngine:
             "agent_timeouts": 0,
             "summary_hits": 0,
             "sentinel_warnings": 0,
+            "semantic_cache_hits": 0,
+            "semantic_cache_misses": 0,
         }
 
         # Cached ShadowCortex instance (lazy init)
         self._shadow_cortex = None
+
+        # Semantic Cache (lazy init)
+        self._semantic_cache = None
 
         # Echo Guard — dedup gate (hash, timestamp)
         self._recent_queries: deque = deque(maxlen=50)
@@ -2081,6 +2086,13 @@ class SwarmEngine:
             stats["response_cache"] = get_response_cache().stats()
         except ImportError:
             stats["response_cache"] = {}
+
+        # Semantic cache stats
+        try:
+            from danny_toolkit.core.semantic_cache import get_semantic_cache
+            stats["semantic_cache"] = get_semantic_cache().stats()
+        except ImportError:
+            stats["semantic_cache"] = {}
 
         # Key manager status
         try:
@@ -2194,6 +2206,25 @@ class SwarmEngine:
                 trace_id=trace_id,
             )
 
+        # --- Semantic Cache: lookup ---
+        try:
+            if self._semantic_cache is None:
+                from danny_toolkit.core.semantic_cache import get_semantic_cache
+                self._semantic_cache = get_semantic_cache()
+            cache_result = self._semantic_cache.lookup(agent_naam, agent_input)
+            if cache_result:
+                self._swarm_metrics["semantic_cache_hits"] += 1
+                return SwarmPayload(
+                    agent=agent_naam,
+                    type="text",
+                    content=cache_result,
+                    metadata={"cached": True, "trace_id": trace_id},
+                    trace_id=trace_id,
+                )
+            self._swarm_metrics["semantic_cache_misses"] += 1
+        except Exception as e:
+            logger.debug("Semantic cache lookup failed: %s", e)
+
         # Per-agent timeout (default 20s)
         timeout = _AGENT_TIMEOUTS.get(agent_naam, _DEFAULT_AGENT_TIMEOUT)
 
@@ -2211,6 +2242,13 @@ class SwarmEngine:
                 get_waakhuis().registreer_dispatch(agent_naam, elapsed_ms)
             except Exception as e:
                 logger.debug("Waakhuis dispatch: %s", e)
+            # --- Semantic Cache: store ---
+            try:
+                if self._semantic_cache and result and hasattr(result, 'content') and result.content:
+                    if not (hasattr(result, 'metadata') and result.metadata and result.metadata.get('error_type')):
+                        self._semantic_cache.store(agent_naam, agent_input, result.content)
+            except Exception as e:
+                logger.debug("Semantic cache store failed: %s", e)
             # Propageer trace_id naar payload
             if hasattr(result, "trace_id"):
                 result.trace_id = trace_id

@@ -71,6 +71,9 @@ data/cortical_stack.db-wal
 data/waakhuis_metrics.db
 data/waakhuis_metrics.db-shm
 data/waakhuis_metrics.db-wal
+data/semantic_cache.db
+data/semantic_cache.db-shm
+data/semantic_cache.db-wal
 
 # Generated output
 data/output/
