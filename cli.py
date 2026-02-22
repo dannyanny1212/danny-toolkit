@@ -498,6 +498,13 @@ def main():
     clear_screen()
     print_header()
 
+    # Startup validatie (Phase 26)
+    try:
+        from danny_toolkit.core.startup_validator import valideer_opstart
+        valideer_opstart()
+    except ImportError:
+        pass
+
     # 1.2: Exception handling brain loading
     try:
         brain, boot_log = laad_brain()

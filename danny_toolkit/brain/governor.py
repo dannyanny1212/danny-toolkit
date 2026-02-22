@@ -786,6 +786,7 @@ class OmegaGovernor:
         rapport = {}
 
         keys = {
+            "GROQ_API_KEY": "gsk_",
             "ANTHROPIC_API_KEY": "sk-ant-",
             "VOYAGE_API_KEY": "pa-",
         }

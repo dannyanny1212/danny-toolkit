@@ -1462,6 +1462,14 @@ class Launcher:
     def __init__(self):
         fix_encoding()
         Config.ensure_dirs()
+
+        # Startup validatie (Phase 26)
+        try:
+            from danny_toolkit.core.startup_validator import valideer_opstart
+            valideer_opstart()
+        except ImportError:
+            pass
+
         Config.laad_voorkeuren()
         self.stats = LauncherStats()
         self.stats.registreer_sessie()

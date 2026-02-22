@@ -42,6 +42,30 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
+# ── PER-AGENT PIPELINE METRICS (module-level singleton) ──
+
+import threading as _threading
+
+_AGENT_PIPELINE_METRICS: Dict[str, Dict[str, Any]] = {}
+_METRICS_LOCK = _threading.Lock()
+
+
+def get_pipeline_metrics() -> Dict[str, Any]:
+    """Per-agent pipeline metrics (module-level singleton)."""
+    with _METRICS_LOCK:
+        result = {}
+        for naam, m in _AGENT_PIPELINE_METRICS.items():
+            result[naam] = {
+                "calls": m["calls"],
+                "errors": m["errors"],
+                "avg_ms": round(m["total_ms"] / max(m["calls"], 1), 1),
+                "success_rate": round(
+                    (m["calls"] - m["errors"]) / max(m["calls"], 1) * 100, 1
+                ),
+                "last_error": m["last_error"],
+            }
+        return result
+
 
 # ── CUSTOM EXCEPTIONS ──
 
@@ -1924,7 +1948,7 @@ class SwarmEngine:
             if self._query_count > 0
             else 0.0
         )
-        return {
+        stats = {
             "queries_processed": self._query_count,
             "active_agents": len(self.agents),
             "avg_response_ms": round(avg_ms, 1),
@@ -1933,6 +1957,63 @@ class SwarmEngine:
             ),
             **self._swarm_metrics,
         }
+
+        # Per-agent pipeline metrics
+        stats["agent_metrics"] = get_pipeline_metrics()
+
+        # Response cache stats
+        try:
+            from danny_toolkit.core.response_cache import (
+                get_response_cache,
+            )
+            stats["response_cache"] = get_response_cache().stats()
+        except ImportError:
+            stats["response_cache"] = {}
+
+        # Key manager status
+        try:
+            from danny_toolkit.core.key_manager import (
+                get_key_manager,
+            )
+            stats["key_manager"] = get_key_manager().get_status()
+        except ImportError:
+            stats["key_manager"] = {}
+
+        return stats
+
+    def _record_agent_metric(self, agent_naam, elapsed_ms, error=None):
+        """Registreer per-agent timing en foutstatistiek."""
+        with _METRICS_LOCK:
+            if agent_naam not in _AGENT_PIPELINE_METRICS:
+                _AGENT_PIPELINE_METRICS[agent_naam] = {
+                    "calls": 0, "errors": 0, "total_ms": 0.0,
+                    "last_error": None, "last_call_ts": 0.0,
+                }
+            m = _AGENT_PIPELINE_METRICS[agent_naam]
+            m["calls"] += 1
+            m["total_ms"] += elapsed_ms
+            m["last_call_ts"] = time.time()
+            if error:
+                m["errors"] += 1
+                m["last_error"] = str(error)[:200]
+
+    async def _timed_dispatch(self, agent, agent_input):
+        """Wrap agent.process() met timing + error handling."""
+        t0 = time.time()
+        try:
+            result = await agent.process(agent_input, self.brain)
+            elapsed_ms = (time.time() - t0) * 1000
+            self._record_agent_metric(agent.name, elapsed_ms)
+            return result
+        except Exception as e:
+            elapsed_ms = (time.time() - t0) * 1000
+            self._record_agent_metric(agent.name, elapsed_ms, error=e)
+            logger.warning("Agent %s fout: %s", agent.name, e)
+            return SwarmPayload(
+                agent=agent.name,
+                type="error",
+                content=f"[{agent.name}] Fout: {e}",
+            )
 
     @property
     def _governor(self):
@@ -2925,8 +3006,8 @@ class SwarmEngine:
                 )
 
             tasks.append(
-                agent.process(
-                    agent_input, self.brain,
+                self._timed_dispatch(
+                    agent, agent_input,
                 )
             )
 

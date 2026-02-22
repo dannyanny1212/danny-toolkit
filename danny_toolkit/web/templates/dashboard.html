@@ -58,6 +58,20 @@
         </div>
     </div>
 
+    <!-- Pipeline Metrics -->
+    <div class="card">
+        <div class="card-header">
+            Pipeline Metrics
+            <span class="htmx-indicator">laden...</span>
+        </div>
+        <div class="card-body"
+             hx-get="/ui/partials/pipeline-metrics"
+             hx-trigger="load, every 10s"
+             hx-indicator="closest .card">
+            <p style="color: var(--text-secondary);">Metrics laden...</p>
+        </div>
+    </div>
+
     <!-- Event Feed (SSE) -->
     <div class="card">
         <div class="card-header">

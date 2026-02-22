@@ -1,6 +1,6 @@
 """
 Danny Toolkit — Master Test Runner
-Draait alle 21 test suites in volgorde en geeft een totaaloverzicht.
+Draait alle 22 test suites in volgorde en geeft een totaaloverzicht.
 
 Gebruik: python run_all_tests.py
 """
@@ -51,6 +51,7 @@ TESTS = [
     {"naam": "Phase 23 Cache+Queue","cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase23.py"]},
     {"naam": "Phase 24 Backup+Ret", "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase24.py"]},
     {"naam": "Phase 25 OpHarden",  "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase25.py"]},
+    {"naam": "Phase 26 Metrics+Val","cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase26.py"]},
 ]
 
 BREEDTE = 60

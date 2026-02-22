@@ -1,0 +1,26 @@
+<table class="rate-table">
+<thead>
+    <tr><th>Agent</th><th>Calls</th><th>Avg ms</th><th>Errors</th><th>Success %</th></tr>
+</thead>
+<tbody>
+{% for name, m in metrics.items() %}
+<tr>
+    <td>{{ name }}</td>
+    <td>{{ m.calls }}</td>
+    <td>{{ m.avg_ms }}</td>
+    <td>{{ m.errors }}</td>
+    <td>
+        <span class="{{ 'low' if m.success_rate >= 90 else 'high' }}">{{ m.success_rate }}%</span>
+    </td>
+</tr>
+{% endfor %}
+{% if not metrics %}
+<tr><td colspan="5" style="color: var(--text-secondary);">Geen pipeline data.</td></tr>
+{% endif %}
+</tbody>
+</table>
+{% if cache %}
+<div style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-secondary);">
+    Cache: {{ cache.hits }} hits / {{ cache.misses }} misses ({{ cache.hit_rate }}% hit rate, {{ cache.entries }}/{{ cache.max_entries }} entries)
+</div>
+{% endif %}

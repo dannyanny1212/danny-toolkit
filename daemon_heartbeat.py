@@ -211,6 +211,13 @@ class HeartbeatDaemon:
 
 def main():
     """Start de Heartbeat Daemon."""
+    # Startup validatie (Phase 26)
+    try:
+        from danny_toolkit.core.startup_validator import valideer_opstart
+        valideer_opstart()
+    except ImportError:
+        pass
+
     brain = _laad_brain()
     daemon = HeartbeatDaemon(brain=brain)
 

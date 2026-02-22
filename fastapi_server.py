@@ -71,6 +71,13 @@ FASTAPI_PORT = int(os.getenv("FASTAPI_PORT", "8000"))
 
 _SERVER_START_TIME = time.time()
 
+# Startup validatie (Phase 26)
+try:
+    from danny_toolkit.core.startup_validator import valideer_opstart
+    valideer_opstart()
+except ImportError:
+    pass
+
 # ─── SINGLETON BRAIN ───────────────────────────────
 
 _brain = None
@@ -136,6 +143,9 @@ class HealthResponse(BaseModel):
     cortical_stack_writable: bool = False
     disk_free_gb: float = 0.0
     agents_in_cooldown: int = 0
+    # Pipeline metrics (Phase 26)
+    agent_metrics: Dict[str, Any] = {}
+    response_cache: Dict[str, Any] = {}
 
 
 class AgentInfo(BaseModel):
@@ -428,6 +438,21 @@ async def health(
     except Exception as e:
         logger.debug("Cooldown probe mislukt: %s", e)
 
+    # Pipeline metrics (Phase 26)
+    cache_stats = {}
+    try:
+        from danny_toolkit.core.response_cache import get_response_cache
+        cache_stats = get_response_cache().stats()
+    except ImportError:
+        pass
+
+    agent_m = {}
+    try:
+        from swarm_engine import get_pipeline_metrics
+        agent_m = get_pipeline_metrics()
+    except ImportError:
+        pass
+
     return HealthResponse(
         status="ONLINE",
         brain_online=brain.is_online,
@@ -442,6 +467,8 @@ async def health(
         cortical_stack_writable=stack_ok,
         disk_free_gb=disk_free,
         agents_in_cooldown=cooldown_count,
+        agent_metrics=agent_m,
+        response_cache=cache_stats,
     )
 
 
@@ -703,6 +730,23 @@ if HAS_DASHBOARD:
             pass
         tmpl = _templates.get_template("partials/cortex_stats.html")
         return HTMLResponse(tmpl.render(stats=stats))
+
+    @app.get("/ui/partials/pipeline-metrics", response_class=HTMLResponse, include_in_schema=False)
+    async def partial_pipeline_metrics():
+        metrics = {}
+        cache_stats = {}
+        try:
+            from swarm_engine import get_pipeline_metrics
+            metrics = get_pipeline_metrics()
+        except ImportError:
+            pass
+        try:
+            from danny_toolkit.core.response_cache import get_response_cache
+            cache_stats = get_response_cache().stats()
+        except ImportError:
+            pass
+        tmpl = _templates.get_template("partials/pipeline_metrics.html")
+        return HTMLResponse(tmpl.render(metrics=metrics, cache=cache_stats))
 
     @app.get("/ui/events", include_in_schema=False)
     async def sse_events():
