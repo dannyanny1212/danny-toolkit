@@ -18,6 +18,7 @@ import logging
 import re
 import shutil
 import time
+from collections import defaultdict
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -86,6 +87,9 @@ class OmegaGovernor:
         "launcher_stats.json",
     ]
 
+    # Token budget (char-based estimation: 1 token ≈ 4 chars)
+    MAX_TOKENS_PER_HOUR = 250_000
+
     def __init__(self):
         self._data_dir = (
             Path(__file__).parent.parent.parent / "data" / "apps"
@@ -102,6 +106,9 @@ class OmegaGovernor:
         # Learning cycle tracking
         self._learning_cycles_this_hour = 0
         self._hour_start = time.time()
+
+        # Token budget tracking (hourly, keyed by "%Y%m%d%H")
+        self._token_counts: Dict[str, int] = defaultdict(int)
 
         # Daemon referentie (bi-directionele link)
         self._daemon = None
@@ -924,6 +931,51 @@ class OmegaGovernor:
     # F. InputFirewall - Prompt Injectie & PII Bescherming
     # =================================================================
 
+    def registreer_tokens(self, tekst: str):
+        """Registreer geschat tokenverbruik na een LLM response.
+
+        Char-based schatting: 1 token ≈ 4 tekens.
+
+        Args:
+            tekst: De LLM response tekst.
+        """
+        if not tekst:
+            return
+        tokens = len(tekst) // 4
+        hour_key = datetime.now().strftime("%Y%m%d%H")
+        self._token_counts[hour_key] += tokens
+
+        # Cleanup: verwijder keys ouder dan 2 uur
+        current = datetime.now()
+        stale = [
+            k for k in self._token_counts
+            if k != hour_key and abs(
+                int(current.strftime("%Y%m%d%H"))
+                - int(k)
+            ) > 1
+        ]
+        for k in stale:
+            del self._token_counts[k]
+
+    def _check_token_budget(self) -> Tuple[bool, str]:
+        """Check of het token budget nog niet overschreden is.
+
+        Returns:
+            Tuple (binnen_budget: bool, reden: str).
+        """
+        hour_key = datetime.now().strftime("%Y%m%d%H")
+        used = self._token_counts.get(hour_key, 0)
+        if used >= self.MAX_TOKENS_PER_HOUR:
+            self._log("token_budget_bereikt", {
+                "used": used,
+                "max": self.MAX_TOKENS_PER_HOUR,
+            })
+            return False, (
+                "Token budget bereikt, wacht tot"
+                " volgend uur."
+            )
+        return True, "OK"
+
     def valideer_input(
         self, tekst: str,
     ) -> Tuple[bool, str]:
@@ -932,6 +984,7 @@ class OmegaGovernor:
         Checks:
         1. Lengte limiet (MAX_INPUT_LENGTH)
         2. Prompt injectie patronen
+        3. Token budget (uurlimiet)
 
         Args:
             tekst: Gebruikersinput.
@@ -941,6 +994,11 @@ class OmegaGovernor:
         """
         if not tekst or not tekst.strip():
             return True, "OK"
+
+        # Token budget check
+        budget_ok, budget_reden = self._check_token_budget()
+        if not budget_ok:
+            return False, budget_reden
 
         # Lengte check
         if len(tekst) > self.MAX_INPUT_LENGTH:

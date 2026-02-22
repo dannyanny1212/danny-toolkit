@@ -179,8 +179,11 @@ class NeuralBus:
                         loop = asyncio.get_running_loop()
                         loop.create_task(self._safe_async_dispatch(cb, event))
                     except RuntimeError:
-                        # Geen actieve loop — run blocking
-                        asyncio.run(cb(event))
+                        # Geen actieve loop — run blocking (safe)
+                        try:
+                            asyncio.run(cb(event))
+                        except RuntimeError:
+                            logger.debug("Async callback kon niet starten: geen event loop")
                 else:
                     cb(event)
                 self._stats["events_afgeleverd"] += 1

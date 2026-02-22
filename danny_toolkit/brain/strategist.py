@@ -71,6 +71,9 @@ class Strategist:
         self._bus = get_bus() if HAS_BUS else None
         self._stack = get_cortical_stack() if HAS_STACK else None
 
+    MAX_STEPS = 5
+    MAX_CONTEXT_CHARS = 8000
+
     async def execute_mission(self, user_objective: str) -> str:
         """
         Full mission loop: plan → execute steps → synthesize.
@@ -83,7 +86,7 @@ class Strategist:
         if not plan or "steps" not in plan:
             return "Mission Aborted: Could not formulate plan."
 
-        steps = plan["steps"]
+        steps = plan["steps"][:self.MAX_STEPS]
         context_buffer = ""
 
         # Publish mission started
@@ -124,6 +127,10 @@ class Strategist:
                 result = f"[Skipped: {tool} unavailable]"
 
             context_buffer += f"\n[Result of Step {i+1}]:\n{result}\n"
+
+            # Cap context buffer om geheugengroei te voorkomen
+            if len(context_buffer) > self.MAX_CONTEXT_CHARS:
+                context_buffer = context_buffer[-self.MAX_CONTEXT_CHARS:]
 
             # Publish step completed
             self._publish_event(EventTypes.STEP_COMPLETED if HAS_BUS else None, {

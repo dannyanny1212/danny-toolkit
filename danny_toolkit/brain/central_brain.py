@@ -505,6 +505,13 @@ Belangrijke regels:
                     # Geen tool calls, return antwoord
                     final_response = message.content or ""
 
+                    # Token budget registratie
+                    try:
+                        from .governor import OmegaGovernor
+                        OmegaGovernor().registreer_tokens(final_response)
+                    except Exception as e:
+                        logger.debug("Token registratie error: %s", e)
+
                     with self._history_lock:
                         self.conversation_history.append({
                             "role": "assistant",
@@ -677,6 +684,13 @@ Belangrijke regels:
                         if hasattr(block, "text"):
                             final_response += block.text
 
+                    # Token budget registratie
+                    try:
+                        from .governor import OmegaGovernor
+                        OmegaGovernor().registreer_tokens(final_response)
+                    except Exception as e:
+                        logger.debug("Token registratie error: %s", e)
+
                     with self._history_lock:
                         self.conversation_history.append({
                             "role": "assistant",
@@ -803,6 +817,13 @@ Belangrijke regels:
                 content = data.get(
                     "message", {}
                 ).get("content", "")
+
+                # Token budget registratie
+                try:
+                    from .governor import OmegaGovernor
+                    OmegaGovernor().registreer_tokens(content)
+                except Exception as e:
+                    logger.debug("Token registratie error: %s", e)
 
                 with self._history_lock:
                     self.conversation_history.append({

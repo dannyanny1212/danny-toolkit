@@ -1,6 +1,6 @@
 """
 Danny Toolkit — Master Test Runner
-Draait alle 12 test suites in volgorde en geeft een totaaloverzicht.
+Draait alle 13 test suites in volgorde en geeft een totaaloverzicht.
 
 Gebruik: python run_all_tests.py
 """
@@ -42,6 +42,7 @@ TESTS = [
     {"naam": "Brain Integrations", "cmd": [PYTHON, f"{PROJECT_ROOT}/test_brain_integrations.py"]},
     {"naam": "Brain Modules",      "cmd": [PYTHON, f"{PROJECT_ROOT}/test_brain_modules.py"]},
     {"naam": "Synapse & Phantom",  "cmd": [PYTHON, f"{PROJECT_ROOT}/test_synapse.py"]},
+    {"naam": "Phase 17 Stability", "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase17.py"]},
 ]
 
 BREEDTE = 60
@@ -98,7 +99,7 @@ def run_test(test: dict) -> dict:
 def main():
     print(f"{'=' * BREEDTE}")
     print(f"  DANNY TOOLKIT — MASTER TEST RUNNER")
-    print(f"  {len(TESTS)} test suites")
+    print(f"  {len(TESTS)} test suites")  # 13 suites
     print(f"{'=' * BREEDTE}")
 
     totaal_start = time.time()

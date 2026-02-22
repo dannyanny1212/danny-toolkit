@@ -20,6 +20,7 @@ Gebruik:
 
 import atexit
 import asyncio
+import hashlib
 import json
 import logging
 import math
@@ -1900,6 +1901,7 @@ class SwarmEngine:
         self._swarm_metrics = {
             "fast_track_hits": 0,
             "governor_blocks": 0,
+            "echo_guard_blocks": 0,
             "triples_extracted": 0,
             "tribunal_verified": 0,
             "tribunal_warnings": 0,
@@ -1908,6 +1910,9 @@ class SwarmEngine:
             "phantom_predictions": 0,
             "phantom_hits": 0,
         }
+
+        # Echo Guard — dedup gate (hash, timestamp)
+        self._recent_queries: deque = deque(maxlen=50)
 
     def get_stats(self) -> Dict[str, Any]:
         """Statistieken: verwerkte queries, agents, gem. responstijd."""
@@ -2729,6 +2734,24 @@ class SwarmEngine:
         ))
 
         t = self._tuner
+
+        # 0. Echo Guard — dedup gate (voorkom feedback loops)
+        try:
+            q_hash = hashlib.md5(
+                user_input.strip().lower().encode()
+            ).hexdigest()
+            now = time.time()
+            for prev_hash, prev_ts in self._recent_queries:
+                if prev_hash == q_hash and (now - prev_ts) < 60:
+                    self._swarm_metrics["echo_guard_blocks"] += 1
+                    msg = "Ik heb deze vraag net beantwoord."
+                    return [SwarmPayload(
+                        agent="EchoGuard", type="text",
+                        content=msg, display_text=msg,
+                    )]
+            self._recent_queries.append((q_hash, now))
+        except Exception as e:
+            logger.debug("Echo guard error: %s", e)
 
         # Cortical Stack logging
         _log_to_cortical(
