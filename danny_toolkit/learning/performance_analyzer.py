@@ -10,9 +10,9 @@ DATE: 7 februari 2026
 
 import json
 import statistics
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import List, Optional
 from dataclasses import dataclass, asdict
 
 try:

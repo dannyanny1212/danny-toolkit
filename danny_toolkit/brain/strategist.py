@@ -1,9 +1,8 @@
-import asyncio
 import json
 import logging
 import os
 import re
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +20,6 @@ except ImportError:
     pass
 
 from groq import AsyncGroq
-from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import Kleur
 
 try:

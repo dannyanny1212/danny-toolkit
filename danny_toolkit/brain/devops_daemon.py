@@ -26,7 +26,7 @@ from datetime import datetime
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 from groq import AsyncGroq
 

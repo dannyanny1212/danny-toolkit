@@ -6,9 +6,8 @@ Versie 6.0.0 - OMEGA_SOVEREIGN. Met task queue, workflows, monitoring, retry log
 import asyncio
 import json
 from datetime import datetime
-from pathlib import Path
 from collections import deque
-from typing import Callable, Optional, Any
+from typing import Callable, Any
 from enum import Enum
 
 from .base import Agent

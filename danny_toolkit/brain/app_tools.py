@@ -5,8 +5,8 @@ Definieert alle 31+ apps als Anthropic-compatible tools met hun acties.
 Elke app wordt geregistreerd met beschrijving en callable acties.
 """
 
-from typing import Dict, List, Any, Callable, Optional
-from dataclasses import dataclass, field
+from typing import Dict, List, Optional
+from dataclasses import dataclass
 from enum import Enum
 
 

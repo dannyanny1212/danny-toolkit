@@ -8,7 +8,7 @@ queries en context-aware interacties.
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Callable
+from typing import Dict, List, Optional, Any
 
 from ..core.config import Config
 from ..core.vector_store import VectorStore

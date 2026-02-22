@@ -5,8 +5,7 @@ Time Capsule v1.0 - Berichten naar je toekomstige zelf schrijven.
 import json
 import logging
 from datetime import datetime, timedelta
-from pathlib import Path
-from typing import List, Dict, Optional
+from typing import Dict
 from ..core.config import Config
 from ..core.utils import clear_scherm
 

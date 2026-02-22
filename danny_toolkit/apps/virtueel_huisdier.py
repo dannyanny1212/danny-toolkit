@@ -25,7 +25,6 @@ import time
 import random
 import re
 from datetime import datetime, timedelta
-from pathlib import Path
 
 from ..core.config import Config
 from ..core.utils import clear_scherm

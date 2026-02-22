@@ -6,7 +6,6 @@ Track je doelen, visualiseer voortgang en blijf gemotiveerd.
 import logging
 import random
 from datetime import datetime, timedelta
-from collections import Counter
 from ..core.utils import clear_scherm
 from .base_app import BaseApp
 

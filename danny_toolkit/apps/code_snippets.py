@@ -5,8 +5,7 @@ Code Snippets v1.0 - Persoonlijke code bibliotheek met tags en zoeken.
 import json
 import logging
 from datetime import datetime
-from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Dict
 from collections import Counter
 from ..core.config import Config
 from ..core.utils import clear_scherm

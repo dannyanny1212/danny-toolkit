@@ -18,7 +18,6 @@ Features:
 
 import re
 import ast
-import os
 import json
 import hashlib
 import logging
@@ -26,7 +25,7 @@ from pathlib import Path
 from datetime import datetime
 from collections import Counter
 from statistics import mean, median, stdev
-from typing import List, Dict, Any, Optional, Set, Tuple
+from typing import List, Dict, Any
 
 from ..core.config import Config
 from ..core.utils import clear_scherm, kleur, Kleur

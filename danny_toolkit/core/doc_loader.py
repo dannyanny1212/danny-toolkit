@@ -12,7 +12,6 @@ Chunks bevatten metadata: bron, pagina/sectie, chunk nummer.
 """
 
 import logging
-import os
 import re
 from pathlib import Path
 

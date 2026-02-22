@@ -5,10 +5,7 @@ Recipe Generator v1.0 - AI recepten, ingrediënten tracker, meal planning.
 import json
 import logging
 import random
-from datetime import datetime, timedelta
-from pathlib import Path
 from typing import List, Dict, Optional
-from ..core.config import Config
 from ..core.utils import clear_scherm
 from .base_app import BaseApp
 

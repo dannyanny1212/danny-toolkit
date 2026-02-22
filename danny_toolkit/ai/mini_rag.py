@@ -108,8 +108,6 @@ class MiniRAG:
 
     def _init_ai(self) -> bool:
         """Initialiseer AI client voor betere antwoorden."""
-        # TODO: Groq verwijderd — direct Claude
-
         # Probeer Claude
         if Config.has_anthropic_key():
             try:
@@ -459,7 +457,6 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
                 )
                 return response.content[0].text
             else:
-                # TODO: Groq verwijderd
                 return None
         except Exception as e:
             print(kleur(f"   [!] AI fout: {e}", Kleur.ROOD))

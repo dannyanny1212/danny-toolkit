@@ -6,7 +6,6 @@ Versie 6.0.0 - OMEGA_SOVEREIGN. Met thema's, talen en validatie.
 import os
 import json
 from pathlib import Path
-from typing import Optional
 
 try:
     from dotenv import load_dotenv
@@ -267,7 +266,6 @@ class Config:
     CLAUDE_MODEL = "claude-sonnet-4-20250514"
     MAX_TOKENS = 10000
     VOYAGE_MODEL = "voyage-4-large"
-    GROQ_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
 
     # RAG Settings
     CHUNK_SIZE = 350

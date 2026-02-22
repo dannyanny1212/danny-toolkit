@@ -19,9 +19,7 @@ Features:
 import json
 import logging
 import random
-import time
-from datetime import datetime, date
-from pathlib import Path
+from datetime import date
 from ..core.config import Config
 from ..core.utils import clear_scherm, kleur, Kleur, succes, fout, waarschuwing, info
 

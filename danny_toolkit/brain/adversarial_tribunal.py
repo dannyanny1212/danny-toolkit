@@ -12,7 +12,7 @@ Max 3 retries before returning a system error.
 
 import asyncio
 import logging
-from typing import Optional, Dict, List
+from typing import Dict, List
 
 from danny_toolkit.core.utils import Kleur
 

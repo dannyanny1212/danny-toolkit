@@ -14,16 +14,13 @@ Fases:
 
 import asyncio
 import logging
-import random
 import re
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from pathlib import Path
-from typing import Optional, List, Dict, Any, Tuple
+from typing import List, Dict, Any
 from dataclasses import dataclass, field
 
-from .config import Config
 from .utils import kleur, Kleur
 
 logger = logging.getLogger(__name__)

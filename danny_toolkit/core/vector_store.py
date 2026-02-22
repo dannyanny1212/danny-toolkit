@@ -5,7 +5,6 @@ Versie 2.0 - Met backup/restore, statistieken en filtering.
 
 import json
 import math
-import shutil
 from pathlib import Path
 from datetime import datetime
 from typing import List, Dict, Optional, Callable

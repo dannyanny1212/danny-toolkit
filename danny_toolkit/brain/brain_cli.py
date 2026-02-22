@@ -5,10 +5,8 @@ Interactieve interface om met het AI ecosysteem te communiceren.
 """
 
 import json
-from datetime import datetime
 
 from ..core.utils import clear_scherm, kleur, Kleur, fix_encoding
-from ..core.config import Config
 
 from .central_brain import CentralBrain
 from .workflows import SUPER_WORKFLOWS

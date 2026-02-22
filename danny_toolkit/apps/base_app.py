@@ -3,7 +3,7 @@
 import json
 import logging
 import os
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List
 from ..core.config import Config
 
 logger = logging.getLogger(__name__)
@@ -15,7 +15,7 @@ except ImportError:
     AI_BESCHIKBAAR = False
 
 try:
-    from ..core.neural_bus import get_bus, BusEvent, EventTypes
+    from ..core.neural_bus import get_bus
     HAS_BUS = True
 except ImportError:
     HAS_BUS = False

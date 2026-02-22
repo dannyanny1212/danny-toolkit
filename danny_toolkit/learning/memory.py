@@ -7,8 +7,6 @@ unified interface voor semantic search over alle interacties.
 
 import json
 from datetime import datetime
-from pathlib import Path
-from typing import Optional
 
 from ..core.config import Config
 

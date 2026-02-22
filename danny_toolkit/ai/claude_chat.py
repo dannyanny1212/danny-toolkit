@@ -211,8 +211,6 @@ class ClaudeChatApp:
 
     def _init_client(self) -> bool:
         """Initialiseert de API client (Claude)."""
-        # TODO: Groq verwijderd — direct Claude
-
         # Probeer Claude
         if Config.has_anthropic_key():
             try:
@@ -258,7 +256,6 @@ class ClaudeChatApp:
             )
             antwoord = response.content[0].text
         else:
-            # TODO: Groq verwijderd — alleen Claude ondersteund
             raise ValueError(
                 f"Provider '{self.provider}' niet ondersteund"
             )

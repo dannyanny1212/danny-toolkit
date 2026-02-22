@@ -4,16 +4,14 @@ Versie 6.0.0 - OMEGA_SOVEREIGN. Met multi-provider, memory system, reflection en
 """
 
 import logging
-import os
 import json
 import asyncio
 import time
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
-from pathlib import Path
 from dataclasses import dataclass, field
-from typing import Optional, Callable, Any
+from typing import Optional, Callable
 from enum import Enum
 
 from ..core.config import Config
@@ -138,8 +136,6 @@ class Agent:
 
     def _init_provider(self):
         """Initialiseer de AI provider."""
-        # TODO: Groq verwijderd — direct naar Claude
-
         # Probeer Claude
         if Config.has_anthropic_key():
             try:
@@ -309,8 +305,6 @@ class Agent:
                             "output": response.usage.output_tokens,
                         }
                     }
-
-                # TODO: Groq provider verwijderd
 
                 else:
                     # Local fallback

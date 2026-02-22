@@ -1,6 +1,5 @@
 import json
 import os
-from typing import Optional
 
 from groq import AsyncGroq
 from danny_toolkit.core.config import Config

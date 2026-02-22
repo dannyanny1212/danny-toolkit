@@ -8,8 +8,6 @@ TheLibrarian voor bestandslezers en ChromaDB opslag.
 
 import logging
 import time
-from pathlib import Path
-from typing import List, Dict, Any
 
 from tqdm import tqdm
 

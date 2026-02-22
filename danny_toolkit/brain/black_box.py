@@ -1,7 +1,5 @@
-import json
 import logging
 import time
-from typing import Optional
 
 from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import Kleur

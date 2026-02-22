@@ -15,9 +15,9 @@ Geen nieuwe dependencies.
 
 import threading
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Callable, Dict, List, Optional, Any
+from typing import Callable, Dict, List, Any
 
 import logging
 logger = logging.getLogger(__name__)

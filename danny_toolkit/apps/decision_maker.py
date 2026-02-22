@@ -6,8 +6,7 @@ import json
 import logging
 import random
 from datetime import datetime
-from pathlib import Path
-from typing import List, Dict, Optional
+from typing import Dict
 from ..core.config import Config
 from ..core.utils import clear_scherm
 

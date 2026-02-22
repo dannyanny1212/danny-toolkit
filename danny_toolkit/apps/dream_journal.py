@@ -5,10 +5,9 @@ Dream Journal v1.0 - Log dromen, analyseer patronen, ontdek symbolen.
 import json
 import logging
 import random
-from datetime import datetime, timedelta
+from datetime import datetime
 from collections import Counter
-from pathlib import Path
-from typing import List, Dict, Optional
+from typing import Dict
 from ..core.config import Config
 from ..core.utils import clear_scherm
 

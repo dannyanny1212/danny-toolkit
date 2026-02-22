@@ -1,5 +1,4 @@
 import os
-import asyncio
 
 # Robuuste .env loader — vindt altijd de project root
 try:

@@ -14,7 +14,7 @@ import threading
 import time
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from ..core.utils import kleur, Kleur
 

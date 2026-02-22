@@ -24,7 +24,6 @@ import sys
 import time
 import hashlib
 from datetime import datetime
-from pathlib import Path
 
 if os.name == "nt":
     if hasattr(sys.stdout, "reconfigure"):

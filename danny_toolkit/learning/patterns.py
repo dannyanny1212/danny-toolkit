@@ -10,7 +10,6 @@ Features:
 import json
 import re
 from datetime import datetime
-from pathlib import Path
 from typing import Optional
 
 from ..core.config import Config

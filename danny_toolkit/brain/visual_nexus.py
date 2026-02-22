@@ -13,12 +13,9 @@ Bio, Crypto, AI en Quantum worden zichtbaar als een.
 De Architect heeft gesproken: "Architecten BOUWEN."
 """
 
-import json
-from pathlib import Path
 from datetime import datetime
 from dataclasses import dataclass
-from typing import List, Dict, Optional
-import math
+from typing import Dict
 
 
 # === OMEGA DOMAINS ===

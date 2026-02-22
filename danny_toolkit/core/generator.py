@@ -5,7 +5,7 @@ Ondersteunt: Claude API
 """
 
 import time
-from typing import Generator as TypingGenerator, List, Dict, Optional, Callable
+from typing import Generator as TypingGenerator, Callable
 from .config import Config
 
 
@@ -187,7 +187,6 @@ class Generator:
         }
 
         if provider == "auto":
-            # TODO: Groq verwijderd — alleen Claude
             if Config.has_anthropic_key():
                 self._init_claude(api_key)
             else:
@@ -212,11 +211,6 @@ class Generator:
         self.model = Config.CLAUDE_MODEL
         self.provider = "claude"
         print(f"   [OK] Claude API ({self.model})")
-
-    def _init_groq(self, api_key: str = None):
-        """Groq API verwijderd."""
-        # TODO: Groq verwijderd — voeg hier een nieuwe provider toe
-        raise ValueError("Groq provider is verwijderd")
 
     def genereer(self, vraag: str, context: list, max_tokens: int = 2048) -> str:
         """Genereer antwoord op basis van vraag en context."""
@@ -244,7 +238,7 @@ class Generator:
         if self.provider == "claude":
             response = self._claude_chat(berichten, systeem, max_tokens)
         else:
-            response = self._groq_chat(berichten, systeem, max_tokens)
+            raise ValueError(f"Provider '{self.provider}' niet ondersteund")
 
         self._statistieken["api_calls"] += 1
         return response
@@ -260,12 +254,6 @@ class Generator:
         )
         self._update_token_stats(response)
         return response.content[0].text
-
-    def _groq_chat(self, berichten: list, systeem: str,
-                   max_tokens: int) -> str:
-        """Groq API verwijderd."""
-        # TODO: Groq verwijderd
-        raise ValueError("Groq provider is verwijderd")
 
     def _call_api_met_retry(self, systeem: str, user: str,
                             max_tokens: int) -> str:
@@ -298,7 +286,6 @@ class Generator:
             self._update_token_stats(response)
             return response.content[0].text
         else:
-            # TODO: Groq verwijderd
             raise ValueError(
                 f"Provider '{self.provider}' niet ondersteund"
             )
@@ -310,11 +297,6 @@ class Generator:
             self._statistieken["tokens_uit"] += response.usage.output_tokens
         except AttributeError:
             pass
-
-    def _update_token_stats_groq(self, response):
-        """Groq verwijderd — stub."""
-        # TODO: Groq verwijderd
-        pass
 
     # =========================================================================
     # STREAMING
@@ -352,7 +334,6 @@ class Generator:
         if self.provider == "claude":
             yield from self._stream_claude(systeem, user_prompt)
         else:
-            # TODO: Groq verwijderd
             raise ValueError(
                 f"Provider '{self.provider}' niet ondersteund"
             )
@@ -368,12 +349,6 @@ class Generator:
         ) as stream:
             for text in stream.text_stream:
                 yield text
-
-    def _stream_groq(self, systeem: str,
-                     user: str) -> TypingGenerator[str, None, None]:
-        """Groq verwijderd — stub."""
-        # TODO: Groq verwijderd
-        raise ValueError("Groq provider is verwijderd")
 
     def stream_print(self, vraag: str, context: list = None,
                      systeem: str = None) -> str:
@@ -483,18 +458,6 @@ class Generator:
 # SPECIFIEKE GENERATORS
 # =============================================================================
 
-class GroqGenerator(Generator):
-    """Groq verwijderd — gebruik ClaudeGenerator."""
-
-    def __init__(self, api_key: str = None, retry_config: RetryConfig = None):
-        # TODO: Groq verwijderd — fallback naar Claude
-        super().__init__(
-            provider="claude",
-            api_key=api_key,
-            retry_config=retry_config
-        )
-
-
 class ClaudeGenerator(Generator):
     """Specifieke generator voor Claude."""
 
@@ -506,59 +469,3 @@ class ClaudeGenerator(Generator):
         )
 
 
-# =============================================================================
-# MULTI-PROVIDER FALLBACK
-# =============================================================================
-
-class FallbackGenerator:
-    """Generator met automatische fallback naar andere providers."""
-
-    def __init__(self, primair: str = "claude", secundair: str = "claude"):
-        """
-        Initialiseer met primaire en secundaire provider.
-
-        Args:
-            primair: Eerste keuze provider
-            secundair: Fallback provider
-        """
-        self.primair = None
-        self.secundair = None
-        self.actief = None
-
-        # Probeer primaire provider
-        try:
-            self.primair = Generator(provider=primair)
-            self.actief = self.primair
-        except Exception as e:
-            print(f"   [!] Primaire provider ({primair}) niet beschikbaar: {e}")
-
-        # Probeer secundaire provider
-        try:
-            self.secundair = Generator(provider=secundair)
-            if self.actief is None:
-                self.actief = self.secundair
-        except Exception as e:
-            print(f"   [!] Secundaire provider ({secundair}) niet beschikbaar: {e}")
-
-        if self.actief is None:
-            raise ValueError("Geen enkele provider beschikbaar")
-
-    def genereer(self, vraag: str, context: list, **kwargs) -> str:
-        """Genereer met automatische fallback."""
-        try:
-            return self.actief.genereer(vraag, context, **kwargs)
-        except Exception as e:
-            print(f"   [!] {self.actief.provider} mislukt: {e}")
-
-            # Probeer andere provider
-            andere = self.secundair if self.actief == self.primair else self.primair
-            if andere:
-                print(f"   [>] Fallback naar {andere.provider}")
-                self.actief = andere
-                return self.actief.genereer(vraag, context, **kwargs)
-
-            raise e
-
-    def __getattr__(self, naam):
-        """Delegate andere methoden naar actieve generator."""
-        return getattr(self.actief, naam)

@@ -12,7 +12,6 @@ Samen vormen ze een compleet digitaal wezen.
 import json
 import threading
 from datetime import datetime
-from pathlib import Path
 from typing import Dict, List, Optional, Callable, Any
 from dataclasses import dataclass, field
 from enum import Enum

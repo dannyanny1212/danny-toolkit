@@ -22,7 +22,7 @@ Gebaseerd op de Cosmic Family Quest VIII: Het Prometheus Protocol.
 import logging
 from enum import Enum
 from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional, Callable
+from typing import List, Dict, Any, Optional
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -760,7 +760,7 @@ class PrometheusBrain:
             self._save_state()
             self._dirty = False
 
-    # --- ROL-SPECIFIEKE CONTEXT (Federation v4.1) ---
+    # --- ROL-SPECIFIEKE CONTEXT (Federation v6.0) ---
 
     ROLE_CONTEXT = {
         CosmicRole.PIXEL: (
@@ -1123,7 +1123,7 @@ class PrometheusBrain:
             10, self.swarm.active_tasks + 1
         )
         try:
-            # Rol-specifieke brain executie (v4.2)
+            # Rol-specifieke brain executie (v6.0)
             ai_result, exec_time, brain_status = (
                 self._execute_with_role(CosmicRole.LEGION, task)
             )
@@ -1251,7 +1251,7 @@ class PrometheusBrain:
         """Wijs een taak toe aan een specifieke agent."""
         agent = self.nodes[role]
 
-        # Energy tracking (Federation v4.1)
+        # Energy tracking (Federation v6.0)
         if agent.current_task is None and agent.energy < 100:
             agent.energy = min(100, agent.energy + 10)
         agent.energy = max(0, agent.energy - 5)
@@ -1269,7 +1269,7 @@ class PrometheusBrain:
             print(f"   [RAG] ChromaDB query...")
             enriched_task = self._rag_enrich(task)
 
-        # Rol-specifieke brain executie (Federation v4.1)
+        # Rol-specifieke brain executie (Federation v6.0)
         ai_result, exec_time, brain_status = (
             self._execute_with_role(role, enriched_task)
         )

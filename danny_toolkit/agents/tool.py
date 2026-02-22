@@ -11,7 +11,6 @@ from datetime import datetime, timedelta
 from dataclasses import dataclass, field
 from typing import Optional, Callable, Any, Union
 from enum import Enum
-from pathlib import Path
 
 from ..core.config import Config
 from ..core.utils import kleur, Kleur

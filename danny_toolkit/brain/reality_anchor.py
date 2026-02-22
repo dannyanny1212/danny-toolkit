@@ -9,7 +9,6 @@ references symbols which do not exist.
 import ast
 import logging
 import os
-from pathlib import Path
 from typing import Dict, List, Set, Optional
 
 from danny_toolkit.core.utils import Kleur
