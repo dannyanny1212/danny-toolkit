@@ -22,7 +22,9 @@ Gebruik:
 Geen nieuwe dependencies: sqlite3 is stdlib.
 """
 
+import gzip
 import json
+import shutil
 import sqlite3
 import threading
 import time
@@ -453,6 +455,141 @@ class CorticalStack:
                 (cutoff,),
             )
             self._conn.commit()
+
+    # ─── Backup & Restore ───
+
+    _MAX_BACKUPS = 7  # Keep last 7 backups
+
+    def backup(self, compress: bool = True) -> Path:
+        """Create timestamped backup of cortical_stack.db.
+
+        Steps:
+        1. WAL checkpoint (flush pending writes to main DB)
+        2. Copy to Config.BACKUP_DIR / cortical_stack_YYYYMMDD_HHMMSS.db
+        3. Optional gzip compression (.db.gz)
+        4. Prune old backups: keep last 7
+
+        Returns:
+            Path to the backup file.
+        """
+        Config.ensure_dirs()
+        backup_dir = Config.BACKUP_DIR if hasattr(Config, "BACKUP_DIR") else Config.DATA_DIR / "backups"
+        backup_dir.mkdir(parents=True, exist_ok=True)
+
+        # 1. WAL checkpoint — flush all pending writes to main DB
+        with self._lock:
+            if self._pending_writes > 0:
+                self._conn.commit()
+                self._pending_writes = 0
+                self._last_flush = time.time()
+            try:
+                self._conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+            except sqlite3.Error:
+                pass
+
+        # 2. Copy to backup location
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        if compress:
+            backup_path = backup_dir / f"cortical_stack_{timestamp}.db.gz"
+            with open(str(self._db_path), "rb") as f_in:
+                with gzip.open(str(backup_path), "wb") as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+        else:
+            backup_path = backup_dir / f"cortical_stack_{timestamp}.db"
+            shutil.copy2(str(self._db_path), str(backup_path))
+
+        # 3. Prune old backups
+        self._prune_backups(backup_dir)
+
+        return backup_path
+
+    def _prune_backups(self, backup_dir: Path):
+        """Keep only the last _MAX_BACKUPS backup files."""
+        pattern = "cortical_stack_*"
+        backups = sorted(backup_dir.glob(pattern), key=lambda p: p.name)
+        while len(backups) > self._MAX_BACKUPS:
+            oldest = backups.pop(0)
+            try:
+                oldest.unlink()
+            except OSError:
+                pass
+
+    def restore(self, backup_path: Path) -> bool:
+        """Restore from backup (requires restart).
+
+        Safety: only restores if backup exists and is readable.
+        """
+        if not backup_path.exists():
+            return False
+
+        try:
+            # Close current connection
+            self.flush()
+            self._conn.close()
+
+            # Decompress if gzipped
+            if backup_path.suffix == ".gz":
+                with gzip.open(str(backup_path), "rb") as f_in:
+                    with open(str(self._db_path), "wb") as f_out:
+                        shutil.copyfileobj(f_in, f_out)
+            else:
+                shutil.copy2(str(backup_path), str(self._db_path))
+
+            # Reconnect
+            self._conn = sqlite3.connect(
+                str(self._db_path), check_same_thread=False
+            )
+            self._conn.row_factory = sqlite3.Row
+            self._conn.execute("PRAGMA journal_mode=WAL")
+            self._conn.execute("PRAGMA synchronous=NORMAL")
+            self._conn.execute("PRAGMA busy_timeout=5000")
+            self._pending_writes = 0
+            self._last_flush = time.time()
+            return True
+        except Exception:
+            return False
+
+    # ─── Data Retention Policy ───
+
+    def apply_retention_policy(self) -> dict:
+        """Prune old data from all tables. Returns counts of deleted rows.
+
+        Policies:
+        - episodic_memory:     90 days
+        - interaction_trace:   60 days
+        - phantom_predictions: 30 days
+        - system_stats:        30 days
+
+        NOT pruned (permanent knowledge):
+        - semantic_memory
+        - knowledge_graph (entities, kg_edges)
+        - synaptic_pathways (already has 7-day decay via Synapse)
+        - temporal_patterns (bounded by cardinality)
+        """
+        policies = {
+            "episodic_memory":     90,
+            "interaction_trace":   60,
+            "phantom_predictions": 30,
+            "system_stats":        30,
+        }
+
+        deleted = {}
+        with self._lock:
+            for table, days in policies.items():
+                cutoff = (datetime.now() - timedelta(days=days)).isoformat()
+                try:
+                    cur = self._conn.execute(
+                        f"DELETE FROM {table} WHERE timestamp < ?",
+                        (cutoff,),
+                    )
+                    deleted[table] = cur.rowcount
+                except sqlite3.OperationalError:
+                    # Table doesn't exist — skip silently
+                    deleted[table] = 0
+
+            self._conn.commit()
+
+        return deleted
 
     def close(self):
         """Flush pending writes en sluit de database."""

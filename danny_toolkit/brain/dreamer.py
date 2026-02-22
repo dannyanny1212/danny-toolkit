@@ -52,8 +52,14 @@ class Dreamer:
         """Full REM cycle — run at 04:00 via daemon_heartbeat."""
         print(f"{Kleur.MAGENTA}🌙 Entering REM cycle (System Optimization)...{Kleur.RESET}")
 
+        # 0. Backup — before any destructive operations
+        self._backup_cortical_stack()
+
         # 1. Vacuum — optimize SQLite
         self._vacuum()
+
+        # 1.5. Retention — prune old rows, then vacuum reclaims space
+        self._apply_retention()
 
         # 2. Compress — daily summary
         await self._compress()
@@ -108,6 +114,35 @@ class Dreamer:
             logger.debug("OracleEye forecast error: %s", e)
 
         print(f"{Kleur.GROEN}🌙 REM cycle complete.{Kleur.RESET}")
+
+    def _backup_cortical_stack(self):
+        """Create a compressed backup of cortical_stack.db."""
+        if not HAS_STACK:
+            return
+        print(f"{Kleur.GEEL}💾 Backing up CorticalStack...{Kleur.RESET}")
+        try:
+            stack = get_cortical_stack()
+            backup_path = stack.backup(compress=True)
+            print(f"{Kleur.GROEN}💾 Backup created: {backup_path.name}{Kleur.RESET}")
+        except Exception as e:
+            print(f"{Kleur.ROOD}💾 Backup error: {e}{Kleur.RESET}")
+
+    def _apply_retention(self):
+        """Apply data retention policy to prune old rows."""
+        if not HAS_STACK:
+            return
+        print(f"{Kleur.GEEL}🗑️ Applying retention policy...{Kleur.RESET}")
+        try:
+            stack = get_cortical_stack()
+            deleted = stack.apply_retention_policy()
+            total = sum(deleted.values())
+            if total > 0:
+                details = ", ".join(f"{t}: {c}" for t, c in deleted.items() if c > 0)
+                print(f"{Kleur.GROEN}🗑️ Retention: {total} rows pruned ({details}){Kleur.RESET}")
+            else:
+                print(f"{Kleur.GROEN}🗑️ Retention: no old data to prune.{Kleur.RESET}")
+        except Exception as e:
+            print(f"{Kleur.ROOD}🗑️ Retention error: {e}{Kleur.RESET}")
 
     def _vacuum(self):
         """Optimize the CorticalStack SQLite database."""

@@ -11,6 +11,7 @@ Groq free tier limieten per key:
   - qwen3-32b:      60 RPM / 6K TPM / 500K TPD
 """
 
+import asyncio
 import os
 import time
 import logging
@@ -267,6 +268,30 @@ class SmartKeyManager:
                 return False, f"TPD limiet ({tpd_limit})"
 
             return True, ""
+
+    # ------------------------------------------------------------------
+    # Rate Limit Queue — wait instead of drop
+    # ------------------------------------------------------------------
+
+    MAX_QUEUE_WAIT = 30.0  # Maximum seconds to wait in queue
+
+    async def async_enqueue(self, agent_naam: str, model: str = None) -> tuple:
+        """Wait for rate limit clearance instead of dropping.
+
+        Returns: (mag_door, reden)
+        - (True, "OK") = cleared to request
+        - (False, reason) = timed out after MAX_QUEUE_WAIT
+        """
+        start = time.time()
+        while time.time() - start < self.MAX_QUEUE_WAIT:
+            mag, reden = self.check_throttle(agent_naam, model)
+            if mag:
+                return True, "OK"
+            wait_time = min(1.0, self.MAX_QUEUE_WAIT - (time.time() - start))
+            if wait_time <= 0:
+                break
+            await asyncio.sleep(wait_time)
+        return False, f"Queue timeout ({self.MAX_QUEUE_WAIT}s)"
 
     # ------------------------------------------------------------------
     # Registratie

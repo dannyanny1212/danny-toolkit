@@ -33,6 +33,12 @@ try:
 except ImportError:
     HAS_KEY_MANAGER = False
 
+try:
+    from danny_toolkit.core.response_cache import get_response_cache
+    HAS_RESPONSE_CACHE = True
+except ImportError:
+    HAS_RESPONSE_CACHE = False
+
 
 def _is_rate_limit(error: Exception) -> bool:
     """Detecteer of een exception een 429 rate limit is."""
@@ -60,11 +66,21 @@ async def groq_call_async(
     """
     km = get_key_manager() if HAS_KEY_MANAGER else None
 
-    # Pre-flight throttle check
+    # Check response cache first
+    if HAS_RESPONSE_CACHE:
+        cache = get_response_cache()
+        cached = cache.get(model, messages, temperature)
+        if cached is not None:
+            logger.debug(f"{agent_naam}: cache hit")
+            return cached
+    else:
+        cache = None
+
+    # Pre-flight throttle check with queuing
     if km:
-        mag, reden = km.check_throttle(agent_naam, model)
+        mag, reden = await km.async_enqueue(agent_naam, model)
         if not mag:
-            logger.info(f"{agent_naam} throttled: {reden}")
+            logger.info(f"{agent_naam} throttled (queue timeout): {reden}")
             return None
 
     # API call met exponential backoff
@@ -88,6 +104,10 @@ async def groq_call_async(
             # Registreer verbruik
             if km and tekst:
                 km.registreer_tokens(agent_naam, tekst)
+
+            # Store in response cache
+            if cache and tekst:
+                cache.put(model, messages, temperature, tekst)
 
             return tekst
 

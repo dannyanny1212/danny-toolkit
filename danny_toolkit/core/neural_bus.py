@@ -82,7 +82,7 @@ class NeuralBus:
     _MAX_HISTORY = 100  # events per type
 
     def __init__(self):
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
         # event_type -> [callback, ...]
         self._subscribers: Dict[str, List[Callable]] = defaultdict(list)
         # event_type -> deque[BusEvent] (ringbuffer per type)

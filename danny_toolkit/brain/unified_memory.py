@@ -6,6 +6,7 @@ queries en context-aware interacties.
 """
 
 import json
+from collections import OrderedDict
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Any
@@ -95,8 +96,9 @@ class UnifiedMemory:
         self.event_log_file = self.memory_dir / "event_log.json"
         self.event_log: List[MemoryEvent] = self._laad_event_log()
 
-        # App data cache
-        self.app_data_cache: Dict[str, dict] = {}
+        # App data cache (bounded OrderedDict, FIFO eviction)
+        self._cache_max_size = 50
+        self.app_data_cache: OrderedDict[str, dict] = OrderedDict()
 
         # Context window (recente events in geheugen)
         self.context_window_size = 50
@@ -457,8 +459,10 @@ class UnifiedMemory:
             with open(data_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
-            # Cache de data
+            # Cache de data (FIFO eviction when full)
             self.app_data_cache[app] = data
+            while len(self.app_data_cache) > self._cache_max_size:
+                self.app_data_cache.popitem(last=False)
             print(f"   [OK] {app} data geïmporteerd")
 
         except (json.JSONDecodeError, IOError) as e:

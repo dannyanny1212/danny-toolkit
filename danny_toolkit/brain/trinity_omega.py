@@ -20,6 +20,7 @@ Gebaseerd op de Cosmic Family Quest VIII: Het Prometheus Protocol.
 """
 
 import logging
+from collections import deque
 from enum import Enum
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional
@@ -389,7 +390,7 @@ class PrometheusBrain:
         self.nodes: Dict[CosmicRole, AgentNode] = {}
         self.swarm = OmegaSwarm()
         self.task_queue: List[Dict] = []
-        self.task_history: List[TaskResult] = []
+        self.task_history: deque = deque(maxlen=1000)
         self.is_online = False
 
         # Data persistence
@@ -1003,7 +1004,7 @@ class PrometheusBrain:
         try:
             # Schone history per swarm call
             # (voorkomt token-accumulatie)
-            self.brain.conversation_history = []
+            self.brain.conversation_history.clear()
             result = self.brain.process_request(
                 task, model=model,
                 use_tools=False,

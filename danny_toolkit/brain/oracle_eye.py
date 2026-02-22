@@ -61,6 +61,8 @@ class TheOracleEye:
     _HIGH_QUERY_THRESHOLD = 50      # queries/uur → switch naar 8B
     _CACHE_TTL = 300                # 5 minuten cache
 
+    _MAX_CACHE_ENTRIES = 100
+
     def __init__(self):
         self._stack = get_cortical_stack() if HAS_STACK else None
         self._bus = get_bus() if HAS_BUS else None
@@ -72,11 +74,23 @@ class TheOracleEye:
             ts, data = self._cache[key]
             if time.time() - ts < self._CACHE_TTL:
                 return data
+            else:
+                del self._cache[key]
         return None
 
     def _set_cached(self, key: str, data):
-        """Sla waarde op in cache."""
-        self._cache[key] = (time.time(), data)
+        """Sla waarde op in cache met eager eviction."""
+        # Evict expired entries first
+        now = time.time()
+        expired = [k for k, (ts, _) in self._cache.items()
+                   if now - ts >= self._CACHE_TTL]
+        for k in expired:
+            del self._cache[k]
+        # Evict oldest if still full
+        while len(self._cache) >= self._MAX_CACHE_ENTRIES:
+            oldest_key = min(self._cache, key=lambda k: self._cache[k][0])
+            del self._cache[oldest_key]
+        self._cache[key] = (now, data)
 
     def analyze_patterns(self, days: int = 7) -> Dict:
         """

@@ -23,6 +23,7 @@ import re
 import sys
 import time
 import hashlib
+from collections import OrderedDict
 from datetime import datetime
 
 if os.name == "nt":
@@ -360,7 +361,9 @@ class SecurityResearchEngine:
         self._coherentie = None
         self.config = SecurityConfig()
         self._alerts = []
-        self._eth_tx_cache = {}
+        self._eth_tx_cache: OrderedDict = OrderedDict()
+        self._eth_tx_cache_max = 100
+        self._eth_tx_cache_ttl = 300  # seconds
 
     # ── Lazy properties ───────────────────────────────
 
@@ -543,9 +546,11 @@ class SecurityResearchEngine:
                     f"/{adres}/transactions"
                 )
                 data = _fetch_json(url)
-                # Cache voor scan_forensisch
+                # Cache voor scan_forensisch (bounded + TTL)
                 if data:
-                    self._eth_tx_cache[adres] = data
+                    self._eth_tx_cache[adres] = (time.time(), data)
+                    while len(self._eth_tx_cache) > self._eth_tx_cache_max:
+                        self._eth_tx_cache.popitem(last=False)
                 if data and isinstance(data, dict):
                     items = data.get("items", [])
                     for tx in items[:5]:
@@ -1072,8 +1077,13 @@ class SecurityResearchEngine:
             try:
                 cached = self._eth_tx_cache.get(adres)
                 if cached:
-                    data = cached
-                else:
+                    cache_ts, cache_data = cached
+                    if time.time() - cache_ts < self._eth_tx_cache_ttl:
+                        data = cache_data
+                    else:
+                        del self._eth_tx_cache[adres]
+                        data = None
+                if not cached or data is None:
                     url = (
                         "https://eth.blockscout.com"
                         "/api/v2/addresses"
@@ -1196,7 +1206,7 @@ class SecurityResearchEngine:
             dict met alle scan resultaten + metadata.
         """
         start = time.time()
-        self._eth_tx_cache = {}
+        self._eth_tx_cache.clear()
 
         wallet_result = self.scan_wallets()
 
@@ -1214,7 +1224,7 @@ class SecurityResearchEngine:
             "hoogste_ernst": Ernst.LAAG,
         }
 
-        self._eth_tx_cache = {}
+        self._eth_tx_cache.clear()
 
         rapport["duur_seconden"] = round(
             time.time() - start, 2

@@ -14,6 +14,7 @@ import json
 import asyncio
 import importlib
 import threading
+from collections import deque
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 
@@ -89,6 +90,7 @@ class CentralBrain:
         # Thread-safety locks
         self._history_lock = threading.Lock()
         self._client_lock = threading.Lock()
+        self._app_instances_lock = threading.Lock()
 
         # Data directory
         self.data_dir = Config.DATA_DIR / "brain"
@@ -168,8 +170,8 @@ class CentralBrain:
         # Tool definitions voor Claude
         self.tool_definitions = get_all_tools()
 
-        # Conversation history voor context
-        self.conversation_history: List[dict] = []
+        # Conversation history voor context (bounded deque)
+        self.conversation_history: deque = deque(maxlen=self.MAX_HISTORY)
 
         # Statistieken
         self.stats = self._laad_stats()
@@ -206,24 +208,30 @@ class CentralBrain:
         Haal of maak app instance.
 
         Lazy loading - apps worden pas geïnstantieerd wanneer nodig.
+        Double-check locking voor thread safety.
         """
         if app_naam in self.app_instances:
             return self.app_instances[app_naam]
 
-        app_def = self.app_registry.get(app_naam)
-        if not app_def:
-            return None
+        with self._app_instances_lock:
+            # Double-check: another thread may have created it
+            if app_naam in self.app_instances:
+                return self.app_instances[app_naam]
 
-        try:
-            # Dynamisch importeren
-            module = importlib.import_module(app_def.module_path)
-            app_class = getattr(module, app_def.class_name)
-            instance = app_class()
-            self.app_instances[app_naam] = instance
-            return instance
-        except Exception as e:
-            print(kleur(f"   [!] Kon {app_naam} niet laden: {e}", Kleur.ROOD))
-            return None
+            app_def = self.app_registry.get(app_naam)
+            if not app_def:
+                return None
+
+            try:
+                # Dynamisch importeren
+                module = importlib.import_module(app_def.module_path)
+                app_class = getattr(module, app_def.class_name)
+                instance = app_class()
+                self.app_instances[app_naam] = instance
+                return instance
+            except Exception as e:
+                print(kleur(f"   [!] Kon {app_naam} niet laden: {e}", Kleur.ROOD))
+                return None
 
     async def _execute_app_action(
         self,
@@ -378,8 +386,6 @@ Belangrijke regels:
                 "role": "user",
                 "content": user_input
             })
-            if len(self.conversation_history) > self.MAX_HISTORY:
-                self.conversation_history = self.conversation_history[-self.MAX_HISTORY:]
 
         # Route naar juiste provider
         if self.ai_provider == "groq":
@@ -528,8 +534,6 @@ Belangrijke regels:
                             "role": "assistant",
                             "content": final_response
                         })
-                        if len(self.conversation_history) > self.MAX_HISTORY:
-                            self.conversation_history = self.conversation_history[-self.MAX_HISTORY:]
 
                     self._sla_stats_op()
                     return final_response
@@ -707,8 +711,6 @@ Belangrijke regels:
                             "role": "assistant",
                             "content": final_response
                         })
-                        if len(self.conversation_history) > self.MAX_HISTORY:
-                            self.conversation_history = self.conversation_history[-self.MAX_HISTORY:]
 
                     self._sla_stats_op()
                     return final_response
@@ -1009,7 +1011,7 @@ Belangrijke regels:
     def clear_conversation(self):
         """Wis conversation history."""
         with self._history_lock:
-            self.conversation_history = []
+            self.conversation_history.clear()
         print(kleur("   [OK] Conversatie gewist", Kleur.GROEN))
 
     def memory_stats(self) -> dict:

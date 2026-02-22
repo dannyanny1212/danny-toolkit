@@ -8,6 +8,7 @@ Definieert de drie hoofd workflows:
 """
 
 import asyncio
+from collections import deque
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Callable
 from dataclasses import dataclass, field
@@ -337,7 +338,7 @@ class WorkflowEngine:
         """
         self.app_executor = app_executor
         self.running_workflows: Dict[str, WorkflowDefinition] = {}
-        self.workflow_history: List[dict] = []
+        self.workflow_history: deque = deque(maxlen=500)
 
     def set_executor(self, executor: Callable):
         """Set de app executor."""
