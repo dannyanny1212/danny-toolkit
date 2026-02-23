@@ -443,7 +443,15 @@ class CipherAgent(BrainAgent):
     """Crypto specialist — levert metrics payload."""
 
     async def process(self, task, brain=None):
-        payload = await super().process(task, brain)
+        try:
+            payload = await super().process(task, brain)
+        except Exception as e:
+            logger.debug("CipherAgent brain fout: %s", e)
+            payload = SwarmPayload(
+                agent=self.name, type="text",
+                content=f"Crypto analyse (offline): {task[:80]}",
+                display_text="Crypto analyse (offline modus)",
+            )
         payload.type = "metrics"
         payload.metadata["media"] = _crypto_metrics()
         return payload
@@ -453,7 +461,15 @@ class VitaAgent(BrainAgent):
     """Health specialist — levert area_chart payload."""
 
     async def process(self, task, brain=None):
-        payload = await super().process(task, brain)
+        try:
+            payload = await super().process(task, brain)
+        except Exception as e:
+            logger.debug("VitaAgent brain fout: %s", e)
+            payload = SwarmPayload(
+                agent=self.name, type="text",
+                content=f"Gezondheid analyse (offline): {task[:80]}",
+                display_text="Gezondheid analyse (offline modus)",
+            )
         payload.type = "area_chart"
         payload.metadata["media"] = _health_chart()
         return payload
@@ -463,7 +479,15 @@ class AlchemistAgent(BrainAgent):
     """Data specialist — levert bar_chart payload."""
 
     async def process(self, task, brain=None):
-        payload = await super().process(task, brain)
+        try:
+            payload = await super().process(task, brain)
+        except Exception as e:
+            logger.debug("AlchemistAgent brain fout: %s", e)
+            payload = SwarmPayload(
+                agent=self.name, type="text",
+                content=f"Data analyse (offline): {task[:80]}",
+                display_text="Data analyse (offline modus)",
+            )
         payload.type = "bar_chart"
         payload.metadata["media"] = _data_chart()
         return payload
@@ -3928,8 +3952,10 @@ class SwarmEngine:
                 get_hallucination_shield,
             )
             schild = get_hallucination_shield()
+            _MEDIA_TYPES = {"metrics", "area_chart", "bar_chart", "code"}
             schild_non_error = [
-                r for r in results if r.type != "error"
+                r for r in results
+                if r.type != "error" and r.type not in _MEDIA_TYPES
             ]
             if schild_non_error:
                 # Extract tribunal verdict from metadata
