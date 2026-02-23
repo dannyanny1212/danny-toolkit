@@ -10,10 +10,11 @@
 
 import sys
 import io
+import logging
 import math
+import os
 import random
-import time
-from datetime import datetime, timedelta
+from datetime import datetime
 
 # --- Windows UTF-8 ---
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
@@ -21,6 +22,16 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="repla
 import streamlit as st
 import plotly.graph_objects as go
 import numpy as np
+
+logger = logging.getLogger(__name__)
+
+# ── Backend Bridge (live data) ──
+try:
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+    from Omega_Sovereign_Core.core.bridge import BackendBridge
+    _bridge = BackendBridge()
+except ImportError:
+    _bridge = None
 
 # ══════════════════════════════════════════════════════════════
 # PAGINA CONFIGURATIE
@@ -798,9 +809,15 @@ def cortex_neural_network() -> go.Figure:
 
 
 def agent_radar_chart() -> go.Figure:
-    """Radar/spider chart — agent performance metrics. Vervangt bars."""
-    categories = ["FORGE", "VERIFY", "RESEARCH", "DREAM", "SCAN", "GUARD", "PLAN", "HEAL"]
-    values = [82, 91, 65, 74, 88, 48, 70, 85]
+    """Radar/spider chart — agent performance metrics (live via BackendBridge)."""
+    # Live health scores ophalen
+    _health = _bridge.get_agent_health() if _bridge else {}
+    if _health:
+        categories = list(_health.keys())[:8]
+        values = [round(_health[c]) for c in categories]
+    else:
+        categories = ["FORGE", "VERIFY", "RESEARCH", "DREAM", "SCAN", "GUARD", "PLAN", "HEAL"]
+        values = [50, 50, 50, 50, 50, 50, 50, 50]
     values_closed = values + [values[0]]
     cats_closed = categories + [categories[0]]
 
@@ -1032,7 +1049,7 @@ st.markdown(f"""
         <div class="icon-tab">&#9788;</div>
     </div>
     <div style="display:flex;align-items:center;gap:14px;">
-        <span style="font-family:JetBrains Mono;font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.2);">v6.1.0</span>
+        <span style="font-family:JetBrains Mono;font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.2);">v6.10.0</span>
         <div class="top-controls">
             <div class="ctrl-btn" onclick="if(window.pywebview)pywebview.api.minimize()">&#8722;</div>
             <div class="ctrl-btn" onclick="if(window.pywebview)pywebview.api.maximize()">&#9633;</div>
@@ -1109,32 +1126,42 @@ with col_left:
     )
     st.plotly_chart(fig_disc, use_container_width=True, config={"displayModeBar": False})
 
-    # === GAUGES + STATS ===
+    # === GAUGES + STATS (LIVE DATA) ===
+    _live = _bridge.get_dashboard_data() if _bridge else {}
+    _metrics = _bridge.get_system_metrics() if _bridge else {}
+    _live_events = _live.get("events", 0)
+    _live_agents = _live.get("agents", 0)
+    _live_failures = _live.get("failures", 0)
+    _live_vectors = _live.get("vectors", 0)
+    _cpu_pct = max(0, _metrics.get("cpu_percent", 0))
+    _ram_pct = max(0, _metrics.get("ram_percent", 0))
+    _gpu_pct = max(0, _metrics.get("gpu_percent", 0))
     gauges_html = f"""<div class="gauges-row">
-{svg_donut(72, K["violet"], "DISCOVERY")}
-{svg_donut(54, K["amber"], "NET.FS")}
-{svg_donut(10, K["cyan"], "LOAD")}
+{svg_donut(int(_cpu_pct), K["violet"], "CPU")}
+{svg_donut(int(_ram_pct), K["amber"], "RAM")}
+{svg_donut(int(_gpu_pct), K["cyan"], "GPU")}
 </div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px;">
 <div class="stat-tile" style="background:rgba(0,229,255,0.04);border:1px solid rgba(0,229,255,0.1);color:{K['cyan']};">
-<div style="font-family:JetBrains Mono;font-size:20px;font-weight:800;color:{K['cyan']};text-shadow:0 0 12px rgba(0,229,255,0.4);">847</div>
+<div style="font-family:JetBrains Mono;font-size:20px;font-weight:800;color:{K['cyan']};text-shadow:0 0 12px rgba(0,229,255,0.4);">{_live_events}</div>
 <div style="font-family:JetBrains Mono;font-size:7px;color:{K['dim']};letter-spacing:2px;">EVENTS</div>
 </div>
 <div class="stat-tile" style="background:rgba(124,77,255,0.04);border:1px solid rgba(124,77,255,0.1);color:{K['violet']};">
-<div style="font-family:JetBrains Mono;font-size:20px;font-weight:800;color:{K['violet']};text-shadow:0 0 12px rgba(124,77,255,0.4);">8</div>
+<div style="font-family:JetBrains Mono;font-size:20px;font-weight:800;color:{K['violet']};text-shadow:0 0 12px rgba(124,77,255,0.4);">{_live_agents}</div>
 <div style="font-family:JetBrains Mono;font-size:7px;color:{K['dim']};letter-spacing:2px;">AGENTS</div>
 </div>
 <div class="stat-tile" style="background:rgba(255,23,68,0.04);border:1px solid rgba(255,23,68,0.1);color:{K['red']};">
-<div style="font-family:JetBrains Mono;font-size:20px;font-weight:800;color:{K['red']};text-shadow:0 0 12px rgba(255,23,68,0.4);">23</div>
+<div style="font-family:JetBrains Mono;font-size:20px;font-weight:800;color:{K['red']};text-shadow:0 0 12px rgba(255,23,68,0.4);">{_live_failures}</div>
 <div style="font-family:JetBrains Mono;font-size:7px;color:{K['dim']};letter-spacing:2px;">FAILURES</div>
 </div>
 <div class="stat-tile" style="background:rgba(0,200,83,0.04);border:1px solid rgba(0,200,83,0.1);color:{K['emerald']};">
-<div style="font-family:JetBrains Mono;font-size:20px;font-weight:800;color:{K['emerald']};text-shadow:0 0 12px rgba(0,200,83,0.4);">148</div>
+<div style="font-family:JetBrains Mono;font-size:20px;font-weight:800;color:{K['emerald']};text-shadow:0 0 12px rgba(0,200,83,0.4);">{_live_vectors}</div>
 <div style="font-family:JetBrains Mono;font-size:7px;color:{K['dim']};letter-spacing:2px;">VECTORS</div>
 </div>
 </div>"""
     st.markdown(gauges_html, unsafe_allow_html=True)
   except Exception as e:
+    logger.error("LEFT PANEL ERROR: %s", e, exc_info=True)
     st.error(f"LEFT PANEL ERROR: {e}")
 
 
@@ -1168,6 +1195,7 @@ with col_center:
 <span class="listener-label">THE LISTENER &bull; VOICE ACTIVE</span>
 </div>""", unsafe_allow_html=True)
   except Exception as e:
+    logger.error("CENTER PANEL ERROR: %s", e, exc_info=True)
     st.error(f"CENTER PANEL ERROR: {e}")
 
 
@@ -1197,7 +1225,9 @@ with col_right:
         pulse_fig = pulse_protocol_chart()
         st.plotly_chart(pulse_fig, use_container_width=True, config={"displayModeBar": False})
     with c_fuel:
-        fuel_fig = fuel_gauge_chart(85)
+        _fuel = _bridge.get_api_fuel() if _bridge else {}
+        _fuel_pct = _fuel.get("percentage", 0)
+        fuel_fig = fuel_gauge_chart(_fuel_pct)
         st.plotly_chart(fuel_fig, use_container_width=True, config={"displayModeBar": False})
         st.markdown(f"""
         <div style="text-align:center; margin-top:-12px;">
@@ -1248,4 +1278,5 @@ with col_right:
     )
     st.markdown(terminal_html, unsafe_allow_html=True)
   except Exception as e:
+    logger.error("RIGHT PANEL ERROR: %s", e, exc_info=True)
     st.error(f"RIGHT PANEL ERROR: {e}")

@@ -3793,9 +3793,11 @@ class SwarmEngine:
                 )
 
             tasks.append(
-                self._timed_dispatch(
-                    agent, agent_input,
-                    trace_id=trace_id,
+                asyncio.create_task(
+                    self._timed_dispatch(
+                        agent, agent_input,
+                        trace_id=trace_id,
+                    )
                 )
             )
 

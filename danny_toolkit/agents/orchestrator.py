@@ -384,8 +384,9 @@ class Orchestrator:
         tasks_to_process = list(self.task_queue)
         self.task_queue.clear()
 
-        coroutines = [process_with_semaphore(t) for t in tasks_to_process]
-        results = await asyncio.gather(*coroutines, return_exceptions=True)
+        tasks = [asyncio.create_task(process_with_semaphore(t))
+                 for t in tasks_to_process]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
 
         for result in results:
             if isinstance(result, Exception):
@@ -444,10 +445,10 @@ class Orchestrator:
         async def run_task(agent_naam: str, taak: str):
             return await self.delegeer(agent_naam, taak)
 
+        tasks = [asyncio.create_task(run_task(an, t)) for an, t in taken]
         try:
-            coroutines = [run_task(an, t) for an, t in taken]
             resultaten = await asyncio.wait_for(
-                asyncio.gather(*coroutines, return_exceptions=True),
+                asyncio.gather(*tasks, return_exceptions=True),
                 timeout=timeout
             )
 
@@ -456,6 +457,9 @@ class Orchestrator:
                 for r in resultaten
             ]
         except asyncio.TimeoutError:
+            for t in tasks:
+                t.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
             print(kleur("[!] Parallel timeout bereikt", Kleur.ROOD))
             return ["[TIMEOUT]" for _ in taken]
 

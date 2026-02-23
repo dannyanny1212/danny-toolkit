@@ -385,7 +385,9 @@ class TaskArbitrator:
                     self._stats["tasks_failed"] += 1
 
         # asyncio.gather voor parallelle uitvoering
-        await asyncio.gather(*[_dispatch_task(t) for t in manifest.taken])
+        tasks = [asyncio.create_task(_dispatch_task(t))
+                 for t in manifest.taken]
+        await asyncio.gather(*tasks)
 
         # Status bepalen
         failed = sum(1 for t in manifest.taken if t.status == "failed")
@@ -617,7 +619,9 @@ class TaskArbitrator:
                         self._stats["model_tasks_failed"] += 1
 
         # Parallel dispatch via asyncio.gather
-        await asyncio.gather(*[_dispatch_model_task(t) for t in manifest.taken])
+        tasks = [asyncio.create_task(_dispatch_model_task(t))
+                 for t in manifest.taken]
+        await asyncio.gather(*tasks)
 
         # Status bepalen
         failed = sum(1 for t in manifest.taken if t.status == "failed")

@@ -788,7 +788,14 @@ class OmegaAI:
                     print(info(HELP_TEKST))
 
                 # OMEGA SOVEREIGN: Strategist interceptor
-                elif len(gebruiker_input) > 20 and HAS_STRATEGIST:
+                # Guard: skip code/error/traceback-achtige input
+                elif (len(gebruiker_input) > 20
+                      and HAS_STRATEGIST
+                      and not any(kw in gebruiker_input for kw in (
+                          "print(", "import ", "def ", "class ",
+                          "Traceback", "Error]", "Exception",
+                          "RuntimeError", "stdout.decode",
+                      ))):
                     print(kleur(
                         "\n  OMEGA SOVEREIGN AUTONOMY GEACTIVEERD",
                         Kleur.FEL_CYAAN,
@@ -811,9 +818,20 @@ class OmegaAI:
                                 )
                             except Exception as e:
                                 logger.debug("Failed to wire VectorStore into VoidWalker: %s", e)
-                        resultaat = asyncio.run(
-                            strategist.execute_mission(gebruiker_input)
-                        )
+                        loop = asyncio.new_event_loop()
+                        try:
+                            resultaat = loop.run_until_complete(
+                                strategist.execute_mission(gebruiker_input)
+                            )
+                        finally:
+                            # Sluit async clients netjes af vóór loop.close()
+                            pending = asyncio.all_tasks(loop)
+                            for task in pending:
+                                task.cancel()
+                            if pending:
+                                loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+                            loop.run_until_complete(loop.shutdown_asyncgens())
+                            loop.close()
                         print(kleur(
                             "\n  === MISSIE RESULTAAT ===",
                             Kleur.FEL_GROEN,
