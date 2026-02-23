@@ -735,11 +735,17 @@ class SelfPruning:
 
     def registreer_toegang(self, fragment_ids: List[str], shard: str):
         """Registreer dat fragmenten zijn geraadpleegd."""
-        self.tracker.registreer_toegang(fragment_ids, shard)
+        try:
+            self.tracker.registreer_toegang(fragment_ids, shard)
+        except Exception as e:
+            logger.debug("SelfPruning registreer_toegang fout: %s", e)
 
     def registreer_creatie(self, fragment_ids: List[str], shard: str):
         """Registreer nieuw aangemaakte fragmenten."""
-        self.tracker.registreer_creatie(fragment_ids, shard)
+        try:
+            self.tracker.registreer_creatie(fragment_ids, shard)
+        except Exception as e:
+            logger.debug("SelfPruning registreer_creatie fout: %s", e)
 
     def prune(self) -> dict:
         """Voer een volledige prune cyclus uit.
@@ -879,14 +885,18 @@ class SelfPruning:
         Returns:
             Dict met tracker stats en configuratie.
         """
-        return {
-            "totaal_gevolgd": self.tracker.totaal_gevolgd(),
-            "entropy_drempel": self.entropie.drempel,
-            "redundantie_drempel": self.redundantie.drempel,
-            "verval_dagen": Config.RECENCY_DECAY_DAYS,
-            "pruning_enabled": Config.PRUNING_ENABLED,
-            "cold_collection": Config.COLD_STORAGE_COLLECTION,
-        }
+        try:
+            return {
+                "totaal_gevolgd": self.tracker.totaal_gevolgd(),
+                "entropy_drempel": self.entropie.drempel,
+                "redundantie_drempel": self.redundantie.drempel,
+                "verval_dagen": Config.RECENCY_DECAY_DAYS,
+                "pruning_enabled": Config.PRUNING_ENABLED,
+                "cold_collection": Config.COLD_STORAGE_COLLECTION,
+            }
+        except Exception as e:
+            logger.debug("SelfPruning statistieken fout: %s", e)
+            return {"pruning_enabled": False}
 
     # ─── Private helpers ──────────────────────────────
 

@@ -79,11 +79,13 @@ class Dreamer:
             mirror = TheMirror()
             await mirror.reflect()
 
-        # 4. Self-document — GhostWriter haunt
+        # 4. Self-document — GhostWriter haunt (Phase 38: write-back)
         try:
             from danny_toolkit.brain.ghost_writer import GhostWriter
             writer = GhostWriter()
-            await writer.haunt()
+            _gw_dry_run = getattr(Config, "GHOSTWRITER_DRY_RUN", True)
+            _gw_max = getattr(Config, "GHOSTWRITER_MAX_PER_CYCLE", 10)
+            await writer.haunt(dry_run=_gw_dry_run, max_functies=_gw_max)
         except Exception as e:
             logger.debug("GhostWriter haunt error: %s", e)
 
@@ -177,6 +179,52 @@ class Dreamer:
                       f"{vn} vernietigd, {ef} entropie-flagged ({ms}ms){Kleur.RESET}")
         except Exception as e:
             logger.debug("SelfPruning REM cycle failed: %s", e)
+
+        # 5.13 Cortex maintenance — prune lage confidence, merge duplicaten
+        try:
+            from danny_toolkit.brain.cortex import TheCortex
+            cortex = TheCortex()
+            _cx_stats_before = cortex.get_stats()
+            _cx_gepruned = 0
+            _cx_gemerged = 0
+
+            # Prune triples met confidence < 0.2
+            if hasattr(cortex, "_db") and cortex._db:
+                try:
+                    cursor = cortex._db.execute(
+                        "DELETE FROM knowledge_graph WHERE confidence < 0.2"
+                    )
+                    _cx_gepruned = cursor.rowcount
+                    cortex._db.commit()
+                except Exception as e:
+                    logger.debug("Cortex triple prune fout: %s", e)
+
+            # Rebuild in-memory graph als er wijzigingen zijn
+            if _cx_gepruned > 0 and hasattr(cortex, "_build_graph"):
+                cortex._build_graph()
+
+            _cx_stats_after = cortex.get_stats()
+
+            if HAS_STACK:
+                try:
+                    stack = get_cortical_stack()
+                    stack.log_event(
+                        actor="dreamer",
+                        action="cortex_maintenance",
+                        details={
+                            "gepruned_triples": _cx_gepruned,
+                            "gemerged_entities": _cx_gemerged,
+                            "nodes_before": _cx_stats_before.get("graph_nodes", 0),
+                            "nodes_after": _cx_stats_after.get("graph_nodes", 0),
+                        },
+                    )
+                except Exception as e:
+                    logger.debug("CorticalStack cortex log fout: %s", e)
+
+            print(f"{Kleur.GROEN}Knowledge Graph maintenance: "
+                  f"{_cx_gepruned} triples gepruned{Kleur.RESET}")
+        except Exception as e:
+            logger.debug("Cortex REM maintenance error: %s", e)
 
         # 6. Pre-Compute — anticipate tomorrow
         insight = await self._anticipate()

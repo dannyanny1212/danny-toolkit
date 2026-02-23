@@ -147,13 +147,16 @@ class NeuralBus:
             event_type: EventTypes constante, of "*" voor alle events
             callback: Functie die een BusEvent ontvangt
         """
-        with self._lock:
-            if event_type == "*":
-                if callback not in self._wildcard_subscribers:
-                    self._wildcard_subscribers.append(callback)
-            else:
-                if callback not in self._subscribers[event_type]:
-                    self._subscribers[event_type].append(callback)
+        try:
+            with self._lock:
+                if event_type == "*":
+                    if callback not in self._wildcard_subscribers:
+                        self._wildcard_subscribers.append(callback)
+                else:
+                    if callback not in self._subscribers[event_type]:
+                        self._subscribers[event_type].append(callback)
+        except Exception as e:
+            logger.debug("NeuralBus subscribe fout: %s", e)
 
     def unsubscribe(
         self,
@@ -161,13 +164,16 @@ class NeuralBus:
         callback: Callable[[BusEvent], None],
     ):
         """Verwijder een subscriber."""
-        with self._lock:
-            if event_type == "*":
-                if callback in self._wildcard_subscribers:
-                    self._wildcard_subscribers.remove(callback)
-            elif event_type in self._subscribers:
-                if callback in self._subscribers[event_type]:
-                    self._subscribers[event_type].remove(callback)
+        try:
+            with self._lock:
+                if event_type == "*":
+                    if callback in self._wildcard_subscribers:
+                        self._wildcard_subscribers.remove(callback)
+                elif event_type in self._subscribers:
+                    if callback in self._subscribers[event_type]:
+                        self._subscribers[event_type].remove(callback)
+        except Exception as e:
+            logger.debug("NeuralBus unsubscribe fout: %s", e)
 
     def publish(
         self,
@@ -245,19 +251,27 @@ class NeuralBus:
         Returns:
             Lijst van BusEvent objecten (nieuwste eerst)
         """
-        with self._lock:
-            events = list(self._history.get(event_type, []))
+        try:
+            with self._lock:
+                events = list(self._history.get(event_type, []))
 
-        if bron:
-            events = [e for e in events if e.bron == bron]
+            if bron:
+                events = [e for e in events if e.bron == bron]
 
-        return list(reversed(events[-count:]))
+            return list(reversed(events[-count:]))
+        except Exception as e:
+            logger.debug("NeuralBus get_history fout: %s", e)
+            return []
 
     def get_latest(self, event_type: str) -> Optional[BusEvent]:
         """Haal het meest recente event op van een type."""
-        with self._lock:
-            history = self._history.get(event_type, [])
-            return history[-1] if history else None
+        try:
+            with self._lock:
+                history = self._history.get(event_type, [])
+                return history[-1] if history else None
+        except Exception as e:
+            logger.debug("NeuralBus get_latest fout: %s", e)
+            return None
 
     def get_context(
         self,
@@ -274,15 +288,19 @@ class NeuralBus:
         Returns:
             Dict van event_type -> [event_dicts]
         """
-        result = {}
-        types = event_types or list(self._history.keys())
+        try:
+            result = {}
+            types = event_types or list(self._history.keys())
 
-        for et in types:
-            events = self.get_history(et, count=count)
-            if events:
-                result[et] = [e.to_dict() for e in events]
+            for et in types:
+                events = self.get_history(et, count=count)
+                if events:
+                    result[et] = [e.to_dict() for e in events]
 
-        return result
+            return result
+        except Exception as e:
+            logger.debug("NeuralBus get_context fout: %s", e)
+            return {}
 
     def get_context_stream(
         self,
@@ -302,25 +320,29 @@ class NeuralBus:
         Returns:
             Leesbare string voor LLM context, of lege string.
         """
-        with self._lock:
-            types = event_types or list(self._history.keys())
-            # Verzamel alle events, sorteer op timestamp
-            all_events: List[BusEvent] = []
-            for et in types:
-                all_events.extend(self._history.get(et, []))
+        try:
+            with self._lock:
+                types = event_types or list(self._history.keys())
+                # Verzamel alle events, sorteer op timestamp
+                all_events: List[BusEvent] = []
+                for et in types:
+                    all_events.extend(self._history.get(et, []))
 
-        if not all_events:
+            if not all_events:
+                return ""
+
+            all_events.sort(key=lambda e: e.timestamp)
+            recent = all_events[-count:]
+
+            lines = ["[REAL-TIME SYSTEM STATE]"]
+            for e in recent:
+                t = e.timestamp.strftime("%H:%M:%S")
+                data_str = ", ".join(f"{k}={v}" for k, v in e.data.items())
+                lines.append(f"- {t} | {e.bron}: {e.event_type} -> {data_str}")
+            return "\n".join(lines)
+        except Exception as e:
+            logger.debug("NeuralBus get_context_stream fout: %s", e)
             return ""
-
-        all_events.sort(key=lambda e: e.timestamp)
-        recent = all_events[-count:]
-
-        lines = ["[REAL-TIME SYSTEM STATE]"]
-        for e in recent:
-            t = e.timestamp.strftime("%H:%M:%S")
-            data_str = ", ".join(f"{k}={v}" for k, v in e.data.items())
-            lines.append(f"- {t} | {e.bron}: {e.event_type} -> {data_str}")
-        return "\n".join(lines)
 
     async def _safe_async_dispatch(self, callback: Callable, event: BusEvent):
         """Veilige uitvoering van async callbacks."""
@@ -332,32 +354,39 @@ class NeuralBus:
 
     def statistieken(self) -> dict:
         """Geef bus statistieken."""
-        with self._lock:
-            subscriber_count = sum(
-                len(cbs) for cbs in self._subscribers.values()
-            )
-            subscriber_count += len(self._wildcard_subscribers)
+        try:
+            with self._lock:
+                subscriber_count = sum(
+                    len(cbs) for cbs in self._subscribers.values()
+                )
+                subscriber_count += len(self._wildcard_subscribers)
 
-            return {
-                "subscribers": subscriber_count,
-                "event_types_actief": len(self._history),
-                "events_in_history": sum(
-                    len(h) for h in self._history.values()
-                ),
-                **self._stats,
-            }
+                return {
+                    "subscribers": subscriber_count,
+                    "event_types_actief": len(self._history),
+                    "events_in_history": sum(
+                        len(h) for h in self._history.values()
+                    ),
+                    **self._stats,
+                }
+        except Exception as e:
+            logger.debug("NeuralBus statistieken fout: %s", e)
+            return {}
 
     def reset(self):
         """Reset de bus (voor tests)."""
-        with self._lock:
-            self._subscribers.clear()
-            self._wildcard_subscribers.clear()
-            self._history.clear()
-            self._stats = {
-                "events_gepubliceerd": 0,
-                "events_afgeleverd": 0,
-                "fouten": 0,
-            }
+        try:
+            with self._lock:
+                self._subscribers.clear()
+                self._wildcard_subscribers.clear()
+                self._history.clear()
+                self._stats = {
+                    "events_gepubliceerd": 0,
+                    "events_afgeleverd": 0,
+                    "fouten": 0,
+                }
+        except Exception as e:
+            logger.debug("NeuralBus reset fout: %s", e)
 
 
 # -- Singleton --

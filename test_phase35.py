@@ -383,11 +383,12 @@ def test_16_neuralbus_subscribe():
 # ═══════════════════════════════════════════════════
 
 def test_17_version_bump():
-    """Brain versie is 6.3.0."""
-    print("\n[Test 17] Brain versie 6.3.0")
+    """Brain versie is >= 6.3.0."""
+    print("\n[Test 17] Brain versie >= 6.3.0")
     import danny_toolkit.brain as brain_pkg
 
-    check("__version__ is 6.3.0", brain_pkg.__version__ == "6.3.0")
+    check(f"__version__ is {brain_pkg.__version__} (>= 6.3.0)",
+          brain_pkg.__version__ >= "6.3.0")
 
 
 def test_18_module_integrity():

@@ -316,6 +316,100 @@ def show_metrics():
     console.print()
 
 
+# --- Phase 38: OBSERVATORY CLI COMMANDS ---
+
+def show_audit():
+    """Toon ConfigAuditor rapport."""
+    try:
+        from danny_toolkit.brain.config_auditor import get_config_auditor
+        auditor = get_config_auditor()
+        rapport = auditor.audit()
+
+        status_color = "green" if rapport.veilig else "red"
+        status_text = "VEILIG" if rapport.veilig else "ONVEILIG"
+
+        console.print(
+            Panel(
+                f"[bold {status_color}]{status_text}[/bold {status_color}] | "
+                f"Gecontroleerd: {rapport.gecontroleerd} | "
+                f"Schendingen: {len(rapport.schendingen)} | "
+                f"Drift: {'Ja' if rapport.drift_gedetecteerd else 'Nee'}",
+                title="Config Audit",
+                border_style=status_color,
+            )
+        )
+
+        if rapport.schendingen:
+            table = Table(title="Schendingen", border_style="yellow")
+            table.add_column("Ernst", style="bold")
+            table.add_column("Categorie")
+            table.add_column("Beschrijving")
+            table.add_column("Sleutel", style="dim")
+            for s in rapport.schendingen:
+                ernst_style = (
+                    "red" if getattr(s, "ernst", "") == "kritiek"
+                    else "yellow"
+                )
+                table.add_row(
+                    f"[{ernst_style}]{getattr(s, 'ernst', '')}[/{ernst_style}]",
+                    getattr(s, "categorie", ""),
+                    getattr(s, "beschrijving", ""),
+                    getattr(s, "sleutel", ""),
+                )
+            console.print(table)
+    except Exception as e:
+        console.print(f"[red]  Audit mislukt: {e}[/red]")
+
+
+def show_pruning():
+    """Toon SelfPruning statistieken."""
+    try:
+        from danny_toolkit.core.self_pruning import get_self_pruning
+        sp = get_self_pruning()
+        stats = sp.statistieken()
+
+        enabled = stats.get("pruning_enabled", False)
+        status_color = "green" if enabled else "yellow"
+        status_text = "ACTIEF" if enabled else "UITGESCHAKELD"
+
+        console.print(
+            Panel(
+                f"[bold {status_color}]{status_text}[/bold {status_color}] | "
+                f"Gevolgd: {stats.get('totaal_gevolgd', 0)} fragmenten | "
+                f"Entropy: {stats.get('entropy_drempel', 0):.2f} | "
+                f"Redundantie: {stats.get('redundantie_drempel', 0):.2f} | "
+                f"Verval: {stats.get('verval_dagen', 0)}d | "
+                f"Cold: {stats.get('cold_collection', 'n/a')}",
+                title="SelfPruning Stats",
+                border_style=status_color,
+            )
+        )
+    except Exception as e:
+        console.print(f"[red]  Pruning stats mislukt: {e}[/red]")
+
+
+def show_shards():
+    """Toon ShardRouter statistieken."""
+    try:
+        from danny_toolkit.core.shard_router import get_shard_router
+        router = get_shard_router()
+        stats = router.statistieken()
+
+        table = Table(title="Shard Statistieken", border_style="cyan")
+        table.add_column("Shard", style="bold white")
+        table.add_column("Chunks", justify="right", style="yellow")
+
+        totaal = 0
+        for s in stats:
+            table.add_row(s.naam, str(s.aantal_chunks))
+            totaal += s.aantal_chunks
+
+        table.add_row("[bold]Totaal[/bold]", f"[bold]{totaal}[/bold]")
+        console.print(table)
+    except Exception as e:
+        console.print(f"[red]  Shard stats mislukt: {e}[/red]")
+
+
 # --- VISUALISATIE FUNCTIES ---
 
 def render_metrics(media):
@@ -710,6 +804,15 @@ def main():
             # 2.7: Commando metrics
             if cmd == "metrics":
                 show_metrics()
+                continue
+            if cmd == "audit":
+                show_audit()
+                continue
+            if cmd == "pruning":
+                show_pruning()
+                continue
+            if cmd == "shards":
+                show_shards()
                 continue
             if not cmd:
                 continue

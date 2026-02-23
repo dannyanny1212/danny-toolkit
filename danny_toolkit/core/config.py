@@ -289,6 +289,19 @@ class Config:
     RECENCY_DECAY_DAYS = int(os.environ.get("RECENCY_DECAY_DAYS", "14"))
     COLD_STORAGE_COLLECTION = "danny_cold"
 
+    # Cortex Knowledge Graph enrichment
+    CORTEX_ENRICHMENT_ENABLED = os.environ.get(
+        "CORTEX_ENRICHMENT_ENABLED", "1"
+    ).lower() not in ("0", "false", "no")
+
+    # GhostWriter (overnight REM)
+    GHOSTWRITER_DRY_RUN = os.environ.get(
+        "GHOSTWRITER_DRY_RUN", "1"
+    ).lower() not in ("0", "false", "no")
+    GHOSTWRITER_MAX_PER_CYCLE = int(os.environ.get(
+        "GHOSTWRITER_MAX_PER_CYCLE", "10"
+    ))
+
     # Paths
     BASE_DIR = Path(__file__).parent.parent.parent
     DATA_DIR = BASE_DIR / "data"

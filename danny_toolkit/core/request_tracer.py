@@ -133,19 +133,23 @@ class RequestTracer:
         Returns:
             Nieuwe RequestTrace instantie.
         """
-        trace = RequestTrace(trace_id=trace_id)
-        _current_trace.set(trace)
+        try:
+            trace = RequestTrace(trace_id=trace_id)
+            _current_trace.set(trace)
 
-        with self._lock:
-            self._traces.append(trace)
-            self._index[trace_id] = trace
-            # Schoon index op bij overflow
-            if len(self._index) > self._MAX_TRACES:
-                stale = list(self._index.keys())[:-self._MAX_TRACES]
-                for k in stale:
-                    self._index.pop(k, None)
+            with self._lock:
+                self._traces.append(trace)
+                self._index[trace_id] = trace
+                # Schoon index op bij overflow
+                if len(self._index) > self._MAX_TRACES:
+                    stale = list(self._index.keys())[:-self._MAX_TRACES]
+                    for k in stale:
+                        self._index.pop(k, None)
 
-        return trace
+            return trace
+        except Exception as e:
+            logger.debug("RequestTracer begin_trace fout: %s", e)
+            return RequestTrace(trace_id=trace_id)
 
     def begin_span(
         self, fase: str, agent: str = "",
@@ -159,19 +163,23 @@ class RequestTracer:
         Returns:
             TraceSpan of None als geen actieve trace.
         """
-        trace = _current_trace.get()
-        if trace is None:
-            return None
+        try:
+            trace = _current_trace.get()
+            if trace is None:
+                return None
 
-        span = TraceSpan(
-            trace_id=trace.trace_id,
-            fase=fase,
-            agent=agent,
-            start_ms=time.time() * 1000,
-        )
-        trace.spans.append(span)
-        _current_span.set(span)
-        return span
+            span = TraceSpan(
+                trace_id=trace.trace_id,
+                fase=fase,
+                agent=agent,
+                start_ms=time.time() * 1000,
+            )
+            trace.spans.append(span)
+            _current_span.set(span)
+            return span
+        except Exception as e:
+            logger.debug("RequestTracer begin_span fout: %s", e)
+            return None
 
     def eind_span(
         self,
@@ -184,15 +192,18 @@ class RequestTracer:
             status: "ok", "error", of "skipped".
             details: Extra details voor de span.
         """
-        span = _current_span.get()
-        if span is None:
-            return
+        try:
+            span = _current_span.get()
+            if span is None:
+                return
 
-        span.eind_ms = time.time() * 1000
-        span.status = status
-        if details:
-            span.details.update(details)
-        _current_span.set(None)
+            span.eind_ms = time.time() * 1000
+            span.status = status
+            if details:
+                span.details.update(details)
+            _current_span.set(None)
+        except Exception as e:
+            logger.debug("RequestTracer eind_span fout: %s", e)
 
     def registreer_fout(self, fout_id: str):
         """Registreer een fout-ID in de huidige trace.
@@ -200,9 +211,12 @@ class RequestTracer:
         Args:
             fout_id: FoutContext.fout_id referentie.
         """
-        trace = _current_trace.get()
-        if trace is not None:
-            trace.fout_ids.append(fout_id)
+        try:
+            trace = _current_trace.get()
+            if trace is not None:
+                trace.fout_ids.append(fout_id)
+        except Exception as e:
+            logger.debug("RequestTracer registreer_fout fout: %s", e)
 
     def eind_trace(self) -> Optional[RequestTrace]:
         """Sluit de huidige trace en log naar CorticalStack.
@@ -267,8 +281,12 @@ class RequestTracer:
         Returns:
             RequestTrace of None.
         """
-        with self._lock:
-            return self._index.get(trace_id)
+        try:
+            with self._lock:
+                return self._index.get(trace_id)
+        except Exception as e:
+            logger.debug("RequestTracer get_trace fout: %s", e)
+            return None
 
     def get_recent(self, count: int = 20) -> List[RequestTrace]:
         """Haal recente traces op.
@@ -279,9 +297,13 @@ class RequestTracer:
         Returns:
             Lijst van RequestTrace (nieuwste eerst).
         """
-        with self._lock:
-            traces = list(self._traces)
-        return list(reversed(traces[-count:]))
+        try:
+            with self._lock:
+                traces = list(self._traces)
+            return list(reversed(traces[-count:]))
+        except Exception as e:
+            logger.debug("RequestTracer get_recent fout: %s", e)
+            return []
 
 
 # ─── Singleton ───────────────────────────────────────

@@ -207,12 +207,15 @@ def classificeer(exception_or_name: Union[Exception, str]) -> FoutDefinitie:
     Returns:
         FoutDefinitie uit FOUT_REGISTER, of fallback.
     """
-    if isinstance(exception_or_name, Exception):
-        naam = type(exception_or_name).__name__
-    else:
-        naam = str(exception_or_name)
-
-    return FOUT_REGISTER.get(naam, _FALLBACK_DEFINITIE)
+    try:
+        if isinstance(exception_or_name, Exception):
+            naam = type(exception_or_name).__name__
+        else:
+            naam = str(exception_or_name)
+        return FOUT_REGISTER.get(naam, _FALLBACK_DEFINITIE)
+    except Exception as e:
+        logger.debug("classificeer fout: %s", e)
+        return _FALLBACK_DEFINITIE
 
 
 def is_retry_safe(exception_or_name: Union[Exception, str]) -> bool:
@@ -221,12 +224,16 @@ def is_retry_safe(exception_or_name: Union[Exception, str]) -> bool:
     Returns:
         True als de fout VOORBIJGAAND is met RETRY strategie.
     """
-    definitie = classificeer(exception_or_name)
-    return (
-        definitie.ernst == FoutErnst.VOORBIJGAAND
-        and definitie.strategie == HerstelStrategie.RETRY
-        and definitie.retry_max > 0
-    )
+    try:
+        definitie = classificeer(exception_or_name)
+        return (
+            definitie.ernst == FoutErnst.VOORBIJGAAND
+            and definitie.strategie == HerstelStrategie.RETRY
+            and definitie.retry_max > 0
+        )
+    except Exception as e:
+        logger.debug("is_retry_safe fout: %s", e)
+        return False
 
 
 def get_ernst(exception_or_name: Union[Exception, str]) -> FoutErnst:
@@ -235,7 +242,11 @@ def get_ernst(exception_or_name: Union[Exception, str]) -> FoutErnst:
     Returns:
         FoutErnst enum waarde.
     """
-    return classificeer(exception_or_name).ernst
+    try:
+        return classificeer(exception_or_name).ernst
+    except Exception as e:
+        logger.debug("get_ernst fout: %s", e)
+        return FoutErnst.HERSTELBAAR
 
 
 def maak_fout_context(
@@ -253,13 +264,24 @@ def maak_fout_context(
     Returns:
         FoutContext met classificatie en metadata.
     """
-    definitie = classificeer(exception)
-    return FoutContext(
-        fout_id=uuid.uuid4().hex[:8],
-        fout_type=type(exception).__name__,
-        agent=agent,
-        ernst=definitie.ernst,
-        strategie=definitie.strategie,
-        bericht=str(exception)[:500],
-        trace_id=trace_id,
-    )
+    try:
+        definitie = classificeer(exception)
+        return FoutContext(
+            fout_id=uuid.uuid4().hex[:8],
+            fout_type=type(exception).__name__,
+            agent=agent,
+            ernst=definitie.ernst,
+            strategie=definitie.strategie,
+            bericht=str(exception)[:500],
+            trace_id=trace_id,
+        )
+    except Exception as e:
+        logger.debug("maak_fout_context fout: %s", e)
+        return FoutContext(
+            fout_id="fallback",
+            fout_type="Onbekend",
+            agent=agent,
+            ernst=FoutErnst.HERSTELBAAR,
+            strategie=HerstelStrategie.SKIP,
+            bericht=str(exception)[:500],
+        )

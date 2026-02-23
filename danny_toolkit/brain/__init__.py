@@ -82,5 +82,5 @@ __all__ = [
     "ProjectMap", "BrainCLI",
 ]
 
-__version__ = "6.4.0"
+__version__ = "6.5.0"
 __author__ = "Danny"

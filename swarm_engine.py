@@ -101,6 +101,33 @@ def get_pipeline_metrics() -> Dict[str, Any]:
         return result
 
 
+# ── Phase 38: ERROR HISTORY RING BUFFER ──
+
+_ERROR_HISTORY: deque = deque(maxlen=200)
+_ERROR_HISTORY_LOCK = _threading.Lock()
+
+
+def _record_error_context(fc):
+    """Voeg FoutContext toe aan de ring buffer."""
+    try:
+        with _ERROR_HISTORY_LOCK:
+            _ERROR_HISTORY.append(fc)
+    except Exception as e:
+        logger.debug("_record_error_context fout: %s", e)
+
+
+def get_recent_errors(count: int = 50):
+    """Retourneer recente FoutContext objecten (nieuwste eerst)."""
+    try:
+        with _ERROR_HISTORY_LOCK:
+            items = list(_ERROR_HISTORY)
+        items.reverse()
+        return items[:count]
+    except Exception as e:
+        logger.debug("get_recent_errors fout: %s", e)
+        return []
+
+
 # ── CUSTOM EXCEPTIONS ──
 
 class TaskVerificationError(Exception):
@@ -2128,10 +2155,16 @@ class SwarmEngine:
             "sentinel_warnings": 0,
             "semantic_cache_hits": 0,
             "semantic_cache_misses": 0,
+            "error_retries_attempted": 0,
+            "error_retries_succeeded": 0,
+            "cortex_enrichments": 0,
         }
 
         # Cached ShadowCortex instance (lazy init)
         self._shadow_cortex = None
+
+        # Cached TheCortex instance (lazy init, Phase 38)
+        self._cortex = None
 
         # Semantic Cache (lazy init)
         self._semantic_cache = None
@@ -2269,6 +2302,19 @@ class SwarmEngine:
                 if state.get("cooldown", 0) > 0:
                     state["cooldown"] -= 1
 
+    def _publish_error_classified(self, fc):
+        """Publiceer ERROR_CLASSIFIED event + sla op in ring buffer."""
+        try:
+            _record_error_context(fc)
+            from danny_toolkit.core.neural_bus import get_bus, EventTypes
+            get_bus().publish(
+                EventTypes.ERROR_CLASSIFIED,
+                fc.to_dict(),
+                bron="swarm_engine",
+            )
+        except Exception as e:
+            logger.debug("ERROR_CLASSIFIED publish fout: %s", e)
+
     async def _timed_dispatch(self, agent, agent_input,
                               trace_id=""):
         """Wrap agent.process() met timing, timeout + error handling."""
@@ -2295,6 +2341,7 @@ class SwarmEngine:
                     trace_id=trace_id,
                 )
                 _meta = {"error_type": "CircuitBreakerOpen", "fout_context": fc.to_dict()}
+                self._publish_error_classified(fc)
             except Exception:
                 _meta = {"error_type": "CircuitBreakerOpen"}
             return SwarmPayload(
@@ -2377,13 +2424,54 @@ class SwarmEngine:
                 {"timeout_s": timeout, "elapsed_ms": round(elapsed_ms, 1)},
                 trace_id=trace_id,
             )
-            # Phase 35: FoutContext
+            # Phase 35+38: FoutContext + publish + retry
             _meta = {"error_type": "TimeoutError"}
             try:
-                from danny_toolkit.core.error_taxonomy import maak_fout_context
+                from danny_toolkit.core.error_taxonomy import (
+                    maak_fout_context, is_retry_safe, classificeer,
+                )
                 _te = asyncio.TimeoutError(err)
                 fc = maak_fout_context(_te, agent_naam, trace_id)
                 _meta["fout_context"] = fc.to_dict()
+                self._publish_error_classified(fc)
+
+                # Phase 38: retry als VOORBIJGAAND + RETRY
+                if is_retry_safe(_te):
+                    definitie = classificeer(_te)
+                    for poging in range(definitie.retry_max):
+                        wacht = min(2 ** poging + random.uniform(0, 1), 10)
+                        logger.info(
+                            "Retry %d/%d voor %s na %.1fs (trace=%s)",
+                            poging + 1, definitie.retry_max,
+                            agent_naam, wacht, trace_id,
+                        )
+                        self._swarm_metrics["error_retries_attempted"] += 1
+                        await asyncio.sleep(wacht)
+                        try:
+                            retry_result = await asyncio.wait_for(
+                                agent.process(agent_input, self.brain),
+                                timeout=timeout,
+                            )
+                            fc.herstel_geprobeerd = True
+                            fc.herstel_gelukt = True
+                            self._record_circuit_success(agent_naam)
+                            retry_ms = (time.time() - t0) * 1000
+                            self._record_agent_metric(agent_naam, retry_ms)
+                            self._swarm_metrics["error_retries_succeeded"] += 1
+                            _log_to_cortical(
+                                agent_naam, "agent_retry_success",
+                                {"poging": poging + 1,
+                                 "elapsed_ms": round(retry_ms, 1)},
+                                trace_id=trace_id,
+                            )
+                            if hasattr(retry_result, "trace_id"):
+                                retry_result.trace_id = trace_id
+                            return retry_result
+                        except Exception as retry_e:
+                            logger.debug("Retry %d mislukt voor %s: %s",
+                                         poging + 1, agent_naam, retry_e)
+                    fc.herstel_geprobeerd = True
+                    fc.herstel_gelukt = False
             except Exception:
                 pass
             return SwarmPayload(
@@ -2411,12 +2499,53 @@ class SwarmEngine:
                  "elapsed_ms": round(elapsed_ms, 1)},
                 trace_id=trace_id,
             )
-            # Phase 35: FoutContext
+            # Phase 35+38: FoutContext + publish + retry
             _meta = {"error_type": type(e).__name__}
             try:
-                from danny_toolkit.core.error_taxonomy import maak_fout_context
+                from danny_toolkit.core.error_taxonomy import (
+                    maak_fout_context, is_retry_safe, classificeer,
+                )
                 fc = maak_fout_context(e, agent_naam, trace_id)
                 _meta["fout_context"] = fc.to_dict()
+                self._publish_error_classified(fc)
+
+                # Phase 38: retry als VOORBIJGAAND + RETRY
+                if is_retry_safe(e):
+                    definitie = classificeer(e)
+                    for poging in range(definitie.retry_max):
+                        wacht = min(2 ** poging + random.uniform(0, 1), 10)
+                        logger.info(
+                            "Retry %d/%d voor %s na %.1fs (trace=%s)",
+                            poging + 1, definitie.retry_max,
+                            agent_naam, wacht, trace_id,
+                        )
+                        self._swarm_metrics["error_retries_attempted"] += 1
+                        await asyncio.sleep(wacht)
+                        try:
+                            retry_result = await asyncio.wait_for(
+                                agent.process(agent_input, self.brain),
+                                timeout=timeout,
+                            )
+                            fc.herstel_geprobeerd = True
+                            fc.herstel_gelukt = True
+                            self._record_circuit_success(agent_naam)
+                            retry_ms = (time.time() - t0) * 1000
+                            self._record_agent_metric(agent_naam, retry_ms)
+                            self._swarm_metrics["error_retries_succeeded"] += 1
+                            _log_to_cortical(
+                                agent_naam, "agent_retry_success",
+                                {"poging": poging + 1,
+                                 "elapsed_ms": round(retry_ms, 1)},
+                                trace_id=trace_id,
+                            )
+                            if hasattr(retry_result, "trace_id"):
+                                retry_result.trace_id = trace_id
+                            return retry_result
+                        except Exception as retry_e:
+                            logger.debug("Retry %d mislukt voor %s: %s",
+                                         poging + 1, agent_naam, retry_e)
+                    fc.herstel_geprobeerd = True
+                    fc.herstel_gelukt = False
             except Exception:
                 pass
             return SwarmPayload(
@@ -3504,6 +3633,39 @@ class SwarmEngine:
 
         if _tracer:
             _tracer.eind_span("ok", {"fragmenten": len(memex_ctx)})
+
+        # 4.5 Cortex graph expansion (Phase 38)
+        if _tracer:
+            _tracer.begin_span("cortex_expand")
+        _cortex_added = 0
+        try:
+            if getattr(Config, "CORTEX_ENRICHMENT_ENABLED", True):
+                if self._cortex is None:
+                    try:
+                        from danny_toolkit.brain.cortex import TheCortex
+                        self._cortex = TheCortex()
+                    except ImportError:
+                        self._cortex = False
+                if self._cortex and self._cortex is not False:
+                    _cx_results = self._cortex.hybrid_search(
+                        user_input, top_k=3,
+                    )
+                    if _cx_results:
+                        for cr in _cx_results:
+                            _cx_content = cr.get("content", "")
+                            if _cx_content and _cx_content not in memex_ctx:
+                                memex_ctx.append(_cx_content[:300])
+                                _cortex_added += 1
+                        self._swarm_metrics["cortex_enrichments"] += 1
+                        log(
+                            f"\U0001f9e0 Knowledge Graph:"
+                            f" {_cortex_added}"
+                            f" graph-expanded fragmenten"
+                        )
+        except Exception as e:
+            logger.debug("Cortex graph expansion fout: %s", e)
+        if _tracer:
+            _tracer.eind_span("ok", {"cortex_fragments": _cortex_added})
 
         # 5. Nexus Route (NOOIT skippen)
         if _tracer:

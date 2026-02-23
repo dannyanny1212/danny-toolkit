@@ -154,8 +154,12 @@ class ShardRouter:
         Returns:
             Shard naam (danny_code/danny_docs/danny_data).
         """
-        extensie = metadata.get("extensie", "")
-        return EXTENSIE_ROUTING.get(extensie, SHARD_DOCS)
+        try:
+            extensie = metadata.get("extensie", "")
+            return EXTENSIE_ROUTING.get(extensie, SHARD_DOCS)
+        except Exception as e:
+            logger.debug("ShardRouter route_document fout: %s", e)
+            return SHARD_DOCS
 
     # ─── Ingest ──────────────────────────────────────
 

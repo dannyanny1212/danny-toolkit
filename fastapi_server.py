@@ -207,6 +207,74 @@ class TraceSummaryResponse(BaseModel):
     status: str
 
 
+# ─── Phase 38: Observatory Response Models ────────
+
+class AuditSchendingResponse(BaseModel):
+    """Eén configuratie-schending."""
+    categorie: str = ""
+    ernst: str = ""
+    beschrijving: str = ""
+    sleutel: str = ""
+
+
+class AuditRapportResponse(BaseModel):
+    """Response van /api/v1/config/audit."""
+    veilig: bool = True
+    schendingen: List[AuditSchendingResponse] = []
+    drift_gedetecteerd: bool = False
+    gecontroleerd: int = 0
+    timestamp: str = ""
+
+
+class ShardStatistiekResponse(BaseModel):
+    """Eén shard statistiek."""
+    naam: str
+    aantal_chunks: int = 0
+
+
+class FoutDefinitieResponse(BaseModel):
+    """Eén fout definitie uit het register."""
+    naam: str
+    ernst: str
+    strategie: str
+    beschrijving: str
+    retry_max: int = 0
+
+
+class FoutContextResponse(BaseModel):
+    """Eén recent opgetreden fout."""
+    fout_id: str = ""
+    fout_type: str = ""
+    agent: str = ""
+    ernst: str = ""
+    strategie: str = ""
+    bericht: str = ""
+    trace_id: str = ""
+    timestamp: float = 0.0
+    herstel_geprobeerd: bool = False
+    herstel_gelukt: bool = False
+
+
+class PruningStatsResponse(BaseModel):
+    """Response van /api/v1/pruning/stats."""
+    totaal_gevolgd: int = 0
+    entropy_drempel: float = 0.0
+    redundantie_drempel: float = 0.0
+    verval_dagen: int = 0
+    pruning_enabled: bool = False
+    cold_collection: str = ""
+
+
+class BusStatsResponse(BaseModel):
+    """Response van /api/v1/bus/stats."""
+    subscribers: int = 0
+    event_types_actief: int = 0
+    events_in_history: int = 0
+    events_gepubliceerd: int = 0
+    events_afgeleverd: int = 0
+    fouten: int = 0
+
+
 # ─── AUTH ───────────────────────────────────────────
 
 async def verify_api_key(
@@ -759,6 +827,184 @@ async def list_traces(
         raise HTTPException(
             status_code=500,
             detail=f"Traces ophalen mislukt: {e}",
+        )
+
+
+# ─── Phase 38: OMEGA OBSERVATORY ENDPOINTS ────────
+
+@app.get(
+    "/api/v1/config/audit",
+    response_model=AuditRapportResponse,
+    summary="Voer configuratie-audit uit",
+    tags=["Observatory"],
+)
+async def config_audit(
+    _key: str = Depends(verify_api_key),
+):
+    """Trigger ConfigAuditor.audit() en retourneer rapport."""
+    try:
+        from danny_toolkit.brain.config_auditor import get_config_auditor
+        auditor = get_config_auditor()
+        rapport = auditor.audit()
+        return AuditRapportResponse(
+            veilig=rapport.veilig,
+            schendingen=[
+                AuditSchendingResponse(
+                    categorie=getattr(s, "categorie", ""),
+                    ernst=getattr(s, "ernst", ""),
+                    beschrijving=getattr(s, "beschrijving", ""),
+                    sleutel=getattr(s, "sleutel", ""),
+                )
+                for s in rapport.schendingen
+            ],
+            drift_gedetecteerd=rapport.drift_gedetecteerd,
+            gecontroleerd=rapport.gecontroleerd,
+            timestamp=getattr(rapport, "timestamp", ""),
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Config audit mislukt: {e}",
+        )
+
+
+@app.get(
+    "/api/v1/shards/stats",
+    response_model=List[ShardStatistiekResponse],
+    summary="Shard statistieken opvragen",
+    tags=["Observatory"],
+)
+async def shard_stats(
+    _key: str = Depends(verify_api_key),
+):
+    """Haal ShardRouter statistieken op."""
+    try:
+        from danny_toolkit.core.shard_router import get_shard_router
+        router = get_shard_router()
+        stats = router.statistieken()
+        return [
+            ShardStatistiekResponse(
+                naam=s.naam, aantal_chunks=s.aantal_chunks,
+            )
+            for s in stats
+        ]
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Shard stats mislukt: {e}",
+        )
+
+
+@app.get(
+    "/api/v1/errors/taxonomy",
+    response_model=List[FoutDefinitieResponse],
+    summary="Lijst alle fout-definities",
+    tags=["Observatory"],
+)
+async def error_taxonomy(
+    _key: str = Depends(verify_api_key),
+):
+    """Retourneer het volledige FOUT_REGISTER."""
+    try:
+        from danny_toolkit.core.error_taxonomy import FOUT_REGISTER
+        return [
+            FoutDefinitieResponse(
+                naam=fd.naam,
+                ernst=fd.ernst.value,
+                strategie=fd.strategie.value,
+                beschrijving=fd.beschrijving,
+                retry_max=fd.retry_max,
+            )
+            for fd in FOUT_REGISTER.values()
+        ]
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Taxonomy ophalen mislukt: {e}",
+        )
+
+
+@app.get(
+    "/api/v1/errors/recent",
+    response_model=List[FoutContextResponse],
+    summary="Recente fout-contexten",
+    tags=["Observatory"],
+)
+async def recent_errors(
+    count: int = 50,
+    _key: str = Depends(verify_api_key),
+):
+    """Retourneer recente FoutContext objecten uit de ring buffer."""
+    try:
+        from swarm_engine import get_recent_errors
+        errors = get_recent_errors(count=min(count, 200))
+        return [
+            FoutContextResponse(**fc.to_dict())
+            for fc in errors
+        ]
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Recente fouten ophalen mislukt: {e}",
+        )
+
+
+@app.get(
+    "/api/v1/pruning/stats",
+    response_model=PruningStatsResponse,
+    summary="SelfPruning statistieken",
+    tags=["Observatory"],
+)
+async def pruning_stats(
+    _key: str = Depends(verify_api_key),
+):
+    """Haal SelfPruning statistieken op."""
+    try:
+        from danny_toolkit.core.self_pruning import get_self_pruning
+        sp = get_self_pruning()
+        stats = sp.statistieken()
+        return PruningStatsResponse(**stats)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Pruning stats mislukt: {e}",
+        )
+
+
+@app.post(
+    "/api/v1/pruning/run",
+    summary="Trigger pruning cycle",
+    tags=["Observatory"],
+)
+async def pruning_run(
+    _key: str = Depends(verify_api_key),
+):
+    """Start een SelfPruning.prune() on-demand."""
+    try:
+        from danny_toolkit.core.self_pruning import get_self_pruning
+        sp = get_self_pruning()
+        resultaat = sp.prune()
+        return resultaat
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Pruning run mislukt: {e}",
+        )
+
+
+@app.get(
+    "/api/v1/bus/stats",
+    response_model=BusStatsResponse,
+    summary="NeuralBus statistieken",
+    tags=["Observatory"],
+)
+async def bus_stats(
+    _key: str = Depends(verify_api_key),
+):
+    """Haal NeuralBus statistieken op."""
+    try:
+        from danny_toolkit.core.neural_bus import get_bus
+        bus = get_bus()
+        stats = bus.statistieken()
+        return BusStatsResponse(**stats)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Bus stats mislukt: {e}",
         )
 
 
