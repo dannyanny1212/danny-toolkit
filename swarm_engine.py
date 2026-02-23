@@ -3930,9 +3930,25 @@ class SwarmEngine:
                 r for r in results if r.type != "error"
             ]
             if schild_non_error:
+                # Extract tribunal verdict from metadata
+                _tv = [
+                    r.metadata.get("tribunal_verified")
+                    for r in schild_non_error
+                    if r.metadata.get(
+                        "tribunal_verified",
+                    ) is not None
+                ]
+                _tribunal_ok = (
+                    all(_tv) if _tv else None
+                )
                 schild_rapport = schild.beoordeel(
                     schild_non_error,
                     user_input,
+                    context_docs=(
+                        memex_ctx if memex_ctx
+                        else None
+                    ),
+                    tribunal_gevalideerd=_tribunal_ok,
                 )
                 if schild_rapport.geblokkeerd:
                     self._swarm_metrics[
@@ -4155,6 +4171,9 @@ class SwarmEngine:
             if task.resultaat is not None and task.status == "done":
                 results.append(task.resultaat)
 
+        # 3.5 Synthesize — coherent antwoord
+        synthese_text = arbitrator.synthesize(manifest)
+
         # 4. HallucinatieSchild — 95% Barrière
         try:
             from danny_toolkit.brain.hallucination_shield import (
@@ -4163,8 +4182,7 @@ class SwarmEngine:
             schild = get_hallucination_shield()
             non_error = [r for r in results if r.type != "error"]
             if non_error:
-                synthese_text = arbitrator.synthesize(manifest)
-                rapport = schild.beoordeel(non_error, synthese_text)
+                rapport = schild.beoordeel(non_error, goal)
                 if rapport.geblokkeerd:
                     self._swarm_metrics["schild_blocks"] += 1
                     return [SwarmPayload(

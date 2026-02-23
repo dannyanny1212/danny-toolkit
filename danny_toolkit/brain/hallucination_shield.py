@@ -42,6 +42,12 @@ try:
 except ImportError:
     HAS_BLACKBOX = False
 
+try:
+    from danny_toolkit.brain.truth_anchor import TruthAnchor
+    HAS_TRUTH_ANCHOR = True
+except ImportError:
+    HAS_TRUTH_ANCHOR = False
+
 
 # ── Enums & Dataclasses ──
 
@@ -139,12 +145,25 @@ class HallucinatieSchild:
 
     def __init__(self):
         self._lock = threading.Lock()
+        self._truth_anchor = None  # Lazy loaded
+        self._truth_anchor_checked = False
         self._stats = {
             "beoordeeld": 0,
             "geblokkeerd": 0,
             "waarschuwingen": 0,
             "doorgelaten": 0,
         }
+
+    def _get_truth_anchor(self):
+        """Lazy TruthAnchor — only load when needed and available."""
+        if not self._truth_anchor_checked:
+            self._truth_anchor_checked = True
+            if HAS_TRUTH_ANCHOR:
+                try:
+                    self._truth_anchor = TruthAnchor()
+                except Exception as e:
+                    logger.debug("TruthAnchor load: %s", e)
+        return self._truth_anchor
 
     def beoordeel(
         self,
@@ -171,6 +190,21 @@ class HallucinatieSchild:
 
         # 1. Claims extraheren
         claims = self._extraheer_claims(payloads)
+
+        # 1.5 Auto-compute TruthAnchor score if not provided
+        if truth_anchor_score is None and context_docs:
+            anchor = self._get_truth_anchor()
+            if anchor:
+                try:
+                    alle_tekst = " ".join(
+                        str(getattr(p, "display_text", "") or getattr(p, "content", ""))
+                        for p in payloads
+                    )[:2000]
+                    _grounded, truth_anchor_score = anchor.verify(
+                        alle_tekst, context_docs,
+                    )
+                except Exception as e:
+                    logger.debug("TruthAnchor auto-verify: %s", e)
 
         # 2. Claims scoren
         beoordelingen = []
