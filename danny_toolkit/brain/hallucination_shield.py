@@ -37,7 +37,7 @@ except ImportError:
     HAS_BUS = False
 
 try:
-    from danny_toolkit.brain.black_box import BlackBox
+    from danny_toolkit.brain.black_box import get_black_box
     HAS_BLACKBOX = True
 except ImportError:
     HAS_BLACKBOX = False
@@ -479,7 +479,7 @@ class HallucinatieSchild:
             return
 
         try:
-            bb = BlackBox()
+            bb = get_black_box()
             output = " | ".join(
                 str(getattr(p, "display_text", "") or getattr(p, "content", ""))[:200]
                 for p in payloads
@@ -525,3 +525,19 @@ class HallucinatieSchild:
         with self._lock:
             for key in self._stats:
                 self._stats[key] = 0
+
+
+# ── Singleton Factory ──
+
+_hallucination_shield_instance: Optional["HallucinatieSchild"] = None
+_hallucination_shield_lock = threading.Lock()
+
+
+def get_hallucination_shield() -> "HallucinatieSchild":
+    """Return the process-wide HallucinatieSchild singleton (double-checked locking)."""
+    global _hallucination_shield_instance
+    if _hallucination_shield_instance is None:
+        with _hallucination_shield_lock:
+            if _hallucination_shield_instance is None:
+                _hallucination_shield_instance = HallucinatieSchild()
+    return _hallucination_shield_instance

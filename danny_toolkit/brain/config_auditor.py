@@ -455,8 +455,8 @@ class ConfigAuditor:
     def _log_to_blackbox(self, rapport: AuditRapport):
         """Registreer kritieke schendingen in BlackBox failure memory."""
         try:
-            from danny_toolkit.brain.black_box import BlackBox
-            bb = BlackBox()
+            from danny_toolkit.brain.black_box import get_black_box
+            bb = get_black_box()
             kritiek = [
                 s for s in rapport.schendingen
                 if s.ernst == "kritiek"

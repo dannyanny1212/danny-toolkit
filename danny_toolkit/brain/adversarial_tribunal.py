@@ -12,7 +12,8 @@ Max 3 retries before returning a system error.
 
 import asyncio
 import logging
-from typing import Dict, List
+import threading
+from typing import Dict, List, Optional
 
 from danny_toolkit.core.utils import Kleur
 
@@ -305,3 +306,23 @@ class TribunalVerdict:
     def __repr__(self):
         status = "ACCEPTED" if self.accepted else "REJECTED"
         return f"TribunalVerdict({status}, rounds={self.rounds})"
+
+
+# ── Singleton Factory ──
+
+_adversarial_tribunal_instance: Optional["AdversarialTribunal"] = None
+_adversarial_tribunal_lock = threading.Lock()
+
+
+def get_adversarial_tribunal(brain=None) -> "AdversarialTribunal":
+    """Return the process-wide AdversarialTribunal singleton.
+
+    Args:
+        brain: Optional CentralBrain, only used on first creation.
+    """
+    global _adversarial_tribunal_instance
+    if _adversarial_tribunal_instance is None:
+        with _adversarial_tribunal_lock:
+            if _adversarial_tribunal_instance is None:
+                _adversarial_tribunal_instance = AdversarialTribunal(brain=brain)
+    return _adversarial_tribunal_instance

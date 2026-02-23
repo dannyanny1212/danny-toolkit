@@ -57,7 +57,7 @@ except ImportError:
 
 HAS_BLACKBOX = False
 try:
-    from danny_toolkit.brain.black_box import BlackBox
+    from danny_toolkit.brain.black_box import get_black_box
     HAS_BLACKBOX = True
 except ImportError:
     pass
@@ -112,7 +112,7 @@ class DevOpsDaemon:
 
         if HAS_BLACKBOX:
             try:
-                self._blackbox = BlackBox()
+                self._blackbox = get_black_box()
             except Exception as e:
                 logger.debug("BlackBox init error: %s", e)
 

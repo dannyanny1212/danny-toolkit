@@ -1,5 +1,6 @@
 import json
 import logging
+import threading
 import time
 from enum import Enum
 from dataclasses import dataclass, field
@@ -386,3 +387,19 @@ class BlackBox:
             for ab in self._antibodies.values()
             if ab.alive
         ]
+
+
+# ── Singleton Factory ──
+
+_black_box_instance: Optional["BlackBox"] = None
+_black_box_lock = threading.Lock()
+
+
+def get_black_box() -> "BlackBox":
+    """Return the process-wide BlackBox singleton (double-checked locking)."""
+    global _black_box_instance
+    if _black_box_instance is None:
+        with _black_box_lock:
+            if _black_box_instance is None:
+                _black_box_instance = BlackBox()
+    return _black_box_instance

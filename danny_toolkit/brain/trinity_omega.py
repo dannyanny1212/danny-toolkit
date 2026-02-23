@@ -476,8 +476,8 @@ class PrometheusBrain:
     def _init_feedback_loop(self):
         """Lazy load BlackBox, VoidWalker en NeuralBus voor feedback loop."""
         try:
-            from danny_toolkit.brain.black_box import BlackBox
-            self._blackbox = BlackBox()
+            from danny_toolkit.brain.black_box import get_black_box
+            self._blackbox = get_black_box()
         except Exception as e:
             logger.debug("BlackBox init error: %s", e)
             self._blackbox = None
@@ -1177,8 +1177,8 @@ class PrometheusBrain:
         # BlackBox: check for known failure patterns
         bb_warning = ""
         try:
-            from danny_toolkit.brain.black_box import BlackBox
-            bb = BlackBox()
+            from danny_toolkit.brain.black_box import get_black_box
+            bb = get_black_box()
             bb_warning = bb.retrieve_warnings(task)
         except Exception as e:
             logger.debug("BlackBox warning retrieval error: %s", e)

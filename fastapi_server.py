@@ -275,6 +275,88 @@ class BusStatsResponse(BaseModel):
     fouten: int = 0
 
 
+# ─── Phase 39: Deep Observatory Response Models ──
+
+class SchildStatsResponse(BaseModel):
+    """Response van /api/v1/schild/stats."""
+    beoordeeld: int = 0
+    geblokkeerd: int = 0
+    waarschuwingen: int = 0
+    doorgelaten: int = 0
+
+
+class TribunalStatsResponse(BaseModel):
+    """Response van /api/v1/tribunal/stats."""
+    accepted: int = 0
+    retried: int = 0
+    failed: int = 0
+    total: int = 0
+    acceptance_rate: str = "N/A"
+
+
+class AlertEntryResponse(BaseModel):
+    """Eén alert in de historie."""
+    timestamp: float = 0.0
+    niveau: str = ""
+    bericht: str = ""
+    bron: str = ""
+
+
+class AlertHistoryResponse(BaseModel):
+    """Response van /api/v1/alerts/history."""
+    history: List[AlertEntryResponse] = []
+    stats: Dict[str, Any] = {}
+
+
+class BlackBoxStatsResponse(BaseModel):
+    """Response van /api/v1/blackbox/stats."""
+    recorded_failures: int = 0
+    active_antibodies: int = 0
+    total_antibodies: int = 0
+    by_severity: Dict[str, int] = {}
+    strongest: Any = None
+    total_encounters: int = 0
+
+
+class SynapsePathwayResponse(BaseModel):
+    """Eén synapse pathway."""
+    category: str = ""
+    agent: str = ""
+    strength: float = 0.0
+    fires: int = 0
+    successes: int = 0
+    fails: int = 0
+    updated: str = ""
+
+
+class SynapseStatsResponse(BaseModel):
+    """Response van /api/v1/synapse/stats."""
+    pathways: int = 0
+    interactions: int = 0
+    avg_strength: float = 0.0
+    positive_signals: int = 0
+    negative_signals: int = 0
+    top_pathways: List[SynapsePathwayResponse] = []
+
+
+class PhantomPredictionResponse(BaseModel):
+    """Eén phantom prediction."""
+    category: str = ""
+    confidence: float = 0.0
+    basis: str = ""
+    timestamp: str = ""
+
+
+class PhantomAccuracyResponse(BaseModel):
+    """Response van /api/v1/phantom/accuracy."""
+    total_predictions: int = 0
+    hits: int = 0
+    accuracy: float = 0.0
+    pre_warmed: int = 0
+    warm_hit_rate: float = 0.0
+    predictions: List[PhantomPredictionResponse] = []
+
+
 # ─── AUTH ───────────────────────────────────────────
 
 async def verify_api_key(
@@ -1005,6 +1087,160 @@ async def bus_stats(
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Bus stats mislukt: {e}",
+        )
+
+
+# ─── Phase 39: DEEP OBSERVATORY ENDPOINTS ─────────
+
+@app.get(
+    "/api/v1/schild/stats",
+    response_model=SchildStatsResponse,
+    summary="HallucinatieSchild statistieken",
+    tags=["Observatory"],
+)
+async def schild_stats(
+    _key: str = Depends(verify_api_key),
+):
+    """Haal HallucinatieSchild statistieken op."""
+    try:
+        from danny_toolkit.brain.hallucination_shield import (
+            get_hallucination_shield,
+        )
+        stats = get_hallucination_shield().get_stats()
+        return SchildStatsResponse(**stats)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Schild stats mislukt: {e}",
+        )
+
+
+@app.get(
+    "/api/v1/tribunal/stats",
+    response_model=TribunalStatsResponse,
+    summary="AdversarialTribunal statistieken",
+    tags=["Observatory"],
+)
+async def tribunal_stats(
+    _key: str = Depends(verify_api_key),
+):
+    """Haal AdversarialTribunal statistieken op."""
+    try:
+        from danny_toolkit.brain.adversarial_tribunal import (
+            get_adversarial_tribunal,
+        )
+        stats = get_adversarial_tribunal().get_stats()
+        return TribunalStatsResponse(**stats)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Tribunal stats mislukt: {e}",
+        )
+
+
+@app.get(
+    "/api/v1/alerts/history",
+    response_model=AlertHistoryResponse,
+    summary="Alert historie en statistieken",
+    tags=["Observatory"],
+)
+async def alerts_history(
+    count: int = 50,
+    _key: str = Depends(verify_api_key),
+):
+    """Haal alert historie en stats op via Alerter singleton."""
+    try:
+        from danny_toolkit.core.alerter import get_alerter
+        alerter = get_alerter()
+        history = alerter.get_history(count=min(count, 200))
+        stats = alerter.get_alert_stats()
+        return AlertHistoryResponse(
+            history=[
+                AlertEntryResponse(**h) for h in history
+            ],
+            stats=stats,
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Alert history mislukt: {e}",
+        )
+
+
+@app.get(
+    "/api/v1/blackbox/stats",
+    response_model=BlackBoxStatsResponse,
+    summary="BlackBox immune system statistieken",
+    tags=["Observatory"],
+)
+async def blackbox_stats(
+    _key: str = Depends(verify_api_key),
+):
+    """Haal BlackBox immune system statistieken op."""
+    try:
+        from danny_toolkit.brain.black_box import get_black_box
+        stats = get_black_box().get_stats()
+        return BlackBoxStatsResponse(**stats)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"BlackBox stats mislukt: {e}",
+        )
+
+
+@app.get(
+    "/api/v1/synapse/stats",
+    response_model=SynapseStatsResponse,
+    summary="TheSynapse pathway statistieken",
+    tags=["Observatory"],
+)
+async def synapse_stats(
+    _key: str = Depends(verify_api_key),
+):
+    """Haal TheSynapse statistieken en top pathways op."""
+    try:
+        from danny_toolkit.brain.synapse import TheSynapse
+        synapse = TheSynapse()
+        stats = synapse.get_stats()
+        top = synapse.get_top_pathways(limit=20)
+        return SynapseStatsResponse(
+            **stats,
+            top_pathways=[
+                SynapsePathwayResponse(**p) for p in top
+            ],
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Synapse stats mislukt: {e}",
+        )
+
+
+@app.get(
+    "/api/v1/phantom/accuracy",
+    response_model=PhantomAccuracyResponse,
+    summary="ThePhantom voorspellings-nauwkeurigheid",
+    tags=["Observatory"],
+)
+async def phantom_accuracy(
+    _key: str = Depends(verify_api_key),
+):
+    """Haal ThePhantom nauwkeurigheid en actieve voorspellingen op."""
+    try:
+        from danny_toolkit.brain.phantom import ThePhantom
+        phantom = ThePhantom()
+        acc = phantom.get_accuracy()
+        preds = phantom.get_predictions()
+        return PhantomAccuracyResponse(
+            **acc,
+            predictions=[
+                PhantomPredictionResponse(**p) for p in preds
+            ],
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Phantom accuracy mislukt: {e}",
         )
 
 

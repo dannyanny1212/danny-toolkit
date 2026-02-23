@@ -677,9 +677,9 @@ class Dreamer:
     async def _research_failures(self):
         """Research top failure topics via VoidWalker."""
         try:
-            from danny_toolkit.brain.black_box import BlackBox
+            from danny_toolkit.brain.black_box import get_black_box
             from danny_toolkit.brain.void_walker import VoidWalker
-            bb = BlackBox()
+            bb = get_black_box()
             stats = bb.get_stats()
             if stats.get("recorded_failures", 0) == 0:
                 return

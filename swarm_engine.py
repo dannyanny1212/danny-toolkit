@@ -2659,10 +2659,10 @@ class SwarmEngine:
         if not hasattr(self, "_tribunal_instance"):
             try:
                 from danny_toolkit.brain.adversarial_tribunal import (
-                    AdversarialTribunal,
+                    get_adversarial_tribunal,
                 )
                 self._tribunal_instance = (
-                    AdversarialTribunal(brain=self.brain)
+                    get_adversarial_tribunal(brain=self.brain)
                 )
             except Exception as e:
                 logger.debug("AdversarialTribunal laden mislukt: %s", e)
@@ -3832,9 +3832,9 @@ class SwarmEngine:
             _tracer.begin_span("schild")
         try:
             from danny_toolkit.brain.hallucination_shield import (
-                HallucinatieSchild,
+                get_hallucination_shield,
             )
-            schild = HallucinatieSchild()
+            schild = get_hallucination_shield()
             schild_non_error = [
                 r for r in results if r.type != "error"
             ]

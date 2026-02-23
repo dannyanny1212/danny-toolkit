@@ -70,7 +70,7 @@ except ImportError:
     HAS_TRUTH_ANCHOR = False
 
 try:
-    from danny_toolkit.brain.black_box import BlackBox
+    from danny_toolkit.brain.black_box import get_black_box
     HAS_BLACK_BOX = True
 except ImportError:
     HAS_BLACK_BOX = False
@@ -364,7 +364,7 @@ class VirtualTwin:
         """Lazy BlackBox — negative RAG for past failure avoidance."""
         if self._black_box is None and HAS_BLACK_BOX:
             try:
-                self._black_box = BlackBox()
+                self._black_box = get_black_box()
             except Exception as e:
                 logger.debug("BlackBox init failed: %s", e)
         return self._black_box

@@ -37,7 +37,9 @@ try:
     from .shadow_governance import ShadowGovernance
     from .shadow_permissions import ShadowPermissions
     from .waakhuis import WaakhuisMonitor, get_waakhuis
-    from .hallucination_shield import HallucinatieSchild
+    from .hallucination_shield import HallucinatieSchild, get_hallucination_shield
+    from .black_box import get_black_box
+    from .adversarial_tribunal import get_adversarial_tribunal
     from .config_auditor import ConfigAuditor, get_config_auditor
 except ImportError:
     pass
@@ -71,7 +73,9 @@ __all__ = [
     "TheCortex", "TheOracleEye", "TheSynapse", "ThePhantom",
     "VirtualTwin", "ShadowCortex",
     "ShadowGovernance", "ShadowPermissions",
-    "WaakhuisMonitor", "get_waakhuis", "HallucinatieSchild",
+    "WaakhuisMonitor", "get_waakhuis",
+    "HallucinatieSchild", "get_hallucination_shield",
+    "get_black_box", "get_adversarial_tribunal",
     "ConfigAuditor", "get_config_auditor",
     # Anti-Hallucination
     "CitationMarshall", "RealityAnchor", "TruthAnchor",
@@ -82,5 +86,5 @@ __all__ = [
     "ProjectMap", "BrainCLI",
 ]
 
-__version__ = "6.5.0"
+__version__ = "6.6.0"
 __author__ = "Danny"
