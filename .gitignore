@@ -121,5 +121,6 @@ htmlcov/
 .coverage
 .pytest_cache/
 
-# Omega Sovereign Core workspace (runtime)
-Omega_Sovereign_Core/
+# Omega Sovereign Core — runtime artifacts only
+Omega_Sovereign_Core/__pycache__/
+Omega_Sovereign_Core/htmlcov/
