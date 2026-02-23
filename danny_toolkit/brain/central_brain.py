@@ -64,6 +64,12 @@ except ImportError:
     NVIDIA_NIM_BESCHIKBAAR = False
 
 try:
+    from huggingface_hub import InferenceClient as HfInferenceClient
+    HF_BESCHIKBAAR = True
+except ImportError:
+    HF_BESCHIKBAAR = False
+
+try:
     from ..core.key_manager import get_key_manager
     HAS_KEY_MANAGER = True
 except ImportError:
@@ -149,12 +155,23 @@ class CentralBrain:
                 Kleur.GROEN,
             ))
 
+        # HuggingFace Inference als cloud fallback
+        self._hf_available = (
+            HF_BESCHIKBAAR and bool(os.getenv("HF_TOKEN"))
+        )
+        if self._hf_available:
+            print(kleur(
+                "   [OK] Fallback: HuggingFace Inference beschikbaar",
+                Kleur.GROEN,
+            ))
+
         # Per-provider circuit breakers (geïsoleerd)
         self._provider_breakers = {
             "groq_70b": {"fails": 0, "last_fail": 0},
             "groq_8b": {"fails": 0, "last_fail": 0},
             "anthropic": {"fails": 0, "last_fail": 0},
             "nvidia_nim": {"fails": 0, "last_fail": 0},
+            "huggingface": {"fails": 0, "last_fail": 0},
             "ollama": {"fails": 0, "last_fail": 0},
         }
         self._breaker_max = 3
@@ -412,6 +429,8 @@ Belangrijke regels:
     from danny_toolkit.core.config import Config as _Cfg
     GROQ_MODEL_PRIMARY = _Cfg.LLM_MODEL
     GROQ_MODEL_FALLBACK = _Cfg.LLM_FALLBACK_MODEL
+    # HuggingFace Inference model
+    HF_MODEL = "Qwen/Qwen3-32B"
     # Ollama lokaal model
     OLLAMA_MODEL = "gemma3:4b"
     # NVIDIA NIM cloud model
@@ -616,6 +635,21 @@ Belangrijke regels:
                             Kleur.GEEL,
                         ))
                         return self._process_nvidia_nim(
+                            system_message,
+                            use_tools,
+                            max_turns,
+                        )
+                    # Stap 2.7: HuggingFace Inference
+                    if (
+                        self._hf_available
+                        and self._provider_ok("huggingface")
+                    ):
+                        print(kleur(
+                            f"   [FALLBACK] -> HuggingFace"
+                            f" ({self.HF_MODEL})",
+                            Kleur.GEEL,
+                        ))
+                        return self._process_huggingface(
                             system_message,
                             use_tools,
                             max_turns,
@@ -927,11 +961,87 @@ Belangrijke regels:
             self._provider_fail("nvidia_nim")
             # Doorvallen naar volgende provider in de chain
             if (
+                self._hf_available
+                and self._provider_ok("huggingface")
+            ):
+                print(kleur(
+                    f"   [FALLBACK] NVIDIA NIM -> HuggingFace"
+                    f" ({self.HF_MODEL})",
+                    Kleur.GEEL,
+                ))
+                return self._process_huggingface(
+                    system_message, use_tools, max_turns,
+                )
+            if (
                 self._ollama_available
                 and self._provider_ok("ollama")
             ):
                 print(kleur(
                     f"   [FALLBACK] NVIDIA NIM -> {self.OLLAMA_MODEL}",
+                    Kleur.GEEL,
+                ))
+                return self._process_ollama(
+                    system_message, use_tools, max_turns,
+                )
+            # Emergency offline
+            prompt = (
+                self.conversation_history[-1]["content"]
+                if self.conversation_history
+                else ""
+            )
+            return self._emergency_offline_response(prompt)
+
+    def _process_huggingface(
+        self,
+        system_message: str,
+        use_tools: bool,
+        max_turns: int,
+    ) -> str:
+        """Verwerk request via HuggingFace Inference API (Qwen3-32B)."""
+        client = HfInferenceClient(
+            token=os.getenv("HF_TOKEN"),
+        )
+
+        messages = [{"role": "system", "content": system_message}]
+        messages.extend(self.conversation_history)
+
+        try:
+            resp = client.chat_completion(
+                model=self.HF_MODEL,
+                messages=messages,
+                temperature=0.2,
+                max_tokens=4096,
+            )
+
+            content = resp.choices[0].message.content or ""
+
+            # Token budget registratie
+            try:
+                from .governor import OmegaGovernor
+                OmegaGovernor().registreer_tokens(content)
+            except Exception as e:
+                logger.debug("Token registratie error: %s", e)
+
+            with self._history_lock:
+                self.conversation_history.append({
+                    "role": "assistant",
+                    "content": content,
+                })
+
+            self._provider_success("huggingface")
+            self._sla_stats_op()
+            return content
+
+        except Exception as e:
+            logger.debug("HuggingFace fout: %s", e)
+            self._provider_fail("huggingface")
+            # Doorvallen naar Ollama
+            if (
+                self._ollama_available
+                and self._provider_ok("ollama")
+            ):
+                print(kleur(
+                    f"   [FALLBACK] HuggingFace -> {self.OLLAMA_MODEL}",
                     Kleur.GEEL,
                 ))
                 return self._process_ollama(
