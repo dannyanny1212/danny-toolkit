@@ -74,6 +74,9 @@ data/waakhuis_metrics.db-wal
 data/semantic_cache.db
 data/semantic_cache.db-shm
 data/semantic_cache.db-wal
+data/self_pruning.db
+data/self_pruning.db-shm
+data/self_pruning.db-wal
 
 # Generated output
 data/output/

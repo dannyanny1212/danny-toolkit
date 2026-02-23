@@ -179,6 +179,34 @@ class IngestResponse(BaseModel):
     chunks: int
 
 
+class TraceSpanResponse(BaseModel):
+    """Eén span in een request trace."""
+    fase: str
+    agent: str = ""
+    status: str
+    duration_ms: float
+    details: Dict[str, Any] = {}
+
+
+class TraceResponse(BaseModel):
+    """Volledige request trace."""
+    trace_id: str
+    start: float
+    duration_ms: float
+    spans: List[TraceSpanResponse]
+    fouten: List[str] = []
+    afgerond: bool = True
+
+
+class TraceSummaryResponse(BaseModel):
+    """Compacte trace samenvatting voor lijstweergave."""
+    trace_id: str
+    duration_ms: float
+    span_count: int
+    error_count: int
+    status: str
+
+
 # ─── AUTH ───────────────────────────────────────────
 
 async def verify_api_key(
@@ -659,6 +687,78 @@ async def heartbeat(
         raise HTTPException(
             status_code=500,
             detail=f"HeartbeatDaemon fout: {e}",
+        )
+
+
+# ─── TRACING ENDPOINTS (Phase 36) ─────────────────
+
+@app.get(
+    "/api/v1/trace/{trace_id}",
+    response_model=TraceResponse,
+    summary="Haal een request trace op",
+    tags=["Tracing"],
+)
+async def get_trace(
+    trace_id: str,
+    _key: str = Depends(verify_api_key),
+):
+    """Haal een volledige request trace op via trace_id."""
+    try:
+        from danny_toolkit.core.request_tracer import (
+            get_request_tracer,
+        )
+        tracer = get_request_tracer()
+        trace = tracer.get_trace(trace_id)
+        if trace is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Trace {trace_id} niet gevonden",
+            )
+        d = trace.to_dict()
+        return TraceResponse(
+            trace_id=d["trace_id"],
+            start=d["start"],
+            duration_ms=d["duration_ms"],
+            spans=[
+                TraceSpanResponse(**s) for s in d["spans"]
+            ],
+            fouten=d["fouten"],
+            afgerond=d["afgerond"],
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Trace ophalen mislukt: {e}",
+        )
+
+
+@app.get(
+    "/api/v1/traces",
+    response_model=List[TraceSummaryResponse],
+    summary="Lijst recente request traces",
+    tags=["Tracing"],
+)
+async def list_traces(
+    count: int = 20,
+    _key: str = Depends(verify_api_key),
+):
+    """Haal recente request traces op als samenvatting."""
+    try:
+        from danny_toolkit.core.request_tracer import (
+            get_request_tracer,
+        )
+        tracer = get_request_tracer()
+        traces = tracer.get_recent(count=min(count, 100))
+        return [
+            TraceSummaryResponse(**t.to_summary())
+            for t in traces
+        ]
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Traces ophalen mislukt: {e}",
         )
 
 

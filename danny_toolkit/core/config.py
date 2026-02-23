@@ -280,6 +280,14 @@ class Config:
     CHUNK_OVERLAP = 50
     TOP_K = 5
     SHARD_ENABLED = os.environ.get("SHARD_ENABLED", "").lower() in ("1", "true", "yes")
+    TRACING_ENABLED = os.environ.get("TRACING_ENABLED", "1").lower() not in ("0", "false", "no")
+
+    # SelfPruning — Vector Store Maintenance
+    PRUNING_ENABLED = os.environ.get("PRUNING_ENABLED", "").lower() in ("1", "true", "yes")
+    ENTROPY_THRESHOLD = float(os.environ.get("ENTROPY_THRESHOLD", "0.85"))
+    REDUNDANCY_THRESHOLD = float(os.environ.get("REDUNDANCY_THRESHOLD", "0.90"))
+    RECENCY_DECAY_DAYS = int(os.environ.get("RECENCY_DECAY_DAYS", "14"))
+    COLD_STORAGE_COLLECTION = "danny_cold"
 
     # Paths
     BASE_DIR = Path(__file__).parent.parent.parent

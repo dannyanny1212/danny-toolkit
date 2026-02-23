@@ -585,6 +585,27 @@ class MemexAgent(BrainAgent):
                 if resultaten:
                     docs = [r["tekst"] for r in resultaten]
                     metas = [r["metadata"] for r in resultaten]
+                    # Phase 37: track fragment access
+                    try:
+                        from danny_toolkit.core.self_pruning import (
+                            get_self_pruning,
+                        )
+                        hit_ids = [
+                            r["metadata"].get("id", "")
+                            for r in resultaten
+                            if r["metadata"].get("id")
+                        ]
+                        if hit_ids:
+                            shard = resultaten[0].get(
+                                "shard", "danny_knowledge",
+                            )
+                            get_self_pruning().registreer_toegang(
+                                hit_ids, shard,
+                            )
+                    except Exception as e:
+                        logger.debug(
+                            "SelfPruning toegang registratie: %s", e,
+                        )
                     return docs, metas
         except Exception as e:
             logger.debug("ShardRouter zoek fallback: %s", e)
@@ -2258,11 +2279,29 @@ class SwarmEngine:
         if self._is_circuit_open(agent_naam):
             logger.info("Circuit open voor %s, overgeslagen (trace=%s)",
                         agent_naam, trace_id)
+            # Phase 35: FoutContext
+            try:
+                from danny_toolkit.core.error_taxonomy import (
+                    FoutContext, FoutErnst, HerstelStrategie,
+                )
+                import uuid as _uuid
+                fc = FoutContext(
+                    fout_id=_uuid.uuid4().hex[:8],
+                    fout_type="CircuitBreakerOpen",
+                    agent=agent_naam,
+                    ernst=FoutErnst.HERSTELBAAR,
+                    strategie=HerstelStrategie.SKIP,
+                    bericht="Circuit breaker open",
+                    trace_id=trace_id,
+                )
+                _meta = {"error_type": "CircuitBreakerOpen", "fout_context": fc.to_dict()}
+            except Exception:
+                _meta = {"error_type": "CircuitBreakerOpen"}
             return SwarmPayload(
                 agent=agent_naam, type="error",
                 content=f"[{agent_naam}] Circuit breaker open",
                 display_text=f"Agent {agent_naam} tijdelijk uitgeschakeld",
-                metadata={"error_type": "CircuitBreakerOpen"},
+                metadata=_meta,
                 trace_id=trace_id,
             )
 
@@ -2274,11 +2313,14 @@ class SwarmEngine:
             cache_result = self._semantic_cache.lookup(agent_naam, agent_input)
             if cache_result:
                 self._swarm_metrics["semantic_cache_hits"] += 1
+                cached_meta = cache_result.get("metadata", {})
+                cached_meta["cached"] = True
+                cached_meta["trace_id"] = trace_id
                 return SwarmPayload(
                     agent=agent_naam,
-                    type="text",
-                    content=cache_result,
-                    metadata={"cached": True, "trace_id": trace_id},
+                    type=cache_result.get("type", "text"),
+                    content=cache_result["content"],
+                    metadata=cached_meta,
                     trace_id=trace_id,
                 )
             self._swarm_metrics["semantic_cache_misses"] += 1
@@ -2302,11 +2344,15 @@ class SwarmEngine:
                 get_waakhuis().registreer_dispatch(agent_naam, elapsed_ms)
             except Exception as e:
                 logger.debug("Waakhuis dispatch: %s", e)
-            # --- Semantic Cache: store ---
+            # --- Semantic Cache: store (full payload state) ---
             try:
                 if self._semantic_cache and result and hasattr(result, 'content') and result.content:
                     if not (hasattr(result, 'metadata') and result.metadata and result.metadata.get('error_type')):
-                        self._semantic_cache.store(agent_naam, agent_input, result.content)
+                        self._semantic_cache.store(
+                            agent_naam, agent_input, result.content,
+                            payload_type=getattr(result, 'type', 'text'),
+                            payload_meta=getattr(result, 'metadata', None),
+                        )
             except Exception as e:
                 logger.debug("Semantic cache store failed: %s", e)
             # Propageer trace_id naar payload
@@ -2331,11 +2377,20 @@ class SwarmEngine:
                 {"timeout_s": timeout, "elapsed_ms": round(elapsed_ms, 1)},
                 trace_id=trace_id,
             )
+            # Phase 35: FoutContext
+            _meta = {"error_type": "TimeoutError"}
+            try:
+                from danny_toolkit.core.error_taxonomy import maak_fout_context
+                _te = asyncio.TimeoutError(err)
+                fc = maak_fout_context(_te, agent_naam, trace_id)
+                _meta["fout_context"] = fc.to_dict()
+            except Exception:
+                pass
             return SwarmPayload(
                 agent=agent_naam, type="error",
                 content=f"[{agent_naam}] {err}",
                 display_text=f"Agent {agent_naam} timeout ({timeout}s)",
-                metadata={"error_type": "TimeoutError"},
+                metadata=_meta,
                 trace_id=trace_id,
             )
         except Exception as e:
@@ -2356,11 +2411,19 @@ class SwarmEngine:
                  "elapsed_ms": round(elapsed_ms, 1)},
                 trace_id=trace_id,
             )
+            # Phase 35: FoutContext
+            _meta = {"error_type": type(e).__name__}
+            try:
+                from danny_toolkit.core.error_taxonomy import maak_fout_context
+                fc = maak_fout_context(e, agent_naam, trace_id)
+                _meta["fout_context"] = fc.to_dict()
+            except Exception:
+                pass
             return SwarmPayload(
                 agent=agent_naam, type="error",
                 content=f"[{agent_naam}] Fout: {e}",
                 display_text=f"Agent {agent_naam} fout: {e}",
-                metadata={"error_type": type(e).__name__},
+                metadata=_meta,
                 trace_id=trace_id,
             )
 
@@ -3256,6 +3319,19 @@ class SwarmEngine:
         trace_id = uuid.uuid4().hex[:8]
         log(f"\U0001f50d Trace {trace_id}")
 
+        # Phase 36: RequestTracer begin
+        _tracer = None
+        try:
+            from danny_toolkit.core.config import Config as _Cfg
+            if getattr(_Cfg, "TRACING_ENABLED", True):
+                from danny_toolkit.core.request_tracer import (
+                    get_request_tracer,
+                )
+                _tracer = get_request_tracer()
+                _tracer.begin_trace(trace_id)
+        except Exception as e:
+            logger.debug("RequestTracer init: %s", e)
+
         # Phase 31: tick circuit breaker cooldowns
         self._tick_circuit_cooldowns()
 
@@ -3285,6 +3361,8 @@ class SwarmEngine:
         _learn_from_input(user_input)
 
         # 1. Governor Gate (NOOIT skippen)
+        if _tracer:
+            _tracer.begin_span("governor")
         t0 = time.time()
         if self.brain:
             safe, reason = (
@@ -3295,6 +3373,9 @@ class SwarmEngine:
                     "governor",
                     (time.time() - t0) * 1000,
                 )
+                if _tracer:
+                    _tracer.eind_span("blocked", {"reason": reason})
+                    _tracer.eind_trace()
                 log(
                     f"\u274c Governor: BLOCKED"
                     f" \u2014 {reason}"
@@ -3316,6 +3397,8 @@ class SwarmEngine:
             "governor",
             (time.time() - t0) * 1000,
         )
+        if _tracer:
+            _tracer.eind_span("ok")
 
         # 2. ECHO Fast-Track (NOOIT skippen)
         t0 = time.time()
@@ -3387,6 +3470,8 @@ class SwarmEngine:
                 )
 
         # 4. MEMEX Context (tunable)
+        if _tracer:
+            _tracer.begin_span("memex")
         if phantom_ctx:
             # Phantom cache hit — skip MEMEX fetch
             memex_ctx = phantom_ctx
@@ -3417,7 +3502,12 @@ class SwarmEngine:
                 " overgeslagen (tuning)"
             )
 
+        if _tracer:
+            _tracer.eind_span("ok", {"fragmenten": len(memex_ctx)})
+
         # 5. Nexus Route (NOOIT skippen)
+        if _tracer:
+            _tracer.begin_span("routing")
         t0 = time.time()
         targets = await self.route(user_input)
         t.registreer(
@@ -3428,10 +3518,14 @@ class SwarmEngine:
             f"\U0001f9e0 Nexus \u2192"
             f" {', '.join(targets)}"
         )
+        if _tracer:
+            _tracer.eind_span("ok", {"targets": targets})
 
         # 6. Parallel executie via asyncio.gather
         #    MEMEX context voor alle agents behalve
         #    MEMEX zelf (doet eigen RAG)
+        if _tracer:
+            _tracer.begin_span("dispatch")
         t0 = time.time()
         tasks = []
         for name in targets:
@@ -3458,7 +3552,9 @@ class SwarmEngine:
             (time.time() - t0) * 1000,
         )
 
-        # Tel agent errors
+        # Tel agent errors + Phase 36: eind dispatch span
+        if _tracer:
+            _tracer.eind_span("ok", {"agents": [r.agent for r in results]})
         error_count = sum(
             1 for r in results if r.type == "error"
         )
@@ -3470,6 +3566,8 @@ class SwarmEngine:
 
         # 6.5 Tribunal Verification (alleen STRATEGIST)
         # Filter error payloads uit tribunal verificatie
+        if _tracer:
+            _tracer.begin_span("tribunal")
         if any(r.agent == "Strategist" for r in results):
             non_error = [
                 r for r in results if r.type != "error"
@@ -3507,7 +3605,12 @@ class SwarmEngine:
                     "Twin NeuralBus publish: %s", e,
                 )
 
+        if _tracer:
+            _tracer.eind_span("ok")
+
         # 7. SENTINEL Validate (tunable)
+        if _tracer:
+            _tracer.begin_span("sentinel")
         if not t.mag_skippen("sentinel"):
             t0 = time.time()
             # Valideer en tel waarschuwingen
@@ -3559,7 +3662,12 @@ class SwarmEngine:
                 " sampling (tuning)"
             )
 
+        if _tracer:
+            _tracer.eind_span("ok")
+
         # 7.5 HallucinatieSchild — finale anti-hallucinatie gate
+        if _tracer:
+            _tracer.begin_span("schild")
         try:
             from danny_toolkit.brain.hallucination_shield import (
                 HallucinatieSchild,
@@ -3615,6 +3723,9 @@ class SwarmEngine:
             logger.debug(
                 "HallucinatieSchild fout: %s", e,
             )
+
+        if _tracer:
+            _tracer.eind_span("ok")
 
         # Callback per resultaat
         for res in results:
@@ -3735,6 +3846,10 @@ class SwarmEngine:
                 logger.debug(
                     "Phantom resolve failed: %s", e,
                 )
+
+        # Phase 36: eind trace
+        if _tracer:
+            _tracer.eind_trace()
 
         log("\u2705 SWARM COMPLETE")
         self._query_count += 1

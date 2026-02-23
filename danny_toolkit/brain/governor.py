@@ -97,21 +97,27 @@ class OmegaGovernor:
     # Token budget (char-based estimation: 1 token ≈ 4 chars)
     MAX_TOKENS_PER_HOUR = 250_000
 
-    # Foutclassificatie mapping
-    _FOUT_CLASSIFICATIE = {
-        "TimeoutError": "VOORBIJGAAND",
-        "asyncio.TimeoutError": "VOORBIJGAAND",
-        "ConnectionError": "VOORBIJGAAND",
-        "ConnectionResetError": "VOORBIJGAAND",
-        "OSError": "VOORBIJGAAND",
-        "ValueError": "HERSTELBAAR",
-        "KeyError": "HERSTELBAAR",
-        "TypeError": "HERSTELBAAR",
-        "AttributeError": "HERSTELBAAR",
-        "RuntimeError": "KRITIEK",
-        "PermissionError": "KRITIEK",
-        "MemoryError": "KRITIEK",
-    }
+    # Phase 35: foutclassificatie via error_taxonomy (backward compat property)
+    @property
+    def _FOUT_CLASSIFICATIE(self):
+        """Backward-compatible mapping via error_taxonomy."""
+        try:
+            from danny_toolkit.core.error_taxonomy import (
+                FOUT_REGISTER, FoutErnst,
+            )
+            return {
+                naam: d.ernst.value.upper()
+                for naam, d in FOUT_REGISTER.items()
+            }
+        except ImportError:
+            return {
+                "TimeoutError": "VOORBIJGAAND",
+                "ConnectionError": "VOORBIJGAAND",
+                "ValueError": "HERSTELBAAR",
+                "RuntimeError": "KRITIEK",
+                "PermissionError": "KRITIEK",
+                "MemoryError": "FATAAL",
+            }
 
     def __init__(self):
         self._data_dir = (
@@ -1188,14 +1194,21 @@ class OmegaGovernor:
     def classificeer_fout(self, error: Exception) -> str:
         """Classificeer een fout als KRITIEK, HERSTELBAAR, of VOORBIJGAAND.
 
+        Phase 35: delegeert naar error_taxonomy.classificeer().
+
         Args:
             error: De opgetreden Exception.
 
         Returns:
-            Een van: "KRITIEK", "HERSTELBAAR", "VOORBIJGAAND".
+            Een van: "KRITIEK", "HERSTELBAAR", "VOORBIJGAAND", "BEVEILIGING", "FATAAL".
         """
-        error_name = type(error).__name__
-        return self._FOUT_CLASSIFICATIE.get(error_name, "HERSTELBAAR")
+        try:
+            from danny_toolkit.core.error_taxonomy import classificeer
+            definitie = classificeer(error)
+            return definitie.ernst.value.upper()
+        except ImportError:
+            error_name = type(error).__name__
+            return self._FOUT_CLASSIFICATIE.get(error_name, "HERSTELBAAR")
 
     def scrub_pii(self, tekst: str) -> str:
         """Vervang PII in tekst door placeholders.

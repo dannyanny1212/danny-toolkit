@@ -284,7 +284,27 @@ class ShardRouter:
         # Sorteer op distance (lager = beter)
         alle_resultaten.sort(key=lambda x: x["distance"])
 
-        return alle_resultaten[:top_k]
+        top = alle_resultaten[:top_k]
+
+        # Phase 37: track fragment access
+        if top:
+            try:
+                from danny_toolkit.core.self_pruning import (
+                    get_self_pruning,
+                )
+                sp = get_self_pruning()
+                per_shard: Dict[str, List[str]] = {}
+                for r in top:
+                    s = r.get("shard", "")
+                    fid = r.get("metadata", {}).get("id", "")
+                    if s and fid:
+                        per_shard.setdefault(s, []).append(fid)
+                for s, ids in per_shard.items():
+                    sp.registreer_toegang(ids, s)
+            except Exception as e:
+                logger.debug("ShardRouter SelfPruning toegang: %s", e)
+
+        return top
 
     # ─── Migratie ────────────────────────────────────
 

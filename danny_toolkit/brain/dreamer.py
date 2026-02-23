@@ -161,6 +161,23 @@ class Dreamer:
         except Exception as e:
             logger.debug("ShardRouter REM migratie check failed: %s", e)
 
+        # 5.12 SelfPruning — vector store onderhoud
+        try:
+            from danny_toolkit.core.self_pruning import get_self_pruning
+            sp = get_self_pruning()
+            prune_result = sp.prune()
+            if prune_result.get("overgeslagen"):
+                print(f"{Kleur.GEEL}🗑️ SelfPruning: uitgeschakeld (PRUNING_ENABLED=False){Kleur.RESET}")
+            else:
+                ga = prune_result.get("gearchiveerd", 0)
+                vn = prune_result.get("vernietigd", 0)
+                ef = prune_result.get("entropie_geflagd", 0)
+                ms = prune_result.get("duur_ms", 0)
+                print(f"{Kleur.GROEN}🗑️ SelfPruning: {ga} gearchiveerd, "
+                      f"{vn} vernietigd, {ef} entropie-flagged ({ms}ms){Kleur.RESET}")
+        except Exception as e:
+            logger.debug("SelfPruning REM cycle failed: %s", e)
+
         # 6. Pre-Compute — anticipate tomorrow
         insight = await self._anticipate()
         if insight:

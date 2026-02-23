@@ -12,12 +12,14 @@ Gebruik:
     sc = get_semantic_cache()
     hit = sc.lookup("GhostWriter", query)
     if hit:
-        return hit
+        # hit = {"content": "...", "type": "text", "metadata": {...}}
+        return SwarmPayload(agent="GhostWriter", **hit)
     # ... LLM call ...
-    sc.store("GhostWriter", query, response)
+    sc.store("GhostWriter", query, response, payload_type="text", payload_meta={})
 """
 
 import hashlib
+import json
 import logging
 import os
 import sqlite3
@@ -105,6 +107,17 @@ class SemanticCache:
                 CREATE INDEX IF NOT EXISTS idx_agent_hash
                 ON cache_entries (agent, query_hash)
             """)
+            # Migratie: payload_type + payload_meta kolommen (v6.3.0)
+            for col, default in [
+                ("payload_type", "'text'"),
+                ("payload_meta", "'{}'"),
+            ]:
+                try:
+                    conn.execute(
+                        f"ALTER TABLE cache_entries ADD COLUMN {col} TEXT DEFAULT {default}"
+                    )
+                except sqlite3.OperationalError:
+                    pass  # kolom bestaat al
             conn.commit()
             conn.close()
         except Exception as e:
@@ -168,11 +181,11 @@ class SemanticCache:
                 return 0.0
             return dot / (na * nb)
 
-    def lookup(self, agent_naam: str, query: str) -> Optional[str]:
+    def lookup(self, agent_naam: str, query: str) -> Optional[dict]:
         """Zoek een gecacht antwoord via vector similarity.
 
         Returns:
-            Gecachte response string, of None bij miss/niet geconfigureerd.
+            Dict met {"content", "type", "metadata"}, of None bij miss.
         """
         if agent_naam in self.BLACKLIST:
             return None
@@ -206,13 +219,14 @@ class SemanticCache:
 
     def _vector_lookup(self, agent: str, query_emb: list,
                        threshold: float, ttl: int, now: float
-                       ) -> Optional[str]:
+                       ) -> Optional[dict]:
         """Vector similarity lookup tegen recente entries."""
         with self._lock:
             conn = self._get_conn()
             try:
                 rows = conn.execute(
-                    """SELECT id, embedding, response, created, ttl_seconds, hits
+                    """SELECT id, embedding, response, created, ttl_seconds,
+                            hits, payload_type, payload_meta
                        FROM cache_entries
                        WHERE agent = ? AND embedding IS NOT NULL
                        ORDER BY created DESC LIMIT 50""",
@@ -222,7 +236,7 @@ class SemanticCache:
                 best_score = 0.0
                 best_row = None
 
-                for row_id, blob, response, created, row_ttl, hits in rows:
+                for row_id, blob, response, created, row_ttl, hits, p_type, p_meta in rows:
                     # TTL check
                     if now - created > row_ttl:
                         continue
@@ -230,17 +244,26 @@ class SemanticCache:
                     score = self._cosine_similarity(query_emb, cached_emb)
                     if score > best_score:
                         best_score = score
-                        best_row = (row_id, response, hits)
+                        best_row = (row_id, response, hits, p_type, p_meta)
 
                 if best_row and best_score >= threshold:
-                    row_id, response, hits = best_row
+                    row_id, response, hits, p_type, p_meta = best_row
                     conn.execute(
                         "UPDATE cache_entries SET hits = ? WHERE id = ?",
                         (hits + 1, row_id),
                     )
                     conn.commit()
                     self._total_hits += 1
-                    return response
+                    meta = {}
+                    try:
+                        meta = json.loads(p_meta) if p_meta else {}
+                    except (json.JSONDecodeError, TypeError):
+                        pass
+                    return {
+                        "content": response,
+                        "type": p_type or "text",
+                        "metadata": meta,
+                    }
 
                 self._total_misses += 1
                 return None
@@ -248,13 +271,14 @@ class SemanticCache:
                 conn.close()
 
     def _hash_lookup(self, agent: str, qhash: str,
-                     ttl: int, now: float) -> Optional[str]:
+                     ttl: int, now: float) -> Optional[dict]:
         """Exacte hash lookup (fallback wanneer embeddings niet beschikbaar)."""
         with self._lock:
             conn = self._get_conn()
             try:
                 row = conn.execute(
-                    """SELECT id, response, created, ttl_seconds, hits
+                    """SELECT id, response, created, ttl_seconds, hits,
+                            payload_type, payload_meta
                        FROM cache_entries
                        WHERE agent = ? AND query_hash = ?
                        ORDER BY created DESC LIMIT 1""",
@@ -265,7 +289,7 @@ class SemanticCache:
                     self._total_misses += 1
                     return None
 
-                row_id, response, created, row_ttl, hits = row
+                row_id, response, created, row_ttl, hits, p_type, p_meta = row
                 if now - created > row_ttl:
                     self._total_misses += 1
                     return None
@@ -276,12 +300,22 @@ class SemanticCache:
                 )
                 conn.commit()
                 self._total_hits += 1
-                return response
+                meta = {}
+                try:
+                    meta = json.loads(p_meta) if p_meta else {}
+                except (json.JSONDecodeError, TypeError):
+                    pass
+                return {
+                    "content": response,
+                    "type": p_type or "text",
+                    "metadata": meta,
+                }
             finally:
                 conn.close()
 
-    def store(self, agent_naam: str, query: str, response: str):
-        """Sla een LLM response op in de cache.
+    def store(self, agent_naam: str, query: str, response: str,
+              payload_type: str = "text", payload_meta: dict = None):
+        """Sla een LLM response op in de cache (inclusief payload staat).
 
         Skip als agent geblacklist, niet geconfigureerd,
         of response te kort (<20 chars).
@@ -297,6 +331,18 @@ class SemanticCache:
         ttl, _ = config
         qhash = self._query_hash(query)
         now = time.time()
+
+        # Serialiseer metadata (strip niet-cacheable velden)
+        meta_json = "{}"
+        if payload_meta:
+            cacheable = {
+                k: v for k, v in payload_meta.items()
+                if k not in ("cached", "trace_id", "fout_context", "error_type")
+            }
+            try:
+                meta_json = json.dumps(cacheable, default=str)
+            except (TypeError, ValueError):
+                meta_json = "{}"
 
         # Probeer embedding te genereren
         embedding_blob = None
@@ -314,10 +360,10 @@ class SemanticCache:
                 conn.execute(
                     """INSERT INTO cache_entries
                        (agent, query_hash, query_text, embedding, response,
-                        created, ttl_seconds, hits)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, 0)""",
+                        created, ttl_seconds, hits, payload_type, payload_meta)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?)""",
                     (agent_naam, qhash, query[:500], embedding_blob,
-                     response, now, ttl),
+                     response, now, ttl, payload_type or "text", meta_json),
                 )
                 conn.commit()
 

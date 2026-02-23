@@ -59,6 +59,15 @@ class EventTypes:
     # Phase 34: shard routing events
     SHARD_MIGRATION_COMPLETE = "shard_migration_complete"
     SHARD_QUERY_ROUTED = "shard_query_routed"
+    # Phase 35: error taxonomy events
+    ERROR_CLASSIFIED = "error_classified"
+    # Phase 36: request tracing events
+    REQUEST_TRACE_COMPLETE = "request_trace_complete"
+    # Phase 37: self-pruning events
+    PRUNING_STARTED = "pruning_started"
+    FRAGMENT_ARCHIVED = "fragment_archived"
+    FRAGMENT_DESTROYED = "fragment_destroyed"
+    PRUNING_COMPLETE = "pruning_complete"
 
 
 class BusEvent:
