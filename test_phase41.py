@@ -512,7 +512,8 @@ class TestPhase41(unittest.TestCase):
 
         c("ModelRegistry" in brain.__all__, "ModelRegistry in __all__")
         c("get_model_registry" in brain.__all__, "get_model_registry in __all__")
-        c(brain.__version__ >= "6.8.0", f"version: {brain.__version__} >= 6.8.0")
+        v = tuple(int(x) for x in brain.__version__.split("."))
+        c(v >= (6, 8, 0), f"version: {brain.__version__} >= 6.8.0")
 
     # ── Test 16: R_final betrouwbaarheidsformule ──
 

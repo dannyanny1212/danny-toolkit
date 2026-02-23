@@ -424,8 +424,9 @@ def test_18_version_and_integrity():
     """Brain versie 6.6.0 + module integrity."""
     print("\n[Test 18] Versie 6.6.0 + module integrity")
     import danny_toolkit.brain as brain_pkg
+    _v = tuple(int(x) for x in brain_pkg.__version__.split("."))
     check(f"__version__ = {brain_pkg.__version__} (>= 6.6.0)",
-          brain_pkg.__version__ >= "6.6.0")
+          _v >= (6, 6, 0))
 
     # Singleton factory imports
     modules = [

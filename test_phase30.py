@@ -623,7 +623,8 @@ def test_18_init_exports():
     print("\n[Test 18] __init__.py exports + versie")
     import danny_toolkit.brain as brain_mod
 
-    check("__version__ >= 6.1.0", brain_mod.__version__ >= "6.1.0")
+    _v = tuple(int(x) for x in brain_mod.__version__.split("."))
+    check("__version__ >= 6.1.0", _v >= (6, 1, 0))
 
     # Controleer exports in __all__
     check("HallucinatieSchild in __all__",

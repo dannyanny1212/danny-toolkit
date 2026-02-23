@@ -387,8 +387,9 @@ def test_17_version_bump():
     print("\n[Test 17] Brain versie >= 6.5.0")
     import danny_toolkit.brain as brain_pkg
 
+    _v = tuple(int(x) for x in brain_pkg.__version__.split("."))
     check(f"__version__ is {brain_pkg.__version__} (>= 6.5.0)",
-          brain_pkg.__version__ >= "6.5.0")
+          _v >= (6, 5, 0))
 
 
 def test_18_module_integrity():

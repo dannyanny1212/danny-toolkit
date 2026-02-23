@@ -573,7 +573,8 @@ def test_18_module_integrity():
 
     # Versie check
     from danny_toolkit.brain import __version__
-    check(f"brain versie = {__version__} (>= 6.5.0)", __version__ >= "6.5.0")
+    _v = tuple(int(x) for x in __version__.split("."))
+    check(f"brain versie = {__version__} (>= 6.5.0)", _v >= (6, 5, 0))
 
     # Integratie check: swarm_engine referentie
     import inspect
