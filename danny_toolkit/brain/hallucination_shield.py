@@ -48,6 +48,12 @@ try:
 except ImportError:
     HAS_TRUTH_ANCHOR = False
 
+try:
+    from danny_toolkit.brain.reality_anchor import RealityAnchor
+    HAS_REALITY_ANCHOR = True
+except ImportError:
+    HAS_REALITY_ANCHOR = False
+
 
 # ── Enums & Dataclasses ──
 
@@ -147,11 +153,15 @@ class HallucinatieSchild:
         self._lock = threading.Lock()
         self._truth_anchor = None  # Lazy loaded
         self._truth_anchor_checked = False
+        self._reality_anchor = None  # Lazy AST scanner
+        self._reality_anchor_checked = False
         self._stats = {
             "beoordeeld": 0,
             "geblokkeerd": 0,
             "waarschuwingen": 0,
             "doorgelaten": 0,
+            "code_validaties": 0,
+            "code_violations": 0,
         }
 
     def _get_truth_anchor(self):
@@ -164,6 +174,39 @@ class HallucinatieSchild:
                 except Exception as e:
                     logger.debug("TruthAnchor load: %s", e)
         return self._truth_anchor
+
+    def _get_reality_anchor(self):
+        """Lazy RealityAnchor — AST codebase scanner."""
+        if not self._reality_anchor_checked:
+            self._reality_anchor_checked = True
+            if HAS_REALITY_ANCHOR:
+                try:
+                    from danny_toolkit.core.config import Config
+                    root = str(Config.BASE_DIR / "danny_toolkit")
+                    self._reality_anchor = RealityAnchor(root)
+                except Exception as e:
+                    logger.debug("RealityAnchor load: %s", e)
+        return self._reality_anchor
+
+    def valideer_code(self, code_tekst: str) -> List[str]:
+        """Valideer LLM-gegenereerde code tegen de codebase Truth Map.
+
+        Returns:
+            Lijst van violations (leeg = code is geldig).
+        """
+        anchor = self._get_reality_anchor()
+        if not anchor:
+            return []
+        try:
+            result = anchor.validate_code_block(code_tekst)
+            with self._lock:
+                self._stats["code_validaties"] += 1
+                if not result.is_valid:
+                    self._stats["code_violations"] += len(result.violations)
+            return result.violations
+        except Exception as e:
+            logger.debug("RealityAnchor validatie: %s", e)
+            return []
 
     def beoordeel(
         self,
@@ -217,12 +260,36 @@ class HallucinatieSchild:
         # 3. Contradicties detecteren
         contradicties = self._detecteer_contradicties(claims)
 
+        # 3.5 RealityAnchor — code-symbool validatie
+        _code_violations = []
+        for p in payloads:
+            content = str(getattr(p, "content", ""))
+            if "```python" in content or "import danny_toolkit" in content:
+                code_blocks = re.findall(
+                    r"```python\s*\n(.*?)```", content, re.DOTALL,
+                )
+                if not code_blocks and "import danny_toolkit" in content:
+                    code_blocks = [content]
+                for block in code_blocks:
+                    violations = self.valideer_code(block)
+                    for v in violations:
+                        _code_violations.append(f"Code hallucinatie: {v}")
+                    if violations:
+                        logger.warning(
+                            "RealityAnchor: %d violations in %s output",
+                            len(violations), getattr(p, "agent", "?"),
+                        )
+
         # 4. Regelcheck over alle tekst
         alle_tekst = " ".join(
             str(getattr(p, "display_text", "") or getattr(p, "content", ""))
             for p in payloads
         )
         regel_schendingen = self._regelcheck(alle_tekst)
+
+        # 4.5 Merge code violations into regelcheck
+        if _code_violations:
+            regel_schendingen.extend(_code_violations)
 
         # 5. Totaalscore berekenen
         totaal_score = self._bereken_totaal_score(

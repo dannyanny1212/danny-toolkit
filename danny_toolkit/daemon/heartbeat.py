@@ -127,6 +127,8 @@ class HeartbeatDaemon:
         self._last_proactive_check = 0.0
         self._last_security_scan = 0.0
         self._last_rem_date = None
+        self._last_morning_protocol_date = None
+        self._last_dream_observation = 0.0
 
         # DevOps
         self._devops = None
@@ -274,6 +276,121 @@ class HeartbeatDaemon:
             self._log_activity(
                 "devops",
                 f"CI fout: {str(e)[:60]}",
+            )
+
+    # ─── Morning Protocol ───
+
+    def _run_morning_protocol(self):
+        """Run morning protocol headless (07:00 daily)."""
+        self._worker_pool.submit(self._execute_morning_protocol)
+
+    def _execute_morning_protocol(self):
+        """Voer morning protocol uit (draait in worker thread)."""
+        try:
+            from ..brain.morning_protocol import (
+                dna_scan, speed_test, heartbeat_check,
+                generate_report, load_previous_benchmark,
+                save_benchmark,
+            )
+
+            self._log_activity(
+                "morning", "Morning Protocol gestart..."
+            )
+
+            git = dna_scan()
+            prev_bench = load_previous_benchmark()
+            bench = speed_test()
+            heart = heartbeat_check()
+            report = generate_report(git, bench, heart, prev_bench)
+
+            save_benchmark(bench)
+
+            status = report.overall_status
+            recs = len(report.recommendations)
+            modified = len(git.modified_files)
+            self._log_activity(
+                "morning",
+                f"Status: {status} | {modified} gewijzigd"
+                f" | {recs} aanbevelingen"
+                f" | Latency: {bench.latency_ms:.0f}ms",
+            )
+
+            stack = self._get_stack()
+            if stack:
+                try:
+                    stack.log_event(
+                        actor="heartbeat",
+                        action="morning_protocol",
+                        details={
+                            "status": status,
+                            "modified_files": modified,
+                            "latency_ms": bench.latency_ms,
+                            "memory_mb": bench.memory_mb,
+                            "recommendations": report.recommendations[:5],
+                            "brain_alive": heart.brain_alive,
+                            "pixel_alive": heart.pixel_alive,
+                        },
+                        source="daemon",
+                    )
+                except Exception as e:
+                    logger.debug("Morning protocol stack log: %s", e)
+
+        except Exception as e:
+            self._log_activity(
+                "morning",
+                f"Protocol fout: {str(e)[:60]}",
+            )
+
+    # ─── Dream Observation ───
+
+    def _run_dream_observation(self):
+        """Log entity states tijdens nacht-uren (headless)."""
+        try:
+            from ..brain.dream_monitor import (
+                get_real_entity_data, generate_log_line,
+            )
+
+            entity_data = get_real_entity_data()
+
+            # Genereer 3 observaties
+            observations = []
+            for _ in range(3):
+                name, _color, action, _ts, _cpu = generate_log_line(
+                    entity_data,
+                )
+                observations.append(f"{name}: {action}")
+
+            summary = " | ".join(observations)
+            self._log_activity("dream", summary[:120])
+
+            stack = self._get_stack()
+            if stack:
+                try:
+                    # Log entity health data
+                    details = {"observations": observations}
+                    if "pixel" in entity_data:
+                        pixel = entity_data["pixel"]
+                        details["pixel_energie"] = pixel.get("energie", 0)
+                        details["pixel_geluk"] = pixel.get("geluk", 0)
+                    if "iolaax" in entity_data:
+                        cons = entity_data["iolaax"].get("consciousness", {})
+                        details["iolaax_awareness"] = cons.get(
+                            "zelfbewustzijn", 0,
+                        )
+
+                    stack.log_event(
+                        actor="heartbeat",
+                        action="dream_observation",
+                        details=details,
+                        source="daemon",
+                    )
+                except Exception as e:
+                    logger.debug("Dream observation stack log: %s", e)
+
+        except Exception as e:
+            self._log_activity(
+                "dream",
+                f"Observatie fout: {str(e)[:60]}",
             )
 
     # ─── Swarm Taken ───
@@ -759,8 +876,35 @@ class HeartbeatDaemon:
                         if proactive:
                             proactive._check_timer_regels()
 
-                    # Dreamer REM cycle at 04:00 (once per night)
+                    # Morning Protocol at 07:00 (once per day)
                     now_dt = datetime.now()
+                    if (
+                        now_dt.hour == 7
+                        and self._last_morning_protocol_date
+                        != now_dt.date()
+                    ):
+                        self._last_morning_protocol_date = (
+                            now_dt.date()
+                        )
+                        self._log_activity(
+                            "morning",
+                            "Morning Protocol ingepland",
+                        )
+                        self._run_morning_protocol()
+
+                    # Dream Observation (nacht 00:00-06:00,
+                    # elke ~10 min = 600 pulsen)
+                    if (
+                        0 <= now_dt.hour < 6
+                        and self._pulse_count % 600 == 0
+                        and self._pulse_count > 0
+                    ):
+                        now_ts3 = time.time()
+                        if now_ts3 - self._last_dream_observation > 550:
+                            self._last_dream_observation = now_ts3
+                            self._run_dream_observation()
+
+                    # Dreamer REM cycle at 04:00 (once per night)
                     if (
                         now_dt.hour == 4
                         and self._last_rem_date != now_dt.date()
