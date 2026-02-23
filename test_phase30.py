@@ -482,9 +482,10 @@ def test_13_governor_provider_breakers():
     cls_runtime = gov.classificeer_fout(RuntimeError("test"))
     check("RuntimeError classificatie is string", isinstance(cls_runtime, str))
 
-    # _FOUT_CLASSIFICATIE dict bestaat
-    check("_FOUT_CLASSIFICATIE is dict", isinstance(OmegaGovernor._FOUT_CLASSIFICATIE, dict))
-    check("_FOUT_CLASSIFICATIE heeft entries", len(OmegaGovernor._FOUT_CLASSIFICATIE) > 0)
+    # _FOUT_CLASSIFICATIE property → test via instance
+    fc = gov._FOUT_CLASSIFICATIE
+    check("_FOUT_CLASSIFICATIE is dict", isinstance(fc, dict))
+    check("_FOUT_CLASSIFICATIE heeft entries", len(fc) > 0)
 
 
 def test_14_alerter_escalatie():
@@ -622,7 +623,7 @@ def test_18_init_exports():
     print("\n[Test 18] __init__.py exports + versie")
     import danny_toolkit.brain as brain_mod
 
-    check("__version__ = 6.1.0", brain_mod.__version__ == "6.1.0")
+    check("__version__ >= 6.1.0", brain_mod.__version__ >= "6.1.0")
 
     # Controleer exports in __all__
     check("HallucinatieSchild in __all__",

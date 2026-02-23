@@ -1,3 +1,11 @@
+"""
+Dreamer — Overnight REM Cycle (v6.0 Invention).
+
+Draait om 04:00 via daemon heartbeat. Voert uit: CorticalStack backup,
+vacuum, retention policy, GhostWriter auto-docstrings, TheMirror
+user profiling, Phantom anticipation, en Synapse pathway plasticity.
+"""
+
 import asyncio
 import json
 import logging
@@ -671,8 +679,8 @@ class Dreamer:
             if conn is not None:
                 try:
                     conn.close()
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("DB close error: %s", e)
 
     async def _research_failures(self):
         """Research top failure topics via VoidWalker."""

@@ -119,8 +119,8 @@ class ThePhantom:
         """Sluit de SQLite connectie."""
         try:
             self._conn.close()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("DB close error: %s", e)
 
     def update_patterns(self):
         """Rebuild temporal patterns from interaction_trace.

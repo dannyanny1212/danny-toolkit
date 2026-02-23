@@ -1,3 +1,11 @@
+"""
+Strategist — Recursive Task Planner (v6.0 Invention).
+
+Decomponeert complexe taken via LLM in sub-stappen, delegeert naar
+de juiste swarm agents, en chaint resultaten. Bevat search-query
+meta-filter om tool name leakage in LLM-plannen te voorkomen.
+"""
+
 import json
 import logging
 import os
@@ -61,6 +69,13 @@ try:
 except ImportError:
     pass
 
+HAS_ORACLE = False
+try:
+    from danny_toolkit.brain.oracle_eye import TheOracleEye
+    HAS_ORACLE = True
+except ImportError:
+    pass
+
 
 class Strategist:
     """
@@ -87,9 +102,36 @@ class Strategist:
         self.artificer = Artificer() if HAS_ARTIFICER else None
         self._bus = get_bus() if HAS_BUS else None
         self._stack = get_cortical_stack() if HAS_STACK else None
+        self._oracle = TheOracleEye() if HAS_ORACLE else None
 
     MAX_STEPS = 5
     MAX_CONTEXT_CHARS = 8000
+
+    def _check_resources(self) -> Optional[str]:
+        """Raadpleeg OracleEye voor resource-status vóór plan-fase.
+
+        Returns advies-string als er een piek verwacht wordt, anders None.
+        Voorkomt overbelasting van API-quota door preventief naar een
+        lichter model te switchen.
+        """
+        if not self._oracle:
+            return None
+        try:
+            advies = self._oracle.pre_warm_check()
+            if advies:
+                print(f"{Kleur.GEEL}👁️  OracleEye advies: {advies}{Kleur.RESET}")
+                # Switch model als OracleEye dat aanbeveelt
+                suggested = self._oracle.suggest_model(
+                    {"cpu": 0.0, "queries_last_hour": 0}
+                )
+                if suggested != self.model:
+                    print(f"{Kleur.GEEL}👁️  Strategist schakelt over naar "
+                          f"{suggested.split('/')[-1]}{Kleur.RESET}")
+                    self.model = suggested
+            return advies
+        except Exception as e:
+            logger.debug("OracleEye check error: %s", e)
+            return None
 
     async def execute_mission(self, user_objective: str) -> str:
         """
@@ -97,6 +139,9 @@ class Strategist:
         """
         print(f"{Kleur.CYAAN}♟️  Strategist: Analyzing mission "
               f"'{user_objective}'...{Kleur.RESET}")
+
+        # 0. RESOURCE CHECK — OracleEye voorkomt overbelasting
+        self._check_resources()
 
         # 1. THE PLAN
         plan = await self._formulate_plan(user_objective)

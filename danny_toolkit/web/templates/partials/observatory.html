@@ -1,0 +1,72 @@
+<div class="observatory-summary" style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.75rem;">
+    <div style="flex: 1; min-width: 120px;">
+        <div style="font-size: 0.8rem; color: var(--text-secondary);">Modellen</div>
+        <div style="font-size: 1.3rem; font-weight: bold;">{{ dashboard.beschikbare_modellen }}/{{ dashboard.totaal_modellen }}</div>
+    </div>
+    <div style="flex: 1; min-width: 120px;">
+        <div style="font-size: 0.8rem; color: var(--text-secondary);">Totaal Calls</div>
+        <div style="font-size: 1.3rem; font-weight: bold;">{{ dashboard.totaal_calls }}</div>
+    </div>
+    <div style="flex: 1; min-width: 120px;">
+        <div style="font-size: 0.8rem; color: var(--text-secondary);">Tokens</div>
+        <div style="font-size: 1.3rem; font-weight: bold;">{{ dashboard.totaal_tokens }}</div>
+    </div>
+    <div style="flex: 1; min-width: 120px;">
+        <div style="font-size: 0.8rem; color: var(--text-secondary);">Gem. Latency</div>
+        <div style="font-size: 1.3rem; font-weight: bold;">{{ dashboard.gemiddelde_latency_ms }}ms</div>
+    </div>
+    <div style="flex: 1; min-width: 120px;">
+        <div style="font-size: 0.8rem; color: var(--text-secondary);">Success Rate</div>
+        <div style="font-size: 1.3rem; font-weight: bold;">{{ dashboard.gemiddelde_success_rate_pct }}%</div>
+    </div>
+</div>
+
+{% if dashboard.modellen %}
+<table class="rate-table">
+<thead>
+    <tr>
+        <th>Provider</th>
+        <th>Model</th>
+        <th>Calls</th>
+        <th>Tokens</th>
+        <th>Avg ms</th>
+        <th>Success %</th>
+        <th>Barrier Rej.</th>
+        <th>Status</th>
+    </tr>
+</thead>
+<tbody>
+{% for m in dashboard.modellen %}
+<tr>
+    <td>{{ m.provider }}</td>
+    <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">{{ m.model_id }}</td>
+    <td>{{ m.calls }}</td>
+    <td>{{ m.total_tokens }}</td>
+    <td>{{ m.avg_latency_ms }}</td>
+    <td>
+        <span class="{{ 'low' if m.success_rate >= 0.9 else 'high' }}">{{ (m.success_rate * 100)|round(1) }}%</span>
+    </td>
+    <td>{{ m.barrier_rejections }}</td>
+    <td>
+        {% if m.circuit_open %}
+            <span style="color: #ff4444;">CIRCUIT OPEN</span>
+        {% elif m.beschikbaar %}
+            <span style="color: #44ff44;">OK</span>
+        {% else %}
+            <span style="color: #ffaa44;">OFFLINE</span>
+        {% endif %}
+    </td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<p style="color: var(--text-secondary);">Geen modellen geregistreerd. Start auto_discover() of registreer modellen handmatig.</p>
+{% endif %}
+
+<div style="margin-top: 0.75rem; display: flex; gap: 1.5rem; font-size: 0.85rem; color: var(--text-secondary);">
+    <span>Goals: {{ dashboard.goals_processed }}</span>
+    <span>Taken: {{ dashboard.tasks_decomposed }}</span>
+    <span>Veilingen: {{ dashboard.model_auctions_held }}</span>
+    <span>Barriere Afwjzingen: {{ dashboard.barrier_rejections_arbitrator }}</span>
+</div>

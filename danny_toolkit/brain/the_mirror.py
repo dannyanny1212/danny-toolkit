@@ -1,3 +1,11 @@
+"""
+TheMirror — User Profiling Engine (v6.0 Invention).
+
+Analyseert CorticalStack history om een gebruikersprofiel op te bouwen:
+interesses, communicatiestijl, kennisgebieden, en gewoonten. Gebruikt
+door Dreamer (REM cycle) voor anticipatie en personalisatie.
+"""
+
 import json
 import os
 

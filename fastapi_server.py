@@ -357,6 +357,45 @@ class PhantomAccuracyResponse(BaseModel):
     predictions: List[PhantomPredictionResponse] = []
 
 
+# ─── Phase 40: Swarm Sovereignty Models ──
+
+class GoalRequest(BaseModel):
+    """Request body voor POST /api/v1/swarm/goal."""
+    goal: str = Field(..., min_length=1, max_length=5000,
+                      description="High-level doel om te decomponeren en uit te voeren")
+    use_models: bool = Field(False,
+                             description="Dispatch naar externe AI-modellen (Generaal Mode)")
+
+
+class SwarmTaskResponse(BaseModel):
+    """Eén sub-taak binnen een GoalResponse."""
+    task_id: str = ""
+    beschrijving: str = ""
+    categorie: str = ""
+    toegewezen_agent: str = ""
+    status: str = ""
+    resultaat_preview: str = ""
+
+
+class GoalResponse(BaseModel):
+    """Response van POST /api/v1/swarm/goal."""
+    goal: str = ""
+    status: str = ""
+    taken: List[SwarmTaskResponse] = []
+    synthese: str = ""
+    execution_time: float = 0.0
+    trace_id: str = ""
+
+
+# ─── Phase 41: Model Registry Models ──
+
+class ModelRegistryResponse(BaseModel):
+    """Response van GET /api/v1/models/registry."""
+    models: List[dict] = []
+    total: int = 0
+    available: int = 0
+
+
 # ─── AUTH ───────────────────────────────────────────
 
 async def verify_api_key(
@@ -653,8 +692,8 @@ async def health(
     try:
         from danny_toolkit.brain.waakhuis import get_waakhuis
         waakhuis_data = get_waakhuis().gezondheidsrapport()
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("Waakhuis health check error: %s", e)
 
     circuit_data = {}
     try:
@@ -1244,6 +1283,376 @@ async def phantom_accuracy(
         )
 
 
+# ─── Phase 40: Swarm Sovereignty Endpoint ──
+
+@app.post(
+    "/api/v1/swarm/goal",
+    response_model=GoalResponse,
+    summary="Decomponeer en voer een high-level goal uit via TaskArbitrator",
+    tags=["Swarm"],
+)
+async def swarm_goal(
+    req: GoalRequest,
+    _key: str = Depends(verify_api_key),
+):
+    """Decomponeer een goal in sub-taken, wijs agents toe via auction,
+    voer parallel uit, en synthetiseer het resultaat."""
+    import time as _time
+    t0 = _time.time()
+    try:
+        from swarm_engine import SwarmEngine
+        from danny_toolkit.brain.arbitrator import get_arbitrator
+
+        engine = SwarmEngine(brain=_get_brain())
+        arbitrator = get_arbitrator(brain=_get_brain())
+
+        # Decompose + Execute (Generaal Mode of Swarm Mode)
+        manifest = await arbitrator.decompose(req.goal)
+        if req.use_models:
+            manifest = await arbitrator.execute_with_models(manifest)
+        else:
+            manifest = await arbitrator.execute(manifest, engine=engine)
+
+        synthese = arbitrator.synthesize(manifest)
+        elapsed = _time.time() - t0
+
+        return GoalResponse(
+            goal=manifest.goal,
+            status=manifest.status,
+            taken=[
+                SwarmTaskResponse(**t.to_dict())
+                for t in manifest.taken
+            ],
+            synthese=synthese,
+            execution_time=round(elapsed, 3),
+            trace_id=manifest.trace_id,
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Swarm goal execution mislukt: {e}",
+        )
+
+
+# ─── Phase 41: Model Registry ─────────────────────
+
+@app.get(
+    "/api/v1/models/registry",
+    response_model=ModelRegistryResponse,
+    summary="Lijst beschikbare externe AI-modellen",
+    tags=["Models"],
+)
+async def models_registry(
+    _key: str = Depends(verify_api_key),
+):
+    """Geeft een overzicht van alle geregistreerde modellen en hun status."""
+    try:
+        from danny_toolkit.brain.model_sync import get_model_registry
+        registry = get_model_registry()
+        stats = registry.get_stats()
+        return ModelRegistryResponse(
+            models=stats.get("workers", []),
+            total=stats.get("total_workers", 0),
+            available=stats.get("available_workers", 0),
+        )
+    except ImportError:
+        return ModelRegistryResponse(models=[], total=0, available=0)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Model registry ophalen mislukt: {e}",
+        )
+
+
+# ─── Phase 42: System Introspection ───────────────
+
+class IntrospectionResponse(BaseModel):
+    """Response van GET /api/v1/system/introspection."""
+    versie: str = ""
+    gezondheid_score: float = 0.0
+    modules_actief: int = 0
+    modules_totaal: int = 0
+    wirings_actief: int = 0
+    wirings_totaal: int = 0
+    security_score: float = 0.0
+    security_details: dict = {}
+    timestamp: str = ""
+
+
+@app.get(
+    "/api/v1/system/introspection",
+    response_model=IntrospectionResponse,
+    summary="Systeem zelfdiagnose — gezondheid, wirings, security",
+    tags=["System"],
+)
+async def system_introspection(
+    _key: str = Depends(verify_api_key),
+):
+    """Het systeem onderzoekt zichzelf: modules, wirings, beveiliging."""
+    try:
+        from danny_toolkit.brain.introspector import get_introspector
+        intro = get_introspector()
+        report = intro.get_health_report()
+        return IntrospectionResponse(**report)
+    except ImportError:
+        return IntrospectionResponse()
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Introspectie mislukt: {e}",
+        )
+
+
+@app.get(
+    "/api/v1/system/wirings",
+    summary="Cross-module wiring map",
+    tags=["System"],
+)
+async def system_wirings(
+    _key: str = Depends(verify_api_key),
+):
+    """Toont alle cross-module verbindingen en hun status."""
+    try:
+        from danny_toolkit.brain.introspector import get_introspector
+        intro = get_introspector()
+        return {"wiring_map": intro.get_wiring_map()}
+    except ImportError:
+        return {"wiring_map": "Introspector niet beschikbaar"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Wiring map ophalen mislukt: {e}",
+        )
+
+
+# ─── Phase 42: Observatory Sync (Generaal Controlekamer) ──
+
+class ModelObservatoryEntryResponse(BaseModel):
+    """Eén model in het observatory overzicht."""
+    provider: str = ""
+    model_id: str = ""
+    calls: int = 0
+    successes: int = 0
+    failures: int = 0
+    barrier_rejections: int = 0
+    total_tokens: int = 0
+    total_latency_ms: float = 0.0
+    avg_latency_ms: float = 0.0
+    success_rate: float = 0.0
+    cost_tier: int = 1
+    latency_class: int = 1
+    circuit_open: bool = False
+    beschikbaar: bool = True
+    rank: int = 0
+
+
+class AuctionLogEntryResponse(BaseModel):
+    """Eén veiling in het auction log."""
+    timestamp: float = 0.0
+    task_id: str = ""
+    task_categorie: str = ""
+    winnaar_provider: str = ""
+    winnaar_model_id: str = ""
+    winnaar_score: float = 0.0
+    deelnemers: int = 0
+    barrier_pass: Any = None
+
+
+class ObservatoryDashboardResponse(BaseModel):
+    """Response van GET /api/v1/observatory/dashboard."""
+    totaal_modellen: int = 0
+    beschikbare_modellen: int = 0
+    totaal_calls: int = 0
+    totaal_tokens: int = 0
+    totaal_successen: int = 0
+    totaal_failures: int = 0
+    totaal_barrier_rejections: int = 0
+    gemiddelde_latency_ms: float = 0.0
+    gemiddelde_success_rate: float = 0.0
+    goals_processed: int = 0
+    tasks_decomposed: int = 0
+    model_auctions_held: int = 0
+    model_tasks_completed: int = 0
+    model_tasks_failed: int = 0
+    barrier_rejections_arbitrator: int = 0
+    modellen: List[Dict[str, Any]] = []
+    recente_veilingen: List[Dict[str, Any]] = []
+    timestamp: str = ""
+
+
+class CostAnalysisResponse(BaseModel):
+    """Response van GET /api/v1/observatory/costs."""
+    per_provider: Dict[str, Any] = {}
+    per_model: List[Dict[str, Any]] = []
+    aanbevelingen: List[str] = []
+
+
+class FailureAnalysisResponse(BaseModel):
+    """Response van GET /api/v1/observatory/failures."""
+    modellen: List[Dict[str, Any]] = []
+    probleemmodellen: List[Dict[str, Any]] = []
+    totaal_failures: int = 0
+    totaal_barrier_rejections: int = 0
+    circuit_open_count: int = 0
+
+
+class ObservatoryStatsResponse(BaseModel):
+    """Response van GET /api/v1/observatory/stats."""
+    snapshots_taken: int = 0
+    leaderboard_queries: int = 0
+    auction_logs_recorded: int = 0
+    auction_log_size: int = 0
+    snapshot_history_size: int = 0
+
+
+@app.get(
+    "/api/v1/observatory/dashboard",
+    response_model=ObservatoryDashboardResponse,
+    summary="Generaal controlekamer — live model statistieken",
+    tags=["Observatory"],
+)
+async def observatory_dashboard(
+    _key: str = Depends(verify_api_key),
+):
+    """Compleet observatory dashboard met model stats, arbitrator stats,
+    en recente veilingen."""
+    try:
+        from danny_toolkit.brain.observatory_sync import get_observatory_sync
+        obs = get_observatory_sync()
+        data = obs.get_dashboard_data()
+        return ObservatoryDashboardResponse(**data.to_dict())
+    except ImportError:
+        return ObservatoryDashboardResponse()
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Observatory dashboard mislukt: {e}",
+        )
+
+
+@app.get(
+    "/api/v1/observatory/leaderboard",
+    response_model=List[ModelObservatoryEntryResponse],
+    summary="Model leaderboard — ranking op prestatie",
+    tags=["Observatory"],
+)
+async def observatory_leaderboard(
+    sort_by: str = "success_rate",
+    _key: str = Depends(verify_api_key),
+):
+    """Geeft een gerankt overzicht van alle modellen.
+    Sorteer op: success_rate, calls, avg_latency_ms, total_tokens, failures."""
+    try:
+        from danny_toolkit.brain.observatory_sync import get_observatory_sync
+        obs = get_observatory_sync()
+        leaderboard = obs.get_model_leaderboard(sort_by=sort_by)
+        return [ModelObservatoryEntryResponse(**m) for m in leaderboard]
+    except ImportError:
+        return []
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Observatory leaderboard mislukt: {e}",
+        )
+
+
+@app.get(
+    "/api/v1/observatory/auctions",
+    response_model=List[AuctionLogEntryResponse],
+    summary="Recente model-veilingen",
+    tags=["Observatory"],
+)
+async def observatory_auctions(
+    count: int = 50,
+    _key: str = Depends(verify_api_key),
+):
+    """Haal recente model-veiling logs op, nieuwste eerst."""
+    try:
+        from danny_toolkit.brain.observatory_sync import get_observatory_sync
+        obs = get_observatory_sync()
+        auctions = obs.get_auction_history(count=min(count, 200))
+        return [AuctionLogEntryResponse(**a) for a in auctions]
+    except ImportError:
+        return []
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Observatory auctions mislukt: {e}",
+        )
+
+
+@app.get(
+    "/api/v1/observatory/costs",
+    response_model=CostAnalysisResponse,
+    summary="Token-verbruik per provider en model",
+    tags=["Observatory"],
+)
+async def observatory_costs(
+    _key: str = Depends(verify_api_key),
+):
+    """Analyseer token-verbruik met aanbevelingen voor optimalisatie."""
+    try:
+        from danny_toolkit.brain.observatory_sync import get_observatory_sync
+        obs = get_observatory_sync()
+        costs = obs.get_cost_analysis()
+        return CostAnalysisResponse(**costs)
+    except ImportError:
+        return CostAnalysisResponse()
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Observatory cost analysis mislukt: {e}",
+        )
+
+
+@app.get(
+    "/api/v1/observatory/failures",
+    response_model=FailureAnalysisResponse,
+    summary="Faal-analyse per model",
+    tags=["Observatory"],
+)
+async def observatory_failures(
+    _key: str = Depends(verify_api_key),
+):
+    """Analyseer faalpatronen: barrier rejections, circuit opens, errors."""
+    try:
+        from danny_toolkit.brain.observatory_sync import get_observatory_sync
+        obs = get_observatory_sync()
+        failures = obs.get_failure_analysis()
+        return FailureAnalysisResponse(**failures)
+    except ImportError:
+        return FailureAnalysisResponse()
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Observatory failure analysis mislukt: {e}",
+        )
+
+
+@app.get(
+    "/api/v1/observatory/stats",
+    response_model=ObservatoryStatsResponse,
+    summary="ObservatorySync interne statistieken",
+    tags=["Observatory"],
+)
+async def observatory_stats(
+    _key: str = Depends(verify_api_key),
+):
+    """ObservatorySync eigen statistieken: snapshots, leaderboard queries, etc."""
+    try:
+        from danny_toolkit.brain.observatory_sync import get_observatory_sync
+        obs = get_observatory_sync()
+        stats = obs.get_stats()
+        return ObservatoryStatsResponse(**stats)
+    except ImportError:
+        return ObservatoryStatsResponse()
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Observatory stats mislukt: {e}",
+        )
+
+
 # ─── WEB DASHBOARD (HTMX) ─────────────────────────
 
 if HAS_DASHBOARD:
@@ -1364,6 +1773,35 @@ if HAS_DASHBOARD:
             pass
         tmpl = _templates.get_template("partials/pipeline_metrics.html")
         return HTMLResponse(tmpl.render(metrics=metrics, cache=cache_stats))
+
+    @app.get("/ui/partials/observatory", response_class=HTMLResponse, include_in_schema=False)
+    async def partial_observatory():
+        dashboard_data = {
+            "totaal_modellen": 0,
+            "beschikbare_modellen": 0,
+            "totaal_calls": 0,
+            "totaal_tokens": 0,
+            "gemiddelde_latency_ms": 0.0,
+            "gemiddelde_success_rate_pct": "0.0",
+            "modellen": [],
+            "goals_processed": 0,
+            "tasks_decomposed": 0,
+            "model_auctions_held": 0,
+            "barrier_rejections_arbitrator": 0,
+        }
+        try:
+            from danny_toolkit.brain.observatory_sync import get_observatory_sync
+            obs = get_observatory_sync()
+            raw = obs.get_dashboard_data()
+            d = raw.to_dict()
+            d["gemiddelde_success_rate_pct"] = str(
+                round(d.get("gemiddelde_success_rate", 0) * 100, 1)
+            )
+            dashboard_data.update(d)
+        except Exception as e:
+            logger.debug("Observatory partial: %s", e)
+        tmpl = _templates.get_template("partials/observatory.html")
+        return HTMLResponse(tmpl.render(dashboard=dashboard_data))
 
     @app.get("/ui/events", include_in_schema=False)
     async def sse_events():

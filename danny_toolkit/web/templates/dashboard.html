@@ -72,6 +72,20 @@
         </div>
     </div>
 
+    <!-- Model Observatory (Phase 42) -->
+    <div class="card" style="grid-column: span 2;">
+        <div class="card-header">
+            Generaal Controlekamer
+            <span class="htmx-indicator">laden...</span>
+        </div>
+        <div class="card-body"
+             hx-get="/ui/partials/observatory"
+             hx-trigger="load, every 10s"
+             hx-indicator="closest .card">
+            <p style="color: var(--text-secondary);">Observatory laden...</p>
+        </div>
+    </div>
+
     <!-- Event Feed (SSE) -->
     <div class="card">
         <div class="card-header">

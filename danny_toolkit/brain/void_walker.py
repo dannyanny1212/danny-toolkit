@@ -1,3 +1,11 @@
+"""
+VoidWalker — Autonomous Web Research (v6.0 Invention).
+
+Last-resort researcher: doorzoekt DuckDuckGo + web scraper wanneer
+MEMEX geen resultaten oplevert. Gebruikt door _rag_enrich (swarm pipeline)
+en Dreamer (REM cycle). SDK: ``ddgs`` 9.10 context manager.
+"""
+
 import logging
 import os
 import time

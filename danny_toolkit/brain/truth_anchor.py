@@ -1,3 +1,11 @@
+"""
+TruthAnchor — CPU Cross-Encoder Fact Verification (v6.0 Invention).
+
+Verifieert of LLM-antwoorden daadwerkelijk ondersteund worden door de
+RAG-bronnen. Gebruikt een lichtgewicht Cross-Encoder (ms-marco-MiniLM)
+die op CPU draait. Gate voor _rag_enrich in de swarm pipeline.
+"""
+
 from sentence_transformers import CrossEncoder
 from danny_toolkit.core.utils import Kleur
 

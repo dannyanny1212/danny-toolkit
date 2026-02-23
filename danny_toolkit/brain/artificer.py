@@ -1,3 +1,11 @@
+"""
+Artificer — Autonomous Skill Forge (v6.0 Invention).
+
+Forge-verify-execute loop: genereert Python skills via LLM, valideert
+met AST parsing en sandboxed executie, slaat op in skills registry.
+Always-forge: geen hergebruik van stale scripts, registry is history-only.
+"""
+
 import ast
 import json
 import logging
@@ -69,6 +77,12 @@ except ImportError:
     HAS_RETRY = False
 
 try:
+    from danny_toolkit.brain.black_box import get_black_box
+    HAS_BLACK_BOX = True
+except ImportError:
+    HAS_BLACK_BOX = False
+
+try:
     from danny_toolkit.core.document_forge import DocumentForge
     HAS_FORGE = True
 except ImportError:
@@ -117,13 +131,16 @@ class Artificer:
         code = await self._write_script(request)
 
         if not code:
+            self._report_to_black_box(request, "", "LLM failed to generate code")
             return "❌ Artificer: Failed to generate code."
 
         # Verify (safety + syntax)
         if not self._safety_check(code):
+            self._report_to_black_box(request, code[:300], "Forbidden pattern detected in generated code")
             return "❌ Artificer blocked unsafe code."
 
         if not self._syntax_check(code):
+            self._report_to_black_box(request, code[:300], "Generated code contains syntax errors")
             return "❌ Artificer blocked code with syntax errors."
 
         # Pre-flight: check of alle imports beschikbaar zijn
@@ -291,10 +308,23 @@ class Artificer:
         except Exception as e:
             logger.debug("Workspace doc promotie fout: %s", e)
 
+    @staticmethod
+    def _sanitize_task_input(task: str) -> str:
+        """Sanitize user task input voor veilige prompt-injectie.
+
+        Verwijdert prompt-escape pogingen en limiteert lengte.
+        """
+        # Strip potentiële prompt-overrides
+        sanitized = task.replace('"""', '').replace("'''", "")
+        sanitized = sanitized.replace("\\n", " ").replace("\n", " ")
+        # Limiet op lengte
+        return sanitized[:500].strip()
+
     async def _write_script(self, task: str) -> Optional[str]:
         workspace = str(self.workspace_dir).replace("\\", "/")
+        safe_task = self._sanitize_task_input(task)
         prompt = (
-            f"Write a STANDALONE Python script to: {task}.\n"
+            f"Write a STANDALONE Python script to: {safe_task}.\n"
             "Rules:\n"
             "- Use ONLY standard library modules when possible.\n"
             "- If external packages are needed, prefer: requests, pillow, pandas.\n"
@@ -504,6 +534,26 @@ class Artificer:
             except Exception as e:
                 logger.debug("NeuralBus publish error: %s", e)
 
+    def _report_to_black_box(self, request: str, result: str, critique: str):
+        """Log forge-fout naar BlackBox immuunsysteem.
+
+        Creëert antibodies zodat dezelfde foutpatronen herkend en
+        voorkomen worden bij toekomstige forge-cycli.
+        """
+        if not HAS_BLACK_BOX:
+            return
+        try:
+            bb = get_black_box()
+            bb.record_crash(
+                user_prompt=request[:500],
+                bad_response=result[:500],
+                critique=critique,
+                source="artificer",
+            )
+            logger.debug("Artificer: forge-fout gerapporteerd aan BlackBox")
+        except Exception as e:
+            logger.debug("BlackBox report error: %s", e)
+
     def _mark_skill_status(self, filename: str, error: Optional[str]):
         """Record success/failure in the registry so stale skills get re-forged."""
         reg = self._load_registry()
@@ -514,6 +564,13 @@ class Artificer:
                     json.dump(reg, f, indent=2, ensure_ascii=False)
             except (IOError, OSError):
                 pass
+            # BlackBox immuniteit: log fout zodat patronen herkend worden
+            if error:
+                self._report_to_black_box(
+                    request=reg[filename].get("description", filename),
+                    result=f"Script {filename} failed",
+                    critique=f"Forge execution error: {error}",
+                )
 
     def _load_registry(self) -> Dict:
         try:

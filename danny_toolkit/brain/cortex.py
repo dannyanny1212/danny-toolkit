@@ -1,3 +1,11 @@
+"""
+TheCortex — Knowledge Graph (v6.0 Invention).
+
+SQLite + NetworkX hybride kennisgraaf. Slaat entity-relatie triples op
+en combineert vector search (ChromaDB) met graaftraversal voor
+hybrid_search queries. Gebruikt door trinity_omega, librarian en swarm.
+"""
+
 import logging
 import os
 from dataclasses import dataclass
@@ -61,6 +69,12 @@ try:
 except ImportError:
     HAS_VECTOR = False
 
+try:
+    from danny_toolkit.brain.the_mirror import TheMirror
+    HAS_MIRROR = True
+except ImportError:
+    HAS_MIRROR = False
+
 
 @dataclass
 class Triple:
@@ -115,6 +129,14 @@ class TheCortex:
 
         # NeuralBus koppeling
         self._bus = get_bus() if HAS_BUS else None
+
+        # TheMirror koppeling — personaliseert RAG-resultaten
+        self._mirror = None
+        if HAS_MIRROR:
+            try:
+                self._mirror = TheMirror()
+            except Exception as e:
+                logger.debug("TheMirror init error: %s", e)
 
         # SQLite tabellen aanmaken
         if self._stack:
@@ -425,7 +447,31 @@ class TheCortex:
                 "score": 0.8,
             })
 
+        # Stap 4: TheMirror — personaliseer met gebruikersprofiel
+        if results and self._mirror:
+            user_context = self._get_user_context()
+            if user_context:
+                results.append({
+                    "bron": "user_profile",
+                    "content": user_context,
+                    "score": 0.6,
+                })
+
         return results
+
+    def _get_user_context(self) -> str:
+        """Haal gebruikersprofiel op via TheMirror voor personalisatie.
+
+        Injecteert het profiel (coding_style, knowledge_level, goal, tone)
+        in de RAG-resultaten zodat antwoorden afgestemd zijn op de gebruiker.
+        """
+        if not self._mirror:
+            return ""
+        try:
+            return self._mirror.get_context_injection()
+        except Exception as e:
+            logger.debug("TheMirror context error: %s", e)
+            return ""
 
     def get_stats(self) -> Dict:
         """Node/edge counts van NetworkX + entity/triple counts van SQLite."""

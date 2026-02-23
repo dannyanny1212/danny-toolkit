@@ -69,6 +69,7 @@ _DEFAULT_CONFIG = {
         "danny_toolkit/brain/governor.py",
         "danny_toolkit/brain/cortical_stack.py",
         "danny_toolkit/brain/singularity.py",
+        "danny_toolkit/brain/arbitrator.py",
         "swarm_engine.py",
     ],
 }

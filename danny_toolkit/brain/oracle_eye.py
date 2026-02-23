@@ -1,3 +1,11 @@
+"""
+TheOracleEye — Predictive Resource Scaler (v6.0 Invention).
+
+Voorspelt resource-gebruik (geheugen, CPU, API-quota) op basis van
+historische patronen. Schaalt proactief de thread pool en cache-limieten.
+Gebruikt door Dreamer (REM) en daemon heartbeat.
+"""
+
 import logging
 import time
 from collections import defaultdict

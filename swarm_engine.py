@@ -2238,7 +2238,11 @@ class SwarmEngine:
     # ── Phase 31: Per-agent circuit breaker helpers ──
 
     def _is_circuit_open(self, agent_naam: str) -> bool:
-        """Check of agent circuit breaker open is."""
+        """Check of agent circuit breaker open is.
+
+        Ondersteunt half-open: als cooldown verlopen, laat 1 probe toe.
+        Bij succes → reset. Bij falen → opnieuw open.
+        """
         with _CIRCUIT_LOCK:
             state = _AGENT_CIRCUIT_STATE.get(agent_naam)
             if not state:
@@ -2246,9 +2250,11 @@ class SwarmEngine:
             if state["failures"] >= _CIRCUIT_BREAKER_THRESHOLD:
                 if state.get("cooldown", 0) > 0:
                     return True
-                # Cooldown verlopen — reset
-                state["failures"] = 0
-                return False
+                # Cooldown verlopen — half-open probe
+                if not state.get("half_open"):
+                    state["half_open"] = True
+                    logger.info("Circuit half-open voor %s, probe", agent_naam)
+                return False  # Laat 1 request door
             return False
 
     def _record_circuit_failure(self, agent_naam: str):
@@ -2283,8 +2289,13 @@ class SwarmEngine:
             state = _AGENT_CIRCUIT_STATE.get(agent_naam)
             if state and state["failures"] > 0:
                 was_open = state["failures"] >= _CIRCUIT_BREAKER_THRESHOLD
+                was_half_open = state.get("half_open", False)
                 state["failures"] = 0
                 state["cooldown"] = 0
+                state["half_open"] = False
+                if was_half_open:
+                    logger.info("Circuit RECOVERED voor %s (half-open probe succeeded)",
+                                agent_naam)
                 if was_open:
                     logger.info("Circuit breaker CLOSED voor %s", agent_naam)
                     try:
@@ -2301,6 +2312,72 @@ class SwarmEngine:
             for state in _AGENT_CIRCUIT_STATE.values():
                 if state.get("cooldown", 0) > 0:
                     state["cooldown"] -= 1
+
+    # ── Upgrade: Adaptieve Timeouts ──
+
+    def _adaptive_timeout(self, agent_naam: str) -> float:
+        """Bereken timeout op basis van historische latency.
+
+        Gebruikt gemiddelde + marge (1.5x) van eerdere calls.
+        Clamp: min 5s, max 60s. Fallback: statische timeout.
+        """
+        with _METRICS_LOCK:
+            metric = _AGENT_PIPELINE_METRICS.get(agent_naam)
+        if not metric or metric.get("calls", 0) < 5:
+            return _AGENT_TIMEOUTS.get(agent_naam, _DEFAULT_AGENT_TIMEOUT)
+        avg_ms = metric["total_ms"] / max(metric["calls"], 1)
+        # P95 schatting: avg × 1.5 (conservatief)
+        p95_s = (avg_ms * 1.5) / 1000
+        return max(5.0, min(p95_s, 60.0))
+
+    # ── Upgrade: Circuit Half-Opening ──
+
+    def _is_circuit_half_open(self, agent_naam: str) -> bool:
+        """Check of circuit in half-open staat is (probe toestaan)."""
+        with _CIRCUIT_LOCK:
+            state = _AGENT_CIRCUIT_STATE.get(agent_naam)
+            if not state:
+                return False
+            if (state["failures"] >= _CIRCUIT_BREAKER_THRESHOLD
+                    and state.get("cooldown", 0) == 0):
+                # Cooldown verlopen — half-open, sta 1 probe toe
+                state["half_open"] = True
+                logger.info("Circuit half-open voor %s, probe toegestaan",
+                            agent_naam)
+                return True
+            return False
+
+    # ── Upgrade: Systemic Failure Detectie ──
+
+    def _detect_systemic_failure(self) -> bool:
+        """Detecteer of 3+ agents tegelijk in circuit breaker open zijn.
+
+        Returns:
+            True als systemische fout gedetecteerd.
+        """
+        with _CIRCUIT_LOCK:
+            open_count = sum(
+                1 for state in _AGENT_CIRCUIT_STATE.values()
+                if (state["failures"] >= _CIRCUIT_BREAKER_THRESHOLD
+                    and state.get("cooldown", 0) > 0)
+            )
+        if open_count >= 3:
+            self._swarm_metrics["systemic_failures"] = (
+                self._swarm_metrics.get("systemic_failures", 0) + 1
+            )
+            logger.error(
+                "SYSTEMIC FAILURE: %d agents tegelijk offline", open_count,
+            )
+            try:
+                from danny_toolkit.core.neural_bus import get_bus, EventTypes
+                get_bus().publish(EventTypes.ERROR_CLASSIFIED, {
+                    "type": "systemic_failure",
+                    "agents_offline": open_count,
+                }, bron="swarm_engine")
+            except Exception as e:
+                logger.debug("Systemic failure publish: %s", e)
+            return True
+        return False
 
     def _publish_error_classified(self, fc):
         """Publiceer ERROR_CLASSIFIED event + sla op in ring buffer."""
@@ -2374,8 +2451,8 @@ class SwarmEngine:
         except Exception as e:
             logger.debug("Semantic cache lookup failed: %s", e)
 
-        # Per-agent timeout (default 20s)
-        timeout = _AGENT_TIMEOUTS.get(agent_naam, _DEFAULT_AGENT_TIMEOUT)
+        # Per-agent timeout — adaptief op basis van historische latency
+        timeout = self._adaptive_timeout(agent_naam)
 
         try:
             result = await asyncio.wait_for(
@@ -2472,8 +2549,8 @@ class SwarmEngine:
                                          poging + 1, agent_naam, retry_e)
                     fc.herstel_geprobeerd = True
                     fc.herstel_gelukt = False
-            except Exception:
-                pass
+            except Exception as _retry_final_e:
+                logger.warning("Retry fallback fout voor %s: %s", agent_naam, _retry_final_e)
             return SwarmPayload(
                 agent=agent_naam, type="error",
                 content=f"[{agent_naam}] {err}",
@@ -2546,8 +2623,8 @@ class SwarmEngine:
                                          poging + 1, agent_naam, retry_e)
                     fc.herstel_geprobeerd = True
                     fc.herstel_gelukt = False
-            except Exception:
-                pass
+            except Exception as _retry_final_e:
+                logger.warning("Retry fallback fout voor %s: %s", agent_naam, _retry_final_e)
             return SwarmPayload(
                 agent=agent_naam, type="error",
                 content=f"[{agent_naam}] Fout: {e}",
@@ -2830,6 +2907,7 @@ class SwarmEngine:
         """Haal relevante context op via ChromaDB.
 
         Lightweight vector search (geen LLM).
+        BlackBox gate: skip bekende falende queries.
         Retourneert max 3 fragmenten van 300 chars.
 
         Args:
@@ -2840,6 +2918,16 @@ class SwarmEngine:
         Returns:
             Lijst van context strings.
         """
+        # BlackBox gate: skip queries die eerder faalden
+        try:
+            from danny_toolkit.brain.black_box import get_black_box
+            bb = get_black_box()
+            if hasattr(bb, "is_rejected") and bb.is_rejected(user_input):
+                logger.info("BlackBox rejection: MEMEX overgeslagen voor bekende faal-query")
+                return []
+        except Exception as e:
+            logger.debug("BlackBox MEMEX gate: %s", e)
+
         memex = self.agents.get("MEMEX")
         if not memex:
             return []
@@ -3464,6 +3552,9 @@ class SwarmEngine:
         # Phase 31: tick circuit breaker cooldowns
         self._tick_circuit_cooldowns()
 
+        # Systemic failure detectie: 3+ agents down → waarschuwing
+        self._detect_systemic_failure()
+
         # 0. Echo Guard — dedup gate (voorkom feedback loops)
         try:
             q_hash = hashlib.md5(
@@ -4020,6 +4111,89 @@ class SwarmEngine:
             for stap in self._tuner._stats.values()
             for e in stap
         )
+        return results
+
+
+    # ── GOAL EXECUTION (Phase 40: Swarm Sovereignty) ──
+
+    async def execute_goal(
+        self, goal: str, use_models: bool = False,
+    ) -> List[SwarmPayload]:
+        """Decomponeer + auction + parallel execute via TaskArbitrator.
+
+        Flow:
+            1. Arbitrator decomponeert goal in sub-taken
+            2. Auction wijst agents toe (S = context_match / (load + 1))
+            3. Parallel dispatch via asyncio.gather
+            4. HallucinatieSchild gate (95% Barrière)
+            5. Return samengevoegde SwarmPayloads
+
+        Args:
+            goal: High-level doelstelling.
+            use_models: Als True, dispatch naar externe AI-modellen
+                        via Generaal Mode (Phase 41).
+
+        Returns:
+            Lijst van SwarmPayloads (één per voltooide sub-taak).
+        """
+        from danny_toolkit.brain.arbitrator import get_arbitrator
+
+        arbitrator = get_arbitrator(brain=self.brain)
+
+        # 1. Decompose
+        manifest = await arbitrator.decompose(goal)
+
+        # 2+3. Auction + Execute (Generaal Mode of Swarm Mode)
+        if use_models:
+            manifest = await arbitrator.execute_with_models(manifest)
+        else:
+            manifest = await arbitrator.execute(manifest, engine=self)
+
+        # Collect resultaten
+        results: List[SwarmPayload] = []
+        for task in manifest.taken:
+            if task.resultaat is not None and task.status == "done":
+                results.append(task.resultaat)
+
+        # 4. HallucinatieSchild — 95% Barrière
+        try:
+            from danny_toolkit.brain.hallucination_shield import (
+                get_hallucination_shield,
+            )
+            schild = get_hallucination_shield()
+            non_error = [r for r in results if r.type != "error"]
+            if non_error:
+                synthese_text = arbitrator.synthesize(manifest)
+                rapport = schild.beoordeel(non_error, synthese_text)
+                if rapport.geblokkeerd:
+                    self._swarm_metrics["schild_blocks"] += 1
+                    return [SwarmPayload(
+                        agent="HallucinatieSchild",
+                        type="text",
+                        content=(
+                            "Goal-output geblokkeerd door"
+                            " HallucinatieSchild"
+                            f" (score: {rapport.totaal_score:.2f})"
+                        ),
+                        display_text=(
+                            "\u26a0\ufe0f Goal-resultaat niet"
+                            " betrouwbaar genoeg."
+                            " Probeer het doel"
+                            " specifieker te stellen."
+                        ),
+                    )]
+        except Exception as e:
+            logger.debug("Goal HallucinatieSchild: %s", e)
+
+        # Fallback: geen resultaten
+        if not results:
+            results.append(SwarmPayload(
+                agent="Arbitrator",
+                type="text",
+                content=f"Goal kon niet worden uitgevoerd: {goal[:200]}",
+                display_text=f"Goal '{goal[:80]}' leverde geen resultaten op.",
+            ))
+
         return results
 
 

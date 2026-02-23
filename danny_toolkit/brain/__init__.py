@@ -41,6 +41,14 @@ try:
     from .black_box import get_black_box
     from .adversarial_tribunal import get_adversarial_tribunal
     from .config_auditor import ConfigAuditor, get_config_auditor
+    from .arbitrator import TaskArbitrator, get_arbitrator, GoalManifest, SwarmTask
+    from .model_sync import (
+        ModelWorker, ModelRegistry, get_model_registry,
+        ModelProfile, ModelResponse, ModelBid, ModelCapability,
+    )
+    from .introspector import SystemIntrospector, get_introspector
+    from .claude_memory import ClaudeMemory, get_claude_memory
+    from .observatory_sync import ObservatorySync, get_observatory_sync
 except ImportError:
     pass
 
@@ -77,6 +85,16 @@ __all__ = [
     "HallucinatieSchild", "get_hallucination_shield",
     "get_black_box", "get_adversarial_tribunal",
     "ConfigAuditor", "get_config_auditor",
+    "TaskArbitrator", "get_arbitrator", "GoalManifest", "SwarmTask",
+    # Phase 41: Multi-Model Sync
+    "ModelWorker", "ModelRegistry", "get_model_registry",
+    "ModelProfile", "ModelResponse", "ModelBid", "ModelCapability",
+    # Phase 42: Self-Awareness
+    "SystemIntrospector", "get_introspector",
+    # Phase 42b: Observatory Sync
+    "ObservatorySync", "get_observatory_sync",
+    # Phase 43: Claude Memory
+    "ClaudeMemory", "get_claude_memory",
     # Anti-Hallucination
     "CitationMarshall", "RealityAnchor", "TruthAnchor",
     # Subsystems
@@ -86,5 +104,5 @@ __all__ = [
     "ProjectMap", "BrainCLI",
 ]
 
-__version__ = "6.6.0"
+__version__ = "6.10.0"
 __author__ = "Danny"

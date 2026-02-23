@@ -1038,9 +1038,9 @@ class OracleAgent(Agent):
             "content": (
                 "Je bent een repair-specialist."
                 " Een swarm-taak is mislukt.\n\n"
-                f"TAAK: {taak_input}\n"
-                f"VERWACHTING: {verwachting}\n"
-                f"FOUT: {fout_beschrijving}\n"
+                f"TAAK: {str(taak_input)[:500]}\n"
+                f"VERWACHTING: {str(verwachting)[:300]}\n"
+                f"FOUT: {str(fout_beschrijving)[:500]}\n"
                 f"{extra_context}\n"
                 "Analyseer het probleem en geef"
                 " een repair plan als JSON:\n"

@@ -1,3 +1,13 @@
+"""
+BlackBox — Negative RAG / Immune Memory (v6.0 Invention).
+
+Registreert gefaalde LLM-outputs als vector embeddings (negatieve kennis).
+Genereert antibodies die escaleren (MILD → SEVERE → CRITICAL) en broadcasts
+immunity events via NeuralBus. Antibodies vervallen na 7 dagen (half-life decay).
+
+Singleton: ``get_black_box()``.
+"""
+
 import json
 import logging
 import threading
