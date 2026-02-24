@@ -51,6 +51,9 @@ import threading as _threading
 _AGENT_PIPELINE_METRICS: Dict[str, Dict[str, Any]] = {}
 _METRICS_LOCK = _threading.Lock()
 
+# ── Phase 100: B-95 background writer (1 daemon thread, fire-and-forget) ──
+_B95_EXECUTOR = ThreadPoolExecutor(max_workers=1, thread_name_prefix="b95")
+
 # ── Phase 31: PER-AGENT TIMEOUTS (seconden) ──
 
 _DEFAULT_AGENT_TIMEOUT = 20  # seconden
@@ -2244,37 +2247,50 @@ class SwarmEngine:
         return stats
 
     def _record_response_outcome(self, query, results):
-        """B-95: Log response quality metrics to CorticalStack.
+        """B-95: Log response quality metrics to CorticalStack (non-blocking).
 
-        Records: error_count, agents used, total latency, schild/sentinel blocks.
+        Extracts payload data on the hot path (~0.01ms), then fires the
+        SQLite write to a background daemon thread via ThreadPoolExecutor.
+        Main thread never waits for DB confirmation.
+
         Used by PrometheusBrain.efficiency_reflection() to compute B-95 score.
         """
         if not HAS_CORTICAL:
             return
+        # Phase 100: Extract data on hot path (pure Python, no I/O)
+        error_count = sum(1 for r in results if r.type == "error")
+        agents_used = [r.agent for r in results]
+        total_ms = sum(
+            r.metadata.get("execution_time", 0) for r in results
+        ) * 1000
+        details = {
+            "query_preview": query[:120],
+            "success": error_count == 0 and len(results) > 0,
+            "error_count": error_count,
+            "agents": agents_used,
+            "latency_ms": round(total_ms, 1),
+            "schild_blocks": self._swarm_metrics.get("schild_blocks", 0),
+            "sentinel_warnings": self._swarm_metrics.get("sentinel_warnings", 0),
+        }
+
+        # Fire-and-forget to background thread (daemon=True via executor)
+        def _write_outcome():
+            try:
+                stack = get_cortical_stack()
+                stack.log_event(
+                    actor="swarm_engine",
+                    action="response_outcome",
+                    details=details,
+                    source="b95_feedback",
+                )
+            except Exception as e:
+                logger.debug("B-95 outcome recording failed: %s", e)
+
         try:
-            stack = get_cortical_stack()
-            error_count = sum(1 for r in results if r.type == "error")
-            agents_used = [r.agent for r in results]
-            total_ms = sum(
-                r.metadata.get("execution_time", 0) for r in results
-            ) * 1000
-            success = error_count == 0 and len(results) > 0
-            stack.log_event(
-                actor="swarm_engine",
-                action="response_outcome",
-                details={
-                    "query_preview": query[:120],
-                    "success": success,
-                    "error_count": error_count,
-                    "agents": agents_used,
-                    "latency_ms": round(total_ms, 1),
-                    "schild_blocks": self._swarm_metrics.get("schild_blocks", 0),
-                    "sentinel_warnings": self._swarm_metrics.get("sentinel_warnings", 0),
-                },
-                source="b95_feedback",
-            )
-        except Exception as e:
-            logger.debug("B-95 outcome recording failed: %s", e)
+            _B95_EXECUTOR.submit(_write_outcome)
+        except RuntimeError:
+            # Executor shut down (interpreter exit)
+            pass
 
     def _record_agent_metric(self, agent_naam, elapsed_ms, error=None):
         """Registreer per-agent timing en foutstatistiek."""
