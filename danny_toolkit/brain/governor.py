@@ -16,7 +16,6 @@ NIET naar andere agents.
 import json
 import logging
 import re
-import shutil
 import time
 from collections import defaultdict
 from datetime import datetime
@@ -26,6 +25,9 @@ from pathlib import Path
 from typing import Dict, Any, Tuple
 
 
+from danny_toolkit.brain.governor_firewall import GovernorFirewallMixin
+from danny_toolkit.brain.governor_state import GovernorStateMixin
+
 try:
     from danny_toolkit.core.alerter import get_alerter, AlertLevel
     HAS_ALERTER = True
@@ -33,7 +35,7 @@ except ImportError:
     HAS_ALERTER = False
 
 
-class OmegaGovernor:
+class OmegaGovernor(GovernorFirewallMixin, GovernorStateMixin):
     """Niveau 2: De Governor (Omega-0) - Autonome Bewaker."""
 
     # Hard-coded grenzen (NIET configureerbaar door agents)
@@ -297,176 +299,8 @@ class OmegaGovernor:
         }
 
     # =================================================================
-    # A. StateGuard - Data Rescue Protocol
+    # A. StateGuard — zie governor_state.py (GovernorStateMixin)
     # =================================================================
-
-    def backup_state(self, file_path: Path) -> bool:
-        """Maak backup van state file (max 3 rotatie).
-
-        Args:
-            file_path: Pad naar het state bestand.
-
-        Returns:
-            True als backup gelukt is, anders False.
-        """
-        try:
-            if not file_path.exists():
-                return False
-
-            self._backup_dir.mkdir(parents=True, exist_ok=True)
-            self._rotate_backups(file_path)
-
-            backup_name = f"{file_path.stem}.1.json"
-            backup_path = self._backup_dir / backup_name
-
-            # Retry bij Windows file lock (WinError 32)
-            for poging in range(3):
-                try:
-                    shutil.copy2(file_path, backup_path)
-                    return True
-                except PermissionError:
-                    if poging < 2:
-                        time.sleep(0.1)
-                    else:
-                        raise
-        except Exception as e:
-            print(f"  [GOVERNOR] Backup mislukt voor "
-                  f"{file_path.name}: {e}")
-            self._log("backup_mislukt", {
-                "bestand": file_path.name,
-            })
-            return False
-
-    def restore_state(self, file_path: Path) -> bool:
-        """Herstel state file van meest recente backup.
-
-        Args:
-            file_path: Pad naar het te herstellen bestand.
-
-        Returns:
-            True als herstel gelukt is, anders False.
-        """
-        for i in range(1, self.MAX_BACKUPS_PER_FILE + 1):
-            backup_name = f"{file_path.stem}.{i}.json"
-            backup_path = self._backup_dir / backup_name
-
-            if not backup_path.exists():
-                continue
-
-            if self.validate_state(backup_path):
-                try:
-                    file_path.parent.mkdir(
-                        parents=True, exist_ok=True
-                    )
-                    shutil.copy2(backup_path, file_path)
-                    print(
-                        f"  [GOVERNOR] Hersteld: "
-                        f"{file_path.name} van backup {i}"
-                    )
-                    self._log("state_hersteld", {
-                        "bestand": file_path.name,
-                        "backup": i,
-                    })
-                    return True
-                except Exception as e:
-                    print(
-                        f"  [GOVERNOR] Herstel mislukt "
-                        f"(backup {i}): {e}"
-                    )
-                    continue
-
-        print(
-            f"  [GOVERNOR] Geen geldige backup gevonden "
-            f"voor {file_path.name}"
-        )
-        return False
-
-    def validate_state(self, file_path: Path) -> bool:
-        """Controleer of state file geldig is.
-
-        Checks: bestand bestaat, valid JSON, niet leeg.
-
-        Args:
-            file_path: Pad naar het te valideren bestand.
-
-        Returns:
-            True als het bestand geldig is.
-        """
-        try:
-            if not file_path.exists():
-                return False
-
-            if file_path.stat().st_size == 0:
-                return False
-
-            with open(file_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-
-            if not data:
-                return False
-
-            return True
-        except (json.JSONDecodeError, IOError, OSError):
-            return False
-
-    def rescue_family(self) -> Dict[str, Any]:
-        """Noodprotocol: check en herstel ALLE state files.
-
-        Returns:
-            Dict met status per bestand.
-        """
-        rapport = {
-            "timestamp": datetime.now().isoformat(),
-            "bestanden": {},
-            "hersteld": 0,
-            "gezond": 0,
-            "verloren": 0,
-        }
-
-        for filename in self.KRITIEKE_STATE_FILES:
-            file_path = self._data_dir / filename
-            status = "onbekend"
-
-            if self.validate_state(file_path):
-                status = "gezond"
-                rapport["gezond"] += 1
-            elif file_path.exists():
-                # Bestand corrupt, probeer herstel
-                if self.restore_state(file_path):
-                    status = "hersteld"
-                    rapport["hersteld"] += 1
-                else:
-                    status = "verloren"
-                    rapport["verloren"] += 1
-            else:
-                # Bestand bestaat niet, geen actie
-                status = "niet_aanwezig"
-
-            rapport["bestanden"][filename] = status
-
-        return rapport
-
-    def _rotate_backups(self, file_path: Path):
-        """Roteer backups: verwijder oudste als >MAX.
-
-        Backup nummering: .1.json (nieuwst) tot .3.json (oudst).
-        """
-        # Schuif bestaande backups op: 2->3, 1->2
-        for i in range(self.MAX_BACKUPS_PER_FILE, 1, -1):
-            old_name = f"{file_path.stem}.{i - 1}.json"
-            new_name = f"{file_path.stem}.{i}.json"
-            old_path = self._backup_dir / old_name
-            new_path = self._backup_dir / new_name
-
-            if not old_path.exists():
-                continue
-
-            try:
-                if new_path.exists():
-                    new_path.unlink()
-                shutil.move(str(old_path), str(new_path))
-            except OSError:
-                pass
 
     # =================================================================
     # B. EntityGuard - Iolaax Bescherming
@@ -1014,111 +848,8 @@ class OmegaGovernor:
         print(f"\n  {'='*50}")
 
     # =================================================================
-    # F. InputFirewall - Prompt Injectie & PII Bescherming
+    # F. InputFirewall — zie governor_firewall.py (GovernorFirewallMixin)
     # =================================================================
-
-    def registreer_tokens(self, tekst: str):
-        """Registreer geschat tokenverbruik na een LLM response.
-
-        Char-based schatting: 1 token ≈ 4 tekens.
-
-        Args:
-            tekst: De LLM response tekst.
-        """
-        if not tekst:
-            return
-        tokens = len(tekst) // 4
-        hour_key = datetime.now().strftime("%Y%m%d%H")
-        self._token_counts[hour_key] += tokens
-
-        # Cleanup: verwijder keys ouder dan 2 uur
-        current = datetime.now()
-        stale = [
-            k for k in self._token_counts
-            if k != hour_key and abs(
-                int(current.strftime("%Y%m%d%H"))
-                - int(k)
-            ) > 1
-        ]
-        for k in stale:
-            del self._token_counts[k]
-
-    def _check_token_budget(self) -> Tuple[bool, str]:
-        """Check of het token budget nog niet overschreden is.
-
-        Returns:
-            Tuple (binnen_budget: bool, reden: str).
-        """
-        hour_key = datetime.now().strftime("%Y%m%d%H")
-        used = self._token_counts.get(hour_key, 0)
-        if used >= self.MAX_TOKENS_PER_HOUR:
-            self._log("token_budget_bereikt", {
-                "used": used,
-                "max": self.MAX_TOKENS_PER_HOUR,
-            })
-            return False, (
-                "Token budget bereikt, wacht tot"
-                " volgend uur."
-            )
-        return True, "OK"
-
-    def valideer_input(
-        self, tekst: str,
-    ) -> Tuple[bool, str]:
-        """Valideer gebruikersinput op injectie en lengte.
-
-        Checks:
-        1. Lengte limiet (MAX_INPUT_LENGTH)
-        2. Prompt injectie patronen
-        3. Token budget (uurlimiet)
-
-        Args:
-            tekst: Gebruikersinput.
-
-        Returns:
-            Tuple (veilig: bool, reden: str).
-        """
-        if not tekst or not tekst.strip():
-            return True, "OK"
-
-        # Token budget check
-        budget_ok, budget_reden = self._check_token_budget()
-        if not budget_ok:
-            if HAS_ALERTER:
-                try:
-                    get_alerter().alert(
-                        AlertLevel.WAARSCHUWING,
-                        budget_reden,
-                        bron="governor",
-                    )
-                except Exception as e:
-                    logger.debug("Alerter error: %s", e)
-            return False, budget_reden
-
-        # Lengte check
-        if len(tekst) > self.MAX_INPUT_LENGTH:
-            self._log("input_te_lang", {
-                "lengte": len(tekst),
-            })
-            return False, (
-                f"Input te lang "
-                f"({len(tekst)}/{self.MAX_INPUT_LENGTH})"
-            )
-
-        # Prompt injectie detectie
-        lower = tekst.lower()
-        for patroon in self._INJECTIE_PATRONEN:
-            if re.search(patroon, lower):
-                print(
-                    "  [GOVERNOR] Prompt injectie "
-                    "gedetecteerd en geblokkeerd"
-                )
-                self._log("prompt_injectie_geblokkeerd", {
-                    "tekst_preview": tekst[:200],
-                })
-                return False, "Prompt injectie gedetecteerd"
-
-        return True, "OK"
 
     # =================================================================
     # G. Per-Provider Circuit Breakers
@@ -1210,30 +941,6 @@ class OmegaGovernor:
             error_name = type(error).__name__
             return self._FOUT_CLASSIFICATIE.get(error_name, "HERSTELBAAR")
 
-    def scrub_pii(self, tekst: str) -> str:
-        """Vervang PII in tekst door placeholders.
-
-        Detecteert email, IBAN, creditcard, telefoon
-        en vervangt door [EMAIL], [IBAN], etc.
-        Volgorde: specifiek → generiek.
-
-        Args:
-            tekst: Tekst om te scrubben.
-
-        Returns:
-            Geschoonde tekst.
-        """
-        if not tekst:
-            return tekst
-
-        resultaat = tekst
-        for label, patroon in self._PII_PATRONEN:
-            placeholder = f"[{label}]"
-            resultaat = re.sub(
-                patroon, placeholder, resultaat,
-            )
-
-        return resultaat
 
 
 # =================================================================

@@ -12,6 +12,10 @@ Componenten:
 # --- CORE INTELLIGENCE ---
 from .central_brain import CentralBrain
 from .trinity_omega import PrometheusBrain
+from .trinity_models import (
+    CosmicRole, NodeTier, TaskPriority,
+    AgentNode, OmegaSwarm, SwarmMetrics, TaskResult,
+)
 from .governor import OmegaGovernor
 from .cortical_stack import CorticalStack, get_cortical_stack
 from .unified_memory import UnifiedMemory
@@ -73,6 +77,9 @@ __all__ = [
     # Core Intelligence
     "CentralBrain", "PrometheusBrain", "OmegaGovernor",
     "CorticalStack", "get_cortical_stack", "UnifiedMemory",
+    # Trinity Models
+    "CosmicRole", "NodeTier", "TaskPriority",
+    "AgentNode", "OmegaSwarm", "SwarmMetrics", "TaskResult",
     # v6.0 Inventions
     "Strategist", "Tribunal", "AdversarialTribunal",
     "VoidWalker", "Artificer", "BlackBox",
