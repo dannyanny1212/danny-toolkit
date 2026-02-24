@@ -183,17 +183,13 @@ class Alerter:
                 self._alert_stats["mislukt"] += 1
 
         # 2. CorticalStack audit
-        try:
-            from danny_toolkit.brain.cortical_stack import get_cortical_stack
-            stack = get_cortical_stack()
-            stack.log_event(
-                actor="alerter",
-                action="alert_sent",
-                details={"niveau": niveau, "bericht": bericht, "bron": bron},
-                source="alerter",
-            )
-        except Exception as e:
-            logger.debug("CorticalStack alert log mislukt: %s", e)
+        from danny_toolkit.core.memory_interface import log_to_cortical
+        log_to_cortical(
+            actor="alerter",
+            action="alert_sent",
+            details={"niveau": niveau, "bericht": bericht, "bron": bron},
+            source="alerter",
+        )
 
         # 3. NeuralBus broadcast
         try:
@@ -246,17 +242,13 @@ class Alerter:
                 self._alert_stats["mislukt"] += 1
 
         # 2. CorticalStack audit
-        try:
-            from danny_toolkit.brain.cortical_stack import get_cortical_stack
-            stack = get_cortical_stack()
-            stack.log_event(
-                actor="alerter",
-                action="alert_sent",
-                details={"niveau": niveau, "bericht": bericht, "bron": bron},
-                source="alerter",
-            )
-        except Exception as e:
-            logger.debug("CorticalStack alert log mislukt: %s", e)
+        from danny_toolkit.core.memory_interface import log_to_cortical
+        log_to_cortical(
+            actor="alerter",
+            action="alert_sent",
+            details={"niveau": niveau, "bericht": bericht, "bron": bron},
+            source="alerter",
+        )
 
         # 3. NeuralBus broadcast
         try:

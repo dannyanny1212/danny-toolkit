@@ -52,11 +52,7 @@ except ImportError:
     class Kleur:
         GROEN = ROOD = GEEL = CYAAN = RESET = ""
 
-try:
-    from danny_toolkit.brain.cortical_stack import get_cortical_stack
-    HAS_STACK = True
-except ImportError:
-    HAS_STACK = False
+from danny_toolkit.core.memory_interface import log_to_cortical as _log_cortical_fn
 
 try:
     from danny_toolkit.core.alerter import get_alerter, AlertLevel
@@ -311,17 +307,11 @@ class ShadowAirlock:
 
     def _log_naar_cortical(self, actie: str, details: dict):
         """Log airlock-activiteit naar CorticalStack."""
-        if not HAS_STACK:
-            return
-        try:
-            stack = get_cortical_stack()
-            stack.log_event(
-                actor="shadow_airlock",
-                action=actie,
-                details=details,
-            )
-        except Exception as e:
-            logger.debug("CorticalStack log mislukt: %s", e)
+        _log_cortical_fn(
+            actor="shadow_airlock",
+            action=actie,
+            details=details,
+        )
 
     def scan_en_verwerk(self) -> Dict:
         """Één volledige scan-cyclus: scan → repareer → valideer → promoveer → ingest.

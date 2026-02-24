@@ -47,10 +47,10 @@ class SelfRepairProtocol:
 
     @property
     def governor(self):
-        """Lazy OmegaGovernor."""
+        """Lazy OmegaGovernor via memory_interface."""
         if self._governor is None:
-            from danny_toolkit.brain.governor import OmegaGovernor
-            self._governor = OmegaGovernor()
+            from danny_toolkit.core.memory_interface import get_governor
+            self._governor = get_governor()
         return self._governor
 
     @property

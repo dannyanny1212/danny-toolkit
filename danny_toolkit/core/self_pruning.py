@@ -933,21 +933,17 @@ class SelfPruning:
 
     def _log_cortical(self, resultaat: dict):
         """Log prune resultaat naar CorticalStack."""
-        try:
-            from danny_toolkit.brain.cortical_stack import get_cortical_stack
-            stack = get_cortical_stack()
-            stack.log_event(
-                actor="self_pruning",
-                event_type="prune_complete",
-                detail=(
-                    f"gearchiveerd={resultaat['gearchiveerd']}, "
-                    f"vernietigd={resultaat['vernietigd']}, "
-                    f"entropie={resultaat['entropie_geflagd']}, "
-                    f"duur={resultaat['duur_ms']}ms"
-                ),
-            )
-        except Exception as e:
-            logger.debug("SelfPruning CorticalStack log fout: %s", e)
+        from danny_toolkit.core.memory_interface import log_to_cortical
+        log_to_cortical(
+            actor="self_pruning",
+            action="prune_complete",
+            details={
+                "gearchiveerd": resultaat["gearchiveerd"],
+                "vernietigd": resultaat["vernietigd"],
+                "entropie_geflagd": resultaat["entropie_geflagd"],
+                "duur_ms": resultaat["duur_ms"],
+            },
+        )
 
 
 # ─── Singleton ────────────────────────────────────────────

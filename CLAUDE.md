@@ -276,7 +276,8 @@ main.py (launcher), cli.py (Rich terminal), brain_cli.py (brain CLI), run_daemon
 | Phase 100: Sovereign Awakening | `f20ba056` | 176-module Sovereign Roadmap + B-95 feedback loop + session state |
 | Cortical Speed Upgrade | `b987fe72` | `_record_response_outcome()` → fire-and-forget background thread |
 | Fase B.2: Fallback Redesign | `07950c14` | Recursive→linear provider chain, 5 bugs fixed, -101 lines |
-| Fase B.3: Rate-limit Queue | pending commit | Exact wait times replacing 1s polling in async_enqueue() |
+| Fase B.3: Rate-limit Queue | `a7a411b3` | Exact wait times replacing 1s polling in async_enqueue() |
+| Fase C.1: Memory Interface | pending commit | core/memory_interface.py gateway, 7 brain imports→1 |
 
 ### Latency Benchmarks (Cortical Speed Upgrade)
 | Metric | Before | After | Reduction |
@@ -300,6 +301,6 @@ main.py (launcher), cli.py (Rich terminal), brain_cli.py (brain CLI), run_daemon
 ### Pending Work (Requires Tribunal Approval)
 - **Fase B.2**: ~~Fallback-chain redesign~~ DONE
 - **Fase B.3**: ~~Rate-limit queue→event-based exact wait times~~ DONE
-- **Fase C.1**: `/core/`↔`/brain/` grens (IMemoryStore interface, 5 violations)
+- **Fase C.1**: ~~`/core/`↔`/brain/` grens~~ DONE (memory_interface.py gateway)
 - **Fase C.2**: Monoliet splits (trinity_omega 2167L, security_research 2111L, governor 1252L)
 - **Fase C.3**: oracle.py + ultimate_hunt.py verplaatsen /core/→/brain/ (Tribunal: grensschending bevestigen)

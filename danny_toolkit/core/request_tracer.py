@@ -252,23 +252,17 @@ class RequestTracer:
             logger.debug("RequestTracer NeuralBus fout: %s", e)
 
         # CorticalStack logging
-        try:
-            from danny_toolkit.brain.cortical_stack import (
-                get_cortical_stack,
-            )
-            stack = get_cortical_stack()
-            stack.log_event(
-                actor="RequestTracer",
-                action="trace_complete",
-                details={
-                    "trace_id": trace.trace_id,
-                    "duration_ms": trace.duration_ms,
-                    "spans": len(trace.spans),
-                    "fouten": len(trace.fout_ids),
-                },
-            )
-        except Exception as e:
-            logger.debug("RequestTracer CorticalStack fout: %s", e)
+        from danny_toolkit.core.memory_interface import log_to_cortical
+        log_to_cortical(
+            actor="RequestTracer",
+            action="trace_complete",
+            details={
+                "trace_id": trace.trace_id,
+                "duration_ms": trace.duration_ms,
+                "spans": len(trace.spans),
+                "fouten": len(trace.fout_ids),
+            },
+        )
 
         return trace
 
