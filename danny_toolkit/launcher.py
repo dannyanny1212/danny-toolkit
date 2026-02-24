@@ -17,72 +17,72 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-from .core.utils import (
+from danny_toolkit.core.utils import (
     clear_scherm, fix_encoding, kleur, succes, fout, waarschuwing, info,
     vet, Kleur, TabelFormatter, kies_uit_lijst
 )
-from .core.config import Config, Thema, Taal
+from danny_toolkit.core.config import Config, Thema, Taal
 
-from .apps.boodschappenlijst import BoodschappenlijstApp
-from .apps.rekenmachine import RekenmachineApp
-from .apps.virtueel_huisdier import VirtueelHuisdierApp
-from .apps.schatzoek import SchatzoekApp
-from .apps.code_analyse import CodeAnalyseApp
-from .apps.notitie_app import NotitieApp
-from .apps.wachtwoord_generator import WachtwoordGeneratorApp
-from .apps.pomodoro_timer import PomodoroTimerApp
-from .apps.habit_tracker import HabitTrackerApp
-from .apps.expense_tracker import ExpenseTrackerApp
-from .apps.flashcards import FlashcardsApp
-from .apps.unit_converter import UnitConverterApp
-from .apps.agenda_planner import AgendaPlannerApp
-from .apps.mood_tracker import MoodTrackerApp
-from .apps.citaten_generator import CitatenGeneratorApp
-from .ai.vector_studio import VectorStudioApp
-from .apps.goals_tracker import GoalsTrackerApp
-from .apps.room_planner import RoomPlannerApp
-from .ai.artificial_life import ArtificialLifeApp
-from .ai.nlp_studio import NLPStudioApp
-from .apps.music_composer import MusicComposerApp
-from .apps.recipe_generator import RecipeGeneratorApp
-from .apps.fitness_tracker import FitnessTrackerApp
-from .apps.dream_journal import DreamJournalApp
-from .apps.code_snippets import CodeSnippetsApp
-from .apps.language_tutor import LanguageTutorApp
-from .apps.decision_maker import DecisionMakerApp
-from .apps.time_capsule import TimeCapsuleApp
-from .ai.advanced_questions import AdvancedQuestionsApp
-from .ai.ml_studio import MLStudioApp
-from .ai.knowledge_companion import KnowledgeCompanionApp
-from .ai.legendary_companion import LegendaryCompanionApp
+from danny_toolkit.apps.boodschappenlijst import BoodschappenlijstApp
+from danny_toolkit.apps.rekenmachine import RekenmachineApp
+from danny_toolkit.apps.virtueel_huisdier import VirtueelHuisdierApp
+from danny_toolkit.apps.schatzoek import SchatzoekApp
+from danny_toolkit.apps.code_analyse import CodeAnalyseApp
+from danny_toolkit.apps.notitie_app import NotitieApp
+from danny_toolkit.apps.wachtwoord_generator import WachtwoordGeneratorApp
+from danny_toolkit.apps.pomodoro_timer import PomodoroTimerApp
+from danny_toolkit.apps.habit_tracker import HabitTrackerApp
+from danny_toolkit.apps.expense_tracker import ExpenseTrackerApp
+from danny_toolkit.apps.flashcards import FlashcardsApp
+from danny_toolkit.apps.unit_converter import UnitConverterApp
+from danny_toolkit.apps.agenda_planner import AgendaPlannerApp
+from danny_toolkit.apps.mood_tracker import MoodTrackerApp
+from danny_toolkit.apps.citaten_generator import CitatenGeneratorApp
+from danny_toolkit.ai.vector_studio import VectorStudioApp
+from danny_toolkit.apps.goals_tracker import GoalsTrackerApp
+from danny_toolkit.apps.room_planner import RoomPlannerApp
+from danny_toolkit.ai.artificial_life import ArtificialLifeApp
+from danny_toolkit.ai.nlp_studio import NLPStudioApp
+from danny_toolkit.apps.music_composer import MusicComposerApp
+from danny_toolkit.apps.recipe_generator import RecipeGeneratorApp
+from danny_toolkit.apps.fitness_tracker import FitnessTrackerApp
+from danny_toolkit.apps.dream_journal import DreamJournalApp
+from danny_toolkit.apps.code_snippets import CodeSnippetsApp
+from danny_toolkit.apps.language_tutor import LanguageTutorApp
+from danny_toolkit.apps.decision_maker import DecisionMakerApp
+from danny_toolkit.apps.time_capsule import TimeCapsuleApp
+from danny_toolkit.ai.advanced_questions import AdvancedQuestionsApp
+from danny_toolkit.ai.ml_studio import MLStudioApp
+from danny_toolkit.ai.knowledge_companion import KnowledgeCompanionApp
+from danny_toolkit.ai.legendary_companion import LegendaryCompanionApp
 
-from .ai.mini_rag import MiniRAG
-from .ai.production_rag import ProductionRAG
-from .ai.nieuws_agent import NieuwsAgentApp
-from .ai.weer_agent import WeerAgentApp
-from .ai.claude_chat import ClaudeChatApp
-from .brain.brain_cli import BrainCLI
-from .brain.trinity_symbiosis import (
+from danny_toolkit.ai.mini_rag import MiniRAG
+from danny_toolkit.ai.production_rag import ProductionRAG
+from danny_toolkit.ai.nieuws_agent import NieuwsAgentApp
+from danny_toolkit.ai.weer_agent import WeerAgentApp
+from danny_toolkit.ai.claude_chat import ClaudeChatApp
+from danny_toolkit.brain.brain_cli import BrainCLI
+from danny_toolkit.brain.trinity_symbiosis import (
     TrinitySymbiosis, TrinityRole, get_trinity,
     connect_iolaax, connect_pixel, connect_daemon, emit_trinity_event
 )
-from .daemon.daemon_core import DigitalDaemon
-from .main_omega import OmegaAI
-from .brain.sanctuary_dashboard import SanctuaryDashboard, get_sanctuary
-from .brain.dream_monitor import dream_monitor, quick_peek
-from .brain.nexus_bridge import (
+from danny_toolkit.daemon.daemon_core import DigitalDaemon
+from danny_toolkit.main_omega import OmegaAI
+from danny_toolkit.brain.sanctuary_dashboard import SanctuaryDashboard, get_sanctuary
+from danny_toolkit.brain.dream_monitor import dream_monitor, quick_peek
+from danny_toolkit.brain.nexus_bridge import (
     NexusBridge, create_nexus_bridge,
     get_nexus_greeting, NexusOracleMode,
 )
-from .brain.trinity_omega import PrometheusBrain, get_prometheus
-from .brain.visual_nexus import VisualNexus, build_visual_nexus
-from .brain.project_map import ProjectMap
-from .brain.singularity import SingularityEngine
-from .brain.file_guard import FileGuard
-from .brain.security_research import SecurityResearchEngine
+from danny_toolkit.brain.trinity_omega import PrometheusBrain, get_prometheus
+from danny_toolkit.brain.visual_nexus import VisualNexus, build_visual_nexus
+from danny_toolkit.brain.project_map import ProjectMap
+from danny_toolkit.brain.singularity import SingularityEngine
+from danny_toolkit.brain.file_guard import FileGuard
+from danny_toolkit.brain.security_research import SecurityResearchEngine
 
 try:
-    from .brain.strategist import Strategist
+    from danny_toolkit.brain.strategist import Strategist
     HAS_STRATEGIST = True
 except ImportError:
     HAS_STRATEGIST = False
@@ -111,7 +111,7 @@ class DaemonApp:
 
     def run(self):
         """Start de daemon interactief."""
-        from .core.utils import clear_scherm, kleur
+        from danny_toolkit.core.utils import clear_scherm, kleur
 
         self.daemon = DigitalDaemon("Nexus")
         self.daemon.awaken()
@@ -164,7 +164,7 @@ class DaemonApp:
 
                 elif cmd.startswith("form "):
                     form_name = cmd.split()[1] if len(cmd.split()) > 1 else ""
-                    from .daemon.limbic_system import AvatarForm
+                    from danny_toolkit.daemon.limbic_system import AvatarForm
                     try:
                         form = AvatarForm(form_name)
                         self.daemon.force_form(form)
@@ -201,7 +201,7 @@ class TrinityApp:
 
     def run(self):
         """Start de Trinity Symbiosis interface."""
-        from .core.utils import clear_scherm, kleur
+        from danny_toolkit.core.utils import clear_scherm, kleur
 
         clear_scherm()
         print(kleur("""
@@ -286,7 +286,7 @@ class TrinityApp:
 
     def _run_test(self):
         """Voer een symbiose test uit."""
-        from .core.utils import kleur
+        from danny_toolkit.core.utils import kleur
         import time
 
         print(kleur("\n  TRINITY SYMBIOSE TEST", Kleur.MAGENTA))
@@ -334,7 +334,7 @@ class SanctuaryApp:
 
     def run(self):
         """Start het Sanctuary Dashboard interactief."""
-        from .core.utils import clear_scherm, kleur
+        from danny_toolkit.core.utils import clear_scherm, kleur
 
         sanctuary = get_sanctuary()
 
@@ -419,7 +419,7 @@ class DreamMonitorApp:
 
     def run(self):
         """Start de Dream Monitor."""
-        from .core.utils import clear_scherm
+        from danny_toolkit.core.utils import clear_scherm
 
         clear_scherm()
         print(kleur("""
@@ -451,7 +451,7 @@ class NexusBridgeApp:
 
     def run(self):
         """Start de Nexus Bridge interactief."""
-        from .core.utils import clear_scherm
+        from danny_toolkit.core.utils import clear_scherm
 
         clear_scherm()
         print(kleur("""
@@ -556,7 +556,7 @@ class PrometheusApp:
 
     def run(self):
         """Start Prometheus Brain interactief."""
-        from .core.utils import clear_scherm
+        from danny_toolkit.core.utils import clear_scherm
 
         clear_scherm()
         print(kleur("""
@@ -683,8 +683,8 @@ class PixelEyeApp:
 
     def run(self):
         """Start Pixel Eye interactief."""
-        from .core.utils import clear_scherm
-        from .skills.pixel_eye import PixelEye
+        from danny_toolkit.core.utils import clear_scherm
+        from danny_toolkit.skills.pixel_eye import PixelEye
 
         clear_scherm()
         print(kleur("""
@@ -934,7 +934,7 @@ class OracleAgentApp:
 
     def run(self):
         """Start de Oracle Agent interactief."""
-        from .core.oracle import OracleAgent
+        from danny_toolkit.core.oracle import OracleAgent
 
         agent = OracleAgent()
         agent.run()
@@ -949,7 +949,7 @@ class VoiceProtocolApp:
 
     def run(self):
         """Start Voice Protocol simulatie."""
-        from .quests.voice_protocol import VoiceProtocol
+        from danny_toolkit.quests.voice_protocol import VoiceProtocol
 
         print(kleur(
             "\n  QUEST X: THE VOICE\n"
@@ -971,7 +971,7 @@ class ListenerProtocolApp:
     """Wrapper voor Listener Protocol in launcher."""
 
     def run(self):
-        from .quests.listener_protocol import ListenerProtocol
+        from danny_toolkit.quests.listener_protocol import ListenerProtocol
 
         print(kleur(
             "\n  QUEST XI: THE LISTENER\n"
@@ -993,7 +993,7 @@ class DialogueProtocolApp:
     """Wrapper voor Dialogue Protocol in launcher."""
 
     def run(self):
-        from .quests.dialogue_protocol import DialogueProtocol
+        from danny_toolkit.quests.dialogue_protocol import DialogueProtocol
         print(kleur(
             "\n  QUEST XII: THE DIALOGUE\n"
             "  Pixel Converseert - Spraakdialoog\n",
@@ -1014,7 +1014,7 @@ class WillProtocolApp:
     """Wrapper voor Will Protocol in launcher."""
 
     def run(self):
-        from .quests.will_protocol import WillProtocol
+        from danny_toolkit.quests.will_protocol import WillProtocol
 
         print(kleur(
             "\n  QUEST XIII: THE WILL\n"
@@ -1039,7 +1039,7 @@ class HeartbeatApp:
         """Start de Heartbeat Daemon met SwarmEngine."""
         import io
         from contextlib import redirect_stdout
-        from .core.utils import clear_scherm
+        from danny_toolkit.core.utils import clear_scherm
 
         clear_scherm()
         print(kleur("""
@@ -1057,7 +1057,7 @@ class HeartbeatApp:
         try:
             buf = io.StringIO()
             with redirect_stdout(buf):
-                from .brain.trinity_omega import (
+                from danny_toolkit.brain.trinity_omega import (
                     PrometheusBrain,
                 )
                 brain = PrometheusBrain()
@@ -1073,7 +1073,7 @@ class HeartbeatApp:
                 Kleur.GEEL,
             ))
 
-        from .daemon.heartbeat import HeartbeatDaemon
+        from danny_toolkit.daemon.heartbeat import HeartbeatDaemon
         daemon = HeartbeatDaemon(brain=brain)
         daemon.start()
 
@@ -1103,7 +1103,7 @@ class PulseProtocolApp:
 
     def run(self):
         """Start Pulse Protocol simulatie."""
-        from .quests.pulse_protocol import PulseProtocol
+        from danny_toolkit.quests.pulse_protocol import PulseProtocol
 
         print(kleur(
             "\n  QUEST IX: THE PULSE PROTOCOL\n"
@@ -1135,7 +1135,7 @@ class FastAPIApp:
 
     def run(self):
         """Start de FastAPI server."""
-        from .core.utils import clear_scherm
+        from danny_toolkit.core.utils import clear_scherm
 
         clear_scherm()
         print(kleur("""
@@ -1180,7 +1180,7 @@ class TelegramBotApp:
 
     def run(self):
         """Start de Telegram bot."""
-        from .core.utils import clear_scherm
+        from danny_toolkit.core.utils import clear_scherm
 
         clear_scherm()
         print(kleur("""

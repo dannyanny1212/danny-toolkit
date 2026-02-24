@@ -90,7 +90,7 @@ class ProactiveEngine:
         """Lazy OmegaGovernor."""
         if self._governor is None:
             try:
-                from .governor import OmegaGovernor
+                from danny_toolkit.brain.governor import OmegaGovernor
                 self._governor = OmegaGovernor()
             except Exception as e:
                 logger.debug("OmegaGovernor init failed: %s", e)
@@ -101,7 +101,7 @@ class ProactiveEngine:
         """Lazy CorticalStack."""
         if self._stack is None:
             try:
-                from .cortical_stack import (
+                from danny_toolkit.brain.cortical_stack import (
                     get_cortical_stack,
                 )
                 self._stack = get_cortical_stack()
@@ -225,7 +225,7 @@ class ProactiveEngine:
     def _verbind_sensorium(self):
         """Registreer listeners bij Sensorium."""
         try:
-            from ..daemon.sensorium import EventType
+            from danny_toolkit.daemon.sensorium import EventType
             sensorium = self.daemon.sensorium
 
             event_types = [
@@ -480,7 +480,7 @@ class ProactiveEngine:
     def _run_repair(self):
         """Voer SelfRepairProtocol diagnose uit."""
         try:
-            from ..core.self_repair import (
+            from danny_toolkit.core.self_repair import (
                 SelfRepairProtocol,
             )
             protocol = SelfRepairProtocol()

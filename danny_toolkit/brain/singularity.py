@@ -16,7 +16,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List
 
-from ..core.utils import kleur, Kleur
+from danny_toolkit.core.utils import kleur, Kleur
 
 import logging
 logger = logging.getLogger(__name__)
@@ -91,7 +91,7 @@ class SingularityEngine:
         """Lazy OmegaGovernor."""
         if self._governor is None:
             try:
-                from .governor import OmegaGovernor
+                from danny_toolkit.brain.governor import OmegaGovernor
                 self._governor = OmegaGovernor()
             except Exception as e:
                 logger.debug("OmegaGovernor init failed: %s", e)
@@ -102,7 +102,7 @@ class SingularityEngine:
         """Lazy CorticalStack."""
         if self._stack is None:
             try:
-                from .cortical_stack import (
+                from danny_toolkit.brain.cortical_stack import (
                     get_cortical_stack,
                 )
                 self._stack = get_cortical_stack()
@@ -354,7 +354,7 @@ class SingularityEngine:
             if proactive is None:
                 return
 
-            from .proactive import ProactiveRule
+            from danny_toolkit.brain.proactive import ProactiveRule
             regel_naam = f"auto_{actor}_repair"
 
             # Check of regel al bestaat
@@ -672,7 +672,7 @@ class SingularityEngine:
             reden.
         """
         try:
-            from ..swarm_engine import AdaptiveRouter
+            from danny_toolkit.swarm_engine import AdaptiveRouter
         except ImportError:
             try:
                 import sys
@@ -859,7 +859,7 @@ class SingularityEngine:
             try:
                 proactive = self._daemon.proactive
                 if proactive is not None:
-                    from .proactive import (
+                    from danny_toolkit.brain.proactive import (
                         ProactiveRule,
                     )
                     for uur, actor in patronen:
@@ -1003,7 +1003,7 @@ class SingularityEngine:
 
         self._laatste_synthese = now
 
-        from .trinity_omega import (
+        from danny_toolkit.brain.trinity_omega import (
             CosmicRole, TaskPriority,
         )
 

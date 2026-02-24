@@ -17,33 +17,33 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
-from .core.utils import (
+from danny_toolkit.core.utils import (
     kleur, Kleur, succes, fout, waarschuwing, info,
     fix_encoding, clear_scherm,
 )
-from .daemon.daemon_core import DigitalDaemon
+from danny_toolkit.daemon.daemon_core import DigitalDaemon
 
 try:
-    from .brain.strategist import Strategist
+    from danny_toolkit.brain.strategist import Strategist
     HAS_STRATEGIST = True
 except ImportError:
     HAS_STRATEGIST = False
 
 try:
-    from .brain.cortex import TheCortex
+    from danny_toolkit.brain.cortex import TheCortex
     HAS_CORTEX = True
 except ImportError:
     HAS_CORTEX = False
 
 try:
-    from .brain.oracle_eye import TheOracleEye
+    from danny_toolkit.brain.oracle_eye import TheOracleEye
     HAS_ORACLE = True
 except ImportError:
     HAS_ORACLE = False
-from .daemon.sensorium import EventType
-from .daemon.limbic_system import Mood, AvatarForm
-from .learning.orchestrator import LearningSystem
-from .brain.governor import OmegaGovernor
+from danny_toolkit.daemon.sensorium import EventType
+from danny_toolkit.daemon.limbic_system import Mood, AvatarForm
+from danny_toolkit.learning.orchestrator import LearningSystem
+from danny_toolkit.brain.governor import OmegaGovernor
 
 
 # Mood naar kleurcode mapping
@@ -165,21 +165,21 @@ class OmegaAI:
     def _get_voice(self):
         """Lazy-init voice protocol."""
         if self._voice is None:
-            from .quests.voice_protocol import VoiceProtocol
+            from danny_toolkit.quests.voice_protocol import VoiceProtocol
             self._voice = VoiceProtocol()
         return self._voice
 
     def _get_listener(self):
         """Lazy-init listener protocol."""
         if self._listener is None:
-            from .quests.listener_protocol import ListenerProtocol
+            from danny_toolkit.quests.listener_protocol import ListenerProtocol
             self._listener = ListenerProtocol()
         return self._listener
 
     def _get_dialogue(self):
         """Lazy-init dialogue protocol."""
         if self._dialogue is None:
-            from .quests.dialogue_protocol import (
+            from danny_toolkit.quests.dialogue_protocol import (
                 DialogueProtocol,
             )
             self._dialogue = DialogueProtocol()
@@ -188,7 +188,7 @@ class OmegaAI:
     def _get_will(self):
         """Lazy-init will protocol."""
         if self._will is None:
-            from .quests.will_protocol import WillProtocol
+            from danny_toolkit.quests.will_protocol import WillProtocol
             self._will = WillProtocol()
             self._will.koppel_systemen(
                 sensorium=self.daemon.sensorium,
@@ -469,7 +469,7 @@ class OmegaAI:
 
     def _run_pulse_protocol(self):
         """Activeer Quest IX: The Pulse Protocol."""
-        from .quests.pulse_protocol import PulseProtocol
+        from danny_toolkit.quests.pulse_protocol import PulseProtocol
 
         print(kleur(
             "\n  [VITA] Bio-Wallet activeren...\n",

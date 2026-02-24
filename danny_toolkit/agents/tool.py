@@ -12,8 +12,8 @@ from dataclasses import dataclass, field
 from typing import Optional, Callable, Any, Union
 from enum import Enum
 
-from ..core.config import Config
-from ..core.utils import kleur, Kleur
+from danny_toolkit.core.config import Config
+from danny_toolkit.core.utils import kleur, Kleur
 
 
 class ToolCategory(Enum):

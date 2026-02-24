@@ -13,7 +13,7 @@ Spelers:
 - METABOLISME    (energie)     - Levenskracht
 """
 
-from ..core.utils import kleur, Kleur, succes, fout, info
+from danny_toolkit.core.utils import kleur, Kleur, succes, fout, info
 
 
 class DaemonProtocol:
@@ -26,7 +26,7 @@ class DaemonProtocol:
     def _init_daemon(self):
         """Initialiseer de Digital Daemon."""
         try:
-            from ..daemon.daemon_core import DigitalDaemon
+            from danny_toolkit.daemon.daemon_core import DigitalDaemon
             self.daemon = DigitalDaemon()
         except Exception as e:
             self.daemon = None

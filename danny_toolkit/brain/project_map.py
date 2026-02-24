@@ -17,7 +17,7 @@ if os.name == "nt":
     if hasattr(sys.stderr, "reconfigure"):
         sys.stderr.reconfigure(encoding="utf-8")
 
-from ..core.utils import kleur, Kleur, clear_scherm
+from danny_toolkit.core.utils import kleur, Kleur, clear_scherm
 
 # ─── Paden (zelfde als config.py in root) ───
 _ROOT = Path(__file__).parent.parent.parent
@@ -65,7 +65,7 @@ class ProjectMap:
         """Met embedding functie (voor .query())."""
         if self._query_collection is None:
             import chromadb
-            from ..core.embeddings import get_chroma_embed_fn
+            from danny_toolkit.core.embeddings import get_chroma_embed_fn
 
             # Suppress model load spam
             import io as _io

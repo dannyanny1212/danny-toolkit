@@ -12,8 +12,8 @@ Spelers:
 - NUTRITION   (voedingswaarde) - Event -> energie mapping
 """
 
-from ..core.utils import kleur, Kleur, succes, fout, info
-from ..daemon.sensorium import Sensorium, EventType
+from danny_toolkit.core.utils import kleur, Kleur, succes, fout, info
+from danny_toolkit.daemon.sensorium import Sensorium, EventType
 
 
 class SensesProtocol:

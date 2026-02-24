@@ -16,8 +16,8 @@ Features:
 import json
 import logging
 from datetime import datetime
-from ..core.config import Config
-from ..core.utils import clear_scherm, kleur, Kleur, succes, fout, waarschuwing, info
+from danny_toolkit.core.config import Config
+from danny_toolkit.core.utils import clear_scherm, kleur, Kleur, succes, fout, waarschuwing, info
 
 logger = logging.getLogger(__name__)
 
@@ -205,7 +205,7 @@ class BoodschappenlijstApp:
         """Log event naar Unified Memory."""
         try:
             if not hasattr(self, "_memory"):
-                from ..brain.unified_memory import UnifiedMemory
+                from danny_toolkit.brain.unified_memory import UnifiedMemory
                 self._memory = UnifiedMemory()
             self._memory.store_event(
                 app="boodschappenlijst",

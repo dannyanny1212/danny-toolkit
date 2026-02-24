@@ -7,8 +7,8 @@ import json
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional
-from ..core.config import Config
-from ..core.utils import clear_scherm
+from danny_toolkit.core.config import Config
+from danny_toolkit.core.utils import clear_scherm
 
 # AI Integration
 try:

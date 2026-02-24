@@ -17,8 +17,8 @@ from enum import Enum
 
 logger = logging.getLogger(__name__)
 
-from ..core.config import Config
-from .sensorium import Sensorium, EventType
+from danny_toolkit.core.config import Config
+from danny_toolkit.daemon.sensorium import Sensorium, EventType
 
 
 class MetabolicState(Enum):

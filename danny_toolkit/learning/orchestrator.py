@@ -10,14 +10,14 @@ SelfImprovementEngine voor echte self-learning.
 
 from typing import Optional
 
-from ..core.config import Config
-from .memory import UnifiedMemory
-from .tracker import InteractionTracker
-from .patterns import PatternRecognizer
-from .optimizer import KnowledgeOptimizer
-from .feedback_manager import FeedbackManager
-from .performance_analyzer import PerformanceAnalyzer
-from .self_improvement import SelfImprovementEngine
+from danny_toolkit.core.config import Config
+from danny_toolkit.learning.memory import UnifiedMemory
+from danny_toolkit.learning.tracker import InteractionTracker
+from danny_toolkit.learning.patterns import PatternRecognizer
+from danny_toolkit.learning.optimizer import KnowledgeOptimizer
+from danny_toolkit.learning.feedback_manager import FeedbackManager
+from danny_toolkit.learning.performance_analyzer import PerformanceAnalyzer
+from danny_toolkit.learning.self_improvement import SelfImprovementEngine
 
 
 class LearningSystem:

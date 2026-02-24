@@ -44,7 +44,7 @@ except ImportError:
 
 # Try imports
 try:
-    from ..core.config import Config
+    from danny_toolkit.core.config import Config
     HAS_CONFIG = True
 except ImportError:
     HAS_CONFIG = False

@@ -12,8 +12,8 @@ Spelers:
 - AVATAR FORM   (7 vormen)     - Visuele representatie
 """
 
-from ..core.utils import kleur, Kleur, succes, fout, info
-from ..daemon.limbic_system import (
+from danny_toolkit.core.utils import kleur, Kleur, succes, fout, info
+from danny_toolkit.daemon.limbic_system import (
     LimbicSystem, Mood, EnergyState, AvatarForm,
 )
 

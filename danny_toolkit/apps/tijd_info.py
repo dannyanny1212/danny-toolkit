@@ -7,8 +7,8 @@ Toont epoch-tijd, lokale tijd, UTC, en tijdsverschillen.
 import logging
 import time
 from datetime import datetime, timezone
-from ..core.utils import clear_scherm
-from .base_app import BaseApp
+from danny_toolkit.core.utils import clear_scherm
+from danny_toolkit.apps.base_app import BaseApp
 
 logger = logging.getLogger(__name__)
 

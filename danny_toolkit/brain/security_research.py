@@ -38,8 +38,8 @@ try:
 except ImportError:
     HAS_REQUESTS = False
 
-from ..core.config import Config
-from ..core.utils import kleur, Kleur
+from danny_toolkit.core.config import Config
+from danny_toolkit.core.utils import kleur, Kleur
 
 import logging
 logger = logging.getLogger(__name__)
@@ -372,7 +372,7 @@ class SecurityResearchEngine:
     def governor(self):
         if self._governor is None:
             try:
-                from .governor import OmegaGovernor
+                from danny_toolkit.brain.governor import OmegaGovernor
                 self._governor = OmegaGovernor()
             except Exception as e:
                 logger.debug("OmegaGovernor init failed: %s", e)
@@ -382,7 +382,7 @@ class SecurityResearchEngine:
     def stack(self):
         if self._stack is None:
             try:
-                from .cortical_stack import (
+                from danny_toolkit.brain.cortical_stack import (
                     get_cortical_stack,
                 )
                 self._stack = get_cortical_stack()
@@ -394,7 +394,7 @@ class SecurityResearchEngine:
     def file_guard(self):
         if self._file_guard is None:
             try:
-                from .file_guard import FileGuard
+                from danny_toolkit.brain.file_guard import FileGuard
                 self._file_guard = FileGuard()
             except Exception as e:
                 logger.debug("FileGuard init failed: %s", e)
@@ -404,7 +404,7 @@ class SecurityResearchEngine:
     def coherentie(self):
         if self._coherentie is None:
             try:
-                from ..daemon.coherentie import (
+                from danny_toolkit.daemon.coherentie import (
                     CoherentieMonitor,
                 )
                 self._coherentie = CoherentieMonitor()
@@ -979,7 +979,7 @@ class SecurityResearchEngine:
 
         # ChromaDB search
         try:
-            from ..ai.production_rag import ProductionRAG
+            from danny_toolkit.ai.production_rag import ProductionRAG
             rag = ProductionRAG()
             if hasattr(rag, "zoek") or hasattr(rag, "search"):
                 for term in self._RAG_ZOEKTERMEN[:4]:

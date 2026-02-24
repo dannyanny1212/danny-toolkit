@@ -16,9 +16,9 @@ Mood -> Emotion mapping:
   SICK     -> SAD       (Diep, zwak)
 """
 
-from ..core.utils import kleur, Kleur, info, succes, fout
-from ..core.emotional_voice import EmotionalVoice, Emotion
-from ..daemon.limbic_system import Mood
+from danny_toolkit.core.utils import kleur, Kleur, info, succes, fout
+from danny_toolkit.core.emotional_voice import EmotionalVoice, Emotion
+from danny_toolkit.daemon.limbic_system import Mood
 
 
 # Voorbeeldzinnen per mood (Nederlands)

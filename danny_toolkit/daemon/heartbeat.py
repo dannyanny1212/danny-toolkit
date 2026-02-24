@@ -144,7 +144,7 @@ class HeartbeatDaemon:
         """Lazy import CorticalStack."""
         if self._stack is None:
             try:
-                from ..brain.cortical_stack import (
+                from danny_toolkit.brain.cortical_stack import (
                     get_cortical_stack,
                 )
                 self._stack = get_cortical_stack()
@@ -172,7 +172,7 @@ class HeartbeatDaemon:
             if self._daemon is None:
                 return None
             try:
-                from ..brain.proactive import (
+                from danny_toolkit.brain.proactive import (
                     ProactiveEngine,
                 )
                 self._proactive = ProactiveEngine(
@@ -187,7 +187,7 @@ class HeartbeatDaemon:
         """Lazy import SingularityEngine."""
         if self._singularity is None:
             try:
-                from ..brain.singularity import (
+                from danny_toolkit.brain.singularity import (
                     SingularityEngine,
                 )
                 self._singularity = SingularityEngine(
@@ -203,7 +203,7 @@ class HeartbeatDaemon:
         """Lazy import SecurityResearchEngine."""
         if self._security is None:
             try:
-                from ..brain.security_research import (
+                from danny_toolkit.brain.security_research import (
                     SecurityResearchEngine,
                 )
                 self._security = SecurityResearchEngine(
@@ -219,7 +219,7 @@ class HeartbeatDaemon:
         """Lazy import DevOpsDaemon."""
         if self._devops is None:
             try:
-                from ..brain.devops_daemon import (
+                from danny_toolkit.brain.devops_daemon import (
                     DevOpsDaemon,
                 )
                 self._devops = DevOpsDaemon()
@@ -287,7 +287,7 @@ class HeartbeatDaemon:
     def _execute_morning_protocol(self):
         """Voer morning protocol uit (draait in worker thread)."""
         try:
-            from ..brain.morning_protocol import (
+            from danny_toolkit.brain.morning_protocol import (
                 dna_scan, speed_test, heartbeat_check,
                 generate_report, load_previous_benchmark,
                 save_benchmark,
@@ -346,7 +346,7 @@ class HeartbeatDaemon:
     def _run_dream_observation(self):
         """Log entity states tijdens nacht-uren (headless)."""
         try:
-            from ..brain.dream_monitor import (
+            from danny_toolkit.brain.dream_monitor import (
                 get_real_entity_data, generate_log_line,
             )
 
@@ -914,7 +914,7 @@ class HeartbeatDaemon:
                             "dreamer", "REM cycle gestart"
                         )
                         try:
-                            from ..brain.dreamer import Dreamer
+                            from danny_toolkit.brain.dreamer import Dreamer
                             dreamer = Dreamer()
                             self._worker_pool.submit(
                                 lambda: asyncio.run(

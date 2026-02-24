@@ -12,8 +12,8 @@ Gebruik:
     protocol.run_simulation()
 """
 
-from ..core.utils import kleur, Kleur, succes, fout
-from ..brain.cortical_stack import get_cortical_stack
+from danny_toolkit.core.utils import kleur, Kleur, succes, fout
+from danny_toolkit.brain.cortical_stack import get_cortical_stack
 
 
 class MemoryProtocol:

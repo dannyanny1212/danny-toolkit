@@ -35,7 +35,7 @@ from pathlib import Path
 import asyncio
 import threading
 
-from .governor import OmegaGovernor
+from danny_toolkit.brain.governor import OmegaGovernor
 from danny_toolkit.core.config import Config
 
 
@@ -456,7 +456,7 @@ class PrometheusBrain:
     def _init_brain(self):
         """Lazy load CentralBrain voor echte AI verwerking."""
         try:
-            from .central_brain import CentralBrain
+            from danny_toolkit.brain.central_brain import CentralBrain
             self.brain = CentralBrain(use_memory=True)
             print("  [BRAIN] CentralBrain verbonden")
         except Exception as e:
@@ -466,7 +466,7 @@ class PrometheusBrain:
     def _init_learning(self):
         """Lazy load LearningSystem voor self-improvement."""
         try:
-            from ..learning.orchestrator import LearningSystem
+            from danny_toolkit.learning.orchestrator import LearningSystem
             self.learning = LearningSystem()
             print("  [LEARNING] LearningSystem verbonden")
         except Exception as e:

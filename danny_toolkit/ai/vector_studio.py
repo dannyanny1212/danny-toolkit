@@ -9,8 +9,8 @@ import random
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple
-from ..core.config import Config
-from ..core.utils import clear_scherm
+from danny_toolkit.core.config import Config
+from danny_toolkit.core.utils import clear_scherm
 
 
 class VectorStudioApp:

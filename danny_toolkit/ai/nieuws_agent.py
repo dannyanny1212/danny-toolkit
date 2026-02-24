@@ -23,8 +23,8 @@ from datetime import datetime, timedelta
 from collections import Counter
 from typing import List, Dict, Any, Optional
 
-from ..core.config import Config
-from ..core.utils import clear_scherm, kleur, Kleur
+from danny_toolkit.core.config import Config
+from danny_toolkit.core.utils import clear_scherm, kleur, Kleur
 
 
 class VectorDatabase:

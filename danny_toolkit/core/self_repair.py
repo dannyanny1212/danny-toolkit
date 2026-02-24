@@ -20,8 +20,8 @@ import subprocess
 import time
 from datetime import datetime
 
-from ..core.utils import kleur, Kleur
-from ..core.config import Config
+from danny_toolkit.core.utils import kleur, Kleur
+from danny_toolkit.core.config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ class SelfRepairProtocol:
     def governor(self):
         """Lazy OmegaGovernor."""
         if self._governor is None:
-            from ..brain.governor import OmegaGovernor
+            from danny_toolkit.brain.governor import OmegaGovernor
             self._governor = OmegaGovernor()
         return self._governor
 
@@ -57,7 +57,7 @@ class SelfRepairProtocol:
     def oracle(self):
         """Lazy OracleAgent (voor LLM fallback)."""
         if self._oracle is None:
-            from ..core.oracle import OracleAgent
+            from danny_toolkit.core.oracle import OracleAgent
             self._oracle = OracleAgent(persist=False)
         return self._oracle
 
@@ -402,7 +402,7 @@ class SelfRepairProtocol:
             return self._collection
         try:
             import chromadb
-            from .embeddings import get_chroma_embed_fn
+            from danny_toolkit.core.embeddings import get_chroma_embed_fn
             import io as _io
             import sys as _sys
 
@@ -689,7 +689,7 @@ class SelfRepairProtocol:
         Returns:
             dict met stap, resultaat, geslaagd, detail.
         """
-        from ..core.oracle import ACTIE_DISPATCH
+        from danny_toolkit.core.oracle import ACTIE_DISPATCH
 
         handler = ACTIE_DISPATCH.get(actie)
         if not handler:

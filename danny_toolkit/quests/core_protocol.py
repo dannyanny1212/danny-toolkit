@@ -12,8 +12,8 @@ Spelers:
 - CONFIG (paden, API keys, thema's) - Systeemconfiguratie
 """
 
-from ..core.utils import kleur, Kleur, succes, fout, info
-from ..core.config import Config, Thema, Taal
+from danny_toolkit.core.utils import kleur, Kleur, succes, fout, info
+from danny_toolkit.core.config import Config, Thema, Taal
 
 
 class CoreProtocol:

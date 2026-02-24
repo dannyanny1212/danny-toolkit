@@ -9,12 +9,12 @@ from pathlib import Path
 from datetime import datetime
 from collections import Counter
 
-from ..core.config import Config
-from ..core.utils import clear_scherm, kleur, Kleur
-from ..core.embeddings import get_embedder
-from ..core.vector_store import VectorStore
-from ..core.document_processor import DocumentProcessor
-from ..core.generator import Generator
+from danny_toolkit.core.config import Config
+from danny_toolkit.core.utils import clear_scherm, kleur, Kleur
+from danny_toolkit.core.embeddings import get_embedder
+from danny_toolkit.core.vector_store import VectorStore
+from danny_toolkit.core.document_processor import DocumentProcessor
+from danny_toolkit.core.generator import Generator
 
 
 class ProductionRAG:

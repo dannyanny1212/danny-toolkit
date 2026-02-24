@@ -22,16 +22,16 @@ from collections import Counter
 
 logger = logging.getLogger(__name__)
 
-from ..core.config import Config
-from ..core.utils import clear_scherm, kleur, Kleur
-from ..core.vector_store import VectorStore
-from ..core.embeddings import get_embedder
-from ..core.document_processor import DocumentProcessor
-from ..core.generator import Generator
+from danny_toolkit.core.config import Config
+from danny_toolkit.core.utils import clear_scherm, kleur, Kleur
+from danny_toolkit.core.vector_store import VectorStore
+from danny_toolkit.core.embeddings import get_embedder
+from danny_toolkit.core.document_processor import DocumentProcessor
+from danny_toolkit.core.generator import Generator
 
 # Audio-First imports (optioneel)
 try:
-    from ..core.emotional_voice import EmotionalVoice, SentimentAnalyzer, Emotion
+    from danny_toolkit.core.emotional_voice import EmotionalVoice, SentimentAnalyzer, Emotion
     VOICE_AVAILABLE = True
 except ImportError:
     VOICE_AVAILABLE = False
@@ -40,7 +40,7 @@ except ImportError:
 
 # THE HUNT imports (optioneel)
 try:
-    from ..core.ultimate_hunt import UltimateHunt, HuntStatus, HuntAnimator
+    from danny_toolkit.core.ultimate_hunt import UltimateHunt, HuntStatus, HuntAnimator
     HUNT_AVAILABLE = True
 except ImportError:
     HUNT_AVAILABLE = False

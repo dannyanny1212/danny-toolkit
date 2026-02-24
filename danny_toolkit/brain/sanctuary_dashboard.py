@@ -27,7 +27,7 @@ from typing import Dict, List, Optional
 from dataclasses import dataclass, field
 from enum import Enum
 
-from ..core.config import Config
+from danny_toolkit.core.config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -188,7 +188,7 @@ class SanctuaryDashboard:
         """Initialiseer systeem metrics."""
         # Central Brain
         try:
-            from .central_brain import CentralBrain
+            from danny_toolkit.brain.central_brain import CentralBrain
             brain = CentralBrain(use_memory=False)
             status = brain.get_status()
             apps = status.get("apps_geregistreerd", 0)

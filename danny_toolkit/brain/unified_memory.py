@@ -11,9 +11,9 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 
-from ..core.config import Config
-from ..core.vector_store import VectorStore
-from ..core.embeddings import get_embedder, EmbeddingProvider
+from danny_toolkit.core.config import Config
+from danny_toolkit.core.vector_store import VectorStore
+from danny_toolkit.core.embeddings import get_embedder, EmbeddingProvider
 
 
 class MemoryEvent:

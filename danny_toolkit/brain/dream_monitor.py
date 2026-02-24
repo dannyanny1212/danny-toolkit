@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 # Try to import real system data
 try:
-    from ..core.config import Config
+    from danny_toolkit.core.config import Config
     HAS_CONFIG = True
 except ImportError:
     HAS_CONFIG = False

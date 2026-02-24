@@ -20,8 +20,8 @@ import json
 import logging
 import random
 from datetime import date
-from ..core.config import Config
-from ..core.utils import clear_scherm, kleur, Kleur, succes, fout, waarschuwing, info
+from danny_toolkit.core.config import Config
+from danny_toolkit.core.utils import clear_scherm, kleur, Kleur, succes, fout, waarschuwing, info
 
 logger = logging.getLogger(__name__)
 

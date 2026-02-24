@@ -26,23 +26,23 @@ import random
 import re
 from datetime import datetime, timedelta
 
-from ..core.config import Config
-from ..core.utils import clear_scherm
+from danny_toolkit.core.config import Config
+from danny_toolkit.core.utils import clear_scherm
 
 logger = logging.getLogger(__name__)
 
 # Lazy imports voor AI integratie (om circulaire imports te voorkomen)
 def _get_boodschappenlijst():
-    from ..apps.boodschappenlijst import BoodschappenlijstApp
+    from danny_toolkit.apps.boodschappenlijst import BoodschappenlijstApp
     return BoodschappenlijstApp()
 
 def _get_rekenmachine():
-    from ..apps.rekenmachine import RekenmachineApp
+    from danny_toolkit.apps.rekenmachine import RekenmachineApp
     return RekenmachineApp()
 
 def _get_nieuws_agent():
     try:
-        from ..ai.nieuws_agent import NieuwsAgentApp
+        from danny_toolkit.ai.nieuws_agent import NieuwsAgentApp
         return NieuwsAgentApp()
     except Exception as e:
         logger.debug("NieuwsAgent import error: %s", e)
@@ -50,7 +50,7 @@ def _get_nieuws_agent():
 
 def _get_weer_agent():
     try:
-        from ..ai.weer_agent import WeerAgentApp
+        from danny_toolkit.ai.weer_agent import WeerAgentApp
         return WeerAgentApp()
     except Exception as e:
         logger.debug("WeerAgent import error: %s", e)
@@ -59,7 +59,7 @@ def _get_weer_agent():
 def _get_claude_chat():
     """Lazy import voor Claude Chat met API client."""
     try:
-        from ..ai.claude_chat import ClaudeChatApp
+        from danny_toolkit.ai.claude_chat import ClaudeChatApp
         chat = ClaudeChatApp()
         if chat._init_client():
             return chat
@@ -72,7 +72,7 @@ def _get_claude_chat():
 def _get_mood_tracker():
     """Lazy import voor Mood Tracker."""
     try:
-        from ..apps.mood_tracker import MoodTrackerApp
+        from danny_toolkit.apps.mood_tracker import MoodTrackerApp
         return MoodTrackerApp()
     except Exception as e:
         logger.debug("MoodTracker import error: %s", e)
@@ -82,7 +82,7 @@ def _get_mood_tracker():
 def _get_habit_tracker():
     """Lazy import voor Habit Tracker."""
     try:
-        from ..apps.habit_tracker import HabitTrackerApp
+        from danny_toolkit.apps.habit_tracker import HabitTrackerApp
         return HabitTrackerApp()
     except Exception as e:
         logger.debug("HabitTracker import error: %s", e)
@@ -92,7 +92,7 @@ def _get_habit_tracker():
 def _get_expense_tracker():
     """Lazy import voor Expense Tracker."""
     try:
-        from ..apps.expense_tracker import ExpenseTrackerApp
+        from danny_toolkit.apps.expense_tracker import ExpenseTrackerApp
         return ExpenseTrackerApp()
     except Exception as e:
         logger.debug("ExpenseTracker import error: %s", e)
@@ -102,7 +102,7 @@ def _get_expense_tracker():
 def _get_agenda_planner():
     """Lazy import voor Agenda Planner."""
     try:
-        from ..apps.agenda_planner import AgendaPlannerApp
+        from danny_toolkit.apps.agenda_planner import AgendaPlannerApp
         return AgendaPlannerApp()
     except Exception as e:
         logger.debug("AgendaPlanner import error: %s", e)
@@ -112,7 +112,7 @@ def _get_agenda_planner():
 def _get_pomodoro_timer():
     """Lazy import voor Pomodoro Timer."""
     try:
-        from ..apps.pomodoro_timer import PomodoroTimerApp
+        from danny_toolkit.apps.pomodoro_timer import PomodoroTimerApp
         return PomodoroTimerApp()
     except Exception as e:
         logger.debug("PomodoroTimer import error: %s", e)
@@ -415,7 +415,7 @@ class VirtueelHuisdierApp:
         """Initialiseer het Self-Learning System (lazy loaded)."""
         if self.learning is None:
             try:
-                from ..learning import LearningSystem
+                from danny_toolkit.learning import LearningSystem
                 self.learning = LearningSystem(self)
                 # Sync met bestaande huisdier kennis
                 if self.huisdier and "kennis" in self.huisdier:
@@ -518,7 +518,7 @@ class VirtueelHuisdierApp:
         """Log event naar Unified Memory."""
         try:
             if not hasattr(self, "_memory"):
-                from ..brain.unified_memory import UnifiedMemory
+                from danny_toolkit.brain.unified_memory import UnifiedMemory
                 self._memory = UnifiedMemory()
             self._memory.store_event(
                 app="virtueel_huisdier",
@@ -2744,7 +2744,7 @@ Maak het dromerig en fantasierijk."""
         intel_bonus = 0
 
         try:
-            from ..ai.production_rag import ProductionRAG
+            from danny_toolkit.ai.production_rag import ProductionRAG
             print(f"  {naam} verbindt met de ECHTE kennisbank...")
             time.sleep(0.5)
 
@@ -4645,7 +4645,7 @@ Code:
         bronnen = []
 
         try:
-            from ..ai.production_rag import ProductionRAG
+            from danny_toolkit.ai.production_rag import ProductionRAG
             rag = ProductionRAG()
             # Check of er documenten zijn
             if hasattr(rag, 'chunks') and rag.chunks:

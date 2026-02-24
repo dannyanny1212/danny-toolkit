@@ -16,7 +16,7 @@ Dependencies (hergebruikt, geen nieuwe):
   edge-tts / pyttsx3 (Quest X)
 """
 
-from ..core.utils import kleur, Kleur, info, succes, fout
+from danny_toolkit.core.utils import kleur, Kleur, info, succes, fout
 
 
 class DialogueProtocol:
@@ -32,14 +32,14 @@ class DialogueProtocol:
     def _get_listener(self):
         """Lazy-init listener."""
         if self._listener is None:
-            from .listener_protocol import ListenerProtocol
+            from danny_toolkit.quests.listener_protocol import ListenerProtocol
             self._listener = ListenerProtocol()
         return self._listener
 
     def _get_voice(self):
         """Lazy-init voice."""
         if self._voice is None:
-            from .voice_protocol import VoiceProtocol
+            from danny_toolkit.quests.voice_protocol import VoiceProtocol
             self._voice = VoiceProtocol()
         return self._voice
 

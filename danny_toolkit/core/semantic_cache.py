@@ -29,7 +29,7 @@ import time
 from pathlib import Path
 from typing import Dict, Optional
 
-from .config import Config
+from danny_toolkit.core.config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -135,7 +135,7 @@ class SemanticCache:
             return self._embed_provider
         self._embed_init_tried = True
         try:
-            from .embeddings import VoyageEmbeddings, CachedEmbeddingProvider
+            from danny_toolkit.core.embeddings import VoyageEmbeddings, CachedEmbeddingProvider
             voyage = VoyageEmbeddings()
             self._embed_provider = CachedEmbeddingProvider(voyage)
             logger.debug("SemanticCache: Voyage embedding provider geladen")

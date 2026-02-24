@@ -8,7 +8,7 @@ unified interface voor semantic search over alle interacties.
 import json
 from datetime import datetime
 
-from ..core.config import Config
+from danny_toolkit.core.config import Config
 
 
 class UnifiedMemory:

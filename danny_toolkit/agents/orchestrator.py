@@ -10,9 +10,9 @@ from collections import deque
 from typing import Callable, Any
 from enum import Enum
 
-from .base import Agent
-from ..core.config import Config
-from ..core.utils import kleur, Kleur
+from danny_toolkit.agents.base import Agent
+from danny_toolkit.core.config import Config
+from danny_toolkit.core.utils import kleur, Kleur
 
 
 class TaskStatus(Enum):

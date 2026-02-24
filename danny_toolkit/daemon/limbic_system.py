@@ -13,8 +13,8 @@ from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
 
-from ..core.config import Config
-from .sensorium import Sensorium, EventType, SensoryEvent
+from danny_toolkit.core.config import Config
+from danny_toolkit.daemon.sensorium import Sensorium, EventType, SensoryEvent
 
 
 class Mood(Enum):

@@ -15,7 +15,7 @@ from typing import Optional, List, Dict
 from dataclasses import dataclass, asdict
 
 try:
-    from ..core.config import Config
+    from danny_toolkit.core.config import Config
     HAS_CONFIG = True
 except ImportError:
     HAS_CONFIG = False

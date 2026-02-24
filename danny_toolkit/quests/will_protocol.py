@@ -32,11 +32,11 @@ from typing import Any, Dict, List, Optional
 
 import logging
 
-from ..core.config import Config
-from ..core.utils import kleur, Kleur, info, succes, fout
+from danny_toolkit.core.config import Config
+from danny_toolkit.core.utils import kleur, Kleur, info, succes, fout
 
 try:
-    from ..core.env_bootstrap import VENV_PYTHON as _VENV_PYTHON
+    from danny_toolkit.core.env_bootstrap import VENV_PYTHON as _VENV_PYTHON
 except ImportError:
     import sys as _sys
     _VENV_PYTHON = _sys.executable
@@ -190,21 +190,21 @@ class WillProtocol:
     def _get_sensorium(self):
         """Lazy Sensorium."""
         if self._sensorium is None:
-            from ..daemon.sensorium import Sensorium
+            from danny_toolkit.daemon.sensorium import Sensorium
             self._sensorium = Sensorium()
         return self._sensorium
 
     def _get_governor(self):
         """Lazy OmegaGovernor."""
         if self._governor is None:
-            from ..brain.governor import OmegaGovernor
+            from danny_toolkit.brain.governor import OmegaGovernor
             self._governor = OmegaGovernor()
         return self._governor
 
     def _get_eye(self):
         """Lazy PixelEye."""
         if self._eye is None:
-            from ..skills.pixel_eye import PixelEye
+            from danny_toolkit.skills.pixel_eye import PixelEye
             self._eye = PixelEye()
         return self._eye
 
@@ -442,7 +442,7 @@ class WillProtocol:
 
             # Sensorium event
             try:
-                from ..daemon.sensorium import EventType
+                from danny_toolkit.daemon.sensorium import EventType
                 self._get_sensorium().sense_event(
                     EventType.TASK_COMPLETE,
                     source="will_protocol",

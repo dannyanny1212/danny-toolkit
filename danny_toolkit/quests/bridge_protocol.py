@@ -14,11 +14,11 @@ Spelers:
 
 import logging
 
-from ..core.utils import kleur, Kleur, succes, fout, info
+from danny_toolkit.core.utils import kleur, Kleur, succes, fout, info
 
 logger = logging.getLogger(__name__)
 
-from ..brain.nexus_bridge import (
+from danny_toolkit.brain.nexus_bridge import (
     NexusBridge, NexusOracleMode, create_nexus_bridge,
 )
 

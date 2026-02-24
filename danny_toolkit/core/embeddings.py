@@ -12,7 +12,7 @@ import time
 from collections import Counter, OrderedDict
 from pathlib import Path
 from typing import List, Dict, Optional
-from .config import Config
+from danny_toolkit.core.config import Config
 
 logger = logging.getLogger(__name__)
 

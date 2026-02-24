@@ -127,7 +127,7 @@ class NeuralBus:
     def enable_persistence(self):
         """Koppel aan UnifiedMemory voor event persistentie."""
         try:
-            from ..brain.unified_memory import UnifiedMemory
+            from danny_toolkit.brain.unified_memory import UnifiedMemory
 
             self._memory = UnifiedMemory()
             self._persist = True

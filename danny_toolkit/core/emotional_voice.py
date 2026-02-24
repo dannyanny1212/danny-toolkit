@@ -18,7 +18,7 @@ from enum import Enum
 
 logger = logging.getLogger(__name__)
 
-from .config import Config
+from danny_toolkit.core.config import Config
 
 
 class Emotion(Enum):

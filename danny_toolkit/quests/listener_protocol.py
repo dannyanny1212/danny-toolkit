@@ -16,7 +16,7 @@ Dependencies (optioneel, graceful degrade):
 
 import logging
 
-from ..core.utils import kleur, Kleur, info, succes, fout
+from danny_toolkit.core.utils import kleur, Kleur, info, succes, fout
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +61,7 @@ class ListenerProtocol:
     def _get_voice(self):
         """Lazy-init voice voor gesproken antwoord."""
         if self._voice is None:
-            from .voice_protocol import VoiceProtocol
+            from danny_toolkit.quests.voice_protocol import VoiceProtocol
             self._voice = VoiceProtocol()
         return self._voice
 

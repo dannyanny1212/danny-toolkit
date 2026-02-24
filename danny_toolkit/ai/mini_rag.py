@@ -14,10 +14,10 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
-from ..core.config import Config
-from ..core.utils import clear_scherm, kleur, Kleur
-from ..core.embeddings import TFIDFEmbeddings
-from ..core.document_processor import DocumentProcessor
+from danny_toolkit.core.config import Config
+from danny_toolkit.core.utils import clear_scherm, kleur, Kleur
+from danny_toolkit.core.embeddings import TFIDFEmbeddings
+from danny_toolkit.core.document_processor import DocumentProcessor
 
 
 class MiniRAG:

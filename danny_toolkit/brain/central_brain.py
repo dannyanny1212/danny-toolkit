@@ -33,16 +33,16 @@ try:
 except ImportError:
     pass
 
-from ..core.config import Config
-from ..core.utils import kleur, Kleur
+from danny_toolkit.core.config import Config
+from danny_toolkit.core.utils import kleur, Kleur
 
-from .app_tools import (
+from danny_toolkit.brain.app_tools import (
     APP_TOOLS,
     get_all_tools,
     parse_tool_call,
 )
-from .unified_memory import UnifiedMemory
-from .workflows import WorkflowEngine, SUPER_WORKFLOWS, get_workflow_by_intent
+from danny_toolkit.brain.unified_memory import UnifiedMemory
+from danny_toolkit.brain.workflows import WorkflowEngine, SUPER_WORKFLOWS, get_workflow_by_intent
 
 # AI Integration
 try:
@@ -70,7 +70,7 @@ except ImportError:
     HF_BESCHIKBAAR = False
 
 try:
-    from ..core.key_manager import get_key_manager
+    from danny_toolkit.core.key_manager import get_key_manager
     HAS_KEY_MANAGER = True
 except ImportError:
     HAS_KEY_MANAGER = False
@@ -572,7 +572,7 @@ Belangrijke regels:
 
                     # Token budget registratie
                     try:
-                        from .governor import OmegaGovernor
+                        from danny_toolkit.brain.governor import OmegaGovernor
                         OmegaGovernor().registreer_tokens(final_response)
                     except Exception as e:
                         logger.debug("Token registratie error: %s", e)
@@ -778,7 +778,7 @@ Belangrijke regels:
 
                     # Token budget registratie
                     try:
-                        from .governor import OmegaGovernor
+                        from danny_toolkit.brain.governor import OmegaGovernor
                         OmegaGovernor().registreer_tokens(final_response)
                     except Exception as e:
                         logger.debug("Token registratie error: %s", e)
@@ -910,7 +910,7 @@ Belangrijke regels:
 
                 # Token budget registratie
                 try:
-                    from .governor import OmegaGovernor
+                    from danny_toolkit.brain.governor import OmegaGovernor
                     OmegaGovernor().registreer_tokens(content)
                 except Exception as e:
                     logger.debug("Token registratie error: %s", e)
@@ -956,7 +956,7 @@ Belangrijke regels:
 
             # Token budget registratie
             try:
-                from .governor import OmegaGovernor
+                from danny_toolkit.brain.governor import OmegaGovernor
                 OmegaGovernor().registreer_tokens(content)
             except Exception as e:
                 logger.debug("Token registratie error: %s", e)
@@ -1032,7 +1032,7 @@ Belangrijke regels:
 
             # Token budget registratie
             try:
-                from .governor import OmegaGovernor
+                from danny_toolkit.brain.governor import OmegaGovernor
                 OmegaGovernor().registreer_tokens(content)
             except Exception as e:
                 logger.debug("Token registratie error: %s", e)
@@ -1111,7 +1111,7 @@ Belangrijke regels:
 
         # NeuralBus real-time state (grounding)
         try:
-            from ..core.neural_bus import get_bus
+            from danny_toolkit.core.neural_bus import get_bus
             stream = get_bus().get_context_stream(count=10)
             if stream:
                 context["real_time_state"] = stream

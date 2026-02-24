@@ -27,8 +27,8 @@ from collections import Counter
 from statistics import mean, median, stdev
 from typing import List, Dict, Any
 
-from ..core.config import Config
-from ..core.utils import clear_scherm, kleur, Kleur
+from danny_toolkit.core.config import Config
+from danny_toolkit.core.utils import clear_scherm, kleur, Kleur
 
 logger = logging.getLogger(__name__)
 

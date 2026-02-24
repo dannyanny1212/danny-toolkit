@@ -4,7 +4,7 @@ Unit Converter - Converteer eenheden.
 
 import logging
 
-from ..core.utils import clear_scherm
+from danny_toolkit.core.utils import clear_scherm
 
 logger = logging.getLogger(__name__)
 

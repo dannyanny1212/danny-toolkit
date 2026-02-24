@@ -23,10 +23,10 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 
-from ..core.utils import clear_scherm, kleur, Kleur
+from danny_toolkit.core.utils import clear_scherm, kleur, Kleur
 
 try:
-    from ..core.neural_bus import get_bus, EventTypes
+    from danny_toolkit.core.neural_bus import get_bus, EventTypes
     HAS_BUS = True
 except ImportError:
     HAS_BUS = False

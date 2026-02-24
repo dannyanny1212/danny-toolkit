@@ -5,8 +5,8 @@ Plan je kamer met ASCII visualisatie en slimme tips.
 
 import logging
 from datetime import datetime
-from ..core.utils import clear_scherm
-from .base_app import BaseApp
+from danny_toolkit.core.utils import clear_scherm
+from danny_toolkit.apps.base_app import BaseApp
 
 logger = logging.getLogger(__name__)
 

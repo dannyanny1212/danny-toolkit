@@ -12,8 +12,8 @@ Spelers:
 - TRINITY CHANNEL   (12 kanalen)      - Communicatie
 """
 
-from ..core.utils import kleur, Kleur, succes, fout, info
-from ..brain.trinity_symbiosis import (
+from danny_toolkit.core.utils import kleur, Kleur, succes, fout, info
+from danny_toolkit.brain.trinity_symbiosis import (
     TrinitySymbiosis, TrinityRole, TrinityChannel,
     COSMIC_FAMILY_CONFIG,
 )

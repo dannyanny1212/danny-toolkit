@@ -16,7 +16,7 @@ from typing import Dict, List, Optional, Callable, Any
 from dataclasses import dataclass, field
 from enum import Enum
 
-from ..core.config import Config
+from danny_toolkit.core.config import Config
 
 
 class TrinityRole(Enum):

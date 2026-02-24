@@ -9,8 +9,8 @@ import math
 from pathlib import Path
 from datetime import datetime
 from typing import List, Dict, Optional, Callable
-from .config import Config
-from .embeddings import EmbeddingProvider
+from danny_toolkit.core.config import Config
+from danny_toolkit.core.embeddings import EmbeddingProvider
 
 logger = logging.getLogger(__name__)
 

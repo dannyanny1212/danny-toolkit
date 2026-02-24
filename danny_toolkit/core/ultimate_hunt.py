@@ -21,7 +21,7 @@ from enum import Enum
 from typing import List, Dict, Any
 from dataclasses import dataclass, field
 
-from .utils import kleur, Kleur
+from danny_toolkit.core.utils import kleur, Kleur
 
 logger = logging.getLogger(__name__)
 
@@ -356,7 +356,7 @@ class HuntRouter:
     async def _search_rag(self, context: HuntContext) -> List[HuntResult]:
         """Zoek in lokale RAG database."""
         try:
-            from ..apps.legendary_companion import LegendaryCompanion
+            from danny_toolkit.apps.legendary_companion import LegendaryCompanion
 
             # Lazy load companion
             companion = LegendaryCompanion()
@@ -392,7 +392,7 @@ class HuntRouter:
         """Zoek in nieuws bronnen."""
         try:
             # Probeer nieuws agent te gebruiken
-            from ..ai.nieuws_agent import NieuwsAgentApp
+            from danny_toolkit.ai.nieuws_agent import NieuwsAgentApp
 
             agent = NieuwsAgentApp()
             # Simplified - in werkelijkheid zou dit de agent aanroepen
@@ -417,7 +417,7 @@ class HuntRouter:
     async def _search_code(self, context: HuntContext) -> List[HuntResult]:
         """Zoek in code bronnen."""
         try:
-            from ..apps.code_analyse import CodeAnalyseApp
+            from danny_toolkit.apps.code_analyse import CodeAnalyseApp
 
             # Simplified
             return [HuntResult(
@@ -436,7 +436,7 @@ class HuntRouter:
     async def _search_archive(self, context: HuntContext) -> List[HuntResult]:
         """Zoek in time capsule archief."""
         try:
-            from ..apps.time_capsule import TimeCapsuleApp
+            from danny_toolkit.apps.time_capsule import TimeCapsuleApp
 
             # Simplified
             return []
@@ -448,7 +448,7 @@ class HuntRouter:
     async def _search_notes(self, context: HuntContext) -> List[HuntResult]:
         """Zoek in notities."""
         try:
-            from ..apps.notitie_app import NotitieApp
+            from danny_toolkit.apps.notitie_app import NotitieApp
 
             # Simplified
             return []

@@ -20,8 +20,8 @@ if os.name == "nt":
     if hasattr(sys.stderr, "reconfigure"):
         sys.stderr.reconfigure(encoding="utf-8")
 
-from ..core.config import Config
-from ..core.utils import kleur, Kleur
+from danny_toolkit.core.config import Config
+from danny_toolkit.core.utils import kleur, Kleur
 
 
 _MANIFEST_PAD = Config.DATA_DIR / "file_manifest.json"

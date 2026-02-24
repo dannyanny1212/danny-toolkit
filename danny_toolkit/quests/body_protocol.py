@@ -12,8 +12,8 @@ Spelers:
 - METABOLIC STATE (7 staten)        - Gezondheid
 """
 
-from ..core.utils import kleur, Kleur, succes, fout, info
-from ..daemon.metabolisme import (
+from danny_toolkit.core.utils import kleur, Kleur, succes, fout, info
+from danny_toolkit.daemon.metabolisme import (
     Metabolisme, MetabolicState, NutrientLevels,
 )
 

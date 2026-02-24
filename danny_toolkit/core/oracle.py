@@ -22,9 +22,9 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-from ..agents.base import Agent, AgentConfig
-from ..core.config import Config
-from ..core.utils import kleur, Kleur, clear_scherm
+from danny_toolkit.agents.base import Agent, AgentConfig
+from danny_toolkit.core.config import Config
+from danny_toolkit.core.utils import kleur, Kleur, clear_scherm
 
 # Root pad voor kinesis.py import
 _root = Path(__file__).parent.parent.parent
@@ -156,7 +156,7 @@ class OracleAgent(Agent):
     def eye(self):
         """Lazy PixelEye — geen import overhead."""
         if self._eye is None:
-            from ..skills.pixel_eye import PixelEye
+            from danny_toolkit.skills.pixel_eye import PixelEye
             self._eye = PixelEye()
             self.log("PixelEye geladen", Kleur.GROEN)
         return self._eye
@@ -165,7 +165,7 @@ class OracleAgent(Agent):
     def repair_protocol(self):
         """Lazy SelfRepairProtocol."""
         if self._repair_protocol is None:
-            from ..core.self_repair import (
+            from danny_toolkit.core.self_repair import (
                 SelfRepairProtocol,
             )
             self._repair_protocol = (

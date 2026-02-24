@@ -12,7 +12,7 @@ import time
 from datetime import datetime
 from typing import Optional
 
-from ..core.config import Config
+from danny_toolkit.core.config import Config
 
 
 class InteractionTracker:

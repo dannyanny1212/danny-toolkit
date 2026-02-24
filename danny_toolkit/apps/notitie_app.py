@@ -4,8 +4,8 @@ Notitie App v2.0 - AI-Powered Notities maken en organiseren.
 
 import logging
 from datetime import datetime
-from ..core.utils import clear_scherm
-from .base_app import BaseApp
+from danny_toolkit.core.utils import clear_scherm
+from danny_toolkit.apps.base_app import BaseApp
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ class NotitieApp(BaseApp):
         """Log event naar Unified Memory."""
         try:
             if not hasattr(self, "_memory"):
-                from ..brain.unified_memory import UnifiedMemory
+                from danny_toolkit.brain.unified_memory import UnifiedMemory
                 self._memory = UnifiedMemory()
             self._memory.store_event(
                 app="notitie_app",

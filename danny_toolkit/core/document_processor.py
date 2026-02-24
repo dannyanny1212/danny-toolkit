@@ -8,7 +8,7 @@ import re
 from pathlib import Path
 from datetime import datetime
 from typing import List, Dict
-from .config import Config
+from danny_toolkit.core.config import Config
 
 logger = logging.getLogger(__name__)
 

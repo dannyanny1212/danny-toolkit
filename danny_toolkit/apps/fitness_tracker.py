@@ -6,13 +6,13 @@ import json
 import logging
 from datetime import datetime, timedelta
 from typing import Dict
-from ..core.config import Config
-from ..core.utils import clear_scherm
+from danny_toolkit.core.config import Config
+from danny_toolkit.core.utils import clear_scherm
 
 logger = logging.getLogger(__name__)
 
 try:
-    from ..core.neural_bus import get_bus, EventTypes
+    from danny_toolkit.core.neural_bus import get_bus, EventTypes
     HAS_BUS = True
 except ImportError:
     HAS_BUS = False
@@ -74,7 +74,7 @@ class FitnessTrackerApp:
         """Log event naar Unified Memory."""
         try:
             if not hasattr(self, "_memory"):
-                from ..brain.unified_memory import UnifiedMemory
+                from danny_toolkit.brain.unified_memory import UnifiedMemory
                 self._memory = UnifiedMemory()
             self._memory.store_event(
                 app="fitness_tracker",

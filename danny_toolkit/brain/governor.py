@@ -153,7 +153,7 @@ class OmegaGovernor:
         """Lazy CorticalStack."""
         if self._stack is None:
             try:
-                from .cortical_stack import (
+                from danny_toolkit.brain.cortical_stack import (
                     get_cortical_stack,
                 )
                 self._stack = get_cortical_stack()

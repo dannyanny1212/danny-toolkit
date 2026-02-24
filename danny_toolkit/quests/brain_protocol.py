@@ -14,7 +14,7 @@ Spelers:
 
 import logging
 
-from ..core.utils import kleur, Kleur, succes, fout, info
+from danny_toolkit.core.utils import kleur, Kleur, succes, fout, info
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class BrainProtocol:
     def _init_brain(self):
         """Initialiseer Central Brain."""
         try:
-            from ..brain.central_brain import CentralBrain
+            from danny_toolkit.brain.central_brain import CentralBrain
             self.brain = CentralBrain(use_memory=True)
         except Exception as e:
             self.brain = None
@@ -103,7 +103,7 @@ class BrainProtocol:
             Kleur.FEL_BLAUW,
         ))
         try:
-            from ..brain.app_tools import (
+            from danny_toolkit.brain.app_tools import (
                 get_all_tools, get_priority_tools,
             )
             alle_tools = get_all_tools()

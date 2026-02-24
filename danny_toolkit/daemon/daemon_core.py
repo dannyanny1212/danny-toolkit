@@ -17,13 +17,13 @@ from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
-from ..core.config import Config
-from ..core.utils import kleur, Kleur
+from danny_toolkit.core.config import Config
+from danny_toolkit.core.utils import kleur, Kleur
 
-from .sensorium import Sensorium, EventType, SensoryEvent
-from .limbic_system import LimbicSystem, Mood, EnergyState, AvatarForm
-from .metabolisme import Metabolisme, MetabolicState
-from ..brain.governor import OmegaGovernor
+from danny_toolkit.daemon.sensorium import Sensorium, EventType, SensoryEvent
+from danny_toolkit.daemon.limbic_system import LimbicSystem, Mood, EnergyState, AvatarForm
+from danny_toolkit.daemon.metabolisme import Metabolisme, MetabolicState
+from danny_toolkit.brain.governor import OmegaGovernor
 
 
 @dataclass
@@ -181,7 +181,7 @@ class DigitalDaemon:
         """Lazy ProactiveEngine property."""
         if self._proactive is None:
             try:
-                from ..brain.proactive import (
+                from danny_toolkit.brain.proactive import (
                     ProactiveEngine,
                 )
                 self._proactive = ProactiveEngine(self)

@@ -11,7 +11,7 @@ Features:
 import json
 from datetime import datetime, timedelta
 
-from ..core.config import Config
+from danny_toolkit.core.config import Config
 
 
 class KnowledgeOptimizer:

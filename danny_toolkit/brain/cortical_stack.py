@@ -36,7 +36,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from ..core.config import Config
+from danny_toolkit.core.config import Config
 
 
 class CorticalStack:

@@ -7,8 +7,8 @@ import logging
 import random
 import string
 from datetime import datetime
-from ..core.config import Config
-from ..core.utils import clear_scherm
+from danny_toolkit.core.config import Config
+from danny_toolkit.core.utils import clear_scherm
 
 logger = logging.getLogger(__name__)
 

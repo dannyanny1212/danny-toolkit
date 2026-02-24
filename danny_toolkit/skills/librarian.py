@@ -109,7 +109,7 @@ class TheLibrarian:
                 logger.debug("Failed to delete collection on reset: %s", e)
 
         # Embedding model — Voyage AI of fallback
-        from ..core.embeddings import get_chroma_embed_fn
+        from danny_toolkit.core.embeddings import get_chroma_embed_fn
         import io as _io
         _old_stdout = sys.stdout
         _old_stderr = sys.stderr
@@ -220,7 +220,7 @@ class TheLibrarian:
     def chunk_text(self, text, chunk_size=CHUNK_SIZE,
                    overlap=CHUNK_OVERLAP) -> List[str]:
         """Hakt tekst in overlappende chunks."""
-        from ..core.document_processor import (
+        from danny_toolkit.core.document_processor import (
             DocumentProcessor,
         )
         processor = DocumentProcessor(

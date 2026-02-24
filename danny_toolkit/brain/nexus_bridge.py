@@ -16,7 +16,7 @@ from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
-from ..core.config import Config
+from danny_toolkit.core.config import Config
 
 
 class NexusBridge:
@@ -59,7 +59,7 @@ class NexusBridge:
     def _init_brain(self):
         """Initialiseer Central Brain connectie."""
         try:
-            from .central_brain import CentralBrain
+            from danny_toolkit.brain.central_brain import CentralBrain
             self.brain = CentralBrain(use_memory=True)
             self.brain_available = True
         except Exception as e:
@@ -222,7 +222,7 @@ class NexusBridge:
             return None
 
         try:
-            from .workflows import SUPER_WORKFLOWS
+            from danny_toolkit.brain.workflows import SUPER_WORKFLOWS
 
             # Bepaal tijd van de dag
             uur = datetime.now().hour

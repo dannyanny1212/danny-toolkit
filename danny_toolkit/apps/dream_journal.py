@@ -8,8 +8,8 @@ import random
 from datetime import datetime
 from collections import Counter
 from typing import Dict
-from ..core.config import Config
-from ..core.utils import clear_scherm
+from danny_toolkit.core.config import Config
+from danny_toolkit.core.utils import clear_scherm
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +96,7 @@ class DreamJournalApp:
         """Log event naar Unified Memory."""
         try:
             if not hasattr(self, "_memory"):
-                from ..brain.unified_memory import UnifiedMemory
+                from danny_toolkit.brain.unified_memory import UnifiedMemory
                 self._memory = UnifiedMemory()
             self._memory.store_event(
                 app="dream_journal",
