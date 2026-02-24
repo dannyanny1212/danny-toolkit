@@ -5,10 +5,13 @@ Start alle 57 apps via knoppen, gegroepeerd per sectie.
 Entry point: danny-gui
 """
 
+import logging
 import subprocess
 import sys
 import tkinter as tk
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 
 # ── Donker thema kleuren ──
@@ -221,8 +224,8 @@ class DannyToolkitGUI:
         # Icoon (optioneel, faalt graceful)
         try:
             self.root.iconbitmap(default="")
-        except tk.TclError:
-            pass
+        except tk.TclError as e:
+            logger.debug("Icoon instellen mislukt: %s", e)
 
     def _bouw_header(self):
         header = tk.Frame(self.root, bg=BG_HEADER, pady=10)

@@ -152,8 +152,8 @@ class WillProtocol:
                 self._totaal_geweigerd = data.get(
                     "totaal_geweigerd", 0
                 )
-            except (json.JSONDecodeError, IOError):
-                pass
+            except (json.JSONDecodeError, IOError) as e:
+                logger.debug("Wil-protocol log laden mislukt: %s", e)
 
     def _bewaar_log(self):
         """Bewaar log naar bestand (max 200 entries)."""
@@ -182,8 +182,8 @@ class WillProtocol:
                 json.dump(
                     data, f, indent=2, ensure_ascii=False
                 )
-        except IOError:
-            pass
+        except IOError as e:
+            logger.debug("Wil-protocol log opslaan mislukt: %s", e)
 
     # ─── Lazy Init + Koppeling ───
 
@@ -284,8 +284,8 @@ class WillProtocol:
                         reden="Systeem idle >30 min",
                         prioriteit=2,
                     ))
-        except (AttributeError, TypeError):
-            pass
+        except (AttributeError, TypeError) as e:
+            logger.debug("Sensorium idle check mislukt: %s", e)
 
         # 5. Grote state files (>100KB)?
         for sf in governor.KRITIEKE_STATE_FILES:
@@ -303,8 +303,8 @@ class WillProtocol:
                             prioriteit=1,
                             data={"file": sf},
                         ))
-                except OSError:
-                    pass
+                except OSError as e:
+                    logger.debug("State file grootte check mislukt: %s", e)
 
         # 6. Daemon nutrient tekorten?
         if self._daemon is not None:
@@ -326,8 +326,8 @@ class WillProtocol:
                             prioriteit=2,
                             data={"nutrient": naam},
                         ))
-            except (AttributeError, TypeError):
-                pass
+            except (AttributeError, TypeError) as e:
+                logger.debug("Daemon nutrient check mislukt: %s", e)
 
         # 7. ChromaDB wees-mappen?
         try:
@@ -452,8 +452,8 @@ class WillProtocol:
                     },
                     importance=0.5,
                 )
-            except (AttributeError, TypeError):
-                pass
+            except (AttributeError, TypeError) as e:
+                logger.debug("Operatie metadata ophalen mislukt: %s", e)
 
             log = UitvoerLog(
                 operatie=operatie.type.value,
@@ -567,8 +567,8 @@ class WillProtocol:
             try:
                 log_pad.unlink()
                 verwijderd += 1
-            except OSError:
-                pass
+            except OSError as e:
+                logger.debug("Log bestand verwijderen mislukt: %s", e)
 
         return f"Verwijderd: {verwijderd} log bestanden"
 

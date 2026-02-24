@@ -3,9 +3,12 @@ Centrale configuratie voor Danny Toolkit.
 Versie 6.0.0 - OMEGA_SOVEREIGN. Met thema's, talen en validatie.
 """
 
+import logging
 import os
 import json
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 try:
     from dotenv import load_dotenv
@@ -481,8 +484,8 @@ class Config:
                 cls._taal = voorkeuren.get("taal", "nl")
                 cls._thema = voorkeuren.get("thema", "standaard")
                 cls._debug_mode = voorkeuren.get("debug_mode", False)
-            except (json.JSONDecodeError, IOError):
-                pass
+            except (json.JSONDecodeError, IOError) as e:
+                logger.debug("Voorkeuren laden mislukt: %s", e)
 
     @classmethod
     def valideer_alle_keys(cls) -> list:

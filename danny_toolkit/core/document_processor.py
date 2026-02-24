@@ -255,8 +255,8 @@ class DocumentProcessor:
             except AttributeError:
                 metadata["aangemaakt"] = metadata["gewijzigd"]
 
-        except OSError:
-            pass
+        except OSError as e:
+            logger.debug("Bestandsmetadata ophalen mislukt: %s", e)
 
         # Type-specifieke metadata
         if pad.suffix.lower() == ".md":

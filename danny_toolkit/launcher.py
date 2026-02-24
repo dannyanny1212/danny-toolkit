@@ -1270,8 +1270,8 @@ class LauncherStats:
             try:
                 with open(self.stats_file, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
-                pass
+            except (json.JSONDecodeError, IOError) as e:
+                logger.debug("Stats laden mislukt: %s", e)
         return {
             "gebruik": {},
             "recente": [],

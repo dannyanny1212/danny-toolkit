@@ -5,6 +5,7 @@ Detecteert emotie in tekst en genereert spraak met emotionele modulatie.
 Ondersteunt: ElevenLabs (premium), Edge-TTS (gratis), pyttsx3 (offline).
 """
 
+import logging
 import os
 import re
 import json
@@ -14,6 +15,8 @@ from pathlib import Path
 from typing import Optional, Tuple, Dict
 from dataclasses import dataclass
 from enum import Enum
+
+logger = logging.getLogger(__name__)
 
 from .config import Config
 
@@ -358,8 +361,8 @@ class EmotionalVoice:
                 ]
                 subprocess.run(cmd, capture_output=True, timeout=30, check=True)
                 return audio_path
-            except (subprocess.SubprocessError, FileNotFoundError):
-                pass
+            except (subprocess.SubprocessError, FileNotFoundError) as e:
+                logger.debug("espeak-ng audio generatie mislukt: %s", e)
 
             # Fallback naar Python module
             import asyncio

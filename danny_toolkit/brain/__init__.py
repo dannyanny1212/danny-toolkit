@@ -67,7 +67,6 @@ from .singularity import SingularityEngine
 from .proactive import ProactiveEngine
 from .file_guard import FileGuard
 from .workflows import WorkflowEngine
-from .brain_cli import BrainCLI
 from .project_map import ProjectMap
 
 __all__ = [
@@ -101,7 +100,7 @@ __all__ = [
     "NexusBridge", "VisualNexus", "SingularityEngine",
     "ProactiveEngine", "FileGuard", "WorkflowEngine",
     # Utils
-    "ProjectMap", "BrainCLI",
+    "ProjectMap",
 ]
 
 __version__ = "6.10.0"

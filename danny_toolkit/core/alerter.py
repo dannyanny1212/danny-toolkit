@@ -150,8 +150,8 @@ class Alerter:
                     except Exception as e:
                         logger.debug("NeuralBus escalatie publish mislukt: %s", e)
                     return nieuw_niveau
-            except ValueError:
-                pass
+            except ValueError as e:
+                logger.debug("Alert niveau parsing mislukt: %s", e)
 
             return huidig_niveau
 

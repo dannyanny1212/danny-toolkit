@@ -723,8 +723,8 @@ class OracleAgent(Agent):
                     pad, "r", encoding="utf-8"
                 ) as f:
                     bestaand = json.load(f)
-            except (json.JSONDecodeError, IOError):
-                pass
+            except (json.JSONDecodeError, IOError) as e:
+                logger.debug("Sessie data laden mislukt: %s", e)
 
         # Voeg nieuwe sessie toe
         bestaand["sessies"].append({

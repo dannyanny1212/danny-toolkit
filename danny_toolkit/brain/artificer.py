@@ -562,8 +562,8 @@ class Artificer:
             try:
                 with open(self.registry_path, "w", encoding="utf-8") as f:
                     json.dump(reg, f, indent=2, ensure_ascii=False)
-            except (IOError, OSError):
-                pass
+            except (IOError, OSError) as e:
+                logger.debug("Registry schrijven mislukt: %s", e)
             # BlackBox immuniteit: log fout zodat patronen herkend worden
             if error:
                 self._report_to_black_box(

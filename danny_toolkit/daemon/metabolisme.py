@@ -6,6 +6,7 @@ Balans is cruciaal voor gezondheid.
 """
 
 import json
+import logging
 import time
 import threading
 from datetime import datetime, timedelta
@@ -13,6 +14,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
+
+logger = logging.getLogger(__name__)
 
 from ..core.config import Config
 from .sensorium import Sensorium, EventType
@@ -330,8 +333,8 @@ class Metabolisme:
                 self.state = MetabolicState(data.get("state", "stable"))
 
             except (json.JSONDecodeError, IOError, OSError,
-                    KeyError, ValueError):
-                pass
+                    KeyError, ValueError) as e:
+                logger.debug("Metabolische state laden mislukt: %s", e)
 
     def get_status(self) -> Dict:
         """Haal volledige status op."""

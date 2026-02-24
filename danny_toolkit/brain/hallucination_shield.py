@@ -481,8 +481,8 @@ class HallucinatieSchild:
                                             "type": "numeriek",
                                             "waarden": [num_a, num_b],
                                         })
-                            except (ValueError, ZeroDivisionError):
-                                pass
+                            except (ValueError, ZeroDivisionError) as e:
+                                logger.debug("Numerieke contradictie check mislukt: %s", e)
 
         return contradicties
 

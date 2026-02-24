@@ -212,8 +212,8 @@ class CentralBrain:
             try:
                 with open(self.data_file, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
-                pass
+            except (json.JSONDecodeError, IOError) as e:
+                logger.debug("Stats laden mislukt: %s", e)
         return {
             "requests_verwerkt": 0,
             "tool_calls": 0,
@@ -358,8 +358,8 @@ class CentralBrain:
                                 return v
 
                     return data
-                except (json.JSONDecodeError, IOError):
-                    pass
+                except (json.JSONDecodeError, IOError) as e:
+                    logger.debug("App data laden mislukt: %s", e)
 
         return {"status": "geen_data", "app": app_naam, "actie": actie_naam}
 
@@ -517,7 +517,9 @@ Belangrijke regels:
                         ]
                     })
 
-                    # Voer tools uit
+                    # Voer tools parallel uit via asyncio.gather
+                    tool_tasks = []
+                    valid_calls = []
                     for tool_call in message.tool_calls:
                         tool_name = tool_call.function.name
                         try:
@@ -525,7 +527,6 @@ Belangrijke regels:
                         except json.JSONDecodeError:
                             tool_input = {}
 
-                        # Parse tool name
                         app_naam, actie_naam = parse_tool_call(tool_name)
 
                         if app_naam and actie_naam:
@@ -533,23 +534,37 @@ Belangrijke regels:
                                 f"   [TOOL] {app_naam}.{actie_naam}",
                                 Kleur.CYAAN
                             ))
-
-                            result = asyncio.run(
+                            tool_tasks.append(
                                 self._execute_app_action(
                                     app_naam, actie_naam, tool_input
                                 )
                             )
+                            valid_calls.append(tool_call)
                         else:
-                            result = {"error": f"Tool '{tool_name}' niet gevonden"}
+                            messages.append({
+                                "role": "tool",
+                                "tool_call_id": tool_call.id,
+                                "content": json.dumps(
+                                    {"error": f"Tool '{tool_name}' niet gevonden"},
+                                    ensure_ascii=False,
+                                )[:5000]
+                            })
 
-                        # Voeg tool result toe
-                        messages.append({
-                            "role": "tool",
-                            "tool_call_id": tool_call.id,
-                            "content": json.dumps(
-                                result, ensure_ascii=False, default=str
-                            )[:5000]
-                        })
+                    if tool_tasks:
+                        results = asyncio.run(
+                            asyncio.gather(*tool_tasks, return_exceptions=True)
+                        )
+                        for tool_call, result in zip(valid_calls, results):
+                            if isinstance(result, BaseException):
+                                logger.debug("Tool %s fout: %s", tool_call.function.name, result)
+                                result = {"error": str(result)}
+                            messages.append({
+                                "role": "tool",
+                                "tool_call_id": tool_call.id,
+                                "content": json.dumps(
+                                    result, ensure_ascii=False, default=str
+                                )[:5000]
+                            })
 
                 else:
                     # Geen tool calls, return antwoord

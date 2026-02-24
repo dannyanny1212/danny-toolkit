@@ -23,6 +23,7 @@ Usage:
     run_morning_protocol()
 """
 
+import logging
 import os
 import json
 import time
@@ -31,6 +32,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 # Optional psutil
 try:
@@ -241,8 +244,8 @@ def load_previous_benchmark() -> Optional[BenchmarkResult]:
                     cpu_percent=data["cpu_percent"],
                     timestamp=datetime.fromisoformat(data["timestamp"])
                 )
-        except (json.JSONDecodeError, KeyError):
-            pass
+        except (json.JSONDecodeError, KeyError) as e:
+            logger.debug("Benchmark data laden mislukt: %s", e)
     return None
 
 

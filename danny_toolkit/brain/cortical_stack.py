@@ -547,8 +547,8 @@ class CorticalStack:
                 self._last_flush = time.time()
             try:
                 self._conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
-            except sqlite3.Error:
-                pass
+            except sqlite3.Error as e:
+                logger.debug("WAL checkpoint mislukt: %s", e)
 
         # 2. Copy to backup location
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -574,8 +574,8 @@ class CorticalStack:
             oldest = backups.pop(0)
             try:
                 oldest.unlink()
-            except OSError:
-                pass
+            except OSError as e:
+                logger.debug("Backup verwijderen mislukt (%s): %s", oldest, e)
 
     def restore(self, backup_path: Path) -> bool:
         """Restore from backup (requires restart).
@@ -660,8 +660,8 @@ class CorticalStack:
         try:
             self.flush()
             self._conn.close()
-        except sqlite3.Error:
-            pass
+        except sqlite3.Error as e:
+            logger.debug("Database sluiten mislukt: %s", e)
 
     # ─── Helpers ───
 
@@ -674,8 +674,8 @@ class CorticalStack:
             if veld in d and isinstance(d[veld], str):
                 try:
                     d[veld] = json.loads(d[veld])
-                except (json.JSONDecodeError, TypeError):
-                    pass
+                except (json.JSONDecodeError, TypeError) as e:
+                    logger.debug("JSON veld '%s' deserialisatie mislukt: %s", veld, e)
         return d
 
 
