@@ -102,6 +102,26 @@ def laad_brain():
 # --- BRAIN LADEN ---
 brain, boot_log = laad_brain()
 
+# AutoSaver daemon (elke 30 min)
+try:
+    from danny_toolkit.omega_sovereign_core.auto_saver import (
+        get_auto_saver,
+    )
+    _saver = get_auto_saver()
+    _saver.start()
+except Exception:
+    pass
+
+# Watchtower daemon (process monitor)
+try:
+    from danny_toolkit.apps.watchtower import (
+        get_watchtower,
+    )
+    _watcher = get_watchtower()
+    _watcher.start()
+except Exception:
+    pass
+
 # Imports die brain nodig hebben
 from danny_toolkit.brain.trinity_omega import NodeTier
 from swarm_engine import run_swarm_sync, SwarmPayload

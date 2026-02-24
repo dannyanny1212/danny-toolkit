@@ -453,6 +453,14 @@ def render_vault():
 #  PANEL 4: THE SWARM — Agent Health & Hardware
 # ══════════════════════════════════════════════════════════════
 
+_KNOWN_BRAIN_AGENTS = [
+    "CentralBrain", "Tribunal", "AdversarialTribunal", "Strategist",
+    "VoidWalker", "Artificer", "Dreamer", "GhostWriter", "TheMirror",
+    "TheCortex", "DevOpsDaemon", "TheOracleEye", "TheSynapse",
+    "ThePhantom", "VirtualTwin", "HallucinatieSchild", "WaakhuisMonitor",
+]
+
+
 def render_swarm():
     """Panel 4: Agent gezondheidsscores & hardware status."""
     st.markdown('<div class="prism-header">THE SWARM &mdash; AGENT HEALTH MONITOR</div>',
@@ -463,67 +471,97 @@ def render_swarm():
         st.warning("WaakhuisMonitor niet beschikbaar")
         return
 
+    # ── Hardware Status (altijd tonen) ──
     try:
-        rapport = waakhuis.gezondheidsrapport()
-    except Exception as e:
-        st.error(f"Gezondheidsrapport fout: {e}")
-        return
+        hw = waakhuis.hardware_status()
+    except Exception:
+        hw = {}
 
-    # ── Hardware Status ──
-    hw = rapport.get("hardware", {})
     if hw:
         st.markdown("**Hardware**")
         c1, c2, c3 = st.columns(3)
-        c1.metric("CPU", f"{hw.get('cpu_percent', 0):.0f}%")
-        c2.metric("RAM", f"{hw.get('ram_percent', 0):.0f}%")
+        cpu = hw.get("cpu_percent", -1)
+        ram = hw.get("ram_percent", -1)
         ram_free = hw.get("ram_beschikbaar_mb", 0)
+        c1.metric("CPU", f"{cpu:.0f}%" if cpu >= 0 else "N/A")
+        c2.metric("RAM", f"{ram:.0f}%" if ram >= 0 else "N/A")
         c3.metric("RAM Vrij", f"{ram_free:.0f} MB")
+
+        # GPU indien beschikbaar
+        if "gpu_used_mb" in hw:
+            g1, g2 = st.columns(2)
+            g1.metric("GPU Used", f"{hw.get('gpu_used_mb', 0):.0f} MB")
+            g2.metric("GPU Total", f"{hw.get('gpu_total_mb', 0):.0f} MB")
 
     st.divider()
 
     # ── Agent Scores ──
-    agents = rapport.get("agents", {})
-    if not agents:
-        st.info("Geen agents geregistreerd in WaakhuisMonitor")
-        return
+    try:
+        dashboard = waakhuis.export_dashboard()
+        rapport = dashboard.get("gezondheid", {})
+        agents = rapport.get("agents", {})
+        stale = dashboard.get("stale_agents", [])
+        stats = dashboard.get("stats", {})
+    except Exception:
+        agents = {}
+        stale = []
+        stats = {}
 
-    st.markdown(f"**Agents ({len(agents)})**")
+    # Toon dispatches/fouten totalen
+    c1, c2 = st.columns(2)
+    c1.metric("Totaal Dispatches", stats.get("totaal_dispatches", 0))
+    c2.metric("Totaal Fouten", stats.get("totaal_fouten", 0))
 
-    # Sorteer op score (laagste eerst — problemen bovenaan)
-    sorted_agents = sorted(agents.items(), key=lambda x: x[1].get("score", 100))
+    if agents:
+        st.markdown(f"**Actieve Agents ({len(agents)})**")
 
-    for agent_name, info in sorted_agents:
-        score = info.get("score", 0)
-        latency = info.get("latency", {})
-        fouten = info.get("fouten", {})
+        # Sorteer op score (laagste eerst — problemen bovenaan)
+        sorted_agents = sorted(agents.items(), key=lambda x: x[1].get("score", 100))
 
-        # Kleur op basis van score
-        if score >= 80:
-            css = "agent-healthy"
-            icon = "&#9679;"
-        elif score >= 50:
-            css = "agent-degraded"
-            icon = "&#9670;"
-        else:
-            css = "agent-critical"
-            icon = "&#9888;"
+        for agent_name, info in sorted_agents:
+            score = info.get("score", 0)
+            latency = info.get("latency", {})
+            fouten = info.get("fouten", {})
 
-        p50 = latency.get("p50", 0)
-        p95 = latency.get("p95", 0)
-        err_total = fouten.get("totaal", 0) if isinstance(fouten, dict) else 0
+            if score >= 80:
+                css = "agent-healthy"
+                icon = "&#9679;"
+            elif score >= 50:
+                css = "agent-degraded"
+                icon = "&#9670;"
+            else:
+                css = "agent-critical"
+                icon = "&#9888;"
 
-        st.markdown(
-            f'<div style="background:#131820; border-radius:6px; padding:8px 12px; '
-            f'margin:4px 0;">'
-            f'<span class="{css}">{icon} <b>{agent_name}</b></span> '
-            f'<span style="color:#8b949e; float:right;">'
-            f'Score: <b>{score:.0f}</b> &nbsp;|&nbsp; '
-            f'p50: {p50:.0f}ms &nbsp;|&nbsp; '
-            f'p95: {p95:.0f}ms &nbsp;|&nbsp; '
-            f'Errors: {err_total}'
-            f'</span></div>',
-            unsafe_allow_html=True,
-        )
+            p50 = latency.get("p50", 0)
+            p95 = latency.get("p95", 0)
+            err_total = fouten.get("totaal", 0) if isinstance(fouten, dict) else 0
+
+            st.markdown(
+                f'<div style="background:#131820; border-radius:6px; padding:8px 12px; '
+                f'margin:4px 0;">'
+                f'<span class="{css}">{icon} <b>{agent_name}</b></span> '
+                f'<span style="color:#8b949e; float:right;">'
+                f'Score: <b>{score:.0f}</b> &nbsp;|&nbsp; '
+                f'p50: {p50:.0f}ms &nbsp;|&nbsp; '
+                f'p95: {p95:.0f}ms &nbsp;|&nbsp; '
+                f'Errors: {err_total}'
+                f'</span></div>',
+                unsafe_allow_html=True,
+            )
+    else:
+        # Toon bekende agents als dormant
+        st.markdown(f"**Brain Agents ({len(_KNOWN_BRAIN_AGENTS)}) — Dormant**")
+        for name in _KNOWN_BRAIN_AGENTS:
+            st.markdown(
+                f'<div style="background:#131820; border-radius:6px; padding:8px 12px; '
+                f'margin:3px 0;">'
+                f'<span style="color:#484f58">&#9711; <b>{name}</b></span> '
+                f'<span style="color:#30363d; float:right;">Standby</span>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+        st.caption("Agents worden actief na de eerste SwarmEngine query")
 
     # ── Stale Agents ──
     try:

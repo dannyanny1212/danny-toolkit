@@ -57,7 +57,8 @@ _ALLOWED_COMPONENTS = frozenset({
     "fastapi_server", "telegram_bot", "streamlit_ui",
     "void_walker", "artificer", "strategist", "cortex",
     "phantom", "synapse", "virtual_twin", "ghost_writer",
-    "devops_daemon", "model_sync", "config_auditor",
+    "devops_daemon", "model_sync", "config_auditor", "auto_saver",
+    "watchtower",
 })
 
 

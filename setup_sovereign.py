@@ -32,8 +32,7 @@ try:
 except Exception:
     pass
 
-# ── Test isolation (voorkom CorticalStack WAL lock deadlocks) ──
-os.environ.setdefault("DANNY_TEST_MODE", "1")
+# ── GPU isolation (voorkom Windows segfaults) ──
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
 
 # ── Pad setup ──
@@ -504,6 +503,28 @@ def main():
     # Step 5: Sovereign Gate (informational — don't block setup)
     gate_passed = run_sovereign_gate()
     results["Sovereign Gate (7 Wetten)"] = gate_passed
+
+    # Step 5.5: AutoSaver daemon
+    try:
+        from danny_toolkit.omega_sovereign_core.auto_saver import get_auto_saver
+        saver = get_auto_saver()
+        saver.start()
+        results["AutoSaver (30 min)"] = saver.running
+        ok("AutoSaver daemon gestart (elke 30 min)")
+    except Exception as e:
+        results["AutoSaver (30 min)"] = False
+        warn(f"AutoSaver kon niet starten: {e}")
+
+    # Step 5.6: Watchtower daemon
+    try:
+        from danny_toolkit.apps.watchtower import get_watchtower
+        watcher = get_watchtower()
+        watcher.start()
+        results["Watchtower (Ghost Detect)"] = watcher.running
+        ok("Watchtower daemon gestart (scan elke 60s)")
+    except Exception as e:
+        results["Watchtower (Ghost Detect)"] = False
+        warn(f"Watchtower kon niet starten: {e}")
 
     # Step 6: Report
     elapsed = (time.perf_counter() - start) * 1000

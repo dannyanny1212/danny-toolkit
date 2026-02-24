@@ -24,6 +24,7 @@ __all__ = [
     "memory_interface",
     "lifecycle",
     "sovereign_engine",
+    "auto_saver",
 ]
 
 __version__ = "2.0.0"

@@ -740,12 +740,33 @@ def main():
     # 2.4: Governor status bij boot
     show_governor_status(brain)
 
+    # AutoSaver daemon (elke 30 min)
+    try:
+        from danny_toolkit.omega_sovereign_core.auto_saver import (
+            get_auto_saver,
+        )
+        _saver = get_auto_saver()
+        _saver.start()
+    except Exception as e:
+        logger.debug("AutoSaver start: %s", e)
+
+    # Watchtower daemon (process monitor)
+    try:
+        from danny_toolkit.apps.watchtower import (
+            get_watchtower,
+        )
+        _watcher = get_watchtower()
+        _watcher.start()
+    except Exception as e:
+        logger.debug("Watchtower start: %s", e)
+
     console.print(
         "[green]Federation ONLINE[/green]\n"
     )
     console.print(
         "[dim]Commando's: exit | chain | clear"
-        " | status | metrics | boot[/dim]"
+        " | status | metrics | boot"
+        " | audit | pruning | shards[/dim]"
     )
 
     chain_mode = False
