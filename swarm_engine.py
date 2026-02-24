@@ -2243,6 +2243,39 @@ class SwarmEngine:
 
         return stats
 
+    def _record_response_outcome(self, query, results):
+        """B-95: Log response quality metrics to CorticalStack.
+
+        Records: error_count, agents used, total latency, schild/sentinel blocks.
+        Used by PrometheusBrain.efficiency_reflection() to compute B-95 score.
+        """
+        if not HAS_CORTICAL:
+            return
+        try:
+            stack = get_cortical_stack()
+            error_count = sum(1 for r in results if r.type == "error")
+            agents_used = [r.agent for r in results]
+            total_ms = sum(
+                r.metadata.get("execution_time", 0) for r in results
+            ) * 1000
+            success = error_count == 0 and len(results) > 0
+            stack.log_event(
+                actor="swarm_engine",
+                action="response_outcome",
+                details={
+                    "query_preview": query[:120],
+                    "success": success,
+                    "error_count": error_count,
+                    "agents": agents_used,
+                    "latency_ms": round(total_ms, 1),
+                    "schild_blocks": self._swarm_metrics.get("schild_blocks", 0),
+                    "sentinel_warnings": self._swarm_metrics.get("sentinel_warnings", 0),
+                },
+                source="b95_feedback",
+            )
+        except Exception as e:
+            logger.debug("B-95 outcome recording failed: %s", e)
+
     def _record_agent_metric(self, agent_naam, elapsed_ms, error=None):
         """Registreer per-agent timing en foutstatistiek."""
         with _METRICS_LOCK:
@@ -4147,6 +4180,9 @@ class SwarmEngine:
         # Phase 36: eind trace
         if _tracer:
             _tracer.eind_trace()
+
+        # B-95: Record response outcome to CorticalStack
+        self._record_response_outcome(user_input, results)
 
         log("\u2705 SWARM COMPLETE")
         self._query_count += 1

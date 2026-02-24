@@ -1443,6 +1443,87 @@ class PrometheusBrain:
 
         print(f"\n{'='*60}\n")
 
+    # --- B-95 EFFICIENCY REFLECTION ---
+
+    def efficiency_reflection(self, window: int = 100) -> dict:
+        """B-95 Efficiency Reflection: Analyseer recente response kwaliteit.
+
+        Queries CorticalStack for the last `window` response_outcome events
+        logged by SwarmEngine and computes a quality score.
+
+        Returns:
+            dict met b95_score (0-100), total, successes, failures,
+            avg_latency_ms, top_failure_agents, en recommendation.
+        """
+        try:
+            from danny_toolkit.brain.cortical_stack import get_cortical_stack
+            stack = get_cortical_stack()
+        except Exception:
+            return {"b95_score": -1, "error": "CorticalStack niet beschikbaar"}
+
+        events = stack.search_events("response_outcome", limit=window)
+        if not events:
+            return {
+                "b95_score": -1,
+                "total": 0,
+                "note": "Geen response_outcome events gevonden. "
+                        "SwarmEngine moet eerst queries verwerken.",
+            }
+
+        total = len(events)
+        successes = 0
+        failures = 0
+        latencies = []
+        failure_agents = {}
+
+        for evt in events:
+            details = evt.get("details", {})
+            if isinstance(details, str):
+                import json
+                try:
+                    details = json.loads(details)
+                except (json.JSONDecodeError, TypeError):
+                    continue
+
+            if details.get("success"):
+                successes += 1
+            else:
+                failures += 1
+                for agent in details.get("agents", []):
+                    failure_agents[agent] = failure_agents.get(agent, 0) + 1
+
+            lat = details.get("latency_ms", 0)
+            if lat > 0:
+                latencies.append(lat)
+
+        b95_score = round((successes / total) * 100, 1) if total > 0 else 0
+        avg_latency = round(sum(latencies) / len(latencies), 1) if latencies else 0
+
+        # Top 3 failure agents
+        top_failures = sorted(
+            failure_agents.items(), key=lambda x: x[1], reverse=True
+        )[:3]
+
+        # Recommendation
+        if b95_score >= 95:
+            recommendation = "EXCELLENT: B-95 standaard gehaald."
+        elif b95_score >= 85:
+            recommendation = "GOED: Dicht bij B-95. Focus op top failure agents."
+        elif b95_score >= 70:
+            recommendation = "AANDACHT: Onder B-95. Controleer fallback chain en circuit breakers."
+        else:
+            recommendation = "KRITIEK: Ver onder B-95. Systeem-brede diagnose nodig."
+
+        return {
+            "b95_score": b95_score,
+            "total": total,
+            "successes": successes,
+            "failures": failures,
+            "avg_latency_ms": avg_latency,
+            "top_failure_agents": top_failures,
+            "recommendation": recommendation,
+        }
+
     # --- TRI-FORCE PROTOCOL ---
 
     def execute_total_mobilization(self, target_topic: str = None) -> dict:
