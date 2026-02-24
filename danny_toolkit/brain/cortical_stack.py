@@ -65,6 +65,8 @@ class CorticalStack:
         self._conn.execute("PRAGMA journal_mode=WAL")
         self._conn.execute("PRAGMA synchronous=NORMAL")
         self._conn.execute("PRAGMA busy_timeout=5000")
+        self._conn.execute("PRAGMA temp_store=MEMORY")
+        self._conn.execute("PRAGMA foreign_keys=ON")
         self._pending_writes = 0
         self._last_flush = time.time()
         self._create_tables()
@@ -606,6 +608,8 @@ class CorticalStack:
             self._conn.execute("PRAGMA journal_mode=WAL")
             self._conn.execute("PRAGMA synchronous=NORMAL")
             self._conn.execute("PRAGMA busy_timeout=5000")
+            self._conn.execute("PRAGMA temp_store=MEMORY")
+            self._conn.execute("PRAGMA foreign_keys=ON")
             self._pending_writes = 0
             self._last_flush = time.time()
             return True

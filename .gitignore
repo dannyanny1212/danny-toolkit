@@ -58,6 +58,11 @@ danny_toolkit/skills/forge/registry.json
 # Artificer workspace (sandboxed file I/O output)
 danny_toolkit/workspace/
 
+# Sovereign Core (machine-specific runtime)
+data/sovereign_master.hash
+data/hash_chain.json
+data/state_archive/
+
 # Governor backups (runtime data)
 data/backups/
 
