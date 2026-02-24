@@ -240,7 +240,23 @@ class SmartKeyManager:
         Returns: (mag_door, reden)
         - (True, "") = vrij om te requesten
         - (False, reden) = moet wachten
+
+        See also: check_throttle_exact() voor exacte wachttijd.
         """
+        ok, reden, _wait = self._check_throttle_inner(agent_naam, model)
+        return ok, reden
+
+    def check_throttle_exact(self, agent_naam: str, model: str = None) -> tuple[bool, str, float]:
+        """Check throttle met exacte wachttijd in seconden.
+
+        Returns: (mag_door, reden, wait_seconds)
+        - (True, "", 0.0) = vrij om te requesten
+        - (False, reden, 2.3) = moet 2.3s wachten
+        """
+        return self._check_throttle_inner(agent_naam, model)
+
+    def _check_throttle_inner(self, agent_naam: str, model: str = None) -> tuple[bool, str, float]:
+        """Interne throttle check met exacte wachttijd berekening."""
         agent = self._get_agent(agent_naam)
         now = time.time()
 
@@ -250,31 +266,41 @@ class SmartKeyManager:
             # 1. Cooldown na 429
             if now < agent.cooldown_tot:
                 wacht = agent.cooldown_tot - now
-                return False, f"Cooldown: {wacht:.1f}s resterend"
+                return False, f"Cooldown: {wacht:.1f}s resterend", wacht
 
             # 2. Globale cooldown
             if now < self._global_cooldown_tot:
                 wacht = self._global_cooldown_tot - now
-                return False, f"Globale cooldown: {wacht:.1f}s"
+                return False, f"Globale cooldown: {wacht:.1f}s", wacht
 
             # 3. RPM check (requests per minuut)
             limits = MODEL_LIMITS.get(model, DEFAULT_LIMITS) if model else DEFAULT_LIMITS
             rpm_limit = limits["rpm"]
             current_rpm = len(agent.request_timestamps)
             if current_rpm >= rpm_limit:
-                return False, f"RPM limiet ({rpm_limit})"
+                # Exacte wachttijd: oudste request + 60s = wanneer slot vrijkomt
+                if agent.request_timestamps:
+                    oldest = agent.request_timestamps[0]
+                    wacht = max(0.1, (oldest + 60.0) - now)
+                else:
+                    wacht = 1.0
+                return False, f"RPM limiet ({rpm_limit})", wacht
 
             # 4. TPM check (tokens per minuut)
             tpm_limit = limits["tpm"]
             if agent.tokens_deze_minuut >= tpm_limit * 0.9:
-                return False, f"TPM limiet ({tpm_limit})"
+                # Exacte wachttijd: tot minuut-venster reset
+                wacht = max(0.1, (agent.minuut_start + 60.0) - now)
+                return False, f"TPM limiet ({tpm_limit})", wacht
 
             # 5. TPD check (tokens per dag)
             tpd_limit = limits["tpd"]
             if agent.tokens_vandaag >= tpd_limit * 0.95:
-                return False, f"TPD limiet ({tpd_limit})"
+                # Exacte wachttijd: tot dag-venster reset
+                wacht = max(0.1, (agent.dag_start + 86400.0) - now)
+                return False, f"TPD limiet ({tpd_limit})", wacht
 
-            return True, ""
+            return True, "", 0.0
 
     # ------------------------------------------------------------------
     # Rate Limit Queue — wait instead of drop
@@ -283,21 +309,31 @@ class SmartKeyManager:
     MAX_QUEUE_WAIT = 30.0  # Maximum seconds to wait in queue
 
     async def async_enqueue(self, agent_naam: str, model: str = None) -> tuple:
-        """Wait for rate limit clearance instead of dropping.
+        """Wait for rate limit clearance with exact sleep times.
+
+        Uses check_throttle_exact() to compute precise wait duration
+        instead of naive 1s polling. Typically resolves in 1 sleep cycle
+        instead of up to 30.
 
         Returns: (mag_door, reden)
         - (True, "OK") = cleared to request
         - (False, reason) = timed out after MAX_QUEUE_WAIT
         """
-        start = time.time()
-        while time.time() - start < self.MAX_QUEUE_WAIT:
-            mag, reden = self.check_throttle(agent_naam, model)
+        deadline = time.time() + self.MAX_QUEUE_WAIT
+
+        while True:
+            mag, reden, wait_secs = self.check_throttle_exact(agent_naam, model)
             if mag:
                 return True, "OK"
-            wait_time = min(1.0, self.MAX_QUEUE_WAIT - (time.time() - start))
-            if wait_time <= 0:
+
+            remaining = deadline - time.time()
+            if remaining <= 0:
                 break
-            await asyncio.sleep(wait_time)
+
+            # Slaap exact de benodigde tijd (+ 0.1s marge), maar niet langer dan deadline
+            sleep_time = min(wait_secs + 0.1, remaining)
+            await asyncio.sleep(sleep_time)
+
         return False, f"Queue timeout ({self.MAX_QUEUE_WAIT}s)"
 
     # ------------------------------------------------------------------
