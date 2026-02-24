@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# LINE 1: The Gate MUST be first.
+import danny_toolkit.core.sovereign_gate  # noqa: F401, E402
 """
 Danny Toolkit - Unified Python Applications
 Entry point voor de toolkit.

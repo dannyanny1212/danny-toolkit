@@ -121,6 +121,5 @@ htmlcov/
 .coverage
 .pytest_cache/
 
-# Omega Sovereign Core — runtime artifacts only
-Omega_Sovereign_Core/__pycache__/
-Omega_Sovereign_Core/htmlcov/
+# Omega Sovereign Core — Danny's privé ruimte, NOOIT committen
+Omega_Sovereign_Core/

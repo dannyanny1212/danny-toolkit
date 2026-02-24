@@ -1,3 +1,5 @@
+# LINE 1: The Gate MUST be first.
+import danny_toolkit.core.sovereign_gate  # noqa: F401, E402
 """
 Brain CLI - Command-line interface voor Central Brain.
 
