@@ -274,7 +274,8 @@ main.py (launcher), cli.py (Rich terminal), brain_cli.py (brain CLI), run_daemon
 | Fase A: Immuunsysteem + Parallel Tools | `1e28e5bd` | 22 silent except→logger.debug, asyncio.gather tool exec, ghost BrainCLI import removed |
 | Fase B.1: Import Conversie (Wet #1) | `e6a471eb` | 361 relative→absolute imports across 97 files via import_analyzer.py |
 | Phase 100: Sovereign Awakening | `f20ba056` | 176-module Sovereign Roadmap + B-95 feedback loop + session state |
-| Cortical Speed Upgrade | pending commit | `_record_response_outcome()` → fire-and-forget background thread |
+| Cortical Speed Upgrade | `b987fe72` | `_record_response_outcome()` → fire-and-forget background thread |
+| Fase B.2: Fallback Redesign | pending commit | Recursive→linear provider chain, 5 bugs fixed, -101 lines |
 
 ### Latency Benchmarks (Cortical Speed Upgrade)
 | Metric | Before | After | Reduction |
@@ -296,7 +297,7 @@ main.py (launcher), cli.py (Rich terminal), brain_cli.py (brain CLI), run_daemon
 - **Aanbeveling**: Een gecontroleerde eerste missie (single-domain, low-stakes query) is VEILIG. Multi-domain swarm-missies vereisen Fase B.2 completion.
 
 ### Pending Work (Requires Tribunal Approval)
-- **Fase B.2**: Fallback-chain redesign (recursive→linear provider-iterator)
+- **Fase B.2**: ~~Fallback-chain redesign~~ DONE
 - **Fase B.3**: Rate-limit queue→event-based exact wait times
 - **Fase C.1**: `/core/`↔`/brain/` grens (IMemoryStore interface, 5 violations)
 - **Fase C.2**: Monoliet splits (trinity_omega 2167L, security_research 2111L, governor 1252L)

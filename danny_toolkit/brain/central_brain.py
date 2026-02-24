@@ -57,6 +57,17 @@ try:
 except ImportError:
     GROQ_BESCHIKBAAR = False
 
+# Rate-limit exception types voor isinstance checks
+try:
+    from groq import RateLimitError as GroqRateLimitError
+except ImportError:
+    GroqRateLimitError = None
+
+try:
+    from anthropic import RateLimitError as AnthropicRateLimitError
+except ImportError:
+    AnthropicRateLimitError = None
+
 try:
     from openai import OpenAI as NvidiaClient
     NVIDIA_NIM_BESCHIKBAAR = True
@@ -415,15 +426,11 @@ Belangrijke regels:
                 "content": user_input
             })
 
-        # Route naar juiste provider
-        if self.ai_provider == "groq":
-            return self._process_groq(
-                system_message, use_tools, max_turns,
-                _model=model,
-                _max_tokens=max_tokens,
-            )
-        else:
-            return self._process_anthropic(system_message, use_tools, max_turns)
+        # Route door lineaire fallback chain
+        return self._process_with_fallback(
+            system_message, use_tools, max_turns,
+            model=model, max_tokens=max_tokens,
+        )
 
     # Groq modellen: primair (groot) en fallback (klein)
     from danny_toolkit.core.config import Config as _Cfg
@@ -437,373 +444,456 @@ Belangrijke regels:
     NVIDIA_NIM_MODEL = Config.NVIDIA_NIM_MODEL
     NVIDIA_NIM_BASE_URL = Config.NVIDIA_NIM_BASE_URL
 
-    def _process_groq(
+    # ----------------------------------------------------------
+    # Phase B.2: Linear Fallback Chain Architecture
+    # ----------------------------------------------------------
+
+    def _is_rate_limit_error(self, error: Exception) -> bool:
+        """Detecteer rate-limit errors via isinstance, string-matching als fallback."""
+        if GroqRateLimitError and isinstance(error, GroqRateLimitError):
+            return True
+        if AnthropicRateLimitError and isinstance(error, AnthropicRateLimitError):
+            return True
+        err_str = str(error).lower()
+        return any(m in err_str for m in [
+            "429", "rate_limit", "rate limit", "too many requests",
+            "resource_exhausted", "quota",
+        ])
+
+    def _build_openai_tools(self):
+        """Converteer tool definitions naar OpenAI function-calling format."""
+        if not self.tool_definitions:
+            return None
+        tools = []
+        for tool in self.tool_definitions:
+            schema = tool["input_schema"].copy()
+            if "properties" in schema:
+                clean_props = {}
+                required_fields = []
+                for prop_name, prop_def in schema["properties"].items():
+                    clean_prop = {k: v for k, v in prop_def.items()
+                                 if k != "required"}
+                    clean_props[prop_name] = clean_prop
+                    if prop_def.get("required"):
+                        required_fields.append(prop_name)
+                schema["properties"] = clean_props
+                if required_fields:
+                    schema["required"] = required_fields
+            tools.append({
+                "type": "function",
+                "function": {
+                    "name": tool["name"],
+                    "description": tool["description"],
+                    "parameters": schema,
+                }
+            })
+        return tools
+
+    def _get_provider_chain(self, system_message, use_tools, max_tokens, model=None):
+        """Bouw geordende provider chain, skip circuit-broken providers.
+
+        Returns:
+            List van (breaker_key, attempt_callable, label) tuples.
+            Elke callable: (remaining_turns) -> (content|None, turns_used)
+        """
+        chain = []
+
+        # 1. Groq primair
+        if self.client and self.ai_provider == "groq":
+            m = model or self.GROQ_MODEL_PRIMARY
+            bk = "groq_8b" if m == self.GROQ_MODEL_FALLBACK else "groq_70b"
+            if self._provider_ok(bk):
+                chain.append((
+                    bk,
+                    lambda rt, _m=m, _mt=max_tokens, _ut=use_tools, _sm=system_message:
+                        self._attempt_groq(rt, _sm, _ut, _m, _mt),
+                    f"Groq ({m})",
+                ))
+            # 2. Groq fallback (8b) — alleen als primair niet al 8b was
+            if m != self.GROQ_MODEL_FALLBACK and self._provider_ok("groq_8b"):
+                chain.append((
+                    "groq_8b",
+                    lambda rt, _mt=max_tokens, _ut=use_tools, _sm=system_message:
+                        self._attempt_groq(rt, _sm, _ut, self.GROQ_MODEL_FALLBACK, _mt),
+                    f"Groq ({self.GROQ_MODEL_FALLBACK})",
+                ))
+
+        # 3. Anthropic
+        anthro = self._fallback_client or (
+            self.client if self.ai_provider == "anthropic" else None
+        )
+        if anthro and self._provider_ok("anthropic"):
+            chain.append((
+                "anthropic",
+                lambda rt, _sm=system_message, _ut=use_tools, _c=anthro:
+                    self._attempt_anthropic(rt, _sm, _ut, _c),
+                "Anthropic",
+            ))
+
+        # 4. NVIDIA NIM
+        if self._nvidia_nim_available and self._provider_ok("nvidia_nim"):
+            chain.append((
+                "nvidia_nim",
+                lambda rt, _sm=system_message:
+                    self._attempt_nvidia_nim(_sm),
+                f"NVIDIA NIM ({self.NVIDIA_NIM_MODEL})",
+            ))
+
+        # 5. HuggingFace
+        if self._hf_available and self._provider_ok("huggingface"):
+            chain.append((
+                "huggingface",
+                lambda rt, _sm=system_message:
+                    self._attempt_huggingface(_sm),
+                f"HuggingFace ({self.HF_MODEL})",
+            ))
+
+        # 6. Ollama (lokaal, geen rate limit)
+        if self._ollama_available and self._provider_ok("ollama"):
+            chain.append((
+                "ollama",
+                lambda rt, _sm=system_message:
+                    self._attempt_ollama(_sm),
+                f"Ollama ({self.OLLAMA_MODEL})",
+            ))
+
+        return chain
+
+    def _process_with_fallback(
         self,
         system_message: str,
         use_tools: bool,
         max_turns: int,
-        _model: str = None,
-        _max_tokens: int = 2000,
+        model: str = None,
+        max_tokens: int = 2000,
     ) -> str:
-        """Verwerk request via GROQ API."""
-        model = _model or self.GROQ_MODEL_PRIMARY
+        """Lineaire fallback chain — gedeeld turn budget.
+
+        Itereert door providers in prioriteitsvolgorde.
+        Een enkele remaining_turns teller wordt gedeeld over ALLE providers,
+        wat het multiplicatieve worst-case van het oude recursieve ontwerp voorkomt.
+        """
+        chain = self._get_provider_chain(
+            system_message, use_tools, max_tokens, model,
+        )
+
+        if not chain:
+            prompt = (
+                self.conversation_history[-1]["content"]
+                if self.conversation_history else ""
+            )
+            return self._emergency_offline_response(prompt)
+
+        remaining_turns = max_turns
+
+        for i, (breaker_key, attempt_fn, label) in enumerate(chain):
+            if remaining_turns <= 0:
+                break
+
+            if i > 0:
+                print(kleur(f"   [FALLBACK] -> {label}", Kleur.GEEL))
+
+            try:
+                content, turns_used = attempt_fn(remaining_turns)
+                remaining_turns -= max(turns_used, 1)
+
+                if content is not None:
+                    # SUCCES — circuit breaker reset + history + stats
+                    self._provider_success(breaker_key)
+
+                    try:
+                        from danny_toolkit.brain.governor import OmegaGovernor
+                        OmegaGovernor().registreer_tokens(content)
+                    except Exception as e:
+                        logger.debug("Token registratie error: %s", e)
+
+                    with self._history_lock:
+                        self.conversation_history.append({
+                            "role": "assistant",
+                            "content": content,
+                        })
+
+                    self._sla_stats_op()
+                    return content
+
+                # content is None — provider faalde, probeer volgende
+                self._provider_fail(breaker_key)
+
+            except Exception as e:
+                self._provider_fail(breaker_key)
+                remaining_turns -= 1
+
+                if self._is_rate_limit_error(e):
+                    print(kleur(
+                        f"   [FALLBACK] {label} rate limit",
+                        Kleur.GEEL,
+                    ))
+                else:
+                    logger.debug("%s fout: %s", label, e)
+                continue
+
+        # Alle providers uitgeput
+        if remaining_turns <= 0:
+            self._sla_stats_op()
+            return "Maximum aantal rondes bereikt. Probeer een specifiekere vraag."
+
+        print(kleur(
+            "   [EMERGENCY] Alle providers onbereikbaar",
+            Kleur.ROOD,
+        ))
+        prompt = (
+            self.conversation_history[-1]["content"]
+            if self.conversation_history else ""
+        )
+        return self._emergency_offline_response(prompt)
+
+    # ----------------------------------------------------------
+    # Single-provider attempt methods (geen fallback-logica!)
+    # ----------------------------------------------------------
+
+    def _attempt_groq(self, remaining_turns, system_message, use_tools, model, max_tokens):
+        """Groq attempt met tool-calling loop.
+
+        Returns:
+            (content, turns_used) — content is None bij falen.
+        Raises:
+            Exception bij rate-limit of onherstelbare fouten.
+        """
         messages = [{"role": "system", "content": system_message}]
         messages.extend(self.conversation_history)
 
-        # Converteer tools naar OpenAI format voor GROQ
-        tools = None
-        if use_tools and self.tool_definitions:
-            tools = []
-            for tool in self.tool_definitions:
-                # Clean up schema - verwijder 'required' boolean uit properties
-                schema = tool["input_schema"].copy()
-                if "properties" in schema:
-                    clean_props = {}
-                    required_fields = []
-                    for prop_name, prop_def in schema["properties"].items():
-                        clean_prop = {k: v for k, v in prop_def.items()
-                                     if k != "required"}
-                        clean_props[prop_name] = clean_prop
-                        if prop_def.get("required"):
-                            required_fields.append(prop_name)
-                    schema["properties"] = clean_props
-                    if required_fields:
-                        schema["required"] = required_fields
+        tools = self._build_openai_tools() if use_tools else None
 
-                tools.append({
-                    "type": "function",
-                    "function": {
-                        "name": tool["name"],
-                        "description": tool["description"],
-                        "parameters": schema
-                    }
+        turns_used = 0
+        for turn in range(remaining_turns):
+            turns_used += 1
+
+            kwargs = {
+                "model": model,
+                "messages": messages,
+                "max_tokens": max_tokens,
+            }
+            if tools:
+                kwargs["tools"] = tools
+                kwargs["tool_choice"] = "auto"
+
+            response = self.client.chat.completions.create(**kwargs)
+            choice = response.choices[0]
+            message = choice.message
+
+            if message.tool_calls:
+                # Voeg assistant message toe aan lokale messages
+                messages.append({
+                    "role": "assistant",
+                    "content": message.content,
+                    "tool_calls": [
+                        {
+                            "id": tc.id,
+                            "type": "function",
+                            "function": {
+                                "name": tc.function.name,
+                                "arguments": tc.function.arguments,
+                            }
+                        }
+                        for tc in message.tool_calls
+                    ]
                 })
 
-        for turn in range(max_turns):
-            try:
-                kwargs = {
-                    "model": model,
-                    "messages": messages,
-                    "max_tokens": _max_tokens,
-                }
-                if tools:
-                    kwargs["tools"] = tools
-                    kwargs["tool_choice"] = "auto"
-                response = (
-                    self.client.chat.completions.create(
-                        **kwargs
+                # Voer tools parallel uit via asyncio.gather
+                tool_tasks = []
+                valid_calls = []
+                for tool_call in message.tool_calls:
+                    tool_name = tool_call.function.name
+                    try:
+                        tool_input = json.loads(tool_call.function.arguments)
+                    except json.JSONDecodeError:
+                        tool_input = {}
+
+                    app_naam, actie_naam = parse_tool_call(tool_name)
+
+                    if app_naam and actie_naam:
+                        print(kleur(
+                            f"   [TOOL] {app_naam}.{actie_naam}",
+                            Kleur.CYAAN,
+                        ))
+                        tool_tasks.append(
+                            self._execute_app_action(app_naam, actie_naam, tool_input)
+                        )
+                        valid_calls.append(tool_call)
+                    else:
+                        messages.append({
+                            "role": "tool",
+                            "tool_call_id": tool_call.id,
+                            "content": json.dumps(
+                                {"error": f"Tool '{tool_name}' niet gevonden"},
+                                ensure_ascii=False,
+                            )[:5000]
+                        })
+
+                if tool_tasks:
+                    results = asyncio.run(
+                        asyncio.gather(*tool_tasks, return_exceptions=True)
                     )
-                )
+                    for tool_call, result in zip(valid_calls, results):
+                        if isinstance(result, BaseException):
+                            logger.debug("Tool %s fout: %s", tool_call.function.name, result)
+                            result = {"error": str(result)}
+                        messages.append({
+                            "role": "tool",
+                            "tool_call_id": tool_call.id,
+                            "content": json.dumps(
+                                result, ensure_ascii=False, default=str,
+                            )[:5000]
+                        })
+            else:
+                # Geen tool calls — finaal antwoord
+                return (message.content or "", turns_used)
 
-                choice = response.choices[0]
-                message = choice.message
+        # Turns uitgeput zonder finaal antwoord
+        return (None, turns_used)
 
-                # Check voor tool calls
-                if message.tool_calls:
-                    # Voeg assistant message toe
-                    messages.append({
-                        "role": "assistant",
-                        "content": message.content,
-                        "tool_calls": [
-                            {
-                                "id": tc.id,
-                                "type": "function",
-                                "function": {
-                                    "name": tc.function.name,
-                                    "arguments": tc.function.arguments
-                                }
-                            }
-                            for tc in message.tool_calls
-                        ]
-                    })
+    def _attempt_anthropic(self, remaining_turns, system_message, use_tools, client):
+        """Anthropic attempt met tool-calling loop.
 
-                    # Voer tools parallel uit via asyncio.gather
-                    tool_tasks = []
-                    valid_calls = []
-                    for tool_call in message.tool_calls:
-                        tool_name = tool_call.function.name
-                        try:
-                            tool_input = json.loads(tool_call.function.arguments)
-                        except json.JSONDecodeError:
-                            tool_input = {}
+        Returns:
+            (content, turns_used) — content is None bij falen.
+        Raises:
+            Exception bij rate-limit of onherstelbare fouten.
+        """
+        messages = list(self.conversation_history)
+
+        turns_used = 0
+        for turn in range(remaining_turns):
+            turns_used += 1
+
+            response = client.messages.create(
+                model=Config.CLAUDE_MODEL,
+                max_tokens=2000,
+                system=system_message,
+                tools=self.tool_definitions if use_tools else [],
+                messages=messages,
+            )
+
+            if response.stop_reason == "tool_use":
+                tool_results = []
+
+                for block in response.content:
+                    if block.type == "tool_use":
+                        tool_name = block.name
+                        tool_input = block.input
 
                         app_naam, actie_naam = parse_tool_call(tool_name)
 
                         if app_naam and actie_naam:
                             print(kleur(
                                 f"   [TOOL] {app_naam}.{actie_naam}",
-                                Kleur.CYAAN
+                                Kleur.CYAAN,
                             ))
-                            tool_tasks.append(
+                            result = asyncio.run(
                                 self._execute_app_action(
-                                    app_naam, actie_naam, tool_input
+                                    app_naam, actie_naam, tool_input,
                                 )
                             )
-                            valid_calls.append(tool_call)
+                            tool_results.append({
+                                "type": "tool_result",
+                                "tool_use_id": block.id,
+                                "content": json.dumps(
+                                    result, ensure_ascii=False, default=str,
+                                )[:5000]
+                            })
                         else:
-                            messages.append({
-                                "role": "tool",
-                                "tool_call_id": tool_call.id,
-                                "content": json.dumps(
-                                    {"error": f"Tool '{tool_name}' niet gevonden"},
-                                    ensure_ascii=False,
-                                )[:5000]
+                            tool_results.append({
+                                "type": "tool_result",
+                                "tool_use_id": block.id,
+                                "content": f"Tool '{tool_name}' niet gevonden",
+                                "is_error": True,
                             })
 
-                    if tool_tasks:
-                        results = asyncio.run(
-                            asyncio.gather(*tool_tasks, return_exceptions=True)
-                        )
-                        for tool_call, result in zip(valid_calls, results):
-                            if isinstance(result, BaseException):
-                                logger.debug("Tool %s fout: %s", tool_call.function.name, result)
-                                result = {"error": str(result)}
-                            messages.append({
-                                "role": "tool",
-                                "tool_call_id": tool_call.id,
-                                "content": json.dumps(
-                                    result, ensure_ascii=False, default=str
-                                )[:5000]
-                            })
+                messages.append({"role": "assistant", "content": response.content})
+                messages.append({"role": "user", "content": tool_results})
+            else:
+                # Finaal antwoord
+                final_response = ""
+                for block in response.content:
+                    if hasattr(block, "text"):
+                        final_response += block.text
+                return (final_response, turns_used)
 
-                else:
-                    # Geen tool calls, return antwoord
-                    final_response = message.content or ""
+        # Turns uitgeput
+        return (None, turns_used)
 
-                    # Token budget registratie
-                    try:
-                        from danny_toolkit.brain.governor import OmegaGovernor
-                        OmegaGovernor().registreer_tokens(final_response)
-                    except Exception as e:
-                        logger.debug("Token registratie error: %s", e)
+    def _attempt_nvidia_nim(self, system_message):
+        """NVIDIA NIM single-attempt (geen tool calling).
 
-                    with self._history_lock:
-                        self.conversation_history.append({
-                            "role": "assistant",
-                            "content": final_response
-                        })
+        Returns:
+            (content, 1) bij succes.
+        Raises:
+            Exception bij fout.
+        """
+        client = NvidiaClient(
+            base_url=self.NVIDIA_NIM_BASE_URL,
+            api_key=Config.NVIDIA_NIM_API_KEY,
+        )
+        messages = [{"role": "system", "content": system_message}]
+        messages.extend(self.conversation_history)
 
-                    self._sla_stats_op()
-                    return final_response
+        resp = client.chat.completions.create(
+            model=self.NVIDIA_NIM_MODEL,
+            messages=messages,
+            temperature=0.2,
+            max_tokens=4096,
+        )
+        content = resp.choices[0].message.content or ""
+        return (content, 1)
 
-            except Exception as e:
-                # Fallback bij rate limit (429)
-                is_rate_limit = (
-                    "429" in str(e) or "rate_limit" in str(e)
-                )
-                if is_rate_limit:
-                    # Registreer faal per provider
-                    breaker_key = (
-                        "groq_8b"
-                        if model == self.GROQ_MODEL_FALLBACK
-                        else "groq_70b"
-                    )
-                    self._provider_fail(breaker_key)
+    def _attempt_huggingface(self, system_message):
+        """HuggingFace Inference single-attempt (geen tool calling).
 
-                    # Stap 1: Groq 8b (ander model = ander
-                    # rate limit budget)
-                    if (
-                        model != self.GROQ_MODEL_FALLBACK
-                        and self._provider_ok("groq_8b")
-                    ):
-                        print(kleur(
-                            "   [FALLBACK] Groq 70b rate"
-                            " limit -> Groq 8b",
-                            Kleur.GEEL,
-                        ))
-                        return self._process_groq(
-                            system_message,
-                            use_tools,
-                            max_turns,
-                            _model=self.GROQ_MODEL_FALLBACK,
-                        )
-                    # Stap 2: Anthropic
-                    if (
-                        self._fallback_client
-                        and self._provider_ok("anthropic")
-                    ):
-                        print(kleur(
-                            "   [FALLBACK] Groq rate limit"
-                            " -> Anthropic",
-                            Kleur.GEEL,
-                        ))
-                        with self._client_lock:
-                            if self._fallback_client:
-                                self.client = self._fallback_client
-                                self.ai_provider = (
-                                    self._fallback_provider
-                                )
-                                self._fallback_client = None
-                                self._fallback_provider = None
-                        return self._process_anthropic(
-                            system_message,
-                            use_tools,
-                            max_turns,
-                        )
-                    # Stap 2.5: NVIDIA NIM
-                    if (
-                        self._nvidia_nim_available
-                        and self._provider_ok("nvidia_nim")
-                    ):
-                        print(kleur(
-                            "   [FALLBACK] -> NVIDIA NIM",
-                            Kleur.GEEL,
-                        ))
-                        return self._process_nvidia_nim(
-                            system_message,
-                            use_tools,
-                            max_turns,
-                        )
-                    # Stap 2.7: HuggingFace Inference
-                    if (
-                        self._hf_available
-                        and self._provider_ok("huggingface")
-                    ):
-                        print(kleur(
-                            f"   [FALLBACK] -> HuggingFace"
-                            f" ({self.HF_MODEL})",
-                            Kleur.GEEL,
-                        ))
-                        return self._process_huggingface(
-                            system_message,
-                            use_tools,
-                            max_turns,
-                        )
-                    # Stap 3: Ollama lokaal
-                    if (
-                        self._ollama_available
-                        and self._provider_ok("ollama")
-                    ):
-                        print(kleur(
-                            "   [FALLBACK] rate limit"
-                            f" -> {self.OLLAMA_MODEL}",
-                            Kleur.GEEL,
-                        ))
-                        return self._process_ollama(
-                            system_message,
-                            use_tools,
-                            max_turns,
-                        )
-                    # Stap 4: Emergency offline response
-                    print(kleur(
-                        "   [EMERGENCY] Alle providers"
-                        " onbereikbaar — offline modus",
-                        Kleur.ROOD,
-                    ))
-                    prompt = (
-                        self.conversation_history[-1]["content"]
-                        if self.conversation_history
-                        else ""
-                    )
-                    return self._emergency_offline_response(
-                        prompt
-                    )
-                self._sla_stats_op()
-                return f"Er is een fout opgetreden: {e}"
+        Returns:
+            (content, 1) bij succes.
+        Raises:
+            Exception bij fout.
+        """
+        client = HfInferenceClient(token=os.getenv("HF_TOKEN"))
+        messages = [{"role": "system", "content": system_message}]
+        messages.extend(self.conversation_history)
 
-        self._sla_stats_op()
-        return "Maximum aantal rondes bereikt. Probeer een specifiekere vraag."
+        resp = client.chat_completion(
+            model=self.HF_MODEL,
+            messages=messages,
+            temperature=0.2,
+            max_tokens=4096,
+        )
+        content = resp.choices[0].message.content or ""
+        return (content, 1)
 
-    def _process_anthropic(
-        self,
-        system_message: str,
-        use_tools: bool,
-        max_turns: int
-    ) -> str:
-        """Verwerk request via Anthropic API."""
-        messages = self.conversation_history.copy()
+    def _attempt_ollama(self, system_message):
+        """Ollama lokale single-attempt (geen tool calling).
 
-        for turn in range(max_turns):
-            try:
-                response = self.client.messages.create(
-                    model=Config.CLAUDE_MODEL,
-                    max_tokens=2000,
-                    system=system_message,
-                    tools=self.tool_definitions if use_tools else [],
-                    messages=messages
-                )
+        Returns:
+            (content, 1) bij succes.
+        Raises:
+            Exception bij fout.
+        """
+        import requests
+        messages = [{"role": "system", "content": system_message}]
+        messages.extend(self.conversation_history)
 
-                # Check voor tool use
-                if response.stop_reason == "tool_use":
-                    tool_results = []
+        resp = requests.post(
+            "http://localhost:11434/api/chat",
+            json={
+                "model": self.OLLAMA_MODEL,
+                "messages": messages,
+                "stream": False,
+            },
+            timeout=120,
+        )
+        if resp.status_code != 200:
+            raise ConnectionError(f"Ollama HTTP {resp.status_code}")
 
-                    for block in response.content:
-                        if block.type == "tool_use":
-                            tool_name = block.name
-                            tool_input = block.input
-
-                            app_naam, actie_naam = parse_tool_call(tool_name)
-
-                            if app_naam and actie_naam:
-                                print(kleur(
-                                    f"   [TOOL] {app_naam}.{actie_naam}",
-                                    Kleur.CYAAN
-                                ))
-
-                                result = asyncio.run(
-                                    self._execute_app_action(
-                                        app_naam, actie_naam, tool_input
-                                    )
-                                )
-
-                                tool_results.append({
-                                    "type": "tool_result",
-                                    "tool_use_id": block.id,
-                                    "content": json.dumps(
-                                        result, ensure_ascii=False, default=str
-                                    )[:5000]
-                                })
-                            else:
-                                tool_results.append({
-                                    "type": "tool_result",
-                                    "tool_use_id": block.id,
-                                    "content": f"Tool '{tool_name}' niet gevonden",
-                                    "is_error": True
-                                })
-
-                    messages.append({
-                        "role": "assistant",
-                        "content": response.content
-                    })
-                    messages.append({
-                        "role": "user",
-                        "content": tool_results
-                    })
-
-                else:
-                    final_response = ""
-                    for block in response.content:
-                        if hasattr(block, "text"):
-                            final_response += block.text
-
-                    # Token budget registratie
-                    try:
-                        from danny_toolkit.brain.governor import OmegaGovernor
-                        OmegaGovernor().registreer_tokens(final_response)
-                    except Exception as e:
-                        logger.debug("Token registratie error: %s", e)
-
-                    with self._history_lock:
-                        self.conversation_history.append({
-                            "role": "assistant",
-                            "content": final_response
-                        })
-
-                    self._sla_stats_op()
-                    return final_response
-
-            except Exception as e:
-                self._provider_fail("anthropic")
-                # Emergency fallback bij Anthropic fout
-                prompt = (
-                    self.conversation_history[-1]["content"]
-                    if self.conversation_history
-                    else ""
-                )
-                return self._emergency_offline_response(prompt)
-
-        self._sla_stats_op()
-        return "Maximum aantal rondes bereikt. Probeer een specifiekere vraag."
+        data = resp.json()
+        content = data.get("message", {}).get("content", "")
+        return (content, 1)
 
     # ----------------------------------------------------------
     # Per-provider circuit breaker helpers
@@ -878,197 +968,6 @@ Belangrijke regels:
         except Exception as e:
             logger.debug("Ollama check failed: %s", e)
             return False
-
-    def _process_ollama(
-        self,
-        system_message: str,
-        use_tools: bool,
-        max_turns: int,
-    ) -> str:
-        """Verwerk request via lokale Ollama."""
-        import requests
-
-        messages = [{"role": "system", "content": system_message}]
-        messages.extend(self.conversation_history)
-
-        try:
-            resp = requests.post(
-                "http://localhost:11434/api/chat",
-                json={
-                    "model": self.OLLAMA_MODEL,
-                    "messages": messages,
-                    "stream": False,
-                },
-                timeout=120,
-            )
-
-            if resp.status_code == 200:
-                data = resp.json()
-                content = data.get(
-                    "message", {}
-                ).get("content", "")
-
-                # Token budget registratie
-                try:
-                    from danny_toolkit.brain.governor import OmegaGovernor
-                    OmegaGovernor().registreer_tokens(content)
-                except Exception as e:
-                    logger.debug("Token registratie error: %s", e)
-
-                with self._history_lock:
-                    self.conversation_history.append({
-                        "role": "assistant",
-                        "content": content,
-                    })
-                    if len(self.conversation_history) > self.MAX_HISTORY:
-                        self.conversation_history = self.conversation_history[-self.MAX_HISTORY:]
-                self._sla_stats_op()
-                return content
-            else:
-                return f"Ollama fout: {resp.status_code}"
-        except Exception as e:
-            return f"Ollama fout: {e}"
-
-    def _process_nvidia_nim(
-        self,
-        system_message: str,
-        use_tools: bool,
-        max_turns: int,
-    ) -> str:
-        """Verwerk request via NVIDIA NIM (OpenAI-compatible API)."""
-        client = NvidiaClient(
-            base_url=self.NVIDIA_NIM_BASE_URL,
-            api_key=Config.NVIDIA_NIM_API_KEY,
-        )
-
-        messages = [{"role": "system", "content": system_message}]
-        messages.extend(self.conversation_history)
-
-        try:
-            resp = client.chat.completions.create(
-                model=self.NVIDIA_NIM_MODEL,
-                messages=messages,
-                temperature=0.2,
-                max_tokens=4096,
-            )
-
-            content = resp.choices[0].message.content or ""
-
-            # Token budget registratie
-            try:
-                from danny_toolkit.brain.governor import OmegaGovernor
-                OmegaGovernor().registreer_tokens(content)
-            except Exception as e:
-                logger.debug("Token registratie error: %s", e)
-
-            with self._history_lock:
-                self.conversation_history.append({
-                    "role": "assistant",
-                    "content": content,
-                })
-
-            self._provider_success("nvidia_nim")
-            self._sla_stats_op()
-            return content
-
-        except Exception as e:
-            logger.debug("NVIDIA NIM fout: %s", e)
-            self._provider_fail("nvidia_nim")
-            # Doorvallen naar volgende provider in de chain
-            if (
-                self._hf_available
-                and self._provider_ok("huggingface")
-            ):
-                print(kleur(
-                    f"   [FALLBACK] NVIDIA NIM -> HuggingFace"
-                    f" ({self.HF_MODEL})",
-                    Kleur.GEEL,
-                ))
-                return self._process_huggingface(
-                    system_message, use_tools, max_turns,
-                )
-            if (
-                self._ollama_available
-                and self._provider_ok("ollama")
-            ):
-                print(kleur(
-                    f"   [FALLBACK] NVIDIA NIM -> {self.OLLAMA_MODEL}",
-                    Kleur.GEEL,
-                ))
-                return self._process_ollama(
-                    system_message, use_tools, max_turns,
-                )
-            # Emergency offline
-            prompt = (
-                self.conversation_history[-1]["content"]
-                if self.conversation_history
-                else ""
-            )
-            return self._emergency_offline_response(prompt)
-
-    def _process_huggingface(
-        self,
-        system_message: str,
-        use_tools: bool,
-        max_turns: int,
-    ) -> str:
-        """Verwerk request via HuggingFace Inference API (Qwen3-32B)."""
-        client = HfInferenceClient(
-            token=os.getenv("HF_TOKEN"),
-        )
-
-        messages = [{"role": "system", "content": system_message}]
-        messages.extend(self.conversation_history)
-
-        try:
-            resp = client.chat_completion(
-                model=self.HF_MODEL,
-                messages=messages,
-                temperature=0.2,
-                max_tokens=4096,
-            )
-
-            content = resp.choices[0].message.content or ""
-
-            # Token budget registratie
-            try:
-                from danny_toolkit.brain.governor import OmegaGovernor
-                OmegaGovernor().registreer_tokens(content)
-            except Exception as e:
-                logger.debug("Token registratie error: %s", e)
-
-            with self._history_lock:
-                self.conversation_history.append({
-                    "role": "assistant",
-                    "content": content,
-                })
-
-            self._provider_success("huggingface")
-            self._sla_stats_op()
-            return content
-
-        except Exception as e:
-            logger.debug("HuggingFace fout: %s", e)
-            self._provider_fail("huggingface")
-            # Doorvallen naar Ollama
-            if (
-                self._ollama_available
-                and self._provider_ok("ollama")
-            ):
-                print(kleur(
-                    f"   [FALLBACK] HuggingFace -> {self.OLLAMA_MODEL}",
-                    Kleur.GEEL,
-                ))
-                return self._process_ollama(
-                    system_message, use_tools, max_turns,
-                )
-            # Emergency offline
-            prompt = (
-                self.conversation_history[-1]["content"]
-                if self.conversation_history
-                else ""
-            )
-            return self._emergency_offline_response(prompt)
 
     def _process_offline(self, user_input: str) -> str:
         """Verwerk request zonder AI (offline modus)."""
