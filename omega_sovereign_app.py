@@ -355,10 +355,8 @@ class DashboardTab(ctk.CTkFrame):
                     except Exception:
                         pass
                 data.append((name, h, s))
-        elif HAS_TRINITY:
-            data = [(r.name, 85, "ok") for r in CosmicRole]
         if not data:
-            data = [("NO_DATA", 0, "dead")]
+            data = [("NO_LIVE_DATA", 0, "dead")]
         data.sort(key=lambda x: x[1])
         colors = [NEON_RED if s == "dead" else (NEON_ORANGE if s == "warn" else NEON_GREEN)
                   for _, _, s in data]
@@ -495,7 +493,7 @@ class DashboardTab(ctk.CTkFrame):
             name, col, sz, y = tc.get(tn, tc[4])
             for i, role in enumerate(roles):
                 x = (i - (len(roles) - 1) / 2) * 1.5
-                yy = y + np.random.uniform(-0.1, 0.1)
+                yy = y + (hash(role.name) % 100 - 50) * 0.002  # deterministic jitter
                 positions[role.name] = (x, yy)
                 ax.scatter(x, yy, s=sz, color=col, alpha=0.8, zorder=3,
                            edgecolors=col, linewidths=1.5)
@@ -544,6 +542,12 @@ class DashboardTab(ctk.CTkFrame):
         km = _safe(SmartKeyManager) if HAS_KEY_MANAGER else None
         if km:
             try:
+                # Real limits from key_manager config
+                rpm_m = getattr(km, 'RPM_LIMIT', None) or 30
+                tpm_m = getattr(km, 'TPM_LIMIT', None) or 30000
+                num_keys = max(1, len(getattr(km, '_keys', [])))
+                rpm_m = rpm_m * num_keys  # total capacity across all keys
+                tpm_m = tpm_m * num_keys
                 now = time.time()
                 with km._metrics_lock:
                     rpm_u = sum(sum(1 for ts in a.request_timestamps if now - ts < 60)
@@ -595,9 +599,7 @@ class DashboardTab(ctk.CTkFrame):
             except Exception:
                 pass
         if not counts:
-            t = np.linspace(0, 4 * math.pi, 60)
-            counts = (np.abs(np.sin(t) * np.cos(t * 0.7)) * 50 +
-                      np.random.uniform(0, 8, len(t))).tolist()
+            counts = [0]  # empty chart, no fake data
         ax = self._list_ax
         ax.clear()
         ax.fill_between(range(len(counts)), counts, alpha=0.1, color=NEON_CYAN)
@@ -625,17 +627,20 @@ class AgentsTab(ctk.CTkFrame):
         super().__init__(master, fg_color="transparent")
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
+        self.grid_columnconfigure(2, weight=1)
         self.grid_rowconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
 
         self.health_panel = InfoPanel(self, "\u269b Agent Health Report")
         self.health_panel.grid(row=0, column=0, sticky="nsew", padx=(0, 4), pady=(0, 4))
         self.circuit_panel = InfoPanel(self, "\u26a1 Circuit Breakers")
-        self.circuit_panel.grid(row=0, column=1, sticky="nsew", padx=(4, 0), pady=(0, 4))
+        self.circuit_panel.grid(row=0, column=1, sticky="nsew", padx=4, pady=(0, 4))
+        self.gpu_panel = InfoPanel(self, "\U0001f3ae GPU / VRAM Status")
+        self.gpu_panel.grid(row=0, column=2, sticky="nsew", padx=(4, 0), pady=(0, 4))
         self.metrics_panel = InfoPanel(self, "\U0001f4ca Pipeline Metrics")
         self.metrics_panel.grid(row=1, column=0, sticky="nsew", padx=(0, 4), pady=(4, 0))
         self.keys_panel = InfoPanel(self, "\U0001f511 API Key Status")
-        self.keys_panel.grid(row=1, column=1, sticky="nsew", padx=(4, 0), pady=(4, 0))
+        self.keys_panel.grid(row=1, column=1, columnspan=2, sticky="nsew", padx=(4, 0), pady=(4, 0))
 
     def refresh(self):
         # Health
@@ -694,6 +699,33 @@ class AgentsTab(ctk.CTkFrame):
                 for k, v in s.items():
                     self.metrics_panel.write(f"  {k}: {v}")
 
+        # GPU / VRAM
+        self.gpu_panel.clear()
+        try:
+            from danny_toolkit.core.vram_manager import vram_rapport
+            vr = vram_rapport()
+            if vr.get("beschikbaar"):
+                self.gpu_panel.write(f"  GPU:     {vr['gpu_naam']}")
+                self.gpu_panel.write(f"  Totaal:  {vr['totaal_mb']:,} MB")
+                self.gpu_panel.write(f"  Gebruikt:{vr['in_gebruik_mb']:,} MB")
+                self.gpu_panel.write(f"  Vrij:    {vr['vrij_mb']:,} MB")
+                pct = round(vr['in_gebruik_mb'] / vr['totaal_mb'] * 100, 1)
+                bar_len = int(pct / 5)
+                bar = "#" * bar_len + "." * (20 - bar_len)
+                status = "[OK]" if vr['gezond'] else "[!!]"
+                self.gpu_panel.write(f"\n  {status} [{bar}] {pct}%")
+            else:
+                self.gpu_panel.write("  CUDA not available")
+        except Exception as e:
+            self.gpu_panel.write(f"  VRAM: {e}")
+
+        try:
+            import psutil
+            self.gpu_panel.write(f"\n  CPU:  {psutil.cpu_percent()}%")
+            self.gpu_panel.write(f"  RAM:  {psutil.virtual_memory().percent}%")
+        except Exception:
+            pass
+
         # Key status
         self.keys_panel.clear()
         km = _safe(SmartKeyManager) if HAS_KEY_MANAGER else None
@@ -735,12 +767,18 @@ class BrainTab(ctk.CTkFrame):
         self.introspect_panel = InfoPanel(self, "\U0001f52d System Introspector")
         self.introspect_panel.grid(row=1, column=1, sticky="nsew", padx=(4, 0), pady=(4, 0))
 
+    _synapse = None
+    _phantom = None
+    _singularity = None
+
     def refresh(self):
-        # Synapse
+        # Synapse (singleton)
         self.synapse_panel.clear()
         try:
-            from danny_toolkit.brain.synapse import TheSynapse
-            syn = TheSynapse()
+            if BrainTab._synapse is None:
+                from danny_toolkit.brain.synapse import TheSynapse
+                BrainTab._synapse = TheSynapse()
+            syn = BrainTab._synapse
             stats = syn.get_stats()
             for k, v in stats.items():
                 self.synapse_panel.write(f"  {k}: {v}")
@@ -754,11 +792,13 @@ class BrainTab(ctk.CTkFrame):
         except Exception as e:
             self.synapse_panel.write(f"  Synapse: {e}")
 
-        # Phantom
+        # Phantom (singleton)
         self.phantom_panel.clear()
         try:
-            from danny_toolkit.brain.phantom import ThePhantom
-            ph = ThePhantom()
+            if BrainTab._phantom is None:
+                from danny_toolkit.brain.phantom import ThePhantom
+                BrainTab._phantom = ThePhantom()
+            ph = BrainTab._phantom
             acc = ph.get_accuracy()
             for k, v in acc.items():
                 self.phantom_panel.write(f"  {k}: {v}")
@@ -770,11 +810,13 @@ class BrainTab(ctk.CTkFrame):
         except Exception as e:
             self.phantom_panel.write(f"  Phantom: {e}")
 
-        # Singularity
+        # Singularity (singleton)
         self.singularity_panel.clear()
         try:
-            from danny_toolkit.brain.singularity import SingularityEngine
-            se = SingularityEngine()
+            if BrainTab._singularity is None:
+                from danny_toolkit.brain.singularity import SingularityEngine
+                BrainTab._singularity = SingularityEngine()
+            se = BrainTab._singularity
             status = se.get_status()
             for k, v in status.items():
                 self.singularity_panel.write(f"  {k}: {v}")
@@ -853,25 +895,23 @@ class ImmuneTab(ctk.CTkFrame):
         else:
             self.schild_panel.write("  Shield not available")
 
-        # Governor
+        # Governor (direct import, no brain dependency)
         self.governor_panel.clear()
-        eng = _load_engine()[0]
-        if eng and hasattr(eng, "brain") and eng.brain:
-            try:
-                brain = eng.brain
-                if hasattr(brain, "governor"):
-                    report = brain.governor.get_health_report()
-                    for k, v in report.items():
-                        if isinstance(v, dict):
-                            self.governor_panel.write(f"  {k}:")
-                            for kk, vv in v.items():
-                                self.governor_panel.write(f"    {kk}: {vv}")
-                        else:
-                            self.governor_panel.write(f"  {k}: {v}")
-            except Exception as e:
-                self.governor_panel.write(f"  Error: {e}")
-        else:
-            self.governor_panel.write("  Governor not available (no brain)")
+        try:
+            from danny_toolkit.brain.governor import OmegaGovernor
+            if not hasattr(ImmuneTab, '_governor'):
+                ImmuneTab._governor = OmegaGovernor()
+            gov = ImmuneTab._governor
+            report = gov.get_health_report()
+            for k, v in report.items():
+                if isinstance(v, dict):
+                    self.governor_panel.write(f"  {k}:")
+                    for kk, vv in v.items():
+                        self.governor_panel.write(f"    {kk}: {vv}")
+                else:
+                    self.governor_panel.write(f"  {k}: {v}")
+        except Exception as e:
+            self.governor_panel.write(f"  Governor: {e}")
 
         # Tribunal
         self.tribunal_panel.clear()
