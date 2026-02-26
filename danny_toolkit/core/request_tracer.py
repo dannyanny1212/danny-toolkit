@@ -52,7 +52,14 @@ class TraceSpan:
 
     @property
     def duration_ms(self) -> float:
+        """Returns the duration in milliseconds. 
+ Calculates the difference between `eind_ms` and `start_ms` if both are positive, 
+ otherwise returns 0.0. 
+ Returns: float, duration in milliseconds, rounded to 2 decimal places."""
         if self.eind_ms > 0 and self.start_ms > 0:
+            """Calculates the duration in milliseconds between the start and end times. 
+Returns 0.0 if either start or end time is not set. 
+The result is rounded to two decimal places."""
             return round(self.eind_ms - self.start_ms, 2)
         return 0.0
 
@@ -120,6 +127,11 @@ class RequestTracer:
     _MAX_TRACES = 200
 
     def __init__(self):
+        """Initializes the object, setting up synchronization and data structures to manage request traces.
+
+ * Acquires a lock (`self._lock`) for thread-safe operations.
+ * Creates a deque (`self._traces`) with a maximum size (`self._MAX_TRACES`) to store recent request traces.
+ * Initializes an index (`self._index`) to map request identifiers to their corresponding traces."""
         self._lock = threading.Lock()
         self._traces: Deque[RequestTrace] = deque(maxlen=self._MAX_TRACES)
         self._index: Dict[str, RequestTrace] = {}  # trace_id -> trace

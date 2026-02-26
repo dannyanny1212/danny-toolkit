@@ -79,6 +79,13 @@ class ShardRouter:
     """
 
     def __init__(self):
+        """Initializes a new instance of the class.
+
+ Attributes:
+  _collections (Dict[str, Any]): A dictionary to store collections.
+  _client: The client object, initially set to None.
+  _embed_fn: The embedding function, initially set to None.
+  _lock (threading.Lock): A lock object for thread synchronization."""
         self._collections: Dict[str, Any] = {}
         self._client = None
         self._embed_fn = None

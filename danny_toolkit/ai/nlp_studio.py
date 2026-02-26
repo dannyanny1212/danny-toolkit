@@ -347,6 +347,12 @@ class TFIDFVectorizer:
     """TF-IDF vectorisatie."""
 
     def __init__(self):
+        """Initializes a new instance of the class, setting up data structures for term frequency-inverse document frequency (TF-IDF) calculations.
+
+Sets the following instance variables:
+- vocabulary: A dictionary to store the vocabulary of terms.
+- idf: A dictionary to store the inverse document frequency of terms.
+- doc_count: The total count of documents, initialized to 0."""
         self.vocabulary = {}
         self.idf = {}
         self.doc_count = 0

@@ -41,6 +41,31 @@ class Task:
                  timeout: float = 60.0,
                  retries: int = 0,
                  metadata: dict = None):
+        """Initializes a new task with the specified parameters.
+
+  Args:
+    agent_naam (str): The name of the agent executing the task.
+    taak (str): A description of the task to be performed.
+    priority (TaskPriority, optional): The priority of the task. Defaults to TaskPriority.NORMAL.
+    timeout (float, optional): The maximum time in seconds to allow the task to run. Defaults to 60.0.
+    retries (int, optional): The maximum number of times to retry the task if it fails. Defaults to 0.
+    metadata (dict, optional): Additional metadata to associate with the task. Defaults to None.
+
+  Attributes:
+    id (str): A unique identifier for the task.
+    agent_naam (str): The name of the agent executing the task.
+    taak (str): A description of the task to be performed.
+    priority (TaskPriority): The priority of the task.
+    timeout (float): The maximum time in seconds to allow the task to run.
+    max_retries (int): The maximum number of times to retry the task if it fails.
+    retry_count (int): The current number of retries.
+    metadata (dict): Additional metadata to associate with the task.
+    status (TaskStatus): The current status of the task.
+    result: The result of the task execution.
+    error: Any error that occurred during task execution.
+    created_at (datetime): The timestamp when the task was created.
+    started_at (datetime): The timestamp when the task started executing.
+    completed_at (datetime): The timestamp when the task completed execution."""
         self.id = datetime.now().strftime("%Y%m%d%H%M%S%f")
         self.agent_naam = agent_naam
         self.taak = taak
@@ -349,6 +374,9 @@ class Orchestrator:
         result = await self._execute_task(task)
 
         # Cleanup
+        """```
+Marks a task as completed, removing it from the active task list and adding it to the completed task list. Also, saves the operational log.
+```"""
         if task.id in self.active_tasks:
             del self.active_tasks[task.id]
         self.completed_tasks.append(task)
@@ -415,6 +443,9 @@ class Orchestrator:
             print(kleur("=" * 50, Kleur.CYAAN))
 
             # Vervang placeholders met eerdere resultaten
+            """```
+Replaces placeholders in the context with previous results by iterating over the context dictionary and substituting values.
+```"""
             for key, value in context.items():
                 taak = taak.replace(f"{{{key}}}", str(value)[:500])
 

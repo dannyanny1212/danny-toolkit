@@ -72,6 +72,8 @@ class TrinityEvent:
     propagated: bool = False
 
     def __post_init__(self):
+        """Initializes the object's timestamp if not already set. 
+Sets the timestamp to the current date and time in ISO format if it is not provided."""
         if not self.timestamp:
             self.timestamp = datetime.now().isoformat()
 

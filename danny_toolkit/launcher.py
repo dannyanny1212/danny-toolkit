@@ -1,6 +1,6 @@
 """
 Danny Toolkit Launcher - Hoofdmenu.
-Versie 6.0.0 - OMEGA_SOVEREIGN Rich Dashboard met thema's, kleuren, statistieken en meer.
+Versie 6.7.0 - OMEGA_SOVEREIGN Rich Dashboard met thema's, kleuren, statistieken en meer.
 """
 
 import sys
@@ -1233,14 +1233,14 @@ BANNER_STANDAARD = """
 ║     ██████╔╝██║  ██║██║ ╚████║██║ ╚████║   ██║               ║
 ║     ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═══╝   ╚═╝               ║
 ║                                                               ║
-║         T O O L K I T   v6.0.0 // OMEGA_SOVEREIGN              ║
+║         T O O L K I T   v6.7.0 // OMEGA_SOVEREIGN              ║
 ║                                                               ║
 ╚═══════════════════════════════════════════════════════════════╝
 """
 
 BANNER_MINIMAAL = """
 ============================================================
-     DANNY TOOLKIT v6.0.0
+     DANNY TOOLKIT v6.7.0
 ============================================================
 """
 
@@ -1329,7 +1329,7 @@ class LauncherStats:
 class Launcher:
     """Hoofdlauncher voor Danny Toolkit."""
 
-    VERSIE = "6.0.0"
+    VERSIE = "6.7.0"
 
     # Alle beschikbare apps
     APPS = {
@@ -2051,7 +2051,7 @@ def main():
 
         if arg in ["--help", "-h"]:
             print("""
-Danny Toolkit v6.0.0 — 60 apps
+Danny Toolkit v6.7.0 — 60 apps
 
 Gebruik:
   python main.py              Start interactieve launcher

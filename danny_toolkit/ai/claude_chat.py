@@ -149,6 +149,10 @@ class ClaudeChatApp:
     }
 
     def __init__(self):
+        """Initializes a new instance of the class, setting up essential attributes and loading existing chat data.
+
+ Configures the necessary directories and sets default values for the provider, client, model, and other instance variables. 
+ Loads chat data from the designated file and initializes conversation history, persona, session start time, and tracking variables for questions and estimated tokens."""
         Config.ensure_dirs()
         self.provider = None
         self.client = None

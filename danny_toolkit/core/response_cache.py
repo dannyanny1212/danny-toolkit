@@ -36,6 +36,13 @@ class ResponseCache:
     _MAX_TEMPERATURE = 0.4  # Only cache deterministic-ish responses
 
     def __init__(self):
+        """Initializes a caching object.
+
+ Attributes:
+  _cache: An ordered dictionary mapping hashes to tuples containing a timestamp, TTL, and response.
+  _lock: A threading lock for ensuring thread safety.
+  _hits: The number of cache hits.
+  _misses: The number of cache misses."""
         self._cache: OrderedDict[str, tuple] = OrderedDict()  # hash -> (timestamp, ttl, response)
         self._lock = threading.Lock()
         self._hits = 0

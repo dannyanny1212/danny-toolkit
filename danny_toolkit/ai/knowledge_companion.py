@@ -100,6 +100,26 @@ class KnowledgeCompanion:
     VERSIE = "1.0.0"
 
     def __init__(self, naam: str = None):
+        """Initializes a Knowledge Companion instance.
+
+### Parameters
+* `naam`: Optional companion name. If provided, it will be saved to the companion's data file.
+
+### Attributes
+* `data_file`: The file path to the companion's data file.
+* `data`: The companion's data, loaded from the data file.
+* `embedder`: The embedder used for the companion's vector store.
+* `vector_store`: The companion's vector store, used for storing and retrieving vectorized data.
+* `processor`: The document processor used for processing documents.
+* `generator`: The generator used for generating responses.
+
+### Behavior
+* Ensures the required directories exist.
+* Loads the companion's data from the data file.
+* Initializes the vector store and document processor.
+* Attempts to initialize the generator, if a Groq or Anthropic API key is available.
+* Synchronizes the companion's stats with the vector store.
+* Prints initialization messages, including the companion's name, level, and document count."""
         Config.ensure_dirs()
 
         # Data bestanden

@@ -111,6 +111,17 @@ class AgentNode:
     family_role: Optional[str] = None
 
     def to_dict(self) -> Dict:
+        """Returns a dictionary representation of the object, containing its attributes.
+
+* name: The object's name
+* role: The object's role
+* capabilities: The object's capabilities
+* tier: The object's tier value
+* status: The object's status
+* tasks_completed: The number of tasks completed by the object
+* energy: The object's energy level
+* family_name: The object's family name
+* family_role: The object's family role"""
         return {
             "name": self.name,
             "role": self.role.name,

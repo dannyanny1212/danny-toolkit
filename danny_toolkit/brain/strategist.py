@@ -92,6 +92,17 @@ class Strategist:
         4. Synthesize — presents final result
     """
     def __init__(self):
+        """Initializes the instance with required clients and components.
+
+ Args:
+  None
+
+ Returns:
+  None
+
+ Notes:
+  Initializes the Groq API client, either through the Key Manager or directly with an API key.
+  Configures the LLM model and conditionally initializes the Void Walker, Artificer, Bus, Cortical Stack, and Oracle Eye components based on environment flags."""
         if HAS_KEY_MANAGER:
             km = get_key_manager()
             self.client = km.create_async_client("Strategist") or AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))

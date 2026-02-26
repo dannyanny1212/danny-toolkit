@@ -53,6 +53,7 @@ try:
     from .introspector import SystemIntrospector, get_introspector
     from .claude_memory import ClaudeMemory, get_claude_memory
     from .observatory_sync import ObservatorySync, get_observatory_sync
+    from .agent_factory import AgentFactory, get_agent_factory
 except ImportError:
     pass
 
@@ -99,6 +100,8 @@ __all__ = [
     "SystemIntrospector", "get_introspector",
     # Phase 42b: Observatory Sync
     "ObservatorySync", "get_observatory_sync",
+    # Dynamic Agent Factory
+    "AgentFactory", "get_agent_factory",
     # Phase 43: Claude Memory
     "ClaudeMemory", "get_claude_memory",
     # Anti-Hallucination
@@ -110,5 +113,5 @@ __all__ = [
     "ProjectMap",
 ]
 
-__version__ = "6.10.0"
+__version__ = "6.7.0"
 __author__ = "Danny"

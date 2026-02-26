@@ -26,6 +26,19 @@ class MemoryEvent:
         data: Dict[str, Any],
         timestamp: datetime = None
     ):
+        """Initializes an event object.
+
+ Args:
+   app (str): The application associated with the event.
+   event_type (str): The type of event.
+   data (Dict[str, Any]): Additional data related to the event.
+   timestamp (datetime, optional): The timestamp of the event. Defaults to the current time if not provided.
+
+ Sets the following instance properties:
+   - app: The application associated with the event.
+   - event_type: The type of event.
+   - data: Additional data related to the event.
+   - timestamp: The timestamp of the event."""
         self.app = app
         self.event_type = event_type
         self.data = data

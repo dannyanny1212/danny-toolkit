@@ -19,6 +19,16 @@ class TruthAnchor:
     DEFAULT_DREMPEL = 0.45
 
     def __init__(self, drempel=None):
+        """Initializes a Truth Anchor instance.
+
+ Args:
+     drempel: Optional; The drempel to use. Defaults to self.DEFAULT_DREMPEL if not provided.
+
+ Returns:
+     None 
+
+ Raises:
+     None"""
         print(f"{Kleur.CYAAN}⚓ Loading Truth Anchor...{Kleur.RESET}")
         self.model = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
         self.drempel = drempel if drempel is not None else self.DEFAULT_DREMPEL

@@ -56,6 +56,12 @@ class SimpleTokenizer:
     }
 
     def __init__(self):
+        """Initializes the object by setting up the vocabulary.
+
+Sets the initial vocabulary with special tokens and then builds the basic vocabulary.
+
+Attributes:
+  vocab (dict): The vocabulary dictionary, initially populated with special tokens."""
         self.vocab = dict(self.SPECIAL_TOKENS)
         self._build_basic_vocab()
 

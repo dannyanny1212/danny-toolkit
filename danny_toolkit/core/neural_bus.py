@@ -81,6 +81,18 @@ class BusEvent:
         data: Dict[str, Any],
         bron: str = "unknown",
     ):
+        """Initializes an event object.
+
+ Args:
+   event_type (str): The type of event.
+   data (Dict[str, Any]): Additional data associated with the event.
+   bron (str, optional): The source of the event. Defaults to "unknown".
+
+ Attributes:
+   event_type (str): The type of event.
+   data (Dict[str, Any]): Additional data associated with the event.
+   bron (str): The source of the event.
+   timestamp (datetime): The timestamp when the event was created."""
         self.event_type = event_type
         self.data = data
         self.bron = bron

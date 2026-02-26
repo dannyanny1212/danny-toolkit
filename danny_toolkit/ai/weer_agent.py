@@ -184,6 +184,12 @@ class WeerAgentApp:
     }
 
     def __init__(self):
+        """Initializes a new instance of the class, setting default properties and loading existing data.
+
+ Sets the instance name to "WeerWijzer" and initializes an empty memory dictionary.
+ 
+ Configures the file path for data storage and loads existing data from the file,
+ if available, into the instance's data attribute."""
         self.naam = "WeerWijzer"
         self.geheugen = {}
 
@@ -546,6 +552,21 @@ class WeerAgentApp:
 
         return voorspelling
 
+    """### Function Docstring
+
+_Checks weather alerts in the provided weather data._
+
+#### Parameters
+* **weer** (dict): The weather data to check for alerts.
+
+#### Returns
+* **list**: A list of weather alerts.
+
+#### Description
+This function processes the given weather data to identify and extract any weather alerts. 
+It categorizes alerts based on their type, level, message, and icon. 
+The specifics of alert processing, such as determining the alert's color based on its level, 
+are handled internally by the function."""
     def _tool_check_alerts(self, weer: dict) -> list:
         """Tool: Check voor weer waarschuwingen."""
         alerts = []

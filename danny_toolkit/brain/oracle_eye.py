@@ -72,6 +72,19 @@ class TheOracleEye:
     _MAX_CACHE_ENTRIES = 100
 
     def __init__(self):
+        """Initializes the object, setting up its internal state.
+
+Sets the cortical stack and bus if available, otherwise sets them to None.
+The cache is initialized as an empty dictionary to store string-tuple pairs.
+
+Args: None
+
+Returns: None 
+
+Attributes:
+    _stack: The cortical stack object, or None if not available.
+    _bus: The bus object, or None if not available.
+    _cache (Dict[str, tuple]): A dictionary to store cached string-tuple pairs."""
         self._stack = get_cortical_stack() if HAS_STACK else None
         self._bus = get_bus() if HAS_BUS else None
         self._cache: Dict[str, tuple] = {}  # key -> (timestamp, data)

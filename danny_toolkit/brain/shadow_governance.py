@@ -58,6 +58,18 @@ class ShadowRule:
     __slots__ = ("code", "beschrijving", "niveau", "actief")
 
     def __init__(self, code: str, beschrijving: str, niveau: str = GOVERNANCE):
+        """Initializes a new instance with the given parameters.
+
+ Args:
+     code (str): The code of the instance.
+     beschrijving (str): The description of the instance.
+     niveau (str, optional): The level of the instance. Defaults to GOVERNANCE.
+
+ Attributes:
+     code (str): The code of the instance.
+     beschrijving (str): The description of the instance.
+     niveau (str): The level of the instance.
+     actief (bool): Whether the instance is active. Defaults to True."""
         self.code = code
         self.beschrijving = beschrijving
         self.niveau = niveau

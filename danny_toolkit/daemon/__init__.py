@@ -10,6 +10,10 @@ from .metabolisme import Metabolisme
 from .daemon_core import DigitalDaemon
 
 def __getattr__(name):
+    """Dynamic attribute accessor. 
+Returns the specified attribute if it exists, otherwise raises an AttributeError. 
+Currently supports:
+  - HeartbeatDaemon: A daemon for handling heartbeats."""
     if name == "HeartbeatDaemon":
         from .heartbeat import HeartbeatDaemon
         return HeartbeatDaemon

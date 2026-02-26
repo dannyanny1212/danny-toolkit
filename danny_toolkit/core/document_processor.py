@@ -29,6 +29,11 @@ class DocumentProcessor:
     }
 
     def __init__(self, chunk_size: int = None, overlap: int = None):
+        """Initializes an object with chunking parameters.
+
+ Args:
+   chunk_size (int): The size of each chunk. Defaults to Config.CHUNK_SIZE if not provided.
+   overlap (int): The overlap between consecutive chunks. Defaults to Config.CHUNK_OVERLAP if not provided."""
         self.chunk_size = chunk_size or Config.CHUNK_SIZE
         self.overlap = overlap or Config.CHUNK_OVERLAP
 

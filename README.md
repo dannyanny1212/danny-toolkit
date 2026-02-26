@@ -1,13 +1,14 @@
-# PROJECT OMEGA: The Danny Toolkit v5
+# PROJECT OMEGA: The Danny Toolkit v6.7.0
 
 > *"Not just a Chatbot. An Autonomous Digital Organism."*
 
-Project Omega is een geavanceerd, lokaal draaiend AI Swarm System.
-Het overstijgt standaard chatbots door actieve interactie met het
-besturingssysteem, visuele waarneming, en diepgaand geheugenbeheer.
+Project Omega is een geavanceerd, lokaal draaiend AI Swarm System met 178 modules,
+50+ agents over 5 lagen, en een Sovereign Security Core.
 
-Gebouwd op **Swarm Engine v5.0**: Een asynchrone, object-georienteerde
-architectuur voor parallelle agent-executie.
+Gebouwd op **Swarm Engine v6.7.0** met **Brain CLI v2.0** als centraal aansturingspunt:
+```bash
+python -m danny_toolkit.brain.brain_cli
+```
 
 ---
 
@@ -21,6 +22,7 @@ architectuur voor parallelle agent-executie.
 | Project Oculus | Vision | Pixel Agent. Kan het scherm zien (screenshots) en analyseren via LLaVA 7B. |
 | Project Kinesis | Action | Legion Agent. Bestuurt muis & toetsenbord. Opent apps, typt tekst en voert systeemtaken uit. |
 | Heartbeat Daemon | Life | Autonoom achtergrondproces met background worker pool. Voert swarm taken en security scans non-blocking uit. |
+| GhostWriter | Documentation | Multi-model token generator. Genereert docstrings via Groq→NVIDIA NIM→Gemini→Ollama fallback chain. |
 
 ---
 
@@ -55,6 +57,8 @@ Nexus Router (keyword multi-intent)
     v
 List[SwarmPayload] --> Streamlit / CLI / Daemon
 ```
+
+6 LLM providers: Groq (llama-4-scout + qwen3-32b), NVIDIA NIM, Google Gemini, Anthropic, Ollama
 
 ---
 
@@ -130,24 +134,48 @@ taken uitvoeren.
 
 ---
 
-## The Agent Roster
+## The Agent Roster — 5 Lagen (50+ agents)
 
-Elke agent is een gespecialiseerde Python class in `swarm_engine.py`.
+Alle agents worden aangestuurd via **Brain CLI v2.0** (`python -m danny_toolkit.brain.brain_cli`).
 
+### Laag 1: Swarm Engine (18 agents)
 | Agent | Rol | Beschrijving |
 |-------|-----|--------------|
-| **NEXUS** | Router | De verkeersleider. Bepaalt wie de taak moet doen. |
-| **IOLAAX** | Engineer | Code, logica en complexe berekeningen. |
-| **CIPHER** | Finance | Crypto, aandelen en blockchain data. |
-| **MEMEX** | Archivist | Beheert kennis. Combineert Vector Search met History. |
-| **PIXEL** | Eye | Multimodaal. Kan het scherm lezen via LLaVA 7B vision. |
-| **LEGION** | Operator | Systeemautomatisering. **FAILSAFE=True**: muis naar linkerbovenhoek = noodstop. |
-| **NAVIGATOR** | Search | Web search fallback bij knowledge gaps. |
-| **ORACLE** | Reasoning | Diep nadenken, filosofie, hypotheses. |
-| **VITA** | Health | Gezondheid, biometrics, HRV data. |
-| **SPARK** | Creative | Brainstorm, ideeen, kunst. |
-| **SENTINEL** | Security | Beveiliging, audits, threat analysis. |
-| **ECHO** | Interface | Fast-track smalltalk (regex, geen AI nodig). |
+| **IOLAAX** | Engineer | Code, logica en complexe berekeningen |
+| **CIPHER** | Finance | Crypto, blockchain, finance data |
+| **MEMEX** | Archivist | Vector Search + episodisch geheugen |
+| **PIXEL** | Vision | Multimodaal (LLaVA 7B), screen reading |
+| **NAVIGATOR** | Search | Strategische planning, doelen |
+| **ORACLE** | Reasoning | Deep reasoning, hypotheses |
+| **SPARK** | Creative | Brainstorm, creatief, kunst |
+| **SENTINEL** | Security | Audits, threat analysis |
+| **VITA** | Health | Gezondheid, biometrics, HRV |
+| **ECHO** | Interface | Fast-track smalltalk (regex) |
+| **CHRONOS** | Schedule | Tijd, agenda, planning |
+| **WEAVER** | Synthesis | Code synthesis, git ops |
+| **ALCHEMIST** | Data | Data ETL, transformatie |
+| **STRATEGIST** | Planning | Recursive task decomposition |
+| **ARTIFICER** | Forge | Skill forge-verify-execute |
+| **VIRTUAL_TWIN** | Analysis | Sandboxed clone intelligence |
+| **VOID** | Cleanup | Entropy reductie |
+| **COHERENTIE** | Monitor | CPU load correlatie |
+
+### Laag 2: Brain Inventions (12 agents)
+Strategist, Artificer, VoidWalker, OmegaGovernor, TaskArbitrator,
+AdversarialTribunal, Tribunal, HallucinatieSchild, TheOracleEye,
+DevOpsDaemon, TheCortex, VirtualTwin
+
+### Laag 3: Daemons (6 always-on)
+HeartbeatDaemon, DigitalDaemon, DreamMonitor, LimbicSystem, Metabolisme, Sensorium
+
+### Laag 4: Prometheus (17 cosmic roles, 5 tiers)
+Trinity → Guardians → Specialists → Infrastructure → Singularity
+
+### Laag 5: Support (18+ systemen)
+CorticalStack, BlackBox, UnifiedMemory, GhostWriter, Dreamer, SingularityEngine,
+TheSynapse, ThePhantom, WaakhuisMonitor, ConfigAuditor, FileGuard, ModelRegistry, etc.
+
+Zie `AGENT_REFERENCE.md` voor volledige details.
 
 ---
 

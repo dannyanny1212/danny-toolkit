@@ -417,14 +417,61 @@ async def verify_api_key(
 # ─── APP ────────────────────────────────────────────
 
 app = FastAPI(
-    title="Danny Toolkit API",
+    title="Danny Toolkit API — Golden Master v6.7.0",
     description=(
-        "REST API voor de Danny Toolkit SwarmEngine. "
-        "Stuur berichten, bekijk agents en systeem status."
+        "## Omega Sovereign Core REST API\n\n"
+        "176 modules | 28/28 test suites | Phase 100+\n\n"
+        "### Endpoints\n"
+        "- **Swarm**: Query de SwarmEngine, bekijk agents, decomponeer doelen\n"
+        "- **Systeem**: Health checks, heartbeat, metrics, configuratie\n"
+        "- **RAG**: Document upload en indexering via ChromaDB\n"
+        "- **Tracing**: Request tracing met trace_id correlatie\n"
+        "- **Observatory**: Real-time monitoring, leaderboards, kosten, fouten\n"
+        "- **Models**: Model registry, provider status, capabilities\n\n"
+        "### Authenticatie\n"
+        "Alle endpoints vereisen `X-API-Key` header.\n"
     ),
-    version="1.0.0",
+    version="6.7.0",
     docs_url="/docs",
     redoc_url="/redoc",
+    openapi_tags=[
+        {
+            "name": "Swarm",
+            "description": "SwarmEngine queries, agent overzicht, goal decomposition. "
+            "Stuur prompts naar het 17-agent netwerk met AdaptiveRouter en circuit breakers.",
+        },
+        {
+            "name": "Systeem",
+            "description": "Health probes, heartbeat daemon, metrics en configuratie. "
+            "Inclusief Groq reachability, CorticalStack status en disk monitoring.",
+        },
+        {
+            "name": "RAG",
+            "description": "Retrieval-Augmented Generation pipeline. "
+            "Upload documenten (.txt, .md, .py, .json, .csv) naar ChromaDB via TheLibrarian.",
+        },
+        {
+            "name": "Tracing",
+            "description": "Distributed request tracing. Elke SwarmEngine run krijgt een "
+            "uniek 8-char hex trace_id. Bekijk traces en spans per request.",
+        },
+        {
+            "name": "Observatory",
+            "description": "Real-time system observatory. Dashboards, leaderboards, "
+            "auction logs, kostenanalyse, foutstatistieken, NeuralBus events, "
+            "BlackBox immune memory, Synapse pathways en Phantom predictions.",
+        },
+        {
+            "name": "Models",
+            "description": "Multi-model registry met 5 provider workers. "
+            "Bekijk beschikbare modellen, capabilities en auction-based routing.",
+        },
+        {
+            "name": "System",
+            "description": "Systeem introspectie en wiring overzicht. "
+            "Module inventaris, singleton status en dependency graph.",
+        },
+    ],
 )
 
 app.add_middleware(
@@ -434,6 +481,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+async def _startup_event():
+    """Auto-discover beschikbare modellen bij server start."""
+    try:
+        from danny_toolkit.brain.model_sync import get_model_registry
+        registry = get_model_registry()
+        registry.auto_discover()
+        logger.info("Model Registry: auto_discover() voltooid")
+    except Exception as e:
+        logger.debug("Model Registry auto_discover failed: %s", e)
 
 
 @app.on_event("shutdown")
@@ -710,7 +769,7 @@ async def health(
         governor_status=gov_status,
         circuit_breaker=cb_status,
         timestamp=datetime.now().isoformat(),
-        version="6.0.0",
+        version="6.7.0",
         uptime_seconds=round(uptime, 1),
         memory_mb=round(mem_mb, 1),
         active_agents=actief,

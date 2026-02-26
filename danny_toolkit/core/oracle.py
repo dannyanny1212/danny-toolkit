@@ -129,6 +129,17 @@ class OracleAgent(Agent):
     """
 
     def __init__(self, persist=True):
+        """Initializes an Oracle agent.
+
+ Args:
+   persist (bool): Whether to persist the agent's state. Defaults to True.
+
+ Attributes:
+   _body: The agent's body.
+   _eye: The agent's eye.
+   _repair_protocol: The agent's repair protocol.
+   _collection: The agent's collection.
+   repair_history (list): A list of the agent's repair history."""
         super().__init__(
             naam="Oracle",
             systeem_prompt=ORACLE_SYSTEM_PROMPT,

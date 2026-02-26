@@ -91,6 +91,10 @@ Help de gebruiker om inzichten om te zetten in concrete stappen."""
     ]
 
     def __init__(self):
+        """Initializes the advanced questions handler. 
+Ensures the required data directories exist, sets up the data storage location, 
+loads existing data, and establishes an Anthropic client if the Anthropic API key 
+is available and AI functionality is enabled."""
         Config.ensure_dirs()
         self.data_dir = Config.APPS_DATA_DIR / "advanced_questions"
         self.data_dir.mkdir(exist_ok=True)

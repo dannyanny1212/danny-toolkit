@@ -78,6 +78,21 @@ class WaakhuisMonitor:
     _MAX_LATENCIES = 500    # max latencies per agent in-memory
 
     def __init__(self, db_path: Optional[str] = None):
+        """Initializes the metrics tracking object.
+
+ Args:
+     db_path: Optional path to the SQLite database file. If not provided, a default path will be used.
+
+ Attributes:
+     _lock: Threading lock for synchronization.
+     _latencies: In-memory dictionary tracking latencies for each metric.
+     _fouten: In-memory dictionary tracking error counts for each metric.
+     _heartbeats: In-memory dictionary tracking heartbeats for each metric.
+     _dispatch_counts: In-memory dictionary tracking dispatch counts for each metric.
+     _error_counts: In-memory dictionary tracking error counts for each metric.
+     _stats: Dictionary containing total dispatch, error, and alert counts.
+     _db_path: Path to the SQLite database file.
+     _conn: SQLite database connection object."""
         self._lock = threading.Lock()
 
         # In-memory tracking

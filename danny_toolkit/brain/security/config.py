@@ -77,6 +77,9 @@ class SecurityConfig:
     """
 
     def __init__(self):
+        """Initializes a new instance, ensuring required directories exist, 
+loading initial data, and setting default configuration values. 
+Configures the pad and tracks hash changes."""
         Config.ensure_dirs()
         self._pad = _CONFIG_PAD
         self._hash_gewijzigd = False

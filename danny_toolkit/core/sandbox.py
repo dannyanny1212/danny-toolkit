@@ -78,6 +78,18 @@ class LocalSandbox(BaseSandbox):
         workspace: str,
         timeout: int = 30,
     ) -> SandboxResult:
+        """Runs a script in a sandboxed environment.
+
+Args:
+  script_path (str): The path to the script to run.
+  workspace (str): The working directory for the script.
+  timeout (int, optional): The maximum execution time in seconds. Defaults to 30.
+
+Returns:
+  SandboxResult: The result of the script execution, including stdout, stderr, return code, and timeout status.
+
+Raises:
+  None (exceptions are caught and handled internally, returning a SandboxResult)"""
         try:
             result = subprocess.run(
                 [_VENV_PYTHON, script_path],

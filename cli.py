@@ -1,5 +1,5 @@
 """
-SANCTUARY CLI — The Glass Box Terminal v6.0.0
+SANCTUARY CLI — The Glass Box Terminal v6.7.0
 ============================================
 
 Terminal-gebaseerde Mission Control voor de Prometheus
@@ -56,7 +56,7 @@ console = Console()
 
 HEADER = """
  ╔═══════════════════════════════════════════════════╗
- ║  S A N C T U A R Y  //  N E X U S  C L I  v6.0.0 ║
+ ║  S A N C T U A R Y  //  N E X U S  C L I  v6.7.0 ║
  ╚═══════════════════════════════════════════════════╝"""
 
 

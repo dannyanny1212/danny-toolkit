@@ -224,6 +224,21 @@ class PrometheusBrain(PrometheusProtocolsMixin):
     }
 
     def __init__(self, auto_init: bool = True):
+        """Initializes a new instance of the class.
+
+ Args:
+     auto_init (bool): Whether to automatically run the boot sequence. Defaults to True.
+
+ Initializes the following instance variables:
+ - nodes: A dictionary mapping cosmic roles to agent nodes.
+ - swarm: An OmegaSwarm instance.
+ - task_queue: A list of task dictionaries.
+ - task_history: A deque of task history with a maximum length of 1000.
+ - is_online: A boolean indicating whether the instance is online.
+
+ Also initializes data persistence settings, lazy-loaded system integrations, 
+ and various other instance variables, including the governor, feedback loop subsystems, 
+ and status counters. If auto_init is True, runs the boot sequence."""
         self.nodes: Dict[CosmicRole, AgentNode] = {}
         self.swarm = OmegaSwarm()
         self.task_queue: List[Dict] = []
@@ -344,6 +359,17 @@ class PrometheusBrain(PrometheusProtocolsMixin):
             except Exception as e:
                 logger.debug("BlackBox record error: %s", e)
 
+        """### Publish Learning Cycle Started Event
+
+Publishes a LEARNING_CYCLE_STARTED event on the NeuralBus.
+
+* Event type: `LEARNING_CYCLE_STARTED`
+* Payload: 
+  + `query`: The query that triggered the learning cycle (truncated to 200 characters)
+  + `reason`: The reason for starting the learning cycle
+* Source: `trinity_omega`
+
+Raises an exception if publishing to the NeuralBus fails."""
         # 2. Publiceer LEARNING_CYCLE_STARTED op NeuralBus
         if self._bus:
             try:

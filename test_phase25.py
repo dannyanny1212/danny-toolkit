@@ -168,8 +168,8 @@ try:
     )
     check("groq_reachable default False", hr.groq_reachable is False)
     check("disk_free_gb default 0.0", hr.disk_free_gb == 0.0)
-except ImportError:
-    # FastAPI niet beschikbaar in test-omgeving — valideer via source inspection
+except (ImportError, SystemExit):
+    # FastAPI of Sovereign Gate niet beschikbaar — valideer via source inspection
     import ast
     source_path = PROJECT_ROOT / "fastapi_server.py"
     tree = ast.parse(source_path.read_text(encoding="utf-8"))

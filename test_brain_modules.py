@@ -137,9 +137,11 @@ class TestGhostWriter(unittest.TestCase):
             "def also_no_doc(x):\n"
             "    return x + 1\n"
         )
+        # Maak temp file in danny_toolkit/ (safety check vereist dit pad)
+        tmp_dir = os.path.join(os.path.dirname(__file__), "danny_toolkit")
         with tempfile.NamedTemporaryFile(
             mode="w", suffix=".py", delete=False,
-            encoding="utf-8",
+            encoding="utf-8", dir=tmp_dir,
         ) as f:
             f.write(code)
             tmp_path = f.name

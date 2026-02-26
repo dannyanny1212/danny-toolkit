@@ -96,6 +96,62 @@ class HeartbeatDaemon:
     ]
 
     def __init__(self, brain=None, daemon=None):
+        """### Class Initialization Docstring
+
+Initializes a new instance of the class.
+
+#### Parameters
+
+*   **brain**: The brain component (default: `None`)
+*   **daemon**: The daemon component (default: `None`)
+
+#### Attributes
+
+*   **Engine**: The engine instance (initialized to `None`)
+*   **Stack**: The stack instance (initialized to `None`)
+*   **Proactive**: The proactive component (initialized to `None`)
+*   **Singularity**: The singularity component (initialized to `None`)
+*   **Security**: The security component (initialized to `None`)
+*   **Running**: A flag indicating whether the instance is running (initialized to `False`)
+*   **Stop Event**: A threading event for stopping the instance
+
+#### Counters
+
+*   **Pulse Count**: The pulse count (initialized to `0`)
+*   **Reflection Count**: The reflection count (initialized to `0`)
+*   **Growth Count**: The growth count (initialized to `0`)
+*   **Swarm Task Count**: The swarm task count (initialized to `0`)
+*   **Start Time**: The start time of the instance (initialized to `None`)
+
+#### System Metrics
+
+*   **CPU**: The CPU usage (initialized to `0.0`)
+*   **RAM**: The RAM usage (initialized to `0.0`)
+
+#### Activity Log
+
+*   **Activity**: The activity log (initialized to an empty list)
+
+#### Timing
+
+*   **Last Reflection**: The timestamp of the last reflection (initialized to `0.0`)
+*   **Last Stat Log**: The timestamp of the last stat log (initialized to `0.0`)
+*   **Last Swarm Check**: A dictionary of last swarm checks (initialized to an empty dictionary)
+*   **Last Proactive Check**: The timestamp of the last proactive check (initialized to `0.0`)
+*   **Last Security Scan**: The timestamp of the last security scan (initialized to `0.0`)
+*   **Last Rem Date**: The last rem date (initialized to `None`)
+*   **Last Morning Protocol Date**: The last morning protocol date (initialized to `None`)
+*   **Last Dream Observation**: The timestamp of the last dream observation (initialized to `0.0`)
+
+#### DevOps
+
+*   **DevOps**: The DevOps component (initialized to `None`)
+*   **Last DevOps Check**: The timestamp of the last DevOps check (initialized to `0.0`)
+
+#### Background Worker
+
+*   **Task Queue**: A queue for background tasks (initialized to a new queue)
+*   **Worker Pool**: A thread pool executor for background tasks (initialized with 2 workers)"""
         self._brain = brain
         self._daemon = daemon
         self._engine = None

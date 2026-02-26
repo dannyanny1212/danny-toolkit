@@ -150,6 +150,16 @@ class HallucinatieSchild:
     ]
 
     def __init__(self):
+        """Initializes a new instance, setting up synchronization and tracking state.
+
+ Attributes:
+  _lock (threading.Lock): Synchronization lock for thread safety.
+  _truth_anchor: The truth anchor, lazily loaded.
+  _truth_anchor_checked (bool): Whether the truth anchor has been checked.
+  _reality_anchor: The reality anchor, lazily loaded via AST scanning.
+  _reality_anchor_checked (bool): Whether the reality anchor has been checked.
+  _stats (dict): Statistics on processed items, including beoordeld, geblokkeerd, 
+    waarschuwingen, doorgelaten, code_validaties, and code_violations."""
         self._lock = threading.Lock()
         self._truth_anchor = None  # Lazy loaded
         self._truth_anchor_checked = False

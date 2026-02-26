@@ -34,6 +34,13 @@ class TheMirror:
     Injects this profile into every AI interaction context.
     """
     def __init__(self):
+        """Initializes the instance with default configuration.
+
+Sets up the profile path, asynchronous client, and model.
+
+*   Profile path: Set to a JSON file within the data directory for storing user profiles.
+*   Asynchronous client: Created using the Key Manager (if available) or directly with the GROQ API key.
+*   Model: Set to the large language model specified in the configuration."""
         self.profile_path = Config.DATA_DIR / "user_profile.json"
         if HAS_KEY_MANAGER:
             km = get_key_manager()
@@ -97,6 +104,21 @@ class TheMirror:
         return (
             "[USER PROFILE]\n"
             f"- Style: {p.get('coding_style', 'Standard')}\n"
+            """Provides a prompt to adjust responses based on a specified persona.
+
+The prompt includes the following persona characteristics:
+- Coding style (defaults to 'Standard')
+- Knowledge level (defaults to 'Intermediate')
+- Current goal (defaults to 'Unknown')
+- Tone preference (defaults to 'Direct')
+
+Parameters are expected to be provided in a dictionary with the following keys:
+- coding_style
+- knowledge_level
+- current_goal
+- tone_preference
+
+Returns a formatted string instructing the model to adjust its responses according to the given persona."""
             f"- Level: {p.get('knowledge_level', 'Intermediate')}\n"
             f"- Goal: {p.get('current_goal', 'Unknown')}\n"
             f"- Tone: {p.get('tone_preference', 'Direct')}\n"

@@ -258,6 +258,10 @@ class Config:
     NVIDIA_NIM_MODEL = os.environ.get("NVIDIA_NIM_MODEL", "qwen/qwen2.5-coder-32b-instruct")
     NIM_REPOSITORY_OVERRIDE = os.environ.get("NIM_REPOSITORY_OVERRIDE", "")
 
+    # Google Gemini
+    GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "")
+    GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+
     # THE BRAIN (Cloud — High IQ, Zero VRAM)
     LLM_PROVIDER = "groq"
     LLM_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
@@ -272,7 +276,7 @@ class Config:
     VERIFICATION_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
     # Fallback / overige modellen
-    CLAUDE_MODEL = "claude-sonnet-4-20250514"
+    CLAUDE_MODEL = os.environ.get("CLAUDE_MODEL", "claude-3-5-sonnet-20241022")
     MAX_TOKENS = 10000
     VOYAGE_MODEL = "voyage-4-large"
     VOYAGE_NATIVE_DIM = 1024              # voyage-4-large native output

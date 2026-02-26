@@ -108,6 +108,19 @@ class AuctionLogEntry:
     barrier_pass: Optional[bool] = None
 
     def to_dict(self) -> dict:
+        """Returns a dictionary representation of the object.
+
+* timestamp: The timestamp associated with the object.
+* task_id: The ID of the task.
+* task_categorie: The category of the task.
+* winnaar_provider: The provider of the winning model.
+* winnaar_model_id: The ID of the winning model.
+* winnaar_score: The score of the winning model, rounded to 4 decimal places.
+* deelnemers: A list of participants.
+* barrier_pass: A flag indicating whether a barrier was passed.
+
+Returns:
+  dict: A dictionary containing the object's attributes."""
         return {
             "timestamp": self.timestamp,
             "task_id": self.task_id,

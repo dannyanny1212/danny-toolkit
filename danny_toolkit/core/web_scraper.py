@@ -72,6 +72,19 @@ def scrape_with_depth(start_url: str, depth: int = 0,
     all_chunks = []
 
     def _crawl(url: str, current_depth: int):
+        """Crawls a webpage and its internal links recursively.
+
+ Args:
+   url (str): The URL to crawl.
+   current_depth (int): The current crawling depth.
+
+ Returns:
+   None
+
+ Notes:
+   This function uses a recursive approach to crawl a webpage and its internal links.
+   It keeps track of visited URLs to avoid infinite loops and stops crawling when the maximum depth is reached.
+   The scraped chunks are stored in the `all_chunks` list."""
         normalized = _normalize_url(url)
         if normalized in visited:
             return

@@ -59,6 +59,14 @@ class Alerter:
     ]
 
     def __init__(self):
+        """Initializes the object, setting up its internal state.
+
+  * Creates a lock for thread safety
+  * Initializes an ordered dictionary to track deduplicated keys and their last sent timestamps
+  * Sets up a deque to store alert history, limited to 500 entries
+  * Initializes a dictionary to track alert statistics by severity
+  * Creates a dictionary to log escalation timestamps for each alert key
+  * Initializes an escalation count to zero"""
         self._lock = threading.Lock()
         # OrderedDict: dedup_key -> timestamp van laatste verzending
         self._dedup: OrderedDict[str, float] = OrderedDict()

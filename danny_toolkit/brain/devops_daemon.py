@@ -94,6 +94,24 @@ class DevOpsDaemon:
     """
 
     def __init__(self):
+        """Initializes the DevOpsDaemon instance.
+
+  If the Key Manager is available, creates an asynchronous Groq client using the Key Manager; 
+  otherwise, creates the client using the GROQ_API_KEY environment variable.
+
+  Initializes the following instance variables:
+    - client: The asynchronous Groq client instance.
+    - model: The LLM model used by the daemon (from Config.LLM_MODEL).
+    - test_runner: The path to the test runner script (from Config.BASE_DIR).
+    - log_dir: The directory for log files (from Config.DATA_DIR).
+
+  Optionally initializes the following subsystems if their respective feature flags are enabled:
+    - BlackBox: A black box instance (using get_black_box()).
+    - Neural Bus: A neural bus instance (using get_bus()).
+    - Governor: An Omega Governor instance (using OmegaGovernor()).
+    - Cortical Stack: A cortical stack instance (using get_cortical_stack()).
+
+  Any errors during subsystem initialization are logged at the debug level."""
         if HAS_KEY_MANAGER:
             km = get_key_manager()
             self.client = km.create_async_client("DevOpsDaemon") or AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))

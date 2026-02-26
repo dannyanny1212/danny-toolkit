@@ -58,6 +58,20 @@ class VoyageEmbeddings(EmbeddingProvider):
     naam = "voyage"
 
     def __init__(self, api_key: str = None):
+        """### Docstring
+
+Initializes the Voyage AI client.
+
+#### Args
+* `api_key`: Optional API key for Voyage AI. If not provided, the key from the `Config` will be used.
+
+#### Attributes
+* `client`: The Voyage AI client instance.
+* `model`: The model used for embeddings.
+* `dimensions`: The dimensionality of the embeddings.
+
+#### Notes
+The `dimensions` attribute is compared to the native dimension of the Voyage AI model, and a tag is printed indicating if MRL (Multi-Resolution Locality) is used."""
         import voyageai
         self.client = voyageai.Client(api_key=api_key or Config.VOYAGE_API_KEY)
         self.model = Config.VOYAGE_MODEL
@@ -449,6 +463,31 @@ class VoyageChromaEmbedding:
     def name(self):
         """ChromaDB protocol: unieke naam."""
         return "VoyageChromaEmbedding"
+
+    def embed_query(self, query: str) -> list:
+        """Embed een enkele query — vereist door ChromaDB query_texts.
+
+        Gebruikt input_type='query' voor optimale retrieval-scoring.
+        """
+        for poging in range(5):
+            try:
+                result = self.client.embed(
+                    texts=[query],
+                    model=self.model,
+                    input_type="query",
+                )
+                return mrl_truncate(result.embeddings, self._target_dim)[0]
+            except (ConnectionError, TimeoutError, OSError) as e:
+                logger.warning("Voyage embed_query netwerk fout (poging %d): %s", poging + 1, e)
+                time.sleep(5 * (poging + 1))
+            except Exception as e:
+                naam = type(e).__name__
+                if "RateLimit" in naam or "429" in str(e):
+                    logger.warning("Voyage embed_query rate limit (poging %d)", poging + 1)
+                    time.sleep(5 * (poging + 1))
+                else:
+                    raise
+        raise RuntimeError("Voyage embed_query rate limit na 5 pogingen")
 
     def __call__(self, input):
         """ChromaDB embedding interface.

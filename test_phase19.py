@@ -88,8 +88,10 @@ brain_dir = os.path.join(os.path.dirname(__file__), "danny_toolkit", "brain")
 hardcoded_files = []
 pattern = re.compile(r'"meta-llama/llama-4-scout-17b-16e-instruct"|"qwen/qwen3-32b"')
 
+# config_auditor.py bevat validation allowlists (geen model selectie)
+ALLOWLIST_FILES = {"config_auditor.py"}
 for fname in os.listdir(brain_dir):
-    if fname.endswith(".py"):
+    if fname.endswith(".py") and fname not in ALLOWLIST_FILES:
         fpath = os.path.join(brain_dir, fname)
         with open(fpath, "r", encoding="utf-8", errors="replace") as f:
             content = f.read()

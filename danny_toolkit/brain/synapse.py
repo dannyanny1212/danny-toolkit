@@ -83,6 +83,21 @@ class TheSynapse:
     }
 
     def __init__(self, db_path: Optional[str] = None):
+        """Initializes the object with a SQLite database connection.
+
+ Args:
+   db_path: Optional path to the SQLite database file. If not provided, 
+     the database path will be determined from the Config.DATA_DIR or a 
+     default path.
+
+ Configures the database connection with the following settings:
+   - Enables write-ahead logging (WAL) journal mode for improved 
+     concurrency.
+   - Sets a busy timeout of 5000 milliseconds.
+
+ Also initializes internal state, including:
+   - A cache for the embed function from AdaptiveRouter.
+   - A cache for profile embeddings."""
         if db_path:
             self._db_path = db_path
         elif Config:

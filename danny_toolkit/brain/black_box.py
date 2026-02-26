@@ -94,9 +94,23 @@ class Antibody:
             self.severity = Severity.CRITICAL
 
     def to_dict(self) -> dict:
+        """Returns a dictionary representation of the object.
+
+* signature: The signature of the object.
+* antidote: The antidote of the object.
+* severity: The severity of the object, represented as a string.
+* encounters: A list of encounters.
+* created_at: The timestamp when the object was created.
+* last_seen: The timestamp when the object was last seen.
+* half_life: The half-life of the object.
+* source: The source of the object."""
         return {
             "signature": self.signature,
             "antidote": self.antidote,
+            """```
+Returns a dictionary representation of the object, containing its antidote, severity, 
+encounters, creation timestamp, last seen timestamp, half-life, and source.
+```"""
             "severity": self.severity.name,
             "encounters": self.encounters,
             "created_at": self.created_at,

@@ -39,6 +39,14 @@ class VisualNexus:
     """
 
     def __init__(self):
+        """Initializes a new instance with default attributes.
+
+Sets up the instance with the following properties:
+- domains: A list of domains initialized by _init_domains method
+- stars: An empty list to store items as stars
+- waves: An empty list to store projects as waves
+- created: The current date and time when the instance is created
+- architect: The architect name, defaults to "DANNY"""
         self.domains = self._init_domains()
         self.stars = []  # Taken als sterren
         self.waves = []  # Projecten als golven

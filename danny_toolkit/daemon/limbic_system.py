@@ -65,6 +65,21 @@ class EmotionalState:
     last_update: str = ""
 
     def to_dict(self) -> Dict:
+        """Returns a dictionary representation of the object, containing its current mood and emotional state.
+
+ Args: 
+  None
+
+ Returns:
+  A dictionary with the following keys:
+    - mood: The current mood (enum value)
+    - energy: The current energy level (enum value)
+    - form: The current form (enum value)
+    - happiness: The current happiness level
+    - stress: The current stress level
+    - curiosity: The current curiosity level
+    - pride: The current pride level
+    - last_update: The timestamp of the last update"""
         return {
             "mood": self.mood.value,
             "energy": self.energy.value,
@@ -93,6 +108,10 @@ class LimbicSystem:
         "productivity": 0.28,    # Taken en doelen
         "knowledge": 0.28,       # Leren en RAG
         "rest": 0.22,            # Pauzes en balans
+        """Initializes a new instance of the class.
+
+ Args:
+     sensorium (Sensorium, optional): The sensorium associated with the instance. Defaults to None."""
         "health": 0.22,          # Fitness en welzijn
     }
 

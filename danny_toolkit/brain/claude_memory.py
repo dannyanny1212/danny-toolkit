@@ -61,6 +61,19 @@ class ClaudeMemory:
     """
 
     def __init__(self):
+        """Initializes a ClaudeMemory instance.
+
+ Configures and initializes the underlying VectorStore for storing and retrieving 
+ memory data if the required dependencies (HAS_VECTOR) are available.
+
+ Loads the index from the specified file path, which maps IDs to their respective 
+ categories, summaries, and timestamps.
+
+ Attributes:
+     _store (Optional[VectorStore]): The VectorStore instance for storing memory data.
+     _db_path (Path): The file path for storing memory data.
+     _index_path (Path): The file path for storing the index data.
+     _index (Dict[str, dict]): The in-memory index mapping IDs to their metadata."""
         self._store: Optional[VectorStore] = None
         self._db_path = Config.DATA_DIR / "memory" / "claude_memory.json"
         self._index_path = Config.DATA_DIR / "memory" / "claude_memory_index.json"

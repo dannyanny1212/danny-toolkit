@@ -38,6 +38,19 @@ class CitationMarshall:
 
     def __init__(self, embedding_provider: "TorchGPUEmbeddings" = None,
                  threshold: float = 0.65):
+        """Initializes a CitationMarshall instance.
+
+ Args:
+   embedding_provider (TorchGPUEmbeddings, optional): The embedding provider to use. Defaults to None, in which case a default TorchGPUEmbeddings instance is used.
+   threshold (float, optional): The threshold for determining similarity. Defaults to 0.65.
+
+ Raises:
+   ImportError: If required dependencies ('torch', 'numpy', and 'transformers') are not installed.
+
+ Sets:
+   embedder (TorchGPUEmbeddings): The embedding provider used by the instance.
+   threshold (float): The similarity threshold used by the instance.
+   stats (dict): A dictionary to track verification statistics, initialized with keys 'verified', 'flagged', and 'uncited'."""
         if not _HAS_DEPS:
             raise ImportError(
                 "CitationMarshall vereist 'torch', 'numpy' en 'transformers'. "

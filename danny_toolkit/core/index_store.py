@@ -24,6 +24,20 @@ class IndexStore:
     """Persistent FAISS index with document metadata."""
 
     def __init__(self, store_dir: str = None):
+        """`__init__(self, store_dir: str = None)`: Initializes the IndexStore instance.
+
+ * Args:
+     + store_dir (str, optional): Directory to store index files. Defaults to None, which uses the default store directory.
+ * Raises:
+     + ImportError: If 'numpy' and 'faiss-cpu' are not installed.
+ * Attributes:
+     + store_dir (Path): The directory to store index files.
+     + index_path (Path): The path to the Faiss index file.
+     + meta_path (Path): The path to the metadata file.
+     + vectors_path (Path): The path to the vector data file.
+     + index: The Faiss index object.
+     + metadata (list): The list of metadata.
+     + _schema_version (str): The schema version of the index."""
         if not _HAS_FAISS:
             raise ImportError("IndexStore vereist 'numpy' en 'faiss-cpu'. Installeer met: pip install numpy faiss-cpu")
         self.store_dir = Path(store_dir) if store_dir else DEFAULT_STORE
@@ -117,6 +131,21 @@ class IndexStore:
 
         results = []
         for rank, idx in enumerate(I[0]):
+            """### Docstring
+
+Creates a list of result dictionaries from provided indices and distances.
+
+*   Iterates over the provided indices (`I[0]`) and their corresponding ranks.
+*   For each valid index, retrieves the associated metadata and distance (`D[0][rank]`).
+*   Constructs a result dictionary containing:
+    *   `rank`: The 1-based rank of the result.
+    *   `text`: The text associated with the result.
+    *   `source`: The source of the result.
+    *   `chunk`: The chunk of the result.
+    *   `hash`: The optional hash value of the result (defaults to an empty string).
+    *   `distance`: The distance of the result.
+
+Appends each result dictionary to the `results` list."""
             if idx < 0 or idx >= len(self.metadata):
                 continue
             meta = self.metadata[idx]
@@ -137,6 +166,13 @@ class IndexStore:
             "chunks": self.metadata,
         }
         with open(self.meta_path, "w", encoding="utf-8") as f:
+            """Writes a JSON object to a file.
+
+ Args:
+  wrapper: The JSON object to be written.
+ 
+ Writes the JSON object to the file specified by `self.meta_path` in UTF-8 encoding, 
+ ensuring that non-ASCII characters are preserved."""
             json.dump(wrapper, f, ensure_ascii=False)
         if hasattr(self, "_vectors"):
             np.save(self.vectors_path, self._vectors)

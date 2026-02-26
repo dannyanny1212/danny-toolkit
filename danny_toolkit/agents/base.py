@@ -99,6 +99,42 @@ class Agent:
         personality: dict = None,
         persist: bool = False
     ):
+        """### Docstring
+
+Initializes an agent instance.
+
+#### Parameters
+
+* **naam** (`str`): The name of the agent.
+* **systeem_prompt** (`str`): The system prompt for the agent.
+* **tools** (`ToolRegistry`, optional): The tool registry for the agent. Defaults to `None`.
+* **config** (`AgentConfig`, optional): The configuration for the agent. Defaults to `None`.
+* **personality** (`dict`, optional): The personality traits for the agent. Defaults to `{}`.
+* **persist** (`bool`, optional): Whether to persist the agent's state. Defaults to `False`.
+
+#### Attributes
+
+* **naam** (`str`): The name of the agent.
+* **systeem_prompt** (`str`): The system prompt for the agent.
+* **tools** (`ToolRegistry`): The tool registry for the agent.
+* **config** (`AgentConfig`): The configuration for the agent.
+* **personality** (`dict`): The personality traits for the agent.
+* **persist** (`bool`): Whether to persist the agent's state.
+* **provider**: The provider for the agent.
+* **client**: The client for the agent.
+* **model**: The model for the agent.
+* **memory** (`AgentMemory`): The memory for the agent.
+* **stats** (`AgentStats`): The statistics for the agent.
+* **state** (`AgentState`): The current state of the agent.
+* **logs** (`list[str]`): The logs for the agent.
+* **on_start** (`list[Callable]`): The event hooks for when the agent starts.
+* **on_complete** (`list[Callable]`): The event hooks for when the agent completes.
+* **on_error** (`list[Callable]`): The event hooks for when an error occurs.
+* **on_tool_use** (`list[Callable]`): The event hooks for when a tool is used.
+
+#### Notes
+
+If `persist` is `True` and a state file exists, the agent's state will be loaded from the file. The state file is stored in the `data_dir` directory, which is created if it does not exist."""
         self.naam = naam
         self.systeem_prompt = systeem_prompt
         self.tools = tools or ToolRegistry()

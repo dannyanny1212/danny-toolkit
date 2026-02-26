@@ -80,6 +80,24 @@ class VoidWalker:
         4. Integrate — ingest into VectorStore
     """
     def __init__(self):
+        """### Docstring
+
+Initializes the instance with a Groq API client and knowledge storage.
+
+*   If the key manager is available, creates an asynchronous Groq client using the key manager; otherwise, uses the GROQ_API_KEY environment variable.
+*   Sets the LLM model and database path based on configuration.
+*   Initializes a vector store using a torch embedder if available; falls back to TheCortex if vector store initialization fails.
+
+### Parameters
+
+None
+
+### Attributes
+
+*   `client`: The asynchronous Groq API client.
+*   `model`: The LLM model.
+*   `db_path`: The path to the knowledge database.
+*   `_store`: The vector store instance (or None if initialization fails)."""
         if HAS_KEY_MANAGER:
             km = get_key_manager()
             self.client = km.create_async_client("VoidWalker") or AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))

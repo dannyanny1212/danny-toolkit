@@ -29,6 +29,21 @@ class FaissIndex:
     """
 
     def __init__(self, dim: int, nlist: int = 1024):
+        """**Initializes a new instance.
+
+### Args
+
+* `dim`: The dimensionality of the data.
+* `nlist`: The initial list size (default: 1024).
+
+### Attributes
+
+* `dim`: The dimensionality of the data.
+* `nlist`: The list size.
+* `gpu`: A flag indicating whether GPU acceleration is enabled (initially False).
+* `index`: The index data (initially None).
+* `trained`: A flag indicating whether the model is trained (initially False).
+* `_lock`: A lock for thread safety."""
         self.dim = dim
         self.nlist = nlist
         self.gpu = False

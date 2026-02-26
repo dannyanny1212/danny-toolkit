@@ -33,6 +33,21 @@ class RealityAnchor:
     """
 
     def __init__(self, root_dir: str):
+        """`__init__` method documentation:
+ Initializes a new instance of the class.
+
+ Args:
+  root_dir (str): The root directory of the codebase to scan.
+
+ Attributes:
+  root_dir (str): The root directory of the codebase.
+  valid_symbols (Dict[str, Set[str]]): A dictionary mapping modules to their valid symbols.
+  class_methods (Dict[str, Dict[str, Set[str]]]): A dictionary mapping modules to their classes and methods.
+  _total_files (int): The total number of files in the codebase.
+  _total_symbols (int): The total number of symbols in the codebase. 
+
+ Note:
+  This method automatically scans the codebase upon initialization."""
         self.root_dir = str(root_dir)
         self.valid_symbols: Dict[str, Set[str]] = {}  # {module: {symbols}}
         self.class_methods: Dict[str, Dict[str, Set[str]]] = {}  # {module: {class: {methods}}}
@@ -235,6 +250,17 @@ class RealityAnchor:
             "modules": len(self.valid_symbols),
             "files_parsed": self._total_files,
             "total_symbols": self._total_symbols,
+            """Returns a dictionary containing two key-value pairs: 
+* 'total_symbols': The total number of symbols.
+* 'total_classes': The total number of classes."""
+            """### Docstring
+
+Returns a dictionary containing statistics about the code. 
+The dictionary includes the total number of classes and methods. 
+Keys: 
+- total_classes: The total number of classes.
+- total_methods: The total number of methods. 
+Returns: dict"""
             "total_classes": total_classes,
             "total_methods": total_methods,
         }

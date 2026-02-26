@@ -31,6 +31,10 @@ class FileGuard:
     """Bewaakt de integriteit van bronbestanden."""
 
     def __init__(self):
+        """Initializes the object with repository root and manifest padding attributes.
+
+* Sets `repo_root` to the base directory specified in the Config.
+* Sets `manifest_pad` to a predefined manifest padding value (_MANIFEST_PAD)."""
         self.repo_root = Config.BASE_DIR
         self.manifest_pad = _MANIFEST_PAD
 

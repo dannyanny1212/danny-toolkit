@@ -42,6 +42,18 @@ class NeuralCluster:
     """Simuleert een cluster van neuronen."""
 
     def __init__(self, naam: str, grootte: int = 100):
+        """Initializes a new object.
+
+ Args:
+  naam (str): The name of the object.
+  grootte (int, optional): The size of the object. Defaults to 100.
+
+ Attributes:
+  naam (str): The name of the object.
+  grootte (int): The size of the object.
+  activatie (float): The activation level of the object, initially 0.0.
+  connecties (dict): A dictionary of connections to other objects, keyed by name and valued by strength.
+  geschiedenis (deque): A deque to store the history of the object, with a maximum length of 50."""
         self.naam = naam
         self.grootte = grootte
         self.activatie = 0.0
@@ -56,6 +68,27 @@ class NeuralCluster:
             "activatie": self.activatie
         })
 
+    """Propagate activation to connected clusters.
+
+Args:
+    clusters (Dict[str, NeuralCluster]): A dictionary of clusters.
+
+Returns:
+    None 
+
+Note: This function seems to be modifying the clusters dictionary or the objects within it, but it's not explicitly clear from the provided code. Consider adding more information about the side effects of this function."""
+    """```
+Propageer activatie naar verbonden clusters.
+
+Args:
+    clusters (Dict[str, NeuralCluster]): A dictionary of neural clusters.
+
+Returns:
+    None
+
+Notes:
+    This function appears to have side effects, potentially modifying the input clusters dictionary or its contents.
+```"""
     def propageer(self, clusters: Dict[str, 'NeuralCluster']):
         """Propageer activatie naar verbonden clusters."""
         for naam, sterkte in self.connecties.items():
@@ -486,6 +519,19 @@ class BewustzijnLevel:
             "range": (0.0, 0.2),
             "beschrijving": "Diepe rust, regeneratie",
             "frequentie": "0.5-4 Hz"
+        """### Docstring
+
+Returns a dictionary containing frequency ranges for different brain wave types. 
+The dictionary keys are the brain wave types and the values are dictionaries with 
+the following keys: 
+- 'frequentie' or 'range': a string or tuple representing the frequency range. 
+  Specifically, 'frequentie' is used for the 'beta' key and contains a string 
+  representing the frequency range in Hz (e.g., '0.5-4 Hz'). 
+  The 'range' key contains a tuple of two floats representing the frequency range. 
+
+### Keys:
+- 'beta': A dictionary with a single key 'frequentie' 
+- 'theta': A dictionary with a single key 'range"""
         },
         "theta": {
             "range": (0.2, 0.4),
@@ -511,6 +557,8 @@ class BewustzijnLevel:
 
     def __init__(self, data: dict = None):
         self.niveau = 0.5  # Alpha staat
+        """Initializes the level state of an entity to alpha level with default progression parameters. 
+Sets the initial level to 'alpha', the level progression to 0, and the alpha state to 0.5."""
         self.huidige_level = "alpha"
         self.tijd_in_level = 0
         self.level_geschiedenis = []

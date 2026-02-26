@@ -136,6 +136,36 @@ class TaskArbitrator:
     """
 
     def __init__(self, brain=None):
+        """### Docstring
+
+Initializes an Arbitrator instance.
+
+#### Args
+
+*   **brain** (optional): The brain component associated with the Arbitrator. Defaults to `None`.
+*   **None**: No explicit return value.
+
+#### Attributes
+
+*   **brain**: The brain component associated with the Arbitrator.
+*   **_lock**: A threading lock for synchronization.
+*   **_stats**: A dictionary containing statistics on the Arbitrator's performance, including:
+    *   **goals_processed**: The number of goals processed.
+    *   **tasks_decomposed**: The number of tasks decomposed.
+    *   **auctions_held**: The number of auctions held.
+    *   **tasks_completed**: The number of tasks completed.
+    *   **tasks_failed**: The number of tasks failed.
+    *   **model_auctions_held**: The number of model auctions held (Phase 41: Generaal Mode).
+    *   **model_tasks_completed**: The number of model tasks completed (Phase 41: Generaal Mode).
+    *   **model_tasks_failed**: The number of model tasks failed (Phase 41: Generaal Mode).
+    *   **barrier_rejections**: The number of barrier rejections.
+*   **_synapse**: A synapse component (not initialized in `__init__`).
+*   **_waakhuis**: A waakhuis component (not initialized in `__init__`).
+*   **_groq_client**: A Groq client instance, initialized lazily if possible.
+
+#### Notes
+
+The Groq client is initialized lazily, attempting to create a synchronous client using `AgentKeyManager` if available, and falling back to using an API key from the environment if not. Any exceptions during initialization are caught and logged at the debug level."""
         self.brain = brain
         self._lock = threading.Lock()
         self._stats = {

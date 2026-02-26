@@ -62,6 +62,28 @@ class ThePhantom:
     MIN_SAMPLES = 3
 
     def __init__(self, db_path: Optional[str] = None):
+        """### Docstring
+
+Initializes the database connection.
+
+#### Args
+
+*   **db_path**: Optional path to the SQLite database file. If not provided, 
+    defaults to `cortical_stack.db` in the `DATA_DIR` configuration directory 
+    or a local `data` directory.
+
+#### Attributes
+
+*   **_db_path**: The path to the SQLite database file.
+*   **_conn**: The SQLite database connection object.
+*   **_cache_lock**: A lock for synchronizing access to the context cache.
+*   **_pre_warmed**: A dictionary for storing pre-warmed context cache. 
+
+#### Notes
+
+The database connection is established with a write-ahead logging (WAL) 
+journal mode and a busy timeout of 5000 milliseconds. The `_create_tables` 
+method is called to initialize the database schema."""
         if db_path:
             self._db_path = db_path
         elif Config:

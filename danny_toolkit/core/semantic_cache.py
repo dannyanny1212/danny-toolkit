@@ -66,6 +66,18 @@ class SemanticCache:
     _EVICT_INTERVAL = 100  # Elke N writes, verwijder verlopen entries
 
     def __init__(self, db_path: Path = None):
+        """Initializes a new instance of the class.
+
+ Args:
+   db_path: Optional path to the database file. Defaults to a file named "semantic_cache.db" in the Config.DATA_DIR.
+
+ Returns:
+   None
+
+ Note:
+   The database directory is created if it does not exist. 
+   The embedding provider is lazily initialized. 
+   Various instance variables are initialized to track database performance metrics."""
         self._db_path = db_path or (Config.DATA_DIR / "semantic_cache.db")
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
         self._lock = threading.Lock()

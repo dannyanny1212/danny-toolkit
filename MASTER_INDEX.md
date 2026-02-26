@@ -1,88 +1,51 @@
-# MASTER_INDEX.md
+# Danny Toolkit v6.7.0 — Master Documentation Index
 
-# Danny Toolkit v5 – Master Documentation Index
-
-Dit document vormt de centrale ingang voor alle documentatie van Danny Toolkit v5 ("Project Omega").
-Alle subsystemen, architectuuronderdelen en technische referenties zijn hier gestructureerd terug te vinden.
-
----
-
-## 1. Hoofddocumenten
-
-- ARCHITECTURE.md
-- DEVELOPER_GUIDE.md
-- FORENSIC_REPORT_V5.md
-- CLAUDE.md
+> Omega Sovereign Core | Centraal documentatie register
+>
+> **Centraal aansturingspunt**: `python -m danny_toolkit.brain.brain_cli` → kies `d`
 
 ---
 
-## 2. Systeemoverzicht
+## Project Documentatie
 
-- SYSTEM_MAP.md
-- AGENT_REFERENCE.md
-- LAUNCHER_GUIDE.md
+| Document | Inhoud | Status |
+|----------|--------|--------|
+| **CLAUDE.md** | Omega Sovereign Directive — alle protocollen, roadmap, 178 modules | GOLD |
+| **AGENT_REFERENCE.md** | 50+ agents over 5 lagen, lifecycle, Brain CLI integratie | v6.7.0 |
+| **ARCHITECTURE.md** | Systeem architectuur, domein scheiding, security, flow | v6.7.0 |
+| **SYSTEM_MAP.md** | Hoofdlagen, globale flow, relaties, data flow | v6.7.0 |
+| **RAG_PIPELINE.md** | RAG ingest, MRL truncatie, query pipeline, verificatie | v6.7.0 |
+| **DEVELOPER_GUIDE.md** | Diamond Polish regels, workflow, test env, security | v6.7.0 |
+| **HARDENING_CHECKLIST.md** | Security hardening: 7 wetten + Sovereign Gate | v6.7.0 |
+| **MEMEX_INTERNALS.md** | MEMEX: shard_router, vector store, shadow_airlock | v6.7.0 |
+| **UPGRADE_WORKFLOW.md** | Branch strategie, test, deploy, patchday | Actueel |
+| **CHANGELOG.md** | Release changelog alle versies | Actueel |
+| **README.md** | Project overzicht + Agent Roster | Actueel |
 
----
+## RAG Kennisbank (data/rag/documenten/)
 
-## 3. Subsystemen
+| Document | Inhoud |
+|----------|--------|
+| omega_sovereign_security.md | Sovereign security protocol, 7 wetten, PII |
+| shadow_rag_token_protocol.md | Shadow RAG staging flow, deduplicatie |
+| vector_embedding_learning.md | Vector embedding architectuur, Voyage, MRL |
+| rag_security_best_practices.md | RAG security best practices |
+| rag_security_ingestion_access_control.md | RAG access control |
+| deep_dive_autopsie.md | Systeem analyse |
+| MYTHICAL_NEXUS_DESIGN.md | Swarm architectuur design |
 
-### RAG / MEMEX
-- RAG_PIPELINE.md
-- MEMEX_INTERNALS.md
+## Bron van Waarheid
 
-### Vision / PixelEye
-- VISION_PIPELINE.md
-- PIXEL_EYE_INTERNALS.md
+1. **CLAUDE.md** — Absolute bron van waarheid voor architectuur en protocollen
+2. **docs/index.md** — MkDocs Golden Master (publiek)
+3. **Brain CLI v2.0** — Live systeem verificatie via Architectuur Scan
 
----
+## Nieuwe Modules (v6.7.0)
 
-## 4. Kerncomponenten (code)
-
-- SwarmEngine
-- PrometheusBrain
-- Governor
-- Quest System
-- OracleAgent
-- UnifiedMemory
-- CorticalStack
-
----
-
-## 5. Data & Persistentie
-
-- data/rag/documents/
-- data/rag/chromadb/
-- data/logs/
-- config/
-- .env
-
----
-
-## 6. Interfaces
-
-- CLI (cli.py)
-- FastAPI Server (fastapi_server.py)
-- Sanctuary UI (sanctuary_ui.py)
-- Telegram Bot (telegram_bot.py)
+| Module | Locatie | Doel |
+|--------|---------|------|
+| `agent_factory.py` | brain/ | Agent instantie factory met lazy loading en registry |
 
 ---
 
-## 7. Workflow & Governance
-
-- UPGRADE_WORKFLOW.md
-- BRANCH_STRATEGY.md
-- HARDENING_CHECKLIST.md
-- RELEASE_NOTES_TEMPLATE.md
-
-## 8. Aanvullende Documentatie (optioneel)
-
-- CHANGELOG.md
-- CONTRIBUTING.md
-- RELEASE_NOTES.md
-
----
-
-## 9. Navigatie
-
-Gebruik dit document als centrale hub om snel naar subsystemen, architectuuronderdelen of technische referenties te springen.
-Alle documenten zijn modulair en onafhankelijk leesbaar.
+Alle andere docs zijn afgeleiden en worden gesynchroniseerd via Brain CLI.

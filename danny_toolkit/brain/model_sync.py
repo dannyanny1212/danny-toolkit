@@ -55,7 +55,7 @@ class ModelCapability(str, Enum):
 class ModelProfile:
     """Profiel van een extern AI model."""
     provider: str           # "groq", "anthropic", "openai", "nvidia_nim", "ollama"
-    model_id: str           # e.g. "meta-llama/llama-4-scout-17b-16e-instruct"
+    model_id: str           # e.g. Config.LLM_MODEL
     capabilities: List[ModelCapability] = field(default_factory=list)
     cost_tier: int = 1      # 1=gratis, 2=goedkoop, 3=duur
     latency_class: int = 1  # 1=snel, 2=gemiddeld, 3=traag
@@ -96,6 +96,17 @@ class ModelWorker:
     """
 
     def __init__(self, profile: ModelProfile):
+        """**Initializes a new instance with the given profile.
+
+ Args:
+     profile (ModelProfile): The profile to use for this instance.
+
+ Attributes:
+     profile (ModelProfile): The profile used by this instance.
+     _circuit_open (bool): Whether the circuit is currently open.
+     _fail_count (int): The current number of failures.
+     _max_fails (int): The maximum number of failures allowed.
+     _perf (dict): Performance metrics, including calls, successes, failures, barrier rejections, total latency, and total tokens.**"""
         self.profile = profile
         self._circuit_open = False
         self._fail_count = 0
@@ -171,8 +182,7 @@ class GroqModelWorker(ModelWorker):
         if profile is None:
             profile = ModelProfile(
                 provider="groq",
-                model_id=getattr(Config, "LLM_MODEL",
-                                 "meta-llama/llama-4-scout-17b-16e-instruct"),
+                model_id=Config.LLM_MODEL,
                 capabilities=[
                     ModelCapability.CODE,
                     ModelCapability.RESEARCH,
@@ -250,7 +260,7 @@ class AnthropicModelWorker(ModelWorker):
         if profile is None:
             profile = ModelProfile(
                 provider="anthropic",
-                model_id="claude-sonnet-4-20250514",
+                model_id=getattr(Config, "CLAUDE_MODEL", "claude-sonnet-4-20250514"),
                 capabilities=[
                     ModelCapability.CODE,
                     ModelCapability.RESEARCH,
@@ -478,6 +488,89 @@ class NVIDIAModelWorker(ModelWorker):
             )
 
 
+class GeminiModelWorker(ModelWorker):
+    """Worker voor Google Gemini API (google.genai SDK).
+
+    Ondersteunt gemini-2.5-pro, gemini-2.5-flash, etc.
+    Key via GOOGLE_API_KEY of GEMINI_API_KEY env var.
+    """
+
+    def __init__(self, profile: ModelProfile = None):
+        if profile is None:
+            gemini_model = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+            profile = ModelProfile(
+                provider="gemini",
+                model_id=gemini_model,
+                capabilities=[
+                    ModelCapability.CODE,
+                    ModelCapability.RESEARCH,
+                    ModelCapability.ANALYSE,
+                    ModelCapability.CREATIEF,
+                    ModelCapability.VERIFICATIE,
+                ],
+                cost_tier=1,
+                latency_class=2,
+                max_tokens=8192,
+            )
+        super().__init__(profile)
+        self._client = None
+        try:
+            from google import genai
+            key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
+            if key:
+                self._client = genai.Client(api_key=key)
+        except ImportError:
+            logger.debug("google-genai SDK niet beschikbaar")
+        except Exception as e:
+            logger.debug("GeminiModelWorker init: %s", e)
+
+    async def generate(self, prompt: str, system: str = "") -> ModelResponse:
+        """Genereer via Google Gemini API."""
+        self._perf["calls"] += 1
+        t0 = time.time()
+        try:
+            if not self._client:
+                raise RuntimeError("Gemini client niet beschikbaar")
+
+            import asyncio
+            full_prompt = f"{system}\n\n{prompt}" if system else prompt
+
+            response = await asyncio.to_thread(
+                self._client.models.generate_content,
+                model=self.profile.model_id,
+                contents=full_prompt,
+            )
+            content = response.text if hasattr(response, "text") else ""
+            tokens = 0
+            if hasattr(response, "usage_metadata"):
+                meta = response.usage_metadata
+                tokens = getattr(meta, "total_token_count", 0)
+            latency = (time.time() - t0) * 1000
+
+            self._perf["total_latency_ms"] += latency
+            self._perf["total_tokens"] += tokens
+            self._fail_count = 0
+
+            return ModelResponse(
+                provider=self.profile.provider,
+                model_id=self.profile.model_id,
+                content=content,
+                tokens_used=tokens,
+                latency_ms=round(latency, 1),
+            )
+        except Exception as e:
+            self._record_failure()
+            latency = (time.time() - t0) * 1000
+            self._perf["total_latency_ms"] += latency
+            logger.debug("GeminiModelWorker.generate: %s", e)
+            return ModelResponse(
+                provider=self.profile.provider,
+                model_id=self.profile.model_id,
+                content="",
+                latency_ms=round(latency, 1),
+            )
+
+
 class OllamaModelWorker(ModelWorker):
     """Worker voor lokale Ollama modellen."""
 
@@ -485,7 +578,7 @@ class OllamaModelWorker(ModelWorker):
         if profile is None:
             profile = ModelProfile(
                 provider="ollama",
-                model_id="llama3.2:3b",
+                model_id=getattr(Config, "VISION_MODEL", "llava:latest"),
                 capabilities=[
                     ModelCapability.CODE,
                     ModelCapability.ANALYSE,
@@ -559,12 +652,32 @@ class ModelRegistry:
 
     def auto_discover(self):
         """Check env vars en registreer beschikbare workers automatisch."""
-        # Groq
+        # Groq — primary (llama-4-scout)
         if os.getenv("GROQ_API_KEY"):
             try:
                 self.register(GroqModelWorker())
             except Exception as e:
-                logger.debug("Groq auto-discover: %s", e)
+                logger.debug("Groq primary auto-discover: %s", e)
+
+            # Groq — fallback (qwen3-32b)
+            try:
+                fallback_model = getattr(Config, "LLM_FALLBACK_MODEL", "qwen/qwen3-32b")
+                fallback_profile = ModelProfile(
+                    provider="groq",
+                    model_id=fallback_model,
+                    capabilities=[
+                        ModelCapability.CODE,
+                        ModelCapability.RESEARCH,
+                        ModelCapability.ANALYSE,
+                        ModelCapability.CREATIEF,
+                    ],
+                    cost_tier=1,
+                    latency_class=1,
+                    max_tokens=4096,
+                )
+                self.register(GroqModelWorker(profile=fallback_profile))
+            except Exception as e:
+                logger.debug("Groq fallback auto-discover: %s", e)
 
         # Anthropic
         if os.getenv("ANTHROPIC_API_KEY"):
@@ -586,6 +699,13 @@ class ModelRegistry:
                 self.register(NVIDIAModelWorker())
             except Exception as e:
                 logger.debug("NVIDIA NIM auto-discover: %s", e)
+
+        # Google Gemini
+        if os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY"):
+            try:
+                self.register(GeminiModelWorker())
+            except Exception as e:
+                logger.debug("Gemini auto-discover: %s", e)
 
         # Ollama — try to connect
         try:

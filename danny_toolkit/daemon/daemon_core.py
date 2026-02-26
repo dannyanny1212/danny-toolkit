@@ -36,6 +36,8 @@ class DaemonMessage:
     timestamp: str = ""
 
     def __post_init__(self):
+        """Initializes the object after construction. 
+If the object has no timestamp, sets it to the current date and time in ISO format."""
         if not self.timestamp:
             self.timestamp = datetime.now().isoformat()
 

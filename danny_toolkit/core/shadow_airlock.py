@@ -22,6 +22,7 @@ Gebruik:
     airlock.start_periodiek(interval=60)      # Blokkerende loop
 """
 
+import hashlib
 import logging
 import os
 import shutil
@@ -65,6 +66,18 @@ try:
 except ImportError:
     VENV_PYTHON = sys.executable
     def get_subprocess_env(test_mode=False):
+        """Returns a modified copy of the current environment variables.
+
+The returned dictionary contains all current environment variables, with the following overrides:
+- CUDA_VISIBLE_DEVICES: set to -1 to disable GPU usage
+- ANONYMIZED_TELEMETRY: set to False to disable telemetry
+- PYTHONIOENCODING: set to utf-8 to ensure consistent encoding
+
+Args:
+    test_mode (bool): Currently unused. Defaults to False.
+
+Returns:
+    dict: A modified copy of the current environment variables."""
         env = os.environ.copy()
         env.update({
             "CUDA_VISIBLE_DEVICES": "-1",
@@ -94,6 +107,20 @@ class ShadowAirlock:
 
     def __init__(self):
         # Mappen instellen
+        """Initializes the object by setting up directory mappings and statistics.
+
+Configures directory paths based on the presence of a configuration. 
+If a configuration is available, uses values from Config; otherwise, 
+uses default paths.
+
+Initializes a dictionary to track session statistics, including:
+- scans: Number of scans performed
+- gerepareerd: Number of repaired items
+- gepromoveerd: Number of promoted items
+- quarantaine: Number of quarantined items
+- ingest_triggers: Number of ingest triggers
+
+Ensures that the staging and production directories exist."""
         if HAS_CONFIG:
             self._staging_dir = Config.SHADOW_RAG_DIR
             self._productie_dir = Config.DOCUMENTEN_DIR
@@ -232,9 +259,13 @@ class ShadowAirlock:
             return False, str(e)
 
     def _promoveer_naar_productie(self, pad: Path) -> Optional[Path]:
-        """Verplaats een gevalideerd bestand van staging naar productie.
+        """Kopieer een gevalideerd bestand van staging naar productie.
 
-        Gebruikt shutil.move() voor atomaire verplaatsing.
+        Veilige 3-staps promotie (copy → verify → delete):
+        1. Kopieer naar productie (staging blijft intact)
+        2. SHA256 verificatie: bron == doel
+        3. Pas dan staging bestand verwijderen
+
         Bij naamconflict: voeg timestamp toe.
 
         Args:
@@ -253,11 +284,33 @@ class ShadowAirlock:
             doel = self._productie_dir / f"{stam}_{ts}{ext}"
 
         try:
-            shutil.move(str(pad), str(doel))
-            logger.info("Airlock: gepromoveerd: %s → %s", pad.name, doel.name)
+            # Stap 1: Kopieer (staging blijft intact als vangnet)
+            shutil.copy2(str(pad), str(doel))
+
+            # Stap 2: SHA256 verificatie — bron en doel moeten identiek zijn
+            bron_hash = hashlib.sha256(pad.read_bytes()).hexdigest()
+            doel_hash = hashlib.sha256(doel.read_bytes()).hexdigest()
+
+            if bron_hash != doel_hash:
+                logger.error(
+                    "Airlock: SHA256 mismatch na copy! %s (%s) != %s (%s)",
+                    pad.name, bron_hash[:12], doel.name, doel_hash[:12],
+                )
+                # Verwijder corrupte kopie, staging blijft behouden
+                doel.unlink(missing_ok=True)
+                return None
+
+            # Stap 3: Pas nu staging verwijderen (bron is veilig in productie)
+            pad.unlink()
+            logger.info(
+                "Airlock: gepromoveerd (SHA256 OK): %s → %s",
+                pad.name, doel.name,
+            )
             return doel
+
         except Exception as e:
-            logger.error("Airlock: verplaatsen mislukt: %s → %s", pad.name, e)
+            logger.error("Airlock: promotie mislukt: %s → %s", pad.name, e)
+            # Bij fout: staging bestand blijft behouden
             return None
 
     def _trigger_ingest(self, bestanden: List[Path]):

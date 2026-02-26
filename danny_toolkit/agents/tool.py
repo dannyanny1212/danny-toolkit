@@ -58,6 +58,9 @@ class ToolResult:
     timestamp: datetime = field(default_factory=datetime.now)
 
     def __str__(self) -> str:
+        """Returns a string representation of the object. 
+If the operation was successful, returns the data as a string; 
+otherwise, returns an error message."""
         if self.success:
             return str(self.data)
         return f"Error: {self.error}"
@@ -145,6 +148,10 @@ class ToolMetrics:
 
 
 class ToolCache:
+    """Caches the results of tool executions, storing a limited number of outcomes to prevent redundant computation and optimize performance. 
+
+Args:
+    max_size (int): The maximum number of cached results to store."""
     """Cache systeem voor tool resultaten."""
 
     def __init__(self, max_size: int = 100, default_ttl: int = 300):

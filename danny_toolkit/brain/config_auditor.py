@@ -150,6 +150,13 @@ class ConfigAuditor:
     """
 
     def __init__(self):
+        """Initializes the object with default state.
+
+ Sets up the baseline and last rapport attributes.
+
+ Attributes:
+  _baseline: A dictionary of baseline data, where keys and values are strings.
+  _last_rapport: The last AuditRapport object."""
         self._baseline: Optional[Dict[str, str]] = None
         self._last_rapport: Optional[AuditRapport] = None
 

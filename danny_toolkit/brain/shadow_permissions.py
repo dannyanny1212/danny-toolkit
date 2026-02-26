@@ -23,6 +23,16 @@ class ShadowPermission:
     __slots__ = ("code", "beschrijving", "scope", "actief")
 
     def __init__(self, code: str, beschrijving: str, scope: str = "shadow"):
+        """Initializes a new instance with the given properties.
+
+  Args:
+    code (str): The code of the instance.
+    beschrijving (str): The description of the instance.
+    scope (str, optional): The scope of the instance. Defaults to "shadow". 
+                           Options: "shadow" (only shadow zone), "transfer" (allowed to physical).
+
+  Attributes:
+    actief (bool): Whether the instance is active. Defaults to True."""
         self.code = code
         self.beschrijving = beschrijving
         self.scope = scope  # "shadow" = alleen shadow zone, "transfer" = mag naar fysiek

@@ -52,6 +52,19 @@ class SingularityEngine:
     NACHTWACHT_PATROON_DAGEN = 7
 
     def __init__(self, daemon=None, brain=None):
+        """Initializes a new instance of the class.
+
+### Args
+* `daemon`: The daemon associated with this instance. 
+* `brain`: The brain associated with this instance.
+
+### Initializes
+* Internal state variables for governor, stack, and stop event
+* Bewustzijn state variables (modus, modus since, and bewustzijn score)
+* Tracking variables for dreams, insights, and synthesis log
+* Timing variables for last reflection, dream, and synthesis
+* Rate limiting variables for dreams and insights
+* Nachtwacht state variables (datum, log, and original threshold)"""
         self._daemon = daemon
         self._brain = brain
         self._governor = None

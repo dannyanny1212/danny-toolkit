@@ -21,6 +21,27 @@ class ProductionRAG:
     """Compleet productie-klaar RAG systeem - Uitgebreide versie."""
 
     def __init__(self, gebruik_voyage: bool = True):
+        """Initializes a Production RAG (Retrieval-Augmented Generation) system.
+
+### Args
+
+*   **gebruik_voyage**: A boolean flag indicating whether to use Voyage as the embedding provider. Defaults to `True`.
+
+### Description
+
+This initializer sets up the necessary components for a Production RAG system, including:
+
+*   Data loading from a JSON file
+*   Selection of an embedding provider (Voyage or another provider)
+*   Initialization of a vector store, document processor, and generator (if available)
+*   Setup of conversation memory and document metadata
+
+It also performs various checks, such as ensuring the existence of required directories and API keys.
+
+### Notes
+
+*   The system will only use retrieval if no Anthropic API key is provided.
+*   The conversation memory has a maximum length of 10 entries."""
         Config.ensure_dirs()
         self.data_file = Config.DATA_DIR / "production_rag_data.json"
         self.data = self._laad_data()

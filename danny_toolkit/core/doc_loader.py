@@ -109,6 +109,17 @@ def _load_pdf(filepath: Path) -> list[dict]:
 
 
 def _load_pdf_plumber(filepath: Path) -> list[dict]:
+    """Loads a PDF file using pdfplumber and extracts text and tables from each page.
+
+ Args:
+     filepath (Path): The path to the PDF file to load.
+
+ Returns:
+     list[dict]: A list of dictionaries, where each dictionary contains the extracted text 
+         and the corresponding page number. Each dictionary has two keys: 'text' and 'page'.
+
+ Raises:
+     ValueError: If no text is found in the PDF file."""
     import pdfplumber
 
     pages = []
@@ -166,6 +177,14 @@ def _table_to_text(table: list) -> str:
         return ""
     rows = []
     for row in table:
+        """Formats a table into a string of pipe-separated rows, 
+ignoring empty rows and cells. 
+ 
+Args: 
+    table: A 2D list of cell values.
+ 
+Returns: 
+    A string representation of the table with non-empty rows joined by newlines."""
         cells = [str(c).strip() if c else "" for c in row]
         if any(cells):
             rows.append(" | ".join(cells))
@@ -189,6 +208,20 @@ def _load_docx(filepath: Path) -> list[dict]:
 
     # Tabellen uit Word
     for table in doc.tables:
+        """Extracts text from tables in a document and returns it as a list of text blocks.
+
+### Args
+* None (function appears to operate on a global or closure variable `doc`)
+
+### Returns
+* A list of dictionaries, where each dictionary contains:
+  + `text`: The extracted text from the tables.
+  + `page`: The page number where the text was found (always `None` in this implementation).
+
+### Notes
+* The function iterates over all tables in the document, extracting text from each row and cell.
+* Only non-empty rows are included in the output.
+* If no text is extracted, an empty list is returned."""
         rows = []
         for row in table.rows:
             cells = [cell.text.strip() for cell in row.cells]
@@ -200,6 +233,17 @@ def _load_docx(filepath: Path) -> list[dict]:
     combined = "\n\n".join(parts)
     if combined.strip():
         return [{"text": combined, "page": None}]
+    """Loads the content of an XLSX file into a list of text representations.
+
+Args:
+     filepath (Path): The path to the XLSX file.
+
+Returns:
+     list[dict]: A list containing a dictionary with the text content of the XLSX file and a page value of None. 
+                  If the file is empty, an empty list is returned.
+
+Raises:
+     Exception: If there is an issue loading the workbook or iterating over its sheets and rows."""
     return []
 
 
@@ -221,6 +265,14 @@ def _load_xlsx(filepath: Path) -> list[dict]:
             if any(cells):
                 rows.append(" | ".join(cells))
         if rows:
+            """Loads a PowerPoint presentation from a file and extracts its content.
+
+ Args:
+     filepath: The path to the PowerPoint presentation file.
+
+ Returns:
+     A list of dictionaries, where each dictionary represents a slide and contains its text content. 
+     The dictionary keys are 'text' (the text on the slide) and 'page' (not used in this implementation, set to None)."""
             text = f"Sheet: {sheet_name}\n" + "\n".join(rows)
             sheets.append({"text": text, "page": None})
 
@@ -241,7 +293,27 @@ def _load_pptx(filepath: Path) -> list[dict]:
     for i, slide in enumerate(prs.slides, 1):
         parts = []
         for shape in slide.shapes:
+            """``` 
+Iterates over all shapes in a slide and extracts text from shapes with a text frame.
+
+ Args:
+     slide: A slide object containing shapes.
+
+ Returns:
+     None. The function modifies no external state, but can be used to 
+     further process the extracted text within its scope.
+```"""
             if shape.has_text_frame:
+                """Extracts text content from a PowerPoint shape and appends it to a list of slide texts.
+
+ Args:
+  shape: A PowerPoint shape object.
+  parts: A list to store text parts.
+  slides: A list to store extracted slide texts.
+  i: The index of the current slide.
+
+ Returns:
+  None, modifies parts and slides lists in-place."""
                 text = shape.text_frame.text.strip()
                 if text:
                     parts.append(text)

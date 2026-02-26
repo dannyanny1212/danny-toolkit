@@ -52,6 +52,18 @@ class CorticalStack:
     _BATCH_INTERVAL = 5.0   # flush elke N seconden
 
     def __init__(self, db_path: Optional[Path] = None):
+        """Initializes a database connection.
+
+ Args:
+   db_path: Optional path to the database file. Defaults to a file named "cortical_stack.db" in the DATA_DIR if not provided.
+
+ Returns:
+   None
+
+ Notes:
+   Configures the database connection with specific pragmas for performance and reliability. 
+   Creates the necessary tables if they do not exist. 
+   Initializes a lock for thread safety and tracks pending writes and last flush time."""
         Config.ensure_dirs()
         self._db_path = db_path or (
             Config.DATA_DIR / "cortical_stack.db"

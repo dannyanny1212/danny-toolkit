@@ -16,6 +16,7 @@ Gebruik:
 import ast
 import logging
 import os
+import re
 from typing import Optional
 
 from groq import AsyncGroq
@@ -36,24 +37,42 @@ try:
 except ImportError:
     HAS_STACK = False
 
+try:
+    from danny_toolkit.brain.model_sync import get_model_registry
+    HAS_REGISTRY = True
+except ImportError:
+    HAS_REGISTRY = False
+
 
 class GhostWriter:
     """
     THE GHOST WRITER (Invention #9)
     -------------------------------
-    Watches your code. If you write a function without a docstring,
-    it writes one for you. Supports dry-run (print only) and
-    write-back (modify source files) modes.
+    Multi-model token generator. Watches your code. If you write a
+    function without a docstring, it writes one for you via the
+    ModelRegistry fallback chain: Groq → Anthropic → NVIDIA NIM → Ollama.
+    Supports dry-run (print only) and write-back (modify source files).
     """
+
+    # Provider volgorde voor token generatie (snelste eerst)
+    PROVIDER_CHAIN = ["groq", "nvidia_nim", "gemini", "ollama"]
 
     def __init__(self, watch_dir: str = None):
         self.watch_dir = watch_dir or str(Config.BASE_DIR / "danny_toolkit")
+        # Primary Groq client (backward-compatible)
         if HAS_KEY_MANAGER:
             km = get_key_manager()
             self.client = km.create_async_client("GhostWriter") or AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
         else:
             self.client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
         self.model = Config.LLM_MODEL
+        # Multi-model registry (lazy init)
+        self._registry = None
+        self._token_stats = {
+            "totaal_tokens": 0,
+            "totaal_calls": 0,
+            "per_provider": {},
+        }
 
     async def haunt(self, dry_run: bool = True, max_functies: int = 10):
         """Scan voor functies zonder docstring en genereer/pas ze toe.
@@ -145,10 +164,38 @@ class GhostWriter:
             logger.debug("GhostWriter _inspect_file fout: %s", e)
             return 0
 
+    def _get_registry(self):
+        """Lazy init ModelRegistry met auto-discover."""
+        if self._registry is None and HAS_REGISTRY:
+            try:
+                self._registry = get_model_registry()
+                self._registry.auto_discover()
+            except Exception as e:
+                logger.debug("GhostWriter registry init fout: %s", e)
+        return self._registry
+
+    def _track_tokens(self, provider: str, tokens: int):
+        """Track token verbruik per provider."""
+        self._token_stats["totaal_tokens"] += tokens
+        self._token_stats["totaal_calls"] += 1
+        stats = self._token_stats["per_provider"]
+        if provider not in stats:
+            stats[provider] = {"tokens": 0, "calls": 0}
+        stats[provider]["tokens"] += tokens
+        stats[provider]["calls"] += 1
+
+    def get_token_stats(self) -> dict:
+        """Return token generatie statistieken."""
+        return dict(self._token_stats)
+
     async def _generate_docstring(
         self, node: ast.AST, full_source: str,
     ) -> Optional[str]:
-        """Genereer een Google-style docstring via Groq."""
+        """Genereer een Google-style docstring via multi-model fallback chain.
+
+        Chain: Groq (primary) → ModelRegistry workers (Groq fallback,
+        Anthropic, NVIDIA NIM, Ollama) als primary faalt.
+        """
         try:
             segment = ast.get_source_segment(full_source, node)
             if not segment:
@@ -159,15 +206,79 @@ class GhostWriter:
                 f"Function Code:\n{segment}\n\n"
                 "Return ONLY the docstring string (no triple quotes, no code)."
             )
+
+            # Poging 1: Primary Groq client (snelste path)
+            result = await self._try_groq_primary(prompt)
+            if result:
+                return result
+
+            # Poging 2: ModelRegistry fallback chain
+            result = await self._try_registry_chain(prompt)
+            if result:
+                return result
+
+            logger.debug("GhostWriter: alle providers gefaald voor %s", node.name)
+            return None
+        except Exception as e:
+            logger.debug("GhostWriter _generate_docstring fout: %s", e)
+            return None
+
+    async def _try_groq_primary(self, prompt: str) -> Optional[str]:
+        """Probeer token generatie via primary Groq client."""
+        try:
+            if not self.client:
+                return None
             chat = await self.client.chat.completions.create(
                 messages=[{"role": "user", "content": prompt}],
                 model=self.model,
                 temperature=0.3,
             )
-            return chat.choices[0].message.content
+            content = chat.choices[0].message.content
+            tokens = getattr(chat.usage, "total_tokens", 0) if chat.usage else 0
+            self._track_tokens("groq_primary", tokens)
+            return content
         except Exception as e:
-            logger.debug("GhostWriter _generate_docstring fout: %s", e)
+            logger.debug("GhostWriter groq primary fout: %s", e)
             return None
+
+    @staticmethod
+    def _strip_think_tags(text: str) -> str:
+        """Verwijder <think>...</think> tags uit reasoning model output (qwen3-32b)."""
+        return re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
+
+    async def _try_registry_chain(self, prompt: str) -> Optional[str]:
+        """Probeer token generatie via ModelRegistry fallback chain."""
+        registry = self._get_registry()
+        if not registry:
+            return None
+
+        for provider in self.PROVIDER_CHAIN:
+            worker = registry.get_by_provider(provider)
+            if worker and worker.is_available():
+                try:
+                    response = await worker.generate(
+                        prompt=prompt,
+                        system="You are a Python documentation expert. Generate concise Google-style docstrings.",
+                    )
+                    if response.content:
+                        content = self._strip_think_tags(response.content)
+                        if not content:
+                            continue
+                        self._track_tokens(
+                            f"{response.provider}/{response.model_id}",
+                            response.tokens_used,
+                        )
+                        logger.debug(
+                            "GhostWriter: tokens via %s/%s (%d tokens, %.0fms)",
+                            response.provider, response.model_id,
+                            response.tokens_used, response.latency_ms,
+                        )
+                        return content
+                except Exception as e:
+                    logger.debug("GhostWriter %s fout: %s", provider, e)
+                    continue
+
+        return None
 
     def _write_back(
         self, filepath: str, source: str,

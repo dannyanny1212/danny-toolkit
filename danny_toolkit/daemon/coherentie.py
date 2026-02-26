@@ -33,6 +33,11 @@ class CoherentieMonitor:
     """Meet CPU/GPU correlatie en detecteert anomalieen."""
 
     def __init__(self):
+        """Initializes the object and checks for the availability of NVML (NVIDIA Management Library) for GPU monitoring. 
+If NVML initialization is successful, sets `_nvml_beschikbaar` to True; otherwise, logs a debug message indicating that GPU monitoring is not available. 
+Parameters: None 
+Returns: None 
+Raises: Exception - if NVML initialization fails, caught and logged for debugging purposes."""
         self._nvml_beschikbaar = False
         try:
             from pynvml import nvmlInit

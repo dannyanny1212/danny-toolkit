@@ -122,6 +122,20 @@ class OmegaGovernor(GovernorFirewallMixin, GovernorStateMixin):
             }
 
     def __init__(self):
+        """Initializes the object, setting up directory paths, circuit breaker state, 
+and tracking variables for learning cycles, token budgets, and daemon references.
+
+### Attributes
+* `_data_dir`: The directory path for storing data files.
+* `_backup_dir`: The directory path for storing backup files.
+* `_api_failures`, `_last_failure_time`, `_consecutive_successes`: 
+  Circuit breaker state variables for tracking API failures and successes.
+* `_provider_breakers`: A dictionary of per-provider circuit breakers.
+* `_learning_cycles_this_hour`, `_hour_start`: 
+  Variables for tracking learning cycles within an hour.
+* `_token_counts`: A dictionary for tracking token budgets by hour.
+* `_daemon`: A reference to the daemon object.
+* `_stack`: A reference to the CorticalStack object, initialized lazily."""
         self._data_dir = (
             Path(__file__).parent.parent.parent / "data" / "apps"
         )

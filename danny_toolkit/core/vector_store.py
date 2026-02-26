@@ -22,6 +22,19 @@ class VectorStore:
     """
 
     def __init__(self, embedding_provider: EmbeddingProvider, db_file: Path = None):
+        """Initializes a new instance of the class.
+
+ Args:
+   embedding_provider (EmbeddingProvider): The provider used for embeddings.
+   db_file (Path, optional): The file path to the vector database. Defaults to None, which uses the value from Config.VECTOR_DB_FILE.
+
+ Returns:
+   None
+
+ Note:
+   If the provided db_file exists, it loads the existing data into the instance. 
+   The data is expected to be in JSON format, supporting both old and new formats. 
+   Statistics such as queries, additions, deletions, and the last query and addition are initialized."""
         self.embedder = embedding_provider
         self.db_file = db_file or Config.VECTOR_DB_FILE
         self.documenten: Dict[str, dict] = {}

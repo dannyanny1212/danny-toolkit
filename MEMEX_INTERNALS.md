@@ -1,59 +1,101 @@
-# MEMEX_INTERNALS.md
+# Danny Toolkit v6.7.0 — MEMEX Internals
 
-# Danny Toolkit v5 – MEMEX Internals
+> RAG Kennissysteem | ShardRouter + ShadowAirlock + ChromaDB
+>
+> **Brain CLI**: `python -m danny_toolkit.brain.brain_cli` → `r` (RAG Query)
 
-Dit document beschrijft de interne werking van MEMEX, het RAG‑systeem van Danny Toolkit v5.
+---
 
 ## 1. Overzicht
 
-MEMEX is het Retrieval-Augmented Generation subsysteem dat documenten verwerkt, embed, opslaat en opvraagt via ChromaDB.
-Het wordt gebruikt door ResearchAgent, RAGAgent en diagnostische workflows.
+MEMEX is het RAG-kennissysteem van Danny Toolkit. Het combineert:
+- **ChromaDB** vector store (3 shards)
+- **Voyage AI** embeddings (MRL 256d)
+- **ShardRouter** fan-out queries
+- **ShadowAirlock** zero-crash staging
+- **TruthAnchor** cross-encoder verificatie
 
-## 2. Directory-structuur
+---
 
-- data/rag/documents/
-  Bevat alle ruwe documenten (PDF, TXT, MD, CODE)
+## 2. Directory Structuur
 
-- data/rag/chromadb/
-  Persistente vectorstore
+```
+data/
+├── rag/
+│   ├── chromadb/          # ChromaDB vector store (3 shards)
+│   │   ├── danny_code/    # Broncode chunks
+│   │   ├── danny_docs/    # Documentatie chunks
+│   │   └── danny_data/    # Data/config chunks
+│   ├── documenten/        # Productie bronbestanden (MD, TXT)
+│   └── embedding_cache.json  # LRU embedding cache
+├── shadow_rag/
+│   └── documenten/        # Staging area (ShadowAirlock)
+├── cortical_stack.db      # Episodisch geheugen (SQLite WAL)
+└── apps/                  # Per-app JSON state
+```
 
-- data/rag/cache/
-  Query‑cache en tijdelijke resultaten
+---
 
-## 3. Ingestieproces
+## 3. Ingest Process
 
-1. Documenten worden ingelezen
-2. Chunking gebeurt op basis van:
-   - paragrafen
-   - code‑structuur
-   - metadata
-3. Embeddings worden berekend met Voyage
-4. Vectoren worden opgeslagen in ChromaDB
-5. Metadata wordt gekoppeld:
-   - pad
-   - type
-   - timestamp
-   - bron
+### Stap 1: Staging (ShadowAirlock)
+- Nieuwe docs → `data/shadow_rag/documenten/`
+- DocumentForge repareert/valideert YAML frontmatter
+- Dry-run ingest test in subprocess
+- SHA256 verificatie bij copy naar productie
+- Quarantaine bij falen (staging bestand blijft)
+
+### Stap 2: Chunking
+- Paragraph method: split op dubbele newlines
+- `CHUNK_SIZE = 350` tokens (Config canonical)
+- Code-aware: respecteert functie/class grenzen
+
+### Stap 3: Embedding
+- Voyage AI `voyage-3-lite` (1024d native)
+- MRL truncatie → 256d + L2 hernormalisatie
+- `VoyageChromaEmbedding.__call__()` voor documents
+- `VoyageChromaEmbedding.embed_query()` voor queries — **fix v6.7.0**: retourneert nu platte `list[float]` (was `list[list[float]]`) voor correcte ChromaDB `query_texts` compatibiliteit
+- Retry met backoff bij rate limits (3 RPM free tier)
+
+### Stap 4: Shard Routing
+ShardRouter bepaalt collectie op basis van extensie:
+- `.py, .js, .ts` → `danny_code`
+- `.md, .txt, .pdf` → `danny_docs`
+- `.json, .yaml, .csv` → `danny_data`
+
+### Stap 5: Opslag
+ChromaDB PersistentClient met Voyage embedding functie.
+
+---
 
 ## 4. Query Pipeline
 
-1. Gebruiker stelt vraag
-2. SwarmEngine routeert naar RAGAgent
-3. Intentie‑analyse
-4. Query naar ChromaDB
-5. Top‑k resultaten ophalen
-6. Context + vraag naar LLM
-7. Antwoord + bronverwijzingen terug
+1. **Query ontvangst** (Brain CLI → `r`, of ShardRouter.zoek())
+2. **Embedding** — Voyage AI met input_type="query"
+3. **Fan-out** — ShardRouter zoekt over geselecteerde shards
+4. **Nearest-neighbor** — ChromaDB cosine distance
+5. **Merge + sort** — Alle resultaten gesorteerd op distance
+6. **TruthAnchor** — Cross-encoder fact verification
+7. **HallucinatieSchild** — Claim-scoring, contradictie-detectie
 
-## 5. Kwaliteitsgaranties
+---
 
-- Geen antwoorden zonder bron
-- Logging van alle queries
-- Deduplicatie van chunks
-- Automatische her‑embedding bij documentupdates
+## 5. Kwaliteitssystemen
 
-## 6. Beperkingen
+| Systeem | Module | Functie |
+|---------|--------|---------|
+| **BlackBox** | brain/black_box.py | Negative RAG: failure memory |
+| **SelfPruning** | core/self_pruning.py | Vector maintenance (entropy/recency) |
+| **CitationMarshall** | brain/citation_marshall.py | Masked mean pooling verificatie |
+| **EmbeddingCache** | core/embeddings.py | LRU cache, 10K entries, dim-aware |
+| **SemanticCache** | core/semantic_cache.py | Vector-based LLM response cache |
 
-- Geen realtime websearch
-- Afhankelijk van documentkwaliteit
-- Embedding‑kwaliteit bepaalt recall
+---
+
+## 6. Herindexering
+
+Na dimensie-wijziging of grote doc updates:
+```bash
+python ingest.py --reset --stats
+python ingest.py --batch --method paragraph --path data/rag/documenten
+```

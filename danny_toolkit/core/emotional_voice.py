@@ -369,6 +369,25 @@ class EmotionalVoice:
             import edge_tts
 
             async def generate():
+                """### Docstring
+
+Generate an audio file using edge-tts.
+
+* Creates a Communicate object with specified text, voice, rate, and pitch.
+* Saves the generated audio to a file.
+
+ Args:
+  * text (str): The text to be converted to speech.
+  * voice (str): The voice to be used for speech synthesis.
+  * rate (float): The speech rate. 
+  * pitch (float): The speech pitch.
+  * audio_path (str): The path to save the generated audio file.
+
+ Returns:
+  * None
+
+ Raises:
+  * Exception: If an error occurs during audio generation or saving."""
                 communicate = edge_tts.Communicate(
                     text, voice,
                     rate=rate,

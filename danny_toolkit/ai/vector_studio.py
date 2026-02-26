@@ -19,6 +19,14 @@ class VectorStudioApp:
     VERSIE = "1.0"
 
     def __init__(self):
+        """`__init__`: Initializes a new instance of the class. 
+Ensures required directories exist, sets up data directory and loads existing project data. 
+Attributes:
+- `data_dir`: The directory where application data is stored.
+- `projects_file`: The file where project data is persisted.
+- `data`: The loaded project data.
+- `huidig_project`: The currently active project (initially None).
+- `vectors`: A list of vectors (initially empty)."""
         Config.ensure_dirs()
         self.data_dir = Config.APPS_DATA_DIR / "vector_studio"
         self.data_dir.mkdir(exist_ok=True)
@@ -309,6 +317,11 @@ class VectorStudioApp:
 
         # Simpele isometrische projectie
         print("\n  3D VECTOR SPACE (Isometrisch)")
+        """### Docstring
+
+Prints a header indicating a 3D vector space in isometric projection, 
+followed by a horizontal line separator. 
+No parameters or return values are used."""
         print("  " + "=" * 44)
 
         # Normaliseer

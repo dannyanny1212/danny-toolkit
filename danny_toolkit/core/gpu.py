@@ -9,4 +9,11 @@ import torch
 
 
 def get_device() -> torch.device:
+    """Returns the device to be used for PyTorch operations, prioritizing a CUDA device if available.
+
+ Args:
+  None
+
+ Returns:
+  torch.device: The device to be used for PyTorch operations, either 'cuda' or 'cpu'."""
     return torch.device("cuda" if torch.cuda.is_available() else "cpu")

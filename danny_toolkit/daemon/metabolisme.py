@@ -42,6 +42,17 @@ class NutrientLevels:
     fiber: float = 50.0          # Balans/consistentie (0-100)
 
     def to_dict(self) -> Dict:
+        """Returns a dictionary representation of the object's nutritional information.
+
+The dictionary contains the following keys:
+- protein: The protein value, rounded to one decimal place.
+- carbs: The carbohydrate value, rounded to one decimal place.
+- vitamins: The vitamin value, rounded to one decimal place.
+- water: The water value, rounded to one decimal place.
+- fiber: The fiber value, rounded to one decimal place.
+
+Returns:
+    Dict: A dictionary containing the object's nutritional information."""
         return {
             "protein": round(self.protein, 1),
             "carbs": round(self.carbs, 1),
@@ -83,6 +94,21 @@ class Metabolisme:
         "carbs": 4.0,        # Energie verbruikt snel
         "vitamins": 1.5,     # Gezondheid stabiel
         "water": 3.0,        # Rust nodig regelmatig
+        """### Docstring
+
+Initializes a metabolic process simulator.
+
+#### Parameters
+* `sensorium`: The sensorium instance to use for simulation. Defaults to a new Sensorium instance if not provided.
+
+#### Attributes
+* `sensorium`: The sensorium instance used for simulation.
+* `nutrients`: The current nutrient levels.
+* `state`: The current metabolic state.
+* `is_running`: A flag indicating whether the simulation is running.
+* `stats`: A dictionary containing simulation statistics, including total consumed nutrients.
+* `_metabolism_thread`: The thread running the metabolism simulation.
+* `_last_burn_time`: The timestamp of the last nutrient burn event."""
         "fiber": 1.0,        # Consistentie bouwt op
     }
 
@@ -251,6 +277,17 @@ class Metabolisme:
         if self.nutrients.protein < self.WARNING_LOW:
             recommendations.append("Upload wat documenten naar RAG - ik heb kennis nodig!")
 
+        """### Generates Recommendations Based on Nutrient Levels
+
+Generates a list of recommendations based on the current nutrient levels. 
+Recommendations are appended to the list when a specific nutrient level 
+falls below a warning threshold or exceeds a high threshold.
+
+* Low carbohydrate levels: Increase productivity
+* Low vitamin levels: Engage in coding or physical activity
+* Low water levels: Take a break using the Pomodoro technique
+* Low fiber levels: Log mood for consistency
+* High total nutrient levels: Reduce input for processing time"""
         if self.nutrients.carbs < self.WARNING_LOW:
             recommendations.append("Werk aan je taken - ik heb energie nodig!")
 

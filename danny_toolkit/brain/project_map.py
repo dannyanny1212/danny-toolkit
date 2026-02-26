@@ -43,6 +43,12 @@ class ProjectMap:
     """Visuele RAG-gestuurde projectkaart."""
 
     def __init__(self):
+        """Initializes a new instance, setting default values for internal state variables.
+
+ Sets the following instance variables to None:
+- _collection: The collection object.
+- _query_collection: The query collection object.
+- _bronnen: The bronnen object."""
         self._collection = None
         self._query_collection = None
         self._bronnen = None

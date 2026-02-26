@@ -55,6 +55,15 @@ class Tribunal:
     Auditor (8B) aggressively critiques it.
     """
     def __init__(self):
+        """Initializes the instance with a Groq API client and model configurations.
+
+If the key manager is available, creates an asynchronous Groq client through the key manager; 
+otherwise, creates one using the GROQ_API_KEY environment variable.
+
+Sets the worker and auditor models based on the Config.
+
+Optionally initializes a TruthAnchor instance if HAS_TRUTH_ANCHOR is True. 
+If initialization fails, logs the error and continues without a TruthAnchor."""
         if HAS_KEY_MANAGER:
             km = get_key_manager()
             self.client = km.create_async_client("Tribunal") or AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))

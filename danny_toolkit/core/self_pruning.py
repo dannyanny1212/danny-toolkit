@@ -49,6 +49,13 @@ class AccessTracker:
     """
 
     def __init__(self, db_path: Optional[str] = None):
+        """Initializes the object with a database path.
+
+ Args:
+  db_path: Optional path to the database file. If not provided, a default path will be used.
+
+ Returns:
+  None"""
         self._db_path = db_path or str(Config.DATA_DIR / "self_pruning.db")
         self._lock = threading.Lock()
         self._init_db()

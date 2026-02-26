@@ -10,6 +10,7 @@
 - **Diamond Polish Wet #1**: All imports absolute (enforced via import_analyzer.py)
 - **B-95 Reflection**: `PrometheusBrain.efficiency_reflection()` computes quality score from CorticalStack
 - **Paranoïde Zero-Trust**: Host-OS, externe domeinen, en hardware als potentieel vijandig beschouwd. Alles vereist cryptografische verificatie.
+- **Anti-Hallucinatie Wet**: Als je het antwoord niet weet — niet gokken. Laat het weten. Antwoorden genereren is de specialiteit van AI, maar eerlijkheid over onzekerheid is belangrijker dan een verzonnen antwoord.
 
 ### Tribunal Assessment: Ready for First External Swarm Mission?
 **VERDICT: CONDITIONALLY READY.** Het reflexsysteem is nu non-blocking en de feedback loop is operationeel. Alle Fase B items zijn voltooid. Fase C.2 monoliet splits zijn afgerond.

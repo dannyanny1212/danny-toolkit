@@ -39,6 +39,11 @@ class SelfRepairProtocol:
     }
 
     def __init__(self):
+        """Initializes a new instance, setting up default attributes. 
+Sets the governor, oracle, and repair log to their initial states: 
+* _governor: None
+* _oracle: None
+* _reparatie_log: An empty list to store repair logs."""
         self._governor = None
         self._oracle = None
         self._reparatie_log = []

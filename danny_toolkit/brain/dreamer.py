@@ -56,6 +56,12 @@ class Dreamer:
     4. Pre-Compute: Anticipate tomorrow's needs
     """
     def __init__(self):
+        """Initializes the instance with a Groq API client and model configuration.
+
+If the key manager is available, creates an asynchronous Groq client using the key manager; 
+otherwise, falls back to using the GROQ_API_KEY environment variable.
+
+Sets the model attribute to the LLM model specified in the configuration."""
         if HAS_KEY_MANAGER:
             km = get_key_manager()
             self.client = km.create_async_client("Dreamer") or AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))

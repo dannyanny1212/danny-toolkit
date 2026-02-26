@@ -131,6 +131,23 @@ class ShadowKeyVault:
     NAME = f"{SHADOW_PREFIX}ShadowKeyVault"
 
     def __init__(self):
+        """### Docstring
+
+Initializes a new instance, setting up internal state and tracking variables.
+
+*   Locks for synchronization: `_lock`
+*   Shadow budget tracking:
+    *   `_shadow_requests`: Total requests
+    *   `_shadow_tokens_used`: Total tokens used
+    *   `_shadow_rpm`: Request timestamps (last 60 seconds)
+    *   `_shadow_429s`: Total 429 responses
+    *   `_shadow_cooldown_tot`: Total cooldown time
+*   Token dividend pool:
+    *   `_dividend_pool`: Accumulated dividends
+    *   `_total_dividends_paid`: Total dividends paid
+*   Key management:
+    *   `_key_prefixes`: Set of real key prefixes (first 8 characters) for scrubbing
+*   Client: `_client` (initialized to `None`)"""
         self._lock = threading.Lock()
         # Shadow budget tracking (independent from real KeyManager)
         self._shadow_requests = 0

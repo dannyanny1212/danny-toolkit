@@ -114,6 +114,24 @@ class TheCortex:
     """
 
     def __init__(self):
+        """Initializes the object, setting up clients, models, and connections to various components.
+
+### Parameters
+None
+
+### Attributes
+* `client`: The asynchronous Groq client, or a fallback client if the key manager is unavailable.
+* `model`: The large language model (LLM) used by the object, retrieved from the configuration.
+* `_graph`: An in-memory directed graph represented using NetworkX, if available.
+* `_stack`: A connection to the CorticalStack, if available.
+* `_bus`: A connection to the NeuralBus, if available.
+* `_mirror`: A connection to TheMirror, used for personalizing RAG results, if available.
+
+### Notes
+The initialization process involves:
+* Creating an asynchronous Groq client using the key manager or a fallback API key.
+* Setting up connections to various components, including the CorticalStack, NeuralBus, and TheMirror.
+* Creating SQLite tables and building the graph if the CorticalStack connection is available."""
         if HAS_KEY_MANAGER:
             km = get_key_manager()
             self.client = km.create_async_client("TheCortex") or AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))

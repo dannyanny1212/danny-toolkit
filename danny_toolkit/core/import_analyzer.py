@@ -161,6 +161,16 @@ def detect_circular_risks(results: List[dict]) -> Dict[str, Set[str]]:
     rec_stack = set()
 
     def dfs(node: str, path: list):
+        """**Performs a depth-first search on a graph to detect cycles.**
+
+*   Args:
+    *   node: The current node being visited.
+    *   path: The current path of nodes from the starting node to the current node.
+*   Returns:
+    *   None. Cycles are stored in the `cycles` dictionary.
+*   Notes:
+    *   Uses a recursive stack to keep track of nodes in the current recursion stack.
+    *   Cycles are stored as a set of nodes in the `cycles` dictionary with a string key representing the cycle."""
         visited.add(node)
         rec_stack.add(node)
         path.append(node)

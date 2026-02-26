@@ -338,6 +338,16 @@ class ToolkitLogger:
     _initialized = False
 
     def __new__(cls):
+        """Implement the singleton design pattern by ensuring only one instance of the class exists.
+
+ Args:
+  None
+
+ Returns:
+  The single instance of the class.
+
+ Notes:
+  This method overrides the __new__ method to control instance creation."""
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance

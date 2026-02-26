@@ -47,6 +47,12 @@ class HuntStatus(Enum):
     ERROR = ("error", "Geschrokken!", "[!?!]")
 
     def __init__(self, key: str, beschrijving: str, emoji: str):
+        """Initializes a new instance.
+
+ Args:
+   key (str): Unique identifier for the instance.
+   beschrijving (str): Description of the instance.
+   emoji (str): Emoji associated with the instance."""
         self.key = key
         self.beschrijving = beschrijving
         self.emoji = emoji

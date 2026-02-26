@@ -295,8 +295,26 @@ class TribunalVerdict:
 
     def __init__(self, final_answer: str, accepted: bool, rounds: int,
                  transcript: List[Dict]):
+        """Initializes a result object.
+
+ Args:
+  final_answer (str): The final answer provided.
+  accepted (bool): Whether the final answer was accepted.
+  rounds (int): The number of rounds taken to provide the final answer.
+  transcript (List[Dict]): A list of dictionaries representing the conversation transcript."""
         self.final_answer = final_answer
         self.accepted = accepted
+        """### Docstring
+
+Initialize the object's properties.
+
+#### Attributes
+* `accepted`: The accepted value.
+* `rounds`: The number of rounds.
+* `transcript`: The transcript data.
+
+#### Usage
+Assigns the provided values to the object's properties."""
         self.rounds = rounds
         self.transcript = transcript
 

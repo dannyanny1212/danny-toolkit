@@ -115,10 +115,26 @@ class SmartKeyManager:
     _lock = threading.Lock()
 
     def __new__(cls):
+        """**Ensures a singleton instance of the class, providing global access to a single object.** 
+**The instance is lazily initialized on first access. 
+ Subsequent calls return the same instance.**"""
         with cls._lock:
             if cls._instance is None:
                 cls._instance = super().__new__(cls)
                 cls._instance._initialized = False
+            """### Singleton Initialization and Metrics Setup
+
+Returns the singleton instance of the class.
+
+The `__init__` method initializes the instance with the following properties:
+
+* A lock for thread-safe access to metrics
+* A list of available keys, discovered through `_discover_keys()`
+* A primary key, set to the first available key or an empty string if none are found
+* A dictionary to store per-agent metrics
+* Global rate limit state, including a 429 response count and a total cooldown time
+
+Note that this is a singleton class, and subsequent calls to `__init__` will not re-initialize the instance."""
             return cls._instance
 
     def __init__(self):

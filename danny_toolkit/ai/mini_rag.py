@@ -45,6 +45,23 @@ class MiniRAG:
     }
 
     def __init__(self, documenten_map: Path = None):
+        """Initializes a new instance of the class.
+
+ Args:
+   documenten_map (Path): The directory containing documents. Defaults to Config.DOCUMENTEN_DIR if not provided.
+
+ Attributes:
+   documenten_map (Path): The directory containing documents.
+   data_file (Path): The file storing rag data.
+   documenten (list): A list of documents.
+   index (dict): An index of documents.
+   tfidf_embedder: The TF-IDF embedder.
+   processor (DocumentProcessor): A processor for documents.
+   data: The loaded data.
+   chunk_strategie (str): The strategy used for chunking. Defaults to 'sliding'.
+   chunk_grootte (int): The size of chunks. Defaults to 150.
+   ai_client: The AI client.
+   ai_provider: The AI provider."""
         Config.ensure_dirs()
         self.documenten_map = documenten_map or Config.DOCUMENTEN_DIR
         self.data_file = Config.DATA_DIR / "rag_data.json"

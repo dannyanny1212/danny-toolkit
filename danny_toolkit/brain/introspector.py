@@ -175,6 +175,18 @@ class SystemIntrospector:
     ]
 
     def __init__(self):
+        """Initializes the object, setting up its internal state.
+
+ Configures the cortical stack, bus, and vector store for semantic self-memory.
+ 
+ Attributes:
+   _stack: The cortical stack, if available.
+   _bus: The bus, if available.
+   _store: The vector store for semantic self-memory, if vector support is enabled.
+   _self_knowledge_path: The file path to self-knowledge data.
+
+ Raises:
+   Exception: If an error occurs during VectorStore initialization, it is logged and the process continues."""
         self._stack = get_cortical_stack() if HAS_STACK else None
         self._bus = get_bus() if HAS_BUS else None
         self._store = None

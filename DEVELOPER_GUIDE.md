@@ -1,70 +1,125 @@
-# DEVELOPER_GUIDE.md
+# Danny Toolkit v6.7.0 — Developer Guide
 
-**Danny Toolkit – Developer Guide**
-
-Deze gids helpt ontwikkelaars (jij of toekomstige AI-agents) om consistent en veilig aan de toolkit te werken.
-
----
-
-# 1. Basisprincipes
-
-- Alles gebeurt lokaal
-- Geen secrets in de repo
-- Golden snapshot blijft onaangeroerd
-- Elke wijziging krijgt een eigen branch
-- Documentatie blijft synchroon met code
+> Omega Sovereign Core | Diamond Polish Protocol
+>
+> **Centraal aansturingspunt**: `python -m danny_toolkit.brain.brain_cli`
 
 ---
 
-# 2. Workflow voor nieuwe functies
+## 1. De Onbreekbare Wetten (Diamond Polish)
 
-1. Maak een nieuwe branch
-2. Voeg code toe in kleine stappen
-3. Commit regelmatig
-4. Test lokaal (CLI, FastAPI, UI, Telegram)
-5. Laat Claude documentatie bijwerken
-6. Commit documentatie
-7. Merge naar `main`
-8. Tag release
+### Wet 1: Absolute Imports (Zero Tolerance)
+Elke import MOET absoluut zijn vanaf de root:
+```python
+# GOED
+from danny_toolkit.core.config import Config
+from danny_toolkit.brain.governor import OmegaGovernor
 
----
+# FOUT — nooit relative imports
+from ..core import Config
+from .governor import OmegaGovernor
+```
 
-# 3. Documentatie-regels
+### Wet 2: God Mode Error Handling
+Elke error wordt gelogd naar CorticalStack. Geen bare `except: pass`.
+```python
+# GOED
+except Exception as e:
+    logger.debug("Context: %s", e)
 
-- Elke functie moet in de juiste .md terechtkomen
-- Gebruik de automatische update-prompt
-- Houd subsystemen consistent
-- Update changelog bij elke release
+# FOUT
+except:
+    pass
+```
 
----
-
-# 4. Veiligheidsregels
-
-- `.env` blijft lokaal
-- Geen port-forwarding
-- Geen onbekende scripts
-- Geen remote execution agents
-- `.gitignore` blijft correct
-
----
-
-# 5. Versiebeheer
-
-Gebruik semver:
-
-| Type   | Voorbeeld | Gebruik wanneer…      |
-|--------|-----------|-----------------------|
-| PATCH  | v5.0.1    | kleine fixes          |
-| MINOR  | v5.1.0    | nieuwe features       |
-| MAJOR  | v6.0.0    | breaking changes      |
+### Wet 3: Windows UTF-8
+Elk nieuw entry point herconfigureert stdout:
+```python
+import io, os, sys
+if os.name == "nt":
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+```
 
 ---
 
-# 6. Rollback
+## 2. Development Workflow
 
-Altijd mogelijk:
+### Branch Strategie
+- `fix/` — bugfixes
+- `feature/` — nieuwe functionaliteit
+- `upgrade/` — systeem upgrades
+- `release/` — release branches
+
+### Test Omgeving
+Verplichte environment variabelen:
+```bash
+CUDA_VISIBLE_DEVICES=-1      # Geen GPU (voorkomt segfaults)
+DANNY_TEST_MODE=1             # Skip ChromaDB PersistentClient
+ANONYMIZED_TELEMETRY=False    # Geen telemetrie
+```
+
+### Python Executable
+Altijd venv311 gebruiken:
+```bash
+C:/Users/danny/danny-toolkit/venv311/Scripts/python.exe
+```
+Nooit bare `python`.
+
+---
+
+## 3. Code Kwaliteit
+
+- Geen placeholders (`pass`, `TODO`) — schrijf complete code
+- Inputs ALTIJD sanitizen (voorkom prompt injection, path traversal)
+- Type hints en docstrings voor statische analyse
+- `try/except ImportError` fallbacks (project conventie)
+- Singleton factories: double-checked locking met `threading.Lock`
+
+---
+
+## 4. Brain CLI Verificatie
+
+Na elke wijziging: draai Brain CLI Architectuur Scan:
+```bash
+python -m danny_toolkit.brain.brain_cli
+# Kies 'a' (Architectuur Scan)
+```
+
+Dit verifieert alle 5 lagen + alle .md bestanden automatisch.
+
+---
+
+## 5. RAG Gate Protocol
+
+Alle schrijfacties in patchday doorlopen automatisch de RAG Gate (3-tier pre-execution validatie).
+
+### `gate` subcommand
+Standalone RAG Gate validatie voor willekeurige acties:
+```bash
+python patchday.py gate "beschrijving van de actie"
+```
+Dit voert de volledige 3-tier check uit (Static Rules, RAG Query, Governor) zonder een daadwerkelijke schrijfactie.
+
+---
+
+## 6. PatchDay Lifecycle
 
 ```bash
-git checkout main
-git reset --hard v5.0.0
+python patchday.py status    # Versie, branch, sync check
+python patchday.py verify    # Pre-flight verificatie
+python patchday.py test      # Volledige test suite
+python patchday.py validate  # RAG pipeline validatie (7 checks)
+python patchday.py bump patch|minor|major  # Versie ophogen (15 locaties)
+python patchday.py release   # Volledig release workflow
+python patchday.py gate "actie"  # RAG Gate validatie
 ```
+
+---
+
+## 7. Sovereign Gate
+
+De Sovereign Gate (`sovereign_gate.py`) is ONAANRAAKBAAR:
+- `DANNY_TEST_MODE` mag NOOIT de gate bypassen
+- Gate heeft geen test modus, by design
+- Tests die `fastapi_server` importeren moeten `except SystemExit` vangen

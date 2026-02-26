@@ -59,6 +59,14 @@ try:
 except ImportError:
     _VENV_PYTHON = sys.executable
     def _sandbox_env():
+        """Returns a copy of the current environment variables with modifications for a sandboxed environment.
+ 
+Modifications include:
+- Disabling CUDA by setting CUDA_VISIBLE_DEVICES to -1
+- Disabling anonymized telemetry by setting ANONYMIZED_TELEMETRY to False
+- Setting the Python I/O encoding to utf-8. 
+Returns:
+    dict: The modified environment variables."""
         env = os.environ.copy()
         env.update({"CUDA_VISIBLE_DEVICES": "-1",
                      "ANONYMIZED_TELEMETRY": "False", "PYTHONIOENCODING": "utf-8"})
@@ -97,6 +105,17 @@ class Artificer:
     If a tool is missing, it is forged, verified, and cataloged.
     """
     def __init__(self):
+        """Initializes the instance with default directories and services.
+
+ Configures the following instance variables:
+  * `skills_dir`: The directory containing skill definitions for forge.
+  * `registry_path`: The path to the registry JSON file for skills.
+  * `workspace_dir`: The directory for workspace data.
+  * `client`: An asynchronous Groq client instance, optionally managed by a key manager.
+  * `model`: The large language model to use, as specified in the configuration.
+  * `_bus`: The event bus instance, if available.
+
+ Calls `_ensure_setup` to perform any necessary initialization."""
         self.skills_dir = Config.BASE_DIR / "danny_toolkit" / "skills" / "forge"
         self.registry_path = self.skills_dir / "registry.json"
         self.workspace_dir = Config.BASE_DIR / "danny_toolkit" / "workspace"
@@ -310,6 +329,17 @@ class Artificer:
 
     @staticmethod
     def _sanitize_task_input(task: str) -> str:
+        """### Docstring
+
+Sanitize user task input to prevent prompt injection.
+
+This function removes potential prompt override attempts and limits the input length.
+
+* Removes triple quotes and newline characters
+* Limits the input length to 500 characters
+* Strips leading and trailing whitespace
+
+Returns the sanitized task input string."""
         """Sanitize user task input voor veilige prompt-injectie.
 
         Verwijdert prompt-escape pogingen en limiteert lengte.

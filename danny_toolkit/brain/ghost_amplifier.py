@@ -112,6 +112,19 @@ class GhostAmplifier:
     }
 
     def __init__(self):
+        """Initializes the instance with a Groq API client and model configuration.
+
+ Args:
+  None
+
+ Returns:
+  None
+
+ Notes:
+  If the key manager is available, creates an asynchronous Groq client using the key manager; 
+  otherwise, falls back to using the GROQ_API_KEY environment variable. 
+  Initializes the model and instance statistics, including call count, token counts, 
+  and strategy usage."""
         if HAS_KEY_MANAGER:
             km = get_key_manager()
             self.client = (

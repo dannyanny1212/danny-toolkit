@@ -31,6 +31,8 @@ class VectorDatabase:
     """Simpele vector database voor de nieuws agent."""
 
     def __init__(self):
+        """Initializes a new instance, setting up an empty list to store documents. 
+The list is stored in the `documenten` attribute."""
         self.documenten = []
 
     def voeg_toe(self, bron: str, tekst: str) -> int:

@@ -381,6 +381,8 @@ class SpacedRepetition:
     """SuperMemo-2 gebaseerd spaced repetition systeem."""
 
     def __init__(self):
+        """Initializes the object, setting up an empty dictionary to store reviews. 
+The reviews are stored as key-value pairs in the `self.reviews` dictionary."""
         self.reviews = {}  # doc_id -> review data
 
     def add_item(self, doc_id: str, content: str):
@@ -1333,9 +1335,19 @@ class LegendaryCompanionApp:
     def __init__(self):
         self._companion = None
 
+    """`Gets the companion associated with this object. 
+
+Returns:
+    The companion object, or None if not set.
+
+Note:
+    The companion object is lazily loaded and may be None if not explicitly set.`"""
     @property
     def companion(self):
+        """Gets the companion object, initializing it if necessary. 
+Returns: The companion object associated with the current instance."""
         if self._companion is None:
+            """Initializes the companion if it hasn't been set yet, assigning it to LegendaryCompanion."""
             self._companion = LegendaryCompanion()
         return self._companion
 
@@ -1344,6 +1356,13 @@ class LegendaryCompanionApp:
 
     # Delegate methods voor Central Brain
     def ask(self, question: str) -> str:
+        """Asks a question to the companion and returns the response.
+
+ Args:
+     question (str): The question to be asked.
+
+ Returns:
+     str: The companion's response to the question."""
         return self.companion.ask(question)
 
     def feed(self, text: str, doc_id: str = None) -> dict:
@@ -1459,6 +1478,9 @@ class LegendaryCompanionApp:
 
 
 def main():
+    """**Main entry point for the Legendary Companion application.
+
+Instantiates the LegendaryCompanionApp and executes its run method to start the application.**"""
     app = LegendaryCompanionApp()
     app.run()
 

@@ -140,6 +140,24 @@ def met_retry(func: Callable, retry_config: RetryConfig = None,
     excepties = retry_excepties or (Exception,)
 
     def wrapper(*args, **kwargs):
+        """```python
+"Retry a function with exponential backoff in case of specified exceptions.
+
+ Args:
+     *args: Variable length argument list to be passed to the function.
+     **kwargs: Arbitrary keyword arguments to be passed to the function.
+
+ Returns:
+     The result of the function.
+
+ Raises:
+     Exception: The last exception that occurred if all retries fail.
+
+ Notes:
+     The number of retries, exception types and backoff strategy are configured 
+     through the 'config' object, which should have 'max_pogingen', 
+     'bereken_wachttijd' and 'excepties' attributes."
+```"""
         laatste_exceptie = None
 
         for poging in range(config.max_pogingen):
@@ -444,6 +462,9 @@ class Generator:
             )
         }
 
+    """Resets the statistics. 
+Reinitializes the statistics dictionary with default values. 
+Currently resets the 'api_calls' counter to 0."""
     def reset_statistieken(self):
         """Reset statistieken."""
         self._statistieken = {

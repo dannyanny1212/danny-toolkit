@@ -1,6 +1,11 @@
-site_name: Danny Toolkit
+site_name: Danny Toolkit v6.6.0 — Golden Master
+site_description: "Omega Sovereign Core — 176 modules, 28/28 test suites"
 theme:
   name: material
+  palette:
+    scheme: slate
+    primary: deep purple
+    accent: amber
 nav:
   - Home: index.md
   - GPU Acceleratie: gpu.md

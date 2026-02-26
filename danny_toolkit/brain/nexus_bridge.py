@@ -386,6 +386,14 @@ class NexusOracleMode:
     """
 
     def __init__(self, bridge: NexusBridge):
+        """Initializes a new instance with the provided NexusBridge.
+
+ Args:
+     bridge (NexusBridge): The NexusBridge instance to associate with this object.
+
+ Attributes:
+     bridge (NexusBridge): The NexusBridge instance.
+     active (bool): A flag indicating whether the object is active (initially False)."""
         self.bridge = bridge
         self.active = False
 
