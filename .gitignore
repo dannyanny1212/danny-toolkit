@@ -215,3 +215,6 @@ launch_deck.py
 requirements_deck.txt
 test_sections.py
 test_swarm_stress.py
+
+# Generated API schema (runtime export from FastAPI)
+api.json

@@ -44,6 +44,16 @@ try:
 except ImportError:
     HAS_PSUTIL = False
 
+# --- GPU monitoring via pynvml ---
+try:
+    import pynvml
+    pynvml.nvmlInit()
+    _GPU_HANDLE = pynvml.nvmlDeviceGetHandleByIndex(0)
+    HAS_GPU = True
+except Exception:
+    _GPU_HANDLE = None
+    HAS_GPU = False
+
 # --- Project imports (graceful degradation) ---
 try:
     from danny_toolkit.core.config import Config
@@ -70,6 +80,24 @@ except Exception:
     HAS_KEYS = False
 
 try:
+    from danny_toolkit.core.semantic_cache import get_semantic_cache
+    HAS_SCACHE = True
+except Exception:
+    HAS_SCACHE = False
+
+try:
+    from swarm_engine import SwarmEngine as _SwarmEngine
+    HAS_SWARM = True
+except Exception:
+    HAS_SWARM = False
+
+try:
+    from danny_toolkit.core.vector_store import VectorStore
+    HAS_VSTORE = True
+except Exception:
+    HAS_VSTORE = False
+
+try:
     from danny_toolkit.brain import __version__ as BRAIN_VERSION
 except Exception:
     BRAIN_VERSION = "?.?.?"
@@ -91,7 +119,6 @@ OMEGA_LOGO = r"""[bold bright_cyan] ██████╗ ███╗   ██�
  ╚═════╝ ╚═╝     ╚═╝╚══════╝ ╚═════╝ ╚═╝  ╚═╝[/]"""
 
 # Agent catalog: (name, role, style, status_type)
-# status_type: "ready", "guardian", "verifier", "sleeper", "watcher"
 AGENT_CATALOG = [
     ("CentralBrain",      "Orchestrator",   "bold green",   "ready"),
     ("PrometheusBrain",   "17-Pillar",      "bold green",   "ready"),
@@ -133,7 +160,6 @@ FEATURE_LIST = [
     ("SemanticCache",     "vector 256d"),
 ]
 
-# Status type -> (text, style) mapping
 STATUS_MAP = {
     "ready":    ("READY",    "bold green"),
     "guardian":  ("ARMED",    "bold yellow"),
@@ -146,18 +172,15 @@ STATUS_MAP = {
 
 
 # ------------------------------------------------------------------ #
-# Cached data store — refresh expensive ops every N seconds           #
+# Cached data store                                                    #
 # ------------------------------------------------------------------ #
 
 class DataCache:
-    """Cache expensive filesystem/API operations."""
-
     def __init__(self):
         self._cache = {}
         self._timestamps = {}
 
     def get(self, key: str, func, ttl: float = 10.0):
-        """Return cached value or compute via func if stale."""
         now = time.time()
         if key in self._cache and (now - self._timestamps.get(key, 0)) < ttl:
             return self._cache[key]
@@ -174,7 +197,7 @@ _cache = DataCache()
 
 
 # ------------------------------------------------------------------ #
-# Data collection helpers                                             #
+# Data collection helpers                                              #
 # ------------------------------------------------------------------ #
 
 def _uptime() -> str:
@@ -231,7 +254,6 @@ def _count_skills() -> int:
 
 
 def _get_ecosystem_counts() -> dict:
-    """Get all module counts (cached 30s)."""
     return _cache.get("ecosystem", lambda: {
         "brain":    _count_modules("brain"),
         "core":     _count_modules("core"),
@@ -251,6 +273,28 @@ def _get_cpu_ram() -> tuple:
     cpu = psutil.cpu_percent(interval=0)
     mem = psutil.virtual_memory()
     return (cpu, mem.used / (1024**3), mem.total / (1024**3))
+
+
+def _get_gpu_info() -> dict:
+    """Get GPU utilization and VRAM via pynvml."""
+    if not HAS_GPU:
+        return {}
+    try:
+        info = pynvml.nvmlDeviceGetMemoryInfo(_GPU_HANDLE)
+        util = pynvml.nvmlDeviceGetUtilizationRates(_GPU_HANDLE)
+        name = pynvml.nvmlDeviceGetName(_GPU_HANDLE)
+        if isinstance(name, bytes):
+            name = name.decode("utf-8", errors="replace")
+        # Shorten name
+        name = name.replace("NVIDIA GeForce ", "")
+        return {
+            "name": name,
+            "gpu_util": util.gpu,
+            "vram_used_gb": info.used / (1024**3),
+            "vram_total_gb": info.total / (1024**3),
+        }
+    except Exception:
+        return {}
 
 
 def _make_bar(value: float, max_val: float, width: int = 20, color: str = "green") -> Text:
@@ -273,10 +317,7 @@ def _make_bar(value: float, max_val: float, width: int = 20, color: str = "green
 
 
 def _get_provider_status() -> list:
-    """Returns list of (name, filled, max_blocks, style)."""
     providers = []
-
-    # Groq keys
     groq_count = 0
     key_names = ["", "USER", "VERIFY", "RESEARCH", "WALKER", "FORGE", "OVERNIGHT", "KNOWLEDGE"]
     if os.environ.get("GROQ_API_KEY") or os.environ.get("GROQ_API_KEY_USER"):
@@ -291,8 +332,6 @@ def _get_provider_status() -> list:
         f"Groq ({groq_count}k)", groq_count, 10,
         "bold green" if groq_count > 0 else "dim red",
     ))
-
-    # Other providers
     checks = [
         ("Gemini",    ["GEMINI_API_KEY", "GOOGLE_API_KEY"]),
         ("NVIDIA NIM",["NVIDIA_NIM_API_KEY"]),
@@ -301,11 +340,7 @@ def _get_provider_status() -> list:
     ]
     for pname, env_keys in checks:
         has = any(os.environ.get(k) for k in env_keys)
-        providers.append((
-            pname, 5 if has else 0, 5,
-            "bold green" if has else "dim red",
-        ))
-
+        providers.append((pname, 5 if has else 0, 5, "bold green" if has else "dim red"))
     providers.append(("Ollama", 3, 5, "bold blue"))
     return providers
 
@@ -380,12 +415,52 @@ def _get_db_size(filename: str) -> str:
     return f"{size} B"
 
 
+def _get_semantic_cache_stats() -> dict:
+    if not HAS_SCACHE:
+        return {}
+    return _cache.get("scache", lambda: get_semantic_cache().stats(), ttl=5.0) or {}
+
+
+def _get_vector_store_stats() -> dict:
+    if not HAS_VSTORE:
+        return {}
+    def _fetch():
+        vs = VectorStore()
+        return vs.statistieken()
+    return _cache.get("vstore", _fetch, ttl=10.0) or {}
+
+
+def _get_swarm_stats() -> dict:
+    if not HAS_SWARM:
+        return {}
+    def _fetch():
+        se = _SwarmEngine()
+        return se.get_stats()
+    return _cache.get("swarm", _fetch, ttl=5.0) or {}
+
+
+def _get_api_status() -> str:
+    """Check if FastAPI server is running on :8000."""
+    import urllib.request
+    def _check():
+        try:
+            req = urllib.request.Request("http://localhost:8000/docs", method="HEAD")
+            urllib.request.urlopen(req, timeout=1)
+            return "ONLINE"
+        except Exception:
+            return "OFFLINE"
+    return _cache.get("api_status", _check, ttl=5.0) or "OFFLINE"
+
+
 def _get_git_log(count: int = 5) -> list:
     import subprocess
     def _fetch():
+        env = os.environ.copy()
+        env["LC_ALL"] = "C.UTF-8"
         result = subprocess.run(
-            ["git", "log", "--oneline", f"-{count}", "--no-color"],
-            capture_output=True, cwd=str(BASE_DIR), timeout=3,
+            ["git", "-c", "core.quotepath=false", "log", "--oneline",
+             f"-{count}", "--no-color"],
+            capture_output=True, cwd=str(BASE_DIR), timeout=3, env=env,
         )
         if result.returncode == 0:
             return result.stdout.decode("utf-8", errors="replace").strip().split("\n")
@@ -399,6 +474,7 @@ def _get_git_log(count: int = 5) -> list:
 
 def build_header() -> Panel:
     cpu, ram_used, ram_total = _get_cpu_ram()
+    gpu = _get_gpu_info()
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     eco = _get_ecosystem_counts()
     total = sum(eco.values())
@@ -413,16 +489,27 @@ def build_header() -> Panel:
     left.append(f"  |  {now}\n", style="dim")
     left.append(f"  Uptime: {_uptime()}", style="dim cyan")
 
-    # Right: system bars
+    # Right: system bars (CPU, RAM, GPU, DSK)
     right = Text()
     right.append("CPU ", style="bold white")
     right.append_text(_make_bar(cpu, 100.0, 16))
     right.append(f" {cpu:5.1f}%\n", style="bold white")
+
     right.append("RAM ", style="bold white")
     right.append_text(_make_bar(ram_used, ram_total, 16))
     right.append(f" {ram_used:.1f}/{ram_total:.1f}G\n", style="bold white")
 
-    if HAS_PSUTIL:
+    if gpu:
+        vu = gpu["vram_used_gb"]
+        vt = gpu["vram_total_gb"]
+        gu = gpu["gpu_util"]
+        right.append("GPU ", style="bold bright_green")
+        right.append_text(_make_bar(gu, 100.0, 16, "bright_green"))
+        right.append(f" {gu}% {gpu['name']}\n", style="bold bright_green")
+        right.append("VRM ", style="bold bright_green")
+        right.append_text(_make_bar(vu, vt, 16, "bright_green"))
+        right.append(f" {vu:.1f}/{vt:.1f}G", style="bold bright_green")
+    elif HAS_PSUTIL:
         disk = psutil.disk_usage(str(BASE_DIR))
         du, dt = disk.used / (1024**3), disk.total / (1024**3)
         right.append("DSK ", style="bold white")
@@ -456,7 +543,6 @@ def build_providers() -> Panel:
             status.append(" OFF", style="dim red")
         table.add_row(Text(name, style=style), status)
 
-    # Rate limit summary
     ks = _get_key_stats()
     if ks:
         cd = ks.get("in_globale_cooldown", False)
@@ -471,11 +557,9 @@ def build_providers() -> Panel:
 
 
 def build_agents() -> Panel:
-    """Build agents panel with 2-column layout for density."""
     cooldown = _get_cooldown_agents()
     now_hour = datetime.now().hour
 
-    # Build status for each agent
     rows = []
     for name, role, style, stype in AGENT_CATALOG:
         if name in cooldown:
@@ -486,7 +570,6 @@ def build_agents() -> Panel:
             st_text, st_style = STATUS_MAP.get(stype, ("READY", "bold green"))
         rows.append((name, role, style, st_text, st_style))
 
-    # Two-column table
     table = Table(show_header=True, box=None, padding=(0, 1), expand=True)
     table.add_column("Agent", style="bold", ratio=2)
     table.add_column("St", justify="right", ratio=1)
@@ -516,6 +599,136 @@ def build_agents() -> Panel:
 
     return Panel(table, title=f"[bold cyan]BRAIN AGENTS ({len(AGENT_CATALOG)})[/]",
                  border_style="cyan", box=box.ROUNDED)
+
+
+def build_system_status() -> Panel:
+    """Build the SYSTEM STATUS panel — Swarm, RAG, Vector, Cache, Services."""
+    table = Table(show_header=False, box=None, padding=(0, 1), expand=True)
+    table.add_column("System", style="bold", ratio=3)
+    table.add_column("Status", justify="right", ratio=3)
+
+    # --- Swarm Engine ---
+    sw = _get_swarm_stats()
+    if sw:
+        agents = sw.get("active_agents", 0)
+        queries = sw.get("queries_processed", 0)
+        avg_ms = sw.get("avg_response_ms", 0)
+        avg_str = f"{avg_ms:.0f}ms" if avg_ms > 0 else "idle"
+        table.add_row(
+            Text("SwarmEngine", style="bold bright_cyan"),
+            Text(f"{agents} agents | {queries} queries | {avg_str}", style="white"),
+        )
+        # Swarm subsystems
+        gov_blocks = sw.get("governor_blocks", 0)
+        schild = sw.get("schild_blocks", 0)
+        tribunal = sw.get("tribunal_verified", 0)
+        t_warn = sw.get("tribunal_warnings", 0)
+        synapse = sw.get("synapse_adjustments", 0)
+        phantom = sw.get("phantom_predictions", 0)
+        p_hits = sw.get("phantom_hits", 0)
+        cortex_e = sw.get("cortex_enrichments", 0)
+        table.add_row(
+            Text("  Governor", style="dim"),
+            Text(f"{gov_blocks} blocks | Schild: {schild}", style="dim white"),
+        )
+        table.add_row(
+            Text("  Tribunal", style="dim"),
+            Text(f"{tribunal} verified | {t_warn} warn", style="dim white"),
+        )
+        table.add_row(
+            Text("  Synapse", style="dim"),
+            Text(f"{synapse} adj | Cortex: {cortex_e}", style="dim white"),
+        )
+        table.add_row(
+            Text("  Phantom", style="dim"),
+            Text(f"{phantom} pred | {p_hits} hits", style="dim white"),
+        )
+        # Errors & resilience
+        errs = sw.get("agent_errors", 0)
+        timeouts = sw.get("agent_timeouts", 0)
+        cb_trips = sw.get("circuit_breaker_trips", 0)
+        retries = sw.get("error_retries_attempted", 0)
+        r_ok = sw.get("error_retries_succeeded", 0)
+        err_style = "bold red" if errs > 0 else "green"
+        table.add_row(
+            Text("  Errors", style="dim"),
+            Text(f"{errs} err | {timeouts} timeout | {cb_trips} CB trips", style=err_style),
+        )
+        if retries > 0:
+            table.add_row(
+                Text("  Retries", style="dim"),
+                Text(f"{retries} tried | {r_ok} ok", style="dim white"),
+            )
+        # Cache stats from swarm
+        rc = sw.get("response_cache", {})
+        sc_hits = sw.get("semantic_cache_hits", 0)
+        sc_miss = sw.get("semantic_cache_misses", 0)
+        ft = sw.get("fast_track_hits", 0)
+        table.add_row(
+            Text("  Cache", style="dim"),
+            Text(f"resp:{rc.get('entries',0)} | sem:{sc_hits}h/{sc_miss}m | fast:{ft}", style="dim white"),
+        )
+    else:
+        table.add_row(Text("SwarmEngine", style="dim"), Text("not loaded", style="dim"))
+
+    # --- RAG / ChromaDB ---
+    chroma = _get_chromadb_count()
+    table.add_row(
+        Text("ChromaDB RAG", style="bold magenta"),
+        Text(f"{chroma} files | 3 shards", style="white"),
+    )
+
+    # --- SemanticCache ---
+    sc = _get_semantic_cache_stats()
+    if sc:
+        entries = sc.get("total_entries", 0)
+        hit_rate = sc.get("session_hit_rate", 0)
+        db_kb = sc.get("db_size_kb", 0)
+        table.add_row(
+            Text("SemanticCache", style="bold green"),
+            Text(f"{entries} entries | {hit_rate:.0f}% hit | {db_kb:.0f}KB", style="white"),
+        )
+    else:
+        table.add_row(Text("SemanticCache", style="bold green"), Text("standby", style="dim"))
+
+    # --- NeuralBus ---
+    bus = _get_bus_stats()
+    if bus:
+        subs = bus.get("subscribers", 0)
+        pub = bus.get("events_gepubliceerd", 0)
+        errs = bus.get("fouten", 0)
+        err_txt = f" | {errs} err" if errs else ""
+        table.add_row(
+            Text("NeuralBus", style="bold yellow"),
+            Text(f"{subs} subs | {pub} events{err_txt}", style="white"),
+        )
+
+    # --- Services ---
+    api = _get_api_status()
+    api_style = "bold green" if api == "ONLINE" else "bold red"
+    ollama_style = "bold green"
+    try:
+        import urllib.request
+        urllib.request.urlopen("http://127.0.0.1:11434", timeout=1)
+        ollama_status = "ONLINE"
+    except Exception:
+        ollama_status = "OFFLINE"
+        ollama_style = "bold red"
+    table.add_row(
+        Text("Services", style="bold blue"),
+        Text(f"API:{api}  Ollama:{ollama_status}", style=f"{api_style}"),
+    )
+
+    # --- GPU summary ---
+    gpu = _get_gpu_info()
+    if gpu:
+        table.add_row(
+            Text(f"GPU {gpu['name']}", style="bold bright_green"),
+            Text(f"{gpu['vram_used_gb']:.1f}/{gpu['vram_total_gb']:.1f}G | {gpu['gpu_util']}%", style="white"),
+        )
+
+    return Panel(table, title="[bold bright_red]SYSTEM STATUS[/]",
+                 border_style="bright_red", box=box.ROUNDED)
 
 
 def build_ecosystem() -> Panel:
@@ -562,26 +775,17 @@ def build_ecosystem() -> Panel:
 
 def build_events() -> Panel:
     bus_stats = _get_bus_stats()
-    events = _get_bus_events(5)
+    events = _get_bus_events(4)
     git_log = _get_git_log(4)
 
     lines = Text()
 
-    # Bus stats
-    if bus_stats:
-        subs = bus_stats.get("subscribers", 0)
-        pub = bus_stats.get("events_gepubliceerd", 0)
-        lines.append(f" Bus: {subs} subs | {pub} published\n", style="dim cyan")
-        lines.append(" " + "\u2500" * 28 + "\n", style="dim")
-
-    # Live events
     if events:
         for ev in events:
             lines.append(f" \u25b8 {ev}\n", style="white")
     else:
         lines.append(" (awaiting events...)\n", style="dim")
 
-    # Git log
     if git_log:
         lines.append("\n ")
         lines.append("Commits:\n", style="bold yellow")
@@ -663,7 +867,7 @@ def build_dashboard() -> Layout:
     layout = Layout()
 
     layout.split_column(
-        Layout(name="header", size=5),
+        Layout(name="header", size=6),
         Layout(name="body"),
         Layout(name="footer", size=3),
     )
@@ -687,9 +891,10 @@ def build_dashboard() -> Layout:
         Layout(name="features", ratio=2),
     )
 
-    # Right column: agents + events
+    # Right column: agents + system_status + events
     layout["col_right"].split_column(
-        Layout(name="agents", ratio=3),
+        Layout(name="agents", ratio=2),
+        Layout(name="system_status", ratio=3),
         Layout(name="events", ratio=2),
     )
 
@@ -700,6 +905,7 @@ def build_dashboard() -> Layout:
     layout["ecosystem"].update(build_ecosystem())
     layout["features"].update(build_features())
     layout["agents"].update(build_agents())
+    layout["system_status"].update(build_system_status())
     layout["events"].update(build_events())
     layout["footer"].update(build_footer())
 
@@ -741,7 +947,6 @@ def main():
     console = Console()
     console.clear()
 
-    # Splash screen
     console.print(OMEGA_LOGO)
     console.print("\n  [bold bright_cyan]COMMAND CENTER[/] initializing...\n", highlight=False)
     time.sleep(0.6)
@@ -757,7 +962,12 @@ def main():
         pass
     finally:
         console.clear()
-        console.print("\n  [bold bright_cyan]\u03a9 OMEGA COMMAND CENTER[/] [dim]\u2014 session ended.[/]\n")
+        console.print("\n  [bold bright_cyan]\u03a9 OMEGA COMMAND CENTER[/] [dim]-- session ended.[/]\n")
+        if HAS_GPU:
+            try:
+                pynvml.nvmlShutdown()
+            except Exception:
+                pass
 
 
 if __name__ == "__main__":
