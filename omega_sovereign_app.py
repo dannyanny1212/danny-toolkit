@@ -1041,8 +1041,26 @@ class DashboardTab(ctk.CTkFrame):
 
             # ── PHASE 1: WILL (Plan + Execute via function calling) ──
             w("\u2126 [W] Will \u2014 planning & executing...")
-            response = brain.process_request(question, use_tools=True, max_tokens=2000)
+
+            # Capture stdout om [TOOL] en [FALLBACK] prints te vangen
+            import io as _io
+            from contextlib import redirect_stdout as _rs
+            _stdout_buf = _io.StringIO()
+            try:
+                with _rs(_stdout_buf):
+                    response = brain.process_request(question, use_tools=True, max_tokens=2000)
+            except Exception as _brain_err:
+                response = None
+                w(f"[ERROR] Brain crash: {_brain_err}")
             t_action = time.time() - t0
+
+            # Toon captured debug/tool output in GUI
+            _captured = _stdout_buf.getvalue().strip()
+            if _captured:
+                for _dline in _captured.split("\n"):
+                    _dline = _dline.strip()
+                    if _dline:
+                        w(f"  {_dline}")
 
             if not response or not response.strip():
                 w("[ERROR] Empty response from Brain")
