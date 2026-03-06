@@ -566,6 +566,40 @@ def _run_self_diagnostic():
     fout = sum(1 for v in results.values() if v["status"] == "FOUT")
     results["_samenvatting"] = {"totaal": len(results) - 1, "ok": ok, "fout": fout}
 
+    # ── Schrijf naar logbestand ──
+    try:
+        from danny_toolkit.core.config import Config
+        log_dir = Config.DATA_DIR / "logs"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        log_file = log_dir / "diagnostic.log"
+
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        lines = [f"\n{'='*60}", f"SELF-DIAGNOSTIC  {timestamp}", f"{'='*60}"]
+        lines.append(f"Resultaat: {ok}/{ok + fout} OK, {fout} FOUT\n")
+
+        for comp, info in sorted(results.items()):
+            if comp.startswith("_"):
+                continue
+            status = info.get("status", "?")
+            mark = "[OK]  " if status == "OK" else "[FOUT]"
+            line = f"  {mark} {comp}"
+            err = info.get("error", "")
+            if err:
+                line += f" — {err}"
+            extra = {k: v for k, v in info.items() if k not in ("status", "error")}
+            if extra:
+                line += f"  {extra}"
+            lines.append(line)
+
+        lines.append("")
+
+        with open(log_file, "a", encoding="utf-8") as f:
+            f.write("\n".join(lines))
+
+        logger.info("Diagnostic log written to %s", log_file)
+    except Exception as e:
+        logger.warning("Failed to write diagnostic log: %s", e)
+
     return results
 
 
