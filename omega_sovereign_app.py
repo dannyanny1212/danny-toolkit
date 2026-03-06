@@ -201,7 +201,10 @@ class _DataCache:
             time.sleep(sleep_time)
 
     def _fetch_all(self):
-        """Fetch all data sources in background — UI never blocks."""
+        """Fetch all data sources in background — UI never blocks.
+
+        Diamond Polish: every except logs to logger.debug (no silent pass).
+        """
         # System metrics
         if HAS_PSUTIL:
             self.put("cpu", psutil.cpu_percent(interval=0.05))
@@ -213,12 +216,12 @@ class _DataCache:
         if eng:
             try:
                 self.put("engine_stats", eng.get_stats())
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("cache engine_stats: %s", e)
             try:
                 self.put("swarm_metrics", dict(eng._swarm_metrics))
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("cache swarm_metrics: %s", e)
 
         # Waakhuis
         if HAS_WAAKHUIS:
@@ -226,23 +229,19 @@ class _DataCache:
                 wh = get_waakhuis()
                 self.put("waakhuis_rapport", wh.gezondheidsrapport())
                 self.put("hardware_status", wh.hardware_status())
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("cache waakhuis: %s", e)
 
-        # NeuralBus
+        # NeuralBus (public API only — no _lock/_history access)
         if HAS_BUS:
             try:
                 bus = get_bus()
                 self.put("bus_stats", bus.statistieken())
                 self.put("bus_stream", bus.get_context_stream(count=15))
-                with bus._lock:
-                    types = list(bus._history.keys())
-                counts = []
-                for et in types[:20]:
-                    counts.append(len(bus.get_history(et, count=100)))
-                self.put("bus_event_counts", counts)
-            except Exception:
-                pass
+                type_counts = bus.get_event_type_counts()
+                self.put("bus_event_counts", list(type_counts.values())[:20])
+            except Exception as e:
+                logger.debug("cache bus: %s", e)
 
         # CorticalStack
         if HAS_CORTICAL:
@@ -252,8 +251,8 @@ class _DataCache:
                 self.put("cortical_db_metrics", stack.get_db_metrics())
                 self.put("cortical_stats", stack.get_stats())
                 self.put("cortical_facts", stack.recall_all())
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("cache cortical: %s", e)
 
         # BlackBox
         if HAS_BLACKBOX:
@@ -261,22 +260,22 @@ class _DataCache:
                 bb = get_black_box()
                 self.put("blackbox_stats", bb.get_stats())
                 self.put("blackbox_antibodies", bb.get_antibodies())
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("cache blackbox: %s", e)
 
         # Shield
         if HAS_SCHILD:
             try:
                 self.put("shield_stats", get_hallucination_shield().get_stats())
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("cache shield: %s", e)
 
         # Tribunal
         if HAS_TRIBUNAL:
             try:
                 self.put("tribunal_stats", get_adversarial_tribunal().get_stats())
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("cache tribunal: %s", e)
 
         # Key Manager
         if HAS_KEY_MANAGER:
@@ -298,30 +297,31 @@ class _DataCache:
                     key_data["tpm_total"] = sum(a["tpm"] for a in agents.values())
                 try:
                     key_data["cooldown"] = km.get_agents_in_cooldown()
-                except Exception:
+                except Exception as e:
+                    logger.debug("cache cooldown: %s", e)
                     key_data["cooldown"] = set()
                 rpm_limit = getattr(km, 'RPM_LIMIT', 30) * max(1, len(km._keys))
                 tpm_limit = getattr(km, 'TPM_LIMIT', 30000) * max(1, len(km._keys))
                 key_data["rpm_limit"] = rpm_limit
                 key_data["tpm_limit"] = tpm_limit
                 self.put("key_data", key_data)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("cache key_manager: %s", e)
 
         # Circuit breakers
         if eng:
             try:
                 from swarm_engine import get_circuit_state
                 self.put("circuit_state", get_circuit_state())
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("cache circuit: %s", e)
 
         # GPU
         try:
             from danny_toolkit.core.vram_manager import vram_rapport
             self.put("vram", vram_rapport())
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("cache vram: %s", e)
 
         # Model Registry
         if HAS_MODELS:
@@ -329,8 +329,8 @@ class _DataCache:
                 reg = get_model_registry()
                 self.put("model_stats", reg.get_stats())
                 self.put("model_workers", reg.get_all_workers())
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("cache model_registry: %s", e)
 
         # Observatory
         if HAS_OBSERVATORY:
@@ -338,19 +338,18 @@ class _DataCache:
                 obs = get_observatory_sync()
                 self.put("leaderboard", obs.get_model_leaderboard())
                 self.put("cost_analysis", obs.get_cost_analysis())
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("cache observatory: %s", e)
 
         # Brain: Synapse
         try:
             if not hasattr(self, '_synapse'):
                 from danny_toolkit.brain.synapse import TheSynapse
                 self._synapse = TheSynapse()
-            syn = self._synapse
-            self.put("synapse_stats", syn.get_stats())
-            self.put("synapse_pathways", syn.get_top_pathways(limit=10))
-        except Exception:
-            pass
+            self.put("synapse_stats", self._synapse.get_stats())
+            self.put("synapse_pathways", self._synapse.get_top_pathways(limit=10))
+        except Exception as e:
+            logger.debug("cache synapse: %s", e)
 
         # Brain: Phantom
         try:
@@ -359,8 +358,8 @@ class _DataCache:
                 self._phantom = ThePhantom()
             self.put("phantom_accuracy", self._phantom.get_accuracy())
             self.put("phantom_predictions", self._phantom.get_predictions(max_results=5))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("cache phantom: %s", e)
 
         # Brain: Singularity
         try:
@@ -368,15 +367,15 @@ class _DataCache:
                 from danny_toolkit.brain.singularity import SingularityEngine
                 self._singularity = SingularityEngine()
             self.put("singularity_status", self._singularity.get_status())
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("cache singularity: %s", e)
 
         # Brain: Introspector
         if HAS_INTROSPECTOR:
             try:
                 self.put("introspector_report", get_introspector().get_health_report())
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("cache introspector: %s", e)
 
         # Immune: Governor
         try:
@@ -384,18 +383,24 @@ class _DataCache:
                 from danny_toolkit.brain.governor import OmegaGovernor
                 self._governor = OmegaGovernor()
             self.put("governor_health", self._governor.get_health_report())
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("cache governor: %s", e)
 
         # Config Auditor
         try:
             from danny_toolkit.brain.config_auditor import get_config_auditor
             self.put("config_audit", get_config_auditor().audit())
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("cache config_audit: %s", e)
 
 
 _cache = _DataCache()
+
+# ── WAV-LOOP STATS (persistent across queries) ─────────────────
+_wav_stats = {
+    "queries": 0, "total_time": 0.0, "schild_blocks": 0,
+    "schild_warns": 0, "v_scores": deque(maxlen=50),
+}
 
 
 # ── LAZY LOADERS ─────────────────────────────────────────────────
@@ -1105,7 +1110,18 @@ class DashboardTab(ctk.CTkFrame):
                 w(f"\u2126 [S] Schild: {schild_label}")
 
             elapsed = time.time() - t0
+
+            # Track WAV stats
+            _wav_stats["queries"] += 1
+            _wav_stats["total_time"] += elapsed
+            if schild_label and "GEBLOKKEERD" in schild_label:
+                _wav_stats["schild_blocks"] += 1
+            elif schild_label and "WAARSCHUWING" in schild_label:
+                _wav_stats["schild_warns"] += 1
+
+            avg_t = _wav_stats["total_time"] / _wav_stats["queries"]
             w(f"\n  [WAV: W={t_action:.1f}s V={t_verify:.1f}s | total={elapsed:.1f}s | {len(response)} chars]")
+            w(f"  [Session: {_wav_stats['queries']} queries | avg {avg_t:.1f}s | S-blocks:{_wav_stats['schild_blocks']} warns:{_wav_stats['schild_warns']}]")
             w("")
 
         except Exception as e:
@@ -1113,12 +1129,12 @@ class DashboardTab(ctk.CTkFrame):
         finally:
             self._ot_text.after(0, lambda: self._ot_entry.configure(state="normal"))
 
-    # ── Cortex Network ──
+    # ── Cortex Network (LIVE — refreshes with waakhuis health) ──
     def _draw_cortex(self):
         ax = self._cortex_ax
         ax.clear()
         ax.set_xlim(-7, 7)
-        ax.set_ylim(-0.5, 6)
+        ax.set_ylim(-1.0, 6.5)
         ax.set_aspect("equal")
         ax.axis("off")
         tc = {1: ("TRINITY", NEON_CYAN, 220, 4), 2: ("GUARDIANS", NEON_GREEN, 160, 3),
@@ -1128,6 +1144,9 @@ class DashboardTab(ctk.CTkFrame):
             ax.text(0, 3, "trinity_models\nnot available", ha="center", color=TEXT_DIM, fontsize=10)
             self._cortex_cv.draw_idle()
             return
+        # Get live health data
+        rapport = _cache.get("waakhuis_rapport", {})
+        agent_health = rapport.get("agents", {})
         tiers = {}
         for role in CosmicRole:
             tiers.setdefault(CosmicRole.get_tier(role), []).append(role)
@@ -1136,12 +1155,23 @@ class DashboardTab(ctk.CTkFrame):
             name, col, sz, y = tc.get(tn, tc[4])
             for i, role in enumerate(roles):
                 x = (i - (len(roles) - 1) / 2) * 1.5
-                yy = y + (hash(role.name) % 100 - 50) * 0.002  # deterministic jitter
+                yy = y + (hash(role.name) % 100 - 50) * 0.002
                 positions[role.name] = (x, yy)
-                ax.scatter(x, yy, s=sz, color=col, alpha=0.8, zorder=3,
-                           edgecolors=col, linewidths=1.5)
-                ax.scatter(x, yy, s=sz * 2, color=col, alpha=0.08, zorder=2)
-                ax.text(x, yy + 0.35, role.name, ha="center", va="bottom",
+                # Live color: match role name to waakhuis agents
+                health = agent_health.get(role.name, {}).get("score", None)
+                if health is not None:
+                    node_col = NEON_GREEN if health >= 70 else (NEON_ORANGE if health >= 30 else NEON_RED)
+                    node_alpha = 0.9
+                else:
+                    node_col = col
+                    node_alpha = 0.6
+                ax.scatter(x, yy, s=sz, color=node_col, alpha=node_alpha, zorder=3,
+                           edgecolors=node_col, linewidths=1.5)
+                ax.scatter(x, yy, s=sz * 2, color=node_col, alpha=0.08, zorder=2)
+                label = role.name
+                if health is not None:
+                    label += f" {health:.0f}%"
+                ax.text(x, yy + 0.35, label, ha="center", va="bottom",
                         fontsize=6, color=TEXT_PRIMARY, fontweight="bold")
         for tf, tt in [(1, 2), (2, 3), (3, 4), (5, 1)]:
             for ra in tiers.get(tf, []):
@@ -1152,6 +1182,19 @@ class DashboardTab(ctk.CTkFrame):
         for tn, (name, col, _, y) in tc.items():
             ax.text(-6.5, y, f"T{tn}: {name}", fontsize=7, color=col,
                     va="center", fontweight="bold")
+        # Live system health summary
+        if agent_health:
+            scores = [info.get("score", 100) for info in agent_health.values()]
+            avg = sum(scores) / len(scores)
+            hc = NEON_GREEN if avg >= 70 else (NEON_ORANGE if avg >= 30 else NEON_RED)
+            ax.text(0, -0.7, f"SYSTEM HEALTH: {avg:.0f}% | {len(agent_health)} agents active",
+                    ha="center", fontsize=9, color=hc, fontweight="bold")
+        # WAV stats
+        wq = _wav_stats["queries"]
+        if wq > 0:
+            avg_t = _wav_stats["total_time"] / wq
+            ax.text(0, 6.2, f"WAV: {wq} queries | avg {avg_t:.1f}s | S-blocks: {_wav_stats['schild_blocks']}",
+                    ha="center", fontsize=7, color=NEON_CYAN, fontstyle="italic")
         self._cortex_fig.tight_layout(pad=0.3)
         self._cortex_cv.draw_idle()
 
@@ -1290,6 +1333,7 @@ class DashboardTab(ctk.CTkFrame):
 
     def refresh(self):
         self.update_vanguard()
+        self._draw_cortex()
         self.update_pulse()
         self.update_fuel()
         self.update_listener()
@@ -1673,8 +1717,8 @@ class ObservatoryTab(ctk.CTkFrame):
                     self.models_panel.write(
                         f"    {prov:12s} ok:{perf.get('success_rate', 0):.0%}  "
                         f"lat:{perf.get('avg_latency_ms', 0):.0f}ms")
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("model worker perf: %s", e)
         else:
             self.models_panel.write("  ModelRegistry not available")
 
@@ -1973,7 +2017,15 @@ class OmegaSovereignApp(ctk.CTk):
                                      font=FONT_MONO_XS, text_color=TEXT_DIM)
         self._ai_lbl.pack(side="left", padx=8)
         self._hw = ctk.CTkLabel(bar, text="", font=FONT_MONO_XS, text_color=TEXT_DIM)
-        self._hw.pack(side="left", padx=20)
+        self._hw.pack(side="left", padx=12)
+        self._shield_lbl = ctk.CTkLabel(bar, text="", font=FONT_MONO_XS, text_color=TEXT_DIM)
+        self._shield_lbl.pack(side="left", padx=8)
+        self._bus_lbl = ctk.CTkLabel(bar, text="", font=FONT_MONO_XS, text_color=TEXT_DIM)
+        self._bus_lbl.pack(side="left", padx=8)
+        self._health_lbl = ctk.CTkLabel(bar, text="", font=FONT_MONO_XS, text_color=TEXT_DIM)
+        self._health_lbl.pack(side="left", padx=8)
+        self._wav_lbl = ctk.CTkLabel(bar, text="", font=FONT_MONO_XS, text_color=TEXT_DIM)
+        self._wav_lbl.pack(side="left", padx=8)
         self._time = ctk.CTkLabel(bar, text="", font=FONT_MONO_XS, text_color=TEXT_DIM)
         self._time.pack(side="right", padx=10)
         self._uptime_lbl = ctk.CTkLabel(bar, text="", font=FONT_MONO_XS, text_color=TEXT_DIM)
@@ -2050,6 +2102,34 @@ class OmegaSovereignApp(ctk.CTk):
                 pct = round(vr['in_gebruik_mb'] / vr['totaal_mb'] * 100)
                 hw_text += f" | GPU {pct}%"
             self._hw.configure(text=hw_text, text_color=cpu_color)
+
+        # Shield status
+        shield_stats = _cache.get("shield_stats")
+        if shield_stats:
+            checked = shield_stats.get("beoordeeld", 0)
+            blocked = shield_stats.get("geblokkeerd", 0)
+            sc = NEON_GREEN if blocked == 0 else NEON_RED
+            self._shield_lbl.configure(text=f"S:{checked}/{blocked}blk", text_color=sc)
+
+        # Bus events
+        bus_stats = _cache.get("bus_stats")
+        if bus_stats:
+            ev = bus_stats.get("events_gepubliceerd", 0)
+            self._bus_lbl.configure(text=f"Bus:{ev}ev", text_color=NEON_CYAN)
+
+        # System health from introspector
+        intro = _cache.get("introspector_report")
+        if intro:
+            hp = intro.get("gezondheid_score", 0)
+            ma = intro.get("modules_actief", 0)
+            hc = NEON_GREEN if hp >= 80 else (NEON_ORANGE if hp >= 50 else NEON_RED)
+            self._health_lbl.configure(text=f"{ma}mod {hp:.0f}%", text_color=hc)
+
+        # WAV stats
+        wq = _wav_stats["queries"]
+        if wq > 0:
+            avg_t = _wav_stats["total_time"] / wq
+            self._wav_lbl.configure(text=f"WAV:{wq}q {avg_t:.1f}s", text_color=NEON_GREEN)
 
         # Refresh active tab only (performance)
         active = self._tabs.get()

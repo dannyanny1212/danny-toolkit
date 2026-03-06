@@ -389,6 +389,15 @@ class NeuralBus:
             logger.debug("NeuralBus statistieken fout: %s", e)
             return {}
 
+    def get_event_type_counts(self) -> dict:
+        """Return per-type event count in history (public API)."""
+        try:
+            with self._lock:
+                return {et: len(q) for et, q in self._history.items()}
+        except Exception as e:
+            logger.debug("NeuralBus get_event_type_counts fout: %s", e)
+            return {}
+
     def reset(self):
         """Reset de bus (voor tests)."""
         try:
