@@ -410,6 +410,11 @@ class CentralBrain:
         # RAG: automatische kennisbank verrijking
         rag_section = self._rag_context(user_input)
 
+        # Smart Prefetch: live data ophalen op basis van keywords
+        live_section = self._smart_prefetch(user_input)
+        if live_section:
+            rag_section = f"{rag_section}\n\n{live_section}" if rag_section else f"\n\n{live_section}"
+
         # System message
         system_message = f"""Je bent Danny's Central Brain — de kern-AI van het OMEGA SOVEREIGN CORE ecosysteem.
 Dit is een 176-module AI-netwerk (48K regels code) gebouwd door Commandant Danny.
@@ -430,6 +435,7 @@ KRITIEKE REGEL: Gebruik ALTIJD de function calling API om tools aan te roepen.
 Beschrijf NOOIT een tool call als JSON tekst — voer hem UIT via de tool_calls interface.
 Als je meerdere tools wilt aanroepen, maak dan meerdere tool_calls in één response.
 Als er KENNISBANK CONTEXT hierboven staat, gebruik die als primaire bron voor je antwoord.
+Als er LIVE SYSTEEM DATA hierboven staat, gebruik die als feitelijke basis — dit zijn ECHTE real-time metrics, niet geschat.
 
 Context over de gebruiker:
 {json.dumps(context, ensure_ascii=False, indent=2)}
@@ -833,6 +839,9 @@ Regels:
 
         remaining_turns = max_turns
 
+        # Safety net: reset éénmalig per user query (niet per provider)
+        self._last_tool_results = []
+
         for i, (breaker_key, attempt_fn, label) in enumerate(chain):
             if remaining_turns <= 0:
                 break
@@ -926,9 +935,10 @@ Regels:
 
         tools = self._build_openai_tools() if use_tools else None
 
-        # Safety net: bewaar tool resultaten op instance level zodat
-        # _process_with_fallback ze kan gebruiken als alle providers falen
-        self._last_tool_results = []
+        # NB: _last_tool_results wordt NIET hier gereset — dat doet
+        # _process_with_fallback() éénmalig per user query, zodat
+        # tool resultaten van een eerdere provider bewaard blijven
+        # wanneer de volgende provider (fallback) de samenvatting overneemt.
 
         turns_used = 0
         for turn in range(remaining_turns):
@@ -1029,31 +1039,52 @@ Regels:
                         })
 
                 if tool_tasks:
-                    results = asyncio.run(
-                        asyncio.gather(*tool_tasks, return_exceptions=True)
-                    )
-                    for tool_call, result in zip(valid_calls, results):
-                        if isinstance(result, BaseException):
-                            logger.debug("Tool %s fout: %s", tool_call.function.name, result)
-                            result = {"error": str(result)}
-                        result_str = json.dumps(
-                            result, ensure_ascii=False, default=str,
-                        )[:5000]
-                        messages.append({
-                            "role": "tool",
-                            "tool_call_id": tool_call.id,
-                            "content": result_str,
-                        })
-                        # Bewaar voor safety net
-                        app_naam, actie_naam = parse_tool_call(tool_call.function.name)
-                        self._last_tool_results.append(
-                            (f"{app_naam}.{actie_naam}" if app_naam else tool_call.function.name,
-                             result_str)
-                        )
-                    print(kleur(
-                        f"   [DEBUG] backup={len(self._last_tool_results)} tool results saved",
-                        Kleur.GEEL,
-                    ))
+                    try:
+                        # Probeer asyncio.run() — werkt als er geen actieve loop is
+                        try:
+                            results = asyncio.run(
+                                asyncio.gather(*tool_tasks, return_exceptions=True)
+                            )
+                        except RuntimeError:
+                            # Event loop al actief of ontbreekt in thread — maak + set
+                            loop = asyncio.new_event_loop()
+                            asyncio.set_event_loop(loop)
+                            try:
+                                results = loop.run_until_complete(
+                                    asyncio.gather(*tool_tasks, return_exceptions=True)
+                                )
+                            finally:
+                                loop.close()
+
+                        for tool_call, result in zip(valid_calls, results):
+                            if isinstance(result, BaseException):
+                                logger.debug("Tool %s fout: %s", tool_call.function.name, result)
+                                result = {"error": str(result)}
+                            result_str = json.dumps(
+                                result, ensure_ascii=False, default=str,
+                            )[:5000]
+                            messages.append({
+                                "role": "tool",
+                                "tool_call_id": tool_call.id,
+                                "content": result_str,
+                            })
+                            # Bewaar voor safety net
+                            app_naam, actie_naam = parse_tool_call(tool_call.function.name)
+                            self._last_tool_results.append(
+                                (f"{app_naam}.{actie_naam}" if app_naam else tool_call.function.name,
+                                 result_str)
+                            )
+                        print(kleur(
+                            f"   [DEBUG] backup={len(self._last_tool_results)} tool results saved",
+                            Kleur.GEEL,
+                        ))
+                    except Exception as tool_exec_err:
+                        # Tool executie crashte — log maar ga door
+                        print(kleur(
+                            f"   [DEBUG] tool execution error: {type(tool_exec_err).__name__}: {tool_exec_err}",
+                            Kleur.GEEL,
+                        ))
+                        logger.debug("Tool execution fout: %s", tool_exec_err)
             else:
                 content_text = message.content or ""
                 # Detecteer tekst-beschreven tool calls die niet via API kwamen
@@ -1081,9 +1112,19 @@ Regels:
                             fallback_ids.append(f"{app_naam}.{actie_naam}")
 
                     if tool_tasks:
-                        results = asyncio.run(
-                            asyncio.gather(*tool_tasks, return_exceptions=True)
-                        )
+                        try:
+                            results = asyncio.run(
+                                asyncio.gather(*tool_tasks, return_exceptions=True)
+                            )
+                        except RuntimeError:
+                            loop = asyncio.new_event_loop()
+                            asyncio.set_event_loop(loop)
+                            try:
+                                results = loop.run_until_complete(
+                                    asyncio.gather(*tool_tasks, return_exceptions=True)
+                                )
+                            finally:
+                                loop.close()
                         # Bouw samenvattend antwoord van tool resultaten
                         summary_parts = []
                         for tid, result in zip(fallback_ids, results):
@@ -1441,6 +1482,292 @@ Regels:
                 f"{docs_text}\n"
                 "[EINDE KENNISBANK CONTEXT]\n"
             )
+        return ""
+
+    # ----------------------------------------------------------
+    # Smart Auto-Prefetch: keyword → live data injection
+    # ----------------------------------------------------------
+
+    # Keyword → categorie mapping (lowercase)
+    _PREFETCH_MAP = {
+        "system_health": {
+            "keywords": {"status", "systeem", "health", "gezondheid", "modules", "overzicht"},
+            "label": "SYSTEM HEALTH",
+        },
+        "hardware": {
+            "keywords": {"cpu", "ram", "gpu", "hardware", "geheugen", "vram"},
+            "label": "HARDWARE",
+        },
+        "agents": {
+            "keywords": {"agents", "swarm", "pipeline", "circuit", "breaker"},
+            "label": "AGENTS",
+        },
+        "memory": {
+            "keywords": {"memory", "geheugen", "cortical", "episodic"},
+            "label": "MEMORY",
+        },
+        "immune": {
+            "keywords": {"immune", "blackbox", "schild", "antibodies", "security"},
+            "label": "IMMUNE SYSTEM",
+        },
+        "bus": {
+            "keywords": {"bus", "neural", "realtime", "stream"},
+            "label": "NEURAL BUS",
+        },
+        "user_context": {
+            "keywords": {"ik", "mijn", "fitness", "mood", "stemming", "agenda", "goals", "doelen"},
+            "label": "USER CONTEXT",
+        },
+        "weather": {
+            "keywords": {"weer", "weather", "temperatuur", "buiten", "regen"},
+            "label": "WEER",
+        },
+    }
+
+    def _smart_prefetch(self, query: str) -> str:
+        """Haal automatisch live data op gebaseerd op keywords in de query.
+
+        Keyword-matching bepaalt welke categorieën relevant zijn. Per categorie
+        wordt een directe Python API call gedaan (geen tool system overhead).
+        Resultaten worden geformat als leesbare tekst voor LLM-injectie.
+
+        Args:
+            query: De user query
+
+        Returns:
+            Geformateerde live data string, of lege string als niets relevant.
+        """
+        # Guard: test mode
+        if os.environ.get("DANNY_TEST_MODE") == "1":
+            return ""
+
+        # Guard: korte queries (groet/kort commando)
+        words = query.strip().split()
+        if len(words) < 3:
+            return ""
+
+        # Bepaal welke categorieën matchen
+        query_words = set(query.lower().split())
+        # Strip interpunctie van query woorden
+        query_words = {w.strip(".,!?;:'\"()[]{}") for w in query_words}
+
+        matched = []
+        for cat_key, cat_def in self._PREFETCH_MAP.items():
+            if query_words & cat_def["keywords"]:
+                matched.append(cat_key)
+
+        if not matched:
+            return ""
+
+        logger.info("Smart prefetch: matched categories %s", matched)
+
+        # Verzamel data per categorie (met 3s timeout per stuk)
+        sections = []
+        for cat in matched:
+            try:
+                data = self._prefetch_category(cat)
+                if data:
+                    label = self._PREFETCH_MAP[cat]["label"]
+                    sections.append(f"── {label} ──\n{data}")
+            except Exception as e:
+                logger.debug("Prefetch %s error: %s", cat, e)
+
+        if not sections:
+            return ""
+
+        # Bouw output, trim op 2000 chars
+        output = "[LIVE SYSTEEM DATA — automatisch opgehaald]\n" + "\n\n".join(sections)
+        if len(output) > 2000:
+            output = output[:1997] + "..."
+
+        print(kleur(
+            f"   [PREFETCH] {len(sections)} categorie(ën) opgehaald: {', '.join(matched)}",
+            Kleur.CYAAN,
+        ))
+
+        return output
+
+    def _prefetch_category(self, category: str) -> str:
+        """Haal live data op voor één categorie.
+
+        Onderdrukt stdout tijdens singleton-initialisatie om Windows
+        encoding errors (emoji's in charmap) te voorkomen.
+
+        Args:
+            category: Een van de keys uit _PREFETCH_MAP
+
+        Returns:
+            Geformateerde tekst voor die categorie, of lege string.
+        """
+        import sys as _sys
+        from io import StringIO
+        _saved_out = _sys.stdout
+        try:
+            _sys.stdout = StringIO()  # Suppress singleton init prints
+            return self._fetch_category_data(category)
+        finally:
+            _sys.stdout = _saved_out
+
+    def _fetch_category_data(self, category: str) -> str:
+        """Interne data-ophaal per categorie (stdout is al onderdrukt).
+
+        Args:
+            category: Een van de keys uit _PREFETCH_MAP
+
+        Returns:
+            Geformateerde tekst voor die categorie, of lege string.
+        """
+        if category == "system_health":
+            try:
+                from danny_toolkit.brain.introspector import get_introspector
+                report = get_introspector().get_health_report()
+                score = report.get("gezondheid_score", 0)
+                actief = report.get("modules_actief", "?")
+                totaal = report.get("modules_totaal", "?")
+                wirings_a = report.get("wirings_actief", "?")
+                wirings_t = report.get("wirings_totaal", "?")
+                return (
+                    f"gezondheid: {score:.1%}, modules: {actief}/{totaal}, "
+                    f"wirings: {wirings_a}/{wirings_t}"
+                )
+            except Exception as e:
+                logger.debug("Prefetch system_health error: %s", e)
+                return ""
+
+        elif category == "hardware":
+            try:
+                from danny_toolkit.brain.waakhuis import get_waakhuis
+                hw = get_waakhuis().hardware_status()
+                parts = []
+                if "cpu_percent" in hw:
+                    parts.append(f"CPU: {hw['cpu_percent']}%")
+                if "ram_percent" in hw:
+                    parts.append(f"RAM: {hw['ram_percent']}%")
+                if "ram_beschikbaar_mb" in hw:
+                    vrij_gb = hw["ram_beschikbaar_mb"] / 1024
+                    parts.append(f"({vrij_gb:.1f} GB vrij)")
+                if "gpu_used_mb" in hw:
+                    used_gb = hw["gpu_used_mb"] / 1024
+                    total_gb = hw.get("gpu_total_mb", 0) / 1024
+                    parts.append(f"GPU: {used_gb:.1f} GB / {total_gb:.1f} GB")
+                return ", ".join(parts) if parts else str(hw)
+            except Exception as e:
+                logger.debug("Prefetch hardware error: %s", e)
+                return ""
+
+        elif category == "agents":
+            try:
+                from swarm_engine import get_pipeline_metrics, get_circuit_state
+                metrics = get_pipeline_metrics()
+                circuits = get_circuit_state()
+                lines = []
+                for agent, m in metrics.items():
+                    circuit_info = ""
+                    cs = circuits.get(agent, {})
+                    if cs.get("is_open"):
+                        circuit_info = " [CIRCUIT OPEN]"
+                    lines.append(
+                        f"{agent}: {m['calls']} calls, {m['success_rate']}% success, "
+                        f"{m['avg_ms']}ms avg{circuit_info}"
+                    )
+                return "\n".join(lines) if lines else "Geen agent metrics beschikbaar"
+            except Exception as e:
+                logger.debug("Prefetch agents error: %s", e)
+                return ""
+
+        elif category == "memory":
+            try:
+                from danny_toolkit.brain.cortical_stack import get_cortical_stack
+                cs = get_cortical_stack()
+                db = cs.get_db_metrics()
+                events = cs.get_recent_events(count=5)
+                parts = [
+                    f"DB: {db.get('db_size_mb', '?')} MB, "
+                    f"WAL: {db.get('wal_size_bytes', 0)} bytes, "
+                    f"pending writes: {db.get('pending_writes', 0)}"
+                ]
+                if events:
+                    parts.append("Recente events:")
+                    for ev in events[:5]:
+                        actor = ev.get("actor", "?")
+                        etype = ev.get("event_type", "?")
+                        parts.append(f"  - [{actor}] {etype}")
+                return "\n".join(parts)
+            except Exception as e:
+                logger.debug("Prefetch memory error: %s", e)
+                return ""
+
+        elif category == "immune":
+            try:
+                from danny_toolkit.brain.black_box import get_black_box
+                stats = get_black_box().get_stats()
+                return (
+                    f"recorded failures: {stats.get('recorded_failures', 0)}, "
+                    f"active antibodies: {stats.get('active_antibodies', 0)}, "
+                    f"total: {stats.get('total_antibodies', 0)}"
+                )
+            except Exception as e:
+                logger.debug("Prefetch immune error: %s", e)
+                return ""
+
+        elif category == "bus":
+            try:
+                from danny_toolkit.core.neural_bus import get_bus
+                st = get_bus().statistieken()
+                return (
+                    f"subscribers: {st.get('subscribers', 0)}, "
+                    f"event types actief: {st.get('event_types_actief', 0)}, "
+                    f"events in history: {st.get('events_in_history', 0)}"
+                )
+            except Exception as e:
+                logger.debug("Prefetch bus error: %s", e)
+                return ""
+
+        elif category == "user_context":
+            if not self.unified_memory:
+                return ""
+            try:
+                ctx = self.unified_memory.get_user_context()
+                # Formatteer alleen de meest relevante secties
+                parts = []
+                for key in ["fitness", "mood", "goals", "expenses", "agenda"]:
+                    val = ctx.get(key)
+                    if val and isinstance(val, dict):
+                        items = ", ".join(
+                            f"{k}: {v}" for k, v in val.items()
+                            if not isinstance(v, (dict, list))
+                        )
+                        if items:
+                            parts.append(f"{key}: {items}")
+                    elif val:
+                        parts.append(f"{key}: {val}")
+                return "\n".join(parts) if parts else ""
+            except Exception as e:
+                logger.debug("Prefetch user_context error: %s", e)
+                return ""
+
+        elif category == "weather":
+            try:
+                import asyncio as _aio
+                try:
+                    result = _aio.run(
+                        self._execute_app_action("weer_agent", "get_weather", {})
+                    )
+                except RuntimeError:
+                    loop = _aio.new_event_loop()
+                    try:
+                        result = loop.run_until_complete(
+                            self._execute_app_action("weer_agent", "get_weather", {})
+                        )
+                    finally:
+                        loop.close()
+                if isinstance(result, dict) and "error" not in result:
+                    return json.dumps(result, ensure_ascii=False, default=str)[:500]
+                return ""
+            except Exception as e:
+                logger.debug("Prefetch weather error: %s", e)
+                return ""
+
         return ""
 
     def _build_context(self) -> dict:
