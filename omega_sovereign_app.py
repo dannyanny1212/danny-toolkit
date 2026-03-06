@@ -846,8 +846,9 @@ class DashboardTab(ctk.CTkFrame):
                 w("[ERROR] CentralBrain not available")
                 return
 
-            # Schone sessie per vraag — voorkom history-vervuiling
-            brain.conversation_history.clear()
+            # Houd laatste 4 berichten (2 exchanges) voor follow-up context
+            if len(brain.conversation_history) > 4:
+                brain.conversation_history[:] = brain.conversation_history[-4:]
 
             # ── PHASE 1: WILL (Plan + Execute via function calling) ──
             w("\u2126 [W] Will \u2014 planning & executing...")

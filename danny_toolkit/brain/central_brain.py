@@ -839,7 +839,7 @@ Regels:
                 # Eerste turn: forceer tool call zodat het model tools
                 # GEBRUIKT in plaats van ze als JSON tekst te beschrijven.
                 # Na eerste turn: auto (model mag samenvatten of meer tools aanroepen)
-                kwargs["tool_choice"] = "required" if turn == 0 else "auto"
+                kwargs["tool_choice"] = "auto"
 
             response = self.client.chat.completions.create(**kwargs)
             choice = response.choices[0]
