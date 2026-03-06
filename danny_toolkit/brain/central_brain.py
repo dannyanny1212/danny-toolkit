@@ -950,6 +950,10 @@ Regels:
                 response = self.client.chat.completions.create(**kwargs)
             except Exception as api_err:
                 # Rate limit of andere fout NADAT tools al uitgevoerd zijn
+                print(kleur(
+                    f"   [DEBUG] API error turn={turn}, backup={len(self._last_tool_results)}, err={type(api_err).__name__}",
+                    Kleur.GEEL,
+                ))
                 if self._last_tool_results:
                     logger.info("API fout na tool executie, gebruik backup resultaten")
                     print(kleur(
@@ -1046,6 +1050,10 @@ Regels:
                             (f"{app_naam}.{actie_naam}" if app_naam else tool_call.function.name,
                              result_str)
                         )
+                    print(kleur(
+                        f"   [DEBUG] backup={len(self._last_tool_results)} tool results saved",
+                        Kleur.GEEL,
+                    ))
             else:
                 content_text = message.content or ""
                 # Detecteer tekst-beschreven tool calls die niet via API kwamen
@@ -1103,6 +1111,10 @@ Regels:
                     return (content_text, turns_used)
 
         # Turns uitgeput zonder finaal antwoord
+        print(kleur(
+            f"   [DEBUG] _attempt_groq exhausted, backup={len(self._last_tool_results)}",
+            Kleur.GEEL,
+        ))
         return (None, turns_used)
 
     def _attempt_anthropic(self, remaining_turns, system_message, use_tools, client):
