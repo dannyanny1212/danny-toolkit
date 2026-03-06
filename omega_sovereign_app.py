@@ -528,7 +528,7 @@ def _run_self_diagnostic():
 
     # ── CORE INFRA ──
     for name, path, cls in [
-        ("SwarmEngine", "danny_toolkit.core.swarm_engine", "SwarmEngine"),
+        ("SwarmEngine", "swarm_engine", "SwarmEngine"),
         ("NeuralBus", "danny_toolkit.core.neural_bus", "get_bus"),
         ("BlackBox", "danny_toolkit.brain.black_box", "get_black_box"),
         ("ConfigAuditor", "danny_toolkit.brain.config_auditor", "get_config_auditor"),
