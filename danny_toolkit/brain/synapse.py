@@ -3,6 +3,8 @@ THE SYNAPSE (Invention #19)
 ===========================
 Synaptic pathway plasticity for adaptive agent routing.
 
+Singleton: get_synapse() — double-checked locking.
+
 Learns which agents produce the best results for which query types
 through implicit behavioral feedback signals. Over time the routing
 surface adapts to actual performance via Hebbian plasticity:
@@ -31,6 +33,7 @@ import hashlib
 import logging
 import math
 import sqlite3
+import threading
 import time
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
@@ -567,3 +570,18 @@ class TheSynapse:
             }
             for r in rows
         ]
+
+
+# ── Singleton ────────────────────────────────────────────────────
+_synapse_instance: Optional["TheSynapse"] = None
+_synapse_lock = threading.Lock()
+
+
+def get_synapse() -> "TheSynapse":
+    """Return the process-wide TheSynapse singleton (double-checked locking)."""
+    global _synapse_instance
+    if _synapse_instance is None:
+        with _synapse_lock:
+            if _synapse_instance is None:
+                _synapse_instance = TheSynapse()
+    return _synapse_instance

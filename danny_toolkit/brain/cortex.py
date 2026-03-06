@@ -8,9 +8,10 @@ hybrid_search queries. Gebruikt door trinity_omega, librarian en swarm.
 
 import logging
 import os
+import threading
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -518,3 +519,18 @@ The initialization process involves:
                 logger.debug("Stats DB error: %s", e)
 
         return stats
+
+
+# ── Singleton ────────────────────────────────────────────────────
+_cortex_instance: Optional["TheCortex"] = None
+_cortex_lock = threading.Lock()
+
+
+def get_cortex() -> "TheCortex":
+    """Return the process-wide TheCortex singleton (double-checked locking)."""
+    global _cortex_instance
+    if _cortex_instance is None:
+        with _cortex_lock:
+            if _cortex_instance is None:
+                _cortex_instance = TheCortex()
+    return _cortex_instance

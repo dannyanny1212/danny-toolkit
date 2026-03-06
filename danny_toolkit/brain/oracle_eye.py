@@ -7,6 +7,7 @@ Gebruikt door Dreamer (REM) en daemon heartbeat.
 """
 
 import logging
+import threading
 import time
 from collections import defaultdict
 from dataclasses import dataclass
@@ -381,3 +382,18 @@ Attributes:
                 logger.debug("CorticalStack log error: %s", e)
 
         return forecast_text
+
+
+# ── Singleton ────────────────────────────────────────────────────
+_oracle_eye_instance: Optional["TheOracleEye"] = None
+_oracle_eye_lock = threading.Lock()
+
+
+def get_oracle_eye() -> "TheOracleEye":
+    """Return the process-wide TheOracleEye singleton (double-checked locking)."""
+    global _oracle_eye_instance
+    if _oracle_eye_instance is None:
+        with _oracle_eye_lock:
+            if _oracle_eye_instance is None:
+                _oracle_eye_instance = TheOracleEye()
+    return _oracle_eye_instance

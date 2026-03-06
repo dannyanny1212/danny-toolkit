@@ -566,3 +566,18 @@ method is called to initialize the database schema."""
             "pre_warmed": pre_warmed,
             "warm_hit_rate": round(warm_hits / pre_warmed, 4) if pre_warmed > 0 else 0.0,
         }
+
+
+# ── Singleton ────────────────────────────────────────────────────
+_phantom_instance: Optional["ThePhantom"] = None
+_phantom_lock = threading.Lock()
+
+
+def get_phantom() -> "ThePhantom":
+    """Return the process-wide ThePhantom singleton (double-checked locking)."""
+    global _phantom_instance
+    if _phantom_instance is None:
+        with _phantom_lock:
+            if _phantom_instance is None:
+                _phantom_instance = ThePhantom()
+    return _phantom_instance

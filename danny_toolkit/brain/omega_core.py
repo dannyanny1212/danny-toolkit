@@ -233,8 +233,8 @@ class OmegaCore:
 
         # TheSynapse
         try:
-            from danny_toolkit.brain.synapse import TheSynapse
-            syn = TheSynapse()
+            from danny_toolkit.brain.synapse import get_synapse
+            syn = get_synapse()
             stats = syn.get_stats()
             nodes["TheSynapse"] = {
                 "status": "ACTIVE",
@@ -248,8 +248,8 @@ class OmegaCore:
 
         # ThePhantom
         try:
-            from danny_toolkit.brain.phantom import ThePhantom
-            ph = ThePhantom()
+            from danny_toolkit.brain.phantom import get_phantom
+            ph = get_phantom()
             acc = ph.get_accuracy()
             preds = ph.get_predictions(max_results=3)
             nodes["ThePhantom"] = {
@@ -263,8 +263,8 @@ class OmegaCore:
 
         # TheCortex
         try:
-            from danny_toolkit.brain.cortex import TheCortex
-            cx = TheCortex()
+            from danny_toolkit.brain.cortex import get_cortex
+            cx = get_cortex()
             stats = cx.get_stats()
             nodes["TheCortex"] = {
                 "status": "ACTIVE",
@@ -277,8 +277,8 @@ class OmegaCore:
 
         # OracleEye
         try:
-            from danny_toolkit.brain.oracle_eye import TheOracleEye
-            oe = TheOracleEye()
+            from danny_toolkit.brain.oracle_eye import get_oracle_eye
+            oe = get_oracle_eye()
             peak = oe.get_peak_hours(days=7)
             nodes["OracleEye"] = {
                 "status": "ACTIVE",
@@ -314,8 +314,8 @@ class OmegaCore:
         """Doorzoek de Cortex Knowledge Graph."""
         result = {}
         try:
-            from danny_toolkit.brain.cortex import TheCortex
-            cx = TheCortex()
+            from danny_toolkit.brain.cortex import get_cortex
+            cx = get_cortex()
             hits = cx.hybrid_search(query, top_k=5)
             result["query"] = query
             result["results"] = hits[:5]
@@ -406,8 +406,8 @@ class OmegaCore:
 
         # Synapse
         try:
-            from danny_toolkit.brain.synapse import TheSynapse
-            syn = TheSynapse()
+            from danny_toolkit.brain.synapse import get_synapse
+            syn = get_synapse()
             result["synapse"] = syn.get_stats()
             result["top_pathways"] = syn.get_top_pathways(limit=5)
         except Exception:
@@ -415,8 +415,8 @@ class OmegaCore:
 
         # Phantom
         try:
-            from danny_toolkit.brain.phantom import ThePhantom
-            ph = ThePhantom()
+            from danny_toolkit.brain.phantom import get_phantom
+            ph = get_phantom()
             result["phantom_accuracy"] = ph.get_accuracy()
             result["phantom_predictions"] = ph.get_predictions(max_results=3)
         except Exception:
