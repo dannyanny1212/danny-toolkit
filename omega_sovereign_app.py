@@ -564,7 +564,7 @@ def _run_self_diagnostic():
     # Samenvatting
     ok = sum(1 for v in results.values() if v["status"] == "OK")
     fout = sum(1 for v in results.values() if v["status"] == "FOUT")
-    results["_samenvatting"] = {"totaal": len(results) - 1, "ok": ok, "fout": fout}
+    results["_samenvatting"] = {"totaal": len(results), "ok": ok, "fout": fout}
 
     # ── Schrijf naar logbestand ──
     try:
