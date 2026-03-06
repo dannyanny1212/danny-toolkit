@@ -975,7 +975,7 @@ class DashboardTab(ctk.CTkFrame):
                 try:
                     schild = get_hallucination_shield()
                     stats = schild.get_stats()
-                    self._ot_write(f"  Shield: {stats.get('checks', 0)} checks, {stats.get('blocked', 0)} blocked")
+                    self._ot_write(f"  Shield: {stats.get('beoordeeld', 0)} checks, {stats.get('geblokkeerd', 0)} blocked")
                 except Exception:
                     self._ot_write("  Shield: error")
             if HAS_TRIBUNAL:
@@ -1280,11 +1280,11 @@ class DashboardTab(ctk.CTkFrame):
         bb_stats = _cache.get("blackbox_stats")
         if bb_stats:
             self._mini_immune.write(f" BlackBox: {bb_stats.get('total_antibodies', 0)} antibodies")
-            self._mini_immune.write(f" Rejections: {bb_stats.get('total_rejections', 0)}")
+            self._mini_immune.write(f" Failures: {bb_stats.get('recorded_failures', 0)}")
         shield_stats = _cache.get("shield_stats")
         if shield_stats:
-            self._mini_immune.write(f" Shield: {shield_stats.get('checks', 0)} checks")
-            self._mini_immune.write(f" Blocked: {shield_stats.get('blocked', 0)}")
+            self._mini_immune.write(f" Shield: {shield_stats.get('beoordeeld', 0)} checks")
+            self._mini_immune.write(f" Blocked: {shield_stats.get('geblokkeerd', 0)}")
         if not bb_stats and not shield_stats:
             self._mini_immune.write(" Immune system N/A")
 
@@ -1459,7 +1459,7 @@ class BrainTab(ctk.CTkFrame):
             if preds:
                 self.phantom_panel.write("\n  Recent predictions:")
                 for p in preds:
-                    self.phantom_panel.write(f"    {p.get('pattern', '?')}: {p.get('confidence', 0):.2f}")
+                    self.phantom_panel.write(f"    {p.get('category', '?')}: {p.get('confidence', 0):.2f}")
         else:
             self.phantom_panel.write("  Phantom: loading...")
 
