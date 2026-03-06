@@ -430,7 +430,7 @@ Context over de gebruiker:
 Regels:
 1. Antwoord altijd in het Nederlands
 2. VOER tools UIT — toon geen JSON, geen namen, geen beschrijvingen van calls
-3. Bij "test jezelf" of "controleer": roep minstens 5 tools aan (fitness_tracker_get_stats, mood_tracker_get_stats, goals_tracker_get_goals, expense_tracker_get_stats, agenda_planner_vandaag) en rapporteer de WERKELIJKE resultaten
+3. Bij "test jezelf" of "controleer": roep minstens 5 tools aan (fitness_tracker_get_stats, mood_tracker_get_stats, goals_tracker_get_active_goals, expense_tracker_get_stats, agenda_planner_get_today) en rapporteer de WERKELIJKE resultaten
 4. Combineer informatie uit meerdere apps voor een compleet antwoord
 5. Als de gebruiker vraagt over de architectuur, T1-T5 tiers, Cortex, of Omega — beantwoord uit bovenstaande kennis"""
 
@@ -494,17 +494,44 @@ Regels:
         calls = []
 
         # Fallback 0: bare tool names — één per regel, matchen tegen bekende tools
+        from danny_toolkit.brain.app_tools import APP_TOOLS
         lines = [l.strip().strip("-").strip("*").strip()
                  for l in text.strip().split("\n") if l.strip()]
         if lines:
             bare_calls = []
             for line in lines:
-                # Alleen woorden met underscores (tool name patroon)
                 candidate = line.split()[0] if line.split() else ""
-                if "_" in candidate:
-                    app_naam, actie_naam = parse_tool_call(candidate)
-                    if app_naam and actie_naam:
-                        bare_calls.append((candidate, {}))
+                if "_" not in candidate:
+                    continue
+                # Exacte match
+                app_naam, actie_naam = parse_tool_call(candidate)
+                if app_naam and actie_naam:
+                    bare_calls.append((candidate, {}))
+                    continue
+                # Fuzzy: zoek app-deel en closest actie
+                for ak, ad in APP_TOOLS.items():
+                    if not candidate.startswith(ak):
+                        continue
+                    rest = candidate[len(ak):].lstrip("_")
+                    best = None
+                    for actie in ad.acties:
+                        # Directe substring match
+                        if rest in actie.naam or actie.naam in rest:
+                            best = f"{ak}_{actie.naam}"
+                            break
+                        # Common renames: goals→active_goals, vandaag→get_today
+                        if rest.replace("get_", "") in actie.naam:
+                            best = f"{ak}_{actie.naam}"
+                            break
+                    if not best:
+                        # Fallback: eerste get_ actie
+                        for actie in ad.acties:
+                            if actie.naam.startswith("get_"):
+                                best = f"{ak}_{actie.naam}"
+                                break
+                    if best:
+                        bare_calls.append((best, {}))
+                    break
             # Als minstens 2 bare tool namen gevonden → dat is het antwoord
             if len(bare_calls) >= 2:
                 return bare_calls[:10]
