@@ -500,15 +500,31 @@ Regels:
 
         # Fallback 0: bare tool names — één per regel, matchen tegen bekende tools
         from danny_toolkit.brain.app_tools import APP_TOOLS
-        lines = [l.strip().strip("-").strip("*").strip()
-                 for l in text.strip().split("\n") if l.strip()]
-        if lines:
+        cleaned_lines = []
+        for raw_line in text.strip().split("\n"):
+            cl = raw_line.strip()
+            if not cl:
+                continue
+            # Strip markdown formatting: numbering, bullets, bold, backticks
+            cl = re.sub(r'^\d+[\.\)]\s*', '', cl)  # "1. " "2) "
+            cl = re.sub(r'[*`]', '', cl)            # **bold**, `code`
+            cl = re.sub(r'^[-•○→]\s*', '', cl)      # bullet chars
+            cl = cl.strip()
+            if cl:
+                cleaned_lines.append(cl)
+        if cleaned_lines:
             bare_calls = []
-            for line in lines:
+            for line in cleaned_lines:
                 # Parse "tool_name -- key=value" of "tool_name key=value" formaat
                 parts = re.split(r'\s+--\s+', line, maxsplit=1)
-                candidate = parts[0].split()[0] if parts[0].split() else ""
-                if "_" not in candidate:
+                # Zoek eerste woord met underscore (tool namen bevatten altijd _)
+                candidate = ""
+                for word in parts[0].split():
+                    clean_word = word.rstrip(".,;:!?()[]")
+                    if "_" in clean_word:
+                        candidate = clean_word
+                        break
+                if not candidate:
                     continue
                 # Parse args uit rest van de regel (na tool naam of na --)
                 line_args = {}
@@ -913,12 +929,17 @@ Regels:
             message = choice.message
 
             # Debug: log of het model echte tool_calls retourneert
+            tc_count = len(message.tool_calls) if message.tool_calls else 0
+            content_len = len(message.content or "")
             logger.info(
-                "Groq turn %d: finish=%s, tool_calls=%s, content_len=%d",
-                turn, choice.finish_reason,
-                len(message.tool_calls) if message.tool_calls else 0,
-                len(message.content or ""),
+                "Groq turn %d: finish=%s, tool_calls=%d, content_len=%d",
+                turn, choice.finish_reason, tc_count, content_len,
             )
+            print(kleur(
+                f"   [DEBUG] turn={turn} finish={choice.finish_reason} "
+                f"tool_calls={tc_count} content={content_len}ch",
+                Kleur.GEEL,
+            ))
 
             if message.tool_calls:
                 # Voeg assistant message toe aan lokale messages
