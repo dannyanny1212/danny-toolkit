@@ -500,13 +500,33 @@ Regels:
         if lines:
             bare_calls = []
             for line in lines:
-                candidate = line.split()[0] if line.split() else ""
+                # Parse "tool_name -- key=value" of "tool_name key=value" formaat
+                parts = re.split(r'\s+--\s+', line, maxsplit=1)
+                candidate = parts[0].split()[0] if parts[0].split() else ""
                 if "_" not in candidate:
                     continue
+                # Parse args uit rest van de regel (na tool naam of na --)
+                line_args = {}
+                arg_text = parts[1] if len(parts) > 1 else line[len(candidate):].strip()
+                if arg_text:
+                    for kv in re.finditer(r'(\w+)=(?:"([^"]*)"|\'([^\']*)\'|(\S+))', arg_text):
+                        key = kv.group(1)
+                        val = kv.group(2) or kv.group(3) or kv.group(4) or ""
+                        line_args[key] = val
                 # Exacte match
                 app_naam, actie_naam = parse_tool_call(candidate)
                 if app_naam and actie_naam:
-                    bare_calls.append((candidate, {}))
+                    # Map arg keys naar tool parameter namen
+                    if line_args:
+                        # Vertaal common aliases: query→vraag (production_rag)
+                        param_map = {"query": "vraag", "question": "vraag",
+                                     "text": "tekst", "name": "naam"}
+                        mapped_args = {}
+                        for k, v in line_args.items():
+                            mapped_args[param_map.get(k, k)] = v
+                        bare_calls.append((candidate, mapped_args))
+                    else:
+                        bare_calls.append((candidate, {}))
                     continue
                 # Fuzzy: zoek app-deel en closest actie
                 for ak, ad in APP_TOOLS.items():
@@ -530,10 +550,10 @@ Regels:
                                 best = f"{ak}_{actie.naam}"
                                 break
                     if best:
-                        bare_calls.append((best, {}))
+                        bare_calls.append((best, line_args))
                     break
-            # Als minstens 2 bare tool namen gevonden → dat is het antwoord
-            if len(bare_calls) >= 2:
+            # Eén of meer bare tool namen gevonden → uitvoeren
+            if bare_calls:
                 return bare_calls[:10]
 
         # Split op regels en parse elke "- app: action ..." regel
@@ -863,9 +883,9 @@ Regels:
             }
             if tools:
                 kwargs["tools"] = tools
-                # Eerste turn: forceer tool call zodat het model tools
-                # GEBRUIKT in plaats van ze als JSON tekst te beschrijven.
-                # Na eerste turn: auto (model mag samenvatten of meer tools aanroepen)
+                # Auto: model kiest zelf of tools nodig zijn.
+                # Als het model tool-namen als tekst retourneert i.p.v.
+                # tool_calls API, vangt _parse_text_tool_calls() het op.
                 kwargs["tool_choice"] = "auto"
 
             response = self.client.chat.completions.create(**kwargs)
