@@ -1150,11 +1150,23 @@ Regels:
                         f"   [FALLBACK] {len(parsed_calls)} text tool calls → executing",
                         Kleur.GEEL,
                     ))
+                    # Safety: text-parsed tools alleen read-only acties
+                    _SAFE_PREFIXES = ("get_", "check_", "analyze_", "search",
+                                      "zoek", "stats", "status", "list_",
+                                      "system_scan", "tier_detail", "query_",
+                                      "memory_recall", "immune_report",
+                                      "neural_activity", "vraag")
                     tool_tasks = []
                     fallback_ids = []
                     for tc_name, tc_args in parsed_calls:
                         app_naam, actie_naam = parse_tool_call(tc_name)
                         if app_naam and actie_naam:
+                            if not actie_naam.startswith(_SAFE_PREFIXES):
+                                print(kleur(
+                                    f"   [SKIP] {app_naam}.{actie_naam} (write-actie geblokt)",
+                                    Kleur.GEEL,
+                                ))
+                                continue
                             print(kleur(
                                 f"   [TOOL] {app_naam}.{actie_naam}",
                                 Kleur.CYAAN,
