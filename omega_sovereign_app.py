@@ -452,6 +452,131 @@ def _safe(factory):
         return None
 
 
+def _run_self_diagnostic():
+    """Test alle brain componenten en return status dict."""
+    results = {}
+
+    # ── T1 TRINITY ──
+    for name, path, cls in [
+        ("PrometheusBrain", "danny_toolkit.brain.trinity_omega", "PrometheusBrain"),
+        ("TaskArbitrator", "danny_toolkit.brain.arbitrator", "TaskArbitrator"),
+        ("CorticalStack", "danny_toolkit.brain.cortical_stack", "get_cortical_stack"),
+    ]:
+        try:
+            mod = __import__(path, fromlist=[cls])
+            obj = getattr(mod, cls)
+            if callable(obj) and cls.startswith("get_"):
+                instance = obj()
+            else:
+                instance = obj
+            results[name] = {"status": "OK", "type": type(instance).__name__}
+        except Exception as e:
+            results[name] = {"status": "FOUT", "error": str(e)[:100]}
+
+    # ── T2 GUARDIANS ──
+    for name, path, cls in [
+        ("OmegaGovernor", "danny_toolkit.brain.governor", "OmegaGovernor"),
+        ("HallucinatieSchild", "danny_toolkit.brain.hallucination_shield", "get_hallucination_shield"),
+        ("AdversarialTribunal", "danny_toolkit.brain.adversarial_tribunal", "get_adversarial_tribunal"),
+    ]:
+        try:
+            mod = __import__(path, fromlist=[cls])
+            obj = getattr(mod, cls)
+            instance = obj() if callable(obj) else obj
+            results[name] = {"status": "OK"}
+        except Exception as e:
+            results[name] = {"status": "FOUT", "error": str(e)[:100]}
+
+    # ── T3 SPECIALISTS ──
+    for name, path, cls in [
+        ("Strategist", "danny_toolkit.brain.strategist", "Strategist"),
+        ("VoidWalker", "danny_toolkit.brain.void_walker", "VoidWalker"),
+        ("Artificer", "danny_toolkit.brain.artificer", "Artificer"),
+        ("Dreamer", "danny_toolkit.brain.dreamer", "Dreamer"),
+    ]:
+        try:
+            mod = __import__(path, fromlist=[cls])
+            getattr(mod, cls)
+            results[name] = {"status": "OK"}
+        except Exception as e:
+            results[name] = {"status": "FOUT", "error": str(e)[:100]}
+
+    # ── T4 INFRA ──
+    for name, path, cls in [
+        ("TheSynapse", "danny_toolkit.brain.synapse", "TheSynapse"),
+        ("ThePhantom", "danny_toolkit.brain.phantom", "ThePhantom"),
+        ("OracleEye", "danny_toolkit.brain.oracle_eye", "TheOracleEye"),
+        ("DevOpsDaemon", "danny_toolkit.brain.devops_daemon", "DevOpsDaemon"),
+        ("ModelRegistry", "danny_toolkit.brain.model_sync", "get_model_registry"),
+        ("WaakhuisMonitor", "danny_toolkit.brain.waakhuis", "get_waakhuis"),
+    ]:
+        try:
+            mod = __import__(path, fromlist=[cls])
+            obj = getattr(mod, cls)
+            if callable(obj) and cls.startswith("get_"):
+                instance = obj()
+            results[name] = {"status": "OK"}
+        except Exception as e:
+            results[name] = {"status": "FOUT", "error": str(e)[:100]}
+
+    # ── T5 SINGULARITY ──
+    try:
+        from danny_toolkit.brain.singularity import SingularityEngine
+        results["SingularityEngine"] = {"status": "OK"}
+    except Exception as e:
+        results["SingularityEngine"] = {"status": "FOUT", "error": str(e)[:100]}
+
+    # ── CORE INFRA ──
+    for name, path, cls in [
+        ("SwarmEngine", "danny_toolkit.core.swarm_engine", "SwarmEngine"),
+        ("NeuralBus", "danny_toolkit.core.neural_bus", "get_bus"),
+        ("BlackBox", "danny_toolkit.brain.black_box", "get_black_box"),
+        ("ConfigAuditor", "danny_toolkit.brain.config_auditor", "get_config_auditor"),
+        ("UnifiedMemory", "danny_toolkit.brain.unified_memory", "UnifiedMemory"),
+    ]:
+        try:
+            mod = __import__(path, fromlist=[cls])
+            obj = getattr(mod, cls)
+            if callable(obj) and cls.startswith("get_"):
+                obj()
+            results[name] = {"status": "OK"}
+        except Exception as e:
+            results[name] = {"status": "FOUT", "error": str(e)[:100]}
+
+    # ── OLLAMA (GPU) ──
+    try:
+        import urllib.request
+        resp = urllib.request.urlopen("http://localhost:11434/api/tags", timeout=3)
+        import json as _json
+        models = _json.loads(resp.read()).get("models", [])
+        results["Ollama"] = {"status": "OK", "models": [m["name"] for m in models]}
+    except Exception as e:
+        results["Ollama"] = {"status": "FOUT", "error": str(e)[:100]}
+
+    # ── GROQ API ──
+    try:
+        from danny_toolkit.core.config import Config
+        key = Config.GROQ_API_KEY
+        results["Groq API"] = {"status": "OK" if key else "FOUT", "key_set": bool(key)}
+    except Exception as e:
+        results["Groq API"] = {"status": "FOUT", "error": str(e)[:100]}
+
+    # Samenvatting
+    ok = sum(1 for v in results.values() if v["status"] == "OK")
+    fout = sum(1 for v in results.values() if v["status"] == "FOUT")
+    results["_samenvatting"] = {"totaal": len(results) - 1, "ok": ok, "fout": fout}
+
+    return results
+
+
+_DIAGNOSTIC_KEYWORDS = [
+    "diagnose", "diagnostic", "zelftest", "self-test", "health check",
+    "wat werkt", "welke functies", "niet werkend", "kapot", "stuk",
+    "system check", "status check", "controleer systeem", "check jezelf",
+    "welke modules", "wat is stuk", "wat werkt niet", "systeem status",
+]
+
+
 def _ollama_verify(prompt, timeout=45):
     """Verify via local Ollama — zero latency, no rate limits.
     Tries gemma3:4b first, falls back to llava:latest."""
@@ -849,6 +974,31 @@ class DashboardTab(ctk.CTkFrame):
             # Houd laatste 4 berichten (2 exchanges) voor follow-up context
             if len(brain.conversation_history) > 4:
                 brain.conversation_history[:] = brain.conversation_history[-4:]
+
+            # ── PRE-CHECK: Self-diagnostic als gevraagd ──
+            q_lower = question.lower()
+            diag_data = None
+            if any(kw in q_lower for kw in _DIAGNOSTIC_KEYWORDS):
+                w("\u2126 [D] Diagnostic \u2014 scanning all modules...")
+                diag_data = _run_self_diagnostic()
+                samenv = diag_data.pop("_samenvatting", {})
+                ok_count = samenv.get("ok", 0)
+                fout_count = samenv.get("fout", 0)
+                totaal = samenv.get("totaal", 0)
+                w(f"\u2126 [D] Scan complete: {ok_count}/{totaal} OK, {fout_count} FOUT")
+
+                # Bouw diagnostic context voor de brain
+                diag_lines = [f"SYSTEEM DIAGNOSTIC ({ok_count}/{totaal} modules OK):"]
+                for comp, info in sorted(diag_data.items()):
+                    status = info.get("status", "?")
+                    err = info.get("error", "")
+                    mark = "\u2705" if status == "OK" else "\u274c"
+                    line = f"  {mark} {comp}: {status}"
+                    if err:
+                        line += f" — {err}"
+                    diag_lines.append(line)
+                diag_context = "\n".join(diag_lines)
+                question = f"{question}\n\nHier zijn de ECHTE testresultaten:\n{diag_context}\n\nAnalyseer welke componenten werken en welke niet. Geef details over fouten."
 
             # ── PHASE 1: WILL (Plan + Execute via function calling) ──
             w("\u2126 [W] Will \u2014 planning & executing...")
