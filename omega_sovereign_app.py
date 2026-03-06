@@ -1061,6 +1061,30 @@ class DashboardTab(ctk.CTkFrame):
                 verification = None
                 t_verify = 0
 
+            # ── PHASE 2.5: HALLUCINATIESCHILD ──
+            schild_label = ""
+            if HAS_SCHILD:
+                try:
+                    schild = get_hallucination_shield()
+                    # Bouw pseudo-result list voor schild.beoordeel()
+                    from types import SimpleNamespace
+                    pseudo = SimpleNamespace(
+                        content=response,
+                        type="text",
+                        agent="CentralBrain",
+                        metadata={"source": "wav_loop"},
+                    )
+                    rapport = schild.beoordeel([pseudo], vraag=question)
+                    if rapport.geblokkeerd:
+                        schild_label = f"\u26a0 GEBLOKKEERD (score {rapport.score:.2f})"
+                    elif rapport.waarschuwingen:
+                        schild_label = f"\u26a0 WAARSCHUWING: {', '.join(rapport.waarschuwingen[:2])}"
+                    else:
+                        schild_label = f"\u2705 OK (score {rapport.score:.2f})"
+                except Exception as e:
+                    logger.debug("Schild check error: %s", e)
+                    schild_label = ""
+
             # ── OUTPUT ──
             w("")
             for line in response.strip().split("\n"):
@@ -1074,6 +1098,9 @@ class DashboardTab(ctk.CTkFrame):
                     w(f"  \u2502 {line}")
             else:
                 w("\u2126 [V] Verificatie: (geen respons van Ollama)")
+
+            if schild_label:
+                w(f"\u2126 [S] Schild: {schild_label}")
 
             elapsed = time.time() - t0
             w(f"\n  [WAV: W={t_action:.1f}s V={t_verify:.1f}s | total={elapsed:.1f}s | {len(response)} chars]")
