@@ -7,7 +7,7 @@ Verbindt de "wil" (LLM reasoning) met de "handen"
 gesloten feedback-lus: Will -> Action -> Verification.
 
 Gebruik:
-    from danny_toolkit.core.oracle import OracleAgent
+    from danny_toolkit.brain.oracle import OracleAgent
     agent = OracleAgent()
     agent.run()
 """

@@ -62,7 +62,7 @@ Sets the governor, oracle, and repair log to their initial states:
     def oracle(self):
         """Lazy OracleAgent (voor LLM fallback)."""
         if self._oracle is None:
-            from danny_toolkit.core.oracle import OracleAgent
+            from danny_toolkit.brain.oracle import OracleAgent
             self._oracle = OracleAgent(persist=False)
         return self._oracle
 
@@ -694,7 +694,7 @@ Sets the governor, oracle, and repair log to their initial states:
         Returns:
             dict met stap, resultaat, geslaagd, detail.
         """
-        from danny_toolkit.core.oracle import ACTIE_DISPATCH
+        from danny_toolkit.brain.oracle import ACTIE_DISPATCH
 
         handler = ACTIE_DISPATCH.get(actie)
         if not handler:

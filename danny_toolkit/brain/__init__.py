@@ -54,6 +54,8 @@ try:
     from .claude_memory import ClaudeMemory, get_claude_memory
     from .observatory_sync import ObservatorySync, get_observatory_sync
     from .agent_factory import AgentFactory, get_agent_factory
+    from .oracle import OracleAgent
+    from .ultimate_hunt import UltimateHunt, HuntStatus, HuntAnimator
 except ImportError:
     pass
 
@@ -104,6 +106,8 @@ __all__ = [
     "AgentFactory", "get_agent_factory",
     # Phase 43: Claude Memory
     "ClaudeMemory", "get_claude_memory",
+    # Fase C.3: Agents (moved from /core/)
+    "OracleAgent", "UltimateHunt", "HuntStatus", "HuntAnimator",
     # Anti-Hallucination
     "CitationMarshall", "RealityAnchor", "TruthAnchor",
     # Subsystems
@@ -113,5 +117,5 @@ __all__ = [
     "ProjectMap",
 ]
 
-__version__ = "6.7.0"
+__version__ = "6.8.0"
 __author__ = "Danny"

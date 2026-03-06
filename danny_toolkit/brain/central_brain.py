@@ -405,19 +405,34 @@ class CentralBrain:
         context = self._build_context()
 
         # System message
-        system_message = f"""Je bent Danny's Central Brain - een AI assistent die alle apps in de toolkit kan aansturen.
+        system_message = f"""Je bent Danny's Central Brain — de kern-AI van het OMEGA SOVEREIGN CORE ecosysteem.
+Dit is een 176-module AI-netwerk (48K regels code) gebouwd door Commandant Danny.
+
+ARCHITECTUUR (Cortex Knowledge Core — 5 Tiers):
+- T1 TRINITY: PrometheusBrain (leider), Oracle (WAV-loop), TaskArbitrator (generaal)
+- T2 GUARDIANS: OmegaGovernor (safety), Tribunal (dual-model verify), HallucinatieSchild (anti-hallucination)
+- T3 SPECIALISTS: Strategist (planner), VoidWalker (researcher), Artificer (skill forge), Dreamer (overnight REM)
+- T4 INFRA: TheSynapse (adaptive routing), ThePhantom (prediction), OracleEye (scaling), DevOpsDaemon (CI)
+- T5 SINGULARITY: SingularityEngine (bewustzijn, reflectie, cross-tier synthese)
+
+SUBSYSTEMEN: SwarmEngine (orchestrator), NeuralBus (pub/sub events), CorticalStack (episodic memory),
+BlackBox (immune/negative RAG), VirtualTwin (sandboxed clone), ModelRegistry (multi-model auction).
 
 Je hebt toegang tot {len(self.app_registry)} apps via function calling.
-Gebruik de juiste tools om taken uit te voeren.
+
+KRITIEKE REGEL: Gebruik ALTIJD de function calling API om tools aan te roepen.
+Beschrijf NOOIT een tool call als JSON tekst — voer hem UIT via de tool_calls interface.
+Als je meerdere tools wilt aanroepen, maak dan meerdere tool_calls in één response.
 
 Context over de gebruiker:
 {json.dumps(context, ensure_ascii=False, indent=2)}
 
-Belangrijke regels:
+Regels:
 1. Antwoord altijd in het Nederlands
-2. Gebruik tools om acties uit te voeren, niet alleen om informatie te geven
-3. Wees proactief - als je ziet dat iets relevant is, meld het
-4. Combineer informatie uit meerdere apps voor een compleet antwoord"""
+2. VOER tools UIT — toon geen JSON, geen namen, geen beschrijvingen van calls
+3. Bij "test jezelf" of "controleer": roep minstens 5 tools aan (fitness_tracker_get_stats, mood_tracker_get_stats, goals_tracker_get_goals, expense_tracker_get_stats, agenda_planner_vandaag) en rapporteer de WERKELIJKE resultaten
+4. Combineer informatie uit meerdere apps voor een compleet antwoord
+5. Als de gebruiker vraagt over de architectuur, T1-T5 tiers, Cortex, of Omega — beantwoord uit bovenstaande kennis"""
 
         # Voeg user message toe aan history
         with self._history_lock:
@@ -459,6 +474,135 @@ Belangrijke regels:
             "429", "rate_limit", "rate limit", "too many requests",
             "resource_exhausted", "quota",
         ])
+
+    def _parse_text_tool_calls(self, text: str):
+        """Detecteer en parse tool calls die als tekst zijn beschreven.
+
+        Herkent patronen zoals:
+          tool_calls:
+          - tool_name: action
+          - tool_name: action key=value key2=value2
+
+        Returns:
+            list van (tool_name, args_dict) tuples, of lege lijst.
+        """
+        import re
+        if "tool_call" not in text.lower():
+            return []
+
+        calls = []
+
+        # Split op regels en parse elke "- app: action ..." regel
+        for line in text.split("\n"):
+            line = line.strip()
+            m = re.match(r"^-\s+(\w+):\s+(\w+)(.*)", line)
+            if not m:
+                continue
+            app = m.group(1)
+            action = m.group(2)
+            extra = m.group(3).strip()
+            tool_name = f"{app}_{action}"
+
+            # Parse key=value args
+            args = {}
+            if extra:
+                # Match key="value" of key=value
+                for kv in re.finditer(r'(\w+)=(?:"([^"]*)"|\'([^\']*)\'|(\S+))', extra):
+                    key = kv.group(1)
+                    val = kv.group(2) or kv.group(3) or kv.group(4) or ""
+                    args[key] = val
+
+            calls.append((tool_name, args))
+
+        # Fallback: JSON-style tool descriptions
+        if not calls:
+            # Try parsing JSON array: [{"name": "tool", "arguments": {...}}, ...]
+            start = text.find("[")
+            end = text.rfind("]")
+            if start != -1 and end > start:
+                try:
+                    arr = json.loads(text[start:end + 1])
+                    if isinstance(arr, list):
+                        for item in arr:
+                            if isinstance(item, dict) and "name" in item:
+                                name = item["name"]
+                                args = item.get("arguments", item.get("function_args", {}))
+                                if isinstance(args, dict):
+                                    # Fix: als "action" in args zit, combineer naam+action
+                                    # bijv. name="fitness_tracker" + action="get_status"
+                                    # -> "fitness_tracker_get_status"
+                                    action_in_args = args.pop("action", None)
+                                    if action_in_args and "_" not in name[name.find("_")+1:]:
+                                        # naam bevat geen actie-deel, voeg toe
+                                        combined = f"{name}_{action_in_args}"
+                                        calls.append((combined, args))
+                                    else:
+                                        calls.append((name, args))
+                except (json.JSONDecodeError, TypeError):
+                    pass
+
+        # Fallback 2: {"function_name": "...", "function_args": {...}} patterns
+        if not calls:
+            for pattern_key in [("function_name", "function_args"), ("name", "arguments")]:
+                fn_key, arg_key = pattern_key
+                json_pattern = re.compile(
+                    rf'"{fn_key}"\s*:\s*"(\w+)".*?"{arg_key}"\s*:\s*(\{{[^}}]*\}})',
+                    re.DOTALL,
+                )
+                for match in json_pattern.finditer(text):
+                    tool_name = match.group(1)
+                    try:
+                        args = json.loads(match.group(2))
+                    except json.JSONDecodeError:
+                        args = {}
+                    calls.append((tool_name, args))
+                if calls:
+                    break
+
+        # Fix tool names: fuzzy-match tegen bekende tools
+        if calls:
+            from danny_toolkit.brain.app_tools import APP_TOOLS
+            fixed = []
+            for name, args in calls:
+                app_naam, actie_naam = parse_tool_call(name)
+                if app_naam:
+                    fixed.append((name, args))
+                    continue
+                # Probeer app-deel te matchen en closest actie te vinden
+                best = None
+                for ak, ad in APP_TOOLS.items():
+                    if name.startswith(ak):
+                        rest = name[len(ak):].lstrip("_")
+                        for actie in ad.acties:
+                            if rest == actie.naam or rest.replace("status", "stats") == actie.naam:
+                                best = f"{ak}_{actie.naam}"
+                                break
+                        if not best:
+                            # Zoek een "get_" actie als fallback (meest veilig)
+                            for actie in ad.acties:
+                                if actie.naam.startswith("get_"):
+                                    best = f"{ak}_{actie.naam}"
+                                    break
+                            if not best:
+                                best = f"{ak}_{ad.acties[0].naam}"
+                        break
+                    elif ak.startswith(name.split("_")[0]):
+                        # Partial match op app naam
+                        for actie in ad.acties:
+                            candidate = f"{ak}_{actie.naam}"
+                            if name.replace("status", "stats") in candidate or actie.naam in name:
+                                best = candidate
+                                break
+                        if best:
+                            break
+                if best:
+                    logger.info("Tool name fix: %s -> %s", name, best)
+                    fixed.append((best, args))
+                else:
+                    fixed.append((name, args))
+            calls = fixed
+
+        return calls[:10]  # Max 10 om runaway te voorkomen
 
     def _build_openai_tools(self):
         """Converteer tool definitions naar OpenAI function-calling format."""
@@ -675,11 +819,22 @@ Belangrijke regels:
             }
             if tools:
                 kwargs["tools"] = tools
-                kwargs["tool_choice"] = "auto"
+                # Eerste turn: forceer tool call zodat het model tools
+                # GEBRUIKT in plaats van ze als JSON tekst te beschrijven.
+                # Na eerste turn: auto (model mag samenvatten of meer tools aanroepen)
+                kwargs["tool_choice"] = "required" if turn == 0 else "auto"
 
             response = self.client.chat.completions.create(**kwargs)
             choice = response.choices[0]
             message = choice.message
+
+            # Debug: log of het model echte tool_calls retourneert
+            logger.info(
+                "Groq turn %d: finish=%s, tool_calls=%s, content_len=%d",
+                turn, choice.finish_reason,
+                len(message.tool_calls) if message.tool_calls else 0,
+                len(message.content or ""),
+            )
 
             if message.tool_calls:
                 # Voeg assistant message toe aan lokale messages
@@ -746,8 +901,60 @@ Belangrijke regels:
                             )[:5000]
                         })
             else:
-                # Geen tool calls — finaal antwoord
-                return (message.content or "", turns_used)
+                content_text = message.content or ""
+                # Detecteer tekst-beschreven tool calls die niet via API kwamen
+                parsed_calls = self._parse_text_tool_calls(content_text)
+                if parsed_calls and turn < remaining_turns - 1:
+                    # Model beschreef tools als tekst — voer ze alsnog uit
+                    logger.info("Fallback: %d text-described tool calls detected, executing",
+                                len(parsed_calls))
+                    print(kleur(
+                        f"   [FALLBACK] {len(parsed_calls)} text tool calls → executing",
+                        Kleur.GEEL,
+                    ))
+                    tool_tasks = []
+                    fallback_ids = []
+                    for tc_name, tc_args in parsed_calls:
+                        app_naam, actie_naam = parse_tool_call(tc_name)
+                        if app_naam and actie_naam:
+                            print(kleur(
+                                f"   [TOOL] {app_naam}.{actie_naam}",
+                                Kleur.CYAAN,
+                            ))
+                            tool_tasks.append(
+                                self._execute_app_action(app_naam, actie_naam, tc_args)
+                            )
+                            fallback_ids.append(f"{app_naam}.{actie_naam}")
+
+                    if tool_tasks:
+                        results = asyncio.run(
+                            asyncio.gather(*tool_tasks, return_exceptions=True)
+                        )
+                        # Bouw samenvattend antwoord van tool resultaten
+                        summary_parts = []
+                        for tid, result in zip(fallback_ids, results):
+                            if isinstance(result, BaseException):
+                                summary_parts.append(f"{tid}: ERROR - {result}")
+                            else:
+                                result_str = json.dumps(result, ensure_ascii=False, default=str)[:500]
+                                summary_parts.append(f"{tid}: {result_str}")
+
+                        # Laat model samenvatten
+                        messages.append({"role": "assistant", "content": content_text})
+                        messages.append({
+                            "role": "user",
+                            "content": (
+                                "De tools zijn uitgevoerd. Hier zijn de resultaten:\n\n"
+                                + "\n".join(summary_parts)
+                                + "\n\nVat de resultaten samen in een helder antwoord."
+                            ),
+                        })
+                        continue  # Volgende turn — model vat samen
+                    # Geen geldige tools gevonden, return tekst
+                    return (content_text, turns_used)
+                else:
+                    # Echt finaal antwoord (geen tool beschrijvingen)
+                    return (content_text, turns_used)
 
         # Turns uitgeput zonder finaal antwoord
         return (None, turns_used)

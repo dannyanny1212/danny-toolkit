@@ -160,10 +160,269 @@ except ImportError:
     HAS_LIMBIC = False
 
 
+# ── REALTIME DATA CACHE (background thread fills, UI reads) ──────
+
+class _DataCache:
+    """Thread-safe cache — background fetcher writes, UI reads instantly."""
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._data = {}
+        self._running = False
+        self._thread = None
+
+    def get(self, key, default=None):
+        with self._lock:
+            return self._data.get(key, default)
+
+    def put(self, key, value):
+        with self._lock:
+            self._data[key] = value
+
+    def start(self, interval=1.0):
+        if self._running:
+            return
+        self._running = True
+        self._thread = threading.Thread(target=self._loop, args=(interval,), daemon=True)
+        self._thread.start()
+
+    def stop(self):
+        self._running = False
+
+    def _loop(self, interval):
+        while self._running:
+            t0 = time.time()
+            try:
+                self._fetch_all()
+            except Exception as e:
+                logger.debug("DataCache fetch error: %s", e)
+            elapsed = time.time() - t0
+            sleep_time = max(0.1, interval - elapsed)
+            time.sleep(sleep_time)
+
+    def _fetch_all(self):
+        """Fetch all data sources in background — UI never blocks."""
+        # System metrics
+        if HAS_PSUTIL:
+            self.put("cpu", psutil.cpu_percent(interval=0.05))
+            self.put("ram", psutil.virtual_memory().percent)
+
+        # Engine stats
+        eng_tuple = _load_engine()
+        eng = eng_tuple[0] if eng_tuple else None
+        if eng:
+            try:
+                self.put("engine_stats", eng.get_stats())
+            except Exception:
+                pass
+            try:
+                self.put("swarm_metrics", dict(eng._swarm_metrics))
+            except Exception:
+                pass
+
+        # Waakhuis
+        if HAS_WAAKHUIS:
+            try:
+                wh = get_waakhuis()
+                self.put("waakhuis_rapport", wh.gezondheidsrapport())
+                self.put("hardware_status", wh.hardware_status())
+            except Exception:
+                pass
+
+        # NeuralBus
+        if HAS_BUS:
+            try:
+                bus = get_bus()
+                self.put("bus_stats", bus.statistieken())
+                self.put("bus_stream", bus.get_context_stream(count=15))
+                with bus._lock:
+                    types = list(bus._history.keys())
+                counts = []
+                for et in types[:20]:
+                    counts.append(len(bus.get_history(et, count=100)))
+                self.put("bus_event_counts", counts)
+            except Exception:
+                pass
+
+        # CorticalStack
+        if HAS_CORTICAL:
+            try:
+                stack = get_cortical_stack()
+                self.put("cortical_events", stack.get_recent_events(count=25))
+                self.put("cortical_db_metrics", stack.get_db_metrics())
+                self.put("cortical_stats", stack.get_stats())
+                self.put("cortical_facts", stack.recall_all())
+            except Exception:
+                pass
+
+        # BlackBox
+        if HAS_BLACKBOX:
+            try:
+                bb = get_black_box()
+                self.put("blackbox_stats", bb.get_stats())
+                self.put("blackbox_antibodies", bb.get_antibodies())
+            except Exception:
+                pass
+
+        # Shield
+        if HAS_SCHILD:
+            try:
+                self.put("shield_stats", get_hallucination_shield().get_stats())
+            except Exception:
+                pass
+
+        # Tribunal
+        if HAS_TRIBUNAL:
+            try:
+                self.put("tribunal_stats", get_adversarial_tribunal().get_stats())
+            except Exception:
+                pass
+
+        # Key Manager
+        if HAS_KEY_MANAGER:
+            try:
+                km = SmartKeyManager()
+                now = time.time()
+                key_data = {"count": len(km._keys)}
+                agents = {}
+                with km._metrics_lock:
+                    for name, a in km._agents.items():
+                        rpm = sum(1 for ts in a.request_timestamps if now - ts < 60)
+                        agents[name] = {
+                            "req": a.totaal_requests, "tok": a.totaal_tokens,
+                            "rpm": rpm, "429s": a.totaal_429s,
+                            "tpm": a.tokens_deze_minuut,
+                        }
+                    key_data["agents"] = agents
+                    key_data["rpm_total"] = sum(a["rpm"] for a in agents.values())
+                    key_data["tpm_total"] = sum(a["tpm"] for a in agents.values())
+                try:
+                    key_data["cooldown"] = km.get_agents_in_cooldown()
+                except Exception:
+                    key_data["cooldown"] = set()
+                rpm_limit = getattr(km, 'RPM_LIMIT', 30) * max(1, len(km._keys))
+                tpm_limit = getattr(km, 'TPM_LIMIT', 30000) * max(1, len(km._keys))
+                key_data["rpm_limit"] = rpm_limit
+                key_data["tpm_limit"] = tpm_limit
+                self.put("key_data", key_data)
+            except Exception:
+                pass
+
+        # Circuit breakers
+        if eng:
+            try:
+                from swarm_engine import get_circuit_state
+                self.put("circuit_state", get_circuit_state())
+            except Exception:
+                pass
+
+        # GPU
+        try:
+            from danny_toolkit.core.vram_manager import vram_rapport
+            self.put("vram", vram_rapport())
+        except Exception:
+            pass
+
+        # Model Registry
+        if HAS_MODELS:
+            try:
+                reg = get_model_registry()
+                self.put("model_stats", reg.get_stats())
+                self.put("model_workers", reg.get_all_workers())
+            except Exception:
+                pass
+
+        # Observatory
+        if HAS_OBSERVATORY:
+            try:
+                obs = get_observatory_sync()
+                self.put("leaderboard", obs.get_model_leaderboard())
+                self.put("cost_analysis", obs.get_cost_analysis())
+            except Exception:
+                pass
+
+        # Brain: Synapse
+        try:
+            if not hasattr(self, '_synapse'):
+                from danny_toolkit.brain.synapse import TheSynapse
+                self._synapse = TheSynapse()
+            syn = self._synapse
+            self.put("synapse_stats", syn.get_stats())
+            self.put("synapse_pathways", syn.get_top_pathways(limit=10))
+        except Exception:
+            pass
+
+        # Brain: Phantom
+        try:
+            if not hasattr(self, '_phantom'):
+                from danny_toolkit.brain.phantom import ThePhantom
+                self._phantom = ThePhantom()
+            self.put("phantom_accuracy", self._phantom.get_accuracy())
+            self.put("phantom_predictions", self._phantom.get_predictions(max_results=5))
+        except Exception:
+            pass
+
+        # Brain: Singularity
+        try:
+            if not hasattr(self, '_singularity'):
+                from danny_toolkit.brain.singularity import SingularityEngine
+                self._singularity = SingularityEngine()
+            self.put("singularity_status", self._singularity.get_status())
+        except Exception:
+            pass
+
+        # Brain: Introspector
+        if HAS_INTROSPECTOR:
+            try:
+                self.put("introspector_report", get_introspector().get_health_report())
+            except Exception:
+                pass
+
+        # Immune: Governor
+        try:
+            if not hasattr(self, '_governor'):
+                from danny_toolkit.brain.governor import OmegaGovernor
+                self._governor = OmegaGovernor()
+            self.put("governor_health", self._governor.get_health_report())
+        except Exception:
+            pass
+
+        # Config Auditor
+        try:
+            from danny_toolkit.brain.config_auditor import get_config_auditor
+            self.put("config_audit", get_config_auditor().audit())
+        except Exception:
+            pass
+
+
+_cache = _DataCache()
+
+
 # ── LAZY LOADERS ─────────────────────────────────────────────────
 
 _engine_cache = None
 _engine_lock = threading.Lock()
+
+_brain_cache = None
+_brain_lock = threading.Lock()
+
+
+def _load_brain():
+    global _brain_cache
+    if _brain_cache is not None:
+        return _brain_cache
+    with _brain_lock:
+        if _brain_cache is not None:
+            return _brain_cache
+        try:
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                from danny_toolkit.brain.central_brain import CentralBrain
+                _brain_cache = CentralBrain()
+        except Exception as e:
+            logger.debug("CentralBrain load fail: %s", e)
+            _brain_cache = None
+    return _brain_cache
 
 
 def _load_engine():
@@ -191,6 +450,32 @@ def _safe(factory):
         return factory()
     except Exception:
         return None
+
+
+def _ollama_verify(prompt, timeout=45):
+    """Verify via local Ollama — zero latency, no rate limits.
+    Tries gemma3:4b first, falls back to llava:latest."""
+    import json
+    import urllib.request
+    for model in ("gemma3:4b", "llava:latest"):
+        try:
+            url = "http://localhost:11434/api/generate"
+            data = json.dumps({
+                "model": model,
+                "prompt": prompt,
+                "stream": False,
+                "keep_alive": "10m",
+                "options": {"num_predict": 20},
+            }).encode()
+            req = urllib.request.Request(url, data, {"Content-Type": "application/json"})
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                result = json.loads(resp.read()).get("response", "")
+                if result and result.strip():
+                    return result
+        except Exception as e:
+            logger.warning("Ollama verify failed (%s): %s", model, e)
+            continue
+    return None
 
 
 # ── HELPER: chart in tk.Frame (avoid CTk _canvas conflict) ──────
@@ -265,70 +550,82 @@ class DashboardTab(ctk.CTkFrame):
         self.grid_rowconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
 
-        # Left: Vanguard + OmegaTerminal
-        left = ctk.CTkFrame(self, fg_color="transparent")
-        left.grid(row=0, column=0, rowspan=2, sticky="nsew", padx=(0, 4))
-        left.grid_rowconfigure(0, weight=1)
-        left.grid_rowconfigure(1, weight=1)
-        self.vanguard = self._build_vanguard(left)
-        self.vanguard.grid(row=0, column=0, sticky="nsew", pady=(0, 4))
-        self.omega_term = self._build_omega_terminal(left)
-        self.omega_term.grid(row=1, column=0, sticky="nsew", pady=(4, 0))
+        # Left: Vanguard (full height)
+        self.vanguard = self._build_vanguard(self)
+        self.vanguard.grid(row=0, column=0, rowspan=2, sticky="nsew", padx=(0, 4))
 
-        # Center: Cortex
+        # Center top: Cortex Knowledge Core
         self.cortex_panel = NeonPanel(self, "\U0001f9e0 Cortex Knowledge Core")
-        self.cortex_panel.grid(row=0, column=1, rowspan=2, sticky="nsew", padx=4)
+        self.cortex_panel.grid(row=0, column=1, sticky="nsew", padx=4, pady=(0, 4))
         self._cortex_fig, self._cortex_ax, self._cortex_cv = _make_chart(
-            self.cortex_panel.content, figsize=(5, 4))
+            self.cortex_panel.content, figsize=(5, 3))
         self._draw_cortex()
+
+        # Center bottom: Omega Terminal
+        self.omega_term = self._build_omega_terminal(self)
+        self.omega_term.grid(row=1, column=1, sticky="nsew", padx=4, pady=(4, 0))
 
         # Right: Pulse + Fuel + Listener
         right = ctk.CTkFrame(self, fg_color="transparent")
         right.grid(row=0, column=2, rowspan=2, sticky="nsew", padx=(4, 0))
-        right.grid_rowconfigure(0, weight=1)
-        right.grid_rowconfigure(1, weight=1)
-        right.grid_rowconfigure(2, weight=1)
+        for ri in range(6):
+            right.grid_rowconfigure(ri, weight=1)
 
+        # Row 0: Pulse Protocol
         self.pulse_panel = NeonPanel(right, "\u2764 Pulse Protocol")
-        self.pulse_panel.grid(row=0, column=0, sticky="nsew", pady=(0, 4))
+        self.pulse_panel.grid(row=0, column=0, sticky="nsew", pady=(0, 2))
         self._pulse_fig, self._pulse_ax, self._pulse_cv = _make_chart(
-            self.pulse_panel.content, figsize=(3.2, 1.6))
+            self.pulse_panel.content, figsize=(3.2, 1.2))
         self._pulse_samples = deque(maxlen=60)
         self._pulse_metrics = ctk.CTkFrame(self.pulse_panel.content, fg_color="transparent")
         self._pulse_metrics.pack(fill="x", padx=4)
         self._cpu_lbl = ctk.CTkLabel(self._pulse_metrics, text="CPU: --%",
-                                      font=FONT_MONO_SM, text_color=NEON_GREEN)
-        self._cpu_lbl.pack(side="left", padx=6)
+                                      font=FONT_MONO_XS, text_color=NEON_GREEN)
+        self._cpu_lbl.pack(side="left", padx=4)
         self._ram_lbl = ctk.CTkLabel(self._pulse_metrics, text="RAM: --%",
-                                      font=FONT_MONO_SM, text_color=NEON_CYAN)
-        self._ram_lbl.pack(side="right", padx=6)
+                                      font=FONT_MONO_XS, text_color=NEON_CYAN)
+        self._ram_lbl.pack(side="right", padx=4)
 
+        # Row 1: API Fuel Gauge
         self.fuel_panel = NeonPanel(right, "\u26fd API Fuel Gauge")
-        self.fuel_panel.grid(row=1, column=0, sticky="nsew", pady=4)
+        self.fuel_panel.grid(row=1, column=0, sticky="nsew", pady=2)
         self._fuel_fig, self._fuel_ax, self._fuel_cv = _make_chart(
-            self.fuel_panel.content, figsize=(3.2, 2.0),
+            self.fuel_panel.content, figsize=(3.2, 1.4),
             subplot_kw={"projection": "polar"})
         self._fuel_metrics = ctk.CTkFrame(self.fuel_panel.content, fg_color="transparent")
         self._fuel_metrics.pack(fill="x", padx=4)
         self._rpm_lbl = ctk.CTkLabel(self._fuel_metrics, text="RPM: 0/30",
-                                      font=FONT_MONO_SM, text_color=NEON_CYAN)
-        self._rpm_lbl.pack(side="left", padx=6)
+                                      font=FONT_MONO_XS, text_color=NEON_CYAN)
+        self._rpm_lbl.pack(side="left", padx=4)
         self._tpm_lbl = ctk.CTkLabel(self._fuel_metrics, text="TPM: 0/30K",
-                                      font=FONT_MONO_SM, text_color=NEON_CYAN)
-        self._tpm_lbl.pack(side="right", padx=6)
+                                      font=FONT_MONO_XS, text_color=NEON_CYAN)
+        self._tpm_lbl.pack(side="right", padx=4)
 
+        # Row 2: The Listener
         self.listener_panel = NeonPanel(right, "\U0001f3a7 The Listener")
-        self.listener_panel.grid(row=2, column=0, sticky="nsew", pady=(4, 0))
+        self.listener_panel.grid(row=2, column=0, sticky="nsew", pady=2)
         self._list_fig, self._list_ax, self._list_cv = _make_chart(
-            self.listener_panel.content, figsize=(3.2, 1.6))
+            self.listener_panel.content, figsize=(3.2, 1.0))
         self._list_metrics = ctk.CTkFrame(self.listener_panel.content, fg_color="transparent")
         self._list_metrics.pack(fill="x", padx=4)
         self._ev_lbl = ctk.CTkLabel(self._list_metrics, text="Events: 0",
-                                     font=FONT_MONO_SM, text_color=NEON_CYAN)
-        self._ev_lbl.pack(side="left", padx=6)
+                                     font=FONT_MONO_XS, text_color=NEON_CYAN)
+        self._ev_lbl.pack(side="left", padx=4)
         self._sub_lbl = ctk.CTkLabel(self._list_metrics, text="Subs: 0",
-                                      font=FONT_MONO_SM, text_color=NEON_CYAN)
-        self._sub_lbl.pack(side="right", padx=6)
+                                      font=FONT_MONO_XS, text_color=NEON_CYAN)
+        self._sub_lbl.pack(side="right", padx=4)
+
+        # Row 3: Recent Events (from Memory tab)
+        self._mini_events = InfoPanel(right, "\U0001f4dc Recent Events")
+        self._mini_events.grid(row=3, column=0, sticky="nsew", pady=2)
+
+        # Row 4: Circuit Breakers (from Agents tab)
+        self._mini_circuits = InfoPanel(right, "\u26a1 Circuit Breakers")
+        self._mini_circuits.grid(row=4, column=0, sticky="nsew", pady=2)
+
+        # Row 5: Immune Status (from Immune tab)
+        self._mini_immune = InfoPanel(right, "\U0001f6e1 Immune Status")
+        self._mini_immune.grid(row=5, column=0, sticky="nsew", pady=(2, 0))
 
     # ── Vanguard ──
     def _build_vanguard(self, parent):
@@ -342,18 +639,14 @@ class DashboardTab(ctk.CTkFrame):
         ax.clear()
         data = []
         eng = _load_engine()[0]
-        wh = _safe(get_waakhuis) if HAS_WAAKHUIS else None
+        rapport = _cache.get("waakhuis_rapport", {})
         if eng and hasattr(eng, "agents"):
             for name in eng.agents:
                 h, s = 100, "ok"
-                if wh:
-                    try:
-                        info = wh.gezondheidsrapport().get("agents", {}).get(name, {})
-                        if info:
-                            h = info.get("gezondheid", 100)
-                            s = "dead" if h < 30 else ("warn" if h < 70 else "ok")
-                    except Exception:
-                        pass
+                info = rapport.get("agents", {}).get(name, {})
+                if info:
+                    h = info.get("score", 100)
+                    s = "dead" if h < 30 else ("warn" if h < 70 else "ok")
                 data.append((name, h, s))
         if not data:
             data = [("NO_LIVE_DATA", 0, "dead")]
@@ -381,8 +674,11 @@ class DashboardTab(ctk.CTkFrame):
             font=FONT_MONO_SM, border_color=BORDER, border_width=1,
             corner_radius=4, wrap="word", state="disabled")
         self._ot_text.pack(fill="both", expand=True, padx=4, pady=(0, 4))
-        self._ot_write("\u2126 OMEGA SOVEREIGN CORE v2.0")
-        self._ot_write("Commands: status, agents, health, metrics, bus, events, keys, cortical, clear, help\n")
+        self._ot_write("\u2126 OMEGA SOVEREIGN CORE v2.0 \u2014 176 modules | 48K lines")
+        self._ot_write("Commands: status, agents, health, metrics, bus, events,")
+        self._ot_write("          keys, cortical, apps, brain, immune, rag, clear")
+        self._ot_write("WAV-Loop: Will \u2192 Action \u2192 Verify (86 tools)")
+        self._ot_write("Type any question \u2014 Oracle WAV will execute.\n")
         inp_frame = ctk.CTkFrame(panel.content, fg_color="transparent")
         inp_frame.pack(fill="x", padx=4, pady=(0, 2))
         ctk.CTkLabel(inp_frame, text="\u2126 >", font=("Consolas", 11, "bold"),
@@ -390,7 +686,7 @@ class DashboardTab(ctk.CTkFrame):
         self._ot_entry = ctk.CTkEntry(
             inp_frame, fg_color=BG_CARD, text_color=NEON_GREEN,
             font=FONT_MONO_SM, border_color=BORDER, border_width=1,
-            placeholder_text="Enter command...", placeholder_text_color=TEXT_DIM)
+            placeholder_text="Command or question...", placeholder_text_color=TEXT_DIM)
         self._ot_entry.pack(side="left", fill="x", expand=True, padx=(0, 4))
         self._ot_entry.bind("<Return>", self._ot_on_enter)
         return panel
@@ -407,15 +703,29 @@ class DashboardTab(ctk.CTkFrame):
             return
         self._ot_entry.delete(0, "end")
         self._ot_write(f"\u2126 > {cmd}")
-        self._ot_dispatch(cmd.lower())
-        self._ot_write("")
+        known = {"help", "clear", "status", "agents", "health",
+                 "metrics", "bus", "events", "keys", "cortical",
+                 "apps", "brain", "immune", "rag"}
+        if cmd.lower() in known:
+            self._ot_dispatch(cmd.lower())
+            self._ot_write("")
+        else:
+            # Free-text question → WAV-Loop via background thread
+            self._ot_write("\u2126 WAV-Loop activating...")
+            self._ot_entry.configure(state="disabled")
+            threading.Thread(target=self._ot_ask_brain, args=(cmd,), daemon=True).start()
 
     def _ot_dispatch(self, cmd):
         eng = _load_engine()[0]
         if cmd == "help":
-            for c in ["status", "agents", "health", "metrics",
-                       "bus", "events", "keys", "cortical", "clear"]:
-                self._ot_write(f"  {c}")
+            self._ot_write("  System commands:")
+            for c in ["status", "agents", "health", "metrics", "bus",
+                       "events", "keys", "cortical", "apps", "brain",
+                       "immune", "rag", "clear"]:
+                self._ot_write(f"    {c}")
+            self._ot_write("\n  AI mode (86 tools):")
+            self._ot_write("    Just type any question or command in natural language.")
+            self._ot_write("    The AI has access to all 31 apps + brain agents.")
         elif cmd == "clear":
             self._ot_text.configure(state="normal")
             self._ot_text.delete("1.0", "end")
@@ -439,7 +749,7 @@ class DashboardTab(ctk.CTkFrame):
             wh = _safe(get_waakhuis) if HAS_WAAKHUIS else None
             if wh:
                 for n, i in wh.gezondheidsrapport().get("agents", {}).items():
-                    self._ot_write(f"  {n}: {i.get('gezondheid', '?')}%")
+                    self._ot_write(f"  {n}: {i.get('score', '?')}%")
             else:
                 self._ot_write("Waakhuis unavailable")
         elif cmd == "metrics":
@@ -467,8 +777,127 @@ class DashboardTab(ctk.CTkFrame):
             if HAS_CORTICAL:
                 for k, v in get_cortical_stack().get_db_metrics().items():
                     self._ot_write(f"  {k}: {v}")
-        else:
-            self._ot_write(f"Unknown: '{cmd}'")
+        elif cmd == "apps":
+            if eng and hasattr(eng, "app_registry"):
+                apps = sorted(eng.app_registry.keys()) if hasattr(eng.app_registry, "keys") else []
+                self._ot_write(f"  Registered apps: {len(apps)}")
+                for a in apps:
+                    self._ot_write(f"    {a}")
+            else:
+                try:
+                    from danny_toolkit.brain.app_tools import TOOL_DEFINITIONS
+                    self._ot_write(f"  Available tools: {len(TOOL_DEFINITIONS)}")
+                    for td in TOOL_DEFINITIONS[:15]:
+                        name = td.get("function", {}).get("name", "?")
+                        self._ot_write(f"    {name}")
+                    if len(TOOL_DEFINITIONS) > 15:
+                        self._ot_write(f"    ... and {len(TOOL_DEFINITIONS) - 15} more")
+                except Exception:
+                    self._ot_write("  App registry not available")
+        elif cmd == "brain":
+            brain = _brain_cache
+            if brain:
+                self._ot_write(f"  CentralBrain: ACTIVE")
+                tools = getattr(brain, '_tools', getattr(brain, 'tools', []))
+                self._ot_write(f"  Tools loaded: {len(tools)}")
+                self._ot_write(f"  Provider: {getattr(brain, 'provider', '?')}")
+                self._ot_write(f"  Model: {getattr(brain, 'model', '?')}")
+            else:
+                self._ot_write("  CentralBrain: NOT LOADED")
+        elif cmd == "immune":
+            if HAS_BLACKBOX:
+                try:
+                    bb = get_black_box()
+                    stats = bb.get_stats()
+                    self._ot_write(f"  BlackBox: {stats.get('total_antibodies', 0)} antibodies")
+                except Exception:
+                    self._ot_write("  BlackBox: error")
+            if HAS_SCHILD:
+                try:
+                    schild = get_hallucination_shield()
+                    stats = schild.get_stats()
+                    self._ot_write(f"  Shield: {stats.get('checks', 0)} checks, {stats.get('blocked', 0)} blocked")
+                except Exception:
+                    self._ot_write("  Shield: error")
+            if HAS_TRIBUNAL:
+                try:
+                    trib = get_adversarial_tribunal()
+                    stats = trib.get_stats()
+                    self._ot_write(f"  Tribunal: {stats.get('verdicts', stats.get('total', 0))} verdicts")
+                except Exception:
+                    self._ot_write("  Tribunal: error")
+        elif cmd == "rag":
+            try:
+                from danny_toolkit.core.vector_store import VectorStore
+                vs = VectorStore()
+                stats = vs.get_stats()
+                for k, v in stats.items():
+                    self._ot_write(f"  {k}: {v}")
+            except Exception as e:
+                self._ot_write(f"  VectorStore: {e}")
+
+    def _ot_ask_brain(self, question):
+        """WAV-Loop: Will -> Action -> Verification via CentralBrain."""
+        t0 = time.time()
+        w = lambda txt: self._ot_text.after(0, self._ot_write, txt)
+        try:
+            brain = _load_brain()
+            if brain is None:
+                w("[ERROR] CentralBrain not available")
+                return
+
+            # Schone sessie per vraag — voorkom history-vervuiling
+            brain.conversation_history.clear()
+
+            # ── PHASE 1: WILL (Plan + Execute via function calling) ──
+            w("\u2126 [W] Will \u2014 planning & executing...")
+            response = brain.process_request(question, use_tools=True, max_tokens=2000)
+            t_action = time.time() - t0
+
+            if not response or not response.strip():
+                w("[ERROR] Empty response from Brain")
+                return
+
+            w(f"\u2126 [A] Action \u2014 completed in {t_action:.1f}s")
+
+            # ── PHASE 2: VERIFICATION ──
+            w("\u2126 [V] Verify \u2014 checking response quality...")
+            t_v0 = time.time()
+
+            verify_prompt = (
+                f"Vraag: \"{question}\"\n"
+                f"Antwoord: {response[:200]}\n"
+                "Geef ALLEEN: Score: [0-100] en 1 zin waarom."
+            )
+            try:
+                verification = _ollama_verify(verify_prompt, timeout=45)
+                t_verify = time.time() - t_v0
+            except Exception:
+                verification = None
+                t_verify = 0
+
+            # ── OUTPUT ──
+            w("")
+            for line in response.strip().split("\n"):
+                w(f"  {line}")
+
+            # Show verification result
+            w("")
+            if verification and verification.strip():
+                w("\u2126 [V] Verificatie:")
+                for line in verification.strip().split("\n")[:5]:
+                    w(f"  \u2502 {line}")
+            else:
+                w("\u2126 [V] Verificatie: (geen respons van Ollama)")
+
+            elapsed = time.time() - t0
+            w(f"\n  [WAV: W={t_action:.1f}s V={t_verify:.1f}s | total={elapsed:.1f}s | {len(response)} chars]")
+            w("")
+
+        except Exception as e:
+            w(f"[ERROR] {e}")
+        finally:
+            self._ot_text.after(0, lambda: self._ot_entry.configure(state="normal"))
 
     # ── Cortex Network ──
     def _draw_cortex(self):
@@ -514,10 +943,12 @@ class DashboardTab(ctk.CTkFrame):
 
     # ── Pulse Protocol ──
     def update_pulse(self):
-        if HAS_PSUTIL:
-            self._pulse_samples.append(psutil.cpu_percent(interval=0.05))
-            self._cpu_lbl.configure(text=f"CPU: {self._pulse_samples[-1]:.0f}%")
-            self._ram_lbl.configure(text=f"RAM: {psutil.virtual_memory().percent:.0f}%")
+        cpu = _cache.get("cpu")
+        ram = _cache.get("ram")
+        if cpu is not None:
+            self._pulse_samples.append(cpu)
+            self._cpu_lbl.configure(text=f"CPU: {cpu:.0f}%")
+            self._ram_lbl.configure(text=f"RAM: {ram:.0f}%" if ram else "RAM: --%")
         else:
             t = len(self._pulse_samples)
             self._pulse_samples.append(20 + 10 * math.sin(t / 5) +
@@ -538,24 +969,15 @@ class DashboardTab(ctk.CTkFrame):
 
     # ── Fuel Gauge ──
     def update_fuel(self):
-        pct, rpm_u, rpm_m, tpm_u, tpm_m = 0, 0, 30, 0, 30000
-        km = _safe(SmartKeyManager) if HAS_KEY_MANAGER else None
-        if km:
-            try:
-                # Real limits from key_manager config
-                rpm_m = getattr(km, 'RPM_LIMIT', None) or 30
-                tpm_m = getattr(km, 'TPM_LIMIT', None) or 30000
-                num_keys = max(1, len(getattr(km, '_keys', [])))
-                rpm_m = rpm_m * num_keys  # total capacity across all keys
-                tpm_m = tpm_m * num_keys
-                now = time.time()
-                with km._metrics_lock:
-                    rpm_u = sum(sum(1 for ts in a.request_timestamps if now - ts < 60)
-                                for a in km._agents.values())
-                    tpm_u = sum(a.tokens_deze_minuut for a in km._agents.values())
-                pct = min(100, (rpm_u / rpm_m) * 100) if rpm_m else 0
-            except Exception:
-                pass
+        kd = _cache.get("key_data")
+        if kd:
+            rpm_u = kd.get("rpm_total", 0)
+            rpm_m = kd.get("rpm_limit", 30)
+            tpm_u = kd.get("tpm_total", 0)
+            tpm_m = kd.get("tpm_limit", 30000)
+            pct = min(100, (rpm_u / rpm_m) * 100) if rpm_m else 0
+        else:
+            pct, rpm_u, rpm_m, tpm_u, tpm_m = 0, 0, 30, 0, 30000
         self._rpm_lbl.configure(text=f"RPM: {rpm_u}/{rpm_m}")
         tp = f"{tpm_u // 1000}K" if tpm_u >= 1000 else str(tpm_u)
         self._tpm_lbl.configure(text=f"TPM: {tp}/{tpm_m // 1000}K")
@@ -585,21 +1007,13 @@ class DashboardTab(ctk.CTkFrame):
 
     # ── Listener ──
     def update_listener(self):
-        bus = _safe(get_bus) if HAS_BUS else None
-        counts = []
-        if bus:
-            try:
-                with bus._lock:
-                    types = list(bus._history.keys())
-                for et in types[:20]:
-                    counts.append(len(bus.get_history(et, count=100)))
-                st = bus.statistieken()
-                self._ev_lbl.configure(text=f"Events: {st.get('events_gepubliceerd', 0)}")
-                self._sub_lbl.configure(text=f"Subs: {st.get('subscribers', 0)}")
-            except Exception:
-                pass
+        counts = _cache.get("bus_event_counts", [])
+        bus_stats = _cache.get("bus_stats")
+        if bus_stats:
+            self._ev_lbl.configure(text=f"Events: {bus_stats.get('events_gepubliceerd', 0)}")
+            self._sub_lbl.configure(text=f"Subs: {bus_stats.get('subscribers', 0)}")
         if not counts:
-            counts = [0]  # empty chart, no fake data
+            counts = [0]
         ax = self._list_ax
         ax.clear()
         ax.fill_between(range(len(counts)), counts, alpha=0.1, color=NEON_CYAN)
@@ -612,10 +1026,62 @@ class DashboardTab(ctk.CTkFrame):
         self._list_fig.tight_layout(pad=0.4)
         self._list_cv.draw_idle()
 
+    # ── Mini: Recent Events ──
+    def _update_mini_events(self):
+        self._mini_events.clear()
+        events = _cache.get("cortical_events", [])
+        if events:
+            for ev in events[:6]:
+                ts = ev.get("timestamp", "?")
+                if isinstance(ts, str) and len(ts) > 16:
+                    ts = ts[11:16]
+                actor = ev.get("actor", "?")
+                action = ev.get("action", "?")
+                self._mini_events.write(f" {ts} {actor}: {action}")
+        else:
+            self._mini_events.write(" No events")
+
+    # ── Mini: Circuit Breakers ──
+    def _update_mini_circuits(self):
+        self._mini_circuits.clear()
+        cs = _cache.get("circuit_state")
+        if cs:
+            open_count = sum(1 for s in cs.values() if s.get("is_open"))
+            closed_count = sum(1 for s in cs.values() if not s.get("is_open"))
+            self._mini_circuits.write(f" CLOSED: {closed_count}  OPEN: {open_count}")
+            for agent, state in sorted(cs.items()):
+                if state.get("is_open") or state.get("consecutive_failures", 0) > 0:
+                    fails = state.get("consecutive_failures", 0)
+                    icon = "[OPEN]" if state.get("is_open") else "[WARN]"
+                    self._mini_circuits.write(f" {icon} {agent}: {fails} fails")
+            if open_count == 0 and all(
+                    s.get("consecutive_failures", 0) == 0 for s in cs.values()):
+                self._mini_circuits.write(" All circuits healthy")
+        else:
+            self._mini_circuits.write(" No circuit data")
+
+    # ── Mini: Immune Status ──
+    def _update_mini_immune(self):
+        self._mini_immune.clear()
+        bb_stats = _cache.get("blackbox_stats")
+        if bb_stats:
+            self._mini_immune.write(f" BlackBox: {bb_stats.get('total_antibodies', 0)} antibodies")
+            self._mini_immune.write(f" Rejections: {bb_stats.get('total_rejections', 0)}")
+        shield_stats = _cache.get("shield_stats")
+        if shield_stats:
+            self._mini_immune.write(f" Shield: {shield_stats.get('checks', 0)} checks")
+            self._mini_immune.write(f" Blocked: {shield_stats.get('blocked', 0)}")
+        if not bb_stats and not shield_stats:
+            self._mini_immune.write(" Immune system N/A")
+
     def refresh(self):
+        self.update_vanguard()
         self.update_pulse()
         self.update_fuel()
         self.update_listener()
+        self._update_mini_events()
+        self._update_mini_circuits()
+        self._update_mini_immune()
 
 
 # ╔══════════════════════════════════════════════════════════════════╗
@@ -643,107 +1109,92 @@ class AgentsTab(ctk.CTkFrame):
         self.keys_panel.grid(row=1, column=1, columnspan=2, sticky="nsew", padx=(4, 0), pady=(4, 0))
 
     def refresh(self):
-        # Health
+        # Health — from cache
         self.health_panel.clear()
-        wh = _safe(get_waakhuis) if HAS_WAAKHUIS else None
-        if wh:
-            try:
-                r = wh.gezondheidsrapport()
-                for name, info in sorted(r.get("agents", {}).items()):
-                    score = info.get("gezondheid", "?")
-                    disp = info.get("dispatches", 0)
-                    errs = info.get("fouten", 0)
-                    icon = "[OK]" if score >= 70 else ("[!!]" if score >= 30 else "[XX]")
-                    self.health_panel.write(f"  {icon} {name:20s} {score:>3}%  disp:{disp}  err:{errs}")
-                hw = wh.hardware_status()
-                self.health_panel.write(f"\n  Hardware: CPU {hw.get('cpu_percent', '?')}%  "
-                                        f"RAM {hw.get('ram_percent', '?')}%")
-            except Exception as e:
-                self.health_panel.write(f"Error: {e}")
+        rapport = _cache.get("waakhuis_rapport")
+        if rapport:
+            for name, info in sorted(rapport.get("agents", {}).items()):
+                score = info.get("score", "?")
+                lat = info.get("latency", {})
+                disp = lat.get("count", 0) if isinstance(lat, dict) else 0
+                errs_info = info.get("fouten", {})
+                errs = errs_info.get("totaal", 0) if isinstance(errs_info, dict) else 0
+                icon = "[OK]" if isinstance(score, (int, float)) and score >= 70 else (
+                    "[!!]" if isinstance(score, (int, float)) and score >= 30 else "[XX]")
+                self.health_panel.write(f"  {icon} {name:20s} {score:>3}%  disp:{disp}  err:{errs}")
+            hw = _cache.get("hardware_status", {})
+            self.health_panel.write(f"\n  Hardware: CPU {hw.get('cpu_percent', '?')}%  "
+                                    f"RAM {hw.get('ram_percent', '?')}%")
         else:
             self.health_panel.write("Waakhuis not available")
 
-        # Circuit breakers
+        # Circuit breakers — from cache
         self.circuit_panel.clear()
-        eng = _load_engine()[0]
-        if eng:
-            try:
-                from swarm_engine import get_circuit_state
-                cs = get_circuit_state()
-                for agent, state in sorted(cs.items()):
-                    is_open = state.get("is_open", False)
-                    fails = state.get("failures", 0)
-                    icon = "[OPEN]" if is_open else "[CLOSED]"
-                    self.circuit_panel.write(f"  {icon} {agent:20s} fails:{fails}")
-            except Exception:
-                for k, v in eng._swarm_metrics.items():
-                    if "circuit" in k:
-                        self.circuit_panel.write(f"  {k}: {v}")
+        cs = _cache.get("circuit_state")
+        if cs:
+            for agent, state in sorted(cs.items()):
+                is_open = state.get("is_open", False)
+                fails = state.get("consecutive_failures", 0)
+                cooldown = state.get("cooldown_remaining", 0)
+                icon = "[OPEN]" if is_open else "[CLOSED]"
+                self.circuit_panel.write(f"  {icon} {agent:20s} fails:{fails}  cd:{cooldown}")
         else:
-            self.circuit_panel.write("SwarmEngine not loaded")
+            self.circuit_panel.write("Circuit data not available")
 
-        # Pipeline metrics
+        # Pipeline metrics — from cache
         self.metrics_panel.clear()
-        if eng:
-            try:
-                from swarm_engine import get_pipeline_metrics
-                pm = get_pipeline_metrics()
-                for agent, m in sorted(pm.items()):
+        engine_stats = _cache.get("engine_stats")
+        if engine_stats:
+            am = engine_stats.get("agent_metrics", {})
+            if am:
+                for agent, m in sorted(am.items()):
                     calls = m.get("calls", 0)
-                    avg = m.get("avg_ms", 0)
+                    avg = m.get("avg_latency_ms", m.get("avg_ms", 0))
                     rate = m.get("success_rate", 1.0)
                     self.metrics_panel.write(
                         f"  {agent:20s} calls:{calls:>4}  avg:{avg:>6.1f}ms  ok:{rate:.0%}")
-            except Exception:
-                s = eng.get_stats()
-                for k, v in s.items():
-                    self.metrics_panel.write(f"  {k}: {v}")
-
-        # GPU / VRAM
-        self.gpu_panel.clear()
-        try:
-            from danny_toolkit.core.vram_manager import vram_rapport
-            vr = vram_rapport()
-            if vr.get("beschikbaar"):
-                self.gpu_panel.write(f"  GPU:     {vr['gpu_naam']}")
-                self.gpu_panel.write(f"  Totaal:  {vr['totaal_mb']:,} MB")
-                self.gpu_panel.write(f"  Gebruikt:{vr['in_gebruik_mb']:,} MB")
-                self.gpu_panel.write(f"  Vrij:    {vr['vrij_mb']:,} MB")
-                pct = round(vr['in_gebruik_mb'] / vr['totaal_mb'] * 100, 1)
-                bar_len = int(pct / 5)
-                bar = "#" * bar_len + "." * (20 - bar_len)
-                status = "[OK]" if vr['gezond'] else "[!!]"
-                self.gpu_panel.write(f"\n  {status} [{bar}] {pct}%")
             else:
-                self.gpu_panel.write("  CUDA not available")
-        except Exception as e:
-            self.gpu_panel.write(f"  VRAM: {e}")
+                self.metrics_panel.write(f"  Queries: {engine_stats.get('queries_processed', 0)}")
+                self.metrics_panel.write(f"  Agents: {engine_stats.get('active_agents', 0)}")
+                self.metrics_panel.write(f"  Avg: {engine_stats.get('avg_response_ms', 0):.1f}ms")
+        else:
+            self.metrics_panel.write("  Engine not available")
 
-        try:
-            import psutil
-            self.gpu_panel.write(f"\n  CPU:  {psutil.cpu_percent()}%")
-            self.gpu_panel.write(f"  RAM:  {psutil.virtual_memory().percent}%")
-        except Exception:
-            pass
+        # GPU / VRAM — from cache
+        self.gpu_panel.clear()
+        vr = _cache.get("vram")
+        if vr and vr.get("beschikbaar"):
+            self.gpu_panel.write(f"  GPU:     {vr['gpu_naam']}")
+            self.gpu_panel.write(f"  Totaal:  {vr['totaal_mb']:,} MB")
+            self.gpu_panel.write(f"  Gebruikt:{vr['in_gebruik_mb']:,} MB")
+            self.gpu_panel.write(f"  Vrij:    {vr['vrij_mb']:,} MB")
+            pct = round(vr['in_gebruik_mb'] / vr['totaal_mb'] * 100, 1)
+            bar_len = int(pct / 5)
+            bar = "#" * bar_len + "." * (20 - bar_len)
+            status = "[OK]" if vr['gezond'] else "[!!]"
+            self.gpu_panel.write(f"\n  {status} [{bar}] {pct}%")
+        else:
+            self.gpu_panel.write("  CUDA not available")
+        cpu = _cache.get("cpu")
+        ram = _cache.get("ram")
+        if cpu is not None:
+            self.gpu_panel.write(f"\n  CPU:  {cpu:.0f}%")
+            self.gpu_panel.write(f"  RAM:  {ram:.0f}%")
 
-        # Key status
+        # Key status — from cache
         self.keys_panel.clear()
-        km = _safe(SmartKeyManager) if HAS_KEY_MANAGER else None
-        if km:
-            self.keys_panel.write(f"  Keys loaded: {len(km._keys)}")
-            try:
-                cooldown = km.get_agents_in_cooldown()
-                if cooldown:
-                    self.keys_panel.write(f"  In cooldown: {', '.join(cooldown)}")
-            except Exception:
-                pass
-            now = time.time()
-            with km._metrics_lock:
-                for name, a in sorted(km._agents.items()):
-                    rpm = sum(1 for ts in a.request_timestamps if now - ts < 60)
-                    self.keys_panel.write(
-                        f"  {name:20s} req:{a.totaal_requests:>4}  tok:{a.totaal_tokens:>6}  "
-                        f"rpm:{rpm}  429s:{a.totaal_429s}")
+        kd = _cache.get("key_data")
+        if kd:
+            self.keys_panel.write(f"  Keys loaded: {kd.get('count', 0)}")
+            cd = kd.get("cooldown", set())
+            if cd:
+                self.keys_panel.write(f"  In cooldown: {', '.join(cd)}")
+            for name, a in sorted(kd.get("agents", {}).items()):
+                self.keys_panel.write(
+                    f"  {name:20s} req:{a.get('req',0):>4}  tok:{a.get('tok',0):>6}  "
+                    f"rpm:{a.get('rpm',0)}  429s:{a.get('429s',0)}")
+        else:
+            self.keys_panel.write("  Key manager not available")
 
 
 # ╔══════════════════════════════════════════════════════════════════╗
@@ -767,77 +1218,59 @@ class BrainTab(ctk.CTkFrame):
         self.introspect_panel = InfoPanel(self, "\U0001f52d System Introspector")
         self.introspect_panel.grid(row=1, column=1, sticky="nsew", padx=(4, 0), pady=(4, 0))
 
-    _synapse = None
-    _phantom = None
-    _singularity = None
-
     def refresh(self):
-        # Synapse (singleton)
+        # Synapse — from cache
         self.synapse_panel.clear()
-        try:
-            if BrainTab._synapse is None:
-                from danny_toolkit.brain.synapse import TheSynapse
-                BrainTab._synapse = TheSynapse()
-            syn = BrainTab._synapse
-            stats = syn.get_stats()
-            for k, v in stats.items():
+        syn_stats = _cache.get("synapse_stats")
+        if syn_stats:
+            for k, v in syn_stats.items():
                 self.synapse_panel.write(f"  {k}: {v}")
-            top = syn.get_top_pathways(limit=10)
+            top = _cache.get("synapse_pathways", [])
             if top:
                 self.synapse_panel.write("\n  Top pathways:")
                 for p in top:
                     self.synapse_panel.write(
-                        f"    {p.get('from', '?')} -> {p.get('to', '?')}: "
+                        f"    {p.get('category', '?')} -> {p.get('agent', '?')}: "
                         f"{p.get('strength', 0):.3f}")
-        except Exception as e:
-            self.synapse_panel.write(f"  Synapse: {e}")
+        else:
+            self.synapse_panel.write("  Synapse: loading...")
 
-        # Phantom (singleton)
+        # Phantom — from cache
         self.phantom_panel.clear()
-        try:
-            if BrainTab._phantom is None:
-                from danny_toolkit.brain.phantom import ThePhantom
-                BrainTab._phantom = ThePhantom()
-            ph = BrainTab._phantom
-            acc = ph.get_accuracy()
-            for k, v in acc.items():
+        ph_acc = _cache.get("phantom_accuracy")
+        if ph_acc:
+            for k, v in ph_acc.items():
                 self.phantom_panel.write(f"  {k}: {v}")
-            preds = ph.get_predictions(max_results=5)
+            preds = _cache.get("phantom_predictions", [])
             if preds:
                 self.phantom_panel.write("\n  Recent predictions:")
                 for p in preds:
                     self.phantom_panel.write(f"    {p.get('pattern', '?')}: {p.get('confidence', 0):.2f}")
-        except Exception as e:
-            self.phantom_panel.write(f"  Phantom: {e}")
+        else:
+            self.phantom_panel.write("  Phantom: loading...")
 
-        # Singularity (singleton)
+        # Singularity — from cache
         self.singularity_panel.clear()
-        try:
-            if BrainTab._singularity is None:
-                from danny_toolkit.brain.singularity import SingularityEngine
-                BrainTab._singularity = SingularityEngine()
-            se = BrainTab._singularity
-            status = se.get_status()
-            for k, v in status.items():
+        sing_status = _cache.get("singularity_status")
+        if sing_status:
+            for k, v in sing_status.items():
                 self.singularity_panel.write(f"  {k}: {v}")
-        except Exception as e:
-            self.singularity_panel.write(f"  Singularity: {e}")
+        else:
+            self.singularity_panel.write("  Singularity: loading...")
 
-        # Introspector
+        # Introspector — from cache
         self.introspect_panel.clear()
-        if HAS_INTROSPECTOR:
-            try:
-                intro = get_introspector()
-                report = intro.get_health_report()
-                for k, v in report.items():
-                    if isinstance(v, dict):
-                        self.introspect_panel.write(f"  {k}:")
-                        for kk, vv in v.items():
-                            self.introspect_panel.write(f"    {kk}: {vv}")
-                    else:
-                        self.introspect_panel.write(f"  {k}: {v}")
-            except Exception as e:
-                self.introspect_panel.write(f"  Introspector: {e}")
+        intro_report = _cache.get("introspector_report")
+        if intro_report:
+            for k, v in intro_report.items():
+                if isinstance(v, dict):
+                    self.introspect_panel.write(f"  {k}:")
+                    for kk, vv in v.items():
+                        self.introspect_panel.write(f"    {kk}: {vv}")
+                else:
+                    self.introspect_panel.write(f"  {k}: {v}")
+        else:
+            self.introspect_panel.write("  Introspector: loading...")
 
 
 # ╔══════════════════════════════════════════════════════════════════╗
@@ -862,67 +1295,51 @@ class ImmuneTab(ctk.CTkFrame):
         self.tribunal_panel.grid(row=1, column=1, sticky="nsew", padx=(4, 0), pady=(4, 0))
 
     def refresh(self):
-        # BlackBox
+        # BlackBox — from cache
         self.blackbox_panel.clear()
-        if HAS_BLACKBOX:
-            try:
-                bb = get_black_box()
-                stats = bb.get_stats()
-                for k, v in stats.items():
-                    self.blackbox_panel.write(f"  {k}: {v}")
-                antibodies = bb.get_antibodies()
-                if antibodies:
-                    self.blackbox_panel.write(f"\n  Antibodies ({len(antibodies)}):")
-                    for ab in antibodies[:8]:
-                        sig = ab.get("error_signature", "?")[:40]
-                        strength = ab.get("strength", 0)
-                        self.blackbox_panel.write(f"    [{strength:.1f}] {sig}")
-            except Exception as e:
-                self.blackbox_panel.write(f"  Error: {e}")
+        bb_stats = _cache.get("blackbox_stats")
+        if bb_stats:
+            for k, v in bb_stats.items():
+                self.blackbox_panel.write(f"  {k}: {v}")
+            antibodies = _cache.get("blackbox_antibodies", [])
+            if antibodies:
+                self.blackbox_panel.write(f"\n  Antibodies ({len(antibodies)}):")
+                for ab in antibodies[:8]:
+                    sig = ab.get("signature", "?")[:40]
+                    strength = ab.get("strength", 0)
+                    self.blackbox_panel.write(f"    [{strength:.1f}] {sig}")
         else:
             self.blackbox_panel.write("  BlackBox not available")
 
-        # Schild
+        # Schild — from cache
         self.schild_panel.clear()
-        if HAS_SCHILD:
-            try:
-                schild = get_hallucination_shield()
-                stats = schild.get_stats()
-                for k, v in stats.items():
-                    self.schild_panel.write(f"  {k}: {v}")
-            except Exception as e:
-                self.schild_panel.write(f"  Error: {e}")
+        shield_stats = _cache.get("shield_stats")
+        if shield_stats:
+            for k, v in shield_stats.items():
+                self.schild_panel.write(f"  {k}: {v}")
         else:
             self.schild_panel.write("  Shield not available")
 
-        # Governor (direct import, no brain dependency)
+        # Governor — from cache
         self.governor_panel.clear()
-        try:
-            from danny_toolkit.brain.governor import OmegaGovernor
-            if not hasattr(ImmuneTab, '_governor'):
-                ImmuneTab._governor = OmegaGovernor()
-            gov = ImmuneTab._governor
-            report = gov.get_health_report()
-            for k, v in report.items():
+        gov_report = _cache.get("governor_health")
+        if gov_report:
+            for k, v in gov_report.items():
                 if isinstance(v, dict):
                     self.governor_panel.write(f"  {k}:")
                     for kk, vv in v.items():
                         self.governor_panel.write(f"    {kk}: {vv}")
                 else:
                     self.governor_panel.write(f"  {k}: {v}")
-        except Exception as e:
-            self.governor_panel.write(f"  Governor: {e}")
+        else:
+            self.governor_panel.write("  Governor: loading...")
 
-        # Tribunal
+        # Tribunal — from cache
         self.tribunal_panel.clear()
-        if HAS_TRIBUNAL:
-            try:
-                trib = get_adversarial_tribunal()
-                stats = trib.get_stats()
-                for k, v in stats.items():
-                    self.tribunal_panel.write(f"  {k}: {v}")
-            except Exception as e:
-                self.tribunal_panel.write(f"  Error: {e}")
+        trib_stats = _cache.get("tribunal_stats")
+        if trib_stats:
+            for k, v in trib_stats.items():
+                self.tribunal_panel.write(f"  {k}: {v}")
         else:
             self.tribunal_panel.write("  Tribunal not available")
 
@@ -949,62 +1366,60 @@ class MemoryTab(ctk.CTkFrame):
         self.facts_panel.grid(row=1, column=1, sticky="nsew", padx=(4, 0), pady=(4, 0))
 
     def refresh(self):
-        # Events
+        # Events — from cache
         self.events_panel.clear()
-        if HAS_CORTICAL:
-            try:
-                stack = get_cortical_stack()
-                events = stack.get_recent_events(count=25)
-                for ev in events:
-                    ts = ev.get("timestamp", "?")
-                    if isinstance(ts, str) and len(ts) > 19:
-                        ts = ts[:19]
-                    actor = ev.get("actor", "?")
-                    etype = ev.get("event_type", "?")
-                    self.events_panel.write(f"  [{ts}] {actor}: {etype}")
-            except Exception as e:
-                self.events_panel.write(f"  Error: {e}")
+        events = _cache.get("cortical_events", [])
+        if events:
+            for ev in events:
+                ts = ev.get("timestamp", "?")
+                if isinstance(ts, str) and len(ts) > 19:
+                    ts = ts[:19]
+                actor = ev.get("actor", "?")
+                etype = ev.get("action", "?")
+                self.events_panel.write(f"  [{ts}] {actor}: {etype}")
+        else:
+            self.events_panel.write("  No events")
 
-        # DB Metrics
+        # DB Metrics — from cache
         self.dbmetrics_panel.clear()
-        if HAS_CORTICAL:
-            try:
-                m = get_cortical_stack().get_db_metrics()
-                for k, v in m.items():
-                    self.dbmetrics_panel.write(f"  {k}: {v}")
-                stats = get_cortical_stack().get_stats()
+        db_metrics = _cache.get("cortical_db_metrics")
+        if db_metrics:
+            for k, v in db_metrics.items():
+                self.dbmetrics_panel.write(f"  {k}: {v}")
+            cortical_stats = _cache.get("cortical_stats", {})
+            if cortical_stats:
                 self.dbmetrics_panel.write("\n  Memory stats:")
-                for k, v in stats.items():
+                for k, v in cortical_stats.items():
                     self.dbmetrics_panel.write(f"    {k}: {v}")
-            except Exception as e:
-                self.dbmetrics_panel.write(f"  Error: {e}")
+        else:
+            self.dbmetrics_panel.write("  CorticalStack: loading...")
 
-        # NeuralBus
+        # NeuralBus — from cache
         self.bus_panel.clear()
-        bus = _safe(get_bus) if HAS_BUS else None
-        if bus:
-            st = bus.statistieken()
-            for k, v in st.items():
+        bus_stats = _cache.get("bus_stats")
+        if bus_stats:
+            for k, v in bus_stats.items():
                 self.bus_panel.write(f"  {k}: {v}")
-            stream = bus.get_context_stream(count=15)
+            stream = _cache.get("bus_stream", "")
             if stream:
                 self.bus_panel.write("")
                 for line in stream.split("\n"):
                     self.bus_panel.write(f"  {line}")
+        else:
+            self.bus_panel.write("  NeuralBus: loading...")
 
-        # Semantic facts
+        # Semantic facts — from cache
         self.facts_panel.clear()
-        if HAS_CORTICAL:
-            try:
-                facts = get_cortical_stack().recall_all()
-                self.facts_panel.write(f"  Total facts: {len(facts)}")
-                for f in facts[:20]:
-                    key = f.get("key", "?")
-                    val = str(f.get("value", "?"))[:60]
-                    conf = f.get("confidence", 0)
-                    self.facts_panel.write(f"  [{conf:.1f}] {key}: {val}")
-            except Exception as e:
-                self.facts_panel.write(f"  Error: {e}")
+        facts = _cache.get("cortical_facts", [])
+        if facts:
+            self.facts_panel.write(f"  Total facts: {len(facts)}")
+            for f in facts[:20]:
+                key = f.get("key", "?")
+                val = str(f.get("value", "?"))[:60]
+                conf = f.get("confidence", 0)
+                self.facts_panel.write(f"  [{conf:.1f}] {key}: {val}")
+        else:
+            self.facts_panel.write("  No facts")
 
 
 # ╔══════════════════════════════════════════════════════════════════╗
@@ -1029,68 +1444,88 @@ class ObservatoryTab(ctk.CTkFrame):
         self.config_panel.grid(row=1, column=1, sticky="nsew", padx=(4, 0), pady=(4, 0))
 
     def refresh(self):
-        # Model Registry
+        # Model Registry — from cache
         self.models_panel.clear()
-        if HAS_MODELS:
-            try:
-                reg = get_model_registry()
-                stats = reg.get_stats()
-                for k, v in stats.items():
-                    self.models_panel.write(f"  {k}: {v}")
-                workers = reg.get_all_workers()
-                self.models_panel.write(f"\n  Workers ({len(workers)}):")
-                for w in workers:
+        model_stats = _cache.get("model_stats")
+        if model_stats:
+            for k, v in model_stats.items():
+                self.models_panel.write(f"  {k}: {v}")
+            workers = _cache.get("model_workers", [])
+            self.models_panel.write(f"\n  Workers ({len(workers)}):")
+            for w in workers:
+                try:
                     perf = w.get_perf()
+                    prov = perf.get("provider", getattr(getattr(w, "profile", None), "provider", "?"))
                     self.models_panel.write(
-                        f"    {w.provider:12s} ok:{perf.get('success_rate', 0):.0%}  "
-                        f"lat:{perf.get('latency', 0):.0f}ms")
-            except Exception as e:
-                self.models_panel.write(f"  Error: {e}")
+                        f"    {prov:12s} ok:{perf.get('success_rate', 0):.0%}  "
+                        f"lat:{perf.get('avg_latency_ms', 0):.0f}ms")
+                except Exception:
+                    pass
         else:
             self.models_panel.write("  ModelRegistry not available")
 
-        # Leaderboard
+        # Leaderboard — from cache
         self.leaderboard_panel.clear()
-        if HAS_OBSERVATORY:
-            try:
-                obs = get_observatory_sync()
-                lb = obs.get_model_leaderboard()
-                for i, entry in enumerate(lb[:10]):
-                    name = entry.get("model", "?")
-                    rate = entry.get("success_rate", 0)
-                    lat = entry.get("latency", 0)
-                    self.leaderboard_panel.write(
-                        f"  #{i + 1} {name:30s} ok:{rate:.0%}  lat:{lat:.0f}ms")
-            except Exception as e:
-                self.leaderboard_panel.write(f"  Error: {e}")
+        lb = _cache.get("leaderboard", [])
+        if lb:
+            for i, entry in enumerate(lb[:10]):
+                name = entry.get("model_id", "?")
+                rate = entry.get("success_rate", 0)
+                lat = entry.get("avg_latency_ms", 0)
+                self.leaderboard_panel.write(
+                    f"  #{i + 1} {name:30s} ok:{rate:.0%}  lat:{lat:.0f}ms")
         else:
             self.leaderboard_panel.write("  Observatory not available")
 
-        # Cost
+        # Cost — from cache
         self.cost_panel.clear()
-        if HAS_OBSERVATORY:
-            try:
-                obs = get_observatory_sync()
-                cost = obs.get_cost_analysis()
-                for k, v in cost.items():
-                    self.cost_panel.write(f"  {k}: {v}")
-            except Exception as e:
-                self.cost_panel.write(f"  Error: {e}")
+        cost = _cache.get("cost_analysis")
+        if cost:
+            pp = cost.get("per_provider", {})
+            if pp:
+                self.cost_panel.write("  Per provider:")
+                for prov, info in pp.items():
+                    if isinstance(info, dict):
+                        tok = info.get("tokens", info.get("total_tokens", 0))
+                        calls = info.get("calls", 0)
+                        self.cost_panel.write(f"    {prov:12s} tok:{tok:>6}  calls:{calls}")
+                    else:
+                        self.cost_panel.write(f"    {prov}: {info}")
+            pm = cost.get("per_model", [])
+            if pm:
+                self.cost_panel.write(f"\n  Per model (top {min(5, len(pm))}):")
+                for m in pm[:5]:
+                    if isinstance(m, dict):
+                        mid = m.get("model_id", m.get("model", "?"))
+                        tok = m.get("total_tokens", 0)
+                        self.cost_panel.write(f"    {mid}: {tok} tokens")
+                    else:
+                        self.cost_panel.write(f"    {m}")
+            recs = cost.get("aanbevelingen", [])
+            if recs:
+                self.cost_panel.write(f"\n  Aanbevelingen:")
+                for r in recs[:3]:
+                    self.cost_panel.write(f"    {r}")
+            if not pp and not pm:
+                self.cost_panel.write("  No cost data yet")
+        else:
+            self.cost_panel.write("  Cost analysis: loading...")
 
-        # Config Audit
+        # Config Audit — from cache
         self.config_panel.clear()
-        try:
-            from danny_toolkit.brain.config_auditor import get_config_auditor
-            auditor = get_config_auditor()
-            drift = auditor.detect_drift()
-            if drift:
-                self.config_panel.write(f"  Drift detected ({len(drift)} items):")
-                for d in drift[:10]:
-                    self.config_panel.write(f"    {d}")
+        rapport = _cache.get("config_audit")
+        if rapport:
+            self.config_panel.write(f"  Veilig: {rapport.veilig}")
+            self.config_panel.write(f"  Gecontroleerd: {rapport.gecontroleerd}")
+            self.config_panel.write(f"  Drift: {rapport.drift_gedetecteerd}")
+            if rapport.schendingen:
+                self.config_panel.write(f"\n  Schendingen ({len(rapport.schendingen)}):")
+                for s in rapport.schendingen[:8]:
+                    self.config_panel.write(f"    [{s.ernst}] {s.beschrijving}")
             else:
-                self.config_panel.write("  No config drift detected")
-        except Exception as e:
-            self.config_panel.write(f"  ConfigAuditor: {e}")
+                self.config_panel.write("\n  Geen schendingen gevonden")
+        else:
+            self.config_panel.write("  ConfigAuditor: loading...")
 
 
 # ╔══════════════════════════════════════════════════════════════════╗
@@ -1242,7 +1677,7 @@ class RealTerminalTab(ctk.CTkFrame):
 # ╚══════════════════════════════════════════════════════════════════╝
 
 class OmegaSovereignApp(ctk.CTk):
-    REFRESH_MS = 3000
+    REFRESH_MS = 1000
 
     def __init__(self):
         super().__init__()
@@ -1320,18 +1755,37 @@ class OmegaSovereignApp(ctk.CTk):
         self._status = ctk.CTkLabel(bar, text="\u25cf INITIALIZING...",
                                      font=FONT_MONO_XS, text_color=NEON_GREEN)
         self._status.pack(side="left", padx=10)
+        self._ai_lbl = ctk.CTkLabel(bar, text="AI: --",
+                                     font=FONT_MONO_XS, text_color=TEXT_DIM)
+        self._ai_lbl.pack(side="left", padx=8)
         self._hw = ctk.CTkLabel(bar, text="", font=FONT_MONO_XS, text_color=TEXT_DIM)
         self._hw.pack(side="left", padx=20)
         self._time = ctk.CTkLabel(bar, text="", font=FONT_MONO_XS, text_color=TEXT_DIM)
         self._time.pack(side="right", padx=10)
+        self._uptime_lbl = ctk.CTkLabel(bar, text="", font=FONT_MONO_XS, text_color=TEXT_DIM)
+        self._uptime_lbl.pack(side="right", padx=8)
+        self._start_time = time.time()
+
+        # ── Keyboard shortcuts (Ctrl+1..7 for tabs) ──
+        for i, name in enumerate(tab_names):
+            self.bind(f"<Control-Key-{i + 1}>",
+                      lambda e, n=name: self._tabs.set(n))
 
         # ── Initial load ──
         self.after(500, self._initial_load)
         self._schedule_refresh()
 
     def _initial_load(self):
-        """Load SwarmEngine + initial vanguard chart on startup."""
+        """Load SwarmEngine + CentralBrain + start data cache on startup."""
+        _cache.start(interval=1.0)
         self.tab_dashboard.update_vanguard()
+        # Pre-load CentralBrain in background so first AI question is fast
+        threading.Thread(target=_load_brain, daemon=True).start()
+        # Pre-warm Ollama gemma3:4b into VRAM (cold start takes ~30s otherwise)
+        threading.Thread(
+            target=lambda: _ollama_verify("ok", timeout=60),
+            daemon=True,
+        ).start()
 
     def _schedule_refresh(self):
         try:
@@ -1345,20 +1799,43 @@ class OmegaSovereignApp(ctk.CTk):
         self._clock.configure(text=now.strftime("%Y-%m-%d %H:%M:%S"))
         self._time.configure(text=f"\u2126 SOVEREIGN // {now.strftime('%H:%M:%S')}")
 
-        # Status bar
-        eng = _load_engine()[0]
-        if eng:
-            s = eng.get_stats()
+        # Status bar — from cache
+        engine_stats = _cache.get("engine_stats")
+        brain = _brain_cache
+        if engine_stats:
+            q = engine_stats.get('queries_processed', 0)
+            a = engine_stats.get('active_agents', 0)
             self._status.configure(
-                text=f"\u25cf ONLINE | {s.get('active_agents', 0)} agents",
+                text=f"\u25cf ONLINE | {a} agents | {q} queries",
                 text_color=NEON_GREEN)
         else:
             self._status.configure(text="\u25cb OFFLINE", text_color=NEON_RED)
 
-        if HAS_PSUTIL:
-            self._hw.configure(
-                text=f"CPU {psutil.cpu_percent():.0f}% | "
-                     f"RAM {psutil.virtual_memory().percent:.0f}%")
+        # AI status
+        if brain:
+            tools = len(getattr(brain, '_tools', getattr(brain, 'tools', [])))
+            self._ai_lbl.configure(text=f"AI:ON ({tools} tools)", text_color=NEON_GREEN)
+        elif _brain_lock.locked():
+            self._ai_lbl.configure(text="AI:loading...", text_color=NEON_YELLOW)
+        else:
+            self._ai_lbl.configure(text="AI:OFF", text_color=NEON_RED)
+
+        # Uptime
+        uptime_s = int(time.time() - self._start_time)
+        m, s_r = divmod(uptime_s, 60)
+        h, m = divmod(m, 60)
+        self._uptime_lbl.configure(text=f"UP {h:02d}:{m:02d}:{s_r:02d}")
+
+        cpu = _cache.get("cpu")
+        ram = _cache.get("ram")
+        if cpu is not None:
+            cpu_color = NEON_GREEN if cpu < 60 else (NEON_ORANGE if cpu < 85 else NEON_RED)
+            hw_text = f"CPU {cpu:.0f}% | RAM {ram:.0f}%"
+            vr = _cache.get("vram")
+            if vr and vr.get("beschikbaar"):
+                pct = round(vr['in_gebruik_mb'] / vr['totaal_mb'] * 100)
+                hw_text += f" | GPU {pct}%"
+            self._hw.configure(text=hw_text, text_color=cpu_color)
 
         # Refresh active tab only (performance)
         active = self._tabs.get()

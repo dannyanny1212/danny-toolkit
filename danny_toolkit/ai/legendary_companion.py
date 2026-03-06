@@ -40,7 +40,7 @@ except ImportError:
 
 # THE HUNT imports (optioneel)
 try:
-    from danny_toolkit.core.ultimate_hunt import UltimateHunt, HuntStatus, HuntAnimator
+    from danny_toolkit.brain.ultimate_hunt import UltimateHunt, HuntStatus, HuntAnimator
     HUNT_AVAILABLE = True
 except ImportError:
     HUNT_AVAILABLE = False

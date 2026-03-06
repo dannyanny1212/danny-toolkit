@@ -934,7 +934,7 @@ class OracleAgentApp:
 
     def run(self):
         """Start de Oracle Agent interactief."""
-        from danny_toolkit.core.oracle import OracleAgent
+        from danny_toolkit.brain.oracle import OracleAgent
 
         agent = OracleAgent()
         agent.run()

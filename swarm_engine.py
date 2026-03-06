@@ -2797,7 +2797,7 @@ class SwarmEngine:
     def oracle(self):
         """Lazy OracleAgent — geen import overhead."""
         if self._oracle is None:
-            from danny_toolkit.core.oracle import (
+            from danny_toolkit.brain.oracle import (
                 OracleAgent,
             )
             self._oracle = OracleAgent(persist=False)
