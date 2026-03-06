@@ -482,15 +482,32 @@ Regels:
           tool_calls:
           - tool_name: action
           - tool_name: action key=value key2=value2
+          Of bare tool namen (één per regel):
+          fitness_tracker_get_stats
+          mood_tracker_get_stats
 
         Returns:
             list van (tool_name, args_dict) tuples, of lege lijst.
         """
         import re
-        if "tool_call" not in text.lower():
-            return []
 
         calls = []
+
+        # Fallback 0: bare tool names — één per regel, matchen tegen bekende tools
+        lines = [l.strip().strip("-").strip("*").strip()
+                 for l in text.strip().split("\n") if l.strip()]
+        if lines:
+            bare_calls = []
+            for line in lines:
+                # Alleen woorden met underscores (tool name patroon)
+                candidate = line.split()[0] if line.split() else ""
+                if "_" in candidate:
+                    app_naam, actie_naam = parse_tool_call(candidate)
+                    if app_naam and actie_naam:
+                        bare_calls.append((candidate, {}))
+            # Als minstens 2 bare tool namen gevonden → dat is het antwoord
+            if len(bare_calls) >= 2:
+                return bare_calls[:10]
 
         # Split op regels en parse elke "- app: action ..." regel
         for line in text.split("\n"):
