@@ -1006,8 +1006,8 @@ class DashboardTab(ctk.CTkFrame):
                 return
 
             # Houd laatste 4 berichten (2 exchanges) voor follow-up context
-            if len(brain.conversation_history) > 4:
-                brain.conversation_history[:] = brain.conversation_history[-4:]
+            while len(brain.conversation_history) > 4:
+                brain.conversation_history.popleft()
 
             # ── PRE-CHECK: Self-diagnostic als gevraagd ──
             q_lower = question.lower()
