@@ -908,6 +908,10 @@ Regels:
 
         tools = self._build_openai_tools() if use_tools else None
 
+        # Safety net: bewaar tool resultaten zodat bij rate limit
+        # alsnog een bruikbaar antwoord gegeven kan worden
+        _tool_results_backup = []
+
         turns_used = 0
         for turn in range(remaining_turns):
             turns_used += 1
@@ -924,7 +928,19 @@ Regels:
                 # tool_calls API, vangt _parse_text_tool_calls() het op.
                 kwargs["tool_choice"] = "auto"
 
-            response = self.client.chat.completions.create(**kwargs)
+            try:
+                response = self.client.chat.completions.create(**kwargs)
+            except Exception as api_err:
+                # Rate limit of andere fout NADAT tools al uitgevoerd zijn
+                if _tool_results_backup:
+                    logger.info("API fout na tool executie, gebruik backup resultaten")
+                    print(kleur(
+                        f"   [SAFETY-NET] Rate limit na tools — bouw direct antwoord",
+                        Kleur.GEEL,
+                    ))
+                    summary = self._format_tool_results(_tool_results_backup)
+                    return (summary, turns_used)
+                raise  # Geen backup → propageer error naar fallback chain
             choice = response.choices[0]
             message = choice.message
 
@@ -998,13 +1014,20 @@ Regels:
                         if isinstance(result, BaseException):
                             logger.debug("Tool %s fout: %s", tool_call.function.name, result)
                             result = {"error": str(result)}
+                        result_str = json.dumps(
+                            result, ensure_ascii=False, default=str,
+                        )[:5000]
                         messages.append({
                             "role": "tool",
                             "tool_call_id": tool_call.id,
-                            "content": json.dumps(
-                                result, ensure_ascii=False, default=str,
-                            )[:5000]
+                            "content": result_str,
                         })
+                        # Bewaar voor safety net
+                        app_naam, actie_naam = parse_tool_call(tool_call.function.name)
+                        _tool_results_backup.append(
+                            (f"{app_naam}.{actie_naam}" if app_naam else tool_call.function.name,
+                             result_str)
+                        )
             else:
                 content_text = message.content or ""
                 # Detecteer tekst-beschreven tool calls die niet via API kwamen
@@ -1236,6 +1259,33 @@ Regels:
         cb = self._provider_breakers.get(key)
         if cb is not None:
             cb["fails"] = 0
+
+    @staticmethod
+    def _format_tool_results(tool_results: list) -> str:
+        """Formatteer tool resultaten tot leesbaar antwoord (safety net).
+
+        Wordt gebruikt wanneer tools succesvol uitgevoerd zijn maar de
+        samenvatting-stap faalt door rate limits.
+        """
+        parts = ["Hier zijn de resultaten van de uitgevoerde acties:\n"]
+        for tool_id, result_str in tool_results:
+            try:
+                data = json.loads(result_str)
+                if isinstance(data, dict) and "error" in data:
+                    parts.append(f"**{tool_id}**: Fout — {data['error']}")
+                elif isinstance(data, dict):
+                    # Formatteer dict als key: value regels
+                    items = []
+                    for k, v in data.items():
+                        if isinstance(v, (dict, list)):
+                            v = json.dumps(v, ensure_ascii=False, default=str)[:200]
+                        items.append(f"  - {k}: {v}")
+                    parts.append(f"**{tool_id}**:\n" + "\n".join(items))
+                else:
+                    parts.append(f"**{tool_id}**: {str(data)[:300]}")
+            except (json.JSONDecodeError, TypeError):
+                parts.append(f"**{tool_id}**: {result_str[:300]}")
+        return "\n\n".join(parts)
 
     def _emergency_offline_response(self, prompt: str) -> str:
         """Keyword-gebaseerde noodrouting als alle LLM providers falen.
