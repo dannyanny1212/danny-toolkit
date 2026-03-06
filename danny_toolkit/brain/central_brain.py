@@ -539,6 +539,13 @@ Regels:
                         continue
                     rest = candidate[len(ak):].lstrip("_")
                     best = None
+                    # Common action aliases (model → echte naam)
+                    action_aliases = {
+                        "query": "search", "search": "query",
+                        "status": "get_stats", "get_status": "get_stats",
+                        "stats": "get_stats", "get_stats": "stats",
+                        "list": "get_all", "get": "get_stats",
+                    }
                     for actie in ad.acties:
                         # Directe substring match
                         if rest in actie.naam or actie.naam in rest:
@@ -548,12 +555,20 @@ Regels:
                         if rest.replace("get_", "") in actie.naam:
                             best = f"{ak}_{actie.naam}"
                             break
+                        # Alias match: query→search, status→get_stats
+                        alias = action_aliases.get(rest)
+                        if alias and (alias in actie.naam or actie.naam in alias):
+                            best = f"{ak}_{actie.naam}"
+                            break
                     if not best:
                         # Fallback: eerste get_ actie
                         for actie in ad.acties:
                             if actie.naam.startswith("get_"):
                                 best = f"{ak}_{actie.naam}"
                                 break
+                    if not best and ad.acties:
+                        # Last resort: eerste actie van de app
+                        best = f"{ak}_{ad.acties[0].naam}"
                     if best:
                         bare_calls.append((best, line_args))
                     break
