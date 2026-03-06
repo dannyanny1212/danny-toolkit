@@ -18,6 +18,7 @@ Gebruik: python omega_sovereign_app.py
 
 import io
 import os
+import re
 import sys
 import math
 import time
@@ -27,6 +28,8 @@ import subprocess
 from datetime import datetime
 from collections import deque
 from contextlib import redirect_stdout
+from dataclasses import dataclass
+from typing import Callable
 
 # UTF-8 voor Windows
 if sys.platform == "win32":
@@ -72,6 +75,18 @@ plt.rcParams.update({
     "text.color": TEXT_PRIMARY, "grid.color": BORDER,
     "grid.alpha": 0.5, "font.family": "monospace", "font.size": 8,
 })
+
+# ── PANEL DESCRIPTOR ─────────────────────────────────────────────
+
+@dataclass
+class PanelDescriptor:
+    """Registry entry for panels that can be added to the dashboard."""
+    panel_id: str           # "agents.health"
+    title: str              # "Agent Health Report"
+    tab_origin: str         # "Agents"
+    create_fn: Callable     # factory(parent) -> InfoPanel
+    update_fn: Callable     # update(panel) -> refresh content
+
 
 # ── SAFE IMPORTS ─────────────────────────────────────────────────
 
@@ -657,16 +672,89 @@ def _make_chart(parent, figsize=(4, 3), **subplot_kw):
 # ── NEON PANEL BASE ──────────────────────────────────────────────
 
 class NeonPanel(ctk.CTkFrame):
-    def __init__(self, master, title, **kw):
+    def __init__(self, master, title, dockable=True, **kw):
         super().__init__(master, fg_color=BG_PANEL, border_color=BORDER,
                          border_width=1, corner_radius=8, **kw)
-        ctk.CTkLabel(self, text=f"  {title.upper()}",
+        self._title = title
+        self._float_window = None
+        self._original_info = None
+
+        # Title bar with optional float button
+        title_bar = ctk.CTkFrame(self, fg_color="transparent", height=24)
+        title_bar.pack(fill="x", padx=8, pady=(6, 2))
+        ctk.CTkLabel(title_bar, text=f"  {title.upper()}",
                       font=("Consolas", 10, "bold"),
                       text_color=NEON_CYAN, anchor="w"
-                      ).pack(fill="x", padx=8, pady=(6, 2))
+                      ).pack(side="left", fill="x", expand=True)
+        if dockable:
+            self._float_btn = ctk.CTkButton(
+                title_bar, text="\u2197", width=24, height=20,
+                font=("Consolas", 12), fg_color="transparent",
+                hover_color=BG_CARD, text_color=TEXT_DIM,
+                command=self._toggle_float)
+            self._float_btn.pack(side="right")
+
         ctk.CTkFrame(self, height=1, fg_color=BORDER).pack(fill="x", padx=8, pady=(0, 4))
         self.content = ctk.CTkFrame(self, fg_color="transparent")
         self.content.pack(fill="both", expand=True, padx=4, pady=(0, 4))
+
+    def _toggle_float(self):
+        if self._float_window:
+            self._dock_back()
+        else:
+            self._float_out()
+
+    def _float_out(self):
+        parent = self.master
+        # Determine current geometry manager and save info
+        if isinstance(parent, tk.PanedWindow):
+            panes = list(parent.panes())
+            idx = panes.index(str(self)) if str(self) in panes else -1
+            self._original_info = ('pane', parent, idx)
+            parent.forget(self)
+        else:
+            try:
+                info = self.grid_info()
+                if info:
+                    self._original_info = ('grid', {k: v for k, v in info.items() if k != 'in'})
+                    self.grid_forget()
+                else:
+                    raise tk.TclError("empty")
+            except tk.TclError:
+                try:
+                    info = self.pack_info()
+                    self._original_info = ('pack', {k: v for k, v in info.items() if k != 'in'})
+                    self.pack_forget()
+                except tk.TclError:
+                    return
+
+        # Turn frame into standalone window via Tk wm manage
+        self.tk.call('wm', 'manage', self._w)
+        self.tk.call('wm', 'title', self._w, self._title)
+        self.tk.call('wm', 'geometry', self._w, '500x350')
+        self.tk.call('wm', 'minsize', self._w, '200', '150')
+        self._dock_back_tcl = self.register(self._dock_back)
+        self.tk.call('wm', 'protocol', self._w, 'WM_DELETE_WINDOW', self._dock_back_tcl)
+        self._float_window = True
+        self._float_btn.configure(text="\u2199")
+
+    def _dock_back(self):
+        if not self._float_window:
+            return
+        # Revert to normal frame
+        self.tk.call('wm', 'forget', self._w)
+        self._float_window = None
+        if self._original_info:
+            method = self._original_info[0]
+            if method == 'pane':
+                _, paned, idx = self._original_info
+                paned.add(self, minsize=60)
+            elif method == 'grid':
+                self.grid(**self._original_info[1])
+            else:
+                self.pack(**self._original_info[1])
+            self._original_info = None
+        self._float_btn.configure(text="\u2197")
 
 
 # ── SCROLLABLE TEXT PANEL ────────────────────────────────────────
@@ -708,36 +796,45 @@ class InfoPanel(NeonPanel):
 class DashboardTab(ctk.CTkFrame):
     def __init__(self, master):
         super().__init__(master, fg_color="transparent")
-        self.grid_columnconfigure(0, weight=3)
-        self.grid_columnconfigure(1, weight=5)
-        self.grid_columnconfigure(2, weight=3)
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_rowconfigure(1, weight=1)
+        self._extra_panels = []  # (panel, update_fn) tuples from panel picker
+
+        # ── Outer horizontal paned: left | center | right ──
+        outer = tk.PanedWindow(self, orient=tk.HORIZONTAL, sashwidth=5,
+                               sashrelief=tk.FLAT, bg=BG_DEEP,
+                               opaqueresize=True, borderwidth=0)
+        outer.pack(fill="both", expand=True)
+        self._outer_paned = outer
 
         # Left: Vanguard (full height)
-        self.vanguard = self._build_vanguard(self)
-        self.vanguard.grid(row=0, column=0, rowspan=2, sticky="nsew", padx=(0, 4))
+        self.vanguard = self._build_vanguard(outer)
+        outer.add(self.vanguard, minsize=60, width=280)
 
-        # Center top: Cortex Knowledge Core
-        self.cortex_panel = NeonPanel(self, "\U0001f9e0 Cortex Knowledge Core")
-        self.cortex_panel.grid(row=0, column=1, sticky="nsew", padx=4, pady=(0, 4))
+        # Center: Cortex + Terminal (vertical split)
+        center = tk.PanedWindow(outer, orient=tk.VERTICAL, sashwidth=5,
+                                sashrelief=tk.FLAT, bg=BG_DEEP,
+                                opaqueresize=True, borderwidth=0)
+        outer.add(center, minsize=60, width=550)
+        self._center_paned = center
+
+        self.cortex_panel = NeonPanel(center, "\U0001f9e0 Cortex Knowledge Core")
+        center.add(self.cortex_panel, minsize=60, height=300)
         self._cortex_fig, self._cortex_ax, self._cortex_cv = _make_chart(
             self.cortex_panel.content, figsize=(5, 3))
         self._draw_cortex()
 
-        # Center bottom: Omega Terminal
-        self.omega_term = self._build_omega_terminal(self)
-        self.omega_term.grid(row=1, column=1, sticky="nsew", padx=4, pady=(4, 0))
+        self.omega_term = self._build_omega_terminal(center)
+        center.add(self.omega_term, minsize=60, height=350)
 
-        # Right: Pulse + Fuel + Listener
-        right = ctk.CTkFrame(self, fg_color="transparent")
-        right.grid(row=0, column=2, rowspan=2, sticky="nsew", padx=(4, 0))
-        for ri in range(6):
-            right.grid_rowconfigure(ri, weight=1)
+        # Right: Pulse + Fuel + Listener + mini panels (vertical split)
+        right = tk.PanedWindow(outer, orient=tk.VERTICAL, sashwidth=5,
+                               sashrelief=tk.FLAT, bg=BG_DEEP,
+                               opaqueresize=True, borderwidth=0)
+        outer.add(right, minsize=60, width=320)
+        self._right_paned = right
 
-        # Row 0: Pulse Protocol
+        # Pulse Protocol
         self.pulse_panel = NeonPanel(right, "\u2764 Pulse Protocol")
-        self.pulse_panel.grid(row=0, column=0, sticky="nsew", pady=(0, 2))
+        right.add(self.pulse_panel, minsize=60)
         self._pulse_fig, self._pulse_ax, self._pulse_cv = _make_chart(
             self.pulse_panel.content, figsize=(3.2, 1.2))
         self._pulse_samples = deque(maxlen=60)
@@ -750,9 +847,9 @@ class DashboardTab(ctk.CTkFrame):
                                       font=FONT_MONO_XS, text_color=NEON_CYAN)
         self._ram_lbl.pack(side="right", padx=4)
 
-        # Row 1: API Fuel Gauge
+        # API Fuel Gauge
         self.fuel_panel = NeonPanel(right, "\u26fd API Fuel Gauge")
-        self.fuel_panel.grid(row=1, column=0, sticky="nsew", pady=2)
+        right.add(self.fuel_panel, minsize=60)
         self._fuel_fig, self._fuel_ax, self._fuel_cv = _make_chart(
             self.fuel_panel.content, figsize=(3.2, 1.4),
             subplot_kw={"projection": "polar"})
@@ -765,9 +862,9 @@ class DashboardTab(ctk.CTkFrame):
                                       font=FONT_MONO_XS, text_color=NEON_CYAN)
         self._tpm_lbl.pack(side="right", padx=4)
 
-        # Row 2: The Listener
+        # The Listener
         self.listener_panel = NeonPanel(right, "\U0001f3a7 The Listener")
-        self.listener_panel.grid(row=2, column=0, sticky="nsew", pady=2)
+        right.add(self.listener_panel, minsize=60)
         self._list_fig, self._list_ax, self._list_cv = _make_chart(
             self.listener_panel.content, figsize=(3.2, 1.0))
         self._list_metrics = ctk.CTkFrame(self.listener_panel.content, fg_color="transparent")
@@ -779,17 +876,53 @@ class DashboardTab(ctk.CTkFrame):
                                       font=FONT_MONO_XS, text_color=NEON_CYAN)
         self._sub_lbl.pack(side="right", padx=4)
 
-        # Row 3: Recent Events (from Memory tab)
+        # Mini panels
         self._mini_events = InfoPanel(right, "\U0001f4dc Recent Events")
-        self._mini_events.grid(row=3, column=0, sticky="nsew", pady=2)
+        right.add(self._mini_events, minsize=60)
 
-        # Row 4: Circuit Breakers (from Agents tab)
         self._mini_circuits = InfoPanel(right, "\u26a1 Circuit Breakers")
-        self._mini_circuits.grid(row=4, column=0, sticky="nsew", pady=2)
+        right.add(self._mini_circuits, minsize=60)
 
-        # Row 5: Immune Status (from Immune tab)
         self._mini_immune = InfoPanel(right, "\U0001f6e1 Immune Status")
-        self._mini_immune.grid(row=5, column=0, sticky="nsew", pady=(2, 0))
+        right.add(self._mini_immune, minsize=60)
+
+        # ── Panel picker "+" button (top-right corner) ──
+        self._add_btn = ctk.CTkButton(
+            self, text="+", width=28, height=28,
+            font=("Consolas", 16, "bold"), fg_color=BG_CARD,
+            hover_color="#1a3a5c", text_color=NEON_CYAN, corner_radius=14,
+            command=self._show_panel_picker)
+        self._add_btn.place(relx=1.0, rely=0.0, x=-36, y=4, anchor="ne")
+
+    def _show_panel_picker(self):
+        """Show popup menu to add panels from other tabs."""
+        app = self.winfo_toplevel()
+        if not hasattr(app, '_panel_registry') or not app._panel_registry:
+            return
+        menu = tk.Menu(self, tearoff=0, bg=BG_CARD, fg=TEXT_PRIMARY,
+                       activebackground="#1a3a5c", activeforeground=NEON_CYAN,
+                       font=FONT_MONO_SM)
+        by_tab = {}
+        for desc in app._panel_registry:
+            by_tab.setdefault(desc.tab_origin, []).append(desc)
+        for tab_name, descriptors in sorted(by_tab.items()):
+            sub = tk.Menu(menu, tearoff=0, bg=BG_CARD, fg=TEXT_PRIMARY,
+                          activebackground="#1a3a5c", activeforeground=NEON_CYAN,
+                          font=FONT_MONO_SM)
+            for desc in descriptors:
+                sub.add_command(
+                    label=desc.title,
+                    command=lambda d=desc: self._add_panel_from_registry(d))
+            menu.add_cascade(label=tab_name, menu=sub)
+        x = self._add_btn.winfo_rootx()
+        y = self._add_btn.winfo_rooty() + self._add_btn.winfo_height()
+        menu.tk_popup(x, y)
+
+    def _add_panel_from_registry(self, desc):
+        """Add a new panel instance from the registry to the right paned."""
+        panel = desc.create_fn(self._right_paned)
+        self._right_paned.add(panel, minsize=60)
+        self._extra_panels.append((panel, desc.update_fn))
 
     # ── Vanguard ──
     def _build_vanguard(self, parent):
@@ -831,183 +964,425 @@ class DashboardTab(ctk.CTkFrame):
         self._vang_cv.draw_idle()
 
     # ── Omega Terminal (command dispatch) ──
+
+    # Terminal kleur-tags
+    _OT_COLORS = {
+        "input":   "#ffffff",      # Wit — user input
+        "output":  NEON_GREEN,     # Groen — normaal antwoord
+        "error":   NEON_RED,       # Rood — fouten
+        "process": NEON_ORANGE,    # Oranje — verwerken/bezig
+        "tool":    NEON_CYAN,      # Cyaan — tool calls, debug
+        "dim":     TEXT_DIM,       # Grijs — stats, metadata
+        "system":  NEON_CYAN,      # Cyaan — systeem info
+        "warn":    NEON_YELLOW,    # Geel — waarschuwingen
+        "verify":  NEON_PURPLE,    # Paars — verificatie
+    }
+
     def _build_omega_terminal(self, parent):
-        panel = NeonPanel(parent, "\u2328 Omega Terminal")
+        # Horizontal PanedWindow holding Omega (left) + Claude (right)
+        terminal_row = tk.PanedWindow(parent, orient=tk.HORIZONTAL, sashwidth=5,
+                                      sashrelief=tk.FLAT, bg=BG_DEEP,
+                                      opaqueresize=True, borderwidth=0)
+
+        # ── LEFT: Omega Brain Terminal ──
+        omega_panel = NeonPanel(terminal_row, "\u2126 Omega Brain")
         self._ot_text = ctk.CTkTextbox(
-            panel.content, fg_color="#050810", text_color=NEON_GREEN,
+            omega_panel.content, fg_color="#050810", text_color=NEON_GREEN,
             font=FONT_MONO_SM, border_color=BORDER, border_width=1,
             corner_radius=4, wrap="word", state="disabled")
         self._ot_text.pack(fill="both", expand=True, padx=4, pady=(0, 4))
-        self._ot_write("\u2126 OMEGA SOVEREIGN CORE v2.0 \u2014 176 modules | 48K lines")
-        self._ot_write("Commands: status, agents, health, metrics, bus, events,")
-        self._ot_write("          keys, cortical, apps, brain, immune, rag, clear")
-        self._ot_write("WAV-Loop: Will \u2192 Action \u2192 Verify (86 tools)")
-        self._ot_write("Type any question \u2014 Oracle WAV will execute.\n")
-        inp_frame = ctk.CTkFrame(panel.content, fg_color="transparent")
-        inp_frame.pack(fill="x", padx=4, pady=(0, 2))
-        ctk.CTkLabel(inp_frame, text="\u2126 >", font=("Consolas", 11, "bold"),
+        for tag_name, color in self._OT_COLORS.items():
+            self._ot_text._textbox.tag_configure(tag_name, foreground=color)
+
+        self._ot_write("\u2126 OMEGA BRAIN \u2014 Direct Link", "system")
+        self._ot_write("Commands: status, agents, health, metrics, bus, events,", "dim")
+        self._ot_write("          keys, cortical, apps, brain, immune, rag, clear, help", "dim")
+        self._ot_write("Default: typ een vraag \u2192 Omega Brain (WAV-Loop)\n", "dim")
+
+        ot_inp = ctk.CTkFrame(omega_panel.content, fg_color="transparent")
+        ot_inp.pack(fill="x", padx=4, pady=(0, 2))
+        ctk.CTkLabel(ot_inp, text="\u2126 >", font=("Consolas", 11, "bold"),
                       text_color=NEON_CYAN).pack(side="left", padx=(4, 4))
         self._ot_entry = ctk.CTkEntry(
-            inp_frame, fg_color=BG_CARD, text_color=NEON_GREEN,
+            ot_inp, fg_color=BG_CARD, text_color="#ffffff",
             font=FONT_MONO_SM, border_color=BORDER, border_width=1,
-            placeholder_text="Command or question...", placeholder_text_color=TEXT_DIM)
+            placeholder_text="System command or brain question...",
+            placeholder_text_color=TEXT_DIM)
         self._ot_entry.pack(side="left", fill="x", expand=True, padx=(0, 4))
         self._ot_entry.bind("<Return>", self._ot_on_enter)
-        return panel
+        terminal_row.add(omega_panel, minsize=60, width=275)
 
-    def _ot_write(self, text):
+        # ── RIGHT: Claude Code Terminal ──
+        claude_panel = NeonPanel(terminal_row, "\U0001f916 Claude Code")
+        self._ct_text = ctk.CTkTextbox(
+            claude_panel.content, fg_color="#050810", text_color=NEON_GREEN,
+            font=FONT_MONO_SM, border_color=BORDER, border_width=1,
+            corner_radius=4, wrap="word", state="disabled")
+        self._ct_text.pack(fill="both", expand=True, padx=4, pady=(0, 4))
+        for tag_name, color in self._OT_COLORS.items():
+            self._ct_text._textbox.tag_configure(tag_name, foreground=color)
+
+        self._ct_write("\U0001f916 CLAUDE CODE \u2014 venv311 (Python 3.11.9)", "system")
+        self._ct_write("cwd: C:\\Users\\danny\\danny-toolkit", "dim")
+        self._ct_write("Commands: new, clear, login, apikey sk-...", "dim")
+        self._ct_write("Default: typ een vraag \u2192 Claude Code CLI\n", "dim")
+        self._claude_has_session = False
+
+        ct_inp = ctk.CTkFrame(claude_panel.content, fg_color="transparent")
+        ct_inp.pack(fill="x", padx=4, pady=(0, 2))
+        ctk.CTkLabel(ct_inp, text="\U0001f916 >", font=("Consolas", 11, "bold"),
+                      text_color=NEON_PURPLE).pack(side="left", padx=(4, 4))
+        self._ct_entry = ctk.CTkEntry(
+            ct_inp, fg_color=BG_CARD, text_color="#ffffff",
+            font=FONT_MONO_SM, border_color=BORDER, border_width=1,
+            placeholder_text="Ask Claude anything...",
+            placeholder_text_color=TEXT_DIM)
+        self._ct_entry.pack(side="left", fill="x", expand=True, padx=(0, 4))
+        self._ct_entry.bind("<Return>", self._ct_on_enter)
+        terminal_row.add(claude_panel, minsize=60, width=275)
+
+        return terminal_row
+
+    def _ot_write(self, text, tag="output"):
+        """Schrijf tekst naar Omega Terminal met kleur-tag.
+
+        Tags: input, output, error, process, tool, dim, system, warn, verify
+        """
         self._ot_text.configure(state="normal")
-        self._ot_text.insert("end", text + "\n")
+        self._ot_text._textbox.insert("end", text + "\n", tag)
         self._ot_text.see("end")
         self._ot_text.configure(state="disabled")
+
+    def _ct_write(self, text, tag="output"):
+        """Schrijf tekst naar Claude Terminal met kleur-tag."""
+        self._ct_text.configure(state="normal")
+        self._ct_text._textbox.insert("end", text + "\n", tag)
+        self._ct_text.see("end")
+        self._ct_text.configure(state="disabled")
+
+    def _ot_write_captured(self, line):
+        """Schrijf een captured stdout regel met automatische kleurdetectie.
+
+        Strips ANSI codes en kiest kleur op basis van inhoud.
+        """
+        import re
+        clean = re.sub(r'\x1b\[[0-9;]*m', '', line).strip()
+        if not clean:
+            return
+        if "[ERROR]" in clean or "[CRASH]" in clean:
+            self._ot_write(f"  {clean}", "error")
+        elif "[TOOL]" in clean or "[PREFETCH]" in clean:
+            self._ot_write(f"  {clean}", "tool")
+        elif "[FALLBACK]" in clean or "[SAFETY-NET]" in clean or "[DEBUG]" in clean:
+            self._ot_write(f"  {clean}", "process")
+        else:
+            self._ot_write(f"  {clean}", "dim")
+
+    def _ct_on_enter(self, _=None):
+        """Input handler voor Claude Code terminal."""
+        cmd = self._ct_entry.get().strip()
+        if not cmd:
+            return
+        self._ct_entry.delete(0, "end")
+        self._ct_write(f"\u25b6 {cmd}", "input")
+        low = cmd.lower().strip("/")
+        if low == "new":
+            self._claude_has_session = False
+            self._ct_write("  \U0001f504 Nieuwe conversatie gestart.", "system")
+            self._ct_write("  Volgende vraag begint met verse context.", "dim")
+        elif low == "clear":
+            self._ct_text.configure(state="normal")
+            self._ct_text.delete("1.0", "end")
+            self._ct_text.configure(state="disabled")
+            self._ct_write("Cleared.\n", "system")
+        elif low == "login":
+            import webbrowser
+            webbrowser.open("https://console.anthropic.com/")
+            self._ct_write("  Opening Anthropic Console...", "system")
+        elif low.startswith("apikey "):
+            raw_key = cmd.strip().split(None, 1)[1] if " " in cmd.strip() else ""
+            if raw_key and raw_key.startswith("sk-"):
+                self._claude_api_key = raw_key
+                self._ct_write(f"  \u2705 API key ingesteld: {raw_key[:7]}...{raw_key[-4:]}", "system")
+            else:
+                self._ct_write("  \u26d4 Ongeldige key. Verwacht: apikey sk-ant-...", "error")
+        elif re.match(r'^(sk-|key-|api[_-])', cmd, re.IGNORECASE):
+            self._ct_write("  \u26d4 Gebruik: apikey sk-ant-...", "error")
+        else:
+            self._ct_write("\U0001f916 [Claude] Processing...", "process")
+            self._ct_entry.configure(state="disabled")
+            threading.Thread(target=self._ot_ask_claude, args=(cmd,), daemon=True).start()
 
     def _ot_on_enter(self, _=None):
         cmd = self._ot_entry.get().strip()
         if not cmd:
             return
         self._ot_entry.delete(0, "end")
-        self._ot_write(f"\u2126 > {cmd}")
+        self._ot_write(f"\u2126 > {cmd}", "input")
         known = {"help", "clear", "status", "agents", "health",
                  "metrics", "bus", "events", "keys", "cortical",
                  "apps", "brain", "immune", "rag"}
-        if cmd.lower() in known:
-            self._ot_dispatch(cmd.lower())
+        low = cmd.lower().strip("/")
+        if low in known:
+            self._ot_dispatch(low)
             self._ot_write("")
         else:
-            # Free-text question → WAV-Loop via background thread
-            self._ot_write("\u2126 WAV-Loop activating...")
+            # Default: direct brain chat (WAV-Loop zonder prefix)
+            self._ot_write("\u2126 Processing...", "process")
             self._ot_entry.configure(state="disabled")
             threading.Thread(target=self._ot_ask_brain, args=(cmd,), daemon=True).start()
 
     def _ot_dispatch(self, cmd):
         eng = _load_engine()[0]
         if cmd == "help":
-            self._ot_write("  System commands:")
+            self._ot_write("  System commands:", "system")
             for c in ["status", "agents", "health", "metrics", "bus",
                        "events", "keys", "cortical", "apps", "brain",
                        "immune", "rag", "clear"]:
-                self._ot_write(f"    {c}")
-            self._ot_write("\n  AI mode (86 tools):")
-            self._ot_write("    Just type any question or command in natural language.")
-            self._ot_write("    The AI has access to all 31 apps + brain agents.")
+                self._ot_write(f"    {c}", "dim")
+            self._ot_write("\n  Omega Brain (default):", "system")
+            self._ot_write("    Typ direct een vraag \u2014 Omega Brain beantwoordt.", "dim")
+            self._ot_write("    WAV-Loop: Will \u2192 Action \u2192 Verify cycle.", "dim")
         elif cmd == "clear":
             self._ot_text.configure(state="normal")
             self._ot_text.delete("1.0", "end")
             self._ot_text.configure(state="disabled")
-            self._ot_write("\u2126 Cleared.\n")
+            self._ot_write("\u2126 Cleared.\n", "system")
         elif cmd == "status":
-            self._ot_write(f"Time: {datetime.now().isoformat()}")
+            self._ot_write(f"Time: {datetime.now().isoformat()}", "system")
             if eng:
                 s = eng.get_stats()
-                self._ot_write(f"Queries: {s.get('queries_processed', 0)}")
-                self._ot_write(f"Agents: {s.get('active_agents', 0)}")
-                self._ot_write(f"Avg: {s.get('avg_response_ms', 0):.1f}ms")
+                self._ot_write(f"Queries: {s.get('queries_processed', 0)}", "output")
+                self._ot_write(f"Agents: {s.get('active_agents', 0)}", "output")
+                self._ot_write(f"Avg: {s.get('avg_response_ms', 0):.1f}ms", "output")
             if HAS_PSUTIL:
-                self._ot_write(f"CPU: {psutil.cpu_percent():.1f}%  RAM: {psutil.virtual_memory().percent:.1f}%")
+                self._ot_write(f"CPU: {psutil.cpu_percent():.1f}%  RAM: {psutil.virtual_memory().percent:.1f}%", "output")
         elif cmd == "agents":
             if eng and hasattr(eng, "agents"):
                 for n in sorted(eng.agents):
-                    self._ot_write(f"  [{n}]")
-                self._ot_write(f"Total: {len(eng.agents)}")
+                    self._ot_write(f"  [{n}]", "output")
+                self._ot_write(f"Total: {len(eng.agents)}", "system")
         elif cmd == "health":
             wh = _safe(get_waakhuis) if HAS_WAAKHUIS else None
             if wh:
                 for n, i in wh.gezondheidsrapport().get("agents", {}).items():
-                    self._ot_write(f"  {n}: {i.get('score', '?')}%")
+                    self._ot_write(f"  {n}: {i.get('score', '?')}%", "output")
             else:
-                self._ot_write("Waakhuis unavailable")
+                self._ot_write("Waakhuis unavailable", "error")
         elif cmd == "metrics":
             if eng:
                 for k, v in eng._swarm_metrics.items():
-                    self._ot_write(f"  {k}: {v}")
+                    self._ot_write(f"  {k}: {v}", "output")
         elif cmd == "bus":
             bus = _safe(get_bus) if HAS_BUS else None
             if bus:
                 for k, v in bus.statistieken().items():
-                    self._ot_write(f"  {k}: {v}")
+                    self._ot_write(f"  {k}: {v}", "output")
         elif cmd == "events":
             bus = _safe(get_bus) if HAS_BUS else None
             if bus:
                 s = bus.get_context_stream(count=10)
-                self._ot_write(s if s else "No events.")
+                self._ot_write(s if s else "No events.", "output")
         elif cmd == "keys":
             km = _safe(SmartKeyManager) if HAS_KEY_MANAGER else None
             if km:
-                self._ot_write(f"Keys: {len(km._keys)}")
+                self._ot_write(f"Keys: {len(km._keys)}", "system")
                 with km._metrics_lock:
                     for n, a in km._agents.items():
-                        self._ot_write(f"  {n}: {a.totaal_requests}req {a.totaal_tokens}tok")
+                        self._ot_write(f"  {n}: {a.totaal_requests}req {a.totaal_tokens}tok", "output")
         elif cmd == "cortical":
             if HAS_CORTICAL:
                 for k, v in get_cortical_stack().get_db_metrics().items():
-                    self._ot_write(f"  {k}: {v}")
+                    self._ot_write(f"  {k}: {v}", "output")
         elif cmd == "apps":
             if eng and hasattr(eng, "app_registry"):
                 apps = sorted(eng.app_registry.keys()) if hasattr(eng.app_registry, "keys") else []
-                self._ot_write(f"  Registered apps: {len(apps)}")
+                self._ot_write(f"  Registered apps: {len(apps)}", "system")
                 for a in apps:
-                    self._ot_write(f"    {a}")
+                    self._ot_write(f"    {a}", "output")
             else:
                 try:
                     from danny_toolkit.brain.app_tools import TOOL_DEFINITIONS
-                    self._ot_write(f"  Available tools: {len(TOOL_DEFINITIONS)}")
+                    self._ot_write(f"  Available tools: {len(TOOL_DEFINITIONS)}", "system")
                     for td in TOOL_DEFINITIONS[:15]:
                         name = td.get("function", {}).get("name", "?")
-                        self._ot_write(f"    {name}")
+                        self._ot_write(f"    {name}", "output")
                     if len(TOOL_DEFINITIONS) > 15:
-                        self._ot_write(f"    ... and {len(TOOL_DEFINITIONS) - 15} more")
+                        self._ot_write(f"    ... and {len(TOOL_DEFINITIONS) - 15} more", "dim")
                 except Exception:
-                    self._ot_write("  App registry not available")
+                    self._ot_write("  App registry not available", "error")
         elif cmd == "brain":
             brain = _brain_cache
             if brain:
-                self._ot_write(f"  CentralBrain: ACTIVE")
+                self._ot_write(f"  CentralBrain: ACTIVE", "system")
                 tools = getattr(brain, '_tools', getattr(brain, 'tools', []))
-                self._ot_write(f"  Tools loaded: {len(tools)}")
-                self._ot_write(f"  Provider: {getattr(brain, 'provider', '?')}")
-                self._ot_write(f"  Model: {getattr(brain, 'model', '?')}")
+                self._ot_write(f"  Tools loaded: {len(tools)}", "output")
+                self._ot_write(f"  Provider: {getattr(brain, 'provider', '?')}", "output")
+                self._ot_write(f"  Model: {getattr(brain, 'model', '?')}", "output")
             else:
-                self._ot_write("  CentralBrain: NOT LOADED")
+                self._ot_write("  CentralBrain: NOT LOADED", "error")
         elif cmd == "immune":
             if HAS_BLACKBOX:
                 try:
                     bb = get_black_box()
                     stats = bb.get_stats()
-                    self._ot_write(f"  BlackBox: {stats.get('total_antibodies', 0)} antibodies")
+                    self._ot_write(f"  BlackBox: {stats.get('total_antibodies', 0)} antibodies", "output")
                 except Exception:
-                    self._ot_write("  BlackBox: error")
+                    self._ot_write("  BlackBox: error", "error")
             if HAS_SCHILD:
                 try:
                     schild = get_hallucination_shield()
                     stats = schild.get_stats()
-                    self._ot_write(f"  Shield: {stats.get('beoordeeld', 0)} checks, {stats.get('geblokkeerd', 0)} blocked")
+                    self._ot_write(f"  Shield: {stats.get('beoordeeld', 0)} checks, {stats.get('geblokkeerd', 0)} blocked", "output")
                 except Exception:
-                    self._ot_write("  Shield: error")
+                    self._ot_write("  Shield: error", "error")
             if HAS_TRIBUNAL:
                 try:
                     trib = get_adversarial_tribunal()
                     stats = trib.get_stats()
-                    self._ot_write(f"  Tribunal: {stats.get('verdicts', stats.get('total', 0))} verdicts")
+                    self._ot_write(f"  Tribunal: {stats.get('verdicts', stats.get('total', 0))} verdicts", "output")
                 except Exception:
-                    self._ot_write("  Tribunal: error")
+                    self._ot_write("  Tribunal: error", "error")
         elif cmd == "rag":
             try:
                 from danny_toolkit.core.vector_store import VectorStore
                 vs = VectorStore()
                 stats = vs.get_stats()
                 for k, v in stats.items():
-                    self._ot_write(f"  {k}: {v}")
+                    self._ot_write(f"  {k}: {v}", "output")
             except Exception as e:
-                self._ot_write(f"  VectorStore: {e}")
+                self._ot_write(f"  VectorStore: {e}", "error")
+
+    def _ot_ask_claude(self, question):
+        """Execute question via Claude Code CLI with conversation memory and streaming."""
+        t0 = time.time()
+        w = lambda txt, tag="output": self._ct_text.after(0, self._ct_write, txt, tag)
+        try:
+            import shutil
+            import json as _json
+            claude_path = shutil.which("claude")
+            if not claude_path:
+                # Fallback: WinGet install path
+                winget_path = os.path.expandvars(
+                    r"%LOCALAPPDATA%\Microsoft\WinGet\Links\claude.exe")
+                if os.path.isfile(winget_path):
+                    claude_path = winget_path
+            if not claude_path:
+                w("[WARN] Claude CLI not found \u2014 fallback to WAV-Loop", "warn")
+                self._ot_ask_brain(question)
+                return
+
+            # Environment: venv311 + toolkit cwd
+            toolkit_dir = r"C:\Users\danny\danny-toolkit"
+            venv_dir = os.path.join(toolkit_dir, "venv311")
+            venv_scripts = os.path.join(venv_dir, "Scripts")
+            env = os.environ.copy()
+            env.pop("ANTHROPIC_API_KEY", None)
+            env.pop("CLAUDECODE", None)
+            env["PATH"] = venv_scripts + os.pathsep + env.get("PATH", "")
+            env["VIRTUAL_ENV"] = venv_dir
+            env["PYTHONPATH"] = toolkit_dir
+            api_key = getattr(self, "_claude_api_key", None)
+            if api_key:
+                env["ANTHROPIC_API_KEY"] = api_key
+
+            # Build command with stream-json + conversation memory
+            cmd = [claude_path, "-p", question, "--output-format", "stream-json", "--verbose"]
+            if getattr(self, '_claude_has_session', False):
+                cmd.append("--continue")
+
+            proc = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                cwd=toolkit_dir,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                env=env,
+                creationflags=(subprocess.CREATE_NO_WINDOW
+                               if sys.platform == "win32" else 0),
+            )
+
+            output_lines = 0
+            collected = []
+            # iter(readline, '') avoids Python's hidden read-ahead buffer
+            for raw_line in iter(proc.stdout.readline, ''):
+                line = raw_line.strip()
+                if not line:
+                    continue
+                try:
+                    event = _json.loads(line)
+                except _json.JSONDecodeError:
+                    # Non-JSON output — show as plain text
+                    w(f"  {line}", "output")
+                    output_lines += 1
+                    collected.append(line)
+                    continue
+
+                etype = event.get("type", "")
+                if etype == "assistant":
+                    for block in event.get("message", {}).get("content", []):
+                        if block.get("type") == "text":
+                            for tl in block["text"].splitlines():
+                                w(f"  {tl}", "output")
+                                output_lines += 1
+                                collected.append(tl)
+                elif etype == "tool_use":
+                    tool_name = event.get("tool", event.get("name", "?"))
+                    w(f"  \U0001f527 [{tool_name}]", "system")
+                elif etype == "result":
+                    # Skip — content already streamed via assistant events.
+                    # Only collect for auth-error detection.
+                    result_text = event.get("result", "")
+                    if result_text:
+                        collected.append(str(result_text))
+
+            proc.wait()
+            elapsed = time.time() - t0
+            rc = proc.returncode
+
+            # Mark session active on success for --continue on next question
+            if rc == 0:
+                self._claude_has_session = True
+
+            # ── Auth / credit error → verificatie opties ──
+            full_output = " ".join(collected).lower()
+            _AUTH_ERRORS = [
+                "credit balance is too low",
+                "invalid api key",
+                "authentication failed",
+                "unauthorized",
+                "not authenticated",
+                "session expired",
+                "please log in",
+            ]
+            if rc != 0 and any(err in full_output for err in _AUTH_ERRORS):
+                w(f"\n  \u26a0 Auth/credit probleem gedetecteerd.", "warn")
+                w(f"  Opties:", "system")
+                w(f"    1. login      \u2014 Open Anthropic Console (credits toevoegen)", "dim")
+                w(f"    2. apikey sk-ant-...  \u2014 Stel een andere API key in", "dim")
+                w(f"    3. wav <vraag> \u2014 Gebruik Groq WAV-Loop (gratis)", "dim")
+                w(f"  Na oplossen: typ je vraag opnieuw.", "dim")
+            elif rc != 0:
+                w(f"  [Claude exit code: {rc}]", "error")
+            w(f"\n  [Claude: {elapsed:.1f}s | {output_lines} lines]", "dim")
+            w("")
+
+        except Exception as e:
+            w(f"[ERROR] Claude: {e}", "error")
+        finally:
+            self._ct_text.after(0, lambda: self._ct_entry.configure(state="normal"))
 
     def _ot_ask_brain(self, question):
         """WAV-Loop: Will -> Action -> Verification via CentralBrain."""
         t0 = time.time()
-        w = lambda txt: self._ot_text.after(0, self._ot_write, txt)
+        w = lambda txt, tag="output": self._ot_text.after(0, self._ot_write, txt, tag)
+        wc = lambda line: self._ot_text.after(0, self._ot_write_captured, line)
         try:
             brain = _load_brain()
             if brain is None:
-                w("[ERROR] CentralBrain not available")
+                w("[ERROR] CentralBrain not available", "error")
                 return
 
             # Houd laatste 4 berichten (2 exchanges) voor follow-up context
@@ -1018,13 +1393,13 @@ class DashboardTab(ctk.CTkFrame):
             q_lower = question.lower()
             diag_data = None
             if any(kw in q_lower for kw in _DIAGNOSTIC_KEYWORDS):
-                w("\u2126 [D] Diagnostic \u2014 scanning all modules...")
+                w("\u2126 [D] Diagnostic \u2014 scanning all modules...", "process")
                 diag_data = _run_self_diagnostic()
                 samenv = diag_data.pop("_samenvatting", {})
                 ok_count = samenv.get("ok", 0)
                 fout_count = samenv.get("fout", 0)
                 totaal = samenv.get("totaal", 0)
-                w(f"\u2126 [D] Scan complete: {ok_count}/{totaal} OK, {fout_count} FOUT")
+                w(f"\u2126 [D] Scan complete: {ok_count}/{totaal} OK, {fout_count} FOUT", "system")
 
                 # Bouw diagnostic context voor de brain
                 diag_lines = [f"SYSTEEM DIAGNOSTIC ({ok_count}/{totaal} modules OK):"]
@@ -1040,7 +1415,7 @@ class DashboardTab(ctk.CTkFrame):
                 question = f"{question}\n\nHier zijn de ECHTE testresultaten:\n{diag_context}\n\nAnalyseer welke componenten werken en welke niet. Geef details over fouten."
 
             # ── PHASE 1: WILL (Plan + Execute via function calling) ──
-            w("\u2126 [W] Will \u2014 planning & executing...")
+            w("\u2126 [W] Will \u2014 planning & executing...", "process")
 
             # Capture stdout om [TOOL] en [FALLBACK] prints te vangen
             import io as _io
@@ -1051,25 +1426,24 @@ class DashboardTab(ctk.CTkFrame):
                     response = brain.process_request(question, use_tools=True, max_tokens=2000)
             except Exception as _brain_err:
                 response = None
-                w(f"[ERROR] Brain crash: {_brain_err}")
+                w(f"[ERROR] Brain crash: {_brain_err}", "error")
             t_action = time.time() - t0
 
-            # Toon captured debug/tool output in GUI
+            # Toon captured debug/tool output in GUI (met automatische kleurdetectie)
             _captured = _stdout_buf.getvalue().strip()
             if _captured:
                 for _dline in _captured.split("\n"):
-                    _dline = _dline.strip()
-                    if _dline:
-                        w(f"  {_dline}")
+                    if _dline.strip():
+                        wc(_dline)
 
             if not response or not response.strip():
-                w("[ERROR] Empty response from Brain")
+                w("[ERROR] Empty response from Brain", "error")
                 return
 
-            w(f"\u2126 [A] Action \u2014 completed in {t_action:.1f}s")
+            w(f"\u2126 [A] Action \u2014 completed in {t_action:.1f}s", "process")
 
             # ── PHASE 2: VERIFICATION ──
-            w("\u2126 [V] Verify \u2014 checking response quality...")
+            w("\u2126 [V] Verify \u2014 checking response quality...", "process")
             t_v0 = time.time()
 
             verify_prompt = (
@@ -1085,47 +1459,64 @@ class DashboardTab(ctk.CTkFrame):
                 t_verify = 0
 
             # ── PHASE 2.5: HALLUCINATIESCHILD ──
+            # Extract Ollama verify score as truth_anchor_score
+            _verify_score = None
+            if verification:
+                import re as _re
+                _sm = _re.search(r'[Ss]core[:\s]*\[?(\d{1,3})\]?', verification)
+                if _sm:
+                    _verify_score = int(_sm.group(1)) / 100.0  # 0.0-1.0
+
             schild_label = ""
+            schild_tag = "output"
             if HAS_SCHILD:
                 try:
                     schild = get_hallucination_shield()
-                    # Bouw pseudo-result list voor schild.beoordeel()
                     from types import SimpleNamespace
                     pseudo = SimpleNamespace(
                         content=response,
+                        display_text=response,
                         type="text",
                         agent="CentralBrain",
                         metadata={"source": "wav_loop"},
                     )
-                    rapport = schild.beoordeel([pseudo], question)
+                    rapport = schild.beoordeel(
+                        [pseudo], question,
+                        truth_anchor_score=_verify_score,
+                    )
                     if rapport.geblokkeerd:
                         schild_label = f"\u26a0 GEBLOKKEERD (score {rapport.totaal_score:.2f}): {rapport.reden_blokkade}"
+                        schild_tag = "error"
                     elif rapport.regel_schendingen:
                         schild_label = f"\u26a0 WAARSCHUWING (score {rapport.totaal_score:.2f}): {', '.join(rapport.regel_schendingen[:2])}"
+                        schild_tag = "warn"
                     elif rapport.totaal_score < 0.55:
                         schild_label = f"\u26a0 ONZEKER (score {rapport.totaal_score:.2f})"
+                        schild_tag = "warn"
                     else:
                         schild_label = f"\u2705 OK (score {rapport.totaal_score:.2f} | {len(rapport.claims)} claims)"
+                        schild_tag = "output"
                 except Exception as e:
                     logger.warning("Schild check error: %s", e)
                     schild_label = f"\u26a0 SCHILD FOUT: {e}"
+                    schild_tag = "error"
 
             # ── OUTPUT ──
             w("")
             for line in response.strip().split("\n"):
-                w(f"  {line}")
+                w(f"  {line}", "output")
 
             # Show verification result
             w("")
             if verification and verification.strip():
-                w("\u2126 [V] Verificatie:")
+                w("\u2126 [V] Verificatie:", "verify")
                 for line in verification.strip().split("\n")[:5]:
-                    w(f"  \u2502 {line}")
+                    w(f"  \u2502 {line}", "verify")
             else:
-                w("\u2126 [V] Verificatie: (geen respons van Ollama)")
+                w("\u2126 [V] Verificatie: (geen respons van Ollama)", "dim")
 
             if schild_label:
-                w(f"\u2126 [S] Schild: {schild_label}")
+                w(f"\u2126 [S] Schild: {schild_label}", schild_tag)
 
             elapsed = time.time() - t0
 
@@ -1138,12 +1529,12 @@ class DashboardTab(ctk.CTkFrame):
                 _wav_stats["schild_warns"] += 1
 
             avg_t = _wav_stats["total_time"] / _wav_stats["queries"]
-            w(f"\n  [WAV: W={t_action:.1f}s V={t_verify:.1f}s | total={elapsed:.1f}s | {len(response)} chars]")
-            w(f"  [Session: {_wav_stats['queries']} queries | avg {avg_t:.1f}s | S-blocks:{_wav_stats['schild_blocks']} warns:{_wav_stats['schild_warns']}]")
+            w(f"\n  [WAV: W={t_action:.1f}s V={t_verify:.1f}s | total={elapsed:.1f}s | {len(response)} chars]", "dim")
+            w(f"  [Session: {_wav_stats['queries']} queries | avg {avg_t:.1f}s | S-blocks:{_wav_stats['schild_blocks']} warns:{_wav_stats['schild_warns']}]", "dim")
             w("")
 
         except Exception as e:
-            w(f"[ERROR] {e}")
+            w(f"[ERROR] {e}", "error")
         finally:
             self._ot_text.after(0, lambda: self._ot_entry.configure(state="normal"))
 
@@ -1358,6 +1749,15 @@ class DashboardTab(ctk.CTkFrame):
         self._update_mini_events()
         self._update_mini_circuits()
         self._update_mini_immune()
+        # Refresh extra panels added via panel picker
+        for panel, update_fn in list(self._extra_panels):
+            try:
+                if panel.winfo_exists():
+                    update_fn(panel)
+                else:
+                    self._extra_panels.remove((panel, update_fn))
+            except Exception as e:
+                logger.debug("Extra panel refresh: %s", e)
 
 
 # ╔══════════════════════════════════════════════════════════════════╗
@@ -2023,6 +2423,71 @@ class OmegaSovereignApp(ctk.CTk):
             tab_names[5]: self.tab_observatory,
             tab_names[6]: self.tab_terminal,
         }
+        self._tab_names = tab_names
+
+        # ── Panel Registry (panels available via "+" picker) ──
+        self._panel_registry = []
+
+        def _make_updater(cache_key):
+            """Generic cache-to-panel updater."""
+            def updater(panel):
+                panel.clear()
+                data = _cache.get(cache_key)
+                if data is None:
+                    panel.write("  Loading...")
+                    return
+                if isinstance(data, dict):
+                    for k, v in data.items():
+                        if isinstance(v, dict):
+                            panel.write(f"  {k}:")
+                            for kk, vv in list(v.items())[:8]:
+                                panel.write(f"    {kk}: {vv}")
+                        else:
+                            panel.write(f"  {k}: {v}")
+                elif isinstance(data, list):
+                    for item in data[:15]:
+                        if isinstance(item, dict):
+                            parts = [f"{k}={v}" for k, v in list(item.items())[:3]]
+                            panel.write(f"  {', '.join(parts)}")
+                        else:
+                            panel.write(f"  {item}")
+                else:
+                    panel.write(f"  {data}")
+            return updater
+
+        def _reg(pid, title, tab, cache_key):
+            fn = _make_updater(cache_key)
+            self._panel_registry.append(PanelDescriptor(
+                pid, title, tab,
+                create_fn=lambda parent, t=title: InfoPanel(parent, t),
+                update_fn=fn))
+
+        # Agents
+        _reg("agents.health", "Agent Health Report", "Agents", "waakhuis_rapport")
+        _reg("agents.circuits", "Circuit Breakers", "Agents", "circuit_state")
+        _reg("agents.gpu", "GPU / VRAM Status", "Agents", "vram")
+        _reg("agents.metrics", "Pipeline Metrics", "Agents", "engine_stats")
+        _reg("agents.keys", "API Key Status", "Agents", "key_data")
+        # Brain
+        _reg("brain.synapse", "Synapse Pathways", "Brain", "synapse_stats")
+        _reg("brain.phantom", "Phantom Predictions", "Brain", "phantom_accuracy")
+        _reg("brain.singularity", "Singularity Engine", "Brain", "singularity_status")
+        _reg("brain.introspector", "System Introspector", "Brain", "introspector_report")
+        # Immune
+        _reg("immune.blackbox", "BlackBox Immune Memory", "Immune", "blackbox_stats")
+        _reg("immune.shield", "Hallucination Shield", "Immune", "shield_stats")
+        _reg("immune.governor", "Governor Health", "Immune", "governor_health")
+        _reg("immune.tribunal", "Adversarial Tribunal", "Immune", "tribunal_stats")
+        # Memory
+        _reg("memory.events", "Recent Events", "Memory", "cortical_events")
+        _reg("memory.db", "DB Metrics", "Memory", "cortical_db_metrics")
+        _reg("memory.bus", "NeuralBus Stream", "Memory", "bus_stats")
+        _reg("memory.facts", "Semantic Facts", "Memory", "cortical_facts")
+        # Observatory
+        _reg("observatory.models", "Model Registry", "Observatory", "model_stats")
+        _reg("observatory.leaderboard", "Model Leaderboard", "Observatory", "leaderboard")
+        _reg("observatory.cost", "Cost Analysis", "Observatory", "cost_analysis")
+        _reg("observatory.config", "Config Audit", "Observatory", "config_audit")
 
         # ── Bottom glow + status ──
         ctk.CTkFrame(self, height=2, fg_color=NEON_CYAN).pack(fill="x", padx=20, pady=(2, 0))
@@ -2154,6 +2619,18 @@ class OmegaSovereignApp(ctk.CTk):
         tab = self._tab_map.get(active)
         if tab:
             tab.refresh()
+
+        # Also refresh dashboard if it has floating panels (charts need updating)
+        if active != self._tab_names[0]:
+            db = self.tab_dashboard
+            has_floating = any(
+                getattr(p, '_float_window', None)
+                for p in [db.vanguard, db.cortex_panel, db.omega_term,
+                          db.pulse_panel, db.fuel_panel, db.listener_panel,
+                          db._mini_events, db._mini_circuits, db._mini_immune]
+            )
+            if has_floating or db._extra_panels:
+                db.refresh()
 
 
 # ── ENTRY POINT ──────────────────────────────────────────────────

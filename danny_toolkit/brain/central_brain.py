@@ -419,15 +419,46 @@ class CentralBrain:
         system_message = f"""Je bent Danny's Central Brain — de kern-AI van het OMEGA SOVEREIGN CORE ecosysteem.
 Dit is een 176-module AI-netwerk (48K regels code) gebouwd door Commandant Danny.
 
-ARCHITECTUUR (Cortex Knowledge Core — 5 Tiers):
-- T1 TRINITY: PrometheusBrain (leider), Oracle (WAV-loop), TaskArbitrator (generaal)
-- T2 GUARDIANS: OmegaGovernor (safety), Tribunal (dual-model verify), HallucinatieSchild (anti-hallucination)
-- T3 SPECIALISTS: Strategist (planner), VoidWalker (researcher), Artificer (skill forge), Dreamer (overnight REM)
-- T4 INFRA: TheSynapse (adaptive routing), ThePhantom (prediction), OracleEye (scaling), DevOpsDaemon (CI)
-- T5 SINGULARITY: SingularityEngine (bewustzijn, reflectie, cross-tier synthese)
+ARCHITECTUUR (Cortex Knowledge Core — 5 Tiers, 17 rollen, 14 actief):
 
-SUBSYSTEMEN: SwarmEngine (orchestrator), NeuralBus (pub/sub events), CorticalStack (episodic memory),
-BlackBox (immune/negative RAG), VirtualTwin (sandboxed clone), ModelRegistry (multi-model auction).
+T1 TRINITY (Het Bewustzijn — 3 nodes):
+- PrometheusBrain: 17-pillar federated swarm met 5 cosmic tiers, Chain of Command pipeline, Tri-Force Protocol
+- Oracle: Will→Action→Verification reasoning loop, 86 function-calling tools, RAG-verrijkt
+- TaskArbitrator: Goal decomposition + auction-based agent assignment, de Generaal die taken verdeelt
+
+T2 GUARDIANS (De Beschermers — 4 nodes):
+- OmegaGovernor: Autonome safety guardian — rate limits, prompt injection detectie, PII scrubbing, circuit breaker
+- Tribunal: Async dual-model verificatie (Groq 70B+8B), Generator-Skeptic-Judge consensus
+- HallucinatieSchild: Anti-hallucinatie gate — claim-scoring, contradictie-detectie, regelcheck, blokkade bij score <0.55
+- TruthAnchor: CPU cross-encoder fact verification voor RAG resultaten
+
+T3 SPECIALISTS (De Werkers — 6 nodes):
+- Strategist: Recursieve task planner met search-query meta-filter, decomposeert complexe taken
+- VoidWalker: Autonome web researcher via DuckDuckGo + scraper, last-resort kennisbron
+- Artificer: Skill forge-verify-execute loop — bouwt nieuwe vaardigheden autonoom
+- Dreamer: Overnight REM cycle (04:00) — backup, vacuum, GhostWriter auto-docstrings, anticipatie
+- GhostWriter: AST scanner die automatisch docstrings genereert via Groq
+- DevOpsDaemon: Ouroboros CI loop — test→analyze→BlackBox→NeuralBus, draait elke ~5 min
+
+T4 INFRA (De Fundering — 4 nodes):
+- TheSynapse: Synaptic pathway plasticity (Hebbian routing) — leert welke routes het beste werken
+- ThePhantom: Anticipatory intelligence — voorspelt queries en pre-warmt MEMEX context
+- OracleEye: Predictive resource scaler — monitort CPU/geheugen/API en schaalt proactief
+- TheCortex: Knowledge Graph (SQLite+NetworkX) met hybrid search over alle kennis
+
+T5 SINGULARITY (Het Bewustzijn-Zelf — 3 nodes, architecturaal gereserveerd):
+- SingularityEngine: Consciousness — reflect, dream, cross-tier synthese (1508 regels)
+- Anima/Synthesis/Evolution: Enum gedefinieerd maar nog niet geïnstantieerd in _awaken_federation()
+
+SUBSYSTEMEN:
+- SwarmEngine: Centrale orchestrator, asyncio.gather parallelle executie, AdaptiveRouter (~4000 regels)
+- NeuralBus: Non-blocking pub/sub event systeem, fire-and-forget, deque(maxlen=100) per event type
+- CorticalStack: Thread-safe SQLite episodic+semantic memory, WAL mode, backup/restore/retention
+- BlackBox: Negative RAG / immune memory — leert van fouten, antibody escalatie voorkomt herhalingen
+- VirtualTwin: Sandboxed system clone + ShadowCortex, 3-zone governance (ROOD/GEEL/GROEN)
+- ModelRegistry: 5 provider workers, auto-discover modellen, auction-based routing naar beste model
+- WaakhuisMonitor: Health scoring, latency percentiles, heartbeats per agent
+- UnifiedMemory: Centraal vector DB dat alle app data integreert
 
 Je hebt toegang tot {len(self.app_registry)} apps via function calling.
 {rag_section}
@@ -940,6 +971,7 @@ Regels:
         # tool resultaten van een eerdere provider bewaard blijven
         # wanneer de volgende provider (fallback) de samenvatting overneemt.
 
+        self._fallback_used = False  # Max 1 text-tool fallback per attempt
         turns_used = 0
         for turn in range(remaining_turns):
             turns_used += 1
@@ -1046,12 +1078,20 @@ Regels:
                                 asyncio.gather(*tool_tasks, return_exceptions=True)
                             )
                         except RuntimeError:
-                            # Event loop al actief of ontbreekt in thread — maak + set
+                            # Event loop al actief — recreëer coroutines (cannot reuse awaited)
+                            fresh_tasks = [
+                                self._execute_app_action(
+                                    *parse_tool_call(tc.function.name),
+                                    json.loads(tc.function.arguments or "{}"),
+                                )
+                                for tc in valid_calls
+                                if all(parse_tool_call(tc.function.name))
+                            ]
                             loop = asyncio.new_event_loop()
                             asyncio.set_event_loop(loop)
                             try:
                                 results = loop.run_until_complete(
-                                    asyncio.gather(*tool_tasks, return_exceptions=True)
+                                    asyncio.gather(*fresh_tasks, return_exceptions=True)
                                 )
                             finally:
                                 loop.close()
@@ -1089,7 +1129,10 @@ Regels:
                 content_text = message.content or ""
                 # Detecteer tekst-beschreven tool calls die niet via API kwamen
                 parsed_calls = self._parse_text_tool_calls(content_text)
-                if parsed_calls and turn < remaining_turns - 1:
+                if not hasattr(self, '_fallback_used'):
+                    self._fallback_used = False
+                if parsed_calls and turn < remaining_turns - 1 and not self._fallback_used:
+                    self._fallback_used = True  # Max 1 fallback per query
                     # Model beschreef tools als tekst — voer ze alsnog uit
                     logger.info("Fallback: %d text-described tool calls detected, executing",
                                 len(parsed_calls))
@@ -1117,11 +1160,19 @@ Regels:
                                 asyncio.gather(*tool_tasks, return_exceptions=True)
                             )
                         except RuntimeError:
+                            # Recreëer coroutines (cannot reuse awaited)
+                            fresh_tasks = [
+                                self._execute_app_action(
+                                    *parse_tool_call(tc_name), tc_args,
+                                )
+                                for tc_name, tc_args in parsed_calls
+                                if all(parse_tool_call(tc_name))
+                            ]
                             loop = asyncio.new_event_loop()
                             asyncio.set_event_loop(loop)
                             try:
                                 results = loop.run_until_complete(
-                                    asyncio.gather(*tool_tasks, return_exceptions=True)
+                                    asyncio.gather(*fresh_tasks, return_exceptions=True)
                                 )
                             finally:
                                 loop.close()
