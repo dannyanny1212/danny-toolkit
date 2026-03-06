@@ -1074,16 +1074,18 @@ class DashboardTab(ctk.CTkFrame):
                         agent="CentralBrain",
                         metadata={"source": "wav_loop"},
                     )
-                    rapport = schild.beoordeel([pseudo], vraag=question)
+                    rapport = schild.beoordeel([pseudo], question)
                     if rapport.geblokkeerd:
-                        schild_label = f"\u26a0 GEBLOKKEERD (score {rapport.score:.2f})"
-                    elif rapport.waarschuwingen:
-                        schild_label = f"\u26a0 WAARSCHUWING: {', '.join(rapport.waarschuwingen[:2])}"
+                        schild_label = f"\u26a0 GEBLOKKEERD (score {rapport.totaal_score:.2f}): {rapport.reden_blokkade}"
+                    elif rapport.regel_schendingen:
+                        schild_label = f"\u26a0 WAARSCHUWING (score {rapport.totaal_score:.2f}): {', '.join(rapport.regel_schendingen[:2])}"
+                    elif rapport.totaal_score < 0.55:
+                        schild_label = f"\u26a0 ONZEKER (score {rapport.totaal_score:.2f})"
                     else:
-                        schild_label = f"\u2705 OK (score {rapport.score:.2f})"
+                        schild_label = f"\u2705 OK (score {rapport.totaal_score:.2f} | {len(rapport.claims)} claims)"
                 except Exception as e:
-                    logger.debug("Schild check error: %s", e)
-                    schild_label = ""
+                    logger.warning("Schild check error: %s", e)
+                    schild_label = f"\u26a0 SCHILD FOUT: {e}"
 
             # ── OUTPUT ──
             w("")
