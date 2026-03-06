@@ -188,6 +188,9 @@ class CentralBrain:
         self._breaker_max = 3
         self._breaker_cooldown = 60  # seconden
 
+        # Safety net: bewaar tool resultaten voor als samenvatting faalt
+        self._last_tool_results = []
+
         # App Registry
         self.app_registry: Dict[str, Any] = {}
         self.app_instances: Dict[str, Any] = {}
@@ -876,7 +879,22 @@ Regels:
                     logger.debug("%s fout: %s", label, e)
                 continue
 
-        # Alle providers uitgeput
+        # Alle providers uitgeput — check safety net (tools al uitgevoerd?)
+        if self._last_tool_results:
+            print(kleur(
+                f"   [SAFETY-NET] Alle providers faalde, maar {len(self._last_tool_results)} "
+                f"tools zijn al uitgevoerd — bouw direct antwoord",
+                Kleur.GEEL,
+            ))
+            summary = self._format_tool_results(self._last_tool_results)
+            self._last_tool_results = []
+            with self._history_lock:
+                self.conversation_history.append({
+                    "role": "assistant", "content": summary,
+                })
+            self._sla_stats_op()
+            return summary
+
         if remaining_turns <= 0:
             self._sla_stats_op()
             return "Maximum aantal rondes bereikt. Probeer een specifiekere vraag."
@@ -908,9 +926,9 @@ Regels:
 
         tools = self._build_openai_tools() if use_tools else None
 
-        # Safety net: bewaar tool resultaten zodat bij rate limit
-        # alsnog een bruikbaar antwoord gegeven kan worden
-        _tool_results_backup = []
+        # Safety net: bewaar tool resultaten op instance level zodat
+        # _process_with_fallback ze kan gebruiken als alle providers falen
+        self._last_tool_results = []
 
         turns_used = 0
         for turn in range(remaining_turns):
@@ -932,13 +950,13 @@ Regels:
                 response = self.client.chat.completions.create(**kwargs)
             except Exception as api_err:
                 # Rate limit of andere fout NADAT tools al uitgevoerd zijn
-                if _tool_results_backup:
+                if self._last_tool_results:
                     logger.info("API fout na tool executie, gebruik backup resultaten")
                     print(kleur(
                         f"   [SAFETY-NET] Rate limit na tools — bouw direct antwoord",
                         Kleur.GEEL,
                     ))
-                    summary = self._format_tool_results(_tool_results_backup)
+                    summary = self._format_tool_results(self._last_tool_results)
                     return (summary, turns_used)
                 raise  # Geen backup → propageer error naar fallback chain
             choice = response.choices[0]
@@ -1024,7 +1042,7 @@ Regels:
                         })
                         # Bewaar voor safety net
                         app_naam, actie_naam = parse_tool_call(tool_call.function.name)
-                        _tool_results_backup.append(
+                        self._last_tool_results.append(
                             (f"{app_naam}.{actie_naam}" if app_naam else tool_call.function.name,
                              result_str)
                         )
