@@ -469,6 +469,8 @@ BELANGRIJK: Je hebt 6 omega_core tools om je EIGEN systeem te bevragen:
 - omega_core_immune_report: BlackBox + Schild + Tribunal + Waakhuis
 - omega_core_neural_activity: NeuralBus + Synapse + Phantom + ModelRegistry
 Bij vragen over jezelf, je architectuur, tiers, modules, of systeemstatus: GEBRUIK deze tools voor ECHTE data.
+ROUTING: Bij korte vragen als "omega", "scan", "systeem", "status" → gebruik omega_core_system_scan (NIET query_knowledge).
+query_knowledge is ALLEEN voor specifieke kennisgraaf zoekopdrachten ("wat is X", "relatie tussen A en B").
 {rag_section}
 KRITIEKE REGEL: Gebruik ALTIJD de function calling API om tools aan te roepen.
 Beschrijf NOOIT een tool call als JSON tekst — voer hem UIT via de tool_calls interface.
@@ -1550,7 +1552,8 @@ Regels:
     # Keyword → categorie mapping (lowercase)
     _PREFETCH_MAP = {
         "system_health": {
-            "keywords": {"status", "systeem", "health", "gezondheid", "modules", "overzicht"},
+            "keywords": {"status", "systeem", "health", "gezondheid", "modules", "overzicht",
+                         "omega", "sovereign", "scan", "tiers", "architectuur"},
             "label": "SYSTEM HEALTH",
         },
         "hardware": {
@@ -1600,9 +1603,11 @@ Regels:
         if os.environ.get("DANNY_TEST_MODE") == "1":
             return ""
 
-        # Guard: korte queries (groet/kort commando)
+        # Guard: korte queries — maar sta system keywords altijd door
         words = query.strip().split()
-        if len(words) < 3:
+        _ALWAYS_PREFETCH = {"omega", "sovereign", "scan", "status", "systeem",
+                            "health", "tiers", "architectuur"}
+        if len(words) < 3 and not (set(w.lower().strip(".,!?") for w in words) & _ALWAYS_PREFETCH):
             return ""
 
         # Bepaal welke categorieën matchen

@@ -1106,12 +1106,27 @@ class DashboardTab(ctk.CTkFrame):
                 self._ct_write(f"  \u2705 API key ingesteld: {raw_key[:7]}...{raw_key[-4:]}", "system")
             else:
                 self._ct_write("  \u26d4 Ongeldige key. Verwacht: apikey sk-ant-...", "error")
+        elif low == "omega":
+            self._omega_activate(self._ct_write)
         elif re.match(r'^(sk-|key-|api[_-])', cmd, re.IGNORECASE):
             self._ct_write("  \u26d4 Gebruik: apikey sk-ant-...", "error")
         else:
             self._ct_write("\U0001f916 [Claude] Processing...", "process")
             self._ct_entry.configure(state="disabled")
             threading.Thread(target=self._ot_ask_claude, args=(cmd,), daemon=True).start()
+
+    def _omega_activate(self, writer):
+        """Sovereign activatie banner in een terminal."""
+        writer("", "system")
+        writer("  \u2126\u2126\u2126  OMEGA SOVEREIGN CORE  \u2126\u2126\u2126", "system")
+        writer("  \u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501", "system")
+        writer("  176 modules | 48K lines | 5 Tiers | 32 tools", "output")
+        writer("  T1 Trinity | T2 Guardians | T3 Specialists", "output")
+        writer("  T4 Infra   | T5 Singularity", "output")
+        writer("  \u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501", "system")
+        writer("  Prime Executor ONLINE. Alle systemen actief.", "verify")
+        writer("  Wat kan ik voor je doen, Commandant?", "verify")
+        writer("", "system")
 
     def _ot_on_enter(self, _=None):
         cmd = self._ot_entry.get().strip()
@@ -1123,7 +1138,9 @@ class DashboardTab(ctk.CTkFrame):
                  "metrics", "bus", "events", "keys", "cortical",
                  "apps", "brain", "immune", "rag"}
         low = cmd.lower().strip("/")
-        if low in known:
+        if low == "omega":
+            self._omega_activate(self._ot_write)
+        elif low in known:
             self._ot_dispatch(low)
             self._ot_write("")
         else:
