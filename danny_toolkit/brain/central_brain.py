@@ -404,6 +404,9 @@ class CentralBrain:
         # Bouw context
         context = self._build_context()
 
+        # RAG: automatische kennisbank verrijking
+        rag_section = self._rag_context(user_input)
+
         # System message
         system_message = f"""Je bent Danny's Central Brain — de kern-AI van het OMEGA SOVEREIGN CORE ecosysteem.
 Dit is een 176-module AI-netwerk (48K regels code) gebouwd door Commandant Danny.
@@ -419,10 +422,11 @@ SUBSYSTEMEN: SwarmEngine (orchestrator), NeuralBus (pub/sub events), CorticalSta
 BlackBox (immune/negative RAG), VirtualTwin (sandboxed clone), ModelRegistry (multi-model auction).
 
 Je hebt toegang tot {len(self.app_registry)} apps via function calling.
-
+{rag_section}
 KRITIEKE REGEL: Gebruik ALTIJD de function calling API om tools aan te roepen.
 Beschrijf NOOIT een tool call als JSON tekst — voer hem UIT via de tool_calls interface.
 Als je meerdere tools wilt aanroepen, maak dan meerdere tool_calls in één response.
+Als er KENNISBANK CONTEXT hierboven staat, gebruik die als primaire bron voor je antwoord.
 
 Context over de gebruiker:
 {json.dumps(context, ensure_ascii=False, indent=2)}
@@ -432,7 +436,8 @@ Regels:
 2. VOER tools UIT — toon geen JSON, geen namen, geen beschrijvingen van calls
 3. Bij "test jezelf" of "controleer": roep minstens 5 tools aan (fitness_tracker_get_stats, mood_tracker_get_stats, goals_tracker_get_active_goals, expense_tracker_get_stats, agenda_planner_get_today) en rapporteer de WERKELIJKE resultaten
 4. Combineer informatie uit meerdere apps voor een compleet antwoord
-5. Als de gebruiker vraagt over de architectuur, T1-T5 tiers, Cortex, of Omega — beantwoord uit bovenstaande kennis"""
+5. Als de gebruiker vraagt over de architectuur, T1-T5 tiers, Cortex, of Omega — beantwoord uit bovenstaande kennis
+6. Als er kennisbank context beschikbaar is, gebruik die om je antwoord te verankeren in feiten"""
 
         # Voeg user message toe aan history
         with self._history_lock:
@@ -1264,6 +1269,63 @@ Regels:
 
         return ("Central Brain is in offline modus (geen API key). "
                 "Basis data queries zijn beschikbaar.")
+
+    def _rag_context(self, query: str) -> str:
+        """Haal relevante RAG documenten op voor automatische context-injectie.
+
+        Bevraagt ChromaDB (TheLibrarian) en TheCortex (hybrid search)
+        om de LLM te gronden in de kennisbank vóór response generatie.
+
+        Returns:
+            Geformateerde context string, of lege string als niets gevonden.
+        """
+        if os.environ.get("DANNY_TEST_MODE") == "1":
+            return ""
+
+        # Korte queries (< 3 woorden) of simpele groeten → skip RAG
+        words = query.strip().split()
+        if len(words) < 3:
+            return ""
+        skip_patterns = ["hallo", "hoi", "hey", "goedemorgen", "goedemiddag",
+                         "bedankt", "dankje", "ok", "oké", "ja", "nee"]
+        if words[0].lower().rstrip("!.,?") in skip_patterns and len(words) < 5:
+            return ""
+
+        docs_text = ""
+
+        # Layer 1: ChromaDB via TheLibrarian
+        try:
+            from ingest import TheLibrarian
+            lib = TheLibrarian()
+            results = lib.query(query, n_results=3)
+            docs = results.get("documents", [[]])[0]
+            if docs:
+                docs_text = "\n---\n".join(d[:500] for d in docs[:3])
+        except Exception as e:
+            logger.debug("RAG TheLibrarian query error: %s", e)
+
+        # Layer 2: TheCortex hybrid search (vector + graph) als fallback
+        if not docs_text:
+            try:
+                from danny_toolkit.brain.cortex import TheCortex
+                import asyncio as _aio
+                cortex = TheCortex()
+                graph_results = _aio.run(cortex.hybrid_search(query, top_k=3))
+                if graph_results:
+                    parts = [r.get("content", "")[:500]
+                             for r in graph_results if r.get("content")]
+                    if parts:
+                        docs_text = "\n---\n".join(parts)
+            except Exception as e:
+                logger.debug("RAG Cortex hybrid search error: %s", e)
+
+        if docs_text:
+            return (
+                "\n\n[KENNISBANK CONTEXT — automatisch opgehaald uit vectorstore]\n"
+                f"{docs_text}\n"
+                "[EINDE KENNISBANK CONTEXT]\n"
+            )
+        return ""
 
     def _build_context(self) -> dict:
         """Bouw context voor AI requests."""

@@ -464,19 +464,26 @@ class VoyageChromaEmbedding:
         """ChromaDB protocol: unieke naam."""
         return "VoyageChromaEmbedding"
 
-    def embed_query(self, query: str) -> list:
+    def embed_query(self, query=None, *, input=None) -> list:
         """Embed een enkele query — vereist door ChromaDB query_texts.
 
         Gebruikt input_type='query' voor optimale retrieval-scoring.
+        Accepteert zowel positional 'query' als keyword 'input' (ChromaDB compat).
+        ChromaDB stuurt input als list — wordt hier uitgewikkeld.
         """
+        raw = query if query is not None else input
+        if isinstance(raw, list):
+            texts = [str(t) for t in raw]
+        else:
+            texts = [str(raw)] if raw else [""]
         for poging in range(5):
             try:
                 result = self.client.embed(
-                    texts=[query],
+                    texts=texts,
                     model=self.model,
                     input_type="query",
                 )
-                return mrl_truncate(result.embeddings, self._target_dim)[0]
+                return mrl_truncate(result.embeddings, self._target_dim)
             except (ConnectionError, TimeoutError, OSError) as e:
                 logger.warning("Voyage embed_query netwerk fout (poging %d): %s", poging + 1, e)
                 time.sleep(5 * (poging + 1))
