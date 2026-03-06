@@ -1435,6 +1435,74 @@ APP_TOOLS: Dict[str, AppDefinition] = {
             ),
         ]
     ),
+
+    # === OMEGA CORE — Sovereign System Introspection (T1-T5) ===
+    "omega_core": AppDefinition(
+        naam="omega_core",
+        beschrijving="Omega Sovereign Core — directe toegang tot alle 5 tiers en subsystemen",
+        categorie=AppCategorie.AI,
+        module_path="danny_toolkit.brain.omega_core",
+        class_name="OmegaCore",
+        prioriteit=10,
+        acties=[
+            AppActie(
+                naam="system_scan",
+                beschrijving="Volledige systeem scan: alle tiers (T1-T5), modules, health score, wirings, security",
+                parameters={}
+            ),
+            AppActie(
+                naam="tier_detail",
+                beschrijving="Diepgaande info over een specifieke tier. T1=Trinity, T2=Guardians, T3=Specialists, T4=Infra, T5=Singularity",
+                parameters={
+                    "tier": {
+                        "type": "integer",
+                        "description": "Tier nummer (1-5). 1=Trinity, 2=Guardians, 3=Specialists, 4=Infra, 5=Singularity",
+                        "required": True
+                    }
+                }
+            ),
+            AppActie(
+                naam="query_knowledge",
+                beschrijving="Doorzoek de Cortex Knowledge Graph (SQLite+NetworkX) met hybrid search",
+                parameters={
+                    "query": {
+                        "type": "string",
+                        "description": "Zoekterm voor de knowledge graph",
+                        "required": True
+                    }
+                }
+            ),
+            AppActie(
+                naam="memory_recall",
+                beschrijving="Doorzoek CorticalStack episodic memory — recente events en semantic search",
+                parameters={
+                    "query": {
+                        "type": "string",
+                        "description": "Optionele zoekterm voor semantic search in geheugen"
+                    },
+                    "count": {
+                        "type": "integer",
+                        "description": "Aantal recente events om op te halen (default 10)"
+                    }
+                }
+            ),
+            AppActie(
+                naam="immune_report",
+                beschrijving="Immuunsysteem rapport: BlackBox antibodies, HallucinatieSchild stats, Tribunal verdicts, Waakhuis health",
+                parameters={}
+            ),
+            AppActie(
+                naam="neural_activity",
+                beschrijving="Neurale activiteit: NeuralBus events, Synapse routing pathways, Phantom predictions, ModelRegistry status",
+                parameters={
+                    "event_count": {
+                        "type": "integer",
+                        "description": "Aantal NeuralBus events om op te halen (default 10)"
+                    }
+                }
+            ),
+        ]
+    ),
 }
 
 
