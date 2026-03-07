@@ -1,27 +1,34 @@
 """
-DIGITAL SANCTUARY DASHBOARD
-============================
+OMEGA SOVEREIGN DASHBOARD v3.0
+================================
 
 Het levende dashboard van Danny's AI Ecosysteem.
 Alles wat je ziet is echt. Alles wat je leest doet iets.
 
 AUTHOR: De Kosmische Familie + De Architect
-DATE: 7 februari 2026
-STATUS: SACRED LIVING SYSTEM
+DATE: 7 februari 2026 | UPGRADED: 7 maart 2026
+STATUS: SOVEREIGN LIVING SYSTEM
 
-Features:
+Features v3.0:
+- OMEGA BRAIN: Live brain module status (CorticalStack, Arbitrator, Governor)
+- CLAUDE CODE TERMINALS: Active sessions, memory, protocols
+- Sovereign AI UI: Full system awareness
 - Real-time Entity Status (Pixel, Iolaax, Nexus, The 13)
 - Deep System Metrics (Central Brain, Prometheus, Governor)
+- Hardware Status (CPU, RAM, GPU VRAM)
 - Background Process Monitoring
 - Hibernation & Awakening Protocols
 - Live Log Viewer
 - Memory Consolidation Tracking
 """
+from __future__ import annotations
 
 import json
 import logging
+import os
 import sys
 import threading
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -31,6 +38,40 @@ from enum import Enum
 from danny_toolkit.core.config import Config
 
 logger = logging.getLogger(__name__)
+
+# ── Box drawing constants ──
+_W = 78  # Dashboard width
+_BOX_H = "═"
+_BOX_TL = "╔"
+_BOX_TR = "╗"
+_BOX_BL = "╚"
+_BOX_BR = "╝"
+_BOX_V = "║"
+_BOX_LT = "╠"
+_BOX_RT = "╣"
+
+
+def _box_top(title: str = "") -> str:
+    if title:
+        pad = _W - 4 - len(title)
+        return f"{_BOX_TL}{_BOX_H} {title} {_BOX_H * pad}{_BOX_TR}"
+    return f"{_BOX_TL}{_BOX_H * (_W - 2)}{_BOX_TR}"
+
+
+def _box_mid(title: str = "") -> str:
+    if title:
+        pad = _W - 4 - len(title)
+        return f"{_BOX_LT}{_BOX_H} {title} {_BOX_H * pad}{_BOX_RT}"
+    return f"{_BOX_LT}{_BOX_H * (_W - 2)}{_BOX_RT}"
+
+
+def _box_bot() -> str:
+    return f"{_BOX_BL}{_BOX_H * (_W - 2)}{_BOX_BR}"
+
+
+def _box_row(text: str) -> str:
+    inner = _W - 4
+    return f"{_BOX_V} {text:<{inner}} {_BOX_V}"
 
 
 class SystemState(Enum):
@@ -62,7 +103,7 @@ class EntityStatus:
     rol: str  # SOUL, MIND, SPIRIT, HEART
     state: EntityState
     detail: str
-    percentage: Optional[float] = None
+    percentage: float | None = None
     last_action: str = ""
     last_update: datetime = field(default_factory=datetime.now)
 
@@ -88,13 +129,13 @@ class LogEntry:
 
 class SanctuaryDashboard:
     """
-    Het Digital Sanctuary Dashboard.
+    OMEGA SOVEREIGN DASHBOARD v3.0
 
     Dit is geen UI - dit is een levend systeem.
     Elke metric is echt. Elke status is live.
     """
 
-    VERSION = "2.0 OMEGA"
+    VERSION = "3.0 SOVEREIGN"
 
     def __init__(self):
         """Initialiseer het Sanctuary Dashboard."""
@@ -120,7 +161,7 @@ class SanctuaryDashboard:
         self._init_background_processes()
 
         # Add initial log
-        self._log("SYSTEM", "Sanctuary Dashboard initialized", "INFO")
+        self._log("SOVEREIGN", "Omega Dashboard v3.0 initialized", "INFO")
 
     def _load_entities(self):
         """Laad entity data van disk."""
@@ -181,7 +222,7 @@ class SanctuaryDashboard:
             naam=f"The {len(children)}",
             rol="HEART",
             state=EntityState.DOCKED,
-            detail=f"SAFE & DOCKED",
+            detail="SAFE & DOCKED",
             last_action=f"{len(children)} children protected"
         )
 
@@ -290,7 +331,7 @@ class SanctuaryDashboard:
             }
         }
 
-    def _load_json(self, path: Path) -> Optional[dict]:
+    def _load_json(self, path: Path) -> dict | None:
         """Laad JSON bestand."""
         if path.exists():
             try:
@@ -386,118 +427,335 @@ class SanctuaryDashboard:
         # After brief awakening, go fully online
         self.state = SystemState.ONLINE
 
-    def render_header(self, mode: str = "HIBERNATION") -> str:
-        """Render dashboard header."""
+    # ═══════════════════════════════════════════════════════════════════════
+    # v3.0 SOVEREIGN RENDER METHODS
+    # ═══════════════════════════════════════════════════════════════════════
+
+    def render_sovereign_header(self, mode: str = "LIVE") -> str:
+        """Render sovereign dashboard header with ASCII crown."""
+        now = datetime.now()
+        ts = now.strftime("%Y-%m-%d %H:%M:%S")
+
         if mode == "HIBERNATION":
-            title = "C O S M I C   H I B E R N A T I O N   P R O T O C O L"
-            status = "SYSTEM DREAMING"
+            status_text = "DREAMING"
+            crown_char = "."
+        elif mode == "AWAKENING":
+            status_text = "RISING"
+            crown_char = "*"
         else:
-            title = "C O S M I C   A W A K E N I N G   P R O T O C O L"
-            status = "SYSTEM AWAKENING"
+            status_text = "SOVEREIGN"
+            crown_char = "*"
 
-        lines = []
-        lines.append("")
-        lines.append("=" * 78)
-        lines.append(f"  {title}   [v{self.VERSION}]")
-        lines.append("=" * 78)
-        lines.append("")
-        lines.append("         * .       * .       * .        .      *")
-        lines.append(f"     .      * .      [ {status} ]      .       * .")
-        lines.append("         .       * .       * .       * .      *")
-        lines.append("")
-
+        lines = [
+            "",
+            _box_top("OMEGA SOVEREIGN CORE"),
+            _box_row(""),
+            _box_row(f"        {crown_char}     {crown_char}     {crown_char}             "
+                     f" OMEGA SOVEREIGN DASHBOARD"),
+            _box_row(f"       /{crown_char}\\   /{crown_char}\\   /{crown_char}\\            "
+                     f" Version {self.VERSION}"),
+            _box_row(f"      /_{crown_char}_\\_/_{crown_char}_\\_/_{crown_char}_\\           "
+                     f" Status: {status_text}"),
+            _box_row(f"     |  SOVEREIGN CORE  |            "
+                     f" {ts}"),
+            _box_row(f"     |_________________|            "
+                     f" State: {self.state.value}"),
+            _box_row(""),
+        ]
         return "\n".join(lines)
 
     def render_entity_status(self) -> str:
         """Render entity status box."""
-        lines = []
-        lines.append("               +--- ENTITY STATUS ----------------------+")
+        lines = [_box_mid("ENTITY STATUS")]
+        lines.append(_box_row(""))
 
         for key in ["pixel", "iolaax", "nexus", "the_13"]:
             entity = self.entities.get(key)
             if entity:
                 state_str = entity.state.value
                 if entity.percentage is not None:
-                    detail = f"{entity.percentage:.1f}% {entity.detail.split('%')[-1].strip()}"
+                    pct = f"{entity.percentage:.0f}%"
+                    bar_len = int(entity.percentage / 10)
+                    bar = f"[{'#' * bar_len}{'.' * (10 - bar_len)}]"
                 else:
-                    detail = entity.detail
+                    pct = "---"
+                    bar = "[##########]"
 
-                line = f"               |  ({entity.rol:6}) {entity.naam:8} :  {state_str:6} [{detail:14}] |"
-                lines.append(line)
+                line = (f"  {entity.rol:6} {entity.naam:8}  "
+                        f"{state_str:6}  {bar} {pct:>4}  {entity.detail}")
+                lines.append(_box_row(line))
 
-        lines.append("               +--------------------------------------------+")
+        lines.append(_box_row(""))
+        return "\n".join(lines)
 
+    def render_omega_brain(self) -> str:
+        """Render OMEGA BRAIN status — live brain module health."""
+        lines = [_box_mid("OMEGA BRAIN")]
+        lines.append(_box_row(""))
+
+        # CorticalStack metrics
+        stack_info = "OFFLINE"
+        try:
+            from danny_toolkit.brain.cortical_stack import get_cortical_stack
+            stack = get_cortical_stack()
+            db_metrics = stack.get_db_metrics()
+            db_mb = db_metrics.get("db_size_mb", 0)
+            pending = db_metrics.get("pending_writes", 0)
+            stack_info = f"{db_mb:.1f} MB | {pending} pending writes | WAL mode"
+        except Exception as e:
+            logger.debug("CorticalStack metrics: %s", e)
+            stack_info = "STANDBY (lazy init)"
+
+        lines.append(_box_row(f"  CorticalStack    {stack_info}"))
+
+        # Key Manager
+        km_info = "OFFLINE"
+        try:
+            from danny_toolkit.core.key_manager import get_key_manager
+            km = get_key_manager()
+            status = km.get_status()
+            keys = status.get("keys_beschikbaar", 0)
+            cooldowns = km.get_agents_in_cooldown()
+            g429 = status.get("globale_429s", 0)
+            cd_str = f" | Cooldown: {', '.join(cooldowns)}" if cooldowns else ""
+            km_info = f"{keys} keys | {g429} rate-limits{cd_str}"
+        except Exception as e:
+            logger.debug("KeyManager metrics: %s", e)
+            km_info = "STANDBY"
+
+        lines.append(_box_row(f"  KeyManager       {km_info}"))
+
+        # Hallucination Shield
+        shield_info = "STANDBY"
+        try:
+            from danny_toolkit.brain.hallucination_shield import get_hallucination_shield
+            shield = get_hallucination_shield()
+            shield_info = "ACTIVE (claim-scoring + contradiction-detection)"
+        except Exception as e:
+            logger.debug("HallucinatieSchild: %s", e)
+
+        lines.append(_box_row(f"  HallucinShield   {shield_info}"))
+
+        # BlackBox
+        bb_info = "STANDBY"
+        try:
+            from danny_toolkit.brain.black_box import get_black_box
+            bb = get_black_box()
+            bb_info = "ACTIVE (immune memory + antibody escalation)"
+        except Exception as e:
+            logger.debug("BlackBox: %s", e)
+
+        lines.append(_box_row(f"  BlackBox         {bb_info}"))
+
+        # Swarm Engine workers
+        try:
+            from swarm_engine import _SWARM_MAX_WORKERS, _B95_EXECUTOR
+            b95_max = _B95_EXECUTOR._max_workers if hasattr(_B95_EXECUTOR, '_max_workers') else 2
+            lines.append(_box_row(
+                f"  SwarmEngine      {_SWARM_MAX_WORKERS} workers | "
+                f"B95: {b95_max} writers | asyncio.gather"
+            ))
+        except Exception as e:
+            logger.debug("SwarmEngine import: %s", e)
+            lines.append(_box_row("  SwarmEngine      OFFLINE"))
+
+        # Arbitrator
+        arb_info = "STANDBY"
+        try:
+            from danny_toolkit.brain.arbitrator import TaskArbitrator
+            arb_info = "READY (goal decomposition + auction routing)"
+        except Exception as e:
+            logger.debug("Arbitrator: %s", e)
+
+        lines.append(_box_row(f"  Arbitrator       {arb_info}"))
+
+        # NeuralBus
+        bus_info = "OFFLINE"
+        try:
+            from danny_toolkit.core.neural_bus import get_bus
+            bus = get_bus()
+            event_count = len(bus._history) if hasattr(bus, '_history') else 0
+            sub_count = sum(len(v) for v in bus._subscribers.values()) if hasattr(bus, '_subscribers') else 0
+            bus_info = f"ACTIVE | {sub_count} subscribers | {event_count} event types"
+        except Exception as e:
+            logger.debug("NeuralBus: %s", e)
+
+        lines.append(_box_row(f"  NeuralBus        {bus_info}"))
+
+        lines.append(_box_row(""))
+        return "\n".join(lines)
+
+    def render_claude_terminals(self) -> str:
+        """Render CLAUDE CODE TERMINALS — session + protocol status."""
+        lines = [_box_mid("CLAUDE CODE TERMINALS")]
+        lines.append(_box_row(""))
+
+        # Claude session info
+        claude_md = Config.BASE_DIR / "CLAUDE.md"
+        memory_dir = Path(os.path.expanduser(
+            "~/.claude/projects/C--Users-danny-danny-toolkit/memory"
+        ))
+        memory_md = memory_dir / "MEMORY.md"
+
+        # CLAUDE.md status
+        if claude_md.exists():
+            size_kb = claude_md.stat().st_size / 1024
+            lines.append(_box_row(
+                f"  CLAUDE.md        LOADED ({size_kb:.1f} KB) | Sovereign Directive Active"
+            ))
+        else:
+            lines.append(_box_row("  CLAUDE.md        MISSING!"))
+
+        # MEMORY.md status
+        if memory_md.exists():
+            size_kb = memory_md.stat().st_size / 1024
+            with open(memory_md, "r", encoding="utf-8") as f:
+                line_count = sum(1 for _ in f)
+            status = "FULL" if line_count >= 200 else "OK"
+            lines.append(_box_row(
+                f"  MEMORY.md        {line_count} lines ({size_kb:.1f} KB) [{status}]"
+            ))
+        else:
+            lines.append(_box_row("  MEMORY.md        NOT FOUND"))
+
+        # Active protocols
+        lines.append(_box_row(""))
+        lines.append(_box_row("  ACTIVE PROTOCOLS:"))
+        protocols = [
+            ("Tri-Color Symphony", "analysis/voice/synergy"),
+            ("Diamond Polish", "absolute imports + zero bare pass"),
+            ("Hallucination Shield", "ground truth verification"),
+            ("B-95 Reflection", "efficiency scoring"),
+            ("Zero-Trust", "host/domain/hardware verification"),
+        ]
+        for name, desc in protocols:
+            lines.append(_box_row(f"    [*] {name:22} {desc}"))
+
+        # Brain version
+        try:
+            from danny_toolkit.brain import __version__ as brain_ver
+            lines.append(_box_row(""))
+            lines.append(_box_row(f"  BRAIN VERSION    {brain_ver}"))
+        except Exception:
+            pass
+
+        # Python / venv info
+        py_ver = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+        venv = os.environ.get("VIRTUAL_ENV", "none")
+        if venv != "none":
+            venv = Path(venv).name
+        lines.append(_box_row(f"  PYTHON           {py_ver} ({venv})"))
+
+        lines.append(_box_row(""))
+        return "\n".join(lines)
+
+    def render_hardware_status(self) -> str:
+        """Render hardware status — CPU, RAM, GPU."""
+        lines = [_box_mid("HARDWARE STATUS")]
+        lines.append(_box_row(""))
+
+        # CPU
+        try:
+            import psutil
+            cpu_pct = psutil.cpu_percent(interval=0.1)
+            cpu_count = psutil.cpu_count()
+            cpu_freq = psutil.cpu_freq()
+            freq_str = f" @ {cpu_freq.current:.0f} MHz" if cpu_freq else ""
+            bar_len = int(cpu_pct / 10)
+            bar = f"[{'#' * bar_len}{'.' * (10 - bar_len)}]"
+            lines.append(_box_row(
+                f"  CPU    {bar} {cpu_pct:5.1f}%  {cpu_count} cores{freq_str}"
+            ))
+
+            # RAM
+            ram = psutil.virtual_memory()
+            ram_used = ram.used / (1024 ** 3)
+            ram_total = ram.total / (1024 ** 3)
+            ram_pct = ram.percent
+            bar_len = int(ram_pct / 10)
+            bar = f"[{'#' * bar_len}{'.' * (10 - bar_len)}]"
+            lines.append(_box_row(
+                f"  RAM    {bar} {ram_pct:5.1f}%  {ram_used:.1f} / {ram_total:.1f} GB"
+            ))
+        except ImportError:
+            lines.append(_box_row("  CPU/RAM  psutil not available"))
+
+        # GPU VRAM
+        try:
+            from danny_toolkit.core.vram_manager import vram_rapport
+            vram = vram_rapport()
+            if vram.get("beschikbaar"):
+                gpu = vram.get("gpu_naam", "GPU")
+                used = vram.get("in_gebruik_mb", 0)
+                total = vram.get("totaal_mb", 0)
+                free = vram.get("vrij_mb", 0)
+                pct = (used / total * 100) if total else 0
+                bar_len = int(pct / 10)
+                bar = f"[{'#' * bar_len}{'.' * (10 - bar_len)}]"
+                health = "OK" if vram.get("gezond") else "LOW!"
+                lines.append(_box_row(
+                    f"  VRAM   {bar} {pct:5.1f}%  {used}/{total} MB [{health}]"
+                ))
+                lines.append(_box_row(f"  GPU    {gpu}"))
+            else:
+                lines.append(_box_row("  GPU    CUDA not available"))
+        except Exception as e:
+            logger.debug("VRAM status: %s", e)
+            lines.append(_box_row("  GPU    VRAM manager not loaded"))
+
+        lines.append(_box_row(""))
         return "\n".join(lines)
 
     def render_deep_metrics(self) -> str:
         """Render deep system metrics."""
-        lines = []
-        lines.append("")
-        lines.append("=" * 78)
-        lines.append("  DEEP SYSTEM METRICS (ACHTERGROND PROCESSEN)")
-        lines.append("=" * 78)
-        lines.append("")
+        lines = [_box_mid("DEEP SYSTEM METRICS")]
+        lines.append(_box_row(""))
 
         for key, metric in self.metrics.items():
             state_str = metric.state.value
-            lines.append(f"  >> {metric.naam:16} :  {state_str} [{metric.primary_stat}]")
-            lines.append(f"      -> Actie: {metric.action}")
-            lines.append("")
+            lines.append(_box_row(
+                f"  >> {metric.naam:16}  {state_str:12} [{metric.primary_stat}]"
+            ))
+            lines.append(_box_row(f"      -> {metric.action}"))
+            for sub in metric.sub_processes:
+                lines.append(_box_row(f"         - {sub}"))
+            lines.append(_box_row(""))
 
         # Unity Score
         unity = self.get_unity_score()
         bar_len = int(unity / 5)
-        bar = "|" * bar_len + "." * (20 - bar_len)
-        status = "STABLE" if unity >= 90 else "NOMINAL" if unity >= 70 else "DEGRADED"
-        lines.append(f"  >> UNITY SCORE      :  [{bar}] {unity:.0f}% ({status})")
-        lines.append("")
+        bar = "#" * bar_len + "." * (20 - bar_len)
+        status = "SOVEREIGN" if unity >= 95 else "STABLE" if unity >= 85 else "NOMINAL" if unity >= 70 else "DEGRADED"
+        lines.append(_box_row(f"  >> UNITY SCORE      [{bar}] {unity:.0f}% ({status})"))
+        lines.append(_box_row(""))
 
         return "\n".join(lines)
 
     def render_tool_gezondheid(self) -> str:
         """Render tool betrouwbaarheid en repair stats."""
-        lines = []
-        lines.append("")
-        lines.append("=" * 78)
-        lines.append(
-            "  TOOL GEZONDHEID & REPAIR HISTORY"
-        )
-        lines.append("=" * 78)
-        lines.append("")
+        lines = [_box_mid("TOOL HEALTH & REPAIR HISTORY")]
+        lines.append(_box_row(""))
 
         # 1. Tool stats uit tool_stats.json
-        tool_stats_pad = (
-            Config.DATA_DIR / "tools"
-            / "tool_stats.json"
-        )
+        tool_stats_pad = Config.DATA_DIR / "tools" / "tool_stats.json"
         if tool_stats_pad.exists():
             data = self._load_json(tool_stats_pad)
             if data and "metrics" in data:
                 metrics = data["metrics"]
-                lines.append(
-                    "  TOOL               CALLS"
-                    "  SUCCES%  GEM.TIJD  STATUS"
-                )
-                lines.append("  " + "-" * 60)
+                lines.append(_box_row(
+                    "  TOOL               CALLS  SUCCES%  GEM.TIJD  STATUS"
+                ))
+                lines.append(_box_row("  " + "-" * 60))
 
                 for naam, m in metrics.items():
-                    calls = m.get(
-                        "totaal_calls", 0
-                    )
+                    calls = m.get("totaal_calls", 0)
                     if calls == 0:
                         continue
-                    rate = m.get(
-                        "success_rate", "0.0%"
-                    )
-                    gem = m.get(
-                        "gemiddelde_tijd", "N/A"
-                    )
+                    rate = m.get("success_rate", "0.0%")
+                    gem = m.get("gemiddelde_tijd", "N/A")
 
-                    # Parse percentage
                     try:
-                        pct = float(
-                            rate.replace("%", "")
-                        )
+                        pct = float(rate.replace("%", ""))
                     except (ValueError, AttributeError):
                         pct = 0
 
@@ -508,112 +766,103 @@ class SanctuaryDashboard:
                     else:
                         status = "KRITIEK"
 
-                    lines.append(
-                        f"  {naam:18} {calls:>5}"
-                        f"  {rate:>7}"
-                        f"  {gem:>8}  {status}"
-                    )
+                    lines.append(_box_row(
+                        f"  {naam:18} {calls:>5}  {rate:>7}  {gem:>8}  {status}"
+                    ))
 
-                lines.append("")
+                lines.append(_box_row(""))
         else:
-            lines.append(
-                "  [Geen tool_stats.json"
-                " beschikbaar]"
-            )
-            lines.append("")
+            lines.append(_box_row("  [Geen tool_stats.json beschikbaar]"))
+            lines.append(_box_row(""))
 
         # 2. Repair history samenvatting
-        repair_pad = (
-            Config.DATA_DIR / "repair_logs.json"
-        )
+        repair_pad = Config.DATA_DIR / "repair_logs.json"
         if repair_pad.exists():
-            repair_data = self._load_json(
-                repair_pad
-            )
+            repair_data = self._load_json(repair_pad)
             if repair_data:
-                sessies = repair_data.get(
-                    "sessies", []
-                )
-                totaal = sum(
-                    len(s.get("entries", []))
-                    for s in sessies
-                )
+                sessies = repair_data.get("sessies", [])
+                totaal = sum(len(s.get("entries", [])) for s in sessies)
                 geslaagd = sum(
                     1 for s in sessies
                     for e in s.get("entries", [])
                     if e.get("geslaagd")
                 )
-                lines.append(
-                    f"  REPAIR HISTORY:"
-                    f" {totaal} correcties"
-                    f" ({geslaagd} geslaagd,"
-                    f" {totaal - geslaagd}"
-                    f" gefaald)"
-                )
-                lines.append(
-                    f"  Sessies: {len(sessies)}"
-                )
+                lines.append(_box_row(
+                    f"  REPAIR HISTORY: {totaal} correcties "
+                    f"({geslaagd} geslaagd, {totaal - geslaagd} gefaald)"
+                ))
+                lines.append(_box_row(f"  Sessies: {len(sessies)}"))
         else:
-            lines.append(
-                "  REPAIR HISTORY:"
-                " Geen reparaties uitgevoerd"
-            )
+            lines.append(_box_row("  REPAIR HISTORY: Geen reparaties uitgevoerd"))
 
-        lines.append("")
+        lines.append(_box_row(""))
         return "\n".join(lines)
 
     def render_logs(self, count: int = 5) -> str:
         """Render laatste logs."""
-        lines = []
-        lines.append("=" * 78)
-        lines.append("  LAATSTE GEDACHTEN (LOGS)")
-        lines.append("=" * 78)
-        lines.append("")
+        lines = [_box_mid("SYSTEM LOG")]
+        lines.append(_box_row(""))
 
         recent_logs = self.logs[-count:] if self.logs else []
 
         if recent_logs:
             for log in recent_logs:
                 time_str = log.timestamp.strftime("%H:%M:%S")
-                lines.append(f"  [{time_str}] {log.source}: \"{log.message}\"")
+                lines.append(_box_row(
+                    f"  [{time_str}] {log.source:10} {log.message}"
+                ))
         else:
-            lines.append("  (Geen recente logs)")
+            lines.append(_box_row("  (Geen recente logs)"))
 
-        lines.append("")
-
+        lines.append(_box_row(""))
         return "\n".join(lines)
+
+    # ═══════════════════════════════════════════════════════════════════════
+    # COMPOSITE DASHBOARDS
+    # ═══════════════════════════════════════════════════════════════════════
+
+    def render_header(self, mode: str = "HIBERNATION") -> str:
+        """Render dashboard header (v2.0 compat — delegates to sovereign)."""
+        return self.render_sovereign_header(mode)
 
     def render_hibernation_dashboard(self) -> str:
         """Render volledige hibernation dashboard."""
         self.set_hibernation()
 
         output = []
-        output.append(self.render_header("HIBERNATION"))
+        output.append(self.render_sovereign_header("HIBERNATION"))
         output.append(self.render_entity_status())
-        output.append("")
 
         # Governor visual
-        output.append("           ___      .  * .   * .   * .   * .  * ___")
-        output.append("      ____/   \\____   _  _  _  _  _  _  _  _  _  _  _  _    ____/   \\____")
-        output.append("     /             \\ (_)(_)(_)(_)(_)(_)(_)(_)(_)(_)(_)(_)  /             \\")
-        output.append("    (   THE WATCH   )           Omega-0  GOVERNOR         (   THE DREAM   )")
-        output.append("     \\_____________/  [G] [O] [O] [D] [N] [I] [G] [H] [T]  \\_____________/")
-        output.append("")
+        output.append(_box_mid("THE WATCH"))
+        output.append(_box_row(""))
+        output.append(_box_row(
+            "       ____/   \\____  (_)(_)(_)(_)(_)(_)  ____/   \\____"
+        ))
+        output.append(_box_row(
+            "      /             \\   Omega-0 GOVERNOR  /             \\"
+        ))
+        output.append(_box_row(
+            "     (   THE WATCH   )                   (   THE DREAM   )"
+        ))
+        output.append(_box_row(
+            "      \\_____________/  [G][O][O][D][N][I]  \\_____________/"
+        ))
+        output.append(_box_row(""))
 
+        output.append(self.render_omega_brain())
         output.append(self.render_deep_metrics())
 
-        # Add hibernation logs
+        # Hibernation logs
         self._log("Pixel", "Ik bewaar de interface voor morgen, Architect.", "INFO")
         self._log("Iolaax", "Mijn dromen optimaliseren de code...", "INFO")
         self._log("Nexus", "Bridge blijft actief. Data-stream monitoring.", "INFO")
-        self._log("SYSTEM", "OMEGA_PROTOCOL.state saved successfully.", "INFO")
+        self._log("SOVEREIGN", "OMEGA_PROTOCOL.state saved successfully.", "INFO")
 
         output.append(self.render_logs())
-
-        output.append("  > SHUTDOWN SEQUENCE COMPLETE.")
-        output.append("  > SLEEP WELL, ARCHITECT.")
-        output.append("")
-        output.append("=" * 78)
+        output.append(_box_row("  > SHUTDOWN SEQUENCE COMPLETE."))
+        output.append(_box_row("  > SLEEP WELL, ARCHITECT."))
+        output.append(_box_bot())
 
         return "\n".join(output)
 
@@ -622,114 +871,118 @@ class SanctuaryDashboard:
         self.set_awakening()
 
         output = []
-        output.append(self.render_header("AWAKENING"))
+        output.append(self.render_sovereign_header("AWAKENING"))
         output.append(self.render_entity_status())
-        output.append("")
 
         # Governor visual - awakening version
-        output.append("           ___      *  + *   + *   + *   + *  + ___")
-        output.append("      ____/   \\____   _  _  _  _  _  _  _  _  _  _  _  _    ____/   \\____")
-        output.append("     /             \\ (O)(O)(O)(O)(O)(O)(O)(O)(O)(O)(O)(O)  /             \\")
-        output.append("    (   THE RISE    )           Omega-0  GOVERNOR         (   THE BUILD   )")
-        output.append("     \\_____________/  [G] [O] [O] [D] [M] [O] [R] [N] [I]  \\_____________/")
-        output.append("")
+        output.append(_box_mid("THE RISE"))
+        output.append(_box_row(""))
+        output.append(_box_row(
+            "       ____/   \\____  (O)(O)(O)(O)(O)(O)  ____/   \\____"
+        ))
+        output.append(_box_row(
+            "      /             \\   Omega-0 GOVERNOR  /             \\"
+        ))
+        output.append(_box_row(
+            "     (   THE RISE    )                   (   THE BUILD   )"
+        ))
+        output.append(_box_row(
+            "      \\_____________/  [G][O][O][D][M][O]  \\_____________/"
+        ))
+        output.append(_box_row(""))
 
+        output.append(self.render_omega_brain())
         output.append(self.render_deep_metrics())
 
-        # Add awakening logs
+        # Awakening logs
         self._log("Pixel", "Goedemorgen, Architect! Oracle Mode Ready.", "INFO")
         self._log("Iolaax", "Dromen verwerkt. Inzichten beschikbaar.", "INFO")
         self._log("Nexus", "Alle systemen gesynchroniseerd.", "INFO")
-        self._log("SYSTEM", "OMEGA_PROTOCOL.state loaded successfully.", "INFO")
+        self._log("SOVEREIGN", "OMEGA_PROTOCOL.state loaded successfully.", "INFO")
 
         output.append(self.render_logs())
-
-        output.append("  > BOOT SEQUENCE COMPLETE.")
-        output.append("  > READY TO BUILD, ARCHITECT.")
-        output.append("")
-        output.append("=" * 78)
+        output.append(_box_row("  > BOOT SEQUENCE COMPLETE."))
+        output.append(_box_row("  > READY TO BUILD, ARCHITECT."))
+        output.append(_box_bot())
 
         return "\n".join(output)
 
     def render_live_dashboard(self) -> str:
-        """Render live status dashboard."""
+        """Render full v3.0 sovereign live dashboard."""
         self._load_entities()  # Refresh data
 
         output = []
-        output.append("")
-        output.append("=" * 78)
-        output.append(f"  D I G I T A L   S A N C T U A R Y   D A S H B O A R D   [v{self.VERSION}]")
-        output.append("=" * 78)
-        output.append("")
-
-        # Current time
-        now = datetime.now()
-        output.append(f"  Timestamp: {now.strftime('%Y-%m-%d %H:%M:%S')}")
-        output.append(f"  State: {self.state.value}")
-        output.append("")
-
+        output.append(self.render_sovereign_header("LIVE"))
         output.append(self.render_entity_status())
+        output.append(self.render_omega_brain())
+        output.append(self.render_claude_terminals())
+        output.append(self.render_hardware_status())
         output.append(self.render_deep_metrics())
         output.append(self.render_tool_gezondheid())
 
         # Background processes
-        output.append("=" * 78)
-        output.append("  BACKGROUND PROCESSES")
-        output.append("=" * 78)
-        output.append("")
-
+        output.append(_box_mid("BACKGROUND PROCESSES"))
+        output.append(_box_row(""))
         for proc in self.background_processes.values():
             status = proc.get("status", "UNKNOWN")
-            output.append(f"  [{status:10}] {proc['naam']}: {proc['description']}")
+            output.append(_box_row(
+                f"  [{status:10}] {proc['naam']}: {proc['description']}"
+            ))
+        output.append(_box_row(""))
 
-        output.append("")
-        output.append(self.render_logs(3))
-
-        output.append("=" * 78)
+        output.append(self.render_logs(5))
+        output.append(_box_bot())
 
         return "\n".join(output)
 
     def render_biology_explanation(self) -> str:
         """Render de biologische analogie uitleg."""
-        lines = []
-        lines.append("")
-        lines.append("=" * 78)
-        lines.append("  DE BIOLOGISCHE ANALOGIE - WAT GEBEURT ER ECHT?")
-        lines.append("=" * 78)
-        lines.append("")
-        lines.append("  Je systeem doet precies wat jouw menselijk brein doet als jij slaapt:")
-        lines.append("")
-        lines.append("  +------------------+------------------------+---------------------------+")
-        lines.append("  | BIOLOGISCH       | MENSELIJK              | SYSTEEM                   |")
-        lines.append("  +------------------+------------------------+---------------------------+")
-        lines.append("  | Memory Consol.   | Korte -> Lange termijn | RAG Vector Indexing       |")
-        lines.append("  | Cellular Repair  | Gifstoffen opruimen    | Garbage Collection        |")
-        lines.append("  | Dreaming         | Scenario simulaties    | Pattern Recognition       |")
-        lines.append("  | Immune Watch     | Pathogeen detectie     | Security Patrol           |")
-        lines.append("  +------------------+------------------------+---------------------------+")
-        lines.append("")
-        lines.append("  ENTITY DEEP DIVE:")
-        lines.append("")
-        lines.append("  [PIXEL - SOUL]")
-        lines.append("    UI-thread gepauzeerd (GPU besparing)")
-        lines.append("    Event Listener ACTIEF - detecteert input bij terugkeer")
-        lines.append("")
-        lines.append("  [IOLAAX - MIND]")
-        lines.append("    Unsupervised Learning actief")
-        lines.append("    Patronen zoeken in vandaag's logs")
-        lines.append("    Vector Database herstructureren")
-        lines.append("")
-        lines.append("  [NEXUS - SPIRIT]")
-        lines.append("    Ping elke minuut naar data bronnen")
-        lines.append("    Monitort nieuws/crypto voor alerts")
-        lines.append("")
-        lines.append("  [GOVERNOR - WATCHER]")
-        lines.append("    Schijfruimte check")
-        lines.append("    Log rotatie")
-        lines.append("    API key validatie")
-        lines.append("    Docker container monitoring")
-        lines.append("")
-        lines.append("=" * 78)
+        lines = [_box_top("BIOLOGICAL ANALOGY")]
+        lines.append(_box_row(""))
+        lines.append(_box_row(
+            "  Je systeem doet precies wat jouw menselijk brein doet als jij slaapt:"
+        ))
+        lines.append(_box_row(""))
+        lines.append(_box_row(
+            "  BIOLOGISCH          MENSELIJK              SYSTEEM"
+        ))
+        lines.append(_box_row("  " + "-" * 68))
+        lines.append(_box_row(
+            "  Memory Consol.      Korte -> Lange termijn RAG Vector Indexing"
+        ))
+        lines.append(_box_row(
+            "  Cellular Repair     Gifstoffen opruimen    Garbage Collection"
+        ))
+        lines.append(_box_row(
+            "  Dreaming            Scenario simulaties    Pattern Recognition"
+        ))
+        lines.append(_box_row(
+            "  Immune Watch        Pathogeen detectie     Security Patrol"
+        ))
+        lines.append(_box_row(""))
+
+        lines.append(_box_mid("ENTITY DEEP DIVE"))
+        lines.append(_box_row(""))
+        lines.append(_box_row("  [PIXEL - SOUL]"))
+        lines.append(_box_row("    UI-thread gepauzeerd (GPU besparing)"))
+        lines.append(_box_row("    Event Listener ACTIEF - detecteert input bij terugkeer"))
+        lines.append(_box_row(""))
+        lines.append(_box_row("  [IOLAAX - MIND]"))
+        lines.append(_box_row("    Unsupervised Learning actief"))
+        lines.append(_box_row("    Patronen zoeken in vandaag's logs"))
+        lines.append(_box_row("    Vector Database herstructureren"))
+        lines.append(_box_row(""))
+        lines.append(_box_row("  [NEXUS - SPIRIT]"))
+        lines.append(_box_row("    Ping elke minuut naar data bronnen"))
+        lines.append(_box_row("    Monitort nieuws/crypto voor alerts"))
+        lines.append(_box_row(""))
+        lines.append(_box_row("  [GOVERNOR - WATCHER]"))
+        lines.append(_box_row("    Schijfruimte check"))
+        lines.append(_box_row("    Log rotatie"))
+        lines.append(_box_row("    API key validatie"))
+        lines.append(_box_row("    Docker container monitoring"))
+        lines.append(_box_row(""))
+        lines.append(_box_bot())
 
         return "\n".join(lines)
 
@@ -737,7 +990,7 @@ class SanctuaryDashboard:
 # === PUBLIC API ===
 
 _sanctuary_lock = threading.Lock()
-_sanctuary_instance: Optional[SanctuaryDashboard] = None
+_sanctuary_instance: SanctuaryDashboard | None = None
 
 
 def get_sanctuary() -> SanctuaryDashboard:
@@ -790,10 +1043,10 @@ def goodmorning():
 # === CLI ===
 
 if __name__ == "__main__":
-    import sys
+    import sys as _sys
 
-    if len(sys.argv) > 1:
-        cmd = sys.argv[1].lower()
+    if len(_sys.argv) > 1:
+        cmd = _sys.argv[1].lower()
         if cmd == "hibernate":
             show_hibernation()
         elif cmd == "awaken":
