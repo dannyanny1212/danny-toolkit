@@ -25,6 +25,8 @@ import re
 import sys
 import math
 import time
+import queue
+import shutil
 import logging
 import threading
 import subprocess
@@ -1153,11 +1155,12 @@ class DashboardTab(ctk.CTkFrame):
         for tag_name, color in self._OT_COLORS.items():
             self._cl_text._textbox.tag_configure(tag_name, foreground=color)
 
-        self._cl_write("Opus 4.6 \u00b7 Claude Max", "system")
+        self._cl_write("Opus 4.6 \u00b7 Claude Max [ConPTY]", "system")
         self._cl_write("\u2598\u2598 \u259d\u259d    ~\\danny-toolkit", "dim")
-        self._cl_write("Role: Python Assist \u2014 kan Sovereign Agent updaten", "dim")
-        self._cl_write("Commands: new, clear, status, help  |\u2191\u2193 history\n", "dim")
-        self._claude_has_session = False
+        self._cl_write("Interactive Claude Code session via ConPTY", "dim")
+        self._cl_write("Commands: new, clear, status, help  |\u2191\u2193 history", "dim")
+        self._cl_write("Typ een vraag \u2192 persistent Claude sessie\n", "dim")
+        self._claude_pty = ClaudePTY(self._cl_write, self)
 
         cl_inp = ctk.CTkFrame(claude_panel.content, fg_color="transparent")
         cl_inp.pack(fill="x", padx=4, pady=(0, 2))
@@ -1289,7 +1292,7 @@ class DashboardTab(ctk.CTkFrame):
         return "break"
 
     def _cl_on_enter(self, _=None):
-        """Input handler voor Claude Agent terminal."""
+        """Input handler voor Claude terminal — routes to ConPTY session."""
         cmd = self._cl_entry.get().strip()
         if not cmd:
             return
@@ -1299,158 +1302,32 @@ class DashboardTab(ctk.CTkFrame):
         self._cl_write(f"\u25b6 {cmd}", "input")
         low = cmd.lower().strip("/")
         if low == "new":
-            self._claude_has_session = False
-            self._claude_session_id = None
-            self._cl_write("  Session reset. Volgende vraag start nieuw.", "system")
+            self._claude_pty.kill()
+            self._cl_write("  Session killed. Volgende input start nieuwe sessie.", "system")
         elif low == "clear":
             self._cl_text.configure(state="normal")
             self._cl_text._textbox.delete("1.0", "end")
             self._cl_text.configure(state="disabled")
             self._cl_write("\u2126 Cleared.\n", "system")
         elif low == "status":
-            sid = getattr(self, '_claude_session_id', None)
-            self._cl_write(f"  Session: {sid[:12] + '...' if sid else 'geen'}", "system")
-            self._cl_write(f"  Continuity: {'actief' if getattr(self, '_claude_has_session', False) else 'nieuw'}", "output")
+            alive = self._claude_pty.is_alive()
+            self._cl_write(f"  ConPTY: {'ALIVE' if alive else 'DEAD'}", "system")
+            self._cl_write(f"  Mode: persistent interactive session", "output")
         elif low == "help":
-            self._cl_write("  Claude Agent Commands:", "system")
+            self._cl_write("  Claude ConPTY Commands:", "system")
             for c, d in [
-                ("new", "Nieuwe conversatie (reset session)"),
+                ("new", "Kill + start nieuwe Claude sessie"),
                 ("clear", "Terminal wissen"),
-                ("status", "Session info"),
+                ("status", "ConPTY sessie info"),
                 ("help", "Dit overzicht"),
             ]:
                 self._cl_write(f"    {c:18s} {d}", "dim")
-            self._cl_write("\n  Typ direct een vraag voor Claude Agent.", "output")
+            self._cl_write("\n  Typ direct een vraag \u2192 persistent Claude sessie.", "output")
         else:
-            self._cl_write("\u2126 [Claude] Processing...", "process")
-            self._cl_entry.configure(state="disabled")
-            threading.Thread(target=self._cl_ask_claude, args=(cmd,), daemon=True).start()
-
-    def _cl_ask_claude(self, question):
-        """Route naar _ot_ask_claude maar met output naar Claude terminal."""
-        # Redirect _ot_ask_claude output to _cl_text
-        t0 = time.time()
-        w = lambda txt, tag="output": self._cl_text.after(0, self._cl_write, txt, tag)
-        try:
-            import shutil
-            import json as _json
-            claude_path = shutil.which("claude")
-            if not claude_path:
-                winget_path = os.path.expandvars(
-                    r"%LOCALAPPDATA%\Microsoft\WinGet\Links\claude.exe")
-                if os.path.isfile(winget_path):
-                    claude_path = winget_path
-            if not claude_path:
-                w("[WARN] Claude CLI not found", "warn")
-                return
-
-            toolkit_dir = r"C:\Users\danny\danny-toolkit"
-            venv_dir = os.path.join(toolkit_dir, "venv311")
-            venv_scripts = os.path.join(venv_dir, "Scripts")
-            env = os.environ.copy()
-            env.pop("CLAUDECODE", None)
-            env["PATH"] = venv_scripts + os.pathsep + env.get("PATH", "")
-            env["VIRTUAL_ENV"] = venv_dir
-            env["PYTHONPATH"] = toolkit_dir
-            api_key = getattr(self, "_claude_api_key", None)
-            if api_key:
-                env["ANTHROPIC_API_KEY"] = api_key
-
-            cmd = [claude_path, "-p", question, "--output-format", "stream-json", "--verbose",
-                   "--allowedTools", "Edit", "Write", "Bash", "Read", "Glob", "Grep",
-                   "WebFetch", "Grep", "NotebookEdit", "TodoRead", "TodoWrite"]
-
-            session_id = getattr(self, '_claude_session_id', None)
-            if session_id:
-                cmd.extend(["--resume", session_id])
-            elif getattr(self, '_claude_has_session', False):
-                cmd.append("--continue")
-
-            proc = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                cwd=toolkit_dir,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-                env=env,
-                creationflags=(subprocess.CREATE_NO_WINDOW
-                               if sys.platform == "win32" else 0),
-            )
-
-            output_lines = 0
-            collected = []
-            _streaming_line = []
-
-            for raw_line in iter(proc.stdout.readline, ''):
-                line = raw_line.strip()
-                if not line:
-                    continue
-                try:
-                    event = _json.loads(line)
-                except _json.JSONDecodeError:
-                    w(f"  {line}", "output")
-                    output_lines += 1
-                    collected.append(line)
-                    continue
-
-                etype = event.get("type", "")
-
-                if etype == "system":
-                    sid = event.get("session_id", "")
-                    if sid:
-                        self._claude_session_id = sid
-                    model = event.get("model", "")
-                    if model:
-                        w(f"  [{model}]", "dim")
-
-                elif etype == "content_block_delta":
-                    delta = event.get("delta", {})
-                    text = delta.get("text", "")
-                    if text:
-                        _streaming_line.append(text)
-                        if "\n" in text:
-                            parts = "".join(_streaming_line).split("\n")
-                            for p in parts[:-1]:
-                                if p.strip():
-                                    w(f"  {p}", "output")
-                                    output_lines += 1
-                                    collected.append(p)
-                            _streaming_line = [parts[-1]] if parts[-1] else []
-
-                elif etype == "content_block_stop":
-                    remaining = "".join(_streaming_line).strip()
-                    if remaining:
-                        w(f"  {remaining}", "output")
-                        output_lines += 1
-                        collected.append(remaining)
-                    _streaming_line = []
-
-                elif etype == "result":
-                    cost_usd = event.get("cost_usd", 0)
-                    dur = event.get("duration_ms", 0)
-                    if cost_usd or dur:
-                        w(f"  [cost: ${cost_usd:.4f} | {dur/1000:.1f}s]", "dim")
-
-            proc.wait()
-            elapsed = time.time() - t0
-            rc = proc.returncode
-
-            if rc == 0:
-                self._claude_has_session = True
-
-            if rc != 0:
-                w(f"  [Agent exit code: {rc}]", "error")
-
-            sid_short = (getattr(self, '_claude_session_id', None) or "")[:8]
-            w(f"\n  [Agent: {elapsed:.1f}s | {output_lines} lines | sid:{sid_short}]", "dim")
-            w("")
-
-        except Exception as e:
-            w(f"[ERROR] Agent: {e}", "error")
-        finally:
-            self._cl_text.after(0, lambda: self._cl_entry.configure(state="normal"))
+            # Auto-spawn PTY on first real input
+            if not self._claude_pty.is_alive():
+                self._cl_write("\u2126 Starting Claude session...", "process")
+            self._claude_pty.send(cmd)
 
     def _ct_on_enter(self, _=None):
         """Input handler voor Sovereign Agent terminal."""
@@ -3804,6 +3681,181 @@ class PredictionsTab(ctk.CTkFrame):
 
 
 # ╔══════════════════════════════════════════════════════════════════╗
+# ║  ConPTY CLAUDE BRIDGE                                          ║
+# ╚══════════════════════════════════════════════════════════════════╝
+
+# Regex to strip all ANSI escape sequences (colors, cursor moves, clear, etc.)
+_ANSI_RE = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]|\x1b\].*?\x07|\x1b\[[\?0-9;]*[hlJK]')
+
+
+class ClaudePTY:
+    """ConPTY bridge for an interactive Claude Code session.
+
+    Spawns ``claude`` inside a Windows pseudo-terminal (pywinpty) so the
+    session stays alive between questions.  A reader thread drains PTY
+    output into a queue; the Tk main thread polls that queue via ``.after()``.
+    """
+
+    def __init__(self, write_fn: Callable[[str, str], None], root: "ctk.CTk"):
+        self._write = write_fn          # (text, tag) → None  (main-thread safe)
+        self._root = root               # for .after() scheduling
+        self._proc = None               # winpty.PTY process
+        self._q: queue.Queue = queue.Queue()
+        self._alive = False
+        self._reader_thread = None
+        self._poll_id = None
+
+    # ── spawn / kill ────────────────────────────────────────────
+
+    def spawn(self):
+        """Start a new interactive ``claude`` session in a ConPTY."""
+        self.kill()  # clean up any previous session
+
+        claude_path = shutil.which("claude")
+        if not claude_path:
+            winget = os.path.expandvars(
+                r"%LOCALAPPDATA%\Microsoft\WinGet\Links\claude.exe")
+            if os.path.isfile(winget):
+                claude_path = winget
+        if not claude_path:
+            self._write("[ERROR] claude CLI not found in PATH", "error")
+            return False
+
+        # Build a clean environment — strip vars that block nested sessions
+        env = os.environ.copy()
+        env.pop("CLAUDECODE", None)
+        env.pop("CLAUDE_CODE_ENTRYPOINT", None)
+
+        toolkit_dir = r"C:\Users\danny\danny-toolkit"
+        venv_scripts = os.path.join(toolkit_dir, "venv311", "Scripts")
+        env["PATH"] = venv_scripts + os.pathsep + env.get("PATH", "")
+        env["VIRTUAL_ENV"] = os.path.join(toolkit_dir, "venv311")
+        env["PYTHONPATH"] = toolkit_dir
+
+        try:
+            from winpty import PtyProcess  # type: ignore[import-untyped]
+
+            self._proc = PtyProcess.spawn(
+                f'"{claude_path}"',
+                cwd=toolkit_dir,
+                env=env,
+            )
+        except Exception as e:
+            self._write(f"[ERROR] ConPTY spawn failed: {e}", "error")
+            return False
+
+        self._alive = True
+
+        # Reader thread — drains PTY stdout into self._q
+        self._reader_thread = threading.Thread(
+            target=self._reader_loop, daemon=True)
+        self._reader_thread.start()
+
+        # Start Tk polling
+        self._schedule_poll()
+
+        self._write("[ConPTY] Claude session started", "system")
+        return True
+
+    def kill(self):
+        """Terminate the PTY session and clean up."""
+        self._alive = False
+        if self._poll_id is not None:
+            try:
+                self._root.after_cancel(self._poll_id)
+            except Exception:
+                pass
+            self._poll_id = None
+        if self._proc is not None:
+            try:
+                self._proc.terminate(force=True)
+            except Exception:
+                pass
+            self._proc = None
+
+    def is_alive(self) -> bool:
+        if not self._alive or self._proc is None:
+            return False
+        return self._proc.isalive()
+
+    def send(self, text: str):
+        """Send a line of text to the Claude session."""
+        if not self.is_alive():
+            if not self.spawn():
+                return
+        try:
+            self._proc.write(text + "\r\n")
+        except Exception as e:
+            self._write(f"[ERROR] PTY write failed: {e}", "error")
+            self._alive = False
+
+    # ── internal: reader thread ─────────────────────────────────
+
+    def _reader_loop(self):
+        """Blocking read loop — runs in daemon thread."""
+        buf = ""
+        while self._alive:
+            try:
+                chunk = self._proc.read(4096)
+                if not chunk:
+                    break
+                buf += chunk
+                # Split on newlines, keep partial line in buf
+                while "\n" in buf:
+                    line, buf = buf.split("\n", 1)
+                    self._q.put(line)
+            except EOFError:
+                break
+            except Exception:
+                if not self._alive:
+                    break
+                time.sleep(0.05)
+        self._alive = False
+        self._q.put(None)  # sentinel
+
+    # ── internal: Tk polling ────────────────────────────────────
+
+    def _schedule_poll(self):
+        """Poll the output queue every 50ms from the Tk main thread."""
+        if not self._alive and self._q.empty():
+            self._poll_id = None
+            return
+        self._poll_output()
+        self._poll_id = self._root.after(50, self._schedule_poll)
+
+    def _poll_output(self):
+        """Drain all queued lines and write to the terminal widget."""
+        lines_this_tick = 0
+        while not self._q.empty() and lines_this_tick < 200:
+            item = self._q.get_nowait()
+            if item is None:
+                # Session ended
+                self._write("[ConPTY] Session ended", "system")
+                return
+            clean = _ANSI_RE.sub('', item).rstrip()
+            if not clean:
+                continue
+            # Classify line for coloring
+            tag = self._classify_line(clean)
+            self._write(clean, tag)
+            lines_this_tick += 1
+
+    @staticmethod
+    def _classify_line(line: str) -> str:
+        """Pick a tag based on line content."""
+        low = line.lower()
+        if "[error]" in low or "error:" in low:
+            return "error"
+        if "[tool]" in low or "tool:" in low:
+            return "tool"
+        if "[warn" in low or "warning:" in low:
+            return "warn"
+        if line.startswith(">") or line.startswith("$"):
+            return "input"
+        return "output"
+
+
+# ╔══════════════════════════════════════════════════════════════════╗
 # ║  MAIN APPLICATION                                              ║
 # ╚══════════════════════════════════════════════════════════════════╝
 
@@ -4097,9 +4149,14 @@ class OmegaSovereignApp(ctk.CTk):
             self._zintuig_proc = None
 
     def _on_close(self):
-        """Clean shutdown — stop keepalive, stop cache, kill Zintuig, destroy window."""
+        """Clean shutdown — stop keepalive, stop cache, kill PTY/Zintuig, destroy window."""
         self._vram_alive = False
         _cache.stop()
+        # Terminate Claude ConPTY session
+        pty = getattr(self, "_claude_pty", None)
+        if pty is not None:
+            pty.kill()
+            logger.info("Claude ConPTY terminated")
         # Terminate Zesde Zintuig if running
         proc = getattr(self, "_zintuig_proc", None)
         if proc and proc.poll() is None:
