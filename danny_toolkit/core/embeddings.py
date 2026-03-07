@@ -2,6 +2,7 @@
 Embedding providers voor RAG systemen.
 Versie 2.0 - Met TF-IDF, caching en benchmarking.
 """
+from __future__ import annotations
 
 import logging
 import math

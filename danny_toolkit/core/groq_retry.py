@@ -16,6 +16,7 @@ Gebruik:
         temperature=0.4,
     )
 """
+from __future__ import annotations
 
 import asyncio
 import logging

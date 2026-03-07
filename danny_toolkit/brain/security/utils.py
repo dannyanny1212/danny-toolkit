@@ -6,6 +6,7 @@ Bevat:
 - _scrub_adres()  — Wallet adres maskering
 - HAS_REQUESTS    — requests beschikbaarheid flag
 """
+from __future__ import annotations
 
 import logging
 

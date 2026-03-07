@@ -6,6 +6,7 @@ Ondersteunt:
   - Meerdere URL's scrapen
   - Interne links volgen (--depth)
 """
+from __future__ import annotations
 
 import re
 from urllib.parse import urljoin, urlparse, urlencode, parse_qs

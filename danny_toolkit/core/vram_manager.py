@@ -19,6 +19,7 @@ Gebruik:
   with vram_guard("embeddings", 400):  # Acquire 400 MB budget slot
       model.embed(texts)
 """
+from __future__ import annotations
 
 import logging
 import threading

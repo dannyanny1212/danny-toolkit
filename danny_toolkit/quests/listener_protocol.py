@@ -13,6 +13,7 @@ Dependencies (optioneel, graceful degrade):
   pip install SpeechRecognition pyaudio
   pip install vosk  (+ model download voor offline)
 """
+from __future__ import annotations
 
 import logging
 

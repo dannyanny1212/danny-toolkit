@@ -167,7 +167,7 @@ Initializes a new instance, setting up internal state and tracking variables.
         self._key_prefixes = set()
         self._client = None
 
-    def create_shadow_client(self) -> AsyncGroq:
+    def create_shadow_client(self) -> "AsyncGroq":
         """Create an isolated Groq client from the reserve key pool.
 
         Prefers GROQ_API_KEY_RESERVE_* keys to avoid competing with
@@ -198,7 +198,7 @@ Initializes a new instance, setting up internal state and tracking variables.
         return self._client
 
     @property
-    def client(self) -> AsyncGroq:
+    def client(self) -> "AsyncGroq":
         """Lazy shadow client."""
         if self._client is None:
             self.create_shadow_client()

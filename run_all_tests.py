@@ -1,6 +1,6 @@
 """
 Danny Toolkit — Master Test Runner
-Draait alle 46 test suites in volgorde en geeft een totaaloverzicht.
+Draait alle 47 test suites in volgorde en geeft een totaaloverzicht.
 
 Gebruik: python run_all_tests.py
 """
@@ -76,6 +76,7 @@ TESTS = [
     {"naam": "Phase 48 ArbitratorDaemon", "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase48.py"]},
     {"naam": "Phase 49 HardwareOptRAG", "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase49.py"]},
     {"naam": "Phase 50 CPUGPUCoord", "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase50.py"]},
+    {"naam": "Phase 51 TypeHintHarden", "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase51.py"]},
 ]
 
 BREEDTE = 60

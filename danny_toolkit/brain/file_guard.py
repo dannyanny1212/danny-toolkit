@@ -5,6 +5,7 @@ Laag 2 van het bestandsbeschermingssysteem.
 Genereert een manifest van alle git-tracked bestanden (pad + SHA256),
 detecteert ontbrekende/gewijzigde bestanden en kan auto-herstel uitvoeren.
 """
+from __future__ import annotations
 
 import hashlib
 import json
