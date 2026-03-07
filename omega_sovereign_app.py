@@ -1495,10 +1495,10 @@ class DashboardTab(ctk.CTkFrame):
             elif cmd == "gpu":
                 from danny_toolkit.core.vram_manager import vram_rapport
                 vram = vram_rapport()
-                if vram:
-                    wb(f"  GPU: {vram.get('gpu_name', '?')}", "verify")
-                    wb(f"  VRAM: {vram.get('used_mb', 0):.0f}/{vram.get('total_mb', 0):.0f} MB "
-                       f"({vram.get('free_mb', 0):.0f} MB free)", "verify")
+                if vram and vram.get("beschikbaar", False):
+                    wb(f"  GPU: {vram.get('gpu_naam', '?')}", "verify")
+                    wb(f"  VRAM: {vram.get('in_gebruik_mb', 0):.0f}/{vram.get('totaal_mb', 0):.0f} MB "
+                       f"({vram.get('vrij_mb', 0):.0f} MB free)", "verify")
                 else:
                     wb("  GPU: No CUDA device", "warn")
 
@@ -1715,17 +1715,34 @@ class DashboardTab(ctk.CTkFrame):
             creation_flags = 0
             if sys.platform == "win32":
                 creation_flags = subprocess.CREATE_NO_WINDOW
+            # Stderr naar logfile zodat we crashes kunnen diagnosticeren
+            log_dir = os.path.join(project_root, "data", "logs")
+            os.makedirs(log_dir, exist_ok=True)
+            api_log = open(os.path.join(log_dir, "fastapi_startup.log"), "w", encoding="utf-8")
             proc = subprocess.Popen(
                 [python_exe, server_script],
                 cwd=project_root,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+                stdout=api_log,
+                stderr=api_log,
                 creationflags=creation_flags,
             )
+            _omega_mode["_api_log"] = api_log  # Houd referentie voor cleanup
             # Wacht even en verifieer dat het proces leeft
-            time.sleep(2.0)
+            time.sleep(3.0)
             if proc.poll() is not None:
-                raise RuntimeError(f"API server exited immediately (code {proc.returncode})")
+                api_log.flush()
+                # Lees crash log voor diagnostiek
+                crash_detail = ""
+                try:
+                    log_path = os.path.join(log_dir, "fastapi_startup.log")
+                    with open(log_path, "r", encoding="utf-8") as lf:
+                        crash_detail = lf.read()[-500:]  # Laatste 500 chars
+                except Exception:
+                    pass
+                raise RuntimeError(
+                    f"API server exited (code {proc.returncode}). "
+                    f"Log: {crash_detail}"
+                )
             _omega_mode["api_server"] = proc
             return f"http://localhost:{port}"
         api_result = _step("API: FastAPI localhost", _init_api_server)
@@ -1920,11 +1937,11 @@ class DashboardTab(ctk.CTkFrame):
         try:
             from danny_toolkit.core.vram_manager import vram_rapport
             vram = vram_rapport()
-            if vram:
-                total = vram.get("total_mb", 0)
-                used = vram.get("used_mb", 0)
-                free = vram.get("free_mb", 0)
-                gpu_name = vram.get("gpu_name", "Unknown")
+            if vram and vram.get("beschikbaar", False):
+                total = vram.get("totaal_mb", 0)
+                used = vram.get("in_gebruik_mb", 0)
+                free = vram.get("vrij_mb", 0)
+                gpu_name = vram.get("gpu_naam", "Unknown")
                 wb(f"  [2/7] GPU: {gpu_name} | {used:.0f}/{total:.0f} MB "
                    f"({free:.0f} MB free)", "verify")
             else:
@@ -1990,11 +2007,27 @@ class DashboardTab(ctk.CTkFrame):
         try:
             import urllib.request
             port = _omega_mode.get("api_port", 8000)
-            resp = urllib.request.urlopen(f"http://localhost:{port}/docs", timeout=3)
+            resp = urllib.request.urlopen(f"http://localhost:{port}/docs", timeout=5)
             wb(f"  [5/7] API: http://localhost:{port} \u2014 {resp.status} OK", "verify")
             checks_ok += 1
         except Exception as e:
-            wb(f"  [5/7] API: OFFLINE \u2014 {e}", "warn")
+            # Check of server process nog leeft
+            api_proc = _omega_mode.get("api_server")
+            if api_proc is not None and api_proc.poll() is not None:
+                # Server is gecrasht — toon log
+                crash_info = f"exited with code {api_proc.returncode}"
+                try:
+                    project_root = os.path.dirname(os.path.abspath(__file__))
+                    log_path = os.path.join(project_root, "data", "logs", "fastapi_startup.log")
+                    if os.path.isfile(log_path):
+                        with open(log_path, "r", encoding="utf-8") as lf:
+                            last_lines = lf.read().strip().split("\n")[-3:]
+                        crash_info += " | " + " ".join(last_lines)
+                except Exception:
+                    pass
+                wb(f"  [5/7] API: CRASHED \u2014 {crash_info}", "error")
+            else:
+                wb(f"  [5/7] API: OFFLINE \u2014 {e}", "warn")
             checks_fail += 1
 
         # ── [6/7] OLLAMA: GPU model server ──
@@ -4810,6 +4843,13 @@ class OmegaSovereignApp(ctk.CTk):
             api_proc.terminate()
             logger.info("FastAPI server terminated (port %s)", _omega_mode["api_port"])
             _omega_mode["api_server"] = None
+        # Close API log file handle
+        api_log = _omega_mode.get("_api_log")
+        if api_log is not None:
+            try:
+                api_log.close()
+            except Exception:
+                pass
         self.destroy()
 
     def _schedule_refresh(self):

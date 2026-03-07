@@ -296,6 +296,78 @@ class CentralBrain:
             logger.debug("Governor gate error: %s — gate open", e)
             return True, "OK"
 
+    # ── Rol-Context mapping voor SwarmEngine BrainAgent ──
+    _ROLE_PROMPTS: Dict[str, str] = {
+        "interface_soul": "Je bent Pixel, de gebruikers-interface en emotionele schakel.",
+        "reasoning_mind": "Je bent Iolaax, de redenering en logica kern.",
+        "bridge_spirit": "Je bent Nexus, de router die vragen naar de juiste specialist stuurt.",
+        "system_control": "Je bent Governor, de autonome safety guardian.",
+        "security_ops": "Je bent Sentinel, beveiligingsoperaties.",
+        "memory_rag": "Je bent Archivist, geheugen & RAG.",
+        "time_keeper": "Je bent Chronos, tijd & planning.",
+        "code_builder": "Je bent Weaver, de Synthesizer. Je formatteert specialist-output als een helder antwoord.",
+        "crypto_analyst": "Je bent Cipher, crypto & blockchain.",
+        "bio_health": "Je bent Vita, gezondheid & biohacking.",
+        "pattern_history": "Je bent Echo, de Smalltalk Handler. Beantwoord casual conversatie warm en bondig.",
+        "creative_gen": "Je bent Spark, creatief genie.",
+        "web_search": "Je bent Oracle, deep reasoning. Beantwoord complexe vragen met diepgang.",
+        "swarm_manager": "Je bent Legion, zwerm manager.",
+        "strategy_goal": "Je bent Navigator, search & strategie. Zoek informatie en formuleer strategische antwoorden.",
+        "data_proc": "Je bent Alchemist, data transformatie.",
+        "entropy_cleaner": "Je bent Void, opruimer.",
+        "consciousness_core": "Je bent Anima, het bewustzijn.",
+        "cross_tier_merge": "Je bent Synthesis, cross-tier integratie.",
+        "self_evolution": "Je bent Evolution, zelf-evolutie.",
+    }
+
+    def _execute_with_role(self, role, task: str) -> tuple:
+        """Voer taak uit met rol-specifieke context.
+
+        Brug-functie zodat SwarmEngine.BrainAgent dezelfde interface
+        krijgt als PrometheusBrain._execute_with_role().
+
+        Args:
+            role: CosmicRole enum (of string value).
+            task: De uit te voeren taak.
+
+        Returns:
+            (result, execution_time, status) tuple.
+        """
+        import time as _time
+        t0 = _time.time()
+
+        # Haal rol-waarde op (CosmicRole enum → .value string)
+        role_key = role.value if hasattr(role, "value") else str(role)
+        role_prompt = self._ROLE_PROMPTS.get(role_key, "")
+
+        # Combineer role context met task
+        enriched = f"{role_prompt}\n\n{task}" if role_prompt else task
+
+        # Voeg toe aan conversatie
+        with self._history_lock:
+            self.conversation_history.append({
+                "role": "user",
+                "content": enriched,
+            })
+
+        try:
+            # System message met rol-instructie
+            system_msg = (
+                f"Je bent een gespecialiseerde agent in het OMEGA SOVEREIGN CORE ecosysteem. "
+                f"{role_prompt} Beantwoord de vraag beknopt en accuraat."
+            )
+            result = self._process_with_fallback(
+                system_message=system_msg,
+                use_tools=False,
+                max_turns=3,
+            )
+            elapsed = _time.time() - t0
+            return (result, elapsed, "OK")
+        except Exception as e:
+            elapsed = _time.time() - t0
+            logger.error("_execute_with_role fout (%s): %s", role_key, e)
+            return (f"Agent {role_key} fout: {e}", elapsed, "ERROR")
+
     def _register_all_apps(self):
         """Registreer alle apps uit APP_TOOLS."""
         for app_naam, app_def in APP_TOOLS.items():
@@ -1718,6 +1790,19 @@ Regels:
                 return (f"- **Cortex**: {gs.get('graph_nodes', 0)} nodes, "
                         f"{gs.get('graph_edges', 0)} edges | "
                         f"{len(results)} zoekresultaten")
+
+        # omega_core.tier_detail
+        if "tier" in tid and isinstance(data, dict):
+            if data.get("blocked"):
+                return f"- **Tier**: {data.get('reason', 'blocked')}"
+            tier_name = data.get("name", f"T{data.get('tier', '?')}")
+            nodes = data.get("nodes", {})
+            active = sum(1 for n in nodes.values()
+                         if isinstance(n, dict) and n.get("status") == "LOADED")
+            total = len(nodes)
+            node_names = ", ".join(list(nodes.keys())[:5])
+            return (f"- **{tier_name}**: {active}/{total} nodes actief"
+                    f" ({node_names}{'...' if total > 5 else ''})")
 
         return ""
 
