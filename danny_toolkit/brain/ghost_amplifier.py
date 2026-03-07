@@ -23,11 +23,16 @@ import time
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
-from groq import AsyncGroq
 from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import Kleur
 
 logger = logging.getLogger(__name__)
+
+try:
+    from groq import AsyncGroq
+    HAS_GROQ = True
+except ImportError:
+    HAS_GROQ = False
 
 try:
     from danny_toolkit.core.key_manager import get_key_manager
@@ -127,12 +132,13 @@ class GhostAmplifier:
   and strategy usage."""
         if HAS_KEY_MANAGER:
             km = get_key_manager()
-            self.client = (
-                km.create_async_client("GhostWriter")
-                or AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
-            )
-        else:
+            self.client = km.create_async_client("GhostWriter")
+            if not self.client and HAS_GROQ:
+                self.client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
+        elif HAS_GROQ:
             self.client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
+        else:
+            self.client = None
         self.model = Config.LLM_MODEL
         self._stats = {
             "calls": 0,

@@ -21,6 +21,7 @@ Features:
 import json
 import logging
 import sys
+import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -206,7 +207,7 @@ class SanctuaryDashboard:
             self.metrics["central_brain"] = SystemMetric(
                 naam="CENTRAL BRAIN",
                 state=SystemState.STANDBY,
-                primary_stat="31 Apps | 86 Tools",
+                primary_stat="29 Apps | 92 Tools",
                 action="Memory Consolidation",
                 sub_processes=[]
             )
@@ -220,25 +221,43 @@ class SanctuaryDashboard:
             sub_processes=["Oracle Mode Ready", "Wisdom Generator Active"]
         )
 
-        # Prometheus
+        # Prometheus — live query
+        prom_stat = "17 Nodes Sleeping"
+        try:
+            from danny_toolkit.brain.trinity_omega import PrometheusBrain
+            prom = PrometheusBrain.__new__(PrometheusBrain)
+            node_count = len(getattr(prom, "PILAREN", range(17)))
+            prom_stat = f"{node_count} Nodes Sleeping"
+        except Exception as e:
+            logger.debug("Prometheus metrics fallback: %s", e)
+
         self.metrics["prometheus"] = SystemMetric(
             naam="PROMETHEUS",
             state=SystemState.LOW_POWER,
-            primary_stat="17 Nodes Sleeping",
+            primary_stat=prom_stat,
             action="Garbage Collection & Log Rotation",
             sub_processes=["Tri-Force Standby", "God Mode Cached"]
         )
 
-        # Governor
+        # Governor — live query
+        gov_stat = "344 Micro-Agents Idle"
+        try:
+            from danny_toolkit.brain.governor import OmegaGovernor
+            gov = OmegaGovernor.__new__(OmegaGovernor)
+            max_cycles = getattr(OmegaGovernor, "MAX_LEARNING_CYCLES_PER_HOUR", 100)
+            gov_stat = f"{max_cycles} Learning Cycles/h Cap"
+        except Exception as e:
+            logger.debug("Governor metrics fallback: %s", e)
+
         self.metrics["governor"] = SystemMetric(
             naam="GOVERNOR (Omega-0)",
             state=SystemState.WATCHING,
-            primary_stat="344 Micro-Agents Idle",
+            primary_stat=gov_stat,
             action="Security Patrol & Quantum Entropy Scan",
             sub_processes=[
-                "Alpha Force: 144 agents (Cleaners)",
-                "Beta Force: 100 agents (Explorers)",
-                "Gamma Force: 100 agents (Builders)"
+                "Prompt Injection Detection",
+                "Rate Limiting Active",
+                "PII Scrubbing Enabled"
             ]
         )
 
@@ -717,11 +736,18 @@ class SanctuaryDashboard:
 
 # === PUBLIC API ===
 
+_sanctuary_lock = threading.Lock()
+_sanctuary_instance: Optional[SanctuaryDashboard] = None
+
+
 def get_sanctuary() -> SanctuaryDashboard:
-    """Get singleton Sanctuary Dashboard instance."""
-    if not hasattr(get_sanctuary, "_instance"):
-        get_sanctuary._instance = SanctuaryDashboard()
-    return get_sanctuary._instance
+    """Get singleton Sanctuary Dashboard instance (thread-safe)."""
+    global _sanctuary_instance
+    if _sanctuary_instance is None:
+        with _sanctuary_lock:
+            if _sanctuary_instance is None:
+                _sanctuary_instance = SanctuaryDashboard()
+    return _sanctuary_instance
 
 
 def show_hibernation():

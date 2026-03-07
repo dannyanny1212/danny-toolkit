@@ -57,6 +57,8 @@ try:
     from .oracle import OracleAgent
     from .ultimate_hunt import UltimateHunt, HuntStatus, HuntAnimator
     from .dream_monitor import dream_monitor, quick_peek
+    from .ghost_amplifier import GhostAmplifier, get_ghost_amplifier
+    from .sanctuary_dashboard import SanctuaryDashboard, get_sanctuary
 except ImportError:
     pass
 
@@ -111,6 +113,9 @@ __all__ = [
     "OracleAgent", "UltimateHunt", "HuntStatus", "HuntAnimator",
     # Phase 43: Dream Monitor
     "dream_monitor", "quick_peek",
+    # Phase 46: Ghost Amplifier + Sanctuary
+    "GhostAmplifier", "get_ghost_amplifier",
+    "SanctuaryDashboard", "get_sanctuary",
     # Anti-Hallucination
     "CitationMarshall", "RealityAnchor", "TruthAnchor",
     # Subsystems
