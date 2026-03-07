@@ -646,25 +646,9 @@ Regels:
     async def genereer_stream(self, user_input: str, model: str = None):
         """Async generator — yieldt tokens voor live streaming.
 
-        Streamt rechtstreeks van Groq zonder tool-calling.
-        Gebruik process_request() voor function calling met tools.
+        Fallback chain: Groq primary → Groq fallback (aparte key) → NVIDIA NIM.
+        Streamt rechtstreeks zonder tool-calling.
         """
-        if not ASYNC_GROQ_BESCHIKBAAR:
-            yield "[AsyncGroq niet beschikbaar]"
-            return
-
-        model = model or self.GROQ_MODEL_PRIMARY
-
-        # Lazy async client
-        if not hasattr(self, "_async_stream_client") or self._async_stream_client is None:
-            if HAS_KEY_MANAGER:
-                km = get_key_manager()
-                self._async_stream_client = km.create_async_client("CentralBrain")
-            if not getattr(self, "_async_stream_client", None):
-                self._async_stream_client = AsyncGroq(
-                    api_key=os.getenv("GROQ_API_KEY"),
-                )
-
         # Lichte context (geen tools — streaming is conversationeel)
         context = self._build_context()
         rag_section = self._rag_context(user_input)
@@ -689,29 +673,105 @@ Regels:
                 "content": user_input,
             })
 
+        # Bouw fallback chain: [(client, model, label), ...]
+        chain = self._build_stream_chain(model)
+        if not chain:
+            yield "[Geen streaming providers beschikbaar]"
+            return
+
         full_response = ""
-        try:
-            response = await self._async_stream_client.chat.completions.create(
-                model=model,
-                messages=messages,
-                max_tokens=2000,
-                stream=True,
-            )
+        for i, (client, mdl, label) in enumerate(chain):
+            try:
+                if i > 0:
+                    yield f"\n[italic yellow]⚠ Fallback → {label}...[/]\n"
 
-            async for chunk in response:
-                if chunk.choices and chunk.choices[0].delta.content is not None:
-                    token = chunk.choices[0].delta.content
-                    full_response += token
-                    yield token
+                response = await client.chat.completions.create(
+                    model=mdl,
+                    messages=messages,
+                    max_tokens=2000,
+                    stream=True,
+                )
 
-            # Voltooide response bewaren in history
-            with self._history_lock:
-                self.conversation_history.append({
-                    "role": "assistant",
-                    "content": full_response,
-                })
-        except Exception as e:
-            yield f"\n[STREAM ERROR] {e}"
+                async for chunk in response:
+                    if chunk.choices and chunk.choices[0].delta.content is not None:
+                        token = chunk.choices[0].delta.content
+                        full_response += token
+                        yield token
+
+                # Stream gelukt — bewaar in history en stop
+                with self._history_lock:
+                    self.conversation_history.append({
+                        "role": "assistant",
+                        "content": full_response,
+                    })
+                return  # Succes — geen fallback nodig
+
+            except Exception as e:
+                err = str(e)
+                is_rate_limit = any(m in err.lower() for m in [
+                    "429", "rate_limit", "rate limit", "too many requests",
+                    "resource_exhausted", "quota",
+                ])
+                if is_rate_limit and i < len(chain) - 1:
+                    # Rate limit — probeer volgende provider
+                    logger.warning("Stream 429 op %s, fallback...", label)
+                    continue
+                # Laatste provider of onbekende fout
+                yield f"\n[bold red]STREAM ERROR ({label}):[/] {err}"
+                return
+
+    def _build_stream_chain(self, model: str = None):
+        """Bouw streaming fallback chain: Groq primary → Groq fallback → NIM."""
+        chain = []
+
+        # 1. Groq primary
+        if ASYNC_GROQ_BESCHIKBAAR:
+            if not hasattr(self, "_async_stream_client") or self._async_stream_client is None:
+                if HAS_KEY_MANAGER:
+                    km = get_key_manager()
+                    self._async_stream_client = km.create_async_client("CentralBrain")
+                if not getattr(self, "_async_stream_client", None):
+                    self._async_stream_client = AsyncGroq(
+                        api_key=os.getenv("GROQ_API_KEY"),
+                    )
+            chain.append((
+                self._async_stream_client,
+                model or self.GROQ_MODEL_PRIMARY,
+                f"Groq ({model or self.GROQ_MODEL_PRIMARY})",
+            ))
+
+            # 2. Groq fallback (aparte API key = aparte rate-limit pool)
+            if not hasattr(self, "_async_stream_fallback") or self._async_stream_fallback is None:
+                if HAS_KEY_MANAGER:
+                    km = get_key_manager()
+                    self._async_stream_fallback = km.create_async_client_for_model(
+                        "CentralBrain", self.GROQ_MODEL_FALLBACK,
+                    )
+            if getattr(self, "_async_stream_fallback", None):
+                chain.append((
+                    self._async_stream_fallback,
+                    self.GROQ_MODEL_FALLBACK,
+                    f"Groq Fallback ({self.GROQ_MODEL_FALLBACK})",
+                ))
+
+        # 3. NVIDIA NIM (OpenAI-compatible, async)
+        if self._nvidia_nim_available:
+            try:
+                from openai import AsyncOpenAI
+                if not hasattr(self, "_async_nim_client") or self._async_nim_client is None:
+                    self._async_nim_client = AsyncOpenAI(
+                        base_url=self.NVIDIA_NIM_BASE_URL,
+                        api_key=Config.NVIDIA_NIM_API_KEY,
+                    )
+                chain.append((
+                    self._async_nim_client,
+                    self.NVIDIA_NIM_MODEL,
+                    f"NVIDIA NIM ({self.NVIDIA_NIM_MODEL})",
+                ))
+            except ImportError:
+                pass
+
+        return chain
 
     # Groq modellen: primair (groot) en fallback (klein)
     from danny_toolkit.core.config import Config as _Cfg
