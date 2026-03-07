@@ -1350,6 +1350,81 @@ class NieuwsAgentApp:
             status = kleur("Betrouwbaar", Kleur.GROEN) if stats["betrouwbaar"] else kleur("Onbekend", Kleur.GEEL)
             print(f"{bron:<25} {stats['artikelen']:>10} {status:>23}")
 
+    # ── HEADLESS TOOL METHODS (voor SwarmEngine / CentralBrain) ──
+    # Geen input() — 100% automatisch, veilig voor AI-agents.
+
+    def get_news(self, categorie: str = "ai") -> dict:
+        """Haal recent nieuws op voor een categorie (headless).
+
+        Args:
+            categorie: Nieuwscategorie (ai, sport, gaming, etc.)
+
+        Returns:
+            Dict met artikelen en trending data.
+        """
+        cat = categorie.lower().strip()
+        artikelen = self.zoeker.web.zoek_nieuws(cat)
+        # Feitencheck zonder terminal output
+        resultaten = []
+        for artikel in artikelen:
+            is_betrouwbaar = artikel.get("betrouwbaar", False)
+            resultaten.append({
+                "titel": artikel["titel"],
+                "bron": artikel["bron"],
+                "datum": artikel.get("datum", ""),
+                "betrouwbaar": is_betrouwbaar,
+                "categorie": artikel.get("categorie", cat),
+            })
+        return {
+            "categorie": cat,
+            "artikelen": resultaten,
+            "totaal": len(resultaten),
+            "betrouwbaar": sum(1 for r in resultaten if r["betrouwbaar"]),
+        }
+
+    def get_relevant_news(self, onderwerp: str = "ai") -> dict:
+        """Haal relevant nieuws op basis van onderwerp (headless).
+
+        Args:
+            onderwerp: Specifiek onderwerp om te zoeken.
+
+        Returns:
+            Dict met geanalyseerde artikelen.
+        """
+        artikelen = self.zoeker.verzamel(onderwerp)
+        artikelen = self.feitenchecker.controleer(artikelen)
+        artikelen = self.sentiment_agent.analyseer(artikelen)
+
+        betrouwbaar = [a for a in artikelen if a.get("status") == "BETROUWBAAR"]
+        return {
+            "onderwerp": onderwerp,
+            "totaal": len(artikelen),
+            "betrouwbaar": len(betrouwbaar),
+            "artikelen": [
+                {
+                    "titel": a["titel"],
+                    "bron": a["bron"],
+                    "sentiment": a.get("sentiment", "NEUTRAAL"),
+                    "status": a.get("status", "ONBEKEND"),
+                }
+                for a in artikelen
+            ],
+        }
+
+    def summarize_news(self) -> dict:
+        """Genereer een dagelijkse digest van alle categorieen (headless).
+
+        Returns:
+            Dict met digest tekst en statistieken.
+        """
+        alle_nieuws = self.zoeker.zoek_alle()
+        digest = self.samenvatter.genereer_digest(alle_nieuws)
+        return {
+            "digest": digest,
+            "categorieen": len(alle_nieuws),
+            "totaal_artikelen": sum(len(v) for v in alle_nieuws.values()),
+        }
+
     def run(self):
         """Start de interactieve nieuws agent."""
         clear_scherm()
