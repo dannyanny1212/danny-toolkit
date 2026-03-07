@@ -41,11 +41,18 @@ Footer {
 }
 
 .pillar-container {
-    width: 1fr;
     height: 100%;
     border: round #00E5FF;
     margin: 0 1;
     background: #111827;
+}
+
+.pillar-side {
+    width: 1fr;
+}
+
+.pillar-center {
+    width: 2fr;
 }
 
 .pillar-container:focus-within {
@@ -120,14 +127,14 @@ class OmegaDashboardV4(App):
 
         # De Drie Pilaren (Soul, Mind, Body)
         with Horizontal():
-            # LEFT: SOUL (Memory, RAG, Cortex)
-            with Vertical(classes="pillar-container"):
-                yield Label("Ω SOVEREIGN SOUL — Geheugen & RAG", classes="pillar-title")
+            # LEFT: SOUL (Memory, RAG, Cortex) — smal
+            with Vertical(classes="pillar-container pillar-side"):
+                yield Label("Ω SOUL", classes="pillar-title")
                 self.log_soul = RichLog(id="log_soul", highlight=True, markup=True)
                 yield self.log_soul
 
-            # CENTER: MIND (Reasoning, LLM, Decisions)
-            with Vertical(classes="pillar-container"):
+            # CENTER: MIND (Reasoning, LLM, Decisions) — breed
+            with Vertical(classes="pillar-container pillar-center"):
                 yield Label("Ω SOVEREIGN MIND — Groq & NIM Reasoning", classes="pillar-title")
                 self.log_mind = RichLog(id="log_mind", highlight=True, markup=True)
                 yield self.log_mind
@@ -135,8 +142,8 @@ class OmegaDashboardV4(App):
                 self.mind_live_buffer = Static("", id="mind_live_buffer")
                 yield self.mind_live_buffer
 
-            # RIGHT: BODY (Terminal, SwarmEngine, Hardware)
-            with Vertical(classes="pillar-container"):
+            # RIGHT: BODY (Terminal, SwarmEngine, Hardware) — smal
+            with Vertical(classes="pillar-container pillar-side"):
                 yield Label("Ω SOVEREIGN BODY — Swarm & Executie", classes="pillar-title")
                 self.log_body = RichLog(id="log_body", highlight=True, markup=True)
                 yield self.log_body
