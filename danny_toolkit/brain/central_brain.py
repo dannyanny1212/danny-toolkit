@@ -472,7 +472,9 @@ BELANGRIJK: Je hebt 6 omega_core tools om je EIGEN systeem te bevragen:
 - omega_core_neural_activity: NeuralBus + Synapse + Phantom + ModelRegistry
 Bij vragen over jezelf, je architectuur, tiers, modules, of systeemstatus: GEBRUIK deze tools voor ECHTE data.
 ROUTING: Bij korte vragen als "omega", "scan", "systeem", "status" → gebruik omega_core_system_scan (NIET query_knowledge).
+BELANGRIJK: Als er al LIVE SYSTEEM DATA hierboven staat met gezondheid/modules/wirings info, gebruik die data DIRECT — roep omega_core_system_scan dan NIET nogmaals aan. De data is al opgehaald.
 query_knowledge is ALLEEN voor specifieke kennisgraaf zoekopdrachten ("wat is X", "relatie tussen A en B").
+CIRCUIT BREAKER: Roep dezelfde tool NOOIT twee keer aan in dezelfde sessie. Als je de data al hebt, formuleer direct je antwoord.
 {rag_section}
 KRITIEKE REGEL: Gebruik ALTIJD de function calling API om tools aan te roepen.
 Beschrijf NOOIT een tool call als JSON tekst — voer hem UIT via de tool_calls interface.
@@ -1068,6 +1070,7 @@ Regels:
 
         self._fallback_used = False  # Max 1 text-tool fallback per attempt
         turns_used = 0
+        _seen_tool_sets: list[frozenset[str]] = []  # Circuit breaker: track tool call patterns
         for turn in range(remaining_turns):
             turns_used += 1
 
@@ -1220,6 +1223,44 @@ Regels:
                             Kleur.GEEL,
                         ))
                         logger.debug("Tool execution fout: %s", tool_exec_err)
+
+                # ── Circuit Breaker: detecteer herhaalde identieke tool calls ──
+                current_tools = frozenset(
+                    tc.function.name for tc in message.tool_calls
+                )
+                if current_tools in _seen_tool_sets:
+                    # Zelfde tools als vorige beurt → force stop
+                    logger.warning(
+                        "CIRCUIT BREAKER: duplicate tool set %s op turn %d",
+                        current_tools, turn,
+                    )
+                    print(kleur(
+                        f"   [CIRCUIT BREAKER] Duplicate tool calls gedetecteerd "
+                        f"(turn {turn}) — force antwoord",
+                        Kleur.GEEL,
+                    ))
+                    if self._last_tool_results:
+                        summary = self._format_tool_results(self._last_tool_results)
+                        return (summary, turns_used)
+                    # Geen resultaten — laat model samenvatten met dwang
+                    messages.append({
+                        "role": "user",
+                        "content": (
+                            "SYSTEEM: Maximale analyse-diepte bereikt. "
+                            "Geef direct je antwoord met de data die je al hebt. "
+                            "Roep GEEN tools meer aan."
+                        ),
+                    })
+                    try:
+                        forced = self.client.chat.completions.create(
+                            model=model,
+                            messages=messages,
+                            max_tokens=max_tokens,
+                        )
+                        return (forced.choices[0].message.content or "", turns_used + 1)
+                    except Exception:
+                        return (None, turns_used)
+                _seen_tool_sets.append(current_tools)
             else:
                 content_text = message.content or ""
                 # Detecteer tekst-beschreven tool calls die niet via API kwamen

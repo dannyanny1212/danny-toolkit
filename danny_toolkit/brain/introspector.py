@@ -405,8 +405,33 @@ class SystemIntrospector:
 
     # ── Full Snapshot ──
 
-    def take_snapshot(self) -> SystemSnapshot:
-        """Maak een compleet zelfportret van het systeem."""
+    # Snapshot cache: voorkomt herhaalde volledige scans binnen SNAPSHOT_TTL_S
+    _SNAPSHOT_TTL_S = 30  # Seconds
+    _cached_snapshot: "Optional[SystemSnapshot]" = None
+    _cached_snapshot_at: float = 0.0
+
+    def take_snapshot(self, force: bool = False) -> SystemSnapshot:
+        """Maak een compleet zelfportret van het systeem.
+
+        Args:
+            force: Negeer cache en forceer nieuwe scan.
+
+        Returns:
+            SystemSnapshot met alle systeemmetrics.
+        """
+        # ── Cache guard: hergebruik recente snapshot ──
+        now = time.time()
+        if (
+            not force
+            and self._cached_snapshot is not None
+            and (now - self._cached_snapshot_at) < self._SNAPSHOT_TTL_S
+        ):
+            logger.debug(
+                "Introspector: cached snapshot hergebruikt (%.1fs oud)",
+                now - self._cached_snapshot_at,
+            )
+            return self._cached_snapshot
+
         print(f"{Kleur.CYAAN}🧠 Introspector: Zelfdiagnose...{Kleur.RESET}")
 
         modules = self.discover_modules()
@@ -441,6 +466,10 @@ class SystemIntrospector:
               f"gezondheid: {gezondheid:.1%}{Kleur.RESET}")
         print(f"   Wirings: {sum(1 for w in wirings if w.actief)}/{len(wirings)} actief")
         print(f"   Security: {security_score:.0%}")
+
+        # ── Cache opslaan ──
+        self._cached_snapshot = snapshot
+        self._cached_snapshot_at = now
 
         # Sla op in VectorStore
         self._store_self_knowledge(snapshot)

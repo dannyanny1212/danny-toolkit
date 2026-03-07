@@ -312,11 +312,25 @@ class OmegaCore:
 
     def query_knowledge(self, query: str = "omega") -> Dict[str, Any]:
         """Doorzoek de Cortex Knowledge Graph."""
+        import asyncio
+
         result = {}
         try:
             from danny_toolkit.brain.cortex import get_cortex
             cx = get_cortex()
-            hits = cx.hybrid_search(query, top_k=5)
+            # hybrid_search is async — resolve coroutine properly
+            coro = cx.hybrid_search(query, top_k=5)
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = None
+            if loop and loop.is_running():
+                # Event loop actief — nieuwe loop in thread
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                    hits = pool.submit(asyncio.run, coro).result(timeout=10)
+            else:
+                hits = asyncio.run(coro)
             result["query"] = query
             result["results"] = hits[:5]
             stats = cx.get_stats()
