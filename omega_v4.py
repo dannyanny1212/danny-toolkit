@@ -88,8 +88,11 @@ class OmegaDashboardV4(App):
     BINDINGS = [
         ("q", "quit", "Afsluiten"),
         ("c", "clear_logs", "Clear Logs"),
-        ("t", "toggle_dark", "Thema Wisselen")
+        ("t", "toggle_dark", "Thema Wisselen"),
+        ("f2", "toggle_select", "Select Mode"),
     ]
+
+    _select_mode = False
 
     def compose(self) -> ComposeResult:
         """Bouw de Trinity Layout op."""
@@ -229,15 +232,28 @@ class OmegaDashboardV4(App):
 
             elapsed = _time.time() - t0
 
-            # Resultaten naar MIND kolom
+            # Resultaten naar MIND kolom — payload uitpakken
             if payloads:
                 for payload in payloads:
                     agent = getattr(payload, "agent", "?")
-                    result = getattr(payload, "result", str(payload))
-                    status = getattr(payload, "status", "")
+                    # Prioriteit: display_text > content > str(payload)
+                    tekst = getattr(payload, "display_text", "") or ""
+                    if not tekst.strip():
+                        raw = getattr(payload, "content", None)
+                        if isinstance(raw, str):
+                            tekst = raw
+                        elif isinstance(raw, dict):
+                            tekst = raw.get("text", raw.get("result", str(raw)))
+                        elif raw is not None:
+                            tekst = str(raw)
+                        else:
+                            tekst = str(payload)
+                    # Trim extreem lange output
+                    if len(tekst) > 2000:
+                        tekst = tekst[:2000] + "..."
                     self.app.call_from_thread(
                         self.log_mind.write,
-                        f"\n[bold green]Ω {agent}:[/] {result}",
+                        f"\n[bold green]Ω {agent}:[/] {tekst}",
                     )
             else:
                 self.app.call_from_thread(
@@ -255,6 +271,29 @@ class OmegaDashboardV4(App):
                 self.log_mind.write,
                 f"\n[bold red]FATAL ERROR:[/] {e}",
             )
+
+    def action_toggle_select(self) -> None:
+        """Toggle Select Mode — schakelt muisvangst uit zodat je tekst kunt selecteren."""
+        self._select_mode = not self._select_mode
+        if self._select_mode:
+            # Schakel Textual mouse tracking UIT — terminal krijgt muis terug
+            if hasattr(self, "console") and hasattr(self.console, "file"):
+                f = self.console.file
+            else:
+                f = sys.stdout
+            # Disable mouse tracking escape sequences
+            f.write("\033[?1000l\033[?1003l\033[?1015l\033[?1006l")
+            f.flush()
+            self.status_bar.update("SELECT MODE — Selecteer tekst + rechtermuisklik → Copy | F2 = terug")
+        else:
+            # Heractiveer Textual mouse tracking
+            if hasattr(self, "console") and hasattr(self.console, "file"):
+                f = self.console.file
+            else:
+                f = sys.stdout
+            f.write("\033[?1000h\033[?1003h\033[?1015h\033[?1006h")
+            f.flush()
+            self.status_bar.update("🟢 ONLINE | 18 Agents | Select Mode UIT")
 
     def action_clear_logs(self) -> None:
         """Maakt alle schermen schoon met de 'C' toets."""
