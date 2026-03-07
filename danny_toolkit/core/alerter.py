@@ -47,6 +47,7 @@ class Alerter:
 
     DEDUP_INTERVAL = 300  # 5 minuten tussen identieke alerts
     _MAX_DEDUP_ENTRIES = 200
+    _MAX_ESCALATIE_KEYS = 200
 
     ESCALATIE_VENSTER = 600  # 10 minuten
     ESCALATIE_DREMPEL = 3   # 3 keer zelfde alert → escalatie
@@ -129,6 +130,15 @@ class Alerter:
                 t for t in timestamps
                 if now - t <= self.ESCALATIE_VENSTER
             ]
+
+            # Evict stale keys (alle timestamps verlopen)
+            if len(self._escalatie_log) > self._MAX_ESCALATIE_KEYS:
+                stale = [
+                    k for k, ts in self._escalatie_log.items()
+                    if not ts or (now - max(ts)) > self.ESCALATIE_VENSTER
+                ]
+                for k in stale:
+                    del self._escalatie_log[k]
 
             if len(timestamps) < self.ESCALATIE_DREMPEL:
                 return huidig_niveau

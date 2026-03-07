@@ -754,6 +754,83 @@ Regels:
 
         return calls[:10]  # Max 10 om runaway te voorkomen
 
+    def _intercept_text_tools(self, content: str) -> str:
+        """Onderschep tool namen in non-Groq (NIM/HF/Ollama) tekst output.
+
+        Als de fallback provider tool namen als tekst retourneert (kan geen
+        function calling), voer ze alsnog uit en bouw een samenvattend antwoord.
+        """
+        parsed_calls = self._parse_text_tool_calls(content)
+        if not parsed_calls:
+            return content
+
+        _SAFE_PREFIXES = ("get_", "check_", "analyze_", "search",
+                          "zoek", "stats", "status", "list_",
+                          "system_scan", "tier_detail", "query_",
+                          "memory_recall", "immune_report",
+                          "neural_activity", "vraag")
+
+        tool_tasks = []
+        task_ids = []
+        for tc_name, tc_args in parsed_calls:
+            app_naam, actie_naam = parse_tool_call(tc_name)
+            if app_naam and actie_naam:
+                if not actie_naam.startswith(_SAFE_PREFIXES):
+                    continue
+                print(kleur(
+                    f"   [INTERCEPT] {app_naam}.{actie_naam}",
+                    Kleur.CYAAN,
+                ))
+                tool_tasks.append(
+                    self._execute_app_action(app_naam, actie_naam, tc_args)
+                )
+                task_ids.append(f"{app_naam}.{actie_naam}")
+
+        if not tool_tasks:
+            return content
+
+        # Voer tools uit
+        try:
+            try:
+                results = asyncio.run(
+                    asyncio.gather(*tool_tasks, return_exceptions=True)
+                )
+            except RuntimeError:
+                fresh = [
+                    self._execute_app_action(
+                        *parse_tool_call(tc_name), tc_args,
+                    )
+                    for tc_name, tc_args in parsed_calls
+                    if all(parse_tool_call(tc_name))
+                ]
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    results = loop.run_until_complete(
+                        asyncio.gather(*fresh, return_exceptions=True)
+                    )
+                finally:
+                    loop.close()
+        except Exception as e:
+            logger.debug("Intercept tool execution error: %s", e)
+            return content
+
+        # Bouw samenvattend antwoord
+        tool_results = []
+        for tid, result in zip(task_ids, results):
+            if isinstance(result, BaseException):
+                tool_results.append((tid, json.dumps({"error": str(result)})))
+            else:
+                tool_results.append(
+                    (tid, json.dumps(result, ensure_ascii=False, default=str)[:5000])
+                )
+
+        print(kleur(
+            f"   [INTERCEPT] {len(tool_results)} tools uitgevoerd via text-parse",
+            Kleur.CYAAN,
+        ))
+        return self._format_tool_results(tool_results)
+
     def _build_openai_tools(self):
         """Converteer tool definitions naar OpenAI function-calling format."""
         if not self.tool_definitions:
@@ -895,8 +972,14 @@ Regels:
                 remaining_turns -= max(turns_used, 1)
 
                 if content is not None:
-                    # SUCCES — circuit breaker reset + history + stats
+                    # SUCCES — circuit breaker reset
                     self._provider_success(breaker_key)
+
+                    # Non-Groq providers (NIM/HF/Ollama) kunnen geen function calling.
+                    # Als ze tool namen als tekst retourneren, voer ze alsnog uit.
+                    _NO_TOOL_PROVIDERS = ("nvidia_nim", "huggingface", "ollama")
+                    if breaker_key in _NO_TOOL_PROVIDERS and use_tools:
+                        content = self._intercept_text_tools(content)
 
                     try:
                         from danny_toolkit.brain.governor import OmegaGovernor
@@ -1364,6 +1447,7 @@ Regels:
                 "model": self.OLLAMA_MODEL,
                 "messages": messages,
                 "stream": False,
+                "keep_alive": "30m",
             },
             timeout=120,
         )
@@ -1733,7 +1817,7 @@ Regels:
 
         elif category == "agents":
             try:
-                from swarm_engine import get_pipeline_metrics, get_circuit_state
+                from danny_toolkit.core.engine import get_pipeline_metrics, get_circuit_state
                 metrics = get_pipeline_metrics()
                 circuits = get_circuit_state()
                 lines = []

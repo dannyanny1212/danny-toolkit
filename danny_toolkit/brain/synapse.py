@@ -195,7 +195,7 @@ class TheSynapse:
             return None
         try:
             # Import AGENT_PROFIELEN from swarm_engine
-            from swarm_engine import AdaptiveRouter
+            from danny_toolkit.core.engine import AdaptiveRouter
             self._profiel_embeddings = {}
             for agent, subs in AdaptiveRouter.AGENT_PROFIELEN.items():
                 self._profiel_embeddings[agent] = [

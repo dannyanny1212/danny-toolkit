@@ -453,7 +453,7 @@ method is called to initialize the database schema."""
         # Build a synthetic query from category agents
         agents = category.split("+")
         try:
-            from swarm_engine import AdaptiveRouter
+            from danny_toolkit.core.engine import AdaptiveRouter
             query_parts = []
             for agent in agents:
                 profielen = AdaptiveRouter.AGENT_PROFIELEN.get(agent, [])

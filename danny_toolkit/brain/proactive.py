@@ -344,7 +344,7 @@ class ProactiveEngine:
         state["memex_skips"] = 0
         try:
             if self.brain:
-                from swarm_engine import SwarmEngine
+                from danny_toolkit.core.engine import SwarmEngine
                 engine = SwarmEngine(brain=self.brain)
                 samenvatting = (
                     engine._tuner.get_samenvatting()
@@ -469,7 +469,7 @@ class ProactiveEngine:
             prompt: De taak voor SwarmEngine.
         """
         try:
-            from swarm_engine import run_swarm_sync
+            from danny_toolkit.core.engine import run_swarm_sync
             run_swarm_sync(prompt, self.brain)
         except Exception as e:
             logger.debug("Swarm taak failed: %s", e)

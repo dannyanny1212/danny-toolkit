@@ -324,7 +324,7 @@ The Groq client is initialized lazily, attempting to create a synchronous client
         # Fallback: AdaptiveRouter als Synapse geen data heeft
         if not bias_map:
             try:
-                from swarm_engine import AdaptiveRouter
+                from danny_toolkit.core.engine import AdaptiveRouter
                 router = AdaptiveRouter()
                 routed = router.route(task.beschrijving)
                 for i, agent in enumerate(routed):
@@ -389,7 +389,7 @@ The Groq client is initialized lazily, attempting to create a synchronous client
         # Parallel dispatch
         if engine is None:
             try:
-                from swarm_engine import SwarmEngine
+                from danny_toolkit.core.engine import SwarmEngine
                 engine = SwarmEngine(self.brain)
             except Exception as e:
                 logger.debug("SwarmEngine init for execute: %s", e)
@@ -590,7 +590,7 @@ The Groq client is initialized lazily, attempting to create a synchronous client
                 if shield and response.content:
                     try:
                         # Importeer SwarmPayload lokaal om circulaire imports te vermijden
-                        from swarm_engine import SwarmPayload
+                        from danny_toolkit.core.engine import SwarmPayload
                         probe = SwarmPayload(
                             agent=f"EXT:{response.provider}/{response.model_id}",
                             type="text",

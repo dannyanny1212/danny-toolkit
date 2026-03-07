@@ -213,7 +213,7 @@ Initializes a new instance of the class.
         """Lazy import SwarmEngine."""
         if self._engine is None:
             try:
-                from swarm_engine import SwarmEngine
+                from danny_toolkit.core.engine import SwarmEngine
                 self._engine = SwarmEngine(
                     brain=self._brain
                 )
