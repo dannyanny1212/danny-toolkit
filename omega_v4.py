@@ -7,6 +7,15 @@ import asyncio
 import time as _time
 import sys
 import os
+import psutil
+
+try:
+    import pynvml
+    pynvml.nvmlInit()
+    _GPU_HANDLE = pynvml.nvmlDeviceGetHandleByIndex(0)
+    _HAS_GPU = True
+except Exception:
+    _HAS_GPU = False
 
 # Zorg dat danny-toolkit root op sys.path staat voor imports
 _ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -140,6 +149,9 @@ class OmegaDashboardV4(App):
         self._boot_soul()
         self._boot_body_telemetry()
 
+        # 1-seconde real-time hardware monitor
+        self.set_interval(1.0, self.update_status_bar)
+
     @work(thread=True)
     def _boot_soul(self) -> None:
         """Boot SOUL kolom — CorticalStack + NeuralBus listener."""
@@ -257,24 +269,35 @@ class OmegaDashboardV4(App):
             Text.from_ansi("\033[32m[GOVERNOR] Startup check voltooid: OK\033[0m"),
         )
 
-        # Live hardware update elke 30s
-        while True:
-            _time.sleep(30)
-            try:
-                import psutil
-                cpu = psutil.cpu_percent(interval=0.5)
-                ram = psutil.virtual_memory()
-                status = f"🟢 ONLINE | CPU: {cpu}% | RAM: {ram.percent}%"
+        # Hardware refresh nu via set_interval(1s) in on_mount()
+
+    def update_status_bar(self) -> None:
+        """1-seconde real-time hardware telemetrie."""
+        try:
+            cpu = psutil.cpu_percent(interval=None)
+            ram = psutil.virtual_memory()
+
+            # Color-coded warnings
+            cpu_str = f"[red]{cpu}%[/]" if cpu > 85 else f"{cpu}%"
+            ram_str = f"[red]{ram.percent}%[/]" if ram.percent > 90 else f"{ram.percent}%"
+
+            status = f"🟢 ONLINE | CPU: {cpu_str} | RAM: {ram_str} ({ram.used // (1024**3)}/{ram.total // (1024**3)} GB)"
+
+            if _HAS_GPU:
                 try:
-                    from danny_toolkit.core.vram_manager import vram_rapport
-                    vram = vram_rapport()
-                    if vram.get("beschikbaar"):
-                        status += f" | VRAM: {vram.get('vrij_mb', 0)} MB vrij"
+                    util = pynvml.nvmlDeviceGetUtilizationRates(_GPU_HANDLE)
+                    mem = pynvml.nvmlDeviceGetMemoryInfo(_GPU_HANDLE)
+                    gpu_pct = util.gpu
+                    vram_used = mem.used // (1024**2)
+                    vram_total = mem.total // (1024**2)
+                    vram_free = (mem.total - mem.used) // (1024**2)
+                    status += f" | GPU: {gpu_pct}% | VRAM: {vram_used}/{vram_total} MB (vrij: {vram_free})"
                 except Exception:
-                    pass
-                self.app.call_from_thread(self.status_bar.update, status)
-            except Exception:
-                pass
+                    status += " | GPU: N/A"
+
+            self.status_bar.update(status)
+        except Exception:
+            pass
 
     def _get_engine(self):
         """Lazy-init SwarmEngine + CentralBrain."""
