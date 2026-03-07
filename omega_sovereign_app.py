@@ -1158,8 +1158,8 @@ class DashboardTab(ctk.CTkFrame):
         self._cl_write("Opus 4.6 \u00b7 Claude Max [ConPTY]", "system")
         self._cl_write("\u2598\u2598 \u259d\u259d    ~\\danny-toolkit", "dim")
         self._cl_write("Interactive Claude Code session via ConPTY", "dim")
-        self._cl_write("Commands: new, clear, status, help  |\u2191\u2193 history", "dim")
-        self._cl_write("Typ een vraag \u2192 persistent Claude sessie\n", "dim")
+        self._cl_write("Commands: login, new, clear, status, help  |\u2191\u2193 history", "dim")
+        self._cl_write("Typ 'login' voor authenticatie, of een vraag voor Claude\n", "dim")
         self._claude_pty = ClaudePTY(self._cl_write, self)
 
         cl_inp = ctk.CTkFrame(claude_panel.content, fg_color="transparent")
@@ -1304,6 +1304,9 @@ class DashboardTab(ctk.CTkFrame):
         if low == "new":
             self._claude_pty.kill()
             self._cl_write("  Session killed. Volgende input start nieuwe sessie.", "system")
+        elif low == "login":
+            self._cl_write("\u2126 Starting Claude login...", "process")
+            self._claude_pty.spawn_login()
         elif low == "clear":
             self._cl_text.configure(state="normal")
             self._cl_text._textbox.delete("1.0", "end")
@@ -1316,6 +1319,7 @@ class DashboardTab(ctk.CTkFrame):
         elif low == "help":
             self._cl_write("  Claude ConPTY Commands:", "system")
             for c, d in [
+                ("login", "Claude authenticatie / login"),
                 ("new", "Kill + start nieuwe Claude sessie"),
                 ("clear", "Terminal wissen"),
                 ("status", "ConPTY sessie info"),
@@ -3705,40 +3709,50 @@ class ClaudePTY:
         self._reader_thread = None
         self._poll_id = None
 
+    # ── helpers ──────────────────────────────────────────────────
+
+    @staticmethod
+    def _find_claude():
+        """Locate the claude CLI executable."""
+        path = shutil.which("claude")
+        if not path:
+            winget = os.path.expandvars(
+                r"%LOCALAPPDATA%\Microsoft\WinGet\Links\claude.exe")
+            if os.path.isfile(winget):
+                path = winget
+        return path
+
+    @staticmethod
+    def _clean_env():
+        """Build a clean env dict without vars that block nested sessions."""
+        env = os.environ.copy()
+        env.pop("CLAUDECODE", None)
+        env.pop("CLAUDE_CODE_ENTRYPOINT", None)
+        toolkit_dir = r"C:\Users\danny\danny-toolkit"
+        venv_scripts = os.path.join(toolkit_dir, "venv311", "Scripts")
+        env["PATH"] = venv_scripts + os.pathsep + env.get("PATH", "")
+        env["VIRTUAL_ENV"] = os.path.join(toolkit_dir, "venv311")
+        env["PYTHONPATH"] = toolkit_dir
+        return env
+
     # ── spawn / kill ────────────────────────────────────────────
 
     def spawn(self):
         """Start a new interactive ``claude`` session in a ConPTY."""
         self.kill()  # clean up any previous session
 
-        claude_path = shutil.which("claude")
-        if not claude_path:
-            winget = os.path.expandvars(
-                r"%LOCALAPPDATA%\Microsoft\WinGet\Links\claude.exe")
-            if os.path.isfile(winget):
-                claude_path = winget
+        claude_path = self._find_claude()
         if not claude_path:
             self._write("[ERROR] claude CLI not found in PATH", "error")
             return False
-
-        # Build a clean environment — strip vars that block nested sessions
-        env = os.environ.copy()
-        env.pop("CLAUDECODE", None)
-        env.pop("CLAUDE_CODE_ENTRYPOINT", None)
-
-        toolkit_dir = r"C:\Users\danny\danny-toolkit"
-        venv_scripts = os.path.join(toolkit_dir, "venv311", "Scripts")
-        env["PATH"] = venv_scripts + os.pathsep + env.get("PATH", "")
-        env["VIRTUAL_ENV"] = os.path.join(toolkit_dir, "venv311")
-        env["PYTHONPATH"] = toolkit_dir
 
         try:
             from winpty import PtyProcess  # type: ignore[import-untyped]
 
             self._proc = PtyProcess.spawn(
-                f'"{claude_path}"',
-                cwd=toolkit_dir,
-                env=env,
+                claude_path,
+                cwd=r"C:\Users\danny\danny-toolkit",
+                env=self._clean_env(),
             )
         except Exception as e:
             self._write(f"[ERROR] ConPTY spawn failed: {e}", "error")
@@ -3777,6 +3791,35 @@ class ClaudePTY:
         if not self._alive or self._proc is None:
             return False
         return self._proc.isalive()
+
+    def spawn_login(self):
+        """Run ``claude login`` in a ConPTY for interactive authentication."""
+        self.kill()
+
+        claude_path = self._find_claude()
+        if not claude_path:
+            return False
+
+        env = self._clean_env()
+        try:
+            from winpty import PtyProcess  # type: ignore[import-untyped]
+
+            self._proc = PtyProcess.spawn(
+                f"{claude_path} login",
+                cwd=r"C:\Users\danny\danny-toolkit",
+                env=env,
+            )
+        except Exception as e:
+            self._write(f"[ERROR] ConPTY login spawn failed: {e}", "error")
+            return False
+
+        self._alive = True
+        self._reader_thread = threading.Thread(
+            target=self._reader_loop, daemon=True)
+        self._reader_thread.start()
+        self._schedule_poll()
+        self._write("[ConPTY] Claude login gestart — volg instructies hieronder", "system")
+        return True
 
     def send(self, text: str):
         """Send a line of text to the Claude session."""
