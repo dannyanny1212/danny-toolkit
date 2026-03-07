@@ -1162,8 +1162,8 @@ class DashboardTab(ctk.CTkFrame):
         self._sh_write("\u2126 SOVEREIGN BODY \u2014 Omega Shell v3.0", "system")
         self._sh_cwd = os.getcwd()
         self._sh_write(f"Working directory: {self._sh_cwd}", "dim")
-        self._sh_write("Real subprocess execution (PowerShell)", "dim")
-        self._sh_write("Commands: cd, cls/clear, or any shell command  |\u2191\u2193 history\n", "dim")
+        self._sh_write("Hardware monitoring + Shell execution (PowerShell)", "dim")
+        self._sh_write("Commands: scan, cpu, gpu, git, api, ollama, procs, help  |\u2191\u2193 history\n", "dim")
         self._sh_proc = None
 
         sh_inp = ctk.CTkFrame(shell_panel.content, fg_color="transparent")
@@ -1397,9 +1397,37 @@ class DashboardTab(ctk.CTkFrame):
         self._sh_history.append(cmd)
         self._sh_hist_idx = -1
         self._sh_write(f"{self._sh_cwd}> {cmd}", "input")
+        low = cmd.lower().strip()
+
+        # ── Built-in BODY commands ──
+        if low == "help":
+            self._sh_write("  Sovereign Body commands:", "system")
+            for c, d in [
+                ("scan", "Volledige hardware + systeem scan"),
+                ("cpu", "Realtime CPU + RAM status"),
+                ("gpu", "VRAM budget status"),
+                ("git", "Git repo status"),
+                ("api", "FastAPI localhost health check"),
+                ("ollama", "Ollama model server check"),
+                ("procs", "Actieve Python processen"),
+                ("cd <pad>", "Map wisselen"),
+                ("cls/clear", "Terminal wissen"),
+                ("help", "Dit overzicht"),
+            ]:
+                self._sh_write(f"    {c:16s} {d}", "dim")
+            self._sh_write("\n  Of typ een shell commando voor directe executie.", "output")
+            return
+
+        if low == "scan":
+            threading.Thread(target=self._body_auto_dispatch, daemon=True).start()
+            return
+
+        if low in ("cpu", "gpu", "git", "api", "ollama", "procs"):
+            threading.Thread(target=self._body_cmd, args=(low,), daemon=True).start()
+            return
 
         # Handle cd specially
-        if cmd.lower().startswith("cd "):
+        if low.startswith("cd "):
             target = cmd[3:].strip().strip('"').strip("'")
             try:
                 new_cwd = os.path.abspath(os.path.join(self._sh_cwd, target))
@@ -1413,13 +1441,13 @@ class DashboardTab(ctk.CTkFrame):
                 self._sh_write(f"Error: {e}", "error")
             return
 
-        if cmd.lower() in ("cls", "clear"):
+        if low in ("cls", "clear"):
             self._sh_text.configure(state="normal")
             self._sh_text._textbox.delete("1.0", "end")
             self._sh_text.configure(state="disabled")
             return
 
-        # Run in background thread
+        # Run in background thread — raw shell command
         threading.Thread(target=self._sh_run_cmd, args=(cmd,), daemon=True).start()
 
     def _sh_run_cmd(self, cmd):
@@ -1450,6 +1478,94 @@ class DashboardTab(ctk.CTkFrame):
             self._sh_text.after(0, self._sh_write, f"Error: {e}", "error")
         finally:
             self._sh_proc = None
+
+    def _body_cmd(self, cmd):
+        """Voer een individueel BODY command uit (threaded)."""
+        wb = lambda txt, tag="output": self._sh_text.after(0, self._sh_write, txt, tag)
+        try:
+            if cmd == "cpu":
+                import psutil
+                cpu = psutil.cpu_percent(interval=1.0)
+                ram = psutil.virtual_memory()
+                disk = psutil.disk_usage(self._sh_cwd)
+                wb(f"  CPU: {cpu:.1f}% ({psutil.cpu_count()} cores)", "verify")
+                wb(f"  RAM: {ram.percent:.1f}% ({ram.used // (1024**3)}/{ram.total // (1024**3)} GB)", "verify")
+                wb(f"  Disk: {disk.percent:.1f}% ({disk.free // (1024**3)} GB free)", "verify")
+
+            elif cmd == "gpu":
+                from danny_toolkit.core.vram_manager import vram_rapport
+                vram = vram_rapport()
+                if vram:
+                    wb(f"  GPU: {vram.get('gpu_name', '?')}", "verify")
+                    wb(f"  VRAM: {vram.get('used_mb', 0):.0f}/{vram.get('total_mb', 0):.0f} MB "
+                       f"({vram.get('free_mb', 0):.0f} MB free)", "verify")
+                else:
+                    wb("  GPU: No CUDA device", "warn")
+
+            elif cmd == "git":
+                _cf = subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0
+                r1 = subprocess.run(["git", "log", "--oneline", "-3"],
+                                    capture_output=True, text=True, timeout=5,
+                                    cwd=self._sh_cwd, creationflags=_cf)
+                r2 = subprocess.run(["git", "status", "--short"],
+                                    capture_output=True, text=True, timeout=5,
+                                    cwd=self._sh_cwd, creationflags=_cf)
+                r3 = subprocess.run(["git", "branch", "--show-current"],
+                                    capture_output=True, text=True, timeout=5,
+                                    cwd=self._sh_cwd, creationflags=_cf)
+                wb(f"  Branch: {r3.stdout.strip()}", "verify")
+                for line in r1.stdout.strip().split("\n")[:3]:
+                    if line.strip():
+                        wb(f"  {line.strip()}", "output")
+                dirty = r2.stdout.strip()
+                if dirty:
+                    wb(f"  Uncommitted:", "warn")
+                    for line in dirty.split("\n")[:5]:
+                        wb(f"    {line}", "dim")
+                else:
+                    wb("  Working tree: clean", "verify")
+
+            elif cmd == "api":
+                import urllib.request
+                port = _omega_mode.get("api_port", 8000)
+                try:
+                    resp = urllib.request.urlopen(f"http://localhost:{port}/docs", timeout=3)
+                    wb(f"  API: http://localhost:{port} \u2014 {resp.status} OK", "verify")
+                except Exception as e:
+                    wb(f"  API: OFFLINE \u2014 {e}", "warn")
+
+            elif cmd == "ollama":
+                import urllib.request
+                import json as _json
+                try:
+                    resp = urllib.request.urlopen("http://localhost:11434/api/tags", timeout=3)
+                    models = _json.loads(resp.read()).get("models", [])
+                    wb(f"  Ollama: {len(models)} models loaded", "verify")
+                    for m in models[:5]:
+                        size = m.get("size", 0) / (1024**3)
+                        wb(f"    {m.get('name', '?')} ({size:.1f} GB)", "dim")
+                except Exception as e:
+                    wb(f"  Ollama: OFFLINE \u2014 {e}", "warn")
+
+            elif cmd == "procs":
+                import psutil
+                py_procs = []
+                for proc in psutil.process_iter(["pid", "name", "cmdline", "memory_info"]):
+                    try:
+                        if "python" in proc.info["name"].lower():
+                            cmdline = proc.info.get("cmdline") or []
+                            script = next((os.path.basename(a) for a in cmdline if a.endswith(".py")), "python")
+                            mem = proc.info.get("memory_info")
+                            mem_mb = mem.rss / (1024**2) if mem else 0
+                            py_procs.append((proc.info["pid"], script, mem_mb))
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                        continue
+                wb(f"  Python processes: {len(py_procs)}", "verify")
+                for pid, script, mem in sorted(py_procs, key=lambda x: -x[2])[:8]:
+                    wb(f"    PID {pid:6d} | {mem:6.1f} MB | {script}", "dim")
+
+        except Exception as e:
+            wb(f"  Error: {e}", "error")
 
     def _ct_on_enter(self, _=None):
         """Input handler voor Sovereign Agent terminal."""
@@ -1649,8 +1765,9 @@ class DashboardTab(ctk.CTkFrame):
         # Re-enable entry
         self._ot_text.after(0, lambda: self._ot_entry.configure(state="normal"))
 
-        # Auto-dispatch: agents automatisch aansturen via Sovereign Agent terminal
+        # Auto-dispatch: MIND agents + BODY hardware checks
         threading.Thread(target=self._omega_auto_dispatch, daemon=True).start()
+        threading.Thread(target=self._body_auto_dispatch, daemon=True).start()
 
     # ── AUTO-DISPATCH: Sovereign Agent stuurt agents automatisch aan ──
 
@@ -1762,6 +1879,177 @@ class DashboardTab(ctk.CTkFrame):
         wa("  Sovereign Mind AUTONOMOUS — alle agents paraat.", "verify")
         wa("  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "system")
         wa("", "system")
+
+    # ── BODY AUTO-DISPATCH: Hardware + System Health ──
+
+    def _body_auto_dispatch(self):
+        """Na omega awaken: BODY terminal draait automatische systeem checks.
+
+        Hardware, processen, git, API endpoints, venv, disk — alles wat
+        het fysieke zenuwstelsel van Omega betreft.
+        """
+        time.sleep(1.5)  # Na MIND start, BODY volgt
+        wb = lambda txt, tag="output": self._sh_text.after(0, self._sh_write, txt, tag)
+
+        wb("", "system")
+        wb("  \u2126 SOVEREIGN BODY \u2014 AUTO-SCAN", "system")
+        wb("  \u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501", "system")
+
+        t0 = time.time()
+        checks_ok = 0
+        checks_fail = 0
+
+        # ── [1/7] HARDWARE: CPU / RAM / Disk ──
+        wb("  [1/7] HARDWARE \u2014 CPU, RAM, Disk...", "process")
+        try:
+            import psutil
+            cpu = psutil.cpu_percent(interval=0.5)
+            ram = psutil.virtual_memory()
+            disk = psutil.disk_usage(self._sh_cwd)
+            cpu_count = psutil.cpu_count(logical=True)
+            wb(f"  [1/7] CPU: {cpu:.1f}% ({cpu_count} cores) | "
+               f"RAM: {ram.percent:.1f}% ({ram.used // (1024**3)}/{ram.total // (1024**3)} GB) | "
+               f"Disk: {disk.percent:.1f}% ({disk.free // (1024**3)} GB free)", "verify")
+            checks_ok += 1
+        except Exception as e:
+            wb(f"  [1/7] HARDWARE: {e}", "error")
+            checks_fail += 1
+
+        # ── [2/7] GPU: VRAM status ──
+        wb("  [2/7] GPU \u2014 VRAM budget...", "process")
+        try:
+            from danny_toolkit.core.vram_manager import vram_rapport
+            vram = vram_rapport()
+            if vram:
+                total = vram.get("total_mb", 0)
+                used = vram.get("used_mb", 0)
+                free = vram.get("free_mb", 0)
+                gpu_name = vram.get("gpu_name", "Unknown")
+                wb(f"  [2/7] GPU: {gpu_name} | {used:.0f}/{total:.0f} MB "
+                   f"({free:.0f} MB free)", "verify")
+            else:
+                wb("  [2/7] GPU: No CUDA device detected", "warn")
+            checks_ok += 1
+        except Exception as e:
+            wb(f"  [2/7] GPU: {e}", "warn")
+            checks_fail += 1
+
+        # ── [3/7] PYTHON: venv311 health ──
+        wb("  [3/7] PYTHON \u2014 venv311 health...", "process")
+        try:
+            project_root = os.path.dirname(os.path.abspath(__file__))
+            python_exe = os.path.join(project_root, "venv311", "Scripts", "python.exe")
+            if os.path.isfile(python_exe):
+                result = subprocess.run(
+                    [python_exe, "--version"],
+                    capture_output=True, text=True, timeout=5,
+                    creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
+                )
+                ver = result.stdout.strip() or result.stderr.strip()
+                wb(f"  [3/7] PYTHON: {ver} \u2014 venv311 OK", "verify")
+            else:
+                wb(f"  [3/7] PYTHON: venv311 NOT FOUND at {python_exe}", "error")
+            checks_ok += 1
+        except Exception as e:
+            wb(f"  [3/7] PYTHON: {e}", "error")
+            checks_fail += 1
+
+        # ── [4/7] GIT: repo status ──
+        wb("  [4/7] GIT \u2014 repository status...", "process")
+        try:
+            result = subprocess.run(
+                ["git", "log", "--oneline", "-1"],
+                capture_output=True, text=True, timeout=5,
+                cwd=self._sh_cwd,
+                creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
+            )
+            last_commit = result.stdout.strip()
+            result2 = subprocess.run(
+                ["git", "status", "--porcelain"],
+                capture_output=True, text=True, timeout=5,
+                cwd=self._sh_cwd,
+                creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
+            )
+            dirty = len(result2.stdout.strip().split("\n")) if result2.stdout.strip() else 0
+            result3 = subprocess.run(
+                ["git", "branch", "--show-current"],
+                capture_output=True, text=True, timeout=5,
+                cwd=self._sh_cwd,
+                creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
+            )
+            branch = result3.stdout.strip()
+            status_str = f"{dirty} uncommitted" if dirty else "clean"
+            wb(f"  [4/7] GIT: [{branch}] {last_commit} ({status_str})", "verify")
+            checks_ok += 1
+        except Exception as e:
+            wb(f"  [4/7] GIT: {e}", "warn")
+            checks_fail += 1
+
+        # ── [5/7] API: FastAPI localhost health ──
+        wb("  [5/7] API \u2014 FastAPI localhost...", "process")
+        try:
+            import urllib.request
+            port = _omega_mode.get("api_port", 8000)
+            resp = urllib.request.urlopen(f"http://localhost:{port}/docs", timeout=3)
+            wb(f"  [5/7] API: http://localhost:{port} \u2014 {resp.status} OK", "verify")
+            checks_ok += 1
+        except Exception as e:
+            wb(f"  [5/7] API: OFFLINE \u2014 {e}", "warn")
+            checks_fail += 1
+
+        # ── [6/7] OLLAMA: GPU model server ──
+        wb("  [6/7] OLLAMA \u2014 local model server...", "process")
+        try:
+            import urllib.request
+            import json as _json
+            resp = urllib.request.urlopen("http://localhost:11434/api/tags", timeout=3)
+            models = _json.loads(resp.read()).get("models", [])
+            model_names = [m.get("name", "?") for m in models[:5]]
+            wb(f"  [6/7] OLLAMA: {len(models)} models \u2014 {', '.join(model_names)}", "verify")
+            checks_ok += 1
+        except Exception as e:
+            wb(f"  [6/7] OLLAMA: OFFLINE \u2014 {e}", "warn")
+            checks_fail += 1
+
+        # ── [7/7] PROCESSES: Python/Node processen actief ──
+        wb("  [7/7] PROCESSES \u2014 active system processes...", "process")
+        try:
+            import psutil
+            py_procs = []
+            for proc in psutil.process_iter(["pid", "name", "cmdline"]):
+                try:
+                    name = proc.info["name"].lower()
+                    if "python" in name:
+                        cmdline = proc.info.get("cmdline") or []
+                        script = ""
+                        for arg in cmdline:
+                            if arg.endswith(".py"):
+                                script = os.path.basename(arg)
+                                break
+                        if script:
+                            py_procs.append(f"{script}(pid:{proc.info['pid']})")
+                        elif len(py_procs) < 8:
+                            py_procs.append(f"python(pid:{proc.info['pid']})")
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+            wb(f"  [7/7] PROCESSES: {len(py_procs)} Python \u2014 {', '.join(py_procs[:6])}"
+               f"{'...' if len(py_procs) > 6 else ''}", "verify")
+            checks_ok += 1
+        except Exception as e:
+            wb(f"  [7/7] PROCESSES: {e}", "warn")
+            checks_fail += 1
+
+        # ── Samenvatting ──
+        elapsed = time.time() - t0
+        total = checks_ok + checks_fail
+        wb("", "system")
+        wb("  \u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501", "system")
+        wb(f"  BODY SCAN COMPLETE \u2014 {checks_ok}/{total} OK",
+           "verify" if checks_fail == 0 else "warn")
+        wb(f"  Elapsed: {elapsed:.1f}s", "dim")
+        wb("  Sovereign Body OPERATIONAL \u2014 hardware bewaakt.", "verify")
+        wb("  \u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501", "system")
+        wb("", "system")
 
     def _dedup_payloads(self, payloads):
         """Merge duplicate agent antwoorden (>75% similarity)."""

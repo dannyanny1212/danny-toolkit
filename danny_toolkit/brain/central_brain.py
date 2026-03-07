@@ -254,6 +254,25 @@ class CentralBrain:
         with open(self.data_file, "w", encoding="utf-8") as f:
             json.dump(self.stats, f, indent=2, ensure_ascii=False)
 
+    def _chronos_enrich(self, task: str) -> str:
+        """Stap 2: Chronos injecteert tijdscontext in de prompt.
+
+        Identiek formaat als PrometheusBrain._chronos_enrich() zodat
+        SwarmEngine en swarm_core.py hetzelfde resultaat krijgen.
+        """
+        now = datetime.now()
+        dag_namen = [
+            "maandag", "dinsdag", "woensdag",
+            "donderdag", "vrijdag", "zaterdag",
+            "zondag",
+        ]
+        context = (
+            f"[Tijd: {now.strftime('%H:%M')} | "
+            f"Dag: {dag_namen[now.weekday()]} "
+            f"{now.strftime('%d-%m-%Y')}] "
+        )
+        return context + task
+
     def _governor_gate(self, task: str) -> tuple:
         """Governor input-validatie gate voor SwarmEngine.
 
@@ -1582,23 +1601,125 @@ Regels:
         """Formatteer tool resultaten tot leesbaar antwoord (safety net).
 
         Wordt gebruikt wanneer tools succesvol uitgevoerd zijn maar de
-        samenvatting-stap faalt door rate limits.
+        samenvatting-stap faalt door rate limits. Produceert een compacte,
+        menselijk leesbare samenvatting i.p.v. ruwe JSON dumps.
         """
-        parts = ["Hier zijn de resultaten van de uitgevoerde acties:\n"]
+        parts = []
+        skipped = []
+
         for tool_id, result_str in tool_results:
             try:
                 data = json.loads(result_str)
-                if isinstance(data, dict) and "error" in data:
-                    parts.append(f"**{tool_id}**: Fout — {data['error']}")
-                elif isinstance(data, dict):
-                    # Pretty-print: geneste structuren volledig zichtbaar
-                    formatted = json.dumps(data, ensure_ascii=False, default=str, indent=2)[:3000]
-                    parts.append(f"**{tool_id}**:\n```json\n{formatted}\n```")
-                else:
-                    parts.append(f"**{tool_id}**: {str(data)[:800]}")
             except (json.JSONDecodeError, TypeError):
-                parts.append(f"**{tool_id}**: {result_str[:800]}")
-        return "\n\n".join(parts)
+                parts.append(f"- **{tool_id}**: {result_str[:200]}")
+                continue
+
+            # Filter: skip geen_data / lege resultaten
+            if isinstance(data, dict):
+                if data.get("status") == "geen_data":
+                    skipped.append(tool_id.split(".")[-1])
+                    continue
+                if "error" in data and len(data) <= 2:
+                    parts.append(f"- **{tool_id}**: {data['error']}")
+                    continue
+
+            # Smart extractie per tool type
+            summary = CentralBrain._extract_summary(tool_id, data)
+            if summary:
+                parts.append(summary)
+            else:
+                # Onbekend formaat — compacte weergave
+                compact = json.dumps(data, ensure_ascii=False, default=str)[:400]
+                parts.append(f"- **{tool_id}**: {compact}")
+
+        header = "**Systeem Rapport:**\n"
+        body = "\n".join(parts) if parts else "Geen relevante data beschikbaar."
+        footer = ""
+        if skipped:
+            footer = f"\n\n*Geen data voor: {', '.join(skipped)}*"
+        return header + body + footer
+
+    @staticmethod
+    def _extract_summary(tool_id: str, data) -> str:
+        """Extract key metrics uit bekende tool resultaten."""
+        tid = tool_id.lower()
+
+        # omega_core.system_scan
+        if "system_scan" in tid and isinstance(data, dict):
+            health = data.get("health_score", "?")
+            total = data.get("total_modules", "?")
+            active = data.get("active_modules", "?")
+            wirings = data.get("wirings", "?")
+            security = data.get("security", {})
+            sec_str = ""
+            if isinstance(security, dict):
+                sec_items = [k.replace("_actief", "").replace("_", " ")
+                             for k, v in security.items() if v is True]
+                sec_str = f" | Security: {len(sec_items)} checks OK"
+            tiers = data.get("tiers", {})
+            tier_counts = []
+            for t in ["T1", "T2", "T3", "T4", "T5"]:
+                nodes = tiers.get(t, [])
+                if nodes:
+                    tier_counts.append(f"{t}:{len(nodes)}")
+            tier_str = ", ".join(tier_counts) if tier_counts else ""
+            return (f"- **System Scan**: Health {health} | "
+                    f"{active}/{total} modules | Wirings {wirings}"
+                    f"{sec_str}\n  Tiers: {tier_str}")
+
+        # omega_core.immune_report
+        if "immune" in tid and isinstance(data, dict):
+            lines = ["- **Immuunsysteem**:"]
+            bb = data.get("blackbox", {})
+            if bb:
+                lines.append(f"  BlackBox: {bb.get('active_antibodies', 0)} antibodies, "
+                             f"{bb.get('total_encounters', 0)} encounters")
+            hs = data.get("hallucination_shield", {})
+            if hs:
+                lines.append(f"  Schild: {hs.get('beoordeeld', 0)} beoordeeld, "
+                             f"{hs.get('geblokkeerd', 0)} geblokkeerd, "
+                             f"{hs.get('doorgelaten', 0)} doorgelaten")
+            tb = data.get("tribunal", {})
+            if tb:
+                lines.append(f"  Tribunal: {tb.get('total', 0)} checks, "
+                             f"acceptance {tb.get('acceptance_rate', '?')}")
+            return "\n".join(lines)
+
+        # omega_core.neural_activity
+        if "neural" in tid and isinstance(data, dict):
+            lines = ["- **Neural Activity**:"]
+            bus = data.get("bus_stats", {})
+            if bus:
+                lines.append(f"  NeuralBus: {bus.get('events_gepubliceerd', 0)} events, "
+                             f"{bus.get('subscribers', 0)} subscribers")
+            syn = data.get("synapse", {})
+            if syn:
+                lines.append(f"  Synapse: {syn.get('pathways', 0)} pathways, "
+                             f"avg strength {syn.get('avg_strength', 0):.2f}")
+            mr = data.get("model_registry", {})
+            if mr:
+                lines.append(f"  ModelRegistry: {mr.get('total_workers', 0)} workers")
+            return "\n".join(lines)
+
+        # omega_core.memory_recall
+        if "memory" in tid and isinstance(data, dict):
+            db = data.get("db_metrics", {})
+            events = data.get("recent_events", [])
+            if db:
+                return (f"- **Memory**: DB {db.get('db_size_mb', '?')} MB | "
+                        f"{db.get('pending_writes', 0)} pending | "
+                        f"{len(events)} recent events")
+
+        # omega_core.query_knowledge
+        if "knowledge" in tid and isinstance(data, dict):
+            gs = data.get("graph_size", {})
+            results = data.get("results", [])
+            if gs:
+                return (f"- **Cortex**: {gs.get('graph_nodes', 0)} nodes, "
+                        f"{gs.get('graph_edges', 0)} edges | "
+                        f"{len(results)} zoekresultaten")
+
+        return ""
 
     def _emergency_offline_response(self, prompt: str) -> str:
         """Keyword-gebaseerde noodrouting als alle LLM providers falen.
