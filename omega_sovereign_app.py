@@ -1142,8 +1142,8 @@ class DashboardTab(ctk.CTkFrame):
         self._ct_entry.bind("<Down>", self._ct_hist_down)
         terminal_row.add(agent_panel, minsize=60, width=350)
 
-        # ── RIGHT: Sovereign Agent Terminal (Claude CLI) ──
-        claude_panel = NeonPanel(terminal_row, "\u2126 Sovereign Agent \u2014 Claude",
+        # ── RIGHT: Python Assist — Claude Max (can update Sovereign Agent) ──
+        claude_panel = NeonPanel(terminal_row, "\U0001f40d Python Assist \u2014 Claude Max",
                                   border_glow=NEON_PURPLE)
         self._cl_text = ctk.CTkTextbox(
             claude_panel.content, fg_color="#050810", text_color=NEON_GREEN,
@@ -1153,10 +1153,10 @@ class DashboardTab(ctk.CTkFrame):
         for tag_name, color in self._OT_COLORS.items():
             self._cl_text._textbox.tag_configure(tag_name, foreground=color)
 
-        self._cl_write("\u2126 SOVEREIGN AGENT \u2014 Claude Max", "system")
+        self._cl_write("\U0001f40d Python Assist \u2014 Claude Max", "system")
         self._cl_write("Pipeline: Claude Code CLI (stream-json)", "dim")
-        self._cl_write("Commands: new, clear, status, help  |\u2191\u2193 history", "dim")
-        self._cl_write("Default: typ een vraag \u2192 Claude Agent\n", "dim")
+        self._cl_write("Role: Python assistant — kan Sovereign Agent updaten", "dim")
+        self._cl_write("Commands: new, clear, status, help  |\u2191\u2193 history\n", "dim")
         self._claude_has_session = False
 
         cl_inp = ctk.CTkFrame(claude_panel.content, fg_color="transparent")
@@ -1166,7 +1166,7 @@ class DashboardTab(ctk.CTkFrame):
         self._cl_entry = ctk.CTkEntry(
             cl_inp, fg_color=BG_CARD, text_color="#ffffff",
             font=FONT_MONO_SM, border_color=BORDER, border_width=1,
-            placeholder_text="Ask Claude anything...",
+            placeholder_text="Python vraag of agent update...",
             placeholder_text_color=TEXT_DIM)
         self._cl_entry.pack(side="left", fill="x", expand=True, padx=(0, 4))
         self._cl_entry.bind("<Return>", self._cl_on_enter)
