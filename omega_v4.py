@@ -377,8 +377,8 @@ class OmegaDashboardV4(App):
                 "  [green]clear[/]   — Wis alle logs\n"
                 "  [green]help[/]    — Toon deze hulp\n"
                 "  [green]status[/]  — Engine status\n"
-                "  [green]swarm:[/]  — Multi-agent pipeline (SwarmEngine)\n"
-                "  [green]<tekst>[/] — Live streaming via CentralBrain"
+                "  [green]swarm:[/]  — Forceer SwarmEngine (optioneel)\n"
+                "  [green]<tekst>[/] — Auto-Router beslist: MIND stream of BODY swarm"
             )
         elif commando.lower() == "status":
             brain_status = "ONLINE" if self._brain else "BOOTING..."
@@ -387,56 +387,85 @@ class OmegaDashboardV4(App):
                 f"[cyan]CentralBrain: {brain_status} | SwarmEngine: {engine_status}[/]"
             )
         elif commando.lower().startswith("swarm:"):
-            # Multi-agent pipeline via SwarmEngine
+            # Handmatige override — forceer SwarmEngine
             self.verwerk_swarm(commando[6:].strip())
         else:
-            # Live streaming via CentralBrain (typewriter effect)
-            self.stream_commando(commando)
+            # Auto-Router beslist: PRAAT → stream, ACTIE → swarm
+            self.routeer_commando(commando)
+
+    async def _bepaal_intentie(self, prompt: str) -> str:
+        """Bliksemsnelle LLM-check (~0.2s) die beslist: PRAAT of ACTIE."""
+        if self._brain is None:
+            return "PRAAT"
+        try:
+            chain = self._brain._build_stream_chain()
+            if not chain:
+                return "PRAAT"
+            client, mdl, _label, kwargs_extra = chain[0]
+            resp = await client.chat.completions.create(
+                model=mdl,
+                messages=[
+                    {"role": "system", "content": (
+                        "Jij bent een router. Heeft de gebruiker een FYSIEKE ACTIE nodig "
+                        "(bestand maken, download, scan, export, tool uitvoeren, systeem wijzigen, "
+                        "app starten, data opslaan, rapport genereren)? "
+                        "Antwoord UITSLUITEND met het woord ACTIE of PRAAT. "
+                        "Geen uitleg, geen leestekens, alleen dat ene woord."
+                    )},
+                    {"role": "user", "content": prompt},
+                ],
+                max_tokens=5,
+                temperature=0.0,
+            )
+            intent = resp.choices[0].message.content.strip().upper()
+            return "ACTIE" if "ACTIE" in intent else "PRAAT"
+        except Exception:
+            return "PRAAT"  # Fallback: stream (veiligste optie)
 
     @work(exclusive=True)
-    async def stream_commando(self, commando: str) -> None:
-        """Streamt tokens live naar het scherm — typewriter effect."""
-        if self._brain is None:
-            self.log_mind.write("[yellow]CentralBrain nog niet gereed, even geduld...[/]")
-            return
+    async def routeer_commando(self, commando: str) -> None:
+        """Auto-Router: beslist autonoom of het naar MIND of BODY gaat."""
+        intentie = await self._bepaal_intentie(commando)
 
-        try:
-            self.mind_live_buffer.update("[italic cyan]Ω MIND is aan het nadenken... ⠧[/]")
-            t0 = _time.time()
+        if intentie == "ACTIE":
+            self.log_mind.write(
+                "[italic dim]Auto-Router: ACTIE gedetecteerd → BODY pipeline[/]"
+            )
+            self.verwerk_swarm(commando)
+        else:
+            # Stream direct (geen extra worker nodig, we zijn al async)
+            if self._brain is None:
+                self.log_mind.write("[yellow]CentralBrain nog niet gereed...[/]")
+                return
+            try:
+                self.mind_live_buffer.update("[italic cyan]Ω MIND is aan het nadenken... ⠧[/]")
+                t0 = _time.time()
+                opgebouwde_tekst = ""
 
-            opgebouwde_tekst = ""
+                async for token in self._brain.genereer_stream(commando):
+                    opgebouwde_tekst += token
+                    display_tekst = opgebouwde_tekst.replace(
+                        "<think>", "[dim italic]🧠 "
+                    ).replace(
+                        "</think>", "[/dim italic]\n"
+                    )
+                    self.mind_live_buffer.update(
+                        f"[bold green]Ω OMEGA:[/] {display_tekst}"
+                    )
 
-            # --- START DE NEURALE STROOM ---
-            async for token in self._brain.genereer_stream(commando):
-                opgebouwde_tekst += token
-
-                # --- COGNITIVE FILTER ---
-                # <think> blokken dimmen, echte output helder houden
-                display_tekst = opgebouwde_tekst.replace(
-                    "<think>", "[dim italic]🧠 "
-                ).replace(
-                    "</think>", "[/dim italic]\n"
+                elapsed = _time.time() - t0
+                self.mind_live_buffer.update("")
+                import re
+                schone_tekst = re.sub(
+                    r"<think>.*?</think>\s*", "", opgebouwde_tekst, flags=re.DOTALL
                 )
-
-                self.mind_live_buffer.update(
-                    f"[bold green]Ω OMEGA:[/] {display_tekst}"
-                )
-
-            # --- STREAM COMPLEET ---
-            elapsed = _time.time() - t0
-            self.mind_live_buffer.update("")
-
-            # Strip <think> blokken uit permanente log (alleen het antwoord)
-            import re
-            schone_tekst = re.sub(r"<think>.*?</think>\s*", "", opgebouwde_tekst, flags=re.DOTALL)
-            if not schone_tekst.strip():
-                schone_tekst = opgebouwde_tekst  # Fallback: toon alles als er geen clean output is
-            self.log_mind.write(f"\n[bold green]Ω OMEGA:[/] {schone_tekst.strip()}")
-            self.log_mind.write(f"[dim]Gestreamd in {elapsed:.1f}s[/]")
-
-        except Exception as e:
-            self.mind_live_buffer.update("")
-            self.log_mind.write(f"\n[bold red]STREAM ERROR:[/] {e}")
+                if not schone_tekst.strip():
+                    schone_tekst = opgebouwde_tekst
+                self.log_mind.write(f"\n[bold green]Ω OMEGA:[/] {schone_tekst.strip()}")
+                self.log_mind.write(f"[dim]Gestreamd in {elapsed:.1f}s[/]")
+            except Exception as e:
+                self.mind_live_buffer.update("")
+                self.log_mind.write(f"\n[bold red]STREAM ERROR:[/] {e}")
 
     @work(exclusive=True, thread=True)
     def verwerk_swarm(self, commando: str) -> None:
