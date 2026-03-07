@@ -182,17 +182,19 @@ class OmegaDashboardV4(App):
             ]
 
             def _soul_handler(event):
-                etype = getattr(event, "type", str(event))
+                etype = getattr(event, "event_type", "?")
                 data = getattr(event, "data", {})
-                bron = data.get("bron", "") if isinstance(data, dict) else ""
-                detail = ""
+                bron = getattr(event, "bron", "")
                 if isinstance(data, dict):
-                    detail = data.get("detail", data.get("reason", ""))
+                    bron = bron or data.get("bron", "")
+                    detail = data.get("detail", data.get("reason", data.get("query", "")))
+                else:
+                    detail = str(data)[:100] if data else ""
                 msg = f"[cyan][{etype}][/]"
                 if bron:
                     msg += f" [dim]({bron})[/]"
                 if detail:
-                    msg += f" {str(detail)[:100]}"
+                    msg += f" {str(detail)[:120]}"
                 self.app.call_from_thread(self.log_soul.write, msg)
 
             for evt_type in _SOUL_EVENTS:
@@ -345,20 +347,22 @@ class OmegaDashboardV4(App):
                 return
 
             # SwarmEngine.run() is async — draai in eigen event loop
-            loop = asyncio.new_event_loop()
-            try:
-                def _callback(msg):
-                    """Live pipeline updates naar BODY kolom."""
-                    self.app.call_from_thread(
-                        self.log_body.write,
-                        Text.from_ansi(str(msg)),
-                    )
+            # Hergebruik loop tussen calls zodat ThreadPoolExecutors niet
+            # voortijdig geshutdown worden (voorkomt Oracle crash).
+            if not hasattr(self, "_worker_loop") or self._worker_loop.is_closed():
+                self._worker_loop = asyncio.new_event_loop()
+            loop = self._worker_loop
 
-                payloads = loop.run_until_complete(
-                    engine.run(commando, callback=_callback)
+            def _callback(msg):
+                """Live pipeline updates naar BODY kolom."""
+                self.app.call_from_thread(
+                    self.log_body.write,
+                    Text.from_ansi(str(msg)),
                 )
-            finally:
-                loop.close()
+
+            payloads = loop.run_until_complete(
+                engine.run(commando, callback=_callback)
+            )
 
             elapsed = _time.time() - t0
 
