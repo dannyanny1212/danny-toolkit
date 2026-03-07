@@ -3687,6 +3687,8 @@ class OmegaSovereignApp(ctk.CTk):
         ).start()
         # Periodic VRAM keepalive — prevents Ollama from unloading model after 5min idle
         self._start_vram_keepalive()
+        # Launch Zesde Zintuig TUI in separate terminal
+        self._launch_zintuig()
 
     def _start_vram_keepalive(self):
         """Ping Ollama every 4 min to keep model loaded in VRAM."""
@@ -3713,10 +3715,38 @@ class OmegaSovereignApp(ctk.CTk):
                     logger.debug("VRAM keepalive failed: %s", e)
         threading.Thread(target=_keepalive_loop, daemon=True).start()
 
+    def _launch_zintuig(self):
+        """Launch Zesde Zintuig TUI in a separate terminal window."""
+        try:
+            python = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "venv311", "Scripts", "python.exe",
+            )
+            script = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "run_zintuig.py",
+            )
+            if not os.path.isfile(script):
+                logger.debug("run_zintuig.py not found, skipping")
+                return
+            self._zintuig_proc = subprocess.Popen(
+                [python, script],
+                creationflags=subprocess.CREATE_NEW_CONSOLE if sys.platform == "win32" else 0,
+            )
+            logger.info("Zesde Zintuig launched (PID %s)", self._zintuig_proc.pid)
+        except Exception as e:
+            logger.debug("Zintuig launch failed: %s", e)
+            self._zintuig_proc = None
+
     def _on_close(self):
-        """Clean shutdown — stop keepalive, stop cache, destroy window."""
+        """Clean shutdown — stop keepalive, stop cache, kill Zintuig, destroy window."""
         self._vram_alive = False
         _cache.stop()
+        # Terminate Zesde Zintuig if running
+        proc = getattr(self, "_zintuig_proc", None)
+        if proc and proc.poll() is None:
+            proc.terminate()
+            logger.info("Zesde Zintuig terminated")
         self.destroy()
 
     def _schedule_refresh(self):
