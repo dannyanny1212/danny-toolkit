@@ -1143,7 +1143,7 @@ class DashboardTab(ctk.CTkFrame):
         terminal_row.add(agent_panel, minsize=60, width=350)
 
         # ── RIGHT: Python Assist — Claude Max (can update Sovereign Agent) ──
-        claude_panel = NeonPanel(terminal_row, "\U0001f40d Python Assist \u2014 Claude Max",
+        claude_panel = NeonPanel(terminal_row, "Opus 4.6 \u00b7 Claude Max",
                                   border_glow=NEON_PURPLE)
         self._cl_text = ctk.CTkTextbox(
             claude_panel.content, fg_color="#050810", text_color=NEON_GREEN,
@@ -1153,9 +1153,9 @@ class DashboardTab(ctk.CTkFrame):
         for tag_name, color in self._OT_COLORS.items():
             self._cl_text._textbox.tag_configure(tag_name, foreground=color)
 
-        self._cl_write("\U0001f40d Python Assist \u2014 Claude Max", "system")
-        self._cl_write("Pipeline: Claude Code CLI (stream-json)", "dim")
-        self._cl_write("Role: Python assistant — kan Sovereign Agent updaten", "dim")
+        self._cl_write("Opus 4.6 \u00b7 Claude Max", "system")
+        self._cl_write("\u2598\u2598 \u259d\u259d    ~\\danny-toolkit", "dim")
+        self._cl_write("Role: Python Assist \u2014 kan Sovereign Agent updaten", "dim")
         self._cl_write("Commands: new, clear, status, help  |\u2191\u2193 history\n", "dim")
         self._claude_has_session = False
 
