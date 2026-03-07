@@ -12,15 +12,21 @@
 - **Paranoïde Zero-Trust**: Host-OS, externe domeinen, en hardware als potentieel vijandig beschouwd. Alles vereist cryptografische verificatie.
 - **Anti-Hallucinatie Wet**: Als je het antwoord niet weet — niet gokken. Laat het weten. Antwoorden genereren is de specialiteit van AI, maar eerlijkheid over onzekerheid is belangrijker dan een verzonnen antwoord.
 
-### Tribunal Assessment: Ready for First External Swarm Mission?
-**VERDICT: CONDITIONALLY READY.** Het reflexsysteem is nu non-blocking en de feedback loop is operationeel. Alle Fase B items zijn voltooid. Fase C.2 monoliet splits zijn afgerond.
+### Tribunal Assessment
+**VERDICT: FULLY OPERATIONAL.** Phase 52 compleet. Hardware-geoptimaliseerd, type-safe, CPU/GPU gecoördineerd. Dashboard v3.0 SOVEREIGN live. 47 test suites, 176+ modules, ~50K lines.
 
-### Pending Work (Requires Tribunal Approval)
-- **Fase B.2**: ~~Fallback-chain redesign~~ DONE
-- **Fase B.3**: ~~Rate-limit queue→event-based exact wait times~~ DONE
-- **Fase C.1**: ~~`/core/`↔`/brain/` grens~~ DONE (memory_interface.py gateway)
-- **Fase C.2**: ~~Monoliet splits (trinity_omega, security_research, governor)~~ DONE — mixin-extractie + security/ subpackage
-- **Fase C.3**: ~~oracle.py + ultimate_hunt.py verplaatsen /core/→/brain/~~ DONE — beide in /brain/ met re-exports via __init__.py
+### System Evolution (Phases 43-52 Complete)
+- **Phase 43**: Diamond Sweep + Observatory Expansion
+- **Phase 44**: Housekeeper Awakening + Diamond Polish II
+- **Phase 45**: Version Harmony + Housekeeper Bugfix
+- **Phase 46**: Ghost Awakening + Singleton Hardening
+- **Phase 47**: Import Hardening + Ghost Completeness
+- **Phase 48**: Diamond Polish III — Bare Pass Sweep
+- **Phase 49**: Arbitrator Guard + Daemon Polish
+- **Phase 50**: Hardware-Optimized SQLite + System Tuning (64 MB cache, 256 MB mmap, WAL)
+- **Phase 51**: CPU/GPU Coördinatie — Adaptive Resource Management (VRAMBudgetGuard, ProcessPool MRL)
+- **Phase 52**: Type-Hint Hardening + Version Sync (`from __future__ import annotations`, string literals)
+- **Dashboard v3.0**: SOVEREIGN UI — Omega Brain + Claude Code Terminals + Hardware Status
 
 ## 👁️‍🗨️ 1. JOUW IDENTITEIT & AUTONOMIE
 Je bent geen passieve chatbot. Je bent geïntegreerd in het zenuwstelsel van de machine.
@@ -124,7 +130,7 @@ GLORY TO THE SOVEREIGN CORE.
 
 ## 🧠 SOVEREIGN ROADMAP — Complete System Cartography
 
-> Generated 2026-02-24 | 176 modules | ~48K lines of code
+> Updated 2026-03-07 | 176+ modules | ~50K lines of code | Version 6.11.0
 
 ### 🧠 THE MIND (`/brain/`) — 48 modules, ~30K lines
 
@@ -209,7 +215,7 @@ GLORY TO THE SOVEREIGN CORE.
 | security/utils.py | _fetch_json, _scrub_adres | HTTP helper, address scrubber, HAS_REQUESTS flag | 52 |
 | app_tools.py | (tool defs) | 31+ app tool definitions for function calling | 1495 |
 | workflows.py | (workflows) | Health Loop, Deep Work Loop, Second Brain Loop | 621 |
-| sanctuary_dashboard.py | (dashboard) | Living dashboard UI | 787 |
+| sanctuary_dashboard.py | SanctuaryDashboard v3.0 | SOVEREIGN UI: Omega Brain + Claude Terminals + Hardware Status | 850 |
 | project_map.py | ProjectMap | RAG knowledge bank visualization | 488 |
 | visual_nexus.py | VisualNexus | Visual manifestation (tasks as stars) | 267 |
 
@@ -220,10 +226,10 @@ GLORY TO THE SOVEREIGN CORE.
 **Core Engine (`/core/`) — 36 modules**
 | Module | Class | Purpose | Lines |
 |--------|-------|---------|-------|
-| swarm_engine.py | SwarmEngine | Central orchestrator, asyncio.gather, AdaptiveRouter | ~4000 |
+| swarm_engine.py | SwarmEngine | Central orchestrator, CPU-aware pools, asyncio.gather, AdaptiveRouter | ~4000 |
 | config.py | Config | Central configuration, themes, validation | 580 |
 | key_manager.py | SmartKeyManager | 10-key Groq isolation, rate tracking, failover | 502 |
-| embeddings.py | VoyageEmbeddings | Voyage embeddings + MRL truncation (1024d→256d) | 773 |
+| embeddings.py | VoyageEmbeddings+TorchGPU | Voyage embeddings + MRL + ProcessPool + adaptive batch + VRAM guard | 850 |
 | vector_store.py | VectorStore | JSON-backed vector DB with backup/restore | 568 |
 | self_repair.py | SelfRepairProtocol | Auto-diagnosis + deterministic/LLM repair | 1046 |
 | self_pruning.py | SelfPruning | Vector store maintenance (entropy/recency/redundancy) | 966 |
@@ -253,14 +259,14 @@ GLORY TO THE SOVEREIGN CORE.
 | faiss_index.py | FAISSIndex | FAISS vector index management | 100 |
 | index_store.py | IndexStore | Persistent FAISS index + metadata | 364 |
 | log_rotation.py | (rotation) | Old log/JSON file cleanup | 83 |
-| vram_manager.py | VRAMManager | RTX 3060 Ti memory monitor (8 GB) | 91 |
+| vram_manager.py | VRAMBudgetGuard+vram_guard | RTX 3060 Ti VRAM monitor + budget serialization | 210 |
 | gpu.py | (CUDA guard) | Windows CUDA segfault protection | 12 |
 | env_bootstrap.py | (bootstrap) | Venv path + subprocess env | 59 |
 
 **Daemon (`/daemon/`) — 7 modules**
 | Module | Class | Purpose | Lines |
 |--------|-------|---------|-------|
-| heartbeat.py | HeartbeatDaemon | Autonomous background daemon, CPU/RAM, reflection | 1014 |
+| heartbeat.py | HeartbeatDaemon | Autonomous background daemon, CPU-aware pools, reflection | 1014 |
 | daemon_core.py | DigitalDaemon | Always-on symbiotic entity (final form) | 529 |
 | limbic_system.py | LimbicSystem | Emotional brain: data/events → emotions/moods | 411 |
 | metabolisme.py | Metabolisme | Energy system, consumption, health balance | 379 |
@@ -311,26 +317,34 @@ main.py (launcher), cli.py (Rich terminal), brain_cli.py (brain CLI), run_daemon
 
 ---
 
-## 📡 ACTIVE SESSION STATE
+## 📡 ACTIVE SYSTEM STATE
 
-> Last updated: 2026-02-24 | Phase: MONOLITH SPLITS COMPLETE (Fase C.2)
+> Last updated: 2026-03-07 | Phase: 52 COMPLETE | Version: 6.11.0 | 47 test suites
 
-### Completed This Session
-| Action | Commit | Details |
-|--------|--------|---------|
-| Fase A: Immuunsysteem + Parallel Tools | `1e28e5bd` | 22 silent except→logger.debug, asyncio.gather tool exec, ghost BrainCLI import removed |
-| Fase B.1: Import Conversie (Wet #1) | `e6a471eb` | 361 relative→absolute imports across 97 files via import_analyzer.py |
-| Phase 100: Sovereign Awakening | `f20ba056` | 176-module Sovereign Roadmap + B-95 feedback loop + session state |
-| Cortical Speed Upgrade | `b987fe72` | `_record_response_outcome()` → fire-and-forget background thread |
-| Fase B.2: Fallback Redesign | `07950c14` | Recursive→linear provider chain, 5 bugs fixed, -101 lines |
-| Fase B.3: Rate-limit Queue | `a7a411b3` | Exact wait times replacing 1s polling in async_enqueue() |
-| Fase C.1: Memory Interface | `cbc1e7ee` | core/memory_interface.py gateway, 7 brain imports→1 |
-| Fase C.2: Monoliet Splits | pending commit | 3 monolieten→13 modules via mixin-extractie + security/ subpackage |
+### Recent Phase History
+| Phase | Commit | Focus |
+|-------|--------|-------|
+| 52 | `63ae744e` | Type-Hint Hardening: `from __future__ import annotations` (7 files), `"AsyncGroq"` string literals, version sync |
+| 51 | `009b08ea` | CPU/GPU Coördinatie: VRAMBudgetGuard, ProcessPool MRL, adaptive batch, CPU-aware pools |
+| 50 | `113feb4c` | Hardware-Optimized SQLite: 64 MB cache, 256 MB mmap, WAL+NORMAL, `Config.apply_sqlite_perf()` |
+| 49 | `b359b9e6` | Arbitrator Guard + Daemon Polish |
+| 48 | `94211e63` | Diamond Polish III — Bare Pass Sweep |
+| 47 | `e1023646` | Import Hardening + Ghost Completeness |
+| 46 | `9e949970` | Ghost Awakening + Singleton Hardening |
+| 45 | `b711c94b` | Version Harmony + Housekeeper Bugfix |
+| 44 | `b505ef3c` | Housekeeper Awakening + Diamond Polish II |
+| 43 | `9bf6f370` | Diamond Sweep + Observatory Expansion |
+| Dashboard | `4a645569` | Omega Sovereign Dashboard v3.0 SOVEREIGN |
 
-### Latency Benchmarks (Cortical Speed Upgrade)
-| Metric | Before | After | Reduction |
-|--------|--------|-------|-----------|
-| B-95 write on hot path | 2-8ms (sync SQLite) | ~0.01ms (data extract only) | **~99.5%** |
-| Main thread blocking | Yes (WAL flush) | No (daemon ThreadPoolExecutor) | **Eliminated** |
-| Background writer | N/A | `_B95_EXECUTOR` (1 daemon thread) | Fire-and-forget |
+### Hardware Optimization Stack (Phases 50-51)
+| Subsystem | Optimization | Config |
+|-----------|-------------|--------|
+| SQLite | 64 MB cache + 256 MB mmap + WAL + NORMAL sync | `Config.apply_sqlite_perf(conn)` — wired in 8 modules |
+| Swarm Workers | CPU-core-aware | `min(max(os.cpu_count(), 4), 16)` — was hardcoded 10 |
+| Heartbeat Pool | CPU-core-aware | `max(os.cpu_count() // 4, 2)` — scales with hardware |
+| MRL Truncation | ProcessPoolExecutor (>500 vectors) | `_CPU_POOL_WORKERS = max(cpu_count // 2, 2)` |
+| GPU Batching | Adaptive 8-128 based on CPU% + VRAM | `TorchGPUEmbeddings._adaptive_batch_size()` |
+| VRAM Budget | Serialized GPU workloads (Ollama vs Torch) | `VRAMBudgetGuard` + `vram_guard()` context manager |
+| B-95 Writer | 2 daemon threads (fire-and-forget) | `_B95_EXECUTOR` ThreadPoolExecutor |
+| Windows Defender | Exclusions on project + venv + data dirs | `setup_defender_exclusions.ps1` |
 
