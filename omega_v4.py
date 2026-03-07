@@ -159,19 +159,24 @@ class OmegaDashboardV4(App):
         self._engine_ready = False
         self._brain = None
 
-        # Boot CentralBrain voor streaming
-        self._boot_brain()
+        # Boot Brain + Soul sequentieel (voorkomt import lock deadlock)
+        self._boot_brain_and_soul()
 
-        # Start SOUL + BODY telemetrie op achtergrond
-        self._boot_soul()
+        # Start BODY telemetrie op achtergrond (geen brain imports)
         self._boot_body_telemetry()
 
         # 1-seconde real-time hardware monitor
         self.set_interval(1.0, self.update_status_bar)
 
     @work(thread=True)
-    def _boot_brain(self) -> None:
-        """Boot CentralBrain in thread — voor streaming queries."""
+    def _boot_brain_and_soul(self) -> None:
+        """Boot Brain + Soul sequentieel in één thread.
+
+        Voorkomt Python import lock deadlock: twee threads die tegelijk
+        modules uit danny_toolkit.brain importeren deadlocken op
+        _ModuleLock. Door alles in één thread te doen is er geen contention.
+        """
+        # --- FASE 1: CentralBrain (streaming) ---
         try:
             from danny_toolkit.brain.central_brain import CentralBrain
             self._brain = CentralBrain()
@@ -185,9 +190,7 @@ class OmegaDashboardV4(App):
                 f"[bold red]CentralBrain boot failed:[/] {e}",
             )
 
-    @work(thread=True)
-    def _boot_soul(self) -> None:
-        """Boot SOUL kolom — CorticalStack + NeuralBus listener."""
+        # --- FASE 2: SOUL (CorticalStack + NeuralBus) ---
         # 1. CorticalStack status
         try:
             from danny_toolkit.brain.cortical_stack import get_cortical_stack
