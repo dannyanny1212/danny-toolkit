@@ -367,9 +367,10 @@ class DigitalDaemon:
 
         # 3. Log rotation
         try:
-            from danny_toolkit.core.log_rotation import rotate_logs
-            rotate_logs()
-            tasks_done.append("log rotation")
+            from danny_toolkit.core.log_rotation import roteer_logs
+            verwijderd = roteer_logs(Config.DATA_DIR / "logs")
+            if verwijderd > 0:
+                tasks_done.append(f"log rotation: {verwijderd} bestanden")
         except Exception as e:
             logger.debug("Housekeeper log rotation failed: %s", e)
 

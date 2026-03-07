@@ -8,7 +8,10 @@ Versie 2.0: Nu met FeedbackManager, PerformanceAnalyzer en
 SelfImprovementEngine voor echte self-learning.
 """
 
+import logging
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 from danny_toolkit.core.config import Config
 from danny_toolkit.learning.memory import UnifiedMemory
@@ -200,8 +203,8 @@ class LearningSystem:
                     # Good response - reinforce cache
                     self.patterns.record_query(user_input)
                 elif rating <= 2:
-                    # Bad response - could add cache penalty here
-                    pass
+                    logger.debug("Negative feedback (rating=%d) for: %s",
+                                 rating, user_input[:50])
 
                 # Update memory fact scores based on feedback
                 actual_score = (rating / 5.0) * 0.8 + 0.2

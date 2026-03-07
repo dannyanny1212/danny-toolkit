@@ -120,5 +120,5 @@ __all__ = [
     "ProjectMap",
 ]
 
-__version__ = "6.10.0"
+__version__ = "6.11.0"
 __author__ = "Danny"
