@@ -239,12 +239,19 @@ class HallucinatieSchild:
             return []
 
     # Agents die generatieve output produceren (code, skills, creatief)
-    # RAG-verificatie is onmogelijk voor nieuw-gegeneerde content.
+    # + systeem-agents (Echo, Oracle, CentralBrain) die geen RAG-bronnen
+    # nodig hebben.  RAG-verificatie is onmogelijk voor nieuw-gegenereerde
+    # of systeem-intern gegenereerde content.
     _GENERATIEVE_AGENTS = frozenset({
         "Iolaax", "IOLAAX", "iolaax",
         "Artificer", "ARTIFICER", "artificer",
         "Weaver", "WEAVER", "weaver",
         "Spark", "SPARK", "spark",
+        "Echo", "ECHO", "echo",
+        "Oracle", "ORACLE", "oracle",
+        "CentralBrain", "CENTRALBRAIN",
+        "Chronos", "CHRONOS", "chronos",
+        "Coherentie", "COHERENTIE",
     })
 
     def beoordeel(
