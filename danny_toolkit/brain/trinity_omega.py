@@ -1479,13 +1479,16 @@ Raises an exception if publishing to the NeuralBus fails."""
 # --- SINGLETON ACCESS ---
 
 _prometheus_instance: Optional[PrometheusBrain] = None
+_prometheus_lock = threading.Lock()
 
 
 def get_prometheus() -> PrometheusBrain:
     """Haal de Prometheus Brain singleton op."""
     global _prometheus_instance
     if _prometheus_instance is None:
-        _prometheus_instance = PrometheusBrain()
+        with _prometheus_lock:
+            if _prometheus_instance is None:
+                _prometheus_instance = PrometheusBrain()
     return _prometheus_instance
 
 

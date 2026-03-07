@@ -502,13 +502,16 @@ class TrinitySymbiosis:
 
 # Singleton instance
 _trinity_instance: Optional[TrinitySymbiosis] = None
+_trinity_lock = threading.Lock()
 
 
 def get_trinity() -> TrinitySymbiosis:
     """Haal de Trinity singleton op."""
     global _trinity_instance
     if _trinity_instance is None:
-        _trinity_instance = TrinitySymbiosis()
+        with _trinity_lock:
+            if _trinity_instance is None:
+                _trinity_instance = TrinitySymbiosis()
     return _trinity_instance
 
 

@@ -242,6 +242,7 @@ class DockerSandbox(BaseSandbox):
 
 # Singleton
 _sandbox = None
+_sandbox_lock = __import__("threading").Lock()
 
 
 def get_sandbox() -> BaseSandbox:
@@ -253,15 +254,19 @@ def get_sandbox() -> BaseSandbox:
     if _sandbox is not None:
         return _sandbox
 
-    try:
-        docker = DockerSandbox()
-        if docker.available:
-            logger.info("Sandbox: Docker beschikbaar — beveiligde modus actief.")
-            _sandbox = docker
+    with _sandbox_lock:
+        if _sandbox is not None:
             return _sandbox
-    except Exception as e:
-        logger.debug("Docker sandbox init error: %s", e)
 
-    logger.info("Sandbox: Docker niet beschikbaar — lokale modus.")
-    _sandbox = LocalSandbox()
-    return _sandbox
+        try:
+            docker = DockerSandbox()
+            if docker.available:
+                logger.info("Sandbox: Docker beschikbaar — beveiligde modus actief.")
+                _sandbox = docker
+                return _sandbox
+        except Exception as e:
+            logger.debug("Docker sandbox init error: %s", e)
+
+        logger.info("Sandbox: Docker niet beschikbaar — lokale modus.")
+        _sandbox = LocalSandbox()
+        return _sandbox

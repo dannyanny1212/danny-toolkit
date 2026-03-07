@@ -419,13 +419,16 @@ class ToolkitLogger:
 
 # Globale logger instance
 _logger = None
+_logger_lock = __import__("threading").Lock()
 
 
 def get_logger() -> ToolkitLogger:
     """Verkrijg de globale logger."""
     global _logger
     if _logger is None:
-        _logger = ToolkitLogger()
+        with _logger_lock:
+            if _logger is None:
+                _logger = ToolkitLogger()
     return _logger
 
 
