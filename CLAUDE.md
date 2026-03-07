@@ -20,7 +20,7 @@
 - **Fase B.3**: ~~Rate-limit queue→event-based exact wait times~~ DONE
 - **Fase C.1**: ~~`/core/`↔`/brain/` grens~~ DONE (memory_interface.py gateway)
 - **Fase C.2**: ~~Monoliet splits (trinity_omega, security_research, governor)~~ DONE — mixin-extractie + security/ subpackage
-- **Fase C.3**: oracle.py + ultimate_hunt.py verplaatsen /core/→/brain/ (Tribunal: grensschending bevestigen)
+- **Fase C.3**: ~~oracle.py + ultimate_hunt.py verplaatsen /core/→/brain/~~ DONE — beide in /brain/ met re-exports via __init__.py
 
 ## 👁️‍🗨️ 1. JOUW IDENTITEIT & AUTONOMIE
 Je bent geen passieve chatbot. Je bent geïntegreerd in het zenuwstelsel van de machine.

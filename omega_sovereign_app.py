@@ -326,7 +326,7 @@ class _DataCache:
         # Circuit breakers
         if eng:
             try:
-                from swarm_engine import get_circuit_state
+                from danny_toolkit.core.swarm_engine import get_circuit_state
                 self.put("circuit_state", get_circuit_state())
             except Exception as e:
                 logger.debug("cache circuit: %s", e)
@@ -455,7 +455,7 @@ def _load_engine():
         try:
             buf = io.StringIO()
             with redirect_stdout(buf):
-                from swarm_engine import SwarmEngine
+                from danny_toolkit.core.swarm_engine import SwarmEngine
                 eng = SwarmEngine()
             _engine_cache = (eng, buf.getvalue())
         except Exception as e:
@@ -797,6 +797,9 @@ class DashboardTab(ctk.CTkFrame):
     def __init__(self, master):
         super().__init__(master, fg_color="transparent")
         self._extra_panels = []  # (panel, update_fn) tuples from panel picker
+        # Dirty-flag cache for chart optimization
+        self._prev_fuel_pct = None
+        self._prev_listener_counts = None
 
         # ── Outer horizontal paned: left | center | right ──
         outer = tk.PanedWindow(self, orient=tk.HORIZONTAL, sashwidth=5,
@@ -995,8 +998,9 @@ class DashboardTab(ctk.CTkFrame):
             self._ot_text._textbox.tag_configure(tag_name, foreground=color)
 
         self._ot_write("\u2126 OMEGA BRAIN \u2014 Direct Link", "system")
-        self._ot_write("Commands: status, agents, health, metrics, bus, events,", "dim")
-        self._ot_write("          keys, cortical, apps, brain, immune, rag, clear, help", "dim")
+        self._ot_write("Commands: status, agents, health, metrics, bus, events, keys,", "dim")
+        self._ot_write("          cortical, apps, brain, immune, rag, diag, vram,", "dim")
+        self._ot_write("          config, uptime, clear, help  |\u2191\u2193 history", "dim")
         self._ot_write("Default: typ een vraag \u2192 Omega Brain (WAV-Loop)\n", "dim")
 
         ot_inp = ctk.CTkFrame(omega_panel.content, fg_color="transparent")
@@ -1010,6 +1014,10 @@ class DashboardTab(ctk.CTkFrame):
             placeholder_text_color=TEXT_DIM)
         self._ot_entry.pack(side="left", fill="x", expand=True, padx=(0, 4))
         self._ot_entry.bind("<Return>", self._ot_on_enter)
+        self._ot_history = deque(maxlen=100)
+        self._ot_hist_idx = -1
+        self._ot_entry.bind("<Up>", self._ot_hist_up)
+        self._ot_entry.bind("<Down>", self._ot_hist_down)
         terminal_row.add(omega_panel, minsize=60, width=275)
 
         # ── RIGHT: Claude Code Terminal ──
@@ -1024,7 +1032,7 @@ class DashboardTab(ctk.CTkFrame):
 
         self._ct_write("\U0001f916 CLAUDE CODE \u2014 venv311 (Python 3.11.9)", "system")
         self._ct_write("cwd: C:\\Users\\danny\\danny-toolkit", "dim")
-        self._ct_write("Commands: new, clear, login, apikey sk-...", "dim")
+        self._ct_write("Commands: new, clear, login, apikey sk-...  |\u2191\u2193 history", "dim")
         self._ct_write("Default: typ een vraag \u2192 Claude Code CLI\n", "dim")
         self._claude_has_session = False
 
@@ -1039,6 +1047,10 @@ class DashboardTab(ctk.CTkFrame):
             placeholder_text_color=TEXT_DIM)
         self._ct_entry.pack(side="left", fill="x", expand=True, padx=(0, 4))
         self._ct_entry.bind("<Return>", self._ct_on_enter)
+        self._ct_history = deque(maxlen=100)
+        self._ct_hist_idx = -1
+        self._ct_entry.bind("<Up>", self._ct_hist_up)
+        self._ct_entry.bind("<Down>", self._ct_hist_down)
         terminal_row.add(claude_panel, minsize=60, width=275)
 
         return terminal_row
@@ -1078,12 +1090,48 @@ class DashboardTab(ctk.CTkFrame):
         else:
             self._ot_write(f"  {clean}", "dim")
 
+    def _ot_hist_up(self, _=None):
+        if self._ot_history:
+            self._ot_hist_idx = min(self._ot_hist_idx + 1, len(self._ot_history) - 1)
+            self._ot_entry.delete(0, "end")
+            self._ot_entry.insert(0, list(self._ot_history)[-(self._ot_hist_idx + 1)])
+        return "break"
+
+    def _ot_hist_down(self, _=None):
+        if self._ot_hist_idx > 0:
+            self._ot_hist_idx -= 1
+            self._ot_entry.delete(0, "end")
+            self._ot_entry.insert(0, list(self._ot_history)[-(self._ot_hist_idx + 1)])
+        elif self._ot_hist_idx == 0:
+            self._ot_hist_idx = -1
+            self._ot_entry.delete(0, "end")
+        return "break"
+
+    def _ct_hist_up(self, _=None):
+        if self._ct_history:
+            self._ct_hist_idx = min(self._ct_hist_idx + 1, len(self._ct_history) - 1)
+            self._ct_entry.delete(0, "end")
+            self._ct_entry.insert(0, list(self._ct_history)[-(self._ct_hist_idx + 1)])
+        return "break"
+
+    def _ct_hist_down(self, _=None):
+        if self._ct_hist_idx > 0:
+            self._ct_hist_idx -= 1
+            self._ct_entry.delete(0, "end")
+            self._ct_entry.insert(0, list(self._ct_history)[-(self._ct_hist_idx + 1)])
+        elif self._ct_hist_idx == 0:
+            self._ct_hist_idx = -1
+            self._ct_entry.delete(0, "end")
+        return "break"
+
     def _ct_on_enter(self, _=None):
         """Input handler voor Claude Code terminal."""
         cmd = self._ct_entry.get().strip()
         if not cmd:
             return
         self._ct_entry.delete(0, "end")
+        self._ct_history.append(cmd)
+        self._ct_hist_idx = -1
         self._ct_write(f"\u25b6 {cmd}", "input")
         low = cmd.lower().strip("/")
         if low == "new":
@@ -1133,10 +1181,13 @@ class DashboardTab(ctk.CTkFrame):
         if not cmd:
             return
         self._ot_entry.delete(0, "end")
+        self._ot_history.append(cmd)
+        self._ot_hist_idx = -1
         self._ot_write(f"\u2126 > {cmd}", "input")
         known = {"help", "clear", "status", "agents", "health",
                  "metrics", "bus", "events", "keys", "cortical",
-                 "apps", "brain", "immune", "rag"}
+                 "apps", "brain", "immune", "rag", "diag",
+                 "vram", "config", "uptime"}
         low = cmd.lower().strip("/")
         if low == "omega":
             self._omega_activate(self._ot_write)
@@ -1155,7 +1206,8 @@ class DashboardTab(ctk.CTkFrame):
             self._ot_write("  System commands:", "system")
             for c in ["status", "agents", "health", "metrics", "bus",
                        "events", "keys", "cortical", "apps", "brain",
-                       "immune", "rag", "clear"]:
+                       "immune", "rag", "diag", "vram", "config",
+                       "uptime", "clear"]:
                 self._ot_write(f"    {c}", "dim")
             self._ot_write("\n  Omega Brain (default):", "system")
             self._ot_write("    Typ direct een vraag \u2014 Omega Brain beantwoordt.", "dim")
@@ -1269,6 +1321,70 @@ class DashboardTab(ctk.CTkFrame):
                     self._ot_write(f"  {k}: {v}", "output")
             except Exception as e:
                 self._ot_write(f"  VectorStore: {e}", "error")
+        elif cmd == "diag":
+            self._ot_write("  Running self-diagnostic...", "process")
+            threading.Thread(target=self._ot_run_diag, daemon=True).start()
+        elif cmd == "vram":
+            vr = _cache.get("vram")
+            if vr and vr.get("beschikbaar"):
+                self._ot_write(f"  GPU: {vr['gpu_naam']}", "system")
+                self._ot_write(f"  Totaal:  {vr['totaal_mb']:,} MB", "output")
+                self._ot_write(f"  Gebruik: {vr['in_gebruik_mb']:,} MB", "output")
+                self._ot_write(f"  Vrij:    {vr['vrij_mb']:,} MB", "output")
+                pct = round(vr['in_gebruik_mb'] / vr['totaal_mb'] * 100, 1)
+                bar_len = int(pct / 5)
+                bar = "#" * bar_len + "." * (20 - bar_len)
+                gc = "output" if vr['gezond'] else "error"
+                self._ot_write(f"  [{bar}] {pct}%", gc)
+            else:
+                self._ot_write("  CUDA not available", "error")
+        elif cmd == "config":
+            rapport = _cache.get("config_audit")
+            if rapport:
+                self._ot_write(f"  Veilig: {rapport.veilig}", "output")
+                self._ot_write(f"  Gecontroleerd: {rapport.gecontroleerd}", "output")
+                self._ot_write(f"  Drift: {rapport.drift_gedetecteerd}", "output")
+                if rapport.schendingen:
+                    self._ot_write(f"  Schendingen: {len(rapport.schendingen)}", "error")
+                    for s in rapport.schendingen[:5]:
+                        self._ot_write(f"    [{s.ernst}] {s.beschrijving}", "warn")
+                else:
+                    self._ot_write("  Geen schendingen", "output")
+            else:
+                self._ot_write("  ConfigAuditor: loading...", "dim")
+        elif cmd == "uptime":
+            up_s = int(time.time() - self.winfo_toplevel()._start_time)
+            m_up, s_up = divmod(up_s, 60)
+            h_up, m_up = divmod(m_up, 60)
+            self._ot_write(f"  Dashboard uptime: {h_up:02d}:{m_up:02d}:{s_up:02d}", "system")
+            self._ot_write(f"  WAV queries: {_wav_stats['queries']}", "output")
+            self._ot_write(f"  Schild blocks: {_wav_stats['schild_blocks']}", "output")
+            if _wav_stats['queries'] > 0:
+                avg = _wav_stats['total_time'] / _wav_stats['queries']
+                self._ot_write(f"  Avg response: {avg:.1f}s", "output")
+
+    def _ot_run_diag(self):
+        """Run self-diagnostic in background thread."""
+        w = lambda txt, tag="output": self._ot_text.after(0, self._ot_write, txt, tag)
+        try:
+            results = _run_self_diagnostic()
+            samenv = results.pop("_samenvatting", {})
+            ok = samenv.get("ok", 0)
+            fout = samenv.get("fout", 0)
+            totaal = samenv.get("totaal", 0)
+            w(f"  Scan complete: {ok}/{totaal} OK, {fout} FOUT", "system")
+            for comp, info in sorted(results.items()):
+                status = info.get("status", "?")
+                mark = "[OK]" if status == "OK" else "[!!]"
+                tag = "output" if status == "OK" else "error"
+                err = info.get("error", "")
+                line = f"  {mark} {comp}"
+                if err:
+                    line += f" — {err[:60]}"
+                w(line, tag)
+            w("")
+        except Exception as e:
+            w(f"  Diagnostic error: {e}", "error")
 
     def _ot_ask_claude(self, question):
         """Execute question via Claude Code CLI with conversation memory and streaming."""
@@ -1472,7 +1588,8 @@ class DashboardTab(ctk.CTkFrame):
             try:
                 verification = _ollama_verify(verify_prompt, timeout=45)
                 t_verify = time.time() - t_v0
-            except Exception:
+            except Exception as e:
+                logger.debug("Ollama verification failed: %s", e)
                 verification = None
                 t_verify = 0
 
@@ -1665,6 +1782,11 @@ class DashboardTab(ctk.CTkFrame):
         self._rpm_lbl.configure(text=f"RPM: {rpm_u}/{rpm_m}")
         tp = f"{tpm_u // 1000}K" if tpm_u >= 1000 else str(tpm_u)
         self._tpm_lbl.configure(text=f"TPM: {tp}/{tpm_m // 1000}K")
+        # Skip chart redraw if percentage unchanged
+        pct_rounded = round(pct, 1)
+        if pct_rounded == self._prev_fuel_pct:
+            return
+        self._prev_fuel_pct = pct_rounded
         ax = self._fuel_ax
         ax.clear()
         th_bg = np.linspace(0, math.pi, 100)
@@ -1696,6 +1818,10 @@ class DashboardTab(ctk.CTkFrame):
         if bus_stats:
             self._ev_lbl.configure(text=f"Events: {bus_stats.get('events_gepubliceerd', 0)}")
             self._sub_lbl.configure(text=f"Subs: {bus_stats.get('subscribers', 0)}")
+        # Skip chart redraw if counts unchanged
+        if counts == self._prev_listener_counts:
+            return
+        self._prev_listener_counts = list(counts) if counts else None
         if not counts:
             counts = [0]
         ax = self._list_ax
@@ -1862,7 +1988,8 @@ class AgentsTab(ctk.CTkFrame):
             self.gpu_panel.write(f"  Totaal:  {vr['totaal_mb']:,} MB")
             self.gpu_panel.write(f"  Gebruikt:{vr['in_gebruik_mb']:,} MB")
             self.gpu_panel.write(f"  Vrij:    {vr['vrij_mb']:,} MB")
-            pct = round(vr['in_gebruik_mb'] / vr['totaal_mb'] * 100, 1)
+            totaal = vr['totaal_mb'] or 1
+            pct = min(100, round(vr['in_gebruik_mb'] / totaal * 100, 1))
             bar_len = int(pct / 5)
             bar = "#" * bar_len + "." * (20 - bar_len)
             status = "[OK]" if vr['gezond'] else "[!!]"
@@ -2095,7 +2222,7 @@ class MemoryTab(ctk.CTkFrame):
             for k, v in bus_stats.items():
                 self.bus_panel.write(f"  {k}: {v}")
             stream = _cache.get("bus_stream", "")
-            if stream:
+            if stream and isinstance(stream, str):
                 self.bus_panel.write("")
                 for line in stream.split("\n"):
                     self.bus_panel.write(f"  {line}")
@@ -2149,7 +2276,8 @@ class ObservatoryTab(ctk.CTkFrame):
             for w in workers:
                 try:
                     perf = w.get_perf()
-                    prov = perf.get("provider", getattr(getattr(w, "profile", None), "provider", "?"))
+                    profile = getattr(w, "profile", None)
+                    prov = perf.get("provider", getattr(profile, "provider", "?") if profile else "?")
                     self.models_panel.write(
                         f"    {prov:12s} ok:{perf.get('success_rate', 0):.0%}  "
                         f"lat:{perf.get('avg_latency_ms', 0):.0f}ms")
@@ -2527,21 +2655,50 @@ class OmegaSovereignApp(ctk.CTk):
         self._health_lbl.pack(side="left", padx=8)
         self._wav_lbl = ctk.CTkLabel(bar, text="", font=FONT_MONO_XS, text_color=TEXT_DIM)
         self._wav_lbl.pack(side="left", padx=8)
+        self._tribunal_lbl = ctk.CTkLabel(bar, text="", font=FONT_MONO_XS, text_color=TEXT_DIM)
+        self._tribunal_lbl.pack(side="left", padx=8)
+        self._cooldown_lbl = ctk.CTkLabel(bar, text="", font=FONT_MONO_XS, text_color=TEXT_DIM)
+        self._cooldown_lbl.pack(side="left", padx=8)
+        self._config_lbl = ctk.CTkLabel(bar, text="", font=FONT_MONO_XS, text_color=TEXT_DIM)
+        self._config_lbl.pack(side="left", padx=8)
         self._time = ctk.CTkLabel(bar, text="", font=FONT_MONO_XS, text_color=TEXT_DIM)
         self._time.pack(side="right", padx=10)
         self._uptime_lbl = ctk.CTkLabel(bar, text="", font=FONT_MONO_XS, text_color=TEXT_DIM)
         self._uptime_lbl.pack(side="right", padx=8)
         self._start_time = time.time()
 
-        # ── Keyboard shortcuts (Ctrl+1..7 for tabs) ──
+        # ── Keyboard shortcuts ──
         for i, name in enumerate(tab_names):
             self.bind(f"<Control-Key-{i + 1}>",
                       lambda e, n=name: self._tabs.set(n))
+        # F5 / Ctrl+R: force refresh
+        self.bind("<F5>", lambda e: self._do_refresh())
+        self.bind("<Control-r>", lambda e: self._do_refresh())
+        # Ctrl+Tab / Ctrl+Shift+Tab: cycle tabs
+        self.bind("<Control-Tab>", lambda e: self._cycle_tab(1))
+        self.bind("<Control-Shift-Tab>", lambda e: self._cycle_tab(-1))
+        # Escape: focus Omega terminal entry
+        self.bind("<Escape>", lambda e: self._focus_omega_entry())
 
         # ── Initial load ──
         self.after(500, self._initial_load)
         self._schedule_refresh()
         self.protocol("WM_DELETE_WINDOW", self._on_close)
+
+    def _cycle_tab(self, direction):
+        """Cycle through tabs. direction: +1 forward, -1 backward."""
+        current = self._tabs.get()
+        try:
+            idx = self._tab_names.index(current)
+        except ValueError:
+            idx = 0
+        new_idx = (idx + direction) % len(self._tab_names)
+        self._tabs.set(self._tab_names[new_idx])
+
+    def _focus_omega_entry(self):
+        """Focus the Omega terminal input entry."""
+        self._tabs.set(self._tab_names[0])
+        self.tab_dashboard._ot_entry.focus_set()
 
     def _initial_load(self):
         """Load SwarmEngine + CentralBrain + start data cache on startup."""
@@ -2578,8 +2735,8 @@ class OmegaSovereignApp(ctk.CTk):
                         "http://localhost:11434/api/generate",
                         data, {"Content-Type": "application/json"})
                     urllib.request.urlopen(req, timeout=30)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("VRAM keepalive failed: %s", e)
         threading.Thread(target=_keepalive_loop, daemon=True).start()
 
     def _on_close(self):
@@ -2629,12 +2786,13 @@ class OmegaSovereignApp(ctk.CTk):
 
         cpu = _cache.get("cpu")
         ram = _cache.get("ram")
-        if cpu is not None:
+        if cpu is not None and ram is not None:
             cpu_color = NEON_GREEN if cpu < 60 else (NEON_ORANGE if cpu < 85 else NEON_RED)
             hw_text = f"CPU {cpu:.0f}% | RAM {ram:.0f}%"
             vr = _cache.get("vram")
             if vr and vr.get("beschikbaar"):
-                pct = round(vr['in_gebruik_mb'] / vr['totaal_mb'] * 100)
+                totaal = vr['totaal_mb'] or 1
+                pct = round(vr['in_gebruik_mb'] / totaal * 100)
                 hw_text += f" | GPU {pct}%"
             self._hw.configure(text=hw_text, text_color=cpu_color)
 
@@ -2665,6 +2823,32 @@ class OmegaSovereignApp(ctk.CTk):
         if wq > 0:
             avg_t = _wav_stats["total_time"] / wq
             self._wav_lbl.configure(text=f"WAV:{wq}q {avg_t:.1f}s", text_color=NEON_GREEN)
+
+        # Tribunal verdicts
+        trib_stats = _cache.get("tribunal_stats")
+        if trib_stats:
+            verdicts = trib_stats.get("verdicts", trib_stats.get("total", 0))
+            self._tribunal_lbl.configure(text=f"T:{verdicts}v", text_color=NEON_PURPLE)
+
+        # Cooldown agents
+        kd = _cache.get("key_data")
+        if kd:
+            cd = kd.get("cooldown", set())
+            if cd:
+                self._cooldown_lbl.configure(
+                    text=f"CD:{len(cd)}", text_color=NEON_ORANGE)
+            else:
+                self._cooldown_lbl.configure(text="CD:0", text_color=NEON_GREEN)
+
+        # Config audit status
+        config_audit = _cache.get("config_audit")
+        if config_audit:
+            schendingen = getattr(config_audit, 'schendingen', None)
+            n_viol = len(schendingen) if schendingen else 0
+            if n_viol > 0:
+                self._config_lbl.configure(text=f"CFG:{n_viol}!", text_color=NEON_RED)
+            else:
+                self._config_lbl.configure(text="CFG:OK", text_color=NEON_GREEN)
 
         # Refresh active tab only (performance)
         active = self._tabs.get()
