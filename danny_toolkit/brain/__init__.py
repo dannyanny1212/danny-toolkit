@@ -59,6 +59,7 @@ try:
     from .dream_monitor import dream_monitor, quick_peek
     from .ghost_amplifier import GhostAmplifier, get_ghost_amplifier
     from .sanctuary_dashboard import SanctuaryDashboard, get_sanctuary
+    from .tool_dispatcher import ToolDispatcher, get_tool_dispatcher
 except ImportError:
     pass
 
@@ -116,6 +117,8 @@ __all__ = [
     # Phase 46: Ghost Amplifier + Sanctuary
     "GhostAmplifier", "get_ghost_amplifier",
     "SanctuaryDashboard", "get_sanctuary",
+    # Phase 56: Hierarchical Tool Dispatch
+    "ToolDispatcher", "get_tool_dispatcher",
     # Anti-Hallucination
     "CitationMarshall", "RealityAnchor", "TruthAnchor",
     # Subsystems

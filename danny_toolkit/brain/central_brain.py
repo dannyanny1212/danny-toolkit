@@ -41,6 +41,7 @@ from danny_toolkit.core.utils import kleur, Kleur
 from danny_toolkit.brain.app_tools import (
     APP_TOOLS,
     get_all_tools,
+    get_tools_for_apps,
     parse_tool_call,
 )
 from danny_toolkit.brain.unified_memory import UnifiedMemory
@@ -231,6 +232,15 @@ class CentralBrain:
 
         # Tool definitions voor Claude
         self.tool_definitions = get_all_tools()
+
+        # Hierarchical Tool Dispatcher — 2-layer selectie (92 → 8-20 tools)
+        self._tool_dispatcher = None
+        try:
+            from danny_toolkit.brain.tool_dispatcher import get_tool_dispatcher
+            self._tool_dispatcher = get_tool_dispatcher()
+            logger.info("[OK] ToolDispatcher actief — hierarchisch dispatch")
+        except ImportError:
+            logger.debug("ToolDispatcher niet beschikbaar, alle tools worden meegestuurd")
 
         # Conversation history voor context (bounded deque)
         self.conversation_history: deque = deque(maxlen=self.MAX_HISTORY)
@@ -1142,12 +1152,24 @@ Regels:
         ))
         return self._format_tool_results(tool_results)
 
-    def _build_openai_tools(self):
-        """Converteer tool definitions naar OpenAI function-calling format."""
-        if not self.tool_definitions:
+    def _build_openai_tools(self, selected_apps=None):
+        """Converteer tool definitions naar OpenAI function-calling format.
+
+        Args:
+            selected_apps: Optionele set van app-namen. Als meegegeven,
+                           worden alleen tools voor die apps geladen.
+                           Als None → alle tools (bestaand gedrag).
+        """
+        # Bepaal bron-tools: gefilterd of alle
+        if selected_apps is not None:
+            source_tools = get_tools_for_apps(selected_apps)
+        else:
+            source_tools = self.tool_definitions
+
+        if not source_tools:
             return None
         tools = []
-        for tool in self.tool_definitions:
+        for tool in source_tools:
             schema = tool["input_schema"].copy()
             if "properties" in schema:
                 clean_props = {}
@@ -1374,7 +1396,28 @@ Regels:
         messages = [{"role": "system", "content": system_message}]
         messages.extend(self.conversation_history)
 
-        tools = self._build_openai_tools() if use_tools else None
+        # Hierarchical Tool Dispatch: selecteer alleen relevante apps
+        selected_apps = None
+        if use_tools and self._tool_dispatcher:
+            try:
+                # Haal user query uit laatste conversation message
+                user_query = ""
+                for msg in reversed(self.conversation_history):
+                    if msg.get("role") == "user":
+                        user_query = msg.get("content", "")
+                        break
+                if user_query:
+                    selected_apps = self._tool_dispatcher.select_tools(user_query)
+                    print(kleur(
+                        f"   [DISPATCH] {len(selected_apps)} apps geselecteerd: "
+                        f"{', '.join(sorted(selected_apps))}",
+                        Kleur.CYAAN,
+                    ))
+            except Exception as e:
+                logger.debug("ToolDispatcher fout, fallback naar alle tools: %s", e)
+                selected_apps = None
+
+        tools = self._build_openai_tools(selected_apps) if use_tools else None
 
         # NB: _last_tool_results wordt NIET hier gereset — dat doet
         # _process_with_fallback() éénmalig per user query, zodat
@@ -1680,6 +1723,21 @@ Regels:
         """
         messages = list(self.conversation_history)
 
+        # Hierarchical Tool Dispatch (zelfde logica als Groq)
+        active_tools = self.tool_definitions if use_tools else []
+        if use_tools and self._tool_dispatcher:
+            try:
+                user_query = ""
+                for msg in reversed(self.conversation_history):
+                    if msg.get("role") == "user":
+                        user_query = msg.get("content", "")
+                        break
+                if user_query:
+                    selected_apps = self._tool_dispatcher.select_tools(user_query)
+                    active_tools = get_tools_for_apps(selected_apps)
+            except Exception:
+                active_tools = self.tool_definitions if use_tools else []
+
         turns_used = 0
         for turn in range(remaining_turns):
             turns_used += 1
@@ -1688,7 +1746,7 @@ Regels:
                 model=Config.CLAUDE_MODEL,
                 max_tokens=2000,
                 system=system_message,
-                tools=self.tool_definitions if use_tools else [],
+                tools=active_tools,
                 messages=messages,
             )
 

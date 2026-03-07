@@ -1503,6 +1503,29 @@ APP_TOOLS: Dict[str, AppDefinition] = {
             ),
         ]
     ),
+
+    # === LOCAL BRIDGE — Beveiligde Localhost Scraper ===
+    "local_bridge": AppDefinition(
+        naam="local_bridge",
+        beschrijving="Beveiligde localhost scraper — lees je lokale dev-server (read-only, Governor-gated)",
+        categorie=AppCategorie.AI,
+        module_path="danny_toolkit.core.local_bridge",
+        class_name="LocalBridge",
+        prioriteit=6,
+        acties=[
+            AppActie(
+                naam="fetch",
+                beschrijving="Lees een localhost pagina (alleen poort 3000-9999, stateless, read-only)",
+                parameters={
+                    "url": {
+                        "type": "string",
+                        "description": "Localhost URL (bijv. http://localhost:3000)",
+                        "required": True
+                    }
+                }
+            ),
+        ]
+    ),
 }
 
 
@@ -1510,6 +1533,29 @@ def get_all_tools() -> List[dict]:
     """Haal alle app tools op in Anthropic format."""
     tools = []
     for app_def in APP_TOOLS.values():
+        app_tools = app_def.to_anthropic_tool()
+        if isinstance(app_tools, list):
+            tools.extend(app_tools)
+        elif app_tools:
+            tools.append(app_tools)
+    return tools
+
+
+def get_tools_for_apps(app_names: set) -> List[dict]:
+    """Haal tool definitions op voor specifieke apps.
+
+    Args:
+        app_names: Set van app-namen (keys uit APP_TOOLS).
+
+    Returns:
+        Lijst van tool definitions in Anthropic format,
+        alleen voor de opgegeven apps.
+    """
+    tools = []
+    for app_naam in app_names:
+        app_def = APP_TOOLS.get(app_naam)
+        if not app_def:
+            continue
         app_tools = app_def.to_anthropic_tool()
         if isinstance(app_tools, list):
             tools.extend(app_tools)
