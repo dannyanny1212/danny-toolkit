@@ -274,6 +274,7 @@ class Config:
     # THE EYES (Lokaal — RTX 3060 Ti, ~4.7 GB VRAM)
     VISION_PROVIDER = "ollama"
     VISION_MODEL = "llava:latest"
+    OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
 
     # THE MEMORY (Hybrid)
     EMBEDDING_PROVIDER = "voyage"

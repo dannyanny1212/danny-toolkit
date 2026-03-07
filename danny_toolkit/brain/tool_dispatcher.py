@@ -58,8 +58,8 @@ _CATEGORY_KEYWORDS: dict[str, list[str]] = {
     "gezondheid": [
         "fitness_tracker", "mood_tracker",
     ],
-    "fitness|workout|training|oefening|exercise|gym|sport|cardio|kracht|"
-    "calorieën|calories|reps|sets|personal record|pr|streak": [
+    r"\bfitness\b|\bworkout\b|\btraining\b|\boefening\b|\bexercise\b|\bgym\b|\bsport\b|\bcardio\b|\bkracht\b|"
+    r"\bcalorieën\b|\bcalories\b|\breps\b|\bsets\b|personal record|\bpr\b|\bstreak\b": [
         "fitness_tracker",
     ],
     "mood|stemming|emotie|emotion|gevoel|feeling|humeur": [
@@ -106,13 +106,13 @@ _CATEGORY_KEYWORDS: dict[str, list[str]] = {
     "nieuws|news|headlines|actualiteit": [
         "nieuws_agent",
     ],
-    "weer|weather|temperatuur|temperature|regen|rain|forecast|voorspelling": [
+    r"\bweer\b|\bweather\b|\btemperatuur\b|\btemperature\b|\bregen\b|\brain\b|\bforecast\b|\bvoorspelling\b": [
         "weer_agent",
     ],
 
     # Code & Dev
-    "code|analyse|analyze|bug|issue|error|fout|debug|snippet|programmeer|"
-    "program|refactor|lint": [
+    r"\bcode\b|\banalyse\b|\banalyze\b|\bbug\b|\bissue\b|\berror\b|\bfout\b|\bdebug\b|\bsnippet\b|\bprogrammeer\b|"
+    r"\bprogram\b|\brefactor\b|\blint\b": [
         "code_analyse", "code_snippets",
     ],
     "nlp|sentiment|tekst.*analy|text.*analy|natural language": [

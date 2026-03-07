@@ -1856,7 +1856,7 @@ Regels:
         messages.extend(self.conversation_history)
 
         resp = requests.post(
-            "http://localhost:11434/api/chat",
+            f"{self.config.OLLAMA_BASE_URL}/api/chat",
             json={
                 "model": self.OLLAMA_MODEL,
                 "messages": messages,
@@ -2066,7 +2066,7 @@ Regels:
         try:
             import requests
             resp = requests.get(
-                "http://localhost:11434/api/tags",
+                f"{self.config.OLLAMA_BASE_URL}/api/tags",
                 timeout=2,
             )
             if resp.status_code != 200:

@@ -12,6 +12,7 @@ Max 3 retries before returning a system error.
 
 import asyncio
 import logging
+import os
 import threading
 from typing import Dict, List, Optional
 
@@ -103,7 +104,8 @@ class AdversarialTribunal:
         elif _HAS_REQUESTS:
             # Check Ollama availability
             try:
-                resp = _requests.get("http://localhost:11434/api/tags", timeout=3)
+                _ollama_url = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
+                resp = _requests.get(f"{_ollama_url}/api/tags", timeout=3)
                 if resp.status_code == 200:
                     self._provider = "ollama"
                     logger.info("Tribunal using direct Ollama client")
@@ -134,8 +136,9 @@ class AdversarialTribunal:
 
         # Direct Ollama
         if self._provider == "ollama":
+            _ollama_url = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
             resp = _requests.post(
-                "http://localhost:11434/api/chat",
+                f"{_ollama_url}/api/chat",
                 json={
                     "model": "gemma3:4b",
                     "messages": [

@@ -382,8 +382,8 @@ class LocalBridge:
                     },
                     bron="local_bridge",
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("NeuralBus error publish failed: %s", e)
 
 
 # ── Singleton ──
