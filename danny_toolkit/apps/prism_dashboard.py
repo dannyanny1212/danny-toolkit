@@ -590,7 +590,6 @@ def render_sidebar():
         )
         if refresh > 0:
             time.sleep(0.1)  # Prevent race
-            st.rerun() if False else None  # Placeholder — actual rerun below
 
         st.divider()
 

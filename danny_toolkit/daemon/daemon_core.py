@@ -147,6 +147,7 @@ class DigitalDaemon:
         self.naam = naam
         self.is_alive = False
         self._main_thread: Optional[threading.Thread] = None
+        self._boot_time = time.time()
 
         # Core systems
         self.sensorium = Sensorium()
@@ -310,8 +311,8 @@ class DigitalDaemon:
         limbic_status = self.limbic.get_status()
         if limbic_status["state"]["energy"] == EnergyState.OVERCHARGED.value:
             msg = random.choice(self.INTERVENTIONS["no_rest"])
-            hours = 2  # Placeholder - zou echte tijd moeten tracken
-            self._send_message(msg.format(hours=hours), priority=2)
+            hours = (time.time() - self._boot_time) / 3600
+            self._send_message(msg.format(hours=round(hours, 1)), priority=2)
 
         # Check tijd van de dag
         time_of_day = self.sensorium.detect_time_of_day()
@@ -333,18 +334,47 @@ class DigitalDaemon:
         """
         De Housekeeper - Autonome opruiming.
 
-        Voert taken uit terwijl de gebruiker weg is.
+        Voert taken uit terwijl de gebruiker weg is:
+        - CorticalStack retention policy (verwijder oude events)
+        - SelfPruning (vector store onderhoud)
+        - Log rotation cleanup
         """
         if not self.sensorium.detect_idle(threshold_minutes=30):
             return
 
-        # Placeholder voor housekeeper taken
-        # In volledige implementatie zou dit:
-        # - Dubbele notities samenvoegen
-        # - Oude taken archiveren
-        # - RAG optimaliseren
-        # - Etc.
-        pass
+        tasks_done = []
+
+        # 1. CorticalStack retention policy
+        try:
+            from danny_toolkit.brain.cortical_stack import get_cortical_stack
+            stack = get_cortical_stack()
+            result = stack.apply_retention_policy()
+            if result.get("deleted", 0) > 0:
+                tasks_done.append(f"retention: {result['deleted']} events opgeruimd")
+        except Exception as e:
+            logger.debug("Housekeeper retention failed: %s", e)
+
+        # 2. SelfPruning — vector store onderhoud
+        try:
+            from danny_toolkit.core.self_pruning import SelfPruning
+            pruner = SelfPruning()
+            result = pruner.prune()
+            removed = result.get("total_removed", 0)
+            if removed > 0:
+                tasks_done.append(f"pruning: {removed} vectors verwijderd")
+        except Exception as e:
+            logger.debug("Housekeeper pruning failed: %s", e)
+
+        # 3. Log rotation
+        try:
+            from danny_toolkit.core.log_rotation import rotate_logs
+            rotate_logs()
+            tasks_done.append("log rotation")
+        except Exception as e:
+            logger.debug("Housekeeper log rotation failed: %s", e)
+
+        if tasks_done:
+            logger.info("Housekeeper klaar: %s", ", ".join(tasks_done))
 
     def _morning_or_return_greeting(self):
         """Begroet de gebruiker."""

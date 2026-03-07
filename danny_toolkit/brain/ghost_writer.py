@@ -153,8 +153,8 @@ class GhostWriter:
                                         with open(filepath, "r",
                                                   encoding="utf-8") as f:
                                             source = f.read()
-                                    except Exception:
-                                        pass
+                                    except Exception as e:
+                                        logger.debug("GhostWriter re-read failed %s: %s", filepath, e)
                             self._log_suggestion(
                                 filepath, node.name, docstring, not dry_run,
                             )

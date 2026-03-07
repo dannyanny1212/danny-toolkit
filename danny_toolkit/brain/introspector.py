@@ -306,37 +306,37 @@ class SystemIntrospector:
         try:
             from danny_toolkit.brain.hallucination_shield import HallucinatieSchild
             status["hallucination_shield_actief"] = True
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Introspector probe HallucinatieSchild: %s", e)
 
         # ShadowGovernance
         try:
             from danny_toolkit.brain.shadow_governance import ShadowGovernance
             status["shadow_governance_actief"] = True
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Introspector probe ShadowGovernance: %s", e)
 
         # BlackBox
         try:
             from danny_toolkit.brain.black_box import BlackBox
             status["black_box_immuniteit"] = True
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Introspector probe BlackBox: %s", e)
 
         # TruthAnchor
         try:
             from danny_toolkit.brain.truth_anchor import TruthAnchor
             status["truth_anchor_actief"] = True
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Introspector probe TruthAnchor: %s", e)
 
         # Circuit breakers
         try:
             from danny_toolkit.brain.central_brain import CentralBrain
             src = inspect.getsource(CentralBrain)
             status["circuit_breakers_actief"] = "_provider_breakers" in src
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Introspector probe circuit breakers: %s", e)
 
         # Calculate security score
         checks = [
@@ -455,7 +455,8 @@ class SystemIntrospector:
         try:
             import danny_toolkit.brain as brain
             return getattr(brain, "__version__", "unknown")
-        except Exception:
+        except Exception as e:
+            logger.debug("Introspector version check: %s", e)
             return "unknown"
 
     def _store_self_knowledge(self, snapshot: SystemSnapshot):

@@ -416,9 +416,32 @@ class HuntRouter:
             return []
 
     async def _search_web(self, context: HuntContext) -> List[HuntResult]:
-        """Zoek op het web (indien API beschikbaar)."""
-        # Placeholder - zou Tavily/Google Search API kunnen gebruiken
-        return []
+        """Zoek op het web via VoidWalker (DuckDuckGo)."""
+        try:
+            from danny_toolkit.brain.void_walker import VoidWalker
+
+            walker = VoidWalker()
+            query = context.enriched_query or context.original_query
+            links = walker._search(query)
+
+            results = []
+            for title, url in links[:3]:
+                content = walker._harvest(url)
+                if content:
+                    results.append(HuntResult(
+                        bron="web",
+                        titel=title,
+                        content=content[:2000],
+                        confidence=0.6,
+                        relevance=0.5,
+                        timestamp=datetime.now().isoformat(),
+                        metadata={"url": url},
+                    ))
+            return results
+
+        except Exception as e:
+            logger.debug("Hunt web search failed: %s", e)
+            return []
 
     async def _search_code(self, context: HuntContext) -> List[HuntResult]:
         """Zoek in code bronnen."""
