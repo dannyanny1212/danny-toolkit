@@ -238,20 +238,33 @@ class HallucinatieSchild:
             logger.debug("RealityAnchor validatie: %s", e)
             return []
 
-    # Agents die generatieve output produceren (code, skills, creatief)
-    # + systeem-agents (Echo, Oracle, CentralBrain) die geen RAG-bronnen
-    # nodig hebben.  RAG-verificatie is onmogelijk voor nieuw-gegenereerde
-    # of systeem-intern gegenereerde content.
+    # Agents die generatieve/analytische output produceren zonder RAG-bronnen.
+    # RAG-verificatie is onmogelijk voor content die niet uit de kennisbank
+    # komt.  Bypass mits Sentinel OK.  Alleen data-zoekende agents (Memex,
+    # Navigator) blijven onder volledige RAG-controle.
     _GENERATIEVE_AGENTS = frozenset({
+        # Makers (code, skills, creatief)
         "Iolaax", "IOLAAX", "iolaax",
         "Artificer", "ARTIFICER", "artificer",
         "Weaver", "WEAVER", "weaver",
         "Spark", "SPARK", "spark",
-        "Echo", "ECHO", "echo",
+        # Denkers (logica, strategie, analyse)
         "Oracle", "ORACLE", "oracle",
+        "Strategist", "STRATEGIST", "strategist",
+        "Sentinel", "SENTINEL", "sentinel",
+        # Systeem-agents (geen RAG nodig)
+        "Echo", "ECHO", "echo",
         "CentralBrain", "CENTRALBRAIN",
         "Chronos", "CHRONOS", "chronos",
         "Coherentie", "COHERENTIE",
+        "Alchemist", "ALCHEMIST", "alchemist",
+        "Void", "VOID", "void",
+        # Speciale agents
+        "#@*VirtualTwin", "VirtualTwin", "VIRTUAL_TWIN",
+        "Cipher", "CIPHER", "cipher",
+        "Vita", "VITA", "vita",
+        "Pixel", "PIXEL", "pixel",
+        "Legion", "LEGION", "legion",
     })
 
     def beoordeel(
