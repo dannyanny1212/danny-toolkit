@@ -2540,6 +2540,7 @@ class OmegaSovereignApp(ctk.CTk):
         # ── Initial load ──
         self.after(500, self._initial_load)
         self._schedule_refresh()
+        self.protocol("WM_DELETE_WINDOW", self._on_close)
 
     def _initial_load(self):
         """Load SwarmEngine + CentralBrain + start data cache on startup."""
@@ -2547,11 +2548,44 @@ class OmegaSovereignApp(ctk.CTk):
         self.tab_dashboard.update_vanguard()
         # Pre-load CentralBrain in background so first AI question is fast
         threading.Thread(target=_load_brain, daemon=True).start()
-        # Pre-warm Ollama gemma3:4b into VRAM (cold start takes ~30s otherwise)
+        # Pre-warm Ollama into VRAM (cold start takes ~30s otherwise)
         threading.Thread(
             target=lambda: _ollama_verify("ok", timeout=60),
             daemon=True,
         ).start()
+        # Periodic VRAM keepalive — prevents Ollama from unloading model after 5min idle
+        self._start_vram_keepalive()
+
+    def _start_vram_keepalive(self):
+        """Ping Ollama every 4 min to keep model loaded in VRAM."""
+        self._vram_alive = True
+        def _keepalive_loop():
+            import json, urllib.request
+            while self._vram_alive:
+                time.sleep(240)  # 4 minutes
+                if not self._vram_alive:
+                    break
+                try:
+                    data = json.dumps({
+                        "model": "llava:latest",
+                        "prompt": "ping",
+                        "stream": False,
+                        "keep_alive": "30m",
+                        "options": {"num_predict": 1},
+                    }).encode()
+                    req = urllib.request.Request(
+                        "http://localhost:11434/api/generate",
+                        data, {"Content-Type": "application/json"})
+                    urllib.request.urlopen(req, timeout=30)
+                except Exception:
+                    pass
+        threading.Thread(target=_keepalive_loop, daemon=True).start()
+
+    def _on_close(self):
+        """Clean shutdown — stop keepalive, stop cache, destroy window."""
+        self._vram_alive = False
+        _cache.stop()
+        self.destroy()
 
     def _schedule_refresh(self):
         try:
