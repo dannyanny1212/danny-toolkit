@@ -216,7 +216,7 @@ def speed_test() -> BenchmarkResult:
         from danny_toolkit.brain.central_brain import CentralBrain
         from danny_toolkit.brain.nexus_bridge import NexusBridge
     except ImportError:
-        pass
+        logger.debug("CentralBrain/NexusBridge not available for benchmark")
 
     latency_ms = (time.perf_counter() - start) * 1000
 

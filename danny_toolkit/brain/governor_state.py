@@ -200,8 +200,8 @@ class GovernorStateMixin:
                 if new_path.exists():
                     new_path.unlink()
                 shutil.move(str(old_path), str(new_path))
-            except OSError:
-                pass
+            except OSError as e:
+                logger.debug("Governor backup rotation failed: %s", e)
 
 
 # =================================================================

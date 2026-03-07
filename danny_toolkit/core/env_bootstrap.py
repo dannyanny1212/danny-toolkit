@@ -8,9 +8,12 @@ Gebruik:
     from danny_toolkit.core.env_bootstrap import VENV_PYTHON, get_subprocess_env
 """
 
+import logging
 import os
 import sys
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 # Project root: danny-toolkit/
 _PROJECT_ROOT = str(Path(__file__).resolve().parent.parent.parent)
@@ -50,10 +53,10 @@ def bootstrap():
         from dotenv import load_dotenv
         load_dotenv(Path(_PROJECT_ROOT) / ".env", override=False)
     except ImportError:
-        pass
+        logger.debug("dotenv not available, skipping .env load")
 
     # 2. GPU guard
     try:
         import danny_toolkit.core.gpu  # noqa: F401
     except ImportError:
-        pass
+        logger.debug("GPU guard module not available")

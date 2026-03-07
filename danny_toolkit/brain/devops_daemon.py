@@ -50,35 +50,35 @@ try:
     from danny_toolkit.brain.cortical_stack import get_cortical_stack
     HAS_STACK = True
 except ImportError:
-    pass
+    logger.debug("CorticalStack not available for DevOpsDaemon")
 
 HAS_BUS = False
 try:
     from danny_toolkit.core.neural_bus import get_bus, EventTypes
     HAS_BUS = True
 except ImportError:
-    pass
+    logger.debug("NeuralBus not available for DevOpsDaemon")
 
 HAS_BLACKBOX = False
 try:
     from danny_toolkit.brain.black_box import get_black_box
     HAS_BLACKBOX = True
 except ImportError:
-    pass
+    logger.debug("BlackBox not available for DevOpsDaemon")
 
 HAS_GOVERNOR = False
 try:
     from danny_toolkit.brain.governor import OmegaGovernor
     HAS_GOVERNOR = True
 except ImportError:
-    pass
+    logger.debug("Governor not available for DevOpsDaemon")
 
 HAS_ALERTER = False
 try:
     from danny_toolkit.core.alerter import get_alerter, AlertLevel
     HAS_ALERTER = True
 except ImportError:
-    pass
+    logger.debug("Alerter not available for DevOpsDaemon")
 
 
 class DevOpsDaemon:

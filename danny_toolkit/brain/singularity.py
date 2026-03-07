@@ -728,8 +728,8 @@ class SingularityEngine:
                                 avg_latency = float(
                                     ms_str
                                 )
-                            except ValueError:
-                                pass
+                            except ValueError as e:
+                                logger.debug("Tuner latency parse: %s", e)
             except Exception as e:
                 logger.debug("Tuner samenvatting failed: %s", e)
 

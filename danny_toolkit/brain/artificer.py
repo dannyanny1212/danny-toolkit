@@ -38,7 +38,7 @@ try:
     from danny_toolkit.core.neural_bus import get_bus, EventTypes
     HAS_BUS = True
 except ImportError:
-    pass
+    logger.debug("NeuralBus not available for Artificer")
 
 
 # Forbidden patterns — static analysis blocklist

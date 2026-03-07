@@ -385,8 +385,8 @@ class OracleAgent(Agent):
             result = json.loads(tekst)
             if isinstance(result, list):
                 return result
-        except json.JSONDecodeError:
-            pass
+        except json.JSONDecodeError as e:
+            logger.debug("Oracle list direct parse failed: %s", e)
 
         # Zoek JSON array in de tekst
         start = tekst.find("[")
@@ -396,8 +396,8 @@ class OracleAgent(Agent):
                 result = json.loads(tekst[start:einde + 1])
                 if isinstance(result, list):
                     return result
-            except json.JSONDecodeError:
-                pass
+            except json.JSONDecodeError as e:
+                logger.debug("Oracle list bracket parse failed: %s", e)
 
         return []
 
@@ -516,8 +516,8 @@ class OracleAgent(Agent):
             result = json.loads(tekst)
             if isinstance(result, dict):
                 return result
-        except json.JSONDecodeError:
-            pass
+        except json.JSONDecodeError as e:
+            logger.debug("Oracle dict direct parse failed: %s", e)
 
         start = tekst.find("{")
         einde = tekst.rfind("}")
@@ -528,8 +528,8 @@ class OracleAgent(Agent):
                 )
                 if isinstance(result, dict):
                     return result
-            except json.JSONDecodeError:
-                pass
+            except json.JSONDecodeError as e:
+                logger.debug("Oracle dict bracket parse failed: %s", e)
 
         return None
 

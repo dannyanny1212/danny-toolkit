@@ -52,8 +52,8 @@ class NexusBridge:
                 try:
                     with open(path, "r", encoding="utf-8") as f:
                         return json.load(f)
-                except (json.JSONDecodeError, IOError):
-                    pass
+                except (json.JSONDecodeError, IOError) as e:
+                    logger.debug("NexusBridge pixel data load failed: %s", e)
         return {}
 
     def _init_brain(self):

@@ -1432,7 +1432,7 @@ Raises an exception if publishing to the NeuralBus fails."""
                             if role in self.nodes:
                                 self.nodes[role].tasks_completed = node_data.get("tasks_completed", 0)
                         except KeyError:
-                            pass
+                            logger.debug("Unknown CosmicRole: %s", role_name)
                     # Restore swarm metrics
                     swarm = state.get("swarm", {})
                     self.swarm.completed_tasks = swarm.get(

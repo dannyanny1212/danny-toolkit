@@ -17,7 +17,7 @@ try:
         override=False,
     )
 except ImportError:
-    pass
+    logger.debug("dotenv not available, skipping .env load")
 
 
 class Thema:

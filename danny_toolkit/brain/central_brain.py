@@ -13,6 +13,8 @@ import os
 import json
 import asyncio
 import importlib
+
+logger = logging.getLogger(__name__)
 import threading
 from collections import deque
 from datetime import datetime
@@ -31,7 +33,7 @@ try:
         override=True,
     )
 except ImportError:
-    pass
+    logger.debug("dotenv not available, skipping .env load")
 
 from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import kleur, Kleur
@@ -688,8 +690,8 @@ Regels:
                                         calls.append((combined, args))
                                     else:
                                         calls.append((name, args))
-                except (json.JSONDecodeError, TypeError):
-                    pass
+                except (json.JSONDecodeError, TypeError) as e:
+                    logger.debug("Function call parse attempt failed: %s", e)
 
         # Fallback 2: {"function_name": "...", "function_args": {...}} patterns
         if not calls:

@@ -6,10 +6,13 @@ queries en context-aware interacties.
 """
 
 import json
+import logging
 from collections import OrderedDict
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Any
+
+logger = logging.getLogger(__name__)
 
 from danny_toolkit.core.config import Config
 from danny_toolkit.core.vector_store import VectorStore
@@ -125,8 +128,8 @@ class UnifiedMemory:
                 with open(self.event_log_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     return [MemoryEvent.from_dict(e) for e in data.get("events", [])]
-            except (json.JSONDecodeError, IOError):
-                pass
+            except (json.JSONDecodeError, IOError) as e:
+                logger.debug("UnifiedMemory event log corrupt, resetting: %s", e)
         return []
 
     def _sla_event_log_op(self):
@@ -371,8 +374,8 @@ class UnifiedMemory:
                             "titel": e.data.get("titel"),
                             "datum": event_datum
                         })
-                except (ValueError, TypeError):
-                    pass
+                except (ValueError, TypeError) as e:
+                    logger.debug("UnifiedMemory date parse failed: %s", e)
 
         return {
             "status": "actief" if komende else "leeg",

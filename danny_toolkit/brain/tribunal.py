@@ -6,7 +6,10 @@ output onafhankelijk. Alleen bij consensus wordt het resultaat geaccepteerd.
 Voorkomt single-model hallucinaties via redundante verificatie.
 """
 
+import logging
 import os
+
+logger = logging.getLogger(__name__)
 
 # Robuuste .env loader — vindt altijd de project root
 try:
@@ -19,7 +22,7 @@ try:
         override=True,
     )
 except ImportError:
-    pass
+    logger.debug("dotenv not available, skipping .env load")
 
 try:
     from groq import AsyncGroq
@@ -35,10 +38,6 @@ try:
     HAS_KEY_MANAGER = True
 except ImportError:
     HAS_KEY_MANAGER = False
-
-import logging
-
-logger = logging.getLogger(__name__)
 
 try:
     from danny_toolkit.core.groq_retry import groq_call_async

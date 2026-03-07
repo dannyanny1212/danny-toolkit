@@ -25,7 +25,7 @@ try:
         override=True,
     )
 except ImportError:
-    pass
+    logger.debug("dotenv not available, skipping .env load")
 
 try:
     from groq import AsyncGroq
@@ -65,21 +65,21 @@ try:
     from danny_toolkit.core.neural_bus import get_bus, EventTypes
     HAS_BUS = True
 except ImportError:
-    pass
+    logger.debug("NeuralBus not available for Strategist")
 
 HAS_STACK = False
 try:
     from danny_toolkit.brain.cortical_stack import get_cortical_stack
     HAS_STACK = True
 except ImportError:
-    pass
+    logger.debug("CorticalStack not available for Strategist")
 
 HAS_ORACLE = False
 try:
     from danny_toolkit.brain.oracle_eye import TheOracleEye
     HAS_ORACLE = True
 except ImportError:
-    pass
+    logger.debug("OracleEye not available for Strategist")
 
 
 class Strategist:

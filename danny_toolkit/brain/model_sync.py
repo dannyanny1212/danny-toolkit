@@ -712,7 +712,7 @@ class ModelRegistry:
             import ollama
             self.register(OllamaModelWorker())
         except ImportError:
-            pass
+            logger.debug("Ollama SDK not available, skipping worker")
         except Exception as e:
             logger.debug("Ollama auto-discover: %s", e)
 
