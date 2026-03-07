@@ -3938,6 +3938,7 @@ class SwarmEngine:
             _tracer.eind_span("ok")
 
         # 7. SENTINEL Validate (tunable)
+        _sentinel_warns = 0  # track for schild
         if _tracer:
             _tracer.begin_span("sentinel")
         if not t.mag_skippen("sentinel"):
@@ -3976,6 +3977,7 @@ class SwarmEngine:
                         rapport["geschoond"]
                     )
             results = results_list
+            _sentinel_warns = warns
             t.registreer(
                 "sentinel",
                 (time.time() - t0) * 1000,
@@ -4019,6 +4021,15 @@ class SwarmEngine:
                 _tribunal_ok = (
                     all(_tv) if _tv else None
                 )
+                # Context-aware metadata voor
+                # generatieve bypass
+                _agents_in = list({
+                    r.agent for r in schild_non_error
+                    if r.agent
+                })
+                _sentinel_ok = (
+                    _sentinel_warns == 0
+                )
                 schild_rapport = schild.beoordeel(
                     schild_non_error,
                     user_input,
@@ -4027,6 +4038,10 @@ class SwarmEngine:
                         else None
                     ),
                     tribunal_gevalideerd=_tribunal_ok,
+                    metadata={
+                        "agents_involved": _agents_in,
+                        "sentinel_ok": _sentinel_ok,
+                    },
                 )
                 if schild_rapport.geblokkeerd:
                     self._swarm_metrics[
@@ -4263,7 +4278,16 @@ class SwarmEngine:
             schild = get_hallucination_shield()
             non_error = [r for r in results if r.type != "error"]
             if non_error:
-                rapport = schild.beoordeel(non_error, goal)
+                _goal_agents = list({
+                    r.agent for r in non_error if r.agent
+                })
+                rapport = schild.beoordeel(
+                    non_error, goal,
+                    metadata={
+                        "agents_involved": _goal_agents,
+                        "sentinel_ok": True,
+                    },
+                )
                 if rapport.geblokkeerd:
                     self._swarm_metrics["schild_blocks"] += 1
                     return [SwarmPayload(

@@ -238,6 +238,15 @@ class HallucinatieSchild:
             logger.debug("RealityAnchor validatie: %s", e)
             return []
 
+    # Agents die generatieve output produceren (code, skills, creatief)
+    # RAG-verificatie is onmogelijk voor nieuw-gegeneerde content.
+    _GENERATIEVE_AGENTS = frozenset({
+        "Iolaax", "IOLAAX", "iolaax",
+        "Artificer", "ARTIFICER", "artificer",
+        "Weaver", "WEAVER", "weaver",
+        "Spark", "SPARK", "spark",
+    })
+
     def beoordeel(
         self,
         payloads: list,
@@ -245,6 +254,7 @@ class HallucinatieSchild:
         context_docs: Optional[List[str]] = None,
         truth_anchor_score: Optional[float] = None,
         tribunal_gevalideerd: Optional[bool] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> HallucinatieRapport:
         """Beoordeel payloads op hallucinatie-risico.
 
@@ -254,6 +264,8 @@ class HallucinatieSchild:
             context_docs: RAG context documenten (optioneel).
             truth_anchor_score: TruthAnchor score als beschikbaar.
             tribunal_gevalideerd: Tribunal uitspraak als beschikbaar.
+            metadata: Pipeline metadata met 'agents_involved' (list[str])
+                en 'sentinel_ok' (bool) voor context-aware bypass.
 
         Returns:
             HallucinatieRapport met score en blokkade-beslissing.
@@ -261,6 +273,53 @@ class HallucinatieSchild:
         with self._lock:
             self._stats["beoordeeld"] += 1
 
+        meta = metadata or {}
+
+        # ── Context-Aware Bypass: generatieve agents + Sentinel gate ──
+        # Code/skill-generatie is per definitie nieuw; RAG-verificatie is
+        # onmogelijk.  Als SENTINEL de output al als veilig heeft beoordeeld,
+        # stapt het Schild gracieus opzij.  Zonder Sentinel-OK → blokkade.
+        agents_involved = {
+            str(a) for a in meta.get("agents_involved", [])
+        }
+        has_generative = bool(agents_involved & self._GENERATIEVE_AGENTS)
+        sentinel_ok = meta.get("sentinel_ok", False)
+
+        if has_generative:
+            if sentinel_ok:
+                logger.info(
+                    "HallucinatieSchild bypass: generatieve agents %s, "
+                    "Sentinel OK — RAG-verificatie overgeslagen",
+                    agents_involved & self._GENERATIEVE_AGENTS,
+                )
+                with self._lock:
+                    self._stats["doorgelaten"] += 1
+                return HallucinatieRapport(
+                    totaal_score=1.0,
+                    geblokkeerd=False,
+                    reden_blokkade="",
+                )
+            else:
+                logger.warning(
+                    "HallucinatieSchild: generatieve agents %s maar "
+                    "Sentinel NIET OK — output geblokkeerd",
+                    agents_involved & self._GENERATIEVE_AGENTS,
+                )
+                with self._lock:
+                    self._stats["geblokkeerd"] += 1
+                rapport = HallucinatieRapport(
+                    totaal_score=0.0,
+                    geblokkeerd=True,
+                    reden_blokkade=(
+                        "Generatieve output geblokkeerd: Sentinel heeft "
+                        "de veiligheid niet bevestigd."
+                    ),
+                )
+                self._log_naar_blackbox(rapport, payloads, user_input)
+                self._publiceer_event(rapport, user_input)
+                return rapport
+
+        # ── Reguliere RAG Fact-Checking (MEMEX / Navigator / Oracle) ──
         # 1. Claims extraheren
         claims = self._extraheer_claims(payloads)
 
