@@ -1,6 +1,6 @@
 """
 Danny Toolkit — Master Test Runner
-Draait alle 27 test suites in volgorde en geeft een totaaloverzicht.
+Draait alle 37 test suites in volgorde en geeft een totaaloverzicht.
 
 Gebruik: python run_all_tests.py
 """
@@ -58,6 +58,16 @@ TESTS = [
     {"naam": "Phase 29 VirtualTwin", "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase29.py"]},
     {"naam": "Phase 30 Schild&Vriend", "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase30.py"]},
     {"naam": "Phase 31 Trace&Tolerantie", "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase31.py"]},
+    {"naam": "Phase 33 ConfigAuditor",     "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase33.py"]},
+    {"naam": "Phase 34 ShardRouter",       "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase34.py"]},
+    {"naam": "Phase 35 ErrorTaxonomy",     "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase35.py"]},
+    {"naam": "Phase 36 RequestTracer",     "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase36.py"]},
+    {"naam": "Phase 37 SelfPruning",       "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase37.py"]},
+    {"naam": "Phase 38 FullSpectrum",      "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase38.py"]},
+    {"naam": "Phase 39 DeepObservatory",   "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase39.py"]},
+    {"naam": "Phase 40 SwarmSovereignty",  "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase40.py"]},
+    {"naam": "Phase 41 MultiModelSync",    "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase41.py"]},
+    {"naam": "Phase 42 ObservatorySync",   "cmd": [PYTHON, f"{PROJECT_ROOT}/test_phase42.py"]},
 ]
 
 BREEDTE = 60

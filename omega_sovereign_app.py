@@ -353,6 +353,9 @@ class _DataCache:
                 obs = get_observatory_sync()
                 self.put("leaderboard", obs.get_model_leaderboard())
                 self.put("cost_analysis", obs.get_cost_analysis())
+                self.put("auction_history", obs.get_auction_history())
+                self.put("failure_analysis", obs.get_failure_analysis())
+                self.put("trend_data", obs.get_trend_data())
             except Exception as e:
                 logger.debug("cache observatory: %s", e)
 
@@ -2254,15 +2257,20 @@ class ObservatoryTab(ctk.CTkFrame):
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
+        self.grid_rowconfigure(2, weight=1)
 
         self.models_panel = InfoPanel(self, "\U0001f916 Model Registry")
         self.models_panel.grid(row=0, column=0, sticky="nsew", padx=(0, 4), pady=(0, 4))
         self.leaderboard_panel = InfoPanel(self, "\U0001f3c6 Model Leaderboard")
         self.leaderboard_panel.grid(row=0, column=1, sticky="nsew", padx=(4, 0), pady=(0, 4))
         self.cost_panel = InfoPanel(self, "\U0001f4b0 Cost Analysis")
-        self.cost_panel.grid(row=1, column=0, sticky="nsew", padx=(0, 4), pady=(4, 0))
+        self.cost_panel.grid(row=1, column=0, sticky="nsew", padx=(0, 4), pady=4)
         self.config_panel = InfoPanel(self, "\u2699 Config Audit")
-        self.config_panel.grid(row=1, column=1, sticky="nsew", padx=(4, 0), pady=(4, 0))
+        self.config_panel.grid(row=1, column=1, sticky="nsew", padx=(4, 0), pady=4)
+        self.auction_panel = InfoPanel(self, "\U0001f3af Auction History")
+        self.auction_panel.grid(row=2, column=0, sticky="nsew", padx=(0, 4), pady=(4, 0))
+        self.failure_panel = InfoPanel(self, "\u26a0 Failure Analysis")
+        self.failure_panel.grid(row=2, column=1, sticky="nsew", padx=(4, 0), pady=(4, 0))
 
     def refresh(self):
         # Model Registry — from cache
@@ -2348,6 +2356,42 @@ class ObservatoryTab(ctk.CTkFrame):
                 self.config_panel.write("\n  Geen schendingen gevonden")
         else:
             self.config_panel.write("  ConfigAuditor: loading...")
+
+        # Auction History — from cache
+        self.auction_panel.clear()
+        auctions = _cache.get("auction_history", [])
+        if auctions:
+            self.auction_panel.write(f"  Recent auctions ({len(auctions)}):")
+            for a in auctions[:8]:
+                task_id = a.get("task_id", "?")[:16]
+                winner = a.get("winner_model", a.get("winner", "?"))
+                latency = a.get("latency_ms", 0)
+                self.auction_panel.write(
+                    f"    {task_id:16s}  \u2192 {winner}  {latency:.0f}ms")
+        else:
+            self.auction_panel.write("  No auction data yet")
+
+        # Failure Analysis — from cache
+        self.failure_panel.clear()
+        failures = _cache.get("failure_analysis")
+        if failures:
+            total_f = failures.get("totaal_failures", 0)
+            total_b = failures.get("totaal_barrier_rejections", 0)
+            circuits = failures.get("circuit_open_count", 0)
+            self.failure_panel.write(f"  Failures: {total_f}  Barrier: {total_b}  Circuits open: {circuits}")
+            problemen = failures.get("probleemmodellen", [])
+            if problemen:
+                self.failure_panel.write(f"\n  Problem models ({len(problemen)}):")
+                for p in problemen[:6]:
+                    mid = p.get("model_id", "?")
+                    fails = p.get("failures", 0)
+                    rate = p.get("success_rate", 0)
+                    self.failure_panel.write(
+                        f"    {mid:30s}  fail:{fails}  ok:{rate:.0%}")
+            else:
+                self.failure_panel.write("\n  No problem models detected")
+        else:
+            self.failure_panel.write("  Failure analysis: loading...")
 
 
 # ╔══════════════════════════════════════════════════════════════════╗
@@ -2634,6 +2678,9 @@ class OmegaSovereignApp(ctk.CTk):
         _reg("observatory.leaderboard", "Model Leaderboard", "Observatory", "leaderboard")
         _reg("observatory.cost", "Cost Analysis", "Observatory", "cost_analysis")
         _reg("observatory.config", "Config Audit", "Observatory", "config_audit")
+        _reg("observatory.auctions", "Auction History", "Observatory", "auction_history")
+        _reg("observatory.failures", "Failure Analysis", "Observatory", "failure_analysis")
+        _reg("observatory.trends", "Trend Data", "Observatory", "trend_data")
 
         # ── Bottom glow + status ──
         ctk.CTkFrame(self, height=2, fg_color=NEON_CYAN).pack(fill="x", padx=20, pady=(2, 0))

@@ -56,6 +56,7 @@ try:
     from .agent_factory import AgentFactory, get_agent_factory
     from .oracle import OracleAgent
     from .ultimate_hunt import UltimateHunt, HuntStatus, HuntAnimator
+    from .dream_monitor import dream_monitor, quick_peek
 except ImportError:
     pass
 
@@ -108,6 +109,8 @@ __all__ = [
     "ClaudeMemory", "get_claude_memory",
     # Fase C.3: Agents (moved from /core/)
     "OracleAgent", "UltimateHunt", "HuntStatus", "HuntAnimator",
+    # Phase 43: Dream Monitor
+    "dream_monitor", "quick_peek",
     # Anti-Hallucination
     "CitationMarshall", "RealityAnchor", "TruthAnchor",
     # Subsystems
@@ -117,5 +120,5 @@ __all__ = [
     "ProjectMap",
 ]
 
-__version__ = "6.8.0"
+__version__ = "6.10.0"
 __author__ = "Danny"

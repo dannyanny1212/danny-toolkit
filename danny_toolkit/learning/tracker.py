@@ -8,6 +8,9 @@ Houdt bij:
 """
 
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 import time
 from datetime import datetime
 from typing import Optional
@@ -34,8 +37,8 @@ class InteractionTracker:
             try:
                 with open(self.interactions_file, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
-                pass
+            except (json.JSONDecodeError, IOError) as e:
+                logger.debug("Corrupt interactions file, resetting: %s", e)
         return self._create_empty()
 
     def _create_empty(self) -> dict:

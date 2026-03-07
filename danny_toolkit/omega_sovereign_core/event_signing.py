@@ -99,8 +99,8 @@ class EventSigner:
             try:
                 from danny_toolkit.brain.cortical_stack import get_cortical_stack
                 self._stack = get_cortical_stack()
-            except (ImportError, Exception):
-                pass
+            except (ImportError, Exception) as e:
+                logger.debug("CorticalStack lazy-load failed: %s", e)
         return self._stack
 
     def attach_sweeper(self, sweeper) -> None:
@@ -192,8 +192,8 @@ class EventSigner:
                     self._stats["rejected"] += 1
                 self._record_violation(event_type, bron, f"EXPIRED: {age:.1f}s oud", signature[:16])
                 return False, f"EXPIRED: nonce is {age:.1f}s oud (max {_REPLAY_WINDOW_SECONDS}s)"
-        except (ValueError, IndexError):
-            pass  # Graceful — als nonce-format anders is, skip leeftijdscheck
+        except (ValueError, IndexError) as e:
+            logger.debug("Nonce timestamp parse skipped: %s", e)
 
         # ── HMAC verificatie ──
         payload = self._canonicalize(event_type, data, bron, nonce)

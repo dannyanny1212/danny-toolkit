@@ -81,8 +81,8 @@ class SelfImprovementEngine:
             try:
                 with open(self.state_file, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
-                pass
+            except (json.JSONDecodeError, IOError) as e:
+                logger.debug("Corrupt self-improvement state, resetting: %s", e)
 
         return {
             "learning_cycles": 0,

@@ -9,6 +9,9 @@ DATE: 7 februari 2026
 """
 
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, List, Dict
@@ -57,8 +60,8 @@ class FeedbackManager:
             try:
                 with open(self.feedback_file, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
-                pass
+            except (json.JSONDecodeError, IOError) as e:
+                logger.debug("Corrupt feedback file, resetting: %s", e)
 
         return {
             "entries": [],

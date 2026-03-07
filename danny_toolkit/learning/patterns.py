@@ -8,6 +8,9 @@ Features:
 """
 
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 import re
 from datetime import datetime
 from typing import Optional
@@ -35,8 +38,8 @@ class PatternRecognizer:
             try:
                 with open(self.patterns_file, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
-                pass
+            except (json.JSONDecodeError, IOError) as e:
+                logger.debug("Corrupt patterns file, resetting: %s", e)
         return self._create_empty()
 
     def _create_empty(self) -> dict:

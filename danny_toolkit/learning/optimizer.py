@@ -9,6 +9,9 @@ Features:
 """
 
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 from datetime import datetime, timedelta
 
 from danny_toolkit.core.config import Config
@@ -40,8 +43,8 @@ class KnowledgeOptimizer:
             try:
                 with open(self.optimizer_file, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
-                pass
+            except (json.JSONDecodeError, IOError) as e:
+                logger.debug("Corrupt optimizer state, resetting: %s", e)
         return {
             "version": "1.0",
             "last_optimization": None,

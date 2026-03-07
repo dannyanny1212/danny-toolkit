@@ -6,6 +6,9 @@ unified interface voor semantic search over alle interacties.
 """
 
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 from datetime import datetime
 
 from danny_toolkit.core.config import Config
@@ -26,8 +29,8 @@ class UnifiedMemory:
             try:
                 with open(self.memory_file, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
-                pass
+            except (json.JSONDecodeError, IOError) as e:
+                logger.debug("Corrupt memory file, resetting: %s", e)
         return self._create_empty()
 
     def _create_empty(self) -> dict:

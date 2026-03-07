@@ -204,8 +204,8 @@ class AutoSaver:
                 f" (elke {self._interval // 60} min){Kleur.RESET}",
                 flush=True,
             )
-        except UnicodeEncodeError:
-            pass
+        except UnicodeEncodeError as e:
+            logger.debug("AutoSaver banner print failed: %s", e)
 
         while not self._stop_event.is_set():
             # Wacht op interval of stop event

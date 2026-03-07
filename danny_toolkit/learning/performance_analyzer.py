@@ -9,6 +9,9 @@ DATE: 7 februari 2026
 """
 
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 import statistics
 from datetime import datetime
 from pathlib import Path
@@ -59,8 +62,8 @@ class PerformanceAnalyzer:
             try:
                 with open(self.metrics_file, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
-                pass
+            except (json.JSONDecodeError, IOError) as e:
+                logger.debug("Corrupt metrics file, resetting: %s", e)
 
         return {
             "metrics": [],

@@ -220,8 +220,8 @@ class SovereignGate:
                 if session_id == "0":
                     return LawResult(4, "Physical Console", False,
                                      "BREACH: Draait in service sessie (Session 0)")
-            except Exception:
-                pass  # Non-fatal
+            except Exception as e:
+                logger.debug("Session ID check skipped: %s", e)
 
             return LawResult(4, "Physical Console", True,
                              f"Fysieke console OK (sessie: {session_name or 'Console'})")
