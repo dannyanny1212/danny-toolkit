@@ -1509,13 +1509,13 @@ class DashboardTab(ctk.CTkFrame):
             w("\u2126 [OMEGA] Full Pipeline Processing...", "process")
 
             try:
-                from swarm_engine import SwarmEngine
                 import asyncio
 
-                # Create fresh event loop for this thread
+                # Hergebruik de gecachte engine uit OMEGA awakening
                 loop = asyncio.new_event_loop()
-                eng = SwarmEngine(brain=brain)
-                payloads = loop.run_until_complete(eng.run(question))
+                if brain and hasattr(engine, "brain"):
+                    engine.brain = brain
+                payloads = loop.run_until_complete(engine.run(question))
                 loop.close()
             except Exception as e:
                 w(f"[OMEGA] SwarmEngine.run() failed: {e}", "error")
