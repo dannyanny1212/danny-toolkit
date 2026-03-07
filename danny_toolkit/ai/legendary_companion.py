@@ -520,6 +520,46 @@ class DreamEngine:
 
         return None
 
+    def run_dream_cycle(self) -> List[str]:
+        """Voer een volledige droomcyclus uit.
+
+        Haalt documenten uit de VectorStore, splitst ze in recent vs oud,
+        en genereert inzichten door verbanden te leggen.
+
+        Returns:
+            Lijst van drominzichten (strings), leeg als onvoldoende data.
+        """
+        docs = self.vector_store.documenten
+        if len(docs) < 4:
+            return []
+
+        # Sorteer op toevoegdatum
+        sorted_ids = sorted(
+            docs.keys(),
+            key=lambda k: docs[k].get("metadata", {}).get(
+                "toegevoegd_op", docs[k].get("toegevoegd_op", "")
+            ),
+        )
+
+        # Splits: nieuwste 40% = recent, oudste 40% = oud
+        split = max(len(sorted_ids) // 5 * 2, 2)
+        old_ids = sorted_ids[:split]
+        recent_ids = sorted_ids[-split:]
+
+        old_texts = [docs[k]["tekst"] for k in old_ids if docs[k].get("tekst")]
+        recent_texts = [docs[k]["tekst"] for k in recent_ids if docs[k].get("tekst")]
+
+        insights: List[str] = []
+        # Meerdere dromen genereren met overlappende subsets
+        chunk = max(len(recent_texts) // 3, 1)
+        for i in range(0, len(recent_texts), chunk):
+            subset = recent_texts[i:i + chunk]
+            dream = self.generate_dream(subset, old_texts)
+            if dream:
+                insights.append(dream)
+
+        return insights
+
     def get_morning_insight(self) -> Optional[str]:
         """Haal ochtend inzicht op als er een nieuwe droom is."""
         if not self.dreams:
