@@ -3719,7 +3719,13 @@ _ANSI_STRIP = re.compile(
     r'|\x1b\].*?\x07'          # OSC sequences (title bar etc.)
     r'|\x1b\[\?[0-9;]*[hlJK]'  # DEC private modes
     r'|\x1b\[[\d;]*m'          # SGR (colors) — redundant but explicit
-    r'|\r'                      # carriage returns
+)
+# Spinner / TUI noise filter — matches Claude Code animation frames
+_SPINNER_RE = re.compile(
+    r'^[\s\u25cf\u273b\u2736\u2722\u00b7\u273d\u002a\u2802\u2810]*'  # ● ✻ ✶ ✢ · ✽ * ⠂ ⠐
+    r'\s*(?:Doodling|[Tt]hinking|[Ll]oading|[Ww]aiting)'
+    r'\s*\u2026?\.{0,3}'        # … or ...
+    r'\s*(?:\(.*\))?\s*$'       # optional (1m 5s · ↑ 856 tokens)
 )
 
 
@@ -3875,7 +3881,12 @@ class ClaudePTY:
     # ── internal: reader thread ─────────────────────────────────
 
     def _reader_loop(self):
-        """Blocking read loop — runs in daemon thread."""
+        """Blocking read loop — runs in daemon thread.
+
+        Handles carriage returns: TUI apps (Ink/React CLI) redraw lines
+        by sending ``\\r`` + new content.  We only keep the last segment
+        before the newline so spinner redraws collapse into one line.
+        """
         buf = ""
         while self._alive:
             try:
@@ -3886,6 +3897,10 @@ class ClaudePTY:
                 # Split on newlines, keep partial line in buf
                 while "\n" in buf:
                     line, buf = buf.split("\n", 1)
+                    # Carriage return = overwrite from start of line.
+                    # Only keep the LAST segment (final redraw).
+                    if "\r" in line:
+                        line = line.rsplit("\r", 1)[-1]
                     self._q.put(line)
             except EOFError:
                 break
@@ -3919,6 +3934,13 @@ class ClaudePTY:
             clean = _ANSI_CURSOR_FWD.sub(' ', item)
             clean = _ANSI_STRIP.sub('', clean).rstrip()
             if not clean:
+                continue
+            # Skip spinner/animation noise from Claude Code TUI
+            if _SPINNER_RE.match(clean):
+                continue
+            # Skip very short fragments (lone digits from token counter redraws)
+            stripped = clean.strip()
+            if len(stripped) <= 2 and not stripped.isalpha():
                 continue
             # Classify line for coloring
             tag = self._classify_line(clean)
