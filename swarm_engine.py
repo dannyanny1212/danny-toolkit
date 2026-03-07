@@ -34,8 +34,8 @@ from collections import deque
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Dict, Any, Optional
 
-# Max workers voor de per-loop thread pool.
-_SWARM_MAX_WORKERS = 6
+# Max workers voor de per-loop thread pool (hardware: 16 threads, I/O-bound Groq).
+_SWARM_MAX_WORKERS = 10
 from dataclasses import dataclass, field
 from datetime import datetime
 
@@ -52,7 +52,7 @@ _AGENT_PIPELINE_METRICS: Dict[str, Dict[str, Any]] = {}
 _METRICS_LOCK = _threading.Lock()
 
 # ── Phase 100: B-95 background writer (1 daemon thread, fire-and-forget) ──
-_B95_EXECUTOR = ThreadPoolExecutor(max_workers=1, thread_name_prefix="b95")
+_B95_EXECUTOR = ThreadPoolExecutor(max_workers=2, thread_name_prefix="b95")
 
 # ── Phase 31: PER-AGENT TIMEOUTS (seconden) ──
 

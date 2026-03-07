@@ -74,10 +74,7 @@ class CorticalStack:
             check_same_thread=False,
         )
         self._conn.row_factory = sqlite3.Row
-        self._conn.execute("PRAGMA journal_mode=WAL")
-        self._conn.execute("PRAGMA synchronous=NORMAL")
-        self._conn.execute("PRAGMA busy_timeout=5000")
-        self._conn.execute("PRAGMA temp_store=MEMORY")
+        Config.apply_sqlite_perf(self._conn)
         self._conn.execute("PRAGMA foreign_keys=ON")
         self._pending_writes = 0
         self._last_flush = time.time()
@@ -617,10 +614,7 @@ class CorticalStack:
                 str(self._db_path), check_same_thread=False
             )
             self._conn.row_factory = sqlite3.Row
-            self._conn.execute("PRAGMA journal_mode=WAL")
-            self._conn.execute("PRAGMA synchronous=NORMAL")
-            self._conn.execute("PRAGMA busy_timeout=5000")
-            self._conn.execute("PRAGMA temp_store=MEMORY")
+            Config.apply_sqlite_perf(self._conn)
             self._conn.execute("PRAGMA foreign_keys=ON")
             self._pending_writes = 0
             self._last_flush = time.time()

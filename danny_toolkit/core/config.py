@@ -282,6 +282,21 @@ class Config:
     VOYAGE_NATIVE_DIM = 1024              # voyage-4-large native output
     EMBEDDING_DIM = int(os.environ.get("EMBEDDING_DIM", "256"))
 
+    # SQLite Performance Tuning (hardware-optimized for 32 GB RAM + SATA SSD)
+    SQLITE_CACHE_SIZE = int(os.environ.get("SQLITE_CACHE_SIZE", "-64000"))  # 64 MB (negative = KB)
+    SQLITE_MMAP_SIZE = int(os.environ.get("SQLITE_MMAP_SIZE", "268435456"))  # 256 MB memory-mapped I/O
+    SQLITE_BUSY_TIMEOUT = int(os.environ.get("SQLITE_BUSY_TIMEOUT", "10000"))  # 10s
+
+    @staticmethod
+    def apply_sqlite_perf(conn):
+        """Apply hardware-optimized PRAGMAs to a SQLite connection."""
+        conn.execute(f"PRAGMA cache_size = {Config.SQLITE_CACHE_SIZE}")
+        conn.execute(f"PRAGMA mmap_size = {Config.SQLITE_MMAP_SIZE}")
+        conn.execute("PRAGMA journal_mode = WAL")
+        conn.execute("PRAGMA synchronous = NORMAL")
+        conn.execute(f"PRAGMA busy_timeout = {Config.SQLITE_BUSY_TIMEOUT}")
+        conn.execute("PRAGMA temp_store = MEMORY")
+
     # RAG Settings
     CHUNK_SIZE = 350
     CHUNK_OVERLAP = 50

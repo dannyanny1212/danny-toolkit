@@ -96,8 +96,7 @@ method is called to initialize the database schema."""
             check_same_thread=False,
             timeout=10,
         )
-        self._conn.execute("PRAGMA journal_mode=WAL")
-        self._conn.execute("PRAGMA busy_timeout=5000")
+        Config.apply_sqlite_perf(self._conn)
         self._create_tables()
 
         # Pop-once pre-warmed context cache

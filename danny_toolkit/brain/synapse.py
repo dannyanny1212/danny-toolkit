@@ -113,8 +113,7 @@ class TheSynapse:
             check_same_thread=False,
             timeout=10,
         )
-        self._conn.execute("PRAGMA journal_mode=WAL")
-        self._conn.execute("PRAGMA busy_timeout=5000")
+        Config.apply_sqlite_perf(self._conn)
         self._create_tables()
 
         # Cache: embed function from AdaptiveRouter

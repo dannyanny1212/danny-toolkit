@@ -65,8 +65,7 @@ class AccessTracker:
         try:
             os.makedirs(os.path.dirname(self._db_path), exist_ok=True)
             conn = sqlite3.connect(self._db_path, timeout=5)
-            conn.execute("PRAGMA journal_mode=WAL")
-            conn.execute("PRAGMA busy_timeout=5000")
+            Config.apply_sqlite_perf(conn)
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS fragment_access (
                     fragment_id TEXT NOT NULL,
@@ -92,7 +91,7 @@ class AccessTracker:
 
     def _connect(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self._db_path, timeout=5)
-        conn.execute("PRAGMA busy_timeout=5000")
+        Config.apply_sqlite_perf(conn)
         conn.row_factory = sqlite3.Row
         return conn
 

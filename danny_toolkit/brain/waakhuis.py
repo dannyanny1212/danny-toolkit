@@ -130,8 +130,12 @@ class WaakhuisMonitor:
                 check_same_thread=False,
                 timeout=5,
             )
-            self._conn.execute("PRAGMA journal_mode=WAL")
-            self._conn.execute("PRAGMA synchronous=NORMAL")
+            if HAS_CONFIG:
+                Config.apply_sqlite_perf(self._conn)
+            else:
+                self._conn.execute("PRAGMA journal_mode=WAL")
+                self._conn.execute("PRAGMA synchronous=NORMAL")
+                self._conn.execute("PRAGMA busy_timeout=10000")
             self._conn.execute("""
                 CREATE TABLE IF NOT EXISTS waakhuis_metrics (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,

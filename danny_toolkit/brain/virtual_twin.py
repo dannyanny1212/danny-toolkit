@@ -1048,8 +1048,7 @@ class ShadowCortex:
         try:
             db_path = str(Config.DATA_DIR / "cortical_stack.db")
             conn = sqlite3.connect(db_path, timeout=10)
-            conn.execute("PRAGMA journal_mode=WAL")
-            conn.execute("PRAGMA busy_timeout=5000")
+            Config.apply_sqlite_perf(conn)
             conn.executescript("""
                 CREATE TABLE IF NOT EXISTS shadow_summaries (
                     doc_id TEXT PRIMARY KEY,
@@ -1076,8 +1075,7 @@ class ShadowCortex:
             self._summary_conn = sqlite3.connect(
                 db_path, timeout=10, check_same_thread=False,
             )
-            self._summary_conn.execute("PRAGMA journal_mode=WAL")
-            self._summary_conn.execute("PRAGMA busy_timeout=5000")
+            Config.apply_sqlite_perf(self._summary_conn)
         return self._summary_conn
 
     @staticmethod
