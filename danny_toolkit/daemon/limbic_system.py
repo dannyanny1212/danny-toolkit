@@ -6,6 +6,7 @@ Het gevoel van het digitale organisme.
 """
 
 import json
+import logging
 import math
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -15,6 +16,8 @@ from enum import Enum
 
 from danny_toolkit.core.config import Config
 from danny_toolkit.daemon.sensorium import Sensorium, EventType, SensoryEvent
+
+logger = logging.getLogger(__name__)
 
 
 class Mood(Enum):
@@ -412,8 +415,8 @@ class LimbicSystem:
                 self.state.stress = state_data.get("stress", 0.3)
 
             except (json.JSONDecodeError, IOError, OSError,
-                    KeyError, ValueError):
-                pass  # Gebruik defaults
+                    KeyError, ValueError) as e:
+                logger.debug("LimbicSystem state load failed, using defaults: %s", e)
 
     def get_status(self) -> Dict:
         """Haal volledige status op."""

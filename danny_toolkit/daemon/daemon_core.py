@@ -553,7 +553,7 @@ def main():
                 print(f"\n{daemon.naam}: {response}")
 
     except KeyboardInterrupt:
-        pass
+        logger.debug("Daemon interactive session interrupted by user")
     finally:
         daemon.sleep()
 

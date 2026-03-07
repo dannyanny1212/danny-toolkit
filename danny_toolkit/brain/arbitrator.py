@@ -38,6 +38,12 @@ from danny_toolkit.core.utils import Kleur
 logger = logging.getLogger(__name__)
 
 try:
+    from groq import Groq
+    HAS_GROQ = True
+except ImportError:
+    HAS_GROQ = False
+
+try:
     from danny_toolkit.core.key_manager import AgentKeyManager
     HAS_KEY_MANAGER = True
 except ImportError:
@@ -188,8 +194,7 @@ The Groq client is initialized lazily, attempting to create a synchronous client
         try:
             if HAS_KEY_MANAGER:
                 self._groq_client = AgentKeyManager.create_sync_client("Arbitrator")
-            if not self._groq_client:
-                from groq import Groq
+            if not self._groq_client and HAS_GROQ:
                 self._groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
         except Exception as e:
             logger.debug("Arbitrator Groq client init: %s", e)

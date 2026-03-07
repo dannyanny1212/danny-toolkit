@@ -1006,7 +1006,7 @@ Initializes a new instance of the class.
                     )
 
         except KeyboardInterrupt:
-            pass
+            logger.debug("Heartbeat daemon interrupted by user")
         finally:
             self._running = False
             self._worker_pool.shutdown(wait=False)
