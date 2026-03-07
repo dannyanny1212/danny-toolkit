@@ -1,8 +1,17 @@
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical, Container
-from textual.widgets import Header, Footer, RichLog, Static, Label
+from textual.widgets import Header, Footer, RichLog, Static, Label, Input
+from textual import work
 from rich.text import Text
 import asyncio
+import time as _time
+import sys
+import os
+
+# Zorg dat danny-toolkit root op sys.path staat voor imports
+_ROOT = os.path.dirname(os.path.abspath(__file__))
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
 
 # --- V4.0 CYBER-MINIMALIST CSS ---
 OMEGA_CSS = """
@@ -56,6 +65,20 @@ RichLog {
     color: #00FF00;
     content-align: center middle;
 }
+
+Input {
+    dock: bottom;
+    width: 100%;
+    margin: 1 1;
+    border: tall #00E5FF;
+    background: #0B0F19;
+    color: #00FF00;
+    text-style: bold;
+}
+
+Input:focus {
+    border: double #FFAB00;
+}
 """
 
 class OmegaDashboardV4(App):
@@ -92,6 +115,9 @@ class OmegaDashboardV4(App):
                 self.log_body = RichLog(id="log_body", highlight=True, markup=True)
                 yield self.log_body
 
+        # De Sovereign Command Line
+        yield Input(placeholder="Ω SOVEREIGN COMMAND >> Typ een opdracht voor de MIND of 'help'...", id="cmd_input")
+
         # Vaste Statusbalk onderaan
         self.status_bar = Static("🟢 ONLINE | 18 Agents | CPU: 3.6% | RAM: 42% | GPU: 2% | VRAM: 3724MB", id="status-bar")
         yield self.status_bar
@@ -111,8 +137,124 @@ class OmegaDashboardV4(App):
         # Door Text.from_ansi() te gebruiken, verdwijnen de [0m codes en worden het échte kleuren!
         self.log_body.write(Text.from_ansi(ruwe_terminal_output))
 
-        # Start je asynchrone luisteraars hier
-        # asyncio.create_task(self.luister_naar_jouw_omega_core())
+        # Boot SwarmEngine (lazy — zware imports pas bij eerste gebruik)
+        self._engine = None
+        self._engine_ready = False
+
+    def _get_engine(self):
+        """Lazy-init SwarmEngine + CentralBrain."""
+        if self._engine is not None:
+            return self._engine
+        try:
+            from danny_toolkit.brain.central_brain import CentralBrain
+            from swarm_engine import SwarmEngine
+            brain = CentralBrain()
+            self._engine = SwarmEngine(brain=brain)
+            self._engine_ready = True
+            self.app.call_from_thread(
+                self.log_body.write,
+                Text.from_ansi("\033[32m[ENGINE] SwarmEngine + CentralBrain ONLINE\033[0m"),
+            )
+        except Exception as e:
+            self.app.call_from_thread(
+                self.log_body.write,
+                f"[bold red][ENGINE] Boot failed:[/] {e}",
+            )
+        return self._engine
+
+    async def on_input_submitted(self, event: Input.Submitted) -> None:
+        """Wordt getriggerd wanneer de Commandant op Enter drukt."""
+        commando = event.value.strip()
+        if not commando:
+            return
+
+        # 1. Print commando in de MIND kolom
+        self.log_mind.write(f"\n[bold #FFAB00]Commandant:[/] {commando}")
+
+        # 2. Maak invoerveld leeg
+        event.input.value = ""
+
+        # 3. Route commando
+        if commando.lower() in ("clear", "cls"):
+            self.action_clear_logs()
+        elif commando.lower() == "help":
+            self.log_mind.write(
+                "[bold cyan]Beschikbare commando's:[/]\n"
+                "  [green]clear[/]  — Wis alle logs\n"
+                "  [green]help[/]   — Toon deze hulp\n"
+                "  [green]status[/] — Engine status\n"
+                "  [green]<tekst>[/] — Stuur naar SwarmEngine"
+            )
+        elif commando.lower() == "status":
+            status = "ONLINE" if self._engine_ready else "STANDBY (boot bij eerste query)"
+            self.log_mind.write(f"[cyan]SwarmEngine: {status}[/]")
+        else:
+            # Start de achtergrond-denker (UI bevriest NIET)
+            self.verwerk_commando(commando)
+
+    @work(exclusive=True, thread=True)
+    def verwerk_commando(self, commando: str) -> None:
+        """Achtergrond worker — SwarmEngine draait in thread, UI blijft vloeiend."""
+        self.app.call_from_thread(
+            self.log_mind.write,
+            "[italic cyan]Ω MIND is aan het nadenken...[/]",
+        )
+
+        t0 = _time.time()
+
+        try:
+            engine = self._get_engine()
+            if engine is None:
+                self.app.call_from_thread(
+                    self.log_mind.write,
+                    "[bold red]Engine niet beschikbaar — check BODY log[/]",
+                )
+                return
+
+            # SwarmEngine.run() is async — draai in eigen event loop
+            loop = asyncio.new_event_loop()
+            try:
+                def _callback(msg):
+                    """Live pipeline updates naar BODY kolom."""
+                    self.app.call_from_thread(
+                        self.log_body.write,
+                        Text.from_ansi(str(msg)),
+                    )
+
+                payloads = loop.run_until_complete(
+                    engine.run(commando, callback=_callback)
+                )
+            finally:
+                loop.close()
+
+            elapsed = _time.time() - t0
+
+            # Resultaten naar MIND kolom
+            if payloads:
+                for payload in payloads:
+                    agent = getattr(payload, "agent", "?")
+                    result = getattr(payload, "result", str(payload))
+                    status = getattr(payload, "status", "")
+                    self.app.call_from_thread(
+                        self.log_mind.write,
+                        f"\n[bold green]Ω {agent}:[/] {result}",
+                    )
+            else:
+                self.app.call_from_thread(
+                    self.log_mind.write,
+                    "[yellow]Geen resultaat van SwarmEngine.[/]",
+                )
+
+            self.app.call_from_thread(
+                self.log_mind.write,
+                f"[dim]Verwerkt in {elapsed:.1f}s[/]",
+            )
+
+        except Exception as e:
+            self.app.call_from_thread(
+                self.log_mind.write,
+                f"\n[bold red]FATAL ERROR:[/] {e}",
+            )
 
     def action_clear_logs(self) -> None:
         """Maakt alle schermen schoon met de 'C' toets."""
