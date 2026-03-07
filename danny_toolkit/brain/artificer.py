@@ -18,7 +18,12 @@ from typing import Optional, Dict
 
 logger = logging.getLogger(__name__)
 
-from groq import AsyncGroq
+try:
+    from groq import AsyncGroq
+    HAS_GROQ = True
+except ImportError:
+    HAS_GROQ = False
+
 from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import Kleur
 
@@ -119,7 +124,9 @@ class Artificer:
         self.skills_dir = Config.BASE_DIR / "danny_toolkit" / "skills" / "forge"
         self.registry_path = self.skills_dir / "registry.json"
         self.workspace_dir = Config.BASE_DIR / "danny_toolkit" / "workspace"
-        if HAS_KEY_MANAGER:
+        if not HAS_GROQ:
+            self.client = None
+        elif HAS_KEY_MANAGER:
             km = get_key_manager()
             self.client = km.create_async_client("Artificer") or AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
         else:

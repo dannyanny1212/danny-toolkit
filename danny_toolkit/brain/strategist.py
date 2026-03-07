@@ -27,7 +27,12 @@ try:
 except ImportError:
     pass
 
-from groq import AsyncGroq
+try:
+    from groq import AsyncGroq
+    HAS_GROQ = True
+except ImportError:
+    HAS_GROQ = False
+
 from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import Kleur
 
@@ -103,7 +108,9 @@ class Strategist:
  Notes:
   Initializes the Groq API client, either through the Key Manager or directly with an API key.
   Configures the LLM model and conditionally initializes the Void Walker, Artificer, Bus, Cortical Stack, and Oracle Eye components based on environment flags."""
-        if HAS_KEY_MANAGER:
+        if not HAS_GROQ:
+            self.client = None
+        elif HAS_KEY_MANAGER:
             km = get_key_manager()
             self.client = km.create_async_client("Strategist") or AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
         else:

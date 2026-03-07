@@ -9,7 +9,12 @@ door Dreamer (REM cycle) voor anticipatie en personalisatie.
 import json
 import os
 
-from groq import AsyncGroq
+try:
+    from groq import AsyncGroq
+    HAS_GROQ = True
+except ImportError:
+    HAS_GROQ = False
+
 from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import Kleur
 
@@ -42,7 +47,9 @@ Sets up the profile path, asynchronous client, and model.
 *   Asynchronous client: Created using the Key Manager (if available) or directly with the GROQ API key.
 *   Model: Set to the large language model specified in the configuration."""
         self.profile_path = Config.DATA_DIR / "user_profile.json"
-        if HAS_KEY_MANAGER:
+        if not HAS_GROQ:
+            self.client = None
+        elif HAS_KEY_MANAGER:
             km = get_key_manager()
             self.client = km.create_async_client("TheMirror") or AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
         else:

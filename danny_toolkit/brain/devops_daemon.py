@@ -28,7 +28,11 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 from typing import List, Optional
 
-from groq import AsyncGroq
+try:
+    from groq import AsyncGroq
+    HAS_GROQ = True
+except ImportError:
+    HAS_GROQ = False
 
 from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import Kleur
@@ -112,7 +116,9 @@ class DevOpsDaemon:
     - Cortical Stack: A cortical stack instance (using get_cortical_stack()).
 
   Any errors during subsystem initialization are logged at the debug level."""
-        if HAS_KEY_MANAGER:
+        if not HAS_GROQ:
+            self.client = None
+        elif HAS_KEY_MANAGER:
             km = get_key_manager()
             self.client = km.create_async_client("DevOpsDaemon") or AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
         else:

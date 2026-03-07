@@ -6,8 +6,17 @@ RAG-bronnen. Gebruikt een lichtgewicht Cross-Encoder (ms-marco-MiniLM)
 die op CPU draait. Gate voor _rag_enrich in de swarm pipeline.
 """
 
-from sentence_transformers import CrossEncoder
+import logging
+
+try:
+    from sentence_transformers import CrossEncoder
+    HAS_CROSS_ENCODER = True
+except ImportError:
+    HAS_CROSS_ENCODER = False
+
 from danny_toolkit.core.utils import Kleur
+
+logger = logging.getLogger(__name__)
 
 
 class TruthAnchor:
@@ -30,7 +39,11 @@ class TruthAnchor:
  Raises:
      None"""
         print(f"{Kleur.CYAAN}⚓ Loading Truth Anchor...{Kleur.RESET}")
-        self.model = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
+        if HAS_CROSS_ENCODER:
+            self.model = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
+        else:
+            self.model = None
+            logger.debug("TruthAnchor: sentence_transformers not available, verification disabled")
         self.drempel = drempel if drempel is not None else self.DEFAULT_DREMPEL
 
     def verify(self, answer: str, context_docs: list[str]) -> tuple[bool, float]:
@@ -40,7 +53,7 @@ class TruthAnchor:
         grounded is True if the answer is supported by context above threshold.
         score is the best cross-encoder similarity score.
         """
-        if not context_docs:
+        if not context_docs or self.model is None:
             return (False, 0.0)
 
         # Prepare pairs: (Answer, Doc1), (Answer, Doc2)...

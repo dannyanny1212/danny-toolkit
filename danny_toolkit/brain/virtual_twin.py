@@ -34,7 +34,12 @@ import threading
 from collections import deque
 from typing import Dict, List, Optional
 
-from groq import AsyncGroq
+try:
+    from groq import AsyncGroq
+    HAS_GROQ = True
+except ImportError:
+    HAS_GROQ = False
+
 from danny_toolkit.core.config import Config
 
 logger = logging.getLogger(__name__)
@@ -186,6 +191,9 @@ Initializes a new instance, setting up internal state and tracking variables.
         if key:
             self._key_prefixes.add(key[:12])
 
+        if not HAS_GROQ:
+            self._client = None
+            return self._client
         self._client = AsyncGroq(api_key=key)
         return self._client
 

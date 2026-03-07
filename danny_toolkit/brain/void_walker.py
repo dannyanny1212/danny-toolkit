@@ -11,7 +11,12 @@ import os
 import time
 from typing import List, Optional, Tuple
 
-from groq import AsyncGroq
+try:
+    from groq import AsyncGroq
+    HAS_GROQ = True
+except ImportError:
+    HAS_GROQ = False
+
 from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import Kleur
 
@@ -98,7 +103,9 @@ None
 *   `model`: The LLM model.
 *   `db_path`: The path to the knowledge database.
 *   `_store`: The vector store instance (or None if initialization fails)."""
-        if HAS_KEY_MANAGER:
+        if not HAS_GROQ:
+            self.client = None
+        elif HAS_KEY_MANAGER:
             km = get_key_manager()
             self.client = km.create_async_client("VoidWalker") or AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
         else:

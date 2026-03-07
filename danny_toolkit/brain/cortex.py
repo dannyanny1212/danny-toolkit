@@ -26,9 +26,13 @@ try:
         override=True,
     )
 except ImportError:
-    pass
+    logger.debug("dotenv not available, skipping .env load")
 
-from groq import AsyncGroq
+try:
+    from groq import AsyncGroq
+    HAS_GROQ = True
+except ImportError:
+    HAS_GROQ = False
 from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import Kleur
 
@@ -133,7 +137,9 @@ The initialization process involves:
 * Creating an asynchronous Groq client using the key manager or a fallback API key.
 * Setting up connections to various components, including the CorticalStack, NeuralBus, and TheMirror.
 * Creating SQLite tables and building the graph if the CorticalStack connection is available."""
-        if HAS_KEY_MANAGER:
+        if not HAS_GROQ:
+            self.client = None
+        elif HAS_KEY_MANAGER:
             km = get_key_manager()
             self.client = km.create_async_client("TheCortex") or AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
         else:
