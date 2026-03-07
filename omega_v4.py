@@ -108,7 +108,7 @@ class OmegaDashboardV4(App):
         ("q", "quit", "Afsluiten"),
         ("c", "clear_logs", "Clear Logs"),
         ("t", "toggle_dark", "Thema Wisselen"),
-        ("f2", "toggle_select", "Select Mode"),
+        ("i", "toggle_select", "Select Mode"),
     ]
 
     _select_mode = False
