@@ -393,8 +393,28 @@ class OmegaDashboardV4(App):
             # Auto-Router beslist: PRAAT → stream, ACTIE → swarm
             self.routeer_commando(commando)
 
+    # Nederlandse actiewoorden voor snelle keyword pre-check
+    _ACTIE_KEYWORDS = frozenset({
+        "start", "stop", "scan", "download", "export", "exporteer",
+        "importeer", "maak", "genereer", "bewaar", "opslaan", "sla op",
+        "verwijder", "delete", "backup", "herstel", "restore",
+        "installeer", "update", "upgrade", "activeer", "deactiveer",
+        "automatiseer", "voer uit", "execute", "run", "draai",
+        "stuur", "send", "push", "deploy", "build", "test",
+        "create", "open", "sluit", "herstart", "restart", "reboot",
+    })
+
+    def _snelle_actie_check(self, prompt: str) -> bool:
+        """Keyword pre-check — vangt duidelijke acties zonder LLM call."""
+        woorden = prompt.lower().split()
+        return bool(self._ACTIE_KEYWORDS & set(woorden))
+
     async def _bepaal_intentie(self, prompt: str) -> str:
-        """Bliksemsnelle LLM-check (~0.2s) die beslist: PRAAT of ACTIE."""
+        """Bepaalt PRAAT of ACTIE — keyword check eerst, LLM als tiebreaker."""
+        # Snelle keyword pre-check (0ms, geen API call)
+        if self._snelle_actie_check(prompt):
+            return "ACTIE"
+
         if self._brain is None:
             return "PRAAT"
         try:
@@ -406,11 +426,15 @@ class OmegaDashboardV4(App):
                 model=mdl,
                 messages=[
                     {"role": "system", "content": (
-                        "Jij bent een router. Heeft de gebruiker een FYSIEKE ACTIE nodig "
-                        "(bestand maken, download, scan, export, tool uitvoeren, systeem wijzigen, "
-                        "app starten, data opslaan, rapport genereren)? "
-                        "Antwoord UITSLUITEND met het woord ACTIE of PRAAT. "
-                        "Geen uitleg, geen leestekens, alleen dat ene woord."
+                        "You are a strict binary intent router. "
+                        "Does the user need a PHYSICAL ACTION (create file, download, scan, "
+                        "export, execute tool, modify system, start app, save data, generate "
+                        "report, automate, search web, run code, build, deploy, install)? "
+                        "Answer with EXACTLY one word: ACTION or CHAT. "
+                        "No explanation. No punctuation. Just one word.\n"
+                        "NOTE: The user may write in Dutch. 'automatiseer'=ACTION, "
+                        "'exporteer'=ACTION, 'start'=ACTION, 'maak'=ACTION, "
+                        "'wat is'=CHAT, 'leg uit'=CHAT, 'vertel'=CHAT."
                     )},
                     {"role": "user", "content": prompt},
                 ],
@@ -418,22 +442,29 @@ class OmegaDashboardV4(App):
                 temperature=0.0,
             )
             intent = resp.choices[0].message.content.strip().upper()
-            return "ACTIE" if "ACTIE" in intent else "PRAAT"
+            return "ACTIE" if ("ACTION" in intent or "ACTIE" in intent) else "PRAAT"
         except Exception:
-            return "PRAAT"  # Fallback: stream (veiligste optie)
+            return "PRAAT"
 
     @work(exclusive=True)
     async def routeer_commando(self, commando: str) -> None:
         """Auto-Router: beslist autonoom of het naar MIND of BODY gaat."""
+        self.mind_live_buffer.update("[dim]🔍 Poortwachter analyseert...[/]")
         intentie = await self._bepaal_intentie(commando)
+        self.mind_live_buffer.update("")
 
         if intentie == "ACTIE":
             self.log_mind.write(
-                "[italic dim]Auto-Router: ACTIE gedetecteerd → BODY pipeline[/]"
+                "[dim]Routing:[/] [bold yellow]ACTIE[/] [dim]→ BODY pipeline[/]"
+            )
+            self.log_body.write(
+                f"[bold yellow]⚡ AUTO-ROUTER:[/] Actie gedetecteerd voor: [cyan]{commando}[/]"
             )
             self.verwerk_swarm(commando)
         else:
-            # Stream direct (geen extra worker nodig, we zijn al async)
+            self.log_mind.write(
+                "[dim]Routing:[/] [bold cyan]PRAAT[/] [dim]→ MIND stream[/]"
+            )
             if self._brain is None:
                 self.log_mind.write("[yellow]CentralBrain nog niet gereed...[/]")
                 return
