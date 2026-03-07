@@ -568,6 +568,8 @@ _omega_mode = {
     "systems_fail": [],
     "activated_at": None,
     "omega_queries": 0,
+    "api_server": None,       # subprocess.Popen handle for FastAPI
+    "api_port": int(os.getenv("FASTAPI_PORT", "8000")),
 }
 
 _omega_bus_seen = {}  # {event_hash: timestamp} — dedup window
@@ -1074,26 +1076,27 @@ class DashboardTab(ctk.CTkFrame):
     }
 
     def _build_omega_terminal(self, parent):
-        # Horizontal PanedWindow: Omega Brain | Sovereign Agent (Groq) | Sovereign Agent (Claude)
+        # Horizontal PanedWindow: SOUL (Omega Brain) | MIND (Sovereign Agent) | BODY (Shell)
         terminal_row = tk.PanedWindow(parent, orient=tk.HORIZONTAL, sashwidth=5,
                                       sashrelief=tk.FLAT, bg=BG_DEEP,
                                       opaqueresize=True, borderwidth=0)
 
-        # ── LEFT: Omega Brain Terminal ──
-        omega_panel = NeonPanel(terminal_row, "\u2126 Omega Brain")
+        # ── LEFT: SOUL — Omega Brain Terminal ──
+        omega_panel = NeonPanel(terminal_row, "\u2126 SOVEREIGN SOUL \u2014 Omega Brain",
+                                border_glow=NEON_ORANGE)
         self._ot_text = ctk.CTkTextbox(
             omega_panel.content, fg_color="#050810", text_color=NEON_GREEN,
-            font=FONT_MONO_SM, border_color=BORDER, border_width=1,
+            font=FONT_MONO_SM, border_color=NEON_GREEN, border_width=1,
             corner_radius=4, wrap="word", state="disabled")
         self._ot_text.pack(fill="both", expand=True, padx=4, pady=(0, 4))
         for tag_name, color in self._OT_COLORS.items():
             self._ot_text._textbox.tag_configure(tag_name, foreground=color)
 
-        self._ot_write("\u2126 OMEGA BRAIN \u2014 Direct Link", "system")
+        self._ot_write("\u2126 SOVEREIGN SOUL \u2014 Omega Brain Direct Link", "system")
         self._ot_write("Commands: status, agents, health, metrics, bus, events, keys,", "dim")
         self._ot_write("          cortical, apps, brain, immune, rag, diag, vram,", "dim")
         self._ot_write("          config, uptime, py, clear, help  |\u2191\u2193 history", "dim")
-        self._ot_write("Default: typ een vraag \u2192 Omega Brain (WAV-Loop)\n", "dim")
+        self._ot_write("Default: typ een vraag \u2192 Sovereign Soul (WAV-Loop)\n", "dim")
 
         ot_inp = ctk.CTkFrame(omega_panel.content, fg_color="transparent")
         ot_inp.pack(fill="x", padx=4, pady=(0, 2))
@@ -1112,20 +1115,21 @@ class DashboardTab(ctk.CTkFrame):
         self._ot_entry.bind("<Down>", self._ot_hist_down)
         terminal_row.add(omega_panel, minsize=60, width=350)
 
-        # ── CENTER: Sovereign Agent Terminal (Groq WAV-Loop) ──
-        agent_panel = NeonPanel(terminal_row, "\u2126 Sovereign Agent \u2014 Groq")
+        # ── CENTER: MIND — Sovereign Agent Terminal (Groq WAV-Loop) ──
+        agent_panel = NeonPanel(terminal_row, "\u2126 SOVEREIGN MIND \u2014 venv311 (Python 3.11.9)",
+                                border_glow=NEON_ORANGE)
         self._ct_text = ctk.CTkTextbox(
             agent_panel.content, fg_color="#050810", text_color=NEON_GREEN,
-            font=FONT_MONO_SM, border_color=BORDER, border_width=1,
+            font=FONT_MONO_SM, border_color=NEON_GREEN, border_width=1,
             corner_radius=4, wrap="word", state="disabled")
         self._ct_text.pack(fill="both", expand=True, padx=4, pady=(0, 4))
         for tag_name, color in self._OT_COLORS.items():
             self._ct_text._textbox.tag_configure(tag_name, foreground=color)
 
-        self._ct_write("\u2126 SOVEREIGN AGENT \u2014 venv311 (Python 3.11.9)", "system")
+        self._ct_write("\u2126 SOVEREIGN MIND \u2014 Agent Intelligence", "system")
         self._ct_write("Pipeline: Groq WAV-Loop (Will \u2192 Action \u2192 Verify)", "dim")
         self._ct_write("Commands: new, clear, wav, omega, status, help  |\u2191\u2193 history", "dim")
-        self._ct_write("Default: typ een vraag \u2192 Groq Agent\n", "dim")
+        self._ct_write("Default: typ een vraag \u2192 Sovereign Mind\n", "dim")
 
         ct_inp = ctk.CTkFrame(agent_panel.content, fg_color="transparent")
         ct_inp.pack(fill="x", padx=4, pady=(0, 2))
@@ -1134,7 +1138,7 @@ class DashboardTab(ctk.CTkFrame):
         self._ct_entry = ctk.CTkEntry(
             ct_inp, fg_color=BG_CARD, text_color="#ffffff",
             font=FONT_MONO_SM, border_color=BORDER, border_width=1,
-            placeholder_text="Ask Groq agent anything...",
+            placeholder_text="Sovereign Mind — ask anything...",
             placeholder_text_color=TEXT_DIM)
         self._ct_entry.pack(side="left", fill="x", expand=True, padx=(0, 4))
         self._ct_entry.bind("<Return>", self._ct_on_enter)
@@ -1144,41 +1148,42 @@ class DashboardTab(ctk.CTkFrame):
         self._ct_entry.bind("<Down>", self._ct_hist_down)
         terminal_row.add(agent_panel, minsize=60, width=350)
 
-        # ── RIGHT: Python Assist — Claude Max (can update Sovereign Agent) ──
-        claude_panel = NeonPanel(terminal_row, "Opus 4.6 \u00b7 Claude Max",
-                                  border_glow=NEON_PURPLE)
-        self._cl_text = ctk.CTkTextbox(
-            claude_panel.content, fg_color="#050810", text_color=NEON_GREEN,
-            font=FONT_MONO_SM, border_color=BORDER, border_width=1,
+        # ── RIGHT: BODY — Real Shell Terminal (PowerShell subprocess) ──
+        shell_panel = NeonPanel(terminal_row, "\U0001f4bb SOVEREIGN BODY \u2014 Shell v3.0",
+                                border_glow=NEON_ORANGE)
+        self._sh_text = ctk.CTkTextbox(
+            shell_panel.content, fg_color="#050810", text_color=NEON_GREEN,
+            font=FONT_MONO_SM, border_color=NEON_GREEN, border_width=1,
             corner_radius=4, wrap="word", state="disabled")
-        self._cl_text.pack(fill="both", expand=True, padx=4, pady=(0, 4))
+        self._sh_text.pack(fill="both", expand=True, padx=4, pady=(0, 4))
         for tag_name, color in self._OT_COLORS.items():
-            self._cl_text._textbox.tag_configure(tag_name, foreground=color)
+            self._sh_text._textbox.tag_configure(tag_name, foreground=color)
 
-        self._cl_write("Opus 4.6 \u00b7 Claude Max [ConPTY]", "system")
-        self._cl_write("\u2598\u2598 \u259d\u259d    ~\\danny-toolkit", "dim")
-        self._cl_write("Interactive Claude Code session via ConPTY", "dim")
-        self._cl_write("Commands: login, new, clear, status, help  |\u2191\u2193 history", "dim")
-        self._cl_write("Typ 'login' voor authenticatie, of een vraag voor Claude\n", "dim")
-        self._claude_pty = ClaudePTY(self._cl_write, self)
+        self._sh_write("\u2126 SOVEREIGN BODY \u2014 Omega Shell v3.0", "system")
+        self._sh_cwd = os.getcwd()
+        self._sh_write(f"Working directory: {self._sh_cwd}", "dim")
+        self._sh_write("Real subprocess execution (PowerShell)", "dim")
+        self._sh_write("Commands: cd, cls/clear, or any shell command  |\u2191\u2193 history\n", "dim")
+        self._sh_proc = None
 
-        cl_inp = ctk.CTkFrame(claude_panel.content, fg_color="transparent")
-        cl_inp.pack(fill="x", padx=4, pady=(0, 2))
-        ctk.CTkLabel(cl_inp, text="\U0001f52e >", font=("Consolas", 11, "bold"),
-                      text_color=NEON_PURPLE).pack(side="left", padx=(4, 4))
-        self._cl_entry = ctk.CTkEntry(
-            cl_inp, fg_color=BG_CARD, text_color="#ffffff",
+        sh_inp = ctk.CTkFrame(shell_panel.content, fg_color="transparent")
+        sh_inp.pack(fill="x", padx=4, pady=(0, 2))
+        self._sh_cwd_label = ctk.CTkLabel(
+            sh_inp, text=f"{self._sh_cwd}>",
+            font=("Consolas", 10, "bold"), text_color=NEON_CYAN)
+        self._sh_cwd_label.pack(side="left", padx=(4, 4))
+        self._sh_entry = ctk.CTkEntry(
+            sh_inp, fg_color=BG_CARD, text_color="#ffffff",
             font=FONT_MONO_SM, border_color=BORDER, border_width=1,
-            placeholder_text="Python vraag of agent update...",
+            placeholder_text="Type shell command...",
             placeholder_text_color=TEXT_DIM)
-        self._cl_entry.pack(side="left", fill="x", expand=True, padx=(0, 4))
-        self._cl_entry.bind("<Return>", self._cl_on_enter)
-        self._cl_entry.bind("<Escape>", self._cl_on_escape)
-        self._cl_history = deque(maxlen=100)
-        self._cl_hist_idx = -1
-        self._cl_entry.bind("<Up>", self._cl_on_up)
-        self._cl_entry.bind("<Down>", self._cl_on_down)
-        terminal_row.add(claude_panel, minsize=60, width=350)
+        self._sh_entry.pack(side="left", fill="x", expand=True, padx=(0, 4))
+        self._sh_entry.bind("<Return>", self._sh_on_enter)
+        self._sh_history = deque(maxlen=100)
+        self._sh_hist_idx = -1
+        self._sh_entry.bind("<Up>", self._sh_hist_up)
+        self._sh_entry.bind("<Down>", self._sh_hist_down)
+        terminal_row.add(shell_panel, minsize=60, width=350)
 
         return terminal_row
 
@@ -1357,6 +1362,95 @@ class DashboardTab(ctk.CTkFrame):
                 self._cl_write("\u2126 Starting Claude session...", "process")
             self._claude_pty.send(cmd)
 
+    # ── Shell Terminal methods ──
+
+    def _sh_write(self, text, tag="output"):
+        """Schrijf tekst naar Shell Terminal met kleur-tag."""
+        self._sh_text.configure(state="normal")
+        self._sh_text._textbox.insert("end", text + "\n", tag)
+        self._sh_text.see("end")
+        self._sh_text.configure(state="disabled")
+
+    def _sh_hist_up(self, _=None):
+        if self._sh_history:
+            self._sh_hist_idx = min(self._sh_hist_idx + 1, len(self._sh_history) - 1)
+            self._sh_entry.delete(0, "end")
+            self._sh_entry.insert(0, list(self._sh_history)[-(self._sh_hist_idx + 1)])
+        return "break"
+
+    def _sh_hist_down(self, _=None):
+        if self._sh_hist_idx > 0:
+            self._sh_hist_idx -= 1
+            self._sh_entry.delete(0, "end")
+            self._sh_entry.insert(0, list(self._sh_history)[-(self._sh_hist_idx + 1)])
+        elif self._sh_hist_idx == 0:
+            self._sh_hist_idx = -1
+            self._sh_entry.delete(0, "end")
+        return "break"
+
+    def _sh_on_enter(self, _=None):
+        """Input handler voor Shell terminal — real subprocess execution."""
+        cmd = self._sh_entry.get().strip()
+        if not cmd:
+            return
+        self._sh_entry.delete(0, "end")
+        self._sh_history.append(cmd)
+        self._sh_hist_idx = -1
+        self._sh_write(f"{self._sh_cwd}> {cmd}", "input")
+
+        # Handle cd specially
+        if cmd.lower().startswith("cd "):
+            target = cmd[3:].strip().strip('"').strip("'")
+            try:
+                new_cwd = os.path.abspath(os.path.join(self._sh_cwd, target))
+                if os.path.isdir(new_cwd):
+                    self._sh_cwd = new_cwd
+                    self._sh_cwd_label.configure(text=f"{self._sh_cwd}>")
+                    self._sh_write(f"Changed to: {self._sh_cwd}", "system")
+                else:
+                    self._sh_write(f"Directory not found: {new_cwd}", "error")
+            except Exception as e:
+                self._sh_write(f"Error: {e}", "error")
+            return
+
+        if cmd.lower() in ("cls", "clear"):
+            self._sh_text.configure(state="normal")
+            self._sh_text._textbox.delete("1.0", "end")
+            self._sh_text.configure(state="disabled")
+            return
+
+        # Run in background thread
+        threading.Thread(target=self._sh_run_cmd, args=(cmd,), daemon=True).start()
+
+    def _sh_run_cmd(self, cmd):
+        """Execute shell command in subprocess and stream output."""
+        try:
+            if sys.platform == "win32":
+                full_cmd = ["powershell", "-NoProfile", "-Command", cmd]
+            else:
+                full_cmd = ["bash", "-c", cmd]
+
+            proc = subprocess.Popen(
+                full_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                cwd=self._sh_cwd, text=True, encoding="utf-8", errors="replace",
+                creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
+            )
+            self._sh_proc = proc
+
+            for line in proc.stdout:
+                line = line.rstrip("\n\r")
+                self._sh_text.after(0, self._sh_write, line, "output")
+
+            proc.wait()
+            rc = proc.returncode
+            if rc != 0:
+                self._sh_text.after(0, self._sh_write, f"[Exit code: {rc}]", "warn")
+            self._sh_text.after(0, self._sh_write, "", "output")
+        except Exception as e:
+            self._sh_text.after(0, self._sh_write, f"Error: {e}", "error")
+        finally:
+            self._sh_proc = None
+
     def _ct_on_enter(self, _=None):
         """Input handler voor Sovereign Agent terminal."""
         cmd = self._ct_entry.get().strip()
@@ -1385,7 +1479,7 @@ class DashboardTab(ctk.CTkFrame):
             chain = "Groq \u2192 NIM \u2192 HuggingFace \u2192 Ollama"
             self._ct_write(f"  Fallback Chain: {chain}", "output")
         elif low == "help":
-            self._ct_write("  Sovereign Agent Commands:", "system")
+            self._ct_write("  Sovereign Mind Commands:", "system")
             for c, d in [
                 ("new", "Nieuwe conversatie (reset session)"),
                 ("clear", "Terminal wissen"),
@@ -1395,7 +1489,7 @@ class DashboardTab(ctk.CTkFrame):
                 ("help", "Dit overzicht"),
             ]:
                 self._ct_write(f"    {c:18s} {d}", "dim")
-            self._ct_write("\n  Typ direct een vraag voor Omega Agent.", "output")
+            self._ct_write("\n  Typ direct een vraag voor Sovereign Mind.", "output")
         elif low.startswith("wav "):
             # WAV-Loop shortcut vanuit Agent terminal
             vraag = cmd[4:].strip()
@@ -1403,7 +1497,7 @@ class DashboardTab(ctk.CTkFrame):
                 self._ot_write(f"\u2126 > {vraag}", "input")
                 self._ot_write("\u2126 Processing... (WAV-Loop)", "process")
                 threading.Thread(target=self._ot_ask_brain, args=(vraag,), daemon=True).start()
-                self._ct_write(f"  \u21aa Doorgestuurd naar Omega Brain WAV-Loop", "system")
+                self._ct_write(f"  \u21aa Doorgestuurd naar Sovereign Soul WAV-Loop", "system")
             else:
                 self._ct_write("  Gebruik: wav <je vraag>", "dim")
         else:
@@ -1488,6 +1582,40 @@ class DashboardTab(ctk.CTkFrame):
         if HAS_INTROSPECTOR:
             _step("MONITORING: Introspector", get_introspector)
 
+        # [7/7] API — FastAPI localhost server (online data via SwarmEngine)
+        def _init_api_server():
+            import socket
+            port = _omega_mode["api_port"]
+            # Check of poort al bezet is (server draait al)
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                if s.connect_ex(("127.0.0.1", port)) == 0:
+                    return f"Already running on :{port}"
+            # Start FastAPI server als background subprocess
+            project_root = os.path.dirname(os.path.abspath(__file__))
+            server_script = os.path.join(project_root, "fastapi_server.py")
+            python_exe = os.path.join(project_root, "venv311", "Scripts", "python.exe")
+            if not os.path.isfile(server_script):
+                raise FileNotFoundError(f"fastapi_server.py not found at {server_script}")
+            creation_flags = 0
+            if sys.platform == "win32":
+                creation_flags = subprocess.CREATE_NO_WINDOW
+            proc = subprocess.Popen(
+                [python_exe, server_script],
+                cwd=project_root,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                creationflags=creation_flags,
+            )
+            # Wacht even en verifieer dat het proces leeft
+            time.sleep(2.0)
+            if proc.poll() is not None:
+                raise RuntimeError(f"API server exited immediately (code {proc.returncode})")
+            _omega_mode["api_server"] = proc
+            return f"http://localhost:{port}"
+        api_result = _step("API: FastAPI localhost", _init_api_server)
+        if api_result and not str(api_result).startswith("Already"):
+            w(f"  API: {api_result}/docs", "verify")
+
         # Summary
         elapsed = time.time() - t0
         ok = len(_omega_mode["systems_ok"])
@@ -1520,6 +1648,120 @@ class DashboardTab(ctk.CTkFrame):
 
         # Re-enable entry
         self._ot_text.after(0, lambda: self._ot_entry.configure(state="normal"))
+
+        # Auto-dispatch: agents automatisch aansturen via Sovereign Agent terminal
+        threading.Thread(target=self._omega_auto_dispatch, daemon=True).start()
+
+    # ── AUTO-DISPATCH: Sovereign Agent stuurt agents automatisch aan ──
+
+    def _omega_auto_dispatch(self):
+        """Na omega awaken: stuur agents automatisch aan via Sovereign Agent terminal.
+
+        Draait op achtergrond-thread. Output gaat naar de Sovereign Agent terminal.
+        Sequentieel: diagnostic → DevOpsDaemon → SwarmEngine probe → samenvatting.
+        """
+        time.sleep(1.0)  # Geef UI even rust na awaken
+        wa = lambda txt, tag="output": self._ct_text.after(0, self._ct_write, txt, tag)
+
+        wa("", "system")
+        wa("  ΩΩΩ  AUTO-DISPATCH SEQUENCE  ΩΩΩ", "system")
+        wa("  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "system")
+        wa("  Agents worden automatisch aangestuurd...", "process")
+        wa("", "system")
+
+        t0 = time.time()
+        dispatched = []
+        failed = []
+
+        # ── [1/4] DIAGNOSTIC: Volledige module scan ──
+        wa("  [1/4] DIAGNOSTIC — Module health scan...", "process")
+        try:
+            diag = _run_self_diagnostic()
+            samenv = diag.pop("_samenvatting", {})
+            ok_count = samenv.get("ok", 0)
+            fout_count = samenv.get("fout", 0)
+            totaal = samenv.get("totaal", 0)
+            wa(f"  [1/4] DIAGNOSTIC: {ok_count}/{totaal} OK, {fout_count} FOUT", "verify" if fout_count == 0 else "warn")
+            if fout_count > 0:
+                for comp, info in sorted(diag.items()):
+                    if info.get("status") == "FOUT":
+                        wa(f"    FOUT: {comp} — {info.get('error', '?')[:80]}", "error")
+            dispatched.append("Diagnostic")
+        except Exception as e:
+            wa(f"  [1/4] DIAGNOSTIC FAILED: {e}", "error")
+            failed.append("Diagnostic")
+
+        # ── [2/4] DEVOPS: CI status check ──
+        wa("  [2/4] DEVOPS — CI loop status...", "process")
+        try:
+            from danny_toolkit.brain.devops_daemon import DevOpsDaemon
+            daemon = DevOpsDaemon()
+            status = daemon.status() if hasattr(daemon, "status") else {"status": "LOADED"}
+            wa(f"  [2/4] DEVOPS: ONLINE — {status}", "verify")
+            dispatched.append("DevOpsDaemon")
+        except Exception as e:
+            wa(f"  [2/4] DEVOPS: OFFLINE — {e}", "warn")
+            failed.append("DevOpsDaemon")
+
+        # ── [3/4] SWARM PROBE: SwarmEngine health query ──
+        wa("  [3/4] SWARM — Agent probe via SwarmEngine...", "process")
+        try:
+            engine = _omega_mode.get("engine")
+            if engine is None:
+                raise RuntimeError("SwarmEngine not available")
+
+            import asyncio
+            loop = asyncio.new_event_loop()
+            brain = _load_brain()
+            if brain and hasattr(engine, "brain"):
+                engine.brain = brain
+
+            payloads = loop.run_until_complete(
+                engine.run("Geef een korte systeem status: hoeveel agents online, geheugen, health score.")
+            )
+            loop.close()
+
+            agent_names = [getattr(p, "agent", "?") for p in (payloads or [])]
+            wa(f"  [3/4] SWARM: {len(payloads or [])} agents responded — {', '.join(agent_names[:6])}", "verify")
+            dispatched.append("SwarmEngine")
+        except Exception as e:
+            wa(f"  [3/4] SWARM: Probe failed — {e}", "warn")
+            failed.append("SwarmEngine")
+
+        # ── [4/4] MEMORY: CorticalStack + BlackBox status ──
+        wa("  [4/4] MEMORY — CorticalStack + BlackBox...", "process")
+        try:
+            mem_parts = []
+            if HAS_CORTICAL:
+                cs = get_cortical_stack()
+                recent = cs.get_recent_events(count=5)
+                mem_parts.append(f"CorticalStack: {len(recent)} recent events")
+            if HAS_BLACKBOX:
+                bb = get_black_box()
+                ab_list = bb.get_antibodies() if hasattr(bb, "get_antibodies") else []
+                mem_parts.append(f"BlackBox: {len(ab_list)} antibodies")
+            wa(f"  [4/4] MEMORY: {' | '.join(mem_parts) if mem_parts else 'unavailable'}", "verify")
+            dispatched.append("Memory")
+        except Exception as e:
+            wa(f"  [4/4] MEMORY: {e}", "warn")
+            failed.append("Memory")
+
+        # ── Samenvatting ──
+        elapsed = time.time() - t0
+        wa("", "system")
+        wa("  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "system")
+        wa(f"  AUTO-DISPATCH COMPLETE — {len(dispatched)}/{len(dispatched)+len(failed)} OK", "verify" if not failed else "warn")
+        wa(f"  Dispatched: {', '.join(dispatched)}", "output")
+        if failed:
+            wa(f"  Failed: {', '.join(failed)}", "error")
+        port = _omega_mode.get("api_port", 8000)
+        api = _omega_mode.get("api_server")
+        if api is not None and api.poll() is None:
+            wa(f"  API: http://localhost:{port}/docs", "verify")
+        wa(f"  Elapsed: {elapsed:.1f}s", "dim")
+        wa("  Sovereign Mind AUTONOMOUS — alle agents paraat.", "verify")
+        wa("  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "system")
+        wa("", "system")
 
     def _dedup_payloads(self, payloads):
         """Merge duplicate agent antwoorden (>75% similarity)."""
@@ -1689,6 +1931,11 @@ class DashboardTab(ctk.CTkFrame):
                 self._ot_write(f"  Systems: {ok} OK / {fail} FAIL", "output")
                 self._ot_write(f"  Uptime: {m:02d}:{s:02d}", "output")
                 self._ot_write(f"  Omega queries: {_omega_mode['omega_queries']}", "output")
+                api = _omega_mode.get("api_server")
+                if api is not None and api.poll() is None:
+                    self._ot_write(f"  API: http://localhost:{_omega_mode['api_port']}/docs", "verify")
+                else:
+                    self._ot_write("  API: OFFLINE", "warn")
             elif _omega_mode["awakening"]:
                 self._ot_write("  OMEGA AWAKENING in progress...", "process")
             else:
@@ -1730,13 +1977,13 @@ class DashboardTab(ctk.CTkFrame):
     def _ot_dispatch(self, cmd):
         eng = _load_engine()[0]
         if cmd == "help":
-            self._ot_write("  System commands:", "system")
+            self._ot_write("  Sovereign Soul commands:", "system")
             for c in ["status", "agents", "health", "metrics", "bus",
                        "events", "keys", "cortical", "apps", "brain",
                        "immune", "rag", "diag", "vram", "config", "uptime"]:
                 self._ot_write(f"    {c}", "dim")
             self._ot_write("\n  v3.0 commands:", "system")
-            for c, d in [("omega", "AWAKEN all systems (full pipeline)"),
+            for c, d in [("omega", "AWAKEN all systems + API server (full pipeline)"),
                          ("zintuig", "Launch Zesde Zintuig neural monitor"),
                          ("shadow", "Shadow Governance zones"),
                          ("dreamer", "REM cycle + backup status"),
@@ -4269,6 +4516,12 @@ class OmegaSovereignApp(ctk.CTk):
         if proc and proc.poll() is None:
             proc.terminate()
             logger.info("Zesde Zintuig terminated")
+        # Terminate FastAPI server if running
+        api_proc = _omega_mode.get("api_server")
+        if api_proc is not None and api_proc.poll() is None:
+            api_proc.terminate()
+            logger.info("FastAPI server terminated (port %s)", _omega_mode["api_port"])
+            _omega_mode["api_server"] = None
         self.destroy()
 
     def _schedule_refresh(self):

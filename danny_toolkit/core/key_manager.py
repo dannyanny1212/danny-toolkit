@@ -147,6 +147,10 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
         self._keys = self._discover_keys()
         self._primary_key = self._keys[0] if self._keys else ""
 
+        # Dedicated fallback model key (aparte rate-limit pool)
+        _fb = os.getenv("GROQ_API_KEY_FALLBACK", "")
+        self._fallback_key = _fb if _fb and _fb.startswith("gsk_") else ""
+
         # Per-agent metrieken
         self._agents: dict[str, AgentMetrics] = {}
 
@@ -181,6 +185,7 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
             "GROQ_API_KEY_FORGE",
             "GROQ_API_KEY_OVERNIGHT",
             "GROQ_API_KEY_KNOWLEDGE",
+            "GROQ_API_KEY_FALLBACK",
         ]
         for var in named_vars:
             val = os.getenv(var, "")
@@ -434,6 +439,23 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
         return self._keys[idx]
 
     # ------------------------------------------------------------------
+    # Model-Aware Key Selectie
+    # ------------------------------------------------------------------
+
+    def get_key_for_model(self, agent_naam: str = "", model: str = "") -> str:
+        """Geef API key op basis van agent EN model.
+
+        Als het gevraagde model het fallback model is EN er een dedicated
+        GROQ_API_KEY_FALLBACK beschikbaar is, wordt die geretourneerd.
+        Zo worden primary en fallback rate-limit pools volledig geïsoleerd.
+
+        Fallback: reguliere get_key() (agent-prioriteit routing).
+        """
+        if model == _FALLBACK and self._fallback_key:
+            return self._fallback_key
+        return self.get_key(agent_naam)
+
+    # ------------------------------------------------------------------
     # Client Factories
     # ------------------------------------------------------------------
 
@@ -480,6 +502,44 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
 
         return Groq(api_key=key)
 
+    def create_sync_client_for_model(self, agent_naam: str, model: str):
+        """Maak een synchrone Groq client met model-aware key selectie.
+
+        Gebruikt GROQ_API_KEY_FALLBACK voor het fallback model,
+        zodat primary en fallback onafhankelijke rate-limit pools hebben.
+        """
+        try:
+            from groq import Groq
+        except ImportError:
+            logger.warning("groq package niet beschikbaar")
+            return None
+
+        key = self.get_key_for_model(agent_naam, model)
+        if not key:
+            logger.warning(
+                f"Geen Groq key voor {agent_naam or 'onbekend'} model={model}"
+            )
+            return None
+
+        return Groq(api_key=key)
+
+    def create_async_client_for_model(self, agent_naam: str, model: str):
+        """Maak een AsyncGroq client met model-aware key selectie."""
+        try:
+            from groq import AsyncGroq
+        except ImportError:
+            logger.warning("groq package niet beschikbaar")
+            return None
+
+        key = self.get_key_for_model(agent_naam, model)
+        if not key:
+            logger.warning(
+                f"Geen Groq key voor {agent_naam or 'onbekend'} model={model}"
+            )
+            return None
+
+        return AsyncGroq(api_key=key)
+
     # ------------------------------------------------------------------
     # Status & Diagnostiek
     # ------------------------------------------------------------------
@@ -503,6 +563,7 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
 
             return {
                 "keys_beschikbaar": len(self._keys),
+                "fallback_key_actief": bool(self._fallback_key),
                 "globale_429s": self._global_429_count,
                 "in_globale_cooldown": time.time() < self._global_cooldown_tot,
                 "agents": agents_status,

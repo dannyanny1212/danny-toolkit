@@ -20,6 +20,11 @@ class OmegaCore:
 
     def __init__(self):
         self._cache = {}
+        self._turn_tools_called: set = set()  # Idempotency guard per turn
+
+    def reset_turn(self):
+        """Reset per-turn tool tracking. Roep aan bij elke nieuwe user query."""
+        self._turn_tools_called.clear()
 
     # ── Helpers ──────────────────────────────────────────────────
 
@@ -92,6 +97,12 @@ class OmegaCore:
 
     def tier_detail(self, tier: int = 1) -> Dict[str, Any]:
         """Diepgaande info over een specifieke tier (1-5)."""
+        # Idempotency guard: max 1 tier_detail call per turn (any tier)
+        if "tier_detail" in self._turn_tools_called:
+            return {"tier": f"T{tier}", "blocked": True,
+                    "reason": "BLOCKED: tier_detail al aangeroepen deze turn. Gebruik system_scan voor overzicht."}
+        self._turn_tools_called.add("tier_detail")
+
         result = {"tier": f"T{tier}"}
 
         if tier == 1:

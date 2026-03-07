@@ -128,10 +128,20 @@ class CentralBrain:
         self._fallback_client = None
         self._fallback_provider = None
 
+        # Groq fallback client (aparte key voor onafhankelijke rate-limits)
+        self._groq_fallback_client = None
+
         if GROQ_BESCHIKBAAR and Config.has_groq_key():
             if HAS_KEY_MANAGER:
                 km = get_key_manager()
                 self.client = km.create_sync_client("CentralBrain") or Groq()
+                # Dedicated fallback client — aparte API key = aparte rate-limit pool
+                fb_client = km.create_sync_client_for_model(
+                    "CentralBrain", self.GROQ_MODEL_FALLBACK,
+                )
+                if fb_client:
+                    self._groq_fallback_client = fb_client
+                    logger.info("[OK] Groq fallback client: aparte key actief")
             else:
                 self.client = Groq()
             self.ai_provider = "groq"
@@ -243,6 +253,29 @@ class CentralBrain:
         """Sla statistieken op."""
         with open(self.data_file, "w", encoding="utf-8") as f:
             json.dump(self.stats, f, indent=2, ensure_ascii=False)
+
+    def _governor_gate(self, task: str) -> tuple:
+        """Governor input-validatie gate voor SwarmEngine.
+
+        Delegeert naar OmegaGovernor.valideer_input() als beschikbaar.
+        Fallback: (True, "OK") — laat SwarmEngine door.
+        """
+        try:
+            from danny_toolkit.brain.governor import OmegaGovernor
+            gov = OmegaGovernor()
+            if not gov.check_api_health():
+                logger.info("[GOVERNOR] API health warning — laat fallback chain beslissen")
+            veilig, reden = gov.valideer_input(task)
+            if not veilig:
+                logger.warning("[GOVERNOR] Input blocked: %s", reden)
+                return False, reden
+            return True, "OK"
+        except ImportError:
+            logger.debug("OmegaGovernor niet beschikbaar — gate open")
+            return True, "OK"
+        except Exception as e:
+            logger.debug("Governor gate error: %s — gate open", e)
+            return True, "OK"
 
     def _register_all_apps(self):
         """Registreer alle apps uit APP_TOOLS."""
@@ -494,6 +527,11 @@ Regels:
 4. Combineer informatie uit meerdere apps voor een compleet antwoord
 5. Als de gebruiker vraagt over de architectuur, T1-T5 tiers, Cortex, of Omega — beantwoord uit bovenstaande kennis
 6. Als er kennisbank context beschikbaar is, gebruik die om je antwoord te verankeren in feiten"""
+
+        # Reset OmegaCore per-turn idempotency guard
+        omega = self.app_instances.get("omega_core")
+        if omega is not None and hasattr(omega, "reset_turn"):
+            omega.reset_turn()
 
         # Voeg user message toe aan history
         with self._history_lock:
@@ -1061,6 +1099,11 @@ Regels:
         Raises:
             Exception bij rate-limit of onherstelbare fouten.
         """
+        # Model-aware client selectie: fallback model → aparte key/client
+        client = self.client
+        if model == self.GROQ_MODEL_FALLBACK and self._groq_fallback_client:
+            client = self._groq_fallback_client
+
         messages = [{"role": "system", "content": system_message}]
         messages.extend(self.conversation_history)
 
@@ -1090,7 +1133,7 @@ Regels:
                 kwargs["tool_choice"] = "auto"
 
             try:
-                response = self.client.chat.completions.create(**kwargs)
+                response = client.chat.completions.create(**kwargs)
             except Exception as api_err:
                 # Rate limit of andere fout NADAT tools al uitgevoerd zijn
                 print(kleur(
@@ -1255,7 +1298,7 @@ Regels:
                         ),
                     })
                     try:
-                        forced = self.client.chat.completions.create(
+                        forced = client.chat.completions.create(
                             model=model,
                             messages=messages,
                             max_tokens=max_tokens,
