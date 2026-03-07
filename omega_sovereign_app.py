@@ -341,7 +341,7 @@ class _DataCache:
         # Circuit breakers
         if eng:
             try:
-                from danny_toolkit.core.swarm_engine import get_circuit_state
+                from swarm_engine import get_circuit_state
                 self.put("circuit_state", get_circuit_state())
             except Exception as e:
                 logger.debug("cache circuit: %s", e)
@@ -580,7 +580,7 @@ def _load_engine():
         try:
             buf = io.StringIO()
             with redirect_stdout(buf):
-                from danny_toolkit.core.swarm_engine import SwarmEngine
+                from swarm_engine import SwarmEngine
                 eng = SwarmEngine()
             _engine_cache = (eng, buf.getvalue())
         except Exception as e:
@@ -1509,7 +1509,7 @@ class DashboardTab(ctk.CTkFrame):
             w("\u2126 [OMEGA] Full Pipeline Processing...", "process")
 
             try:
-                from danny_toolkit.core.swarm_engine import SwarmEngine
+                from swarm_engine import SwarmEngine
                 import asyncio
 
                 # Create fresh event loop for this thread
