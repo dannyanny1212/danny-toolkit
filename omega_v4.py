@@ -130,19 +130,149 @@ class OmegaDashboardV4(App):
         """Start de background tasks zodra de UI is geladen."""
         self.title = "O M E G A   S O V E R E I G N   v 4 . 0"
 
-        # Testberichtjes om de ANSI parsing te demonstreren
-        self.log_soul.write("[bold cyan]CorticalStack[/] ONLINE. Kennisgraaf geladen (321 nodes).")
         self.log_mind.write("[bold yellow]WAV-Loop[/] Wachten op input van Commandant...")
-
-        # HIER IS DE ANSI FIX VOOR JE RECHTERKANT (BODY)
-        ruwe_terminal_output = "\033[96m[GOVERNOR] Startup check gestart...\033[0m\n\033[32m[GOVERNOR] Startup check voltooid: OK\033[0m"
-
-        # Door Text.from_ansi() te gebruiken, verdwijnen de [0m codes en worden het échte kleuren!
-        self.log_body.write(Text.from_ansi(ruwe_terminal_output))
 
         # Boot SwarmEngine (lazy — zware imports pas bij eerste gebruik)
         self._engine = None
         self._engine_ready = False
+
+        # Start SOUL + BODY telemetrie op achtergrond
+        self._boot_soul()
+        self._boot_body_telemetry()
+
+    @work(thread=True)
+    def _boot_soul(self) -> None:
+        """Boot SOUL kolom — CorticalStack + NeuralBus listener."""
+        # 1. CorticalStack status
+        try:
+            from danny_toolkit.brain.cortical_stack import get_cortical_stack
+            cs = get_cortical_stack()
+            recent = cs.get_recent_events(count=5)
+            self.app.call_from_thread(
+                self.log_soul.write,
+                f"[bold cyan]CorticalStack[/] ONLINE. {len(recent)} recente herinneringen.",
+            )
+            for evt in recent[:3]:
+                if not isinstance(evt, dict):
+                    continue
+                ts = evt.get("timestamp", "")[:19]
+                actor = evt.get("actor", "SYSTEEM")
+                action = evt.get("action", "event").upper()
+                self.app.call_from_thread(
+                    self.log_soul.write,
+                    f"[dim]  {ts}[/] [cyan][{actor}][/] {action}",
+                )
+        except Exception as e:
+            self.app.call_from_thread(
+                self.log_soul.write,
+                f"[yellow]CorticalStack: {e}[/]",
+            )
+
+        # 2. NeuralBus — subscribe op SOUL-relevante events
+        try:
+            from danny_toolkit.core.neural_bus import get_bus
+            bus = get_bus()
+
+            _SOUL_EVENTS = [
+                "knowledge_graph_update", "system_event",
+                "hallucination_blocked", "immune_response",
+                "synapse_updated", "phantom_prediction", "phantom_hit",
+                "pruning_started", "pruning_complete",
+                "fragment_archived", "fragment_destroyed",
+            ]
+
+            def _soul_handler(event):
+                etype = getattr(event, "type", str(event))
+                data = getattr(event, "data", {})
+                bron = data.get("bron", "") if isinstance(data, dict) else ""
+                detail = ""
+                if isinstance(data, dict):
+                    detail = data.get("detail", data.get("reason", ""))
+                msg = f"[cyan][{etype}][/]"
+                if bron:
+                    msg += f" [dim]({bron})[/]"
+                if detail:
+                    msg += f" {str(detail)[:100]}"
+                self.app.call_from_thread(self.log_soul.write, msg)
+
+            for evt_type in _SOUL_EVENTS:
+                bus.subscribe(evt_type, _soul_handler)
+
+            self.app.call_from_thread(
+                self.log_soul.write,
+                f"[green]NeuralBus[/] Luistert op {len(_SOUL_EVENTS)} event types.",
+            )
+        except Exception as e:
+            self.app.call_from_thread(
+                self.log_soul.write,
+                f"[yellow]NeuralBus: {e}[/]",
+            )
+
+    @work(thread=True)
+    def _boot_body_telemetry(self) -> None:
+        """Boot BODY kolom — hardware telemetrie + Governor check."""
+        # Governor startup
+        self.app.call_from_thread(
+            self.log_body.write,
+            Text.from_ansi("\033[96m[GOVERNOR] Startup check gestart...\033[0m"),
+        )
+
+        # Hardware metrics
+        try:
+            import psutil
+            cpu = psutil.cpu_percent(interval=1)
+            ram = psutil.virtual_memory()
+            self.app.call_from_thread(
+                self.log_body.write,
+                Text.from_ansi(
+                    f"\033[32m[HARDWARE] CPU: {cpu}% | "
+                    f"RAM: {ram.percent}% ({ram.used // (1024**3)}/{ram.total // (1024**3)} GB)\033[0m"
+                ),
+            )
+        except ImportError:
+            pass
+
+        # GPU/VRAM
+        try:
+            from danny_toolkit.core.vram_manager import vram_rapport
+            vram = vram_rapport()
+            if vram.get("beschikbaar"):
+                gpu = vram.get("gpu_naam", "?")
+                used = vram.get("in_gebruik_mb", 0)
+                total = vram.get("totaal_mb", 0)
+                free = vram.get("vrij_mb", 0)
+                self.app.call_from_thread(
+                    self.log_body.write,
+                    Text.from_ansi(
+                        f"\033[32m[GPU] {gpu} | {used}/{total} MB (vrij: {free} MB)\033[0m"
+                    ),
+                )
+        except Exception:
+            pass
+
+        self.app.call_from_thread(
+            self.log_body.write,
+            Text.from_ansi("\033[32m[GOVERNOR] Startup check voltooid: OK\033[0m"),
+        )
+
+        # Live hardware update elke 30s
+        while True:
+            _time.sleep(30)
+            try:
+                import psutil
+                cpu = psutil.cpu_percent(interval=0.5)
+                ram = psutil.virtual_memory()
+                status = f"🟢 ONLINE | CPU: {cpu}% | RAM: {ram.percent}%"
+                try:
+                    from danny_toolkit.core.vram_manager import vram_rapport
+                    vram = vram_rapport()
+                    if vram.get("beschikbaar"):
+                        status += f" | VRAM: {vram.get('vrij_mb', 0)} MB vrij"
+                except Exception:
+                    pass
+                self.app.call_from_thread(self.status_bar.update, status)
+            except Exception:
+                pass
 
     def _get_engine(self):
         """Lazy-init SwarmEngine + CentralBrain."""
