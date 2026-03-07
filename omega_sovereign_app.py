@@ -177,6 +177,18 @@ try:
 except ImportError:
     HAS_LIMBIC = False
 
+try:
+    from danny_toolkit.brain.trinity_omega import PrometheusBrain
+    HAS_PROMETHEUS = True
+except ImportError:
+    HAS_PROMETHEUS = False
+
+try:
+    from danny_toolkit.brain.arbitrator import get_arbitrator
+    HAS_ARBITRATOR = True
+except ImportError:
+    HAS_ARBITRATOR = False
+
 
 # ── REALTIME DATA CACHE (background thread fills, UI reads) ──────
 
@@ -498,6 +510,37 @@ _wav_stats = {
     "queries": 0, "total_time": 0.0, "schild_blocks": 0,
     "schild_warns": 0, "v_scores": deque(maxlen=50),
 }
+
+# ── OMEGA MODE STATE ────────────────────────────────────────────
+_omega_mode = {
+    "active": False,
+    "awakening": False,
+    "engine": None,
+    "arbitrator": None,
+    "systems_ok": [],
+    "systems_fail": [],
+    "activated_at": None,
+    "omega_queries": 0,
+}
+
+_omega_bus_seen = {}  # {event_hash: timestamp} — dedup window
+
+
+def _omega_bus_publish(bus, event_type, data, bron="omega"):
+    """Dedup NeuralBus publish — voorkomt duplicate events binnen 5s."""
+    import hashlib
+    import json as _json
+    key = hashlib.md5(
+        f"{event_type}:{_json.dumps(data, default=str, sort_keys=True)[:200]}".encode()
+    ).hexdigest()
+    now = time.time()
+    for k in list(_omega_bus_seen):
+        if now - _omega_bus_seen[k] > 5.0:
+            del _omega_bus_seen[k]
+    if key in _omega_bus_seen:
+        return
+    _omega_bus_seen[key] = now
+    bus.publish(event_type, data, bron=bron)
 
 
 # ── LAZY LOADERS ─────────────────────────────────────────────────
@@ -1291,6 +1334,245 @@ class DashboardTab(ctk.CTkFrame):
         writer("  Wat kan ik voor je doen, Commandant?", "verify")
         writer("", "system")
 
+    def _omega_awaken(self):
+        """Background thread: sequentieel alle subsystemen activeren."""
+        w = lambda txt, tag="output": self._ot_text.after(0, self._ot_write, txt, tag)
+        _omega_mode["awakening"] = True
+        _omega_mode["systems_ok"].clear()
+        _omega_mode["systems_fail"].clear()
+        t0 = time.time()
+
+        # Banner
+        self._ot_text.after(0, self._omega_activate, self._ot_write)
+        time.sleep(0.3)
+        w("\n  OMEGA AWAKENING SEQUENCE INITIATED", "system")
+        w("  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "system")
+
+        def _step(label, fn):
+            w(f"  [{label}] initializing...", "process")
+            try:
+                result = fn()
+                _omega_mode["systems_ok"].append(label)
+                w(f"  [{label}] ONLINE", "verify")
+                return result
+            except Exception as e:
+                _omega_mode["systems_fail"].append(label)
+                w(f"  [{label}] FAILED: {e}", "error")
+                return None
+
+        # [1/6] SOUL — CorticalStack + NeuralBus
+        cs = _step("SOUL: CorticalStack", lambda: get_cortical_stack() if HAS_CORTICAL else None)
+        bus = _step("SOUL: NeuralBus", lambda: get_bus() if HAS_BUS else None)
+
+        # [2/6] BODY — SwarmEngine
+        def _init_engine():
+            eng_tuple = _load_engine()
+            eng = eng_tuple[0] if eng_tuple else None
+            if eng is None:
+                raise RuntimeError("SwarmEngine load failed")
+            _omega_mode["engine"] = eng
+            return eng
+        engine = _step("BODY: SwarmEngine", _init_engine)
+
+        # [3/6] MIND — CentralBrain + PrometheusBrain
+        brain = _step("MIND: CentralBrain", lambda: _load_brain() or (_ for _ in ()).throw(RuntimeError("load failed")))
+        if HAS_PROMETHEUS:
+            _step("MIND: PrometheusBrain", lambda: PrometheusBrain)
+
+        # [4/6] IMMUNE — BlackBox + HallucinatieSchild + AdversarialTribunal
+        if HAS_BLACKBOX:
+            _step("IMMUNE: BlackBox", get_black_box)
+        if HAS_SCHILD:
+            _step("IMMUNE: HallucinatieSchild", get_hallucination_shield)
+        if HAS_TRIBUNAL:
+            _step("IMMUNE: AdversarialTribunal", get_adversarial_tribunal)
+
+        # [5/6] COMMAND — TaskArbitrator
+        if HAS_ARBITRATOR:
+            arb = _step("COMMAND: TaskArbitrator", lambda: get_arbitrator(brain=brain))
+            _omega_mode["arbitrator"] = arb
+
+        # [6/6] MONITORING — Waakhuis + Introspector
+        if HAS_WAAKHUIS:
+            _step("MONITORING: Waakhuis", get_waakhuis)
+        if HAS_INTROSPECTOR:
+            _step("MONITORING: Introspector", get_introspector)
+
+        # Summary
+        elapsed = time.time() - t0
+        ok = len(_omega_mode["systems_ok"])
+        fail = len(_omega_mode["systems_fail"])
+        total = ok + fail
+
+        w("")
+        w("  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "system")
+        if fail == 0:
+            w(f"  OMEGA FULLY OPERATIONAL — {ok}/{total} systems", "verify")
+        else:
+            w(f"  OMEGA PARTIAL — {ok}/{total} OK, {fail} FAILED", "warn")
+            for s in _omega_mode["systems_fail"]:
+                w(f"    FAIL: {s}", "error")
+        w(f"  Awakening time: {elapsed:.1f}s", "dim")
+        w(f"  All questions now route through FULL PIPELINE", "system")
+        w("  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "system")
+        w("")
+
+        _omega_mode["active"] = True
+        _omega_mode["awakening"] = False
+        _omega_mode["activated_at"] = time.time()
+
+        # NeuralBus event
+        if bus:
+            _omega_bus_publish(bus, "OMEGA_AWAKENED", {
+                "systems_ok": ok, "systems_fail": fail,
+                "elapsed": round(elapsed, 2),
+            })
+
+        # Re-enable entry
+        self._ot_text.after(0, lambda: self._ot_entry.configure(state="normal"))
+
+    def _dedup_payloads(self, payloads):
+        """Merge duplicate agent antwoorden (>75% similarity)."""
+        from difflib import SequenceMatcher
+        seen = []
+        for p in payloads:
+            txt = (getattr(p, "display_text", "") or str(getattr(p, "content", ""))).strip()
+            if not txt:
+                continue
+            merged = False
+            for s in seen:
+                ratio = SequenceMatcher(None, s["text"][:500], txt[:500]).ratio()
+                if ratio > 0.75:
+                    s["agents"].append(getattr(p, "agent", "?"))
+                    if len(txt) > len(s["text"]):
+                        s["text"] = txt
+                        s["payload"] = p
+                    merged = True
+                    break
+            if not merged:
+                seen.append({"text": txt, "payload": p, "agents": [getattr(p, "agent", "?")]})
+        return seen
+
+    def _ot_ask_omega(self, question):
+        """OMEGA Pipeline: Full SwarmEngine dispatch met dedup + Arbitrator fallback."""
+        t0 = time.time()
+        w = lambda txt, tag="output": self._ot_text.after(0, self._ot_write, txt, tag)
+
+        try:
+            engine = _omega_mode.get("engine")
+            brain = _load_brain()
+
+            if engine is None:
+                w("[OMEGA] Engine niet beschikbaar — fallback naar WAV-Loop", "warn")
+                self._ot_ask_brain(question)
+                return
+
+            # Check for complex goal keywords → Arbitrator decomposition
+            _GOAL_KEYWORDS = {"plan", "analyseer alles", "missie", "decompose",
+                              "strategie", "audit", "full scan", "volledige analyse"}
+            q_lower = question.lower()
+            use_arbitrator = (
+                _omega_mode.get("arbitrator") is not None
+                and any(kw in q_lower for kw in _GOAL_KEYWORDS)
+            )
+
+            if use_arbitrator:
+                w("\u2126 [ARBITRATOR] Decomposing goal...", "process")
+                arb = _omega_mode["arbitrator"]
+                try:
+                    import asyncio
+                    loop = asyncio.new_event_loop()
+                    manifest = loop.run_until_complete(arb.decompose(question))
+                    task_count = len(manifest.taken) if hasattr(manifest, "taken") else 0
+                    w(f"\u2126 [ARBITRATOR] {task_count} sub-taken gedecomponeerd", "system")
+                    manifest = loop.run_until_complete(arb.execute(manifest, engine=engine))
+                    loop.close()
+
+                    # Show results
+                    for task in getattr(manifest, "taken", []):
+                        status = getattr(task, "status", "?")
+                        desc = getattr(task, "beschrijving", getattr(task, "description", str(task)))[:120]
+                        tag = "verify" if status == "DONE" else "warn"
+                        w(f"  [{status}] {desc}", tag)
+
+                    elapsed = time.time() - t0
+                    _omega_mode["omega_queries"] += 1
+                    _wav_stats["queries"] += 1
+                    _wav_stats["total_time"] += elapsed
+                    w(f"\n  [OMEGA ARBITRATOR: {elapsed:.1f}s | {task_count} tasks]", "dim")
+                    w("")
+                    return
+                except Exception as e:
+                    w(f"[ARBITRATOR] Decompose failed: {e} — using SwarmEngine direct", "warn")
+
+            # Standard SwarmEngine pipeline
+            w("\u2126 [OMEGA] Full Pipeline Processing...", "process")
+
+            try:
+                from danny_toolkit.core.swarm_engine import SwarmEngine
+                import asyncio
+
+                # Create fresh event loop for this thread
+                loop = asyncio.new_event_loop()
+                eng = SwarmEngine(brain=brain)
+                payloads = loop.run_until_complete(eng.run(question))
+                loop.close()
+            except Exception as e:
+                w(f"[OMEGA] SwarmEngine.run() failed: {e}", "error")
+                w("[OMEGA] Fallback naar WAV-Loop...", "warn")
+                self._ot_ask_brain(question)
+                return
+
+            if not payloads:
+                w("[OMEGA] Geen resultaten — fallback naar WAV-Loop", "warn")
+                self._ot_ask_brain(question)
+                return
+
+            # Dedup payloads
+            deduped = self._dedup_payloads(payloads)
+            dup_count = len(payloads) - len(deduped)
+            if dup_count > 0:
+                w(f"  [DEDUP] {dup_count} duplicate antwoorden gemerged", "warn")
+
+            # Display results
+            w("")
+            for entry in deduped:
+                agents = entry["agents"]
+                agent_label = " + ".join(agents)
+                txt = entry["text"]
+                w(f"  [{agent_label}]", "system")
+                for line in txt.strip().split("\n")[:20]:
+                    w(f"    {line}", "output")
+                if len(txt.strip().split("\n")) > 20:
+                    w(f"    ... (+{len(txt.strip().split(chr(10))) - 20} lines)", "dim")
+                w("")
+
+            elapsed = time.time() - t0
+            _omega_mode["omega_queries"] += 1
+            _wav_stats["queries"] += 1
+            _wav_stats["total_time"] += elapsed
+            w(f"  [OMEGA: {elapsed:.1f}s | {len(payloads)} payloads | {len(deduped)} unique | {len(deduped[0]['agents']) if deduped else 0} primary]", "dim")
+            w("")
+
+            # NeuralBus event
+            if HAS_BUS:
+                bus = get_bus()
+                _omega_bus_publish(bus, "OMEGA_QUERY", {
+                    "question": question[:100],
+                    "payloads": len(payloads),
+                    "elapsed": round(elapsed, 2),
+                })
+
+        except Exception as e:
+            w(f"[OMEGA ERROR] {e}", "error")
+            w("[OMEGA] Fallback naar WAV-Loop...", "warn")
+            try:
+                self._ot_ask_brain(question)
+            except Exception as e2:
+                w(f"[WAV-LOOP ERROR] {e2}", "error")
+        finally:
+            self._ot_text.after(0, lambda: self._ot_entry.configure(state="normal"))
+
     def _ot_on_enter(self, _=None):
         cmd = self._ot_entry.get().strip()
         if not cmd:
@@ -1306,7 +1588,21 @@ class DashboardTab(ctk.CTkFrame):
                  "shadow", "dreamer", "oracle", "devops"}
         low = cmd.lower().strip("/")
         if low == "omega":
-            self._omega_activate(self._ot_write)
+            if _omega_mode["active"]:
+                # Already active — show status
+                uptime = int(time.time() - (_omega_mode["activated_at"] or time.time()))
+                m, s = divmod(uptime, 60)
+                ok = len(_omega_mode["systems_ok"])
+                fail = len(_omega_mode["systems_fail"])
+                self._ot_write("  OMEGA MODE: ACTIVE", "verify")
+                self._ot_write(f"  Systems: {ok} OK / {fail} FAIL", "output")
+                self._ot_write(f"  Uptime: {m:02d}:{s:02d}", "output")
+                self._ot_write(f"  Omega queries: {_omega_mode['omega_queries']}", "output")
+            elif _omega_mode["awakening"]:
+                self._ot_write("  OMEGA AWAKENING in progress...", "process")
+            else:
+                self._ot_entry.configure(state="disabled")
+                threading.Thread(target=self._omega_awaken, daemon=True).start()
         elif low in known:
             self._ot_dispatch(low)
             self._ot_write("")
@@ -1323,10 +1619,15 @@ class DashboardTab(ctk.CTkFrame):
             else:
                 self._ot_write("  Gebruik: open <app_naam>", "dim")
         else:
-            # Default: direct brain chat (WAV-Loop zonder prefix)
-            self._ot_write("\u2126 Processing...", "process")
-            self._ot_entry.configure(state="disabled")
-            threading.Thread(target=self._ot_ask_brain, args=(cmd,), daemon=True).start()
+            # Default routing: OMEGA pipeline if active, WAV-Loop otherwise
+            if _omega_mode["active"]:
+                self._ot_write("\u2126 [OMEGA] Processing...", "process")
+                self._ot_entry.configure(state="disabled")
+                threading.Thread(target=self._ot_ask_omega, args=(cmd,), daemon=True).start()
+            else:
+                self._ot_write("\u2126 Processing...", "process")
+                self._ot_entry.configure(state="disabled")
+                threading.Thread(target=self._ot_ask_brain, args=(cmd,), daemon=True).start()
 
     def _ot_dispatch(self, cmd):
         eng = _load_engine()[0]
@@ -1337,15 +1638,22 @@ class DashboardTab(ctk.CTkFrame):
                        "immune", "rag", "diag", "vram", "config", "uptime"]:
                 self._ot_write(f"    {c}", "dim")
             self._ot_write("\n  v3.0 commands:", "system")
-            for c, d in [("shadow", "Shadow Governance zones"),
+            for c, d in [("omega", "AWAKEN all systems (full pipeline)"),
+                         ("shadow", "Shadow Governance zones"),
                          ("dreamer", "REM cycle + backup status"),
                          ("oracle", "OracleEye resource predictions"),
                          ("devops", "DevOpsDaemon CI status"),
                          ("search <q>", "CorticalStack zoeken"),
                          ("open <app>", "App tools opzoeken")]:
                 self._ot_write(f"    {c:16s} {d}", "dim")
-            self._ot_write("\n  Omega Brain (default):", "system")
-            self._ot_write("    Typ direct een vraag \u2014 WAV-Loop.", "dim")
+            mode = "OMEGA PIPELINE" if _omega_mode["active"] else "WAV-Loop"
+            self._ot_write(f"\n  Question routing ({mode}):", "system")
+            if _omega_mode["active"]:
+                self._ot_write("    Typ een vraag \u2014 FULL SwarmEngine pipeline.", "dim")
+                self._ot_write("    Complexe goals \u2192 TaskArbitrator decompose.", "dim")
+            else:
+                self._ot_write("    Typ een vraag \u2014 WAV-Loop (CentralBrain).", "dim")
+                self._ot_write("    Typ 'omega' om FULL PIPELINE te activeren.", "dim")
         elif cmd == "clear":
             self._ot_text.configure(state="normal")
             self._ot_text.delete("1.0", "end")
@@ -3332,9 +3640,10 @@ class OmegaSovereignApp(ctk.CTk):
         self._uptime_lbl.pack(side="right", padx=8)
         self._start_time = time.time()
 
-        # ── Keyboard shortcuts ──
+        # ── Keyboard shortcuts (Ctrl+1..9 for tabs 1-9, Ctrl+0 for tab 10) ──
         for i, name in enumerate(tab_names):
-            self.bind(f"<Control-Key-{i + 1}>",
+            key = (i + 1) if i < 9 else 0  # tab 10 → Ctrl+0
+            self.bind(f"<Control-Key-{key}>",
                       lambda e, n=name: self._tabs.set(n))
         # F5 / Ctrl+R: force refresh
         self.bind("<F5>", lambda e: self._do_refresh())
@@ -3483,9 +3792,15 @@ class OmegaSovereignApp(ctk.CTk):
             hc = NEON_GREEN if hp >= 80 else (NEON_ORANGE if hp >= 50 else NEON_RED)
             self._health_lbl.configure(text=f"{ma}mod {hp:.0f}%", text_color=hc)
 
-        # WAV stats
+        # WAV stats + OMEGA indicator
         wq = _wav_stats["queries"]
-        if wq > 0:
+        if _omega_mode["active"]:
+            oq = _omega_mode["omega_queries"]
+            ok = len(_omega_mode["systems_ok"])
+            self._wav_lbl.configure(
+                text=f"OMEGA:{ok}sys {oq}q" + (f" WAV:{wq}q" if wq > 0 else ""),
+                text_color=NEON_PURPLE)
+        elif wq > 0:
             avg_t = _wav_stats["total_time"] / wq
             self._wav_lbl.configure(text=f"WAV:{wq}q {avg_t:.1f}s", text_color=NEON_GREEN)
 
