@@ -1330,7 +1330,7 @@ Regels:
                             if isinstance(result, BaseException):
                                 summary_parts.append(f"{tid}: ERROR - {result}")
                             else:
-                                result_str = json.dumps(result, ensure_ascii=False, default=str)[:500]
+                                result_str = json.dumps(result, ensure_ascii=False, default=str, indent=2)[:2000]
                                 summary_parts.append(f"{tid}: {result_str}")
 
                         # Laat model samenvatten
@@ -1545,17 +1545,13 @@ Regels:
                 if isinstance(data, dict) and "error" in data:
                     parts.append(f"**{tool_id}**: Fout — {data['error']}")
                 elif isinstance(data, dict):
-                    # Formatteer dict als key: value regels
-                    items = []
-                    for k, v in data.items():
-                        if isinstance(v, (dict, list)):
-                            v = json.dumps(v, ensure_ascii=False, default=str)[:200]
-                        items.append(f"  - {k}: {v}")
-                    parts.append(f"**{tool_id}**:\n" + "\n".join(items))
+                    # Pretty-print: geneste structuren volledig zichtbaar
+                    formatted = json.dumps(data, ensure_ascii=False, default=str, indent=2)[:3000]
+                    parts.append(f"**{tool_id}**:\n```json\n{formatted}\n```")
                 else:
-                    parts.append(f"**{tool_id}**: {str(data)[:300]}")
+                    parts.append(f"**{tool_id}**: {str(data)[:800]}")
             except (json.JSONDecodeError, TypeError):
-                parts.append(f"**{tool_id}**: {result_str[:300]}")
+                parts.append(f"**{tool_id}**: {result_str[:800]}")
         return "\n\n".join(parts)
 
     def _emergency_offline_response(self, prompt: str) -> str:
