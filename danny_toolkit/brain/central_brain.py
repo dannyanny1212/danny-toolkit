@@ -680,17 +680,20 @@ Regels:
             return
 
         full_response = ""
-        for i, (client, mdl, label) in enumerate(chain):
+        for i, (client, mdl, label, kwargs_extra) in enumerate(chain):
             try:
                 if i > 0:
                     yield f"\n[italic yellow]⚠ Fallback → {label}...[/]\n"
 
-                response = await client.chat.completions.create(
-                    model=mdl,
-                    messages=messages,
-                    max_tokens=2000,
-                    stream=True,
-                )
+                call_kwargs = {
+                    "model": mdl,
+                    "messages": messages,
+                    "max_tokens": 2000,
+                    "stream": True,
+                }
+                call_kwargs.update(kwargs_extra)
+
+                response = await client.chat.completions.create(**call_kwargs)
 
                 async for chunk in response:
                     if chunk.choices and chunk.choices[0].delta.content is not None:
@@ -713,15 +716,40 @@ Regels:
                     "resource_exhausted", "quota",
                 ])
                 if is_rate_limit and i < len(chain) - 1:
-                    # Rate limit — probeer volgende provider
                     logger.warning("Stream 429 op %s, fallback...", label)
                     continue
-                # Laatste provider of onbekende fout
+
+                # NIM 400: probeer non-streaming als laatste redmiddel
+                if "400" in err and "NIM" in label:
+                    try:
+                        logger.warning("NIM stream 400, probeer non-streaming...")
+                        call_kwargs["stream"] = False
+                        resp = await client.chat.completions.create(**call_kwargs)
+                        content = resp.choices[0].message.content or ""
+                        full_response += content
+                        yield content
+                        with self._history_lock:
+                            self.conversation_history.append({
+                                "role": "assistant",
+                                "content": full_response,
+                            })
+                        return
+                    except Exception as nim_err:
+                        err = str(nim_err)
+
+                if i < len(chain) - 1:
+                    logger.warning("Stream fout op %s: %s, fallback...", label, err[:100])
+                    continue
+                # Laatste provider — toon fout
                 yield f"\n[bold red]STREAM ERROR ({label}):[/] {err}"
                 return
 
     def _build_stream_chain(self, model: str = None):
-        """Bouw streaming fallback chain: Groq primary → Groq fallback → NIM."""
+        """Bouw streaming fallback chain: Groq primary → Groq fallback → NIM.
+
+        Returns:
+            List[(client, model, label, extra_kwargs)]
+        """
         chain = []
 
         # 1. Groq primary
@@ -738,6 +766,7 @@ Regels:
                 self._async_stream_client,
                 model or self.GROQ_MODEL_PRIMARY,
                 f"Groq ({model or self.GROQ_MODEL_PRIMARY})",
+                {},  # Groq: defaults zijn goed
             ))
 
             # 2. Groq fallback (aparte API key = aparte rate-limit pool)
@@ -752,6 +781,7 @@ Regels:
                     self._async_stream_fallback,
                     self.GROQ_MODEL_FALLBACK,
                     f"Groq Fallback ({self.GROQ_MODEL_FALLBACK})",
+                    {},  # Groq: defaults zijn goed
                 ))
 
         # 3. NVIDIA NIM (OpenAI-compatible, async)
@@ -767,6 +797,7 @@ Regels:
                     self._async_nim_client,
                     self.NVIDIA_NIM_MODEL,
                     f"NVIDIA NIM ({self.NVIDIA_NIM_MODEL})",
+                    {"temperature": 0.2, "max_tokens": 4096},  # NIM-specifiek
                 ))
             except ImportError:
                 pass
