@@ -465,7 +465,7 @@ SUBSYSTEMEN:
 Je hebt toegang tot {len(self.app_registry)} apps via function calling.
 BELANGRIJK: Je hebt 6 omega_core tools om je EIGEN systeem te bevragen:
 - omega_core_system_scan: Volledige T1-T5 scan + health + wirings
-- omega_core_tier_detail(tier=1-5): Deep dive in specifieke tier
+- omega_core_tier_detail(tier=1-5): Deep dive in specifieke tier. Bij "toon alles" → roep system_scan aan, NIET 5x tier_detail
 - omega_core_query_knowledge(query): Cortex Knowledge Graph doorzoeken
 - omega_core_memory_recall(query, count): CorticalStack episodic memory
 - omega_core_immune_report: BlackBox + Schild + Tribunal + Waakhuis

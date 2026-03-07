@@ -351,8 +351,7 @@ class OmegaCore:
             events = cs.get_recent_events(count=count)
             result["recent_events"] = events[:count]
             if query:
-                # Semantic search in cortical stack
-                search_results = cs.search(query, top_k=5) if hasattr(cs, 'search') else []
+                search_results = cs.search_events(query, limit=5)
                 result["search_results"] = search_results
         except Exception as e:
             result["error"] = f"CorticalStack unavailable: {e}"
