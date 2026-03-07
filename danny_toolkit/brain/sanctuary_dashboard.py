@@ -585,26 +585,26 @@ class SanctuaryDashboard:
         lines.append(_box_row(""))
         return "\n".join(lines)
 
-    def render_claude_terminals(self) -> str:
-        """Render CLAUDE CODE TERMINALS — session + protocol status."""
-        lines = [_box_mid("CLAUDE CODE TERMINALS")]
+    def render_omega_terminals(self) -> str:
+        """Render OMEGA SOVEREIGN TERMINALS — directive + protocol status."""
+        lines = [_box_mid("OMEGA SOVEREIGN TERMINALS")]
         lines.append(_box_row(""))
 
-        # Claude session info
-        claude_md = Config.BASE_DIR / "CLAUDE.md"
+        # Sovereign directive file
+        directive_md = Config.BASE_DIR / "CLAUDE.md"
         memory_dir = Path(os.path.expanduser(
             "~/.claude/projects/C--Users-danny-danny-toolkit/memory"
         ))
         memory_md = memory_dir / "MEMORY.md"
 
-        # CLAUDE.md status
-        if claude_md.exists():
-            size_kb = claude_md.stat().st_size / 1024
+        # Directive status
+        if directive_md.exists():
+            size_kb = directive_md.stat().st_size / 1024
             lines.append(_box_row(
-                f"  CLAUDE.md        LOADED ({size_kb:.1f} KB) | Sovereign Directive Active"
+                f"  DIRECTIVE        LOADED ({size_kb:.1f} KB) | Sovereign Core Active"
             ))
         else:
-            lines.append(_box_row("  CLAUDE.md        MISSING!"))
+            lines.append(_box_row("  DIRECTIVE        MISSING!"))
 
         # MEMORY.md status
         if memory_md.exists():
@@ -915,7 +915,7 @@ class SanctuaryDashboard:
         output.append(self.render_sovereign_header("LIVE"))
         output.append(self.render_entity_status())
         output.append(self.render_omega_brain())
-        output.append(self.render_claude_terminals())
+        output.append(self.render_omega_terminals())
         output.append(self.render_hardware_status())
         output.append(self.render_deep_metrics())
         output.append(self.render_tool_gezondheid())

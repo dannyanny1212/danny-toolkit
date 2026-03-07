@@ -136,11 +136,13 @@ class CentralBrain:
                 self.client = Groq()
             self.ai_provider = "groq"
             logger.info("[OK] Central Brain AI actief (Groq)")
-            # Anthropic als fallback
-            if ANTHROPIC_BESCHIKBAAR and Config.has_anthropic_key():
+            # Anthropic als fallback — alleen als ALLOW_ANTHROPIC=1
+            if Config.ALLOW_ANTHROPIC and ANTHROPIC_BESCHIKBAAR and Config.has_anthropic_key():
                 self._fallback_client = Anthropic()
                 self._fallback_provider = "anthropic"
-        elif ANTHROPIC_BESCHIKBAAR and Config.has_anthropic_key():
+            elif not Config.ALLOW_ANTHROPIC:
+                logger.info("[SOVEREIGN] Anthropic bypass actief — chain: Groq → NIM → Ollama")
+        elif Config.ALLOW_ANTHROPIC and ANTHROPIC_BESCHIKBAAR and Config.has_anthropic_key():
             self.client = Anthropic()
             self.ai_provider = "anthropic"
             logger.info("[OK] Central Brain AI actief (Anthropic)")
@@ -893,17 +895,18 @@ Regels:
                     f"Groq ({self.GROQ_MODEL_FALLBACK})",
                 ))
 
-        # 3. Anthropic
-        anthro = self._fallback_client or (
-            self.client if self.ai_provider == "anthropic" else None
-        )
-        if anthro and self._provider_ok("anthropic"):
-            chain.append((
-                "anthropic",
-                lambda rt, _sm=system_message, _ut=use_tools, _c=anthro:
-                    self._attempt_anthropic(rt, _sm, _ut, _c),
-                "Anthropic",
-            ))
+        # 3. Anthropic — gated by ALLOW_ANTHROPIC kill-switch
+        if Config.ALLOW_ANTHROPIC:
+            anthro = self._fallback_client or (
+                self.client if self.ai_provider == "anthropic" else None
+            )
+            if anthro and self._provider_ok("anthropic"):
+                chain.append((
+                    "anthropic",
+                    lambda rt, _sm=system_message, _ut=use_tools, _c=anthro:
+                        self._attempt_anthropic(rt, _sm, _ut, _c),
+                    "Anthropic",
+                ))
 
         # 4. NVIDIA NIM
         if self._nvidia_nim_available and self._provider_ok("nvidia_nim"):

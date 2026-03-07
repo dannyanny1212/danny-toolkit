@@ -96,7 +96,7 @@ class AdversarialTribunal:
         """Initialize a direct LLM client (Anthropic or Ollama)."""
         from danny_toolkit.core.config import Config
 
-        if _HAS_ANTHROPIC and Config.has_anthropic_key():
+        if Config.ALLOW_ANTHROPIC and _HAS_ANTHROPIC and Config.has_anthropic_key():
             self._client = Anthropic()
             self._provider = "anthropic"
             logger.info("Tribunal using direct Anthropic client")

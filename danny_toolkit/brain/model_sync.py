@@ -679,8 +679,8 @@ class ModelRegistry:
             except Exception as e:
                 logger.debug("Groq fallback auto-discover: %s", e)
 
-        # Anthropic
-        if os.getenv("ANTHROPIC_API_KEY"):
+        # Anthropic — gated by ALLOW_ANTHROPIC
+        if Config.ALLOW_ANTHROPIC and os.getenv("ANTHROPIC_API_KEY"):
             try:
                 self.register(AnthropicModelWorker())
             except Exception as e:

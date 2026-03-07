@@ -262,6 +262,10 @@ class Config:
     GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "")
     GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 
+    # Sovereign Independence — kill-switch for commercial LLM providers
+    # Set ALLOW_ANTHROPIC=0 in .env to bypass Anthropic in the fallback chain
+    ALLOW_ANTHROPIC = os.environ.get("ALLOW_ANTHROPIC", "0").lower() in ("1", "true", "yes")
+
     # THE BRAIN (Cloud — High IQ, Zero VRAM)
     LLM_PROVIDER = "groq"
     LLM_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
