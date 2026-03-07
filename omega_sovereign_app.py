@@ -1173,10 +1173,11 @@ class DashboardTab(ctk.CTkFrame):
             placeholder_text_color=TEXT_DIM)
         self._cl_entry.pack(side="left", fill="x", expand=True, padx=(0, 4))
         self._cl_entry.bind("<Return>", self._cl_on_enter)
+        self._cl_entry.bind("<Escape>", self._cl_on_escape)
         self._cl_history = deque(maxlen=100)
         self._cl_hist_idx = -1
-        self._cl_entry.bind("<Up>", self._cl_hist_up)
-        self._cl_entry.bind("<Down>", self._cl_hist_down)
+        self._cl_entry.bind("<Up>", self._cl_on_up)
+        self._cl_entry.bind("<Down>", self._cl_on_down)
         terminal_row.add(claude_panel, minsize=60, width=350)
 
         return terminal_row
@@ -1291,10 +1292,33 @@ class DashboardTab(ctk.CTkFrame):
             self._cl_entry.delete(0, "end")
         return "break"
 
+    def _cl_on_up(self, _=None):
+        """Up arrow: send to PTY when alive, otherwise history."""
+        if self._claude_pty.is_alive():
+            self._claude_pty.send_raw("\x1b[A")
+            return "break"
+        return self._cl_hist_up()
+
+    def _cl_on_down(self, _=None):
+        """Down arrow: send to PTY when alive, otherwise history."""
+        if self._claude_pty.is_alive():
+            self._claude_pty.send_raw("\x1b[B")
+            return "break"
+        return self._cl_hist_down()
+
+    def _cl_on_escape(self, _=None):
+        """Escape: send to PTY when alive."""
+        if self._claude_pty.is_alive():
+            self._claude_pty.send_raw("\x1b")
+        return "break"
+
     def _cl_on_enter(self, _=None):
         """Input handler voor Claude terminal — routes to ConPTY session."""
         cmd = self._cl_entry.get().strip()
+        # Empty Enter while PTY alive → confirm selection (login menu etc.)
         if not cmd:
+            if self._claude_pty.is_alive():
+                self._claude_pty.send_raw("\r")
             return
         self._cl_entry.delete(0, "end")
         self._cl_history.append(cmd)
@@ -3688,8 +3712,15 @@ class PredictionsTab(ctk.CTkFrame):
 # ║  ConPTY CLAUDE BRIDGE                                          ║
 # ╚══════════════════════════════════════════════════════════════════╝
 
-# Regex to strip all ANSI escape sequences (colors, cursor moves, clear, etc.)
-_ANSI_RE = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]|\x1b\].*?\x07|\x1b\[[\?0-9;]*[hlJK]')
+# ANSI handling: cursor-forward → space, then strip remaining escapes
+_ANSI_CURSOR_FWD = re.compile(r'\x1b\[\d*C')          # cursor forward n → space
+_ANSI_STRIP = re.compile(
+    r'\x1b\[[0-9;]*[a-zA-Z]'   # CSI sequences (colors, cursor, erase)
+    r'|\x1b\].*?\x07'          # OSC sequences (title bar etc.)
+    r'|\x1b\[\?[0-9;]*[hlJK]'  # DEC private modes
+    r'|\x1b\[[\d;]*m'          # SGR (colors) — redundant but explicit
+    r'|\r'                      # carriage returns
+)
 
 
 class ClaudePTY:
@@ -3832,6 +3863,15 @@ class ClaudePTY:
             self._write(f"[ERROR] PTY write failed: {e}", "error")
             self._alive = False
 
+    def send_raw(self, data: str):
+        """Send raw bytes to the PTY (for arrow keys, Esc, etc.)."""
+        if not self.is_alive():
+            return
+        try:
+            self._proc.write(data)
+        except Exception:
+            pass
+
     # ── internal: reader thread ─────────────────────────────────
 
     def _reader_loop(self):
@@ -3875,7 +3915,9 @@ class ClaudePTY:
                 # Session ended
                 self._write("[ConPTY] Session ended", "system")
                 return
-            clean = _ANSI_RE.sub('', item).rstrip()
+            # Two-step: cursor-forward → space, then strip remaining ANSI
+            clean = _ANSI_CURSOR_FWD.sub(' ', item)
+            clean = _ANSI_STRIP.sub('', clean).rstrip()
             if not clean:
                 continue
             # Classify line for coloring
