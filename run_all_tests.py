@@ -1,6 +1,6 @@
 """
 Danny Toolkit — Master Test Runner
-Draait alle 47 test suites in volgorde en geeft een totaaloverzicht.
+Draait alle 48 test suites in volgorde en geeft een totaaloverzicht.
 
 Gebruik: python run_all_tests.py
 """
@@ -92,7 +92,7 @@ def run_test(test: dict) -> dict:
     # Tests draaien op CPU; productie gebruikt GPU
     clean_env = os.environ.copy()
     clean_env["PYTHONIOENCODING"] = "utf-8"
-    clean_env["CUDA_VISIBLE_DEVICES"] = "0"
+    clean_env["CUDA_VISIBLE_DEVICES"] = "-1"
     clean_env["ANONYMIZED_TELEMETRY"] = "False"  # ChromaDB posthog crash preventie
     clean_env["DANNY_TEST_MODE"] = "1"  # Skip ChromaDB PersistentClient (Rust FFI crash in subprocess)
 
