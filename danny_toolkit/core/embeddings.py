@@ -7,20 +7,41 @@ import logging
 import math
 import hashlib
 import json
+import os
 import threading
 import time
 from collections import Counter, OrderedDict
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 from typing import List, Dict, Optional
 from danny_toolkit.core.config import Config
 
 logger = logging.getLogger(__name__)
 
+# CPU pool for GIL-free batch operations (MRL truncation, TF-IDF).
+# Workers = half of CPU cores, minimum 2.  Lazy-started on first submit.
+_CPU_POOL_WORKERS = max((os.cpu_count() or 4) // 2, 2)
+_cpu_pool: ProcessPoolExecutor | None = None
+_cpu_pool_lock = threading.Lock()
+# Threshold: only offload to process pool above this batch size
+_CPU_OFFLOAD_THRESHOLD = 500
 
-def mrl_truncate(embeddings: list, dim: int) -> list:
-    """MRL truncatie + L2 hernormalisatie."""
-    if not embeddings or dim >= len(embeddings[0]):
-        return embeddings
+
+def _get_cpu_pool() -> ProcessPoolExecutor:
+    """Lazy-init ProcessPoolExecutor (avoids fork cost at import time)."""
+    global _cpu_pool
+    if _cpu_pool is None:
+        with _cpu_pool_lock:
+            if _cpu_pool is None:
+                _cpu_pool = ProcessPoolExecutor(
+                    max_workers=_CPU_POOL_WORKERS,
+                )
+    return _cpu_pool
+
+
+def _mrl_truncate_chunk(args: tuple) -> list:
+    """Process-safe MRL truncation of a single chunk (for ProcessPoolExecutor)."""
+    embeddings, dim = args
     try:
         import numpy as np
         arr = np.array(embeddings)[:, :dim]
@@ -36,6 +57,31 @@ def mrl_truncate(embeddings: list, dim: int) -> list:
                 trunc = [v / norm for v in trunc]
             result.append(trunc)
         return result
+
+
+def mrl_truncate(embeddings: list, dim: int) -> list:
+    """MRL truncatie + L2 hernormalisatie.
+
+    For large batches (>500 vectors), splits work across ProcessPoolExecutor
+    to bypass the GIL and use all CPU cores.
+    """
+    if not embeddings or dim >= len(embeddings[0]):
+        return embeddings
+
+    # Small batch: inline (avoids IPC overhead)
+    if len(embeddings) <= _CPU_OFFLOAD_THRESHOLD:
+        return _mrl_truncate_chunk((embeddings, dim))
+
+    # Large batch: split across CPU pool
+    pool = _get_cpu_pool()
+    chunk_size = max(len(embeddings) // _CPU_POOL_WORKERS, 100)
+    chunks = [
+        (embeddings[i:i + chunk_size], dim)
+        for i in range(0, len(embeddings), chunk_size)
+    ]
+    results = list(pool.map(_mrl_truncate_chunk, chunks))
+    # Flatten
+    return [vec for chunk in results for vec in chunk]
 
 
 class EmbeddingProvider:
@@ -768,15 +814,52 @@ class TorchGPUEmbeddings(EmbeddingProvider):
         emb = self._masked_mean_pool(out.last_hidden_state, enc["attention_mask"])
         return emb.detach().cpu()
 
-    def embed(self, texts, batch_size: int = 32):
-        with torch.inference_mode():
-            if len(texts) <= batch_size:
-                return self._embed_batch(texts).tolist()
+    @staticmethod
+    def _adaptive_batch_size(default: int = 32) -> int:
+        """Scale batch size based on CPU load (psutil) and available VRAM.
 
-            all_emb = []
-            for i in range(0, len(texts), batch_size):
-                all_emb.append(self._embed_batch(texts[i:i + batch_size]))
-            return torch.cat(all_emb, dim=0).tolist()
+        High CPU (>70%) or low VRAM (<2 GB) → halve the batch.
+        Low CPU (<30%) and healthy VRAM → double the batch (max 128).
+        """
+        try:
+            import psutil
+            cpu_pct = psutil.cpu_percent(interval=0)
+        except (ImportError, Exception):
+            cpu_pct = 50.0  # assume moderate
+
+        try:
+            from danny_toolkit.core.vram_manager import vram_rapport
+            vram = vram_rapport()
+            vrij_mb = vram.get("vrij_mb", 4000) if vram.get("beschikbaar") else 4000
+        except Exception:
+            vrij_mb = 4000
+
+        if cpu_pct > 70 or vrij_mb < 2000:
+            return max(default // 2, 8)
+        if cpu_pct < 30 and vrij_mb > 3000:
+            return min(default * 2, 128)
+        return default
+
+    def embed(self, texts, batch_size: int = 0):
+        """Embed texts with adaptive batch sizing + VRAM budget guard.
+
+        batch_size=0 (default) uses adaptive sizing based on CPU/VRAM load.
+        VRAM guard prevents contention with Ollama (shared 8 GB GPU).
+        """
+        if batch_size <= 0:
+            batch_size = self._adaptive_batch_size()
+
+        from danny_toolkit.core.vram_manager import vram_guard
+
+        with vram_guard("torch_embeddings", required_mb=400):
+            with torch.inference_mode():
+                if len(texts) <= batch_size:
+                    return self._embed_batch(texts).tolist()
+
+                all_emb = []
+                for i in range(0, len(texts), batch_size):
+                    all_emb.append(self._embed_batch(texts[i:i + batch_size]))
+                return torch.cat(all_emb, dim=0).tolist()
 
 
 # =============================================================================

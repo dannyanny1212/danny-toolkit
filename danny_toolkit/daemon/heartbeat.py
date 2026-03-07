@@ -18,6 +18,7 @@ patroon als morning_protocol.py), Rich is al geinstalleerd.
 """
 
 import asyncio
+import os
 import queue
 import random
 import threading
@@ -191,9 +192,11 @@ Initializes a new instance of the class.
         self._last_devops_check = 0.0
 
         # Background worker for heavy tasks (swarm, security)
+        # CPU-core-aware: 1 worker per 4 cores, minimum 2
         self._task_queue = queue.Queue()
         self._worker_pool = ThreadPoolExecutor(
-            max_workers=2, thread_name_prefix="hb-worker"
+            max_workers=max((os.cpu_count() or 4) // 4, 2),
+            thread_name_prefix="hb-worker",
         )
 
     def _get_stack(self):

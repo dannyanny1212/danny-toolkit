@@ -1,5 +1,5 @@
 """
-VRAM Manager — RTX 3060 Ti (8 GB) geheugen monitor.
+VRAM Manager — RTX 3060 Ti (8 GB) geheugen monitor + budget guard.
 
 Budget:
   - Embedding model (mpnet-base-v2): ~400 MB
@@ -7,11 +7,21 @@ Budget:
   - Totaal verwacht:                 ~5.1 GB
   - Veilige marge:                   ~2.9 GB vrij
 
+Budget Guard:
+  - VRAMBudgetGuard prevents TorchGPU and Ollama from competing for VRAM.
+  - Callers acquire a slot before GPU work; guard checks free VRAM first.
+
 Gebruik:
   from danny_toolkit.core.vram_manager import check_vram_status, vram_rapport
+  from danny_toolkit.core.vram_manager import vram_guard
   check_vram_status()          # Print diagnose naar terminal
   rapport = vram_rapport()     # Dict voor dashboard/NeuralBus
+  with vram_guard("embeddings", 400):  # Acquire 400 MB budget slot
+      model.embed(texts)
 """
+
+import logging
+import threading
 
 try:
     import torch
@@ -19,8 +29,13 @@ try:
 except ImportError:
     _HAS_TORCH = False
 
+logger = logging.getLogger(__name__)
+
 # Drempel in MB — waarschuw als minder dan dit vrij is
 VRAM_WARN_THRESHOLD_MB = 1500  # 1.5 GB
+
+# Minimum free VRAM required before allowing a new GPU workload (MB)
+_VRAM_MIN_FREE_MB = 1000
 
 
 def _systeembrede_vram() -> tuple:
@@ -89,3 +104,105 @@ def vram_rapport() -> dict:
         "vrij_mb": round(vrij_mb),
         "gezond": vrij_mb >= VRAM_WARN_THRESHOLD_MB,
     }
+
+
+# =============================================================================
+# VRAM BUDGET GUARD — prevents Ollama + TorchGPU VRAM contention
+# =============================================================================
+
+
+class VRAMBudgetGuard:
+    """Serializes GPU workloads to prevent OOM on shared 8 GB VRAM.
+
+    Only one heavy GPU consumer (embeddings OR vision) can hold the lock
+    at a time.  Before acquiring, checks that enough free VRAM exists.
+    If not, the caller either waits (blocking=True) or gets a RuntimeError.
+
+    Usage:
+        with vram_guard("embeddings", required_mb=400):
+            model.embed(texts)
+    """
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._holder: str | None = None
+
+    def acquire(self, name: str, required_mb: int = 0, blocking: bool = True) -> bool:
+        """Acquire the VRAM budget slot.
+
+        Args:
+            name: Identifier for the workload (e.g. "embeddings", "ollama").
+            required_mb: Minimum free VRAM needed before acquiring.
+            blocking: Wait for the lock or fail immediately.
+
+        Returns:
+            True if acquired, False if non-blocking and unavailable.
+
+        Raises:
+            RuntimeError: If not enough free VRAM after acquiring the lock.
+        """
+        acquired = self._lock.acquire(blocking=blocking)
+        if not acquired:
+            return False
+
+        # Check free VRAM before committing
+        if required_mb > 0:
+            info = _systeembrede_vram()
+            if info is not None:
+                vrij_mb = info[0]
+                if vrij_mb < required_mb:
+                    self._lock.release()
+                    msg = (
+                        f"VRAM budget denied for '{name}': need {required_mb} MB "
+                        f"but only {vrij_mb:.0f} MB free"
+                    )
+                    logger.warning(msg)
+                    raise RuntimeError(msg)
+
+        self._holder = name
+        logger.debug("VRAM budget acquired by '%s' (required=%d MB)", name, required_mb)
+        return True
+
+    def release(self):
+        """Release the VRAM budget slot."""
+        holder = self._holder
+        self._holder = None
+        if self._lock.locked():
+            self._lock.release()
+        logger.debug("VRAM budget released by '%s'", holder)
+
+    @property
+    def current_holder(self) -> str | None:
+        """Name of the current VRAM budget holder, or None."""
+        return self._holder
+
+
+# Module-level singleton
+_vram_guard = VRAMBudgetGuard()
+
+
+class vram_guard:
+    """Context manager for VRAM budget acquisition.
+
+    Usage:
+        with vram_guard("embeddings", 400):
+            model.embed(texts)
+    """
+
+    def __init__(self, name: str, required_mb: int = 0, blocking: bool = True):
+        self._name = name
+        self._required_mb = required_mb
+        self._blocking = blocking
+
+    def __enter__(self):
+        _vram_guard.acquire(self._name, self._required_mb, self._blocking)
+        return _vram_guard
+
+    def __exit__(self, *exc):
+        _vram_guard.release()
+        return False
+
+
+def get_vram_guard() -> VRAMBudgetGuard:
+    """Return the module-level VRAMBudgetGuard singleton."""
+    return _vram_guard

@@ -34,8 +34,9 @@ from collections import deque
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Dict, Any, Optional
 
-# Max workers voor de per-loop thread pool (hardware: 16 threads, I/O-bound Groq).
-_SWARM_MAX_WORKERS = 10
+# Max workers voor de per-loop thread pool (I/O-bound Groq calls).
+# CPU-core-aware: min(cpu_count, 16) met floor van 4 voor lichte machines.
+_SWARM_MAX_WORKERS = min(max(os.cpu_count() or 4, 4), 16)
 from dataclasses import dataclass, field
 from datetime import datetime
 
