@@ -502,6 +502,51 @@ class _DataCache:
         except Exception as e:
             logger.debug("cache mirror: %s", e)
 
+        # ── RAG & Vector data for Dashboard ──
+
+        # Cortex Knowledge Graph
+        try:
+            from danny_toolkit.brain.cortex import get_cortex
+            self.put("cortex_stats", get_cortex().get_stats())
+        except Exception as e:
+            logger.debug("cache cortex: %s", e)
+
+        # SemanticCache
+        try:
+            if not hasattr(self, '_sem_cache'):
+                from danny_toolkit.core.semantic_cache import SemanticCache
+                self._sem_cache = SemanticCache()
+            self.put("semantic_cache_stats", self._sem_cache.stats())
+        except Exception as e:
+            logger.debug("cache semantic_cache: %s", e)
+
+        # ChromaDB disk size
+        try:
+            import os as _os
+            chroma_path = _os.path.join(Config.BASE_DIR, "data", "rag", "chromadb") if HAS_CONFIG else None
+            if chroma_path and _os.path.isdir(chroma_path):
+                total_size = 0
+                file_count = 0
+                for root, dirs, files in _os.walk(chroma_path):
+                    for f in files:
+                        total_size += _os.path.getsize(_os.path.join(root, f))
+                        file_count += 1
+                self.put("chromadb_stats", {
+                    "size_mb": round(total_size / 1024 / 1024, 1),
+                    "files": file_count,
+                })
+        except Exception as e:
+            logger.debug("cache chromadb: %s", e)
+
+        # ShardRouter
+        try:
+            if not hasattr(self, '_shard_router'):
+                from danny_toolkit.core.shard_router import ShardRouter
+                self._shard_router = ShardRouter()
+            self.put("shard_stats", self._shard_router.statistieken())
+        except Exception as e:
+            logger.debug("cache shard: %s", e)
+
 
 _cache = _DataCache()
 
@@ -800,9 +845,10 @@ def _make_chart(parent, figsize=(4, 3), **subplot_kw):
 # ── NEON PANEL BASE ──────────────────────────────────────────────
 
 class NeonPanel(ctk.CTkFrame):
-    def __init__(self, master, title, dockable=True, **kw):
-        super().__init__(master, fg_color=BG_PANEL, border_color=BORDER,
-                         border_width=1, corner_radius=8, **kw)
+    def __init__(self, master, title, dockable=True, border_glow=None, **kw):
+        glow = border_glow or NEON_CYAN
+        super().__init__(master, fg_color=BG_PANEL, border_color=glow,
+                         border_width=2, corner_radius=8, **kw)
         self._title = title
         self._float_window = None
         self._original_info = None
@@ -812,7 +858,7 @@ class NeonPanel(ctk.CTkFrame):
         title_bar.pack(fill="x", padx=8, pady=(6, 2))
         ctk.CTkLabel(title_bar, text=f"  {title.upper()}",
                       font=("Consolas", 10, "bold"),
-                      text_color=NEON_CYAN, anchor="w"
+                      text_color=glow, anchor="w"
                       ).pack(side="left", fill="x", expand=True)
         if dockable:
             self._float_btn = ctk.CTkButton(
@@ -822,7 +868,8 @@ class NeonPanel(ctk.CTkFrame):
                 command=self._toggle_float)
             self._float_btn.pack(side="right")
 
-        ctk.CTkFrame(self, height=1, fg_color=BORDER).pack(fill="x", padx=8, pady=(0, 4))
+        # Glow separator line
+        ctk.CTkFrame(self, height=1, fg_color=glow).pack(fill="x", padx=8, pady=(0, 4))
         self.content = ctk.CTkFrame(self, fg_color="transparent")
         self.content.pack(fill="both", expand=True, padx=4, pady=(0, 4))
 
@@ -940,31 +987,47 @@ class DashboardTab(ctk.CTkFrame):
         self.vanguard = self._build_vanguard(outer)
         outer.add(self.vanguard, minsize=60, width=280)
 
-        # Center: Cortex + Terminal (vertical split)
+        # Center: Cortex (top) + RAG/Vector info (bottom row)
         center = tk.PanedWindow(outer, orient=tk.VERTICAL, sashwidth=5,
                                 sashrelief=tk.FLAT, bg=BG_DEEP,
                                 opaqueresize=True, borderwidth=0)
         outer.add(center, minsize=60, width=550)
         self._center_paned = center
 
-        self.cortex_panel = NeonPanel(center, "\U0001f9e0 Cortex Knowledge Core")
+        self.cortex_panel = NeonPanel(center, "\U0001f9e0 Cortex Knowledge Core",
+                                       border_glow=NEON_PURPLE)
         center.add(self.cortex_panel, minsize=60, height=300)
         self._cortex_fig, self._cortex_ax, self._cortex_cv = _make_chart(
             self.cortex_panel.content, figsize=(5, 3))
         self._draw_cortex()
 
-        self.omega_term = self._build_omega_terminal(center)
-        center.add(self.omega_term, minsize=60, height=350)
+        # ── Bottom row: RAG Info + Vector Info ──
+        info_row = tk.PanedWindow(center, orient=tk.HORIZONTAL, sashwidth=5,
+                                  sashrelief=tk.FLAT, bg=BG_DEEP,
+                                  opaqueresize=True, borderwidth=0)
+        center.add(info_row, minsize=60, height=280)
 
-        # Right: Pulse + Fuel + Listener + mini panels (vertical split)
+        # RAG Info panel (ChromaDB, ShardRouter, SemanticCache)
+        self._rag_panel = InfoPanel(info_row, "\U0001f4da RAG Intelligence")
+        info_row.add(self._rag_panel, minsize=60, width=275)
+
+        # Vector Info panel (CorticalStack, Cortex, Memory DB)
+        self._vector_panel = InfoPanel(info_row, "\U0001f9ec Vector & Memory")
+        info_row.add(self._vector_panel, minsize=60, width=275)
+
+        # Right: Terminal + Pulse + Fuel + Listener + mini panels (vertical split)
         right = tk.PanedWindow(outer, orient=tk.VERTICAL, sashwidth=5,
                                sashrelief=tk.FLAT, bg=BG_DEEP,
                                opaqueresize=True, borderwidth=0)
         outer.add(right, minsize=60, width=320)
         self._right_paned = right
 
+        # Omega Terminal (moved from center to right)
+        self.omega_term = self._build_omega_terminal(right)
+        right.add(self.omega_term, minsize=60, height=250)
+
         # Pulse Protocol
-        self.pulse_panel = NeonPanel(right, "\u2764 Pulse Protocol")
+        self.pulse_panel = NeonPanel(right, "\u2764 Pulse Protocol", border_glow=NEON_GREEN)
         right.add(self.pulse_panel, minsize=60)
         self._pulse_fig, self._pulse_ax, self._pulse_cv = _make_chart(
             self.pulse_panel.content, figsize=(3.2, 1.2))
@@ -979,7 +1042,7 @@ class DashboardTab(ctk.CTkFrame):
         self._ram_lbl.pack(side="right", padx=4)
 
         # API Fuel Gauge
-        self.fuel_panel = NeonPanel(right, "\u26fd API Fuel Gauge")
+        self.fuel_panel = NeonPanel(right, "\u26fd API Fuel Gauge", border_glow=NEON_ORANGE)
         right.add(self.fuel_panel, minsize=60)
         self._fuel_fig, self._fuel_ax, self._fuel_cv = _make_chart(
             self.fuel_panel.content, figsize=(3.2, 1.4),
@@ -994,7 +1057,7 @@ class DashboardTab(ctk.CTkFrame):
         self._tpm_lbl.pack(side="right", padx=4)
 
         # The Listener
-        self.listener_panel = NeonPanel(right, "\U0001f3a7 The Listener")
+        self.listener_panel = NeonPanel(right, "\U0001f3a7 The Listener", border_glow=NEON_YELLOW)
         right.add(self.listener_panel, minsize=60)
         self._list_fig, self._list_ax, self._list_cv = _make_chart(
             self.listener_panel.content, figsize=(3.2, 1.0))
@@ -2520,6 +2583,94 @@ class DashboardTab(ctk.CTkFrame):
         if not bb_stats and not shield_stats:
             self._mini_immune.write(" Immune system N/A")
 
+    # ── RAG Intelligence panel ──
+    def _update_rag_panel(self):
+        self._rag_panel.clear()
+
+        # ChromaDB
+        chroma = _cache.get("chromadb_stats")
+        if chroma:
+            self._rag_panel.write(" \u2588 CHROMADB")
+            self._rag_panel.write(f"   Size:  {chroma.get('size_mb', 0):,.1f} MB")
+            self._rag_panel.write(f"   Files: {chroma.get('files', 0)}")
+        else:
+            self._rag_panel.write(" ChromaDB: N/A")
+
+        # Shard Router
+        shards = _cache.get("shard_stats")
+        if shards:
+            self._rag_panel.write(" \u2588 SHARDS")
+            for s in shards:
+                s_str = str(s)
+                # Parse ShardStatistiek repr
+                if "naam=" in s_str:
+                    parts = s_str.replace("ShardStatistiek(", "").rstrip(")")
+                    self._rag_panel.write(f"   {parts}")
+                else:
+                    self._rag_panel.write(f"   {s_str[:60]}")
+
+        # Semantic Cache
+        sem = _cache.get("semantic_cache_stats")
+        if sem:
+            self._rag_panel.write(" \u2588 SEMANTIC CACHE")
+            self._rag_panel.write(f"   Entries: {sem.get('total_entries', 0)}")
+            self._rag_panel.write(f"   Hits:    {sem.get('total_hits', 0)}")
+            db_kb = sem.get("db_size_kb", 0)
+            self._rag_panel.write(f"   DB:      {db_kb:.0f} KB")
+            per_agent = sem.get("per_agent", {})
+            for agent, info in per_agent.items():
+                self._rag_panel.write(
+                    f"   {agent}: {info.get('entries', 0)} entries, "
+                    f"{info.get('hits', 0)} hits")
+
+        # Shield pass rate
+        shield = _cache.get("shield_stats")
+        if shield:
+            total = shield.get("beoordeeld", 0)
+            blocked = shield.get("geblokkeerd", 0)
+            rate = ((total - blocked) / total * 100) if total > 0 else 100
+            self._rag_panel.write(f" \u2588 SHIELD PASS RATE: {rate:.1f}%")
+
+    # ── Vector & Memory panel ──
+    def _update_vector_panel(self):
+        self._vector_panel.clear()
+
+        # CorticalStack
+        cs_stats = _cache.get("cortical_stats")
+        if cs_stats:
+            self._vector_panel.write(" \u2588 CORTICAL STACK")
+            self._vector_panel.write(f"   Episodes:  {cs_stats.get('episodic_events', 0):,}")
+            self._vector_panel.write(f"   Facts:     {cs_stats.get('semantic_facts', 0):,}")
+            self._vector_panel.write(f"   DB Size:   {cs_stats.get('db_size_mb', 0):.1f} MB")
+            wal = cs_stats.get("wal_size_bytes", 0)
+            if wal > 0:
+                self._vector_panel.write(f"   WAL:       {wal / 1024:.0f} KB")
+            self._vector_panel.write(f"   Pending:   {cs_stats.get('pending_writes', 0)}")
+
+        # Cortex Knowledge Graph
+        cx = _cache.get("cortex_stats")
+        if cx:
+            self._vector_panel.write(" \u2588 CORTEX GRAPH")
+            self._vector_panel.write(f"   Nodes:   {cx.get('graph_nodes', 0):,}")
+            self._vector_panel.write(f"   Edges:   {cx.get('graph_edges', 0):,}")
+            self._vector_panel.write(f"   Triples: {cx.get('db_triples', 0):,}")
+
+        # Synapse
+        syn = _cache.get("synapse_stats")
+        if syn:
+            self._vector_panel.write(" \u2588 SYNAPSE PATHWAYS")
+            self._vector_panel.write(f"   Pathways:     {syn.get('pathways', 0)}")
+            self._vector_panel.write(f"   Interactions: {syn.get('interactions', 0):,}")
+            self._vector_panel.write(f"   Avg Strength: {syn.get('avg_strength', 0):.3f}")
+
+        # Recent facts
+        facts = _cache.get("cortical_facts")
+        if facts:
+            self._vector_panel.write(f" \u2588 SEMANTIC MEMORY ({len(facts)} facts)")
+            for f in (facts or [])[:3]:
+                key = f.get("key", "?")[:35]
+                self._vector_panel.write(f"   {key}")
+
     def refresh(self):
         self.update_vanguard()
         self._draw_cortex()
@@ -2529,6 +2680,8 @@ class DashboardTab(ctk.CTkFrame):
         self._update_mini_events()
         self._update_mini_circuits()
         self._update_mini_immune()
+        self._update_rag_panel()
+        self._update_vector_panel()
         # Refresh extra panels added via panel picker
         for panel, update_fn in list(self._extra_panels):
             try:
@@ -3873,6 +4026,7 @@ class OmegaSovereignApp(ctk.CTk):
                 getattr(p, '_float_window', None)
                 for p in [db.vanguard, db.cortex_panel, db.omega_term,
                           db.pulse_panel, db.fuel_panel, db.listener_panel,
+                          db._rag_panel, db._vector_panel,
                           db._mini_events, db._mini_circuits, db._mini_immune]
             )
             if has_floating or db._extra_panels:
