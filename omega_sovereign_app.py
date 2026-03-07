@@ -1,17 +1,20 @@
 """
-OMEGA SOVEREIGN APP -- Native Desktop Dashboard v2.0
+OMEGA SOVEREIGN APP -- Native Desktop Dashboard v3.0
 =====================================================
 
 Standalone desktop applicatie (CustomTkinter + matplotlib).
-7-tab neon dashboard met het volledige Omega ecosystem:
+10-tab neon dashboard met het volledige Omega ecosystem:
 
-  Tab 1: DASHBOARD   — 6-panel overzicht (Vanguard, Cortex, Pulse, Fuel, Omega Terminal, Listener)
-  Tab 2: AGENTS      — Per-agent health, circuit breakers, pipeline metrics, routing
-  Tab 3: BRAIN       — Cortex graph, Synapse pathways, Phantom predictions, Singularity
-  Tab 4: IMMUNE      — BlackBox antibodies, HallucinatieSchild, Governor, Tribunal
-  Tab 5: MEMORY      — CorticalStack events, DB metrics, semantic recall
-  Tab 6: OBSERVATORY — Model leaderboard, auction history, provider health, cost analysis
-  Tab 7: TERMINAL    — Real subprocess shell (PowerShell/bash)
+  Tab 1:  DASHBOARD    — 6-panel overzicht (Vanguard, Cortex, Pulse, Fuel, Omega Terminal, Listener)
+  Tab 2:  AGENTS       — Per-agent health, circuit breakers, pipeline metrics, routing
+  Tab 3:  BRAIN        — Cortex graph, Synapse pathways, Phantom predictions, Singularity
+  Tab 4:  IMMUNE       — BlackBox antibodies, HallucinatieSchild, Governor, Tribunal
+  Tab 5:  MEMORY       — CorticalStack events, DB metrics, semantic recall
+  Tab 6:  OBSERVATORY  — Model leaderboard, auction history, provider health, cost analysis
+  Tab 7:  TERMINAL     — Real subprocess shell (PowerShell/bash)
+  Tab 8:  APPS         — 29 app buttons with status indicators, quick launch
+  Tab 9:  MAINTENANCE  — Dreamer REM, DevOpsDaemon CI, GhostWriter, Shadow Governance
+  Tab 10: PREDICTIONS  — OracleEye forecasts, Phantom predictions, trend data, TheMirror
 
 Gebruik: python omega_sovereign_app.py
 """
@@ -411,6 +414,82 @@ class _DataCache:
         except Exception as e:
             logger.debug("cache config_audit: %s", e)
 
+        # ── Phase 54: New cache keys for v3.0 tabs ──
+
+        # Dreamer — last REM report
+        try:
+            if not hasattr(self, '_dreamer'):
+                from danny_toolkit.brain.dreamer import Dreamer
+                self._dreamer = Dreamer()
+            dr = self._dreamer
+            stats = {}
+            if hasattr(dr, 'last_rem_report'):
+                stats["last_rem"] = dr.last_rem_report
+            if hasattr(dr, '_backup_ok'):
+                stats["backup_ok"] = dr._backup_ok
+            if hasattr(dr, '_last_cycle'):
+                stats["last_cycle"] = dr._last_cycle
+            stats["next_run"] = "04:00"
+            self.put("dreamer_stats", stats)
+        except Exception as e:
+            logger.debug("cache dreamer: %s", e)
+
+        # DevOpsDaemon — CI stats
+        try:
+            if not hasattr(self, '_devops'):
+                from danny_toolkit.brain.devops_daemon import DevOpsDaemon
+                self._devops = DevOpsDaemon()
+            self.put("devops_stats", self._devops.get_stats())
+        except Exception as e:
+            logger.debug("cache devops: %s", e)
+
+        # GhostWriter — token stats
+        try:
+            if not hasattr(self, '_ghost_writer'):
+                from danny_toolkit.brain.ghost_writer import GhostWriter
+                self._ghost_writer = GhostWriter()
+            self.put("ghost_writer_stats", self._ghost_writer.get_token_stats())
+        except Exception as e:
+            logger.debug("cache ghost_writer: %s", e)
+
+        # GhostAmplifier — amplification stats
+        try:
+            from danny_toolkit.brain.ghost_amplifier import get_ghost_amplifier
+            self.put("ghost_amplifier_stats", get_ghost_amplifier().get_stats())
+        except Exception as e:
+            logger.debug("cache ghost_amplifier: %s", e)
+
+        # ShadowGovernance — zone status
+        try:
+            if not hasattr(self, '_shadow_gov'):
+                from danny_toolkit.brain.shadow_governance import ShadowGovernance
+                self._shadow_gov = ShadowGovernance()
+            self.put("shadow_status", self._shadow_gov.get_stats())
+        except Exception as e:
+            logger.debug("cache shadow: %s", e)
+
+        # OracleEye — forecasts
+        try:
+            from danny_toolkit.brain.oracle_eye import get_oracle_eye
+            oracle = get_oracle_eye()
+            forecasts = oracle.forecast_next_hours(hours=4)
+            self.put("oracle_predictions", [
+                {"hour": f.hour, "cpu": f.cpu, "ram": f.ram, "queries": f.queries}
+                for f in forecasts
+            ] if forecasts else [])
+            self.put("oracle_peaks", oracle.get_peak_hours())
+        except Exception as e:
+            logger.debug("cache oracle: %s", e)
+
+        # TheMirror — user profile
+        try:
+            if not hasattr(self, '_mirror'):
+                from danny_toolkit.brain.the_mirror import TheMirror
+                self._mirror = TheMirror()
+            self.put("mirror_profile", self._mirror.load_profile())
+        except Exception as e:
+            logger.debug("cache mirror: %s", e)
+
 
 _cache = _DataCache()
 
@@ -516,6 +595,8 @@ def _run_self_diagnostic():
         ("VoidWalker", "danny_toolkit.brain.void_walker", "VoidWalker"),
         ("Artificer", "danny_toolkit.brain.artificer", "Artificer"),
         ("Dreamer", "danny_toolkit.brain.dreamer", "Dreamer"),
+        ("GhostWriter", "danny_toolkit.brain.ghost_writer", "GhostWriter"),
+        ("GhostAmplifier", "danny_toolkit.brain.ghost_amplifier", "GhostAmplifier"),
     ]:
         try:
             mod = __import__(path, fromlist=[cls])
@@ -532,6 +613,7 @@ def _run_self_diagnostic():
         ("DevOpsDaemon", "danny_toolkit.brain.devops_daemon", "DevOpsDaemon"),
         ("ModelRegistry", "danny_toolkit.brain.model_sync", "get_model_registry"),
         ("WaakhuisMonitor", "danny_toolkit.brain.waakhuis", "get_waakhuis"),
+        ("TheMirror", "danny_toolkit.brain.the_mirror", "TheMirror"),
     ]:
         try:
             mod = __import__(path, fromlist=[cls])
@@ -1159,6 +1241,36 @@ class DashboardTab(ctk.CTkFrame):
                 self._ct_write("  \u26d4 Ongeldige key. Verwacht: apikey sk-ant-...", "error")
         elif low == "omega":
             self._omega_activate(self._ct_write)
+        elif low == "status":
+            sid = getattr(self, '_claude_session_id', None)
+            self._ct_write(f"  Session: {sid[:12] + '...' if sid else 'geen'}", "system")
+            self._ct_write(f"  Continuity: {'actief' if getattr(self, '_claude_has_session', False) else 'nieuw'}", "output")
+            model = getattr(self, '_claude_model', 'default')
+            self._ct_write(f"  Model: {model}", "output")
+        elif low == "help":
+            self._ct_write("  Claude Terminal Commands:", "system")
+            for c, d in [
+                ("new", "Nieuwe conversatie (reset session)"),
+                ("clear", "Terminal wissen"),
+                ("status", "Session info tonen"),
+                ("login", "Anthropic Console openen"),
+                ("apikey sk-...", "API key instellen"),
+                ("wav <vraag>", "Gebruik Groq WAV-Loop"),
+                ("omega", "Sovereign activatie"),
+                ("help", "Dit overzicht"),
+            ]:
+                self._ct_write(f"    {c:18s} {d}", "dim")
+            self._ct_write("\n  Typ direct een vraag voor Claude Code.", "output")
+        elif low.startswith("wav "):
+            # WAV-Loop shortcut vanuit Claude terminal
+            vraag = cmd[4:].strip()
+            if vraag:
+                self._ot_write(f"\u2126 > {vraag}", "input")
+                self._ot_write("\u2126 Processing... (WAV-Loop)", "process")
+                threading.Thread(target=self._ot_ask_brain, args=(vraag,), daemon=True).start()
+                self._ct_write(f"  \u21aa Doorgestuurd naar Omega Brain WAV-Loop", "system")
+            else:
+                self._ct_write("  Gebruik: wav <je vraag>", "dim")
         elif re.match(r'^(sk-|key-|api[_-])', cmd, re.IGNORECASE):
             self._ct_write("  \u26d4 Gebruik: apikey sk-ant-...", "error")
         else:
@@ -1190,13 +1302,26 @@ class DashboardTab(ctk.CTkFrame):
         known = {"help", "clear", "status", "agents", "health",
                  "metrics", "bus", "events", "keys", "cortical",
                  "apps", "brain", "immune", "rag", "diag",
-                 "vram", "config", "uptime"}
+                 "vram", "config", "uptime",
+                 "shadow", "dreamer", "oracle", "devops"}
         low = cmd.lower().strip("/")
         if low == "omega":
             self._omega_activate(self._ot_write)
         elif low in known:
             self._ot_dispatch(low)
             self._ot_write("")
+        elif low.startswith("search "):
+            query = cmd[7:].strip()
+            if query:
+                self._ot_dispatch_search(query)
+            else:
+                self._ot_write("  Gebruik: search <zoekterm>", "dim")
+        elif low.startswith("open "):
+            app_name = cmd[5:].strip()
+            if app_name:
+                self._ot_dispatch_open(app_name)
+            else:
+                self._ot_write("  Gebruik: open <app_naam>", "dim")
         else:
             # Default: direct brain chat (WAV-Loop zonder prefix)
             self._ot_write("\u2126 Processing...", "process")
@@ -1209,12 +1334,18 @@ class DashboardTab(ctk.CTkFrame):
             self._ot_write("  System commands:", "system")
             for c in ["status", "agents", "health", "metrics", "bus",
                        "events", "keys", "cortical", "apps", "brain",
-                       "immune", "rag", "diag", "vram", "config",
-                       "uptime", "clear"]:
+                       "immune", "rag", "diag", "vram", "config", "uptime"]:
                 self._ot_write(f"    {c}", "dim")
+            self._ot_write("\n  v3.0 commands:", "system")
+            for c, d in [("shadow", "Shadow Governance zones"),
+                         ("dreamer", "REM cycle + backup status"),
+                         ("oracle", "OracleEye resource predictions"),
+                         ("devops", "DevOpsDaemon CI status"),
+                         ("search <q>", "CorticalStack zoeken"),
+                         ("open <app>", "App tools opzoeken")]:
+                self._ot_write(f"    {c:16s} {d}", "dim")
             self._ot_write("\n  Omega Brain (default):", "system")
-            self._ot_write("    Typ direct een vraag \u2014 Omega Brain beantwoordt.", "dim")
-            self._ot_write("    WAV-Loop: Will \u2192 Action \u2192 Verify cycle.", "dim")
+            self._ot_write("    Typ direct een vraag \u2014 WAV-Loop.", "dim")
         elif cmd == "clear":
             self._ot_text.configure(state="normal")
             self._ot_text.delete("1.0", "end")
@@ -1365,6 +1496,121 @@ class DashboardTab(ctk.CTkFrame):
             if _wav_stats['queries'] > 0:
                 avg = _wav_stats['total_time'] / _wav_stats['queries']
                 self._ot_write(f"  Avg response: {avg:.1f}s", "output")
+        elif cmd == "shadow":
+            try:
+                from danny_toolkit.brain.shadow_governance import ShadowGovernance
+                sg = ShadowGovernance()
+                self._ot_write("  Shadow Governance Status:", "system")
+                self._ot_write(f"  Zones: ROOD (locked) | GEEL (restricted) | GROEN (open)", "output")
+                rules = getattr(sg, '_rules', getattr(sg, 'regels', []))
+                self._ot_write(f"  Regels: {len(rules) if rules else '9 (default)'}", "output")
+                locks = getattr(sg, '_lockdowns', getattr(sg, 'lockdowns', []))
+                self._ot_write(f"  Lockdowns: {len(locks) if locks else '2 (default)'}", "output")
+            except Exception as e:
+                self._ot_write(f"  ShadowGovernance: {e}", "error")
+        elif cmd == "dreamer":
+            try:
+                from danny_toolkit.brain.dreamer import Dreamer
+                d = Dreamer.__new__(Dreamer)
+                self._ot_write("  Dreamer REM Status:", "system")
+                self._ot_write(f"  Schedule: 04:00 (heartbeat)", "output")
+                self._ot_write(f"  Cycles: backup, vacuum, retention, compress,", "output")
+                self._ot_write(f"          GhostWriter, anticipate, OracleEye", "output")
+                # Check last backup
+                import glob as _g
+                backups = sorted(_g.glob(os.path.join(
+                    r"C:\Users\danny\danny-toolkit\data", "cortical_backup_*.db*")))
+                if backups:
+                    last = os.path.basename(backups[-1])
+                    self._ot_write(f"  Last backup: {last}", "output")
+                else:
+                    self._ot_write(f"  Last backup: none found", "warn")
+            except Exception as e:
+                self._ot_write(f"  Dreamer: {e}", "error")
+        elif cmd == "oracle":
+            try:
+                from danny_toolkit.brain.oracle_eye import TheOracleEye
+                oe = TheOracleEye.__new__(TheOracleEye)
+                self._ot_write("  OracleEye Predictions:", "system")
+                if HAS_PSUTIL:
+                    cpu = psutil.cpu_percent(interval=0.5)
+                    ram = psutil.virtual_memory()
+                    self._ot_write(f"  CPU: {cpu:.1f}%  {'HIGH' if cpu > 80 else 'OK'}", "output")
+                    self._ot_write(f"  RAM: {ram.percent:.1f}%  ({ram.available // (1024**2)} MB vrij)", "output")
+                vr = _cache.get("vram")
+                if vr and vr.get("beschikbaar"):
+                    pct = round(vr['in_gebruik_mb'] / max(vr['totaal_mb'], 1) * 100, 1)
+                    self._ot_write(f"  VRAM: {pct}%  ({vr['vrij_mb']} MB vrij)", "output")
+                    if pct > 85:
+                        self._ot_write(f"  \u26a0 VRAM pressure — GPU workloads at risk", "warn")
+                self._ot_write(f"  Scaling: adaptive (CPU-aware pools)", "dim")
+            except Exception as e:
+                self._ot_write(f"  OracleEye: {e}", "error")
+        elif cmd == "devops":
+            try:
+                from danny_toolkit.brain.devops_daemon import DevOpsDaemon
+                self._ot_write("  DevOpsDaemon CI Status:", "system")
+                self._ot_write(f"  Loop: test \u2192 analyze \u2192 BlackBox \u2192 NeuralBus", "output")
+                self._ot_write(f"  Schedule: ~5 min (heartbeat)", "output")
+                # Check BlackBox for recent CI entries
+                if HAS_BLACKBOX:
+                    bb = get_black_box()
+                    stats = bb.get_stats()
+                    self._ot_write(f"  Immune antibodies: {stats.get('total_antibodies', 0)}", "output")
+            except Exception as e:
+                self._ot_write(f"  DevOpsDaemon: {e}", "error")
+
+    def _ot_dispatch_search(self, query):
+        """CorticalStack semantic search via Omega terminal."""
+        self._ot_write(f"  Searching: \"{query}\"...", "process")
+        try:
+            if HAS_CORTICAL:
+                cs = get_cortical_stack()
+                if hasattr(cs, 'search'):
+                    results = cs.search(query, top_k=5)
+                    if results:
+                        for i, r in enumerate(results[:5], 1):
+                            tekst = str(r.get("tekst", r.get("content", r.get("action", ""))))[:100]
+                            score = r.get("score", r.get("relevance", ""))
+                            self._ot_write(f"  {i}. {tekst}", "output")
+                            if score:
+                                self._ot_write(f"     score: {score}", "dim")
+                    else:
+                        self._ot_write("  Geen resultaten.", "dim")
+                else:
+                    # Fallback: zoek in recent events
+                    events = cs.get_recent_events(count=50)
+                    matches = [e for e in events if query.lower() in str(e).lower()][:5]
+                    if matches:
+                        for m in matches:
+                            self._ot_write(f"  {str(m)[:100]}", "output")
+                    else:
+                        self._ot_write("  Geen matches in recente events.", "dim")
+            else:
+                self._ot_write("  CorticalStack niet beschikbaar.", "error")
+        except Exception as e:
+            self._ot_write(f"  Search error: {e}", "error")
+
+    def _ot_dispatch_open(self, app_name):
+        """Open een app via brain function calling."""
+        self._ot_write(f"  Opening: {app_name}...", "process")
+        try:
+            # Zoek matching app in tool definitions
+            from danny_toolkit.brain.app_tools import TOOL_DEFINITIONS
+            app_lower = app_name.lower().replace(" ", "_")
+            matches = [td for td in TOOL_DEFINITIONS
+                       if app_lower in td.get("function", {}).get("name", "").lower()]
+            if matches:
+                tool_names = [td["function"]["name"] for td in matches[:5]]
+                self._ot_write(f"  Found {len(matches)} tools:", "system")
+                for tn in tool_names:
+                    self._ot_write(f"    {tn}", "output")
+                self._ot_write(f"\n  Gebruik via brain: typ een vraag met \"{app_name}\"", "dim")
+            else:
+                self._ot_write(f"  App \"{app_name}\" niet gevonden.", "warn")
+                self._ot_write("  Typ 'apps' voor beschikbare apps.", "dim")
+        except Exception as e:
+            self._ot_write(f"  Open error: {e}", "error")
 
     def _ot_run_diag(self):
         """Run self-diagnostic in background thread."""
@@ -1390,7 +1636,14 @@ class DashboardTab(ctk.CTkFrame):
             w(f"  Diagnostic error: {e}", "error")
 
     def _ot_ask_claude(self, question):
-        """Execute question via Claude Code CLI with conversation memory and streaming."""
+        """Execute question via Claude Code CLI — exact als PowerShell ervaring.
+
+        Ondersteunt:
+        - Real-time streaming text (content_block_delta events)
+        - Volledige tool gebruik + resultaten weergave
+        - Session ID tracking voor --resume (persistente conversatie)
+        - Auth/credit error detectie met recovery opties
+        """
         t0 = time.time()
         w = lambda txt, tag="output": self._ct_text.after(0, self._ct_write, txt, tag)
         try:
@@ -1398,7 +1651,6 @@ class DashboardTab(ctk.CTkFrame):
             import json as _json
             claude_path = shutil.which("claude")
             if not claude_path:
-                # Fallback: WinGet install path
                 winget_path = os.path.expandvars(
                     r"%LOCALAPPDATA%\Microsoft\WinGet\Links\claude.exe")
                 if os.path.isfile(winget_path):
@@ -1422,10 +1674,16 @@ class DashboardTab(ctk.CTkFrame):
             if api_key:
                 env["ANTHROPIC_API_KEY"] = api_key
 
-            # Build command with stream-json + conversation memory
+            # Build command — stream-json voor real-time output
             cmd = [claude_path, "-p", question, "--output-format", "stream-json", "--verbose",
-                   "--allowedTools", "Edit", "Write", "Bash", "Read", "Glob", "Grep"]
-            if getattr(self, '_claude_has_session', False):
+                   "--allowedTools", "Edit", "Write", "Bash", "Read", "Glob", "Grep",
+                   "WebFetch", "Grep", "NotebookEdit", "TodoRead", "TodoWrite"]
+
+            # Session continuity: --resume met echte session ID
+            session_id = getattr(self, '_claude_session_id', None)
+            if session_id:
+                cmd.extend(["--resume", session_id])
+            elif getattr(self, '_claude_has_session', False):
                 cmd.append("--continue")
 
             proc = subprocess.Popen(
@@ -1443,7 +1701,8 @@ class DashboardTab(ctk.CTkFrame):
 
             output_lines = 0
             collected = []
-            # iter(readline, '') avoids Python's hidden read-ahead buffer
+            _streaming_line = []  # Buffer voor delta streaming
+
             for raw_line in iter(proc.stdout.readline, ''):
                 line = raw_line.strip()
                 if not line:
@@ -1451,39 +1710,104 @@ class DashboardTab(ctk.CTkFrame):
                 try:
                     event = _json.loads(line)
                 except _json.JSONDecodeError:
-                    # Non-JSON output — show as plain text
                     w(f"  {line}", "output")
                     output_lines += 1
                     collected.append(line)
                     continue
 
                 etype = event.get("type", "")
-                if etype == "assistant":
+
+                # ── System init: capture session ID + model ──
+                if etype == "system":
+                    sid = event.get("session_id", "")
+                    if sid:
+                        self._claude_session_id = sid
+                    model = event.get("model", "")
+                    if model:
+                        w(f"  [{model}]", "dim")
+
+                # ── Streaming text: real-time character output ──
+                elif etype == "content_block_delta":
+                    delta = event.get("delta", {})
+                    text = delta.get("text", "")
+                    if text:
+                        # Accumuleer tot newline, dan flush
+                        _streaming_line.append(text)
+                        combined = "".join(_streaming_line)
+                        if "\n" in combined:
+                            parts = combined.split("\n")
+                            for part in parts[:-1]:
+                                w(f"  {part}", "output")
+                                output_lines += 1
+                                collected.append(part)
+                            _streaming_line = [parts[-1]] if parts[-1] else []
+
+                elif etype == "content_block_start":
+                    _streaming_line = []  # Reset buffer
+
+                elif etype == "content_block_stop":
+                    # Flush remaining buffer
+                    if _streaming_line:
+                        remainder = "".join(_streaming_line).rstrip()
+                        if remainder:
+                            w(f"  {remainder}", "output")
+                            output_lines += 1
+                            collected.append(remainder)
+                        _streaming_line = []
+
+                # ── Full assistant message (fallback voor non-streaming) ──
+                elif etype == "assistant":
                     for block in event.get("message", {}).get("content", []):
                         if block.get("type") == "text":
                             for tl in block["text"].splitlines():
                                 w(f"  {tl}", "output")
                                 output_lines += 1
                                 collected.append(tl)
+
+                # ── Tool gebruik: naam + input weergave ──
                 elif etype == "tool_use":
                     tool_name = event.get("tool", event.get("name", "?"))
+                    tool_input = event.get("input", {})
                     w(f"  \U0001f527 [{tool_name}]", "system")
+                    # Toon relevante tool input (beknopt)
+                    if isinstance(tool_input, dict):
+                        for k, v in list(tool_input.items())[:3]:
+                            v_str = str(v)[:80]
+                            w(f"     {k}: {v_str}", "dim")
+
+                # ── Tool resultaat: toon output (getrimd) ──
+                elif etype == "tool_result":
+                    tool_name = event.get("tool", event.get("name", ""))
+                    content = event.get("content", "")
+                    if isinstance(content, str) and content.strip():
+                        # Toon eerste 5 regels van tool output
+                        lines = content.strip().splitlines()
+                        preview = lines[:5]
+                        for pl in preview:
+                            w(f"     {pl[:120]}", "dim")
+                        if len(lines) > 5:
+                            w(f"     ... ({len(lines) - 5} more lines)", "dim")
+
+                # ── Finaal resultaat: session ID + cost ──
                 elif etype == "result":
-                    # Skip — content already streamed via assistant events.
-                    # Only collect for auth-error detection.
+                    sid = event.get("session_id", "")
+                    if sid:
+                        self._claude_session_id = sid
                     result_text = event.get("result", "")
                     if result_text:
                         collected.append(str(result_text))
+                    cost = event.get("cost_usd", 0)
+                    if cost:
+                        w(f"  [$: {cost:.4f}]", "dim")
 
             proc.wait()
             elapsed = time.time() - t0
             rc = proc.returncode
 
-            # Mark session active on success for --continue on next question
             if rc == 0:
                 self._claude_has_session = True
 
-            # ── Auth / credit error → verificatie opties ──
+            # ── Auth / credit error detectie ──
             full_output = " ".join(collected).lower()
             _AUTH_ERRORS = [
                 "credit balance is too low",
@@ -1497,13 +1821,14 @@ class DashboardTab(ctk.CTkFrame):
             if rc != 0 and any(err in full_output for err in _AUTH_ERRORS):
                 w(f"\n  \u26a0 Auth/credit probleem gedetecteerd.", "warn")
                 w(f"  Opties:", "system")
-                w(f"    1. login      \u2014 Open Anthropic Console (credits toevoegen)", "dim")
-                w(f"    2. apikey sk-ant-...  \u2014 Stel een andere API key in", "dim")
+                w(f"    1. login      \u2014 Open Anthropic Console", "dim")
+                w(f"    2. apikey sk-ant-...  \u2014 Stel een API key in", "dim")
                 w(f"    3. wav <vraag> \u2014 Gebruik Groq WAV-Loop (gratis)", "dim")
-                w(f"  Na oplossen: typ je vraag opnieuw.", "dim")
             elif rc != 0:
                 w(f"  [Claude exit code: {rc}]", "error")
-            w(f"\n  [Claude: {elapsed:.1f}s | {output_lines} lines]", "dim")
+
+            sid_short = (self._claude_session_id or "")[:8]
+            w(f"\n  [Claude: {elapsed:.1f}s | {output_lines} lines | sid:{sid_short}]", "dim")
             w("")
 
         except Exception as e:
@@ -2440,7 +2765,7 @@ class RealTerminalTab(ctk.CTkFrame):
         self._entry.bind("<Up>", self._hist_up)
         self._entry.bind("<Down>", self._hist_down)
 
-        self._write("OMEGA SOVEREIGN SHELL v2.0")
+        self._write("OMEGA SOVEREIGN SHELL v3.0")
         self._write(f"Working directory: {cwd}")
         self._write("Real subprocess execution (PowerShell). Type commands below.\n")
 
@@ -2539,6 +2864,279 @@ class RealTerminalTab(ctk.CTkFrame):
 
 
 # ╔══════════════════════════════════════════════════════════════════╗
+# ║  TAB 8: APPS                                                    ║
+# ╚══════════════════════════════════════════════════════════════════╝
+
+# Canonical app list — matches danny_toolkit/apps/
+_APP_REGISTRY = [
+    ("Agenda", "agenda_planner"), ("Boodschappen", "boodschappenlijst"),
+    ("Calculator", "rekenmachine"), ("Code Analyse", "code_analyse"),
+    ("Code Snippets", "code_snippets"), ("Citaten", "citaten_generator"),
+    ("Decision", "decision_maker"), ("Dream Journal", "dream_journal"),
+    ("Energie", "energie_vs_tech"), ("Expenses", "expense_tracker"),
+    ("Fitness", "fitness_tracker"), ("Flashcards", "flashcards"),
+    ("Goals", "goals_tracker"), ("Habits", "habit_tracker"),
+    ("Language", "language_tutor"), ("Mood", "mood_tracker"),
+    ("Music", "music_composer"), ("Notities", "notitie_app"),
+    ("Pomodoro", "pomodoro_timer"), ("Recepten", "recipe_generator"),
+    ("Room Plan", "room_planner"), ("Schatzoek", "schatzoek"),
+    ("Tijd Info", "tijd_info"), ("Time Capsule", "time_capsule"),
+    ("Units", "unit_converter"), ("Pixel", "virtueel_huisdier"),
+    ("Wachtwoord", "wachtwoord_generator"), ("Weer", "watchtower"),
+    ("Prism", "prism_dashboard"),
+]
+
+
+class AppsTab(ctk.CTkFrame):
+    """Tab 8: Grid of 29 app buttons with status indicators."""
+
+    def __init__(self, master):
+        super().__init__(master, fg_color="transparent")
+
+        # Title
+        ctk.CTkLabel(self, text="\U0001f4e6 APPS ECOSYSTEM (29)",
+                     font=FONT_TITLE, text_color=NEON_CYAN).pack(anchor="w", padx=8, pady=(4, 2))
+
+        # Quick actions bar
+        bar = ctk.CTkFrame(self, fg_color=BG_PANEL, height=32, corner_radius=6)
+        bar.pack(fill="x", padx=4, pady=(0, 4))
+        self._quick_lbl = ctk.CTkLabel(bar, text="", font=FONT_MONO_XS, text_color=TEXT_DIM)
+        self._quick_lbl.pack(side="left", padx=8)
+
+        # Scrollable grid
+        self._scroll = ctk.CTkScrollableFrame(self, fg_color="transparent")
+        self._scroll.pack(fill="both", expand=True, padx=4)
+        for i in range(6):
+            self._scroll.grid_columnconfigure(i, weight=1)
+
+        self._btns = {}
+        self._status_labels = {}
+        for idx, (label, module) in enumerate(_APP_REGISTRY):
+            row, col = divmod(idx, 6)
+            card = ctk.CTkFrame(self._scroll, fg_color=BG_CARD, corner_radius=8,
+                                border_width=1, border_color=BORDER)
+            card.grid(row=row, column=col, padx=3, pady=3, sticky="nsew")
+            card.grid_columnconfigure(0, weight=1)
+
+            btn = ctk.CTkButton(
+                card, text=label, font=FONT_MONO_SM,
+                fg_color="transparent", hover_color="#1a3a5c",
+                text_color=TEXT_PRIMARY, height=28,
+                command=lambda m=module: self._launch_app(m),
+            )
+            btn.grid(row=0, column=0, sticky="ew", padx=4, pady=(4, 0))
+
+            status = ctk.CTkLabel(card, text="\u25cb", font=FONT_MONO_XS, text_color=TEXT_DIM)
+            status.grid(row=1, column=0, pady=(0, 4))
+            self._btns[module] = btn
+            self._status_labels[module] = status
+
+    def _launch_app(self, module_name):
+        """Launch app via brain.process_request()."""
+        brain = _load_brain()
+        if not brain:
+            return
+        threading.Thread(
+            target=lambda: brain.process_request(f"open {module_name}"),
+            daemon=True,
+        ).start()
+
+    def refresh(self):
+        # Check data file presence for each app
+        active = 0
+        for label, module in _APP_REGISTRY:
+            lbl = self._status_labels.get(module)
+            if not lbl:
+                continue
+            try:
+                from danny_toolkit.core.config import Config
+                data_file = Config.DATA_DIR / "apps" / f"{module}.json"
+                if data_file.exists():
+                    lbl.configure(text="\u25cf", text_color=NEON_GREEN)
+                    active += 1
+                else:
+                    lbl.configure(text="\u25cb", text_color=TEXT_DIM)
+            except Exception:
+                lbl.configure(text="\u25cb", text_color=TEXT_DIM)
+        self._quick_lbl.configure(text=f"Active: {active}/{len(_APP_REGISTRY)} apps with data")
+
+
+# ╔══════════════════════════════════════════════════════════════════╗
+# ║  TAB 9: MAINTENANCE                                             ║
+# ╚══════════════════════════════════════════════════════════════════╝
+
+class MaintenanceTab(ctk.CTkFrame):
+    """Tab 9: Dreamer REM, DevOpsDaemon CI, GhostWriter AST, Shadow Governance."""
+
+    def __init__(self, master):
+        super().__init__(master, fg_color="transparent")
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
+
+        self.dreamer_panel = InfoPanel(self, "\U0001f4a4 Dreamer REM Cycle")
+        self.dreamer_panel.grid(row=0, column=0, sticky="nsew", padx=(0, 4), pady=(0, 4))
+        self.devops_panel = InfoPanel(self, "\u2699 DevOpsDaemon CI")
+        self.devops_panel.grid(row=0, column=1, sticky="nsew", padx=(4, 0), pady=(0, 4))
+        self.ghost_panel = InfoPanel(self, "\U0001f47b GhostWriter + Amplifier")
+        self.ghost_panel.grid(row=1, column=0, sticky="nsew", padx=(0, 4), pady=(4, 0))
+        self.shadow_panel = InfoPanel(self, "\U0001f3ad Shadow Governance")
+        self.shadow_panel.grid(row=1, column=1, sticky="nsew", padx=(4, 0), pady=(4, 0))
+
+    def refresh(self):
+        # Dreamer
+        self.dreamer_panel.clear()
+        ds = _cache.get("dreamer_stats")
+        if ds:
+            self.dreamer_panel.write(f"  Next REM: {ds.get('next_run', '04:00')}")
+            last = ds.get("last_cycle")
+            if last:
+                self.dreamer_panel.write(f"  Last cycle: {last}")
+            self.dreamer_panel.write(f"  Backup OK: {ds.get('backup_ok', '?')}")
+            rem = ds.get("last_rem")
+            if rem and isinstance(rem, dict):
+                for k, v in list(rem.items())[:8]:
+                    self.dreamer_panel.write(f"  {k}: {v}")
+            elif rem:
+                self.dreamer_panel.write(f"  {str(rem)[:200]}")
+        else:
+            self.dreamer_panel.write("  Dreamer: loading...")
+
+        # DevOps
+        self.devops_panel.clear()
+        devs = _cache.get("devops_stats")
+        if devs:
+            for k, v in devs.items():
+                if isinstance(v, dict):
+                    self.devops_panel.write(f"  {k}:")
+                    for kk, vv in list(v.items())[:5]:
+                        self.devops_panel.write(f"    {kk}: {vv}")
+                else:
+                    self.devops_panel.write(f"  {k}: {v}")
+        else:
+            self.devops_panel.write("  DevOps: loading...")
+
+        # GhostWriter + Amplifier
+        self.ghost_panel.clear()
+        gw = _cache.get("ghost_writer_stats")
+        if gw:
+            self.ghost_panel.write("  [GhostWriter]")
+            for k, v in gw.items():
+                self.ghost_panel.write(f"    {k}: {v}")
+        else:
+            self.ghost_panel.write("  GhostWriter: no data")
+        ga = _cache.get("ghost_amplifier_stats")
+        if ga:
+            self.ghost_panel.write("  [GhostAmplifier]")
+            for k, v in ga.items():
+                self.ghost_panel.write(f"    {k}: {v}")
+
+        # Shadow Governance
+        self.shadow_panel.clear()
+        sg = _cache.get("shadow_status")
+        if sg:
+            for k, v in sg.items():
+                if isinstance(v, dict):
+                    self.shadow_panel.write(f"  {k}:")
+                    for kk, vv in list(v.items())[:6]:
+                        color = NEON_RED if "ROOD" in str(vv) else (
+                            NEON_YELLOW if "GEEL" in str(vv) else NEON_GREEN)
+                        self.shadow_panel.write(f"    {kk}: {vv}")
+                elif isinstance(v, list):
+                    self.shadow_panel.write(f"  {k}: {len(v)} items")
+                else:
+                    self.shadow_panel.write(f"  {k}: {v}")
+        else:
+            self.shadow_panel.write("  Shadow: loading...")
+
+
+# ╔══════════════════════════════════════════════════════════════════╗
+# ║  TAB 10: PREDICTIONS                                            ║
+# ╚══════════════════════════════════════════════════════════════════╝
+
+class PredictionsTab(ctk.CTkFrame):
+    """Tab 10: OracleEye forecasts, Phantom predictions, trend charts."""
+
+    def __init__(self, master):
+        super().__init__(master, fg_color="transparent")
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
+
+        self.oracle_panel = InfoPanel(self, "\U0001f52e OracleEye Forecasts")
+        self.oracle_panel.grid(row=0, column=0, sticky="nsew", padx=(0, 4), pady=(0, 4))
+        self.phantom_panel = InfoPanel(self, "\U0001f47b Phantom Predictions")
+        self.phantom_panel.grid(row=0, column=1, sticky="nsew", padx=(4, 0), pady=(0, 4))
+        self.trends_panel = InfoPanel(self, "\U0001f4c8 Trend Data")
+        self.trends_panel.grid(row=1, column=0, sticky="nsew", padx=(0, 4), pady=(4, 0))
+        self.mirror_panel = InfoPanel(self, "\U0001fa9e TheMirror Profile")
+        self.mirror_panel.grid(row=1, column=1, sticky="nsew", padx=(4, 0), pady=(4, 0))
+
+    def refresh(self):
+        # OracleEye
+        self.oracle_panel.clear()
+        preds = _cache.get("oracle_predictions")
+        peaks = _cache.get("oracle_peaks")
+        if preds:
+            self.oracle_panel.write("  Next 4h forecast:")
+            for f in preds:
+                self.oracle_panel.write(
+                    f"    H+{f.get('hour', '?')}: CPU={f.get('cpu', '?'):.0f}%"
+                    f" RAM={f.get('ram', '?'):.0f}% Q={f.get('queries', '?'):.0f}")
+            if peaks:
+                self.oracle_panel.write(f"  Peak hours: {peaks}")
+        else:
+            self.oracle_panel.write("  OracleEye: loading...")
+
+        # Phantom
+        self.phantom_panel.clear()
+        ph_acc = _cache.get("phantom_accuracy")
+        ph_pred = _cache.get("phantom_predictions")
+        if ph_acc:
+            for k, v in ph_acc.items():
+                self.phantom_panel.write(f"  {k}: {v}")
+        if ph_pred:
+            self.phantom_panel.write(f"\n  Active predictions ({len(ph_pred)}):")
+            for p in ph_pred[:5]:
+                if isinstance(p, dict):
+                    what = p.get("prediction", p.get("what", "?"))[:50]
+                    conf = p.get("confidence", "?")
+                    self.phantom_panel.write(f"    [{conf}] {what}")
+                else:
+                    self.phantom_panel.write(f"    {str(p)[:60]}")
+        if not ph_acc and not ph_pred:
+            self.phantom_panel.write("  Phantom: loading...")
+
+        # Trends
+        self.trends_panel.clear()
+        td = _cache.get("trend_data")
+        if td:
+            if isinstance(td, dict):
+                for k, v in list(td.items())[:10]:
+                    if isinstance(v, list):
+                        self.trends_panel.write(f"  {k}: {len(v)} points")
+                    else:
+                        self.trends_panel.write(f"  {k}: {v}")
+            elif isinstance(td, list):
+                for item in td[:10]:
+                    self.trends_panel.write(f"  {item}")
+        else:
+            self.trends_panel.write("  Trends: loading...")
+
+        # Mirror profile
+        self.mirror_panel.clear()
+        mp = _cache.get("mirror_profile")
+        if mp and isinstance(mp, dict):
+            for k, v in list(mp.items())[:12]:
+                val = str(v)[:60] if not isinstance(v, (dict, list)) else f"({type(v).__name__})"
+                self.mirror_panel.write(f"  {k}: {val}")
+        else:
+            self.mirror_panel.write("  Mirror: no profile data")
+
+
+# ╔══════════════════════════════════════════════════════════════════╗
 # ║  MAIN APPLICATION                                              ║
 # ╚══════════════════════════════════════════════════════════════════╝
 
@@ -2547,7 +3145,7 @@ class OmegaSovereignApp(ctk.CTk):
 
     def __init__(self):
         super().__init__()
-        self.title("\u2126 OMEGA SOVEREIGN DASHBOARD v2.0")
+        self.title("\u2126 OMEGA SOVEREIGN DASHBOARD v3.0")
         self.geometry("1500x950")
         self.minsize(1200, 750)
         self.configure(fg_color=BG_DEEP)
@@ -2584,6 +3182,7 @@ class OmegaSovereignApp(ctk.CTk):
             "\u2126 Dashboard", "\U0001f916 Agents", "\U0001f9e0 Brain",
             "\U0001f6e1 Immune", "\U0001f4be Memory",
             "\U0001f52d Observatory", "\U0001f4bb Terminal",
+            "\U0001f4e6 Apps", "\U0001f527 Maintenance", "\U0001f52e Predictions",
         ]
         for name in tab_names:
             self._tabs.add(name)
@@ -2603,6 +3202,12 @@ class OmegaSovereignApp(ctk.CTk):
         self.tab_observatory.pack(fill="both", expand=True)
         self.tab_terminal = RealTerminalTab(self._tabs.tab(tab_names[6]))
         self.tab_terminal.pack(fill="both", expand=True)
+        self.tab_apps = AppsTab(self._tabs.tab(tab_names[7]))
+        self.tab_apps.pack(fill="both", expand=True)
+        self.tab_maintenance = MaintenanceTab(self._tabs.tab(tab_names[8]))
+        self.tab_maintenance.pack(fill="both", expand=True)
+        self.tab_predictions = PredictionsTab(self._tabs.tab(tab_names[9]))
+        self.tab_predictions.pack(fill="both", expand=True)
 
         self._tab_map = {
             tab_names[0]: self.tab_dashboard,
@@ -2612,6 +3217,9 @@ class OmegaSovereignApp(ctk.CTk):
             tab_names[4]: self.tab_memory,
             tab_names[5]: self.tab_observatory,
             tab_names[6]: self.tab_terminal,
+            tab_names[7]: self.tab_apps,
+            tab_names[8]: self.tab_maintenance,
+            tab_names[9]: self.tab_predictions,
         }
         self._tab_names = tab_names
 
@@ -2681,6 +3289,16 @@ class OmegaSovereignApp(ctk.CTk):
         _reg("observatory.auctions", "Auction History", "Observatory", "auction_history")
         _reg("observatory.failures", "Failure Analysis", "Observatory", "failure_analysis")
         _reg("observatory.trends", "Trend Data", "Observatory", "trend_data")
+        # Maintenance
+        _reg("maintenance.dreamer", "Dreamer REM Cycle", "Maintenance", "dreamer_stats")
+        _reg("maintenance.devops", "DevOpsDaemon CI", "Maintenance", "devops_stats")
+        _reg("maintenance.ghostwriter", "GhostWriter Stats", "Maintenance", "ghost_writer_stats")
+        _reg("maintenance.shadow", "Shadow Governance", "Maintenance", "shadow_status")
+        # Predictions
+        _reg("predictions.oracle", "OracleEye Forecasts", "Predictions", "oracle_predictions")
+        _reg("predictions.phantom", "Phantom Accuracy", "Predictions", "phantom_accuracy")
+        _reg("predictions.trends", "Trend Charts", "Predictions", "trend_data")
+        _reg("predictions.mirror", "TheMirror Profile", "Predictions", "mirror_profile")
 
         # ── Bottom glow + status ──
         ctk.CTkFrame(self, height=2, fg_color=NEON_CYAN).pack(fill="x", padx=20, pady=(2, 0))
