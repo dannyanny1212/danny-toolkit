@@ -54,6 +54,12 @@ try:
 except ImportError:
     HAS_REALITY_ANCHOR = False
 
+try:
+    from danny_toolkit.brain.adversarial_tribunal import get_adversarial_tribunal
+    HAS_ADVERSARIAL_TRIBUNAL = True
+except ImportError:
+    HAS_ADVERSARIAL_TRIBUNAL = False
+
 
 # ── Enums & Dataclasses ──
 
@@ -165,6 +171,8 @@ class HallucinatieSchild:
         self._truth_anchor_checked = False
         self._reality_anchor = None  # Lazy AST scanner
         self._reality_anchor_checked = False
+        self._adversarial_tribunal = None  # Lazy multi-model verificatie
+        self._adversarial_tribunal_checked = False
         self._stats = {
             "beoordeeld": 0,
             "geblokkeerd": 0,
@@ -172,6 +180,7 @@ class HallucinatieSchild:
             "doorgelaten": 0,
             "code_validaties": 0,
             "code_violations": 0,
+            "tribunal_escalaties": 0,
         }
 
     def _get_truth_anchor(self):
@@ -184,6 +193,17 @@ class HallucinatieSchild:
                 except Exception as e:
                     logger.debug("TruthAnchor load: %s", e)
         return self._truth_anchor
+
+    def _get_adversarial_tribunal(self):
+        """Lazy AdversarialTribunal — multi-model verificatie bij onzekere scores."""
+        if not self._adversarial_tribunal_checked:
+            self._adversarial_tribunal_checked = True
+            if HAS_ADVERSARIAL_TRIBUNAL:
+                try:
+                    self._adversarial_tribunal = get_adversarial_tribunal()
+                except Exception as e:
+                    logger.debug("AdversarialTribunal load: %s", e)
+        return self._adversarial_tribunal
 
     def _get_reality_anchor(self):
         """Lazy RealityAnchor — AST codebase scanner."""
@@ -330,6 +350,50 @@ class HallucinatieSchild:
         elif totaal_score < self.WAARSCHUWING_DREMPEL:
             with self._lock:
                 self._stats["waarschuwingen"] += 1
+
+            # ── Tribunal Escalatie: second opinion bij onzekere scores ──
+            if tribunal_gevalideerd is None:
+                tribunal = self._get_adversarial_tribunal()
+                if tribunal:
+                    try:
+                        alle_tekst = " ".join(
+                            str(getattr(p, "display_text", "")
+                                or getattr(p, "content", ""))
+                            for p in payloads
+                        )[:2000]
+                        verdict = tribunal.deliberate(user_input, alle_tekst)
+                        with self._lock:
+                            self._stats["tribunal_escalaties"] += 1
+                        if verdict and verdict.accepted:
+                            # Tribunal geeft groen licht — verhoog score
+                            totaal_score = min(totaal_score + 0.15, 1.0)
+                            rapport.totaal_score = totaal_score
+                            logger.info(
+                                "Tribunal escalatie: ACCEPTED, score verhoogd naar %.2f",
+                                totaal_score,
+                            )
+                        elif verdict and not verdict.accepted:
+                            # Tribunal wijst af — verlaag score, mogelijk blokkade
+                            totaal_score = max(totaal_score - 0.10, 0.0)
+                            rapport.totaal_score = totaal_score
+                            if totaal_score < self.BLOKKADE_DREMPEL:
+                                rapport.geblokkeerd = True
+                                rapport.reden_blokkade = (
+                                    f"Tribunal escalatie: REJECTED "
+                                    f"(score {totaal_score:.2f})"
+                                )
+                                with self._lock:
+                                    self._stats["geblokkeerd"] += 1
+                                self._log_naar_blackbox(
+                                    rapport, payloads, user_input,
+                                )
+                            logger.info(
+                                "Tribunal escalatie: REJECTED, score verlaagd naar %.2f",
+                                totaal_score,
+                            )
+                    except Exception as e:
+                        logger.debug("Tribunal escalatie fout: %s", e)
+
             logger.info(
                 "HallucinatieSchild waarschuwing: score %.2f < %.2f",
                 totaal_score, self.WAARSCHUWING_DREMPEL,
