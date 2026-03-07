@@ -409,17 +409,29 @@ class OmegaDashboardV4(App):
             # --- START DE NEURALE STROOM ---
             async for token in self._brain.genereer_stream(commando):
                 opgebouwde_tekst += token
-                # Live update — typewriter effect
+
+                # --- COGNITIVE FILTER ---
+                # <think> blokken dimmen, echte output helder houden
+                display_tekst = opgebouwde_tekst.replace(
+                    "<think>", "[dim italic]🧠 "
+                ).replace(
+                    "</think>", "[/dim italic]\n"
+                )
+
                 self.mind_live_buffer.update(
-                    f"[bold green]Ω OMEGA:[/] {opgebouwde_tekst}"
+                    f"[bold green]Ω OMEGA:[/] {display_tekst}"
                 )
 
             # --- STREAM COMPLEET ---
             elapsed = _time.time() - t0
             self.mind_live_buffer.update("")
 
-            # Schrijf voltooide gedachte permanent in de RichLog
-            self.log_mind.write(f"\n[bold green]Ω OMEGA:[/] {opgebouwde_tekst}")
+            # Strip <think> blokken uit permanente log (alleen het antwoord)
+            import re
+            schone_tekst = re.sub(r"<think>.*?</think>\s*", "", opgebouwde_tekst, flags=re.DOTALL)
+            if not schone_tekst.strip():
+                schone_tekst = opgebouwde_tekst  # Fallback: toon alles als er geen clean output is
+            self.log_mind.write(f"\n[bold green]Ω OMEGA:[/] {schone_tekst.strip()}")
             self.log_mind.write(f"[dim]Gestreamd in {elapsed:.1f}s[/]")
 
         except Exception as e:
