@@ -4,6 +4,7 @@ from textual.widgets import Header, Footer, RichLog, Static, Label, Input
 from textual import work
 from rich.text import Text
 import asyncio
+import re
 import time as _time
 import sys
 import os
@@ -105,10 +106,10 @@ class OmegaDashboardV4(App):
 
     CSS = OMEGA_CSS
     BINDINGS = [
-        ("q", "quit", "Afsluiten"),
-        ("c", "clear_logs", "Clear Logs"),
-        ("t", "toggle_dark", "Thema Wisselen"),
-        ("i", "toggle_select", "Select Mode"),
+        ("ctrl+q", "quit", "Afsluiten"),
+        ("ctrl+l", "clear_logs", "Clear Logs"),
+        ("ctrl+t", "toggle_dark", "Thema"),
+        ("ctrl+s", "toggle_select", "Select"),
     ]
 
     _select_mode = False
@@ -153,6 +154,9 @@ class OmegaDashboardV4(App):
         self.title = "O M E G A   S O V E R E I G N   v 4 . 0"
 
         self.log_mind.write("[bold yellow]WAV-Loop[/] Wachten op input van Commandant...")
+
+        # Auto-focus op Input zodat toetsen altijd naar het invoerveld gaan
+        self.query_one("#cmd_input", Input).focus()
 
         # Boot SwarmEngine (lazy — zware imports pas bij eerste gebruik)
         self._engine = None
@@ -373,12 +377,20 @@ class OmegaDashboardV4(App):
             self.action_clear_logs()
         elif commando.lower() == "help":
             self.log_mind.write(
-                "[bold cyan]Beschikbare commando's:[/]\n"
-                "  [green]clear[/]   — Wis alle logs\n"
-                "  [green]help[/]    — Toon deze hulp\n"
-                "  [green]status[/]  — Engine status\n"
-                "  [green]swarm:[/]  — Forceer SwarmEngine (optioneel)\n"
-                "  [green]<tekst>[/] — Auto-Router beslist: MIND stream of BODY swarm"
+                "[bold cyan]Commando's:[/]\n"
+                "  [green]clear[/]     — Wis alle logs (of Ctrl+L)\n"
+                "  [green]help[/]      — Toon deze hulp\n"
+                "  [green]status[/]    — Engine status\n"
+                "  [green]swarm:[/]    — Forceer SwarmEngine (optioneel)\n"
+                "  [green]<tekst>[/]   — Auto-Router beslist: stream of swarm\n"
+                "\n[bold cyan]Sneltoetsen:[/]\n"
+                "  [green]Ctrl+S[/]    — Select Mode (tekst selecteren + copy)\n"
+                "  [green]Ctrl+L[/]    — Wis alle logs\n"
+                "  [green]Ctrl+Q[/]    — Afsluiten\n"
+                "\n[bold cyan]Copy-Paste:[/]\n"
+                "  [green]Shift+klik+sleep[/] — Tekst selecteren (altijd)\n"
+                "  [green]Rechtermuisklik[/]  — Copy/Paste menu\n"
+                "  [green]Ctrl+V[/]           — Plakken in invoerveld"
             )
         elif commando.lower() == "status":
             brain_status = "ONLINE" if self._brain else "BOOTING..."
@@ -486,7 +498,6 @@ class OmegaDashboardV4(App):
 
                 elapsed = _time.time() - t0
                 self.mind_live_buffer.update("")
-                import re
                 schone_tekst = re.sub(
                     r"<think>.*?</think>\s*", "", opgebouwde_tekst, flags=re.DOTALL
                 )
@@ -574,25 +585,19 @@ class OmegaDashboardV4(App):
     def action_toggle_select(self) -> None:
         """Toggle Select Mode — schakelt muisvangst uit zodat je tekst kunt selecteren."""
         self._select_mode = not self._select_mode
+        f = getattr(getattr(self, "console", None), "file", None) or sys.stdout
         if self._select_mode:
             # Schakel Textual mouse tracking UIT — terminal krijgt muis terug
-            if hasattr(self, "console") and hasattr(self.console, "file"):
-                f = self.console.file
-            else:
-                f = sys.stdout
-            # Disable mouse tracking escape sequences
             f.write("\033[?1000l\033[?1003l\033[?1015l\033[?1006l")
             f.flush()
-            self.status_bar.update("SELECT MODE — Selecteer tekst + rechtermuisklik → Copy | F2 = terug")
+            self.status_bar.update(
+                "SELECT MODE — Selecteer tekst + rechtermuisklik → Copy | Ctrl+S = terug"
+            )
         else:
             # Heractiveer Textual mouse tracking
-            if hasattr(self, "console") and hasattr(self.console, "file"):
-                f = self.console.file
-            else:
-                f = sys.stdout
             f.write("\033[?1000h\033[?1003h\033[?1015h\033[?1006h")
             f.flush()
-            self.status_bar.update("🟢 ONLINE | 18 Agents | Select Mode UIT")
+            self.status_bar.update("🟢 ONLINE | Select Mode UIT")
 
     def action_clear_logs(self) -> None:
         """Maakt alle schermen schoon met de 'C' toets."""
