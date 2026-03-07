@@ -59,6 +59,12 @@ try:
 except ImportError:
     GROQ_BESCHIKBAAR = False
 
+try:
+    from groq import AsyncGroq
+    ASYNC_GROQ_BESCHIKBAAR = True
+except ImportError:
+    ASYNC_GROQ_BESCHIKBAAR = False
+
 # Rate-limit exception types voor isinstance checks
 try:
     from groq import RateLimitError as GroqRateLimitError
@@ -636,6 +642,76 @@ Regels:
             system_message, use_tools, max_turns,
             model=model, max_tokens=max_tokens,
         )
+
+    async def genereer_stream(self, user_input: str, model: str = None):
+        """Async generator — yieldt tokens voor live streaming.
+
+        Streamt rechtstreeks van Groq zonder tool-calling.
+        Gebruik process_request() voor function calling met tools.
+        """
+        if not ASYNC_GROQ_BESCHIKBAAR:
+            yield "[AsyncGroq niet beschikbaar]"
+            return
+
+        model = model or self.GROQ_MODEL_PRIMARY
+
+        # Lazy async client
+        if not hasattr(self, "_async_stream_client") or self._async_stream_client is None:
+            if HAS_KEY_MANAGER:
+                km = get_key_manager()
+                self._async_stream_client = km.create_async_client("CentralBrain")
+            if not getattr(self, "_async_stream_client", None):
+                self._async_stream_client = AsyncGroq(
+                    api_key=os.getenv("GROQ_API_KEY"),
+                )
+
+        # Lichte context (geen tools — streaming is conversationeel)
+        context = self._build_context()
+        rag_section = self._rag_context(user_input)
+
+        system_msg = (
+            "Je bent Danny's Central Brain — de kern-AI van het OMEGA SOVEREIGN CORE ecosysteem.\n"
+            "Dit is een 176-module AI-netwerk (48K regels code) gebouwd door Commandant Danny.\n"
+            "Antwoord altijd in het Nederlands. Wees direct en bondig.\n"
+        )
+        if rag_section:
+            system_msg += f"\n{rag_section}\n"
+        system_msg += f"\nContext:\n{json.dumps(context, ensure_ascii=False)}"
+
+        messages = [{"role": "system", "content": system_msg}]
+        with self._history_lock:
+            messages.extend(list(self.conversation_history))
+
+        # User message toevoegen aan history
+        with self._history_lock:
+            self.conversation_history.append({
+                "role": "user",
+                "content": user_input,
+            })
+
+        full_response = ""
+        try:
+            response = await self._async_stream_client.chat.completions.create(
+                model=model,
+                messages=messages,
+                max_tokens=2000,
+                stream=True,
+            )
+
+            async for chunk in response:
+                if chunk.choices and chunk.choices[0].delta.content is not None:
+                    token = chunk.choices[0].delta.content
+                    full_response += token
+                    yield token
+
+            # Voltooide response bewaren in history
+            with self._history_lock:
+                self.conversation_history.append({
+                    "role": "assistant",
+                    "content": full_response,
+                })
+        except Exception as e:
+            yield f"\n[STREAM ERROR] {e}"
 
     # Groq modellen: primair (groot) en fallback (klein)
     from danny_toolkit.core.config import Config as _Cfg

@@ -88,6 +88,16 @@ Input {
 Input:focus {
     border: double #FFAB00;
 }
+
+#mind_live_buffer {
+    padding: 1 2;
+    color: #00FF00;
+    background: #0B0F19;
+    text-style: bold;
+    height: auto;
+    max-height: 12;
+    overflow-y: auto;
+}
 """
 
 class OmegaDashboardV4(App):
@@ -120,6 +130,9 @@ class OmegaDashboardV4(App):
                 yield Label("Ω SOVEREIGN MIND — Groq & NIM Reasoning", classes="pillar-title")
                 self.log_mind = RichLog(id="log_mind", highlight=True, markup=True)
                 yield self.log_mind
+                # Live Buffer — typewriter streaming
+                self.mind_live_buffer = Static("", id="mind_live_buffer")
+                yield self.mind_live_buffer
 
             # RIGHT: BODY (Terminal, SwarmEngine, Hardware)
             with Vertical(classes="pillar-container"):
@@ -144,6 +157,10 @@ class OmegaDashboardV4(App):
         # Boot SwarmEngine (lazy — zware imports pas bij eerste gebruik)
         self._engine = None
         self._engine_ready = False
+        self._brain = None
+
+        # Boot CentralBrain voor streaming
+        self._boot_brain()
 
         # Start SOUL + BODY telemetrie op achtergrond
         self._boot_soul()
@@ -151,6 +168,22 @@ class OmegaDashboardV4(App):
 
         # 1-seconde real-time hardware monitor
         self.set_interval(1.0, self.update_status_bar)
+
+    @work(thread=True)
+    def _boot_brain(self) -> None:
+        """Boot CentralBrain in thread — voor streaming queries."""
+        try:
+            from danny_toolkit.brain.central_brain import CentralBrain
+            self._brain = CentralBrain()
+            self.app.call_from_thread(
+                self.log_mind.write,
+                "[bold green]CentralBrain ONLINE[/] — Live streaming gereed.",
+            )
+        except Exception as e:
+            self.app.call_from_thread(
+                self.log_mind.write,
+                f"[bold red]CentralBrain boot failed:[/] {e}",
+            )
 
     @work(thread=True)
     def _boot_soul(self) -> None:
@@ -338,24 +371,64 @@ class OmegaDashboardV4(App):
         elif commando.lower() == "help":
             self.log_mind.write(
                 "[bold cyan]Beschikbare commando's:[/]\n"
-                "  [green]clear[/]  — Wis alle logs\n"
-                "  [green]help[/]   — Toon deze hulp\n"
-                "  [green]status[/] — Engine status\n"
-                "  [green]<tekst>[/] — Stuur naar SwarmEngine"
+                "  [green]clear[/]   — Wis alle logs\n"
+                "  [green]help[/]    — Toon deze hulp\n"
+                "  [green]status[/]  — Engine status\n"
+                "  [green]swarm:[/]  — Multi-agent pipeline (SwarmEngine)\n"
+                "  [green]<tekst>[/] — Live streaming via CentralBrain"
             )
         elif commando.lower() == "status":
-            status = "ONLINE" if self._engine_ready else "STANDBY (boot bij eerste query)"
-            self.log_mind.write(f"[cyan]SwarmEngine: {status}[/]")
+            brain_status = "ONLINE" if self._brain else "BOOTING..."
+            engine_status = "ONLINE" if self._engine_ready else "STANDBY"
+            self.log_mind.write(
+                f"[cyan]CentralBrain: {brain_status} | SwarmEngine: {engine_status}[/]"
+            )
+        elif commando.lower().startswith("swarm:"):
+            # Multi-agent pipeline via SwarmEngine
+            self.verwerk_swarm(commando[6:].strip())
         else:
-            # Start de achtergrond-denker (UI bevriest NIET)
-            self.verwerk_commando(commando)
+            # Live streaming via CentralBrain (typewriter effect)
+            self.stream_commando(commando)
+
+    @work(exclusive=True)
+    async def stream_commando(self, commando: str) -> None:
+        """Streamt tokens live naar het scherm — typewriter effect."""
+        if self._brain is None:
+            self.log_mind.write("[yellow]CentralBrain nog niet gereed, even geduld...[/]")
+            return
+
+        try:
+            self.mind_live_buffer.update("[italic cyan]Ω MIND is aan het nadenken... ⠧[/]")
+            t0 = _time.time()
+
+            opgebouwde_tekst = ""
+
+            # --- START DE NEURALE STROOM ---
+            async for token in self._brain.genereer_stream(commando):
+                opgebouwde_tekst += token
+                # Live update — typewriter effect
+                self.mind_live_buffer.update(
+                    f"[bold green]Ω OMEGA:[/] {opgebouwde_tekst}"
+                )
+
+            # --- STREAM COMPLEET ---
+            elapsed = _time.time() - t0
+            self.mind_live_buffer.update("")
+
+            # Schrijf voltooide gedachte permanent in de RichLog
+            self.log_mind.write(f"\n[bold green]Ω OMEGA:[/] {opgebouwde_tekst}")
+            self.log_mind.write(f"[dim]Gestreamd in {elapsed:.1f}s[/]")
+
+        except Exception as e:
+            self.mind_live_buffer.update("")
+            self.log_mind.write(f"\n[bold red]STREAM ERROR:[/] {e}")
 
     @work(exclusive=True, thread=True)
-    def verwerk_commando(self, commando: str) -> None:
-        """Achtergrond worker — SwarmEngine draait in thread, UI blijft vloeiend."""
+    def verwerk_swarm(self, commando: str) -> None:
+        """Achtergrond worker — SwarmEngine multi-agent pipeline."""
         self.app.call_from_thread(
             self.log_mind.write,
-            "[italic cyan]Ω MIND is aan het nadenken...[/]",
+            "[italic cyan]Ω SWARM pipeline actief...[/]",
         )
 
         t0 = _time.time()
@@ -369,9 +442,6 @@ class OmegaDashboardV4(App):
                 )
                 return
 
-            # SwarmEngine.run() is async — draai in eigen event loop
-            # Hergebruik loop tussen calls zodat ThreadPoolExecutors niet
-            # voortijdig geshutdown worden (voorkomt Oracle crash).
             if not hasattr(self, "_worker_loop") or self._worker_loop.is_closed():
                 self._worker_loop = asyncio.new_event_loop()
             loop = self._worker_loop
@@ -389,11 +459,9 @@ class OmegaDashboardV4(App):
 
             elapsed = _time.time() - t0
 
-            # Resultaten naar MIND kolom — payload uitpakken
             if payloads:
                 for payload in payloads:
                     agent = getattr(payload, "agent", "?")
-                    # Prioriteit: display_text > content > str(payload)
                     tekst = getattr(payload, "display_text", "") or ""
                     if not tekst.strip():
                         raw = getattr(payload, "content", None)
@@ -405,7 +473,6 @@ class OmegaDashboardV4(App):
                             tekst = str(raw)
                         else:
                             tekst = str(payload)
-                    # Trim extreem lange output
                     if len(tekst) > 2000:
                         tekst = tekst[:2000] + "..."
                     self.app.call_from_thread(
@@ -420,13 +487,13 @@ class OmegaDashboardV4(App):
 
             self.app.call_from_thread(
                 self.log_mind.write,
-                f"[dim]Verwerkt in {elapsed:.1f}s[/]",
+                f"[dim]Swarm verwerkt in {elapsed:.1f}s[/]",
             )
 
         except Exception as e:
             self.app.call_from_thread(
                 self.log_mind.write,
-                f"\n[bold red]FATAL ERROR:[/] {e}",
+                f"\n[bold red]SWARM ERROR:[/] {e}",
             )
 
     def action_toggle_select(self) -> None:
