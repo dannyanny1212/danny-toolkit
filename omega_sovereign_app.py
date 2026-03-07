@@ -1304,7 +1304,8 @@ class DashboardTab(ctk.CTkFrame):
                 env["ANTHROPIC_API_KEY"] = api_key
 
             # Build command with stream-json + conversation memory
-            cmd = [claude_path, "-p", question, "--output-format", "stream-json", "--verbose"]
+            cmd = [claude_path, "-p", question, "--output-format", "stream-json", "--verbose",
+                   "--allowedTools", "Edit", "Write", "Bash", "Read", "Glob", "Grep"]
             if getattr(self, '_claude_has_session', False):
                 cmd.append("--continue")
 
