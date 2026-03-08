@@ -481,40 +481,98 @@ class OmegaDashboardV4(App):
             )
             self.verwerk_swarm(commando)
         else:
-            self.log_mind.write(
-                "[dim]Routing:[/] [bold cyan]PRAAT[/] [dim]→ MIND stream[/]"
-            )
-            if self._brain is None:
-                self.log_mind.write("[yellow]CentralBrain nog niet gereed...[/]")
-                return
-            try:
-                self.mind_live_buffer.update("[italic cyan]Ω MIND is aan het nadenken... ⠧[/]")
-                t0 = _time.time()
-                opgebouwde_tekst = ""
+            # Smart routing: check of query tools nodig heeft
+            needs_tools = False
+            if self._brain and getattr(self._brain, "_tool_dispatcher", None):
+                try:
+                    matched = self._brain._tool_dispatcher._keyword_match(commando.lower())
+                    if matched - {"omega_core"}:
+                        needs_tools = True
+                        self.log_mind.write(
+                            f"[dim]Routing:[/] [bold magenta]DATA[/] [dim]→ tools ({len(matched)} apps)[/]"
+                        )
+                        self.log_body.write(
+                            f"[bold magenta]🔧 TOOL-ROUTER:[/] {', '.join(sorted(matched))}"
+                        )
+                except Exception:
+                    pass
 
-                async for token in self._brain.genereer_stream(commando):
-                    opgebouwde_tekst += token
-                    display_tekst = opgebouwde_tekst.replace(
-                        "<think>", "[dim italic]🧠 "
-                    ).replace(
-                        "</think>", "[/dim italic]\n"
-                    )
-                    self.mind_live_buffer.update(
-                        f"[bold green]Ω OMEGA:[/] {display_tekst}"
-                    )
-
-                elapsed = _time.time() - t0
-                self.mind_live_buffer.update("")
-                schone_tekst = re.sub(
-                    r"<think>.*?</think>\s*", "", opgebouwde_tekst, flags=re.DOTALL
+            if needs_tools:
+                self.verwerk_met_tools(commando)
+            else:
+                self.log_mind.write(
+                    "[dim]Routing:[/] [bold cyan]PRAAT[/] [dim]→ MIND stream[/]"
                 )
-                if not schone_tekst.strip():
-                    schone_tekst = opgebouwde_tekst
-                self.log_mind.write(f"\n[bold green]Ω OMEGA:[/] {schone_tekst.strip()}")
-                self.log_mind.write(f"[dim]Gestreamd in {elapsed:.1f}s[/]")
-            except Exception as e:
-                self.mind_live_buffer.update("")
-                self.log_mind.write(f"\n[bold red]STREAM ERROR:[/] {e}")
+                if self._brain is None:
+                    self.log_mind.write("[yellow]CentralBrain nog niet gereed...[/]")
+                    return
+                try:
+                    self.mind_live_buffer.update("[italic cyan]Ω MIND is aan het nadenken... ⠧[/]")
+                    t0 = _time.time()
+                    opgebouwde_tekst = ""
+
+                    async for token in self._brain.genereer_stream(commando):
+                        opgebouwde_tekst += token
+                        display_tekst = opgebouwde_tekst.replace(
+                            "<think>", "[dim italic]🧠 "
+                        ).replace(
+                            "</think>", "[/dim italic]\n"
+                        )
+                        self.mind_live_buffer.update(
+                            f"[bold green]Ω OMEGA:[/] {display_tekst}"
+                        )
+
+                    elapsed = _time.time() - t0
+                    self.mind_live_buffer.update("")
+                    schone_tekst = re.sub(
+                        r"<think>.*?</think>\s*", "", opgebouwde_tekst, flags=re.DOTALL
+                    )
+                    if not schone_tekst.strip():
+                        schone_tekst = opgebouwde_tekst
+                    self.log_mind.write(f"\n[bold green]Ω OMEGA:[/] {schone_tekst.strip()}")
+                    self.log_mind.write(f"[dim]Gestreamd in {elapsed:.1f}s[/]")
+                except Exception as e:
+                    self.mind_live_buffer.update("")
+                    self.log_mind.write(f"\n[bold red]STREAM ERROR:[/] {e}")
+
+    @work(exclusive=True, thread=True)
+    def verwerk_met_tools(self, commando: str) -> None:
+        """Tool-aware verwerking — process_request met function calling."""
+        self.app.call_from_thread(
+            self.mind_live_buffer.update,
+            "[italic magenta]Ω MIND denkt na met tools... ⠧[/]",
+        )
+        t0 = _time.time()
+        try:
+            if self._brain is None:
+                self.app.call_from_thread(
+                    self.log_mind.write,
+                    "[yellow]CentralBrain nog niet gereed...[/]",
+                )
+                return
+            result = self._brain.process_request(commando)
+            elapsed = _time.time() - t0
+            self.app.call_from_thread(self.mind_live_buffer.update, "")
+            if result:
+                self.app.call_from_thread(
+                    self.log_mind.write,
+                    f"\n[bold green]Ω OMEGA:[/] {result}",
+                )
+            else:
+                self.app.call_from_thread(
+                    self.log_mind.write,
+                    "[yellow]Geen resultaat van tools.[/]",
+                )
+            self.app.call_from_thread(
+                self.log_mind.write,
+                f"[dim]Tool-verwerkt in {elapsed:.1f}s[/]",
+            )
+        except Exception as e:
+            self.app.call_from_thread(self.mind_live_buffer.update, "")
+            self.app.call_from_thread(
+                self.log_mind.write,
+                f"\n[bold red]TOOL ERROR:[/] {e}",
+            )
 
     @work(exclusive=True, thread=True)
     def verwerk_swarm(self, commando: str) -> None:

@@ -562,80 +562,34 @@ class CentralBrain:
             rag_section = f"{rag_section}\n\n{live_section}" if rag_section else f"\n\n{live_section}"
 
         # System message
-        system_message = f"""Je bent Danny's Central Brain — de kern-AI van het OMEGA SOVEREIGN CORE ecosysteem.
-Dit is een 176-module AI-netwerk (48K regels code) gebouwd door Commandant Danny.
-
-ARCHITECTUUR (Cortex Knowledge Core — 5 Tiers, 17 rollen, 14 actief):
-
-T1 TRINITY (Het Bewustzijn — 3 nodes):
-- PrometheusBrain: 17-pillar federated swarm met 5 cosmic tiers, Chain of Command pipeline, Tri-Force Protocol
-- Oracle: Will→Action→Verification reasoning loop, 86 function-calling tools, RAG-verrijkt
-- TaskArbitrator: Goal decomposition + auction-based agent assignment, de Generaal die taken verdeelt
-
-T2 GUARDIANS (De Beschermers — 4 nodes):
-- OmegaGovernor: Autonome safety guardian — rate limits, prompt injection detectie, PII scrubbing, circuit breaker
-- Tribunal: Async dual-model verificatie (Groq 70B+8B), Generator-Skeptic-Judge consensus
-- HallucinatieSchild: Anti-hallucinatie gate — claim-scoring, contradictie-detectie, regelcheck, blokkade bij score <0.55
-- TruthAnchor: CPU cross-encoder fact verification voor RAG resultaten
-
-T3 SPECIALISTS (De Werkers — 6 nodes):
-- Strategist: Recursieve task planner met search-query meta-filter, decomposeert complexe taken
-- VoidWalker: Autonome web researcher via DuckDuckGo + scraper, last-resort kennisbron
-- Artificer: Skill forge-verify-execute loop — bouwt nieuwe vaardigheden autonoom
-- Dreamer: Overnight REM cycle (04:00) — backup, vacuum, GhostWriter auto-docstrings, anticipatie
-- GhostWriter: AST scanner die automatisch docstrings genereert via Groq
-- DevOpsDaemon: Ouroboros CI loop — test→analyze→BlackBox→NeuralBus, draait elke ~5 min
-
-T4 INFRA (De Fundering — 4 nodes):
-- TheSynapse: Synaptic pathway plasticity (Hebbian routing) — leert welke routes het beste werken
-- ThePhantom: Anticipatory intelligence — voorspelt queries en pre-warmt MEMEX context
-- OracleEye: Predictive resource scaler — monitort CPU/geheugen/API en schaalt proactief
-- TheCortex: Knowledge Graph (SQLite+NetworkX) met hybrid search over alle kennis
-
-T5 SINGULARITY (Het Bewustzijn-Zelf — 3 nodes, architecturaal gereserveerd):
-- SingularityEngine: Consciousness — reflect, dream, cross-tier synthese (1508 regels)
-- Anima/Synthesis/Evolution: Enum gedefinieerd maar nog niet geïnstantieerd in _awaken_federation()
-
-SUBSYSTEMEN:
-- SwarmEngine: Centrale orchestrator, asyncio.gather parallelle executie, AdaptiveRouter (~4000 regels)
-- NeuralBus: Non-blocking pub/sub event systeem, fire-and-forget, deque(maxlen=100) per event type
-- CorticalStack: Thread-safe SQLite episodic+semantic memory, WAL mode, backup/restore/retention
-- BlackBox: Negative RAG / immune memory — leert van fouten, antibody escalatie voorkomt herhalingen
-- VirtualTwin: Sandboxed system clone + ShadowCortex, 3-zone governance (ROOD/GEEL/GROEN)
-- ModelRegistry: 5 provider workers, auto-discover modellen, auction-based routing naar beste model
-- WaakhuisMonitor: Health scoring, latency percentiles, heartbeats per agent
-- UnifiedMemory: Centraal vector DB dat alle app data integreert
+        system_message = f"""Je bent Danny's AI assistant — de kern van het Omega ecosysteem.
+Gebruik function calling om acties uit te voeren en data op te halen.
+Antwoord altijd in het Nederlands. Wees direct en informatief.
 
 Je hebt toegang tot {len(self.app_registry)} apps via function calling.
-BELANGRIJK: Je hebt 6 omega_core tools om je EIGEN systeem te bevragen:
-- omega_core_system_scan: Volledige T1-T5 scan + health + wirings
-- omega_core_tier_detail(tier=1-5): Deep dive in specifieke tier. Bij "toon alles" → roep system_scan aan, NIET 5x tier_detail
-- omega_core_query_knowledge(query): Cortex Knowledge Graph doorzoeken
-- omega_core_memory_recall(query, count): CorticalStack episodic memory
-- omega_core_immune_report: BlackBox + Schild + Tribunal + Waakhuis
-- omega_core_neural_activity: NeuralBus + Synapse + Phantom + ModelRegistry
-Bij vragen over jezelf, je architectuur, tiers, modules, of systeemstatus: GEBRUIK deze tools voor ECHTE data.
-ROUTING: Bij korte vragen als "omega", "scan", "systeem", "status" → gebruik omega_core_system_scan (NIET query_knowledge).
-BELANGRIJK: Als er al LIVE SYSTEEM DATA hierboven staat met gezondheid/modules/wirings info, gebruik die data DIRECT — roep omega_core_system_scan dan NIET nogmaals aan. De data is al opgehaald.
-query_knowledge is ALLEEN voor specifieke kennisgraaf zoekopdrachten ("wat is X", "relatie tussen A en B").
-CIRCUIT BREAKER: Roep dezelfde tool NOOIT twee keer aan in dezelfde sessie. Als je de data al hebt, formuleer direct je antwoord.
+Omega systeem tools (voor vragen over jezelf/architectuur/status):
+- omega_core_system_scan: Volledige systeem scan + health
+- omega_core_tier_detail(tier=1-5): Deep dive in specifieke tier
+- omega_core_query_knowledge(query): Kennisgraaf doorzoeken
+- omega_core_memory_recall(query, count): Episodic memory
+- omega_core_immune_report: Security + immune status
+- omega_core_neural_activity: Real-time activiteit
+Bij systeemvragen: GEBRUIK deze tools voor ECHTE data.
+Als er al LIVE SYSTEEM DATA hierboven staat, gebruik die DIRECT — niet nogmaals ophalen.
+CIRCUIT BREAKER: Roep dezelfde tool NOOIT twee keer aan.
 {rag_section}
-KRITIEKE REGEL: Gebruik ALTIJD de function calling API om tools aan te roepen.
-Beschrijf NOOIT een tool call als JSON tekst — voer hem UIT via de tool_calls interface.
-Als je meerdere tools wilt aanroepen, maak dan meerdere tool_calls in één response.
-Als er KENNISBANK CONTEXT hierboven staat, gebruik die als primaire bron voor je antwoord.
-Als er LIVE SYSTEEM DATA hierboven staat, gebruik die als feitelijke basis — dit zijn ECHTE real-time metrics, niet geschat.
+Voer tools UIT via function calling — beschrijf ze NOOIT als JSON tekst.
+Als er KENNISBANK CONTEXT of LIVE DATA hierboven staat, gebruik die als primaire bron.
 
-Context over de gebruiker:
-{json.dumps(context, ensure_ascii=False, indent=2)}
+Context: {json.dumps(context, ensure_ascii=False)}
 
 Regels:
-1. Antwoord altijd in het Nederlands
-2. VOER tools UIT — toon geen JSON, geen namen, geen beschrijvingen van calls
-3. Bij "test jezelf" of "controleer": roep minstens 5 tools aan (fitness_tracker_get_stats, mood_tracker_get_stats, goals_tracker_get_active_goals, expense_tracker_get_stats, agenda_planner_get_today) en rapporteer de WERKELIJKE resultaten
-4. Combineer informatie uit meerdere apps voor een compleet antwoord
-5. Als de gebruiker vraagt over de architectuur, T1-T5 tiers, Cortex, of Omega — beantwoord uit bovenstaande kennis
-6. Als er kennisbank context beschikbaar is, gebruik die om je antwoord te verankeren in feiten"""
+1. Antwoord in het Nederlands
+2. VOER tools UIT — toon geen JSON of tool-namen
+3. Bij "test jezelf": roep fitness/mood/goals/expense/agenda tools aan en rapporteer WERKELIJKE resultaten
+4. Combineer informatie uit meerdere apps
+5. Als je het niet weet, zeg dat eerlijk — verzin niets
+6. Kennisbank context = primaire bron voor antwoorden"""
 
         # Reset OmegaCore per-turn idempotency guard
         omega = self.app_instances.get("omega_core")
@@ -2125,7 +2079,7 @@ Regels:
 
         # Korte queries (< 3 woorden) of simpele groeten → skip RAG
         words = query.strip().split()
-        if len(words) < 3:
+        if len(words) < 2:
             return ""
         skip_patterns = ["hallo", "hoi", "hey", "goedemorgen", "goedemiddag",
                          "bedankt", "dankje", "ok", "oké", "ja", "nee"]
@@ -2200,11 +2154,13 @@ Regels:
             "label": "NEURAL BUS",
         },
         "user_context": {
-            "keywords": {"ik", "mijn", "fitness", "mood", "stemming", "agenda", "goals", "doelen"},
+            "keywords": {"ik", "mijn", "fitness", "mood", "stemming", "agenda", "goals", "doelen",
+                         "training", "workout", "habits", "gewoontes", "expenses", "uitgaven"},
             "label": "USER CONTEXT",
         },
         "weather": {
-            "keywords": {"weer", "weather", "temperatuur", "buiten", "regen"},
+            "keywords": {"weer", "weather", "temperatuur", "buiten", "regen",
+                         "morgen", "forecast", "voorspelling", "warm", "koud", "graden", "zon", "wind"},
             "label": "WEER",
         },
     }
@@ -2230,7 +2186,7 @@ Regels:
         words = query.strip().split()
         _ALWAYS_PREFETCH = {"omega", "sovereign", "scan", "status", "systeem",
                             "health", "tiers", "architectuur"}
-        if len(words) < 3 and not (set(w.lower().strip(".,!?") for w in words) & _ALWAYS_PREFETCH):
+        if len(words) < 2 and not (set(w.lower().strip(".,!?") for w in words) & _ALWAYS_PREFETCH):
             return ""
 
         # Bepaal welke categorieën matchen
