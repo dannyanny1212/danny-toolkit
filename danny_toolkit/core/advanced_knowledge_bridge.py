@@ -187,6 +187,36 @@ class AdvancedKnowledgeBridge:
             n_results=min(n_results, self.collection.count() or 1),
         )
 
+    def raadpleeg_omega_skills(self, query: str, n_results: int = 5) -> dict:
+        """Anthropic tool interface — doorzoek advanced knowledge.
+
+        Retourneert geformatteerde resultaten met score, bron en sectie
+        zodat CentralBrain deze direct kan opnemen in de LLM context.
+        """
+        if self.collection.count() == 0:
+            return {"error": "Collectie leeg — run eerst ingest_all()"}
+
+        raw = self.query(query, n_results=n_results)
+        results = []
+        docs = raw.get("documents", [[]])[0]
+        metas = raw.get("metadatas", [[]])[0]
+        dists = raw.get("distances", [[]])[0]
+
+        for doc, meta, dist in zip(docs, metas, dists):
+            score = max(0.0, 1.0 - dist)
+            results.append({
+                "score": round(score, 3),
+                "bron": meta.get("source", "?"),
+                "sectie": meta.get("Header 2", meta.get("Header 1", "?")),
+                "tekst": doc[:500],
+            })
+
+        return {
+            "query": query,
+            "resultaten": results,
+            "totaal_in_collectie": self.collection.count(),
+        }
+
     def count(self) -> int:
         """Aantal documenten in de collectie."""
         return self.collection.count()

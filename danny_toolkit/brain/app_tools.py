@@ -1504,6 +1504,31 @@ APP_TOOLS: Dict[str, AppDefinition] = {
         ]
     ),
 
+    # === OMEGA ADVANCED KNOWLEDGE — Afgeschermde Vector DB ===
+    "omega_advanced_knowledge": AppDefinition(
+        naam="omega_advanced_knowledge",
+        beschrijving="Doorzoek de afgeschermde OMEGA Advanced Knowledge vector DB — 13 domeinen: Apps, Quests, Skills, Learning, Persona, UI, RAG, Mind, Body, Soul, Security, Wiring, Resources",
+        categorie=AppCategorie.AI,
+        module_path="danny_toolkit.core.advanced_knowledge_bridge",
+        class_name="AdvancedKnowledgeBridge",
+        prioriteit=10,
+        acties=[
+            AppActie(
+                naam="raadpleeg_omega_skills",
+                beschrijving="Haal specifieke geavanceerde architectuur- en protocolkennis (Apps, Quests, Skills, Learning, Persona, UI, Security, Wiring, Resources) op uit de afgeschermde OMEGA Vector DB.",
+                parameters={
+                    "query": {
+                        "type": "string",
+                        "description": "Het specifieke protocol of de skill die je zoekt (bijv. 'Quest protocol 4' of 'Hoe werkt PixelEye?')",
+                        "required": True
+                    }
+                },
+                returns="Een lijst met de meest relevante architectuur-chunks uit de markdown documentatie.",
+                vereist_data=False
+            ),
+        ]
+    ),
+
     # === LOCAL BRIDGE — Beveiligde Localhost Scraper ===
     "local_bridge": AppDefinition(
         naam="local_bridge",
