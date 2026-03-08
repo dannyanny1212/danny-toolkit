@@ -49,13 +49,13 @@ class SemanticCache:
         "GhostWriter":  (3600, 0.90),   # 1 uur, hoge threshold (exacte code-match)
         "Artificer":    (1800, 0.82),   # 30 min, medium (skill-patronen)
         "Strategist":   (1200, 0.85),   # 20 min, medium-hoog
-        "EchoAgent":    (600,  0.95),   # 10 min, zeer hoog (simpele antwoorden)
-        "MemexAgent":   (900,  0.88),   # 15 min, hoog (RAG context)
-        "IolaaxAgent":  (600,  0.85),   # 10 min, code-generatie patronen
-        "OracleAgent":  (900,  0.88),   # 15 min, redeneer-patronen
-        "NavigatorAgent": (300, 0.80),  # 5 min, web research veroudert snel
-        "SparkAgent":   (1200, 0.82),   # 20 min, creatieve output
-        "SentinelAgent": (1800, 0.90),  # 30 min, security scans stabiel
+        "Echo":         (600,  0.95),   # 10 min, zeer hoog (simpele antwoorden)
+        "Memex":        (900,  0.88),   # 15 min, hoog (RAG context)
+        "Iolaax":       (600,  0.85),   # 10 min, code-generatie patronen
+        "Oracle":       (900,  0.88),   # 15 min, redeneer-patronen
+        "Navigator":    (300,  0.80),   # 5 min, web research veroudert snel
+        "Spark":        (1200, 0.82),   # 20 min, creatieve output
+        "Sentinel":     (1800, 0.90),   # 30 min, security scans stabiel
     }
 
     # Agents die NOOIT gecacht worden

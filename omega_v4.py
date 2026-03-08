@@ -301,7 +301,7 @@ class OmegaDashboardV4(App):
             from danny_toolkit.brain.file_guard import FileGuard
             fg = FileGuard()
             fg_rapport = fg.startup_check()
-            fg_status = fg_rapport.get("status", "?") if isinstance(fg_rapport, dict) else "OK"
+            fg_status = fg_rapport.get("status", "?") if isinstance(fg_rapport, dict) else ("OK" if fg_rapport else "WARN")
             color = "\033[32m" if fg_status == "OK" else "\033[33m"
             self.app.call_from_thread(
                 self.log_body.write,
