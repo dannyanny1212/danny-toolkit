@@ -86,6 +86,20 @@
         </div>
     </div>
 
+    <!-- RAG Search -->
+    <div class="card" style="grid-column: span 2;">
+        <div class="card-header">
+            RAG Search
+            <span class="htmx-indicator">laden...</span>
+        </div>
+        <div class="card-body"
+             hx-get="/ui/partials/rag-search"
+             hx-trigger="load"
+             hx-indicator="closest .card">
+            <p style="color: var(--text-secondary);">RAG laden...</p>
+        </div>
+    </div>
+
     <!-- Event Feed (SSE) -->
     <div class="card">
         <div class="card-header">

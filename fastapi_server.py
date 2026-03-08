@@ -1950,6 +1950,105 @@ if HAS_DASHBOARD:
             media_type="text/event-stream",
         )
 
+    # ─── RAG Search (ChromaDB) ─────────────────────────
+
+    def _get_chroma_client():
+        """Lazy ChromaDB PersistentClient singleton."""
+        if not hasattr(_get_chroma_client, "_client"):
+            import chromadb
+            chroma_dir = str(
+                Path(__file__).parent / "data" / "rag" / "chromadb"
+            )
+            _get_chroma_client._client = chromadb.PersistentClient(
+                path=chroma_dir,
+            )
+        return _get_chroma_client._client
+
+    @app.get(
+        "/ui/partials/rag-search",
+        response_class=HTMLResponse,
+        include_in_schema=False,
+    )
+    async def partial_rag_search(_key: str = Depends(verify_ui_key)):
+        """RAG Search card — toont zoekformulier + collectie stats."""
+        collections = []
+        total_docs = 0
+        db_size_mb = "0.0"
+        try:
+            client = _get_chroma_client()
+            for col in client.list_collections():
+                count = col.count()
+                collections.append({"name": col.name, "count": count})
+                total_docs += count
+            # Sorteer danny_knowledge eerst
+            collections.sort(
+                key=lambda c: (c["name"] != "danny_knowledge", c["name"]),
+            )
+            chroma_db = (
+                Path(__file__).parent / "data" / "rag" / "chromadb"
+                / "chroma.sqlite3"
+            )
+            if chroma_db.exists():
+                db_size_mb = f"{chroma_db.stat().st_size / (1024*1024):.1f}"
+        except Exception as e:
+            logger.debug("RAG search init: %s", e)
+        tmpl = _templates.get_template("partials/rag_search.html")
+        return _set_ui_cookie(HTMLResponse(tmpl.render(
+            collections=collections,
+            total_docs=total_docs,
+            db_size_mb=db_size_mb,
+        )))
+
+    @app.post(
+        "/ui/partials/rag-search",
+        response_class=HTMLResponse,
+        include_in_schema=False,
+    )
+    async def partial_rag_search_post(
+        request: Request,
+        _key: str = Depends(verify_ui_key),
+    ):
+        """RAG Search — voer zoekopdracht uit op ChromaDB collectie."""
+        form = await request.form()
+        query = str(form.get("query", "")).strip()
+        collection_name = str(form.get("collection", "danny_knowledge"))
+        top_k = min(int(form.get("top_k", 5)), 20)
+        results = []
+        if query:
+            try:
+                client = _get_chroma_client()
+                col = client.get_collection(name=collection_name)
+                doc_count = col.count()
+                if doc_count > 0:
+                    n = min(top_k, doc_count)
+                    raw = col.query(
+                        query_texts=[query],
+                        n_results=n,
+                        include=["documents", "metadatas", "distances"],
+                    )
+                    docs = raw["documents"][0] if raw["documents"] else []
+                    metas = raw["metadatas"][0] if raw["metadatas"] else []
+                    dists = raw["distances"][0] if raw["distances"] else []
+                    ids = raw["ids"][0] if raw["ids"] else []
+                    for doc, meta, dist, doc_id in zip(
+                        docs, metas, dists, ids,
+                    ):
+                        score = max(0.0, 1.0 - dist)
+                        text = doc[:300] + "..." if len(doc) > 300 else doc
+                        results.append({
+                            "id": doc_id,
+                            "score": score,
+                            "text": text,
+                            "metadata": meta or {},
+                        })
+            except Exception as e:
+                logger.debug("RAG search query: %s", e)
+        tmpl = _templates.get_template("partials/rag_results.html")
+        return _set_ui_cookie(HTMLResponse(tmpl.render(
+            results=results,
+            query=query,
+        )))
+
     @app.get(
         "/api/v1/metrics",
         summary="Systeem metrics (JSON)",

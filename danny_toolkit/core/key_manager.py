@@ -55,6 +55,7 @@ AGENT_PRIORITY = {
     "CentralBrain": 0,       # User-facing — hoogste prioriteit
     "Tribunal": 1,            # Verificatie — realtime pipeline
     "AdversarialTribunal": 1,
+    "RAGSearch": 2,           # User-facing RAG terminal — responsive
     "Strategist": 2,          # Planning — kan wachten
     "VoidWalker": 3,          # Research — zwaarste verbruiker
     "Artificer": 3,           # Code forge — zwaar
@@ -190,6 +191,7 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
             "GROQ_API_KEY_FORGE",
             "GROQ_API_KEY_OVERNIGHT",
             "GROQ_API_KEY_KNOWLEDGE",
+            "GROQ_API_KEY_RAG",
             "GROQ_API_KEY_FALLBACK",
         ]
         for var in named_vars:
