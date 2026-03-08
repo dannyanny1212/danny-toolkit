@@ -37,7 +37,7 @@ def get_tool_dispatcher() -> "ToolDispatcher":
 # --- Constants ---
 
 # Apps die ALTIJD meegestuurd worden (systeemkritisch)
-ALWAYS_INCLUDE: FrozenSet[str] = frozenset({"omega_core"})
+ALWAYS_INCLUDE: FrozenSet[str] = frozenset({"omega_core", "omega_advanced_knowledge"})
 
 # Max apps geselecteerd (excl. ALWAYS_INCLUDE)
 MAX_SELECTED = 8
@@ -180,6 +180,15 @@ _CATEGORY_KEYWORDS: dict[str, list[str]] = {
     "dashboard|sovereign|brain|introspect": [
         "omega_core",
     ],
+
+    # OMEGA Advanced Knowledge (architectuur, protocollen, skills, quests)
+    r"architectuur|protocol|skill|quest|raadpleeg|omega.*skill|"
+    r"advanced.*knowledge|interne.*werking|hoe.*werkt|pixel.*eye|"
+    r"librarian|artificer|limbic|metabolisme|sensorium|trinity|"
+    r"daemon|persona|learning.*system|tool.*dispatch|workflow.*engine|"
+    r"nexus.*design|autopsie|wachtrij|verhouding": [
+        "omega_advanced_knowledge",
+    ],
 }
 
 # Direct app-name match (als user letterlijk de app-naam noemt)
@@ -290,6 +299,7 @@ advanced_questions: complex Q&A
 knowledge_companion: AI knowledge companion
 legendary_companion: evolved AI companion + hunt
 omega_core: system scan/health/tiers/memory/neural
+omega_advanced_knowledge: OMEGA advanced architecture/protocols/skills/quests/learning/persona/UI knowledge from vector DB
 local_bridge: localhost/dev-server page reading (read-only)"""
 
 
@@ -431,5 +441,5 @@ _APP_MANIFEST_NAMES = frozenset({
     "dream_journal", "time_capsule", "rekenmachine", "unit_converter",
     "wachtwoord_generator", "nlp_studio", "ml_studio", "vector_studio",
     "advanced_questions", "knowledge_companion", "legendary_companion",
-    "omega_core", "local_bridge",
+    "omega_core", "omega_advanced_knowledge", "local_bridge",
 })

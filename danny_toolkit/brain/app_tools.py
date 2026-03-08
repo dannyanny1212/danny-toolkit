@@ -1533,23 +1533,26 @@ APP_TOOLS: Dict[str, AppDefinition] = {
     # === OMEGA ADVANCED KNOWLEDGE — Afgeschermde Vector DB ===
     "omega_advanced_knowledge": AppDefinition(
         naam="omega_advanced_knowledge",
-        beschrijving="Doorzoek de afgeschermde OMEGA Advanced Knowledge vector DB — 13 domeinen: Apps, Quests, Skills, Learning, Persona, UI, RAG, Mind, Body, Soul, Security, Wiring, Resources",
+        beschrijving="OMEGA Advanced Knowledge kluis. Bevat alle interne architectuur, protocollen, skills, quests, UI, en Nexus design documentatie.",
         categorie=AppCategorie.AI,
         module_path="danny_toolkit.core.advanced_knowledge_bridge",
         class_name="AdvancedKnowledgeBridge",
-        prioriteit=10,
+        prioriteit=10,  # Hoogste prioriteit voor systeemkennis
         acties=[
             AppActie(
                 naam="raadpleeg_omega_skills",
-                beschrijving="Haal specifieke geavanceerde architectuur- en protocolkennis (Apps, Quests, Skills, Learning, Persona, UI, Security, Wiring, Resources) op uit de afgeschermde OMEGA Vector DB.",
+                beschrijving="Zoek specifieke kennis in de 15 advanced markdown bestanden (422 chunks) in de Vector DB. Gebruik dit ALTIJD voor vragen over de interne werking van OMEGA.",
                 parameters={
-                    "query": {
-                        "type": "string",
-                        "description": "Het specifieke protocol of de skill die je zoekt (bijv. 'Quest protocol 4' of 'Hoe werkt PixelEye?')",
-                        "required": True
-                    }
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "Zoekterm (bijv. '110:6:5 verhouding', 'Nexus evolutie' of 'Quest protocol')"
+                        }
+                    },
+                    "required": ["query"]
                 },
-                returns="Een lijst met de meest relevante architectuur-chunks uit de markdown documentatie.",
+                returns="Een string met de geformatteerde markdown content van de meest relevante bronnen.",
                 vereist_data=False
             ),
         ]
