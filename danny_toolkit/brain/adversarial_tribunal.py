@@ -10,6 +10,8 @@ The Judge (Governor): Accepts if Skeptic says TRUE, loops back if FALSE.
 Max 3 retries before returning a system error.
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import os

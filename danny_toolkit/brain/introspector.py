@@ -9,6 +9,8 @@ bewustzijn.
 Singleton: ``get_introspector()``.
 """
 
+from __future__ import annotations
+
 import importlib
 import inspect
 import json

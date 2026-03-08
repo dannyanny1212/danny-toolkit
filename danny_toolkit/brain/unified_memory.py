@@ -5,6 +5,8 @@ Centrale geheugenlaag die alle app data integreert voor cross-app
 queries en context-aware interacties.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 from collections import OrderedDict

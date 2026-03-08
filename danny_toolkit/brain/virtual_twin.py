@@ -24,6 +24,8 @@ Architectuur:
                             └── _scrub_output()       ← strip leaked key material
 """
 
+from __future__ import annotations
+
 import hashlib
 import logging
 import os
@@ -1047,7 +1049,7 @@ class ShadowCortex:
         """Create shadow_summaries table on CorticalStack DB."""
         try:
             db_path = str(Config.DATA_DIR / "cortical_stack.db")
-            conn = sqlite3.connect(db_path, timeout=10)
+            conn = sqlite3.connect(db_path, timeout=Config.SQLITE_CONNECT_TIMEOUT)
             Config.apply_sqlite_perf(conn)
             conn.executescript("""
                 CREATE TABLE IF NOT EXISTS shadow_summaries (

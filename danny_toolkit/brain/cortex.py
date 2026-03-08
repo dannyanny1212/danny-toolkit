@@ -6,6 +6,8 @@ en combineert vector search (ChromaDB) met graaftraversal voor
 hybrid_search queries. Gebruikt door trinity_omega, librarian en swarm.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import threading

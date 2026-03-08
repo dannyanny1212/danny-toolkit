@@ -128,7 +128,7 @@ class WaakhuisMonitor:
             self._conn = sqlite3.connect(
                 self._db_path,
                 check_same_thread=False,
-                timeout=5,
+                timeout=Config.SQLITE_CONNECT_TIMEOUT if HAS_CONFIG else 10,
             )
             if HAS_CONFIG:
                 Config.apply_sqlite_perf(self._conn)

@@ -6,6 +6,8 @@ historische patronen. Schaalt proactief de thread pool en cache-limieten.
 Gebruikt door Dreamer (REM) en daemon heartbeat.
 """
 
+from __future__ import annotations
+
 import logging
 import threading
 import time

@@ -8,6 +8,8 @@ Het hart van Danny's AI Ecosysteem met:
 - Proactieve suggesties
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import json

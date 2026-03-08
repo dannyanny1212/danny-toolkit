@@ -94,7 +94,7 @@ class SemanticCache:
     def _init_db(self):
         """Maak SQLite database + tabel aan."""
         try:
-            conn = sqlite3.connect(str(self._db_path), timeout=5)
+            conn = sqlite3.connect(str(self._db_path), timeout=Config.SQLITE_CONNECT_TIMEOUT)
             Config.apply_sqlite_perf(conn)
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS cache_entries (
@@ -135,7 +135,7 @@ class SemanticCache:
 
     def _get_conn(self) -> sqlite3.Connection:
         """Open een SQLite connectie."""
-        conn = sqlite3.connect(str(self._db_path), timeout=5)
+        conn = sqlite3.connect(str(self._db_path), timeout=Config.SQLITE_CONNECT_TIMEOUT)
         Config.apply_sqlite_perf(conn)
         return conn
 

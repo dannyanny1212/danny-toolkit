@@ -64,7 +64,7 @@ class AccessTracker:
         """Maak database en tabel aan."""
         try:
             os.makedirs(os.path.dirname(self._db_path), exist_ok=True)
-            conn = sqlite3.connect(self._db_path, timeout=5)
+            conn = sqlite3.connect(self._db_path, timeout=Config.SQLITE_CONNECT_TIMEOUT)
             Config.apply_sqlite_perf(conn)
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS fragment_access (
@@ -90,7 +90,7 @@ class AccessTracker:
             logger.debug("AccessTracker DB init fout: %s", e)
 
     def _connect(self) -> sqlite3.Connection:
-        conn = sqlite3.connect(self._db_path, timeout=5)
+        conn = sqlite3.connect(self._db_path, timeout=Config.SQLITE_CONNECT_TIMEOUT)
         Config.apply_sqlite_perf(conn)
         conn.row_factory = sqlite3.Row
         return conn

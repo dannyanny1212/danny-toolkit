@@ -8,6 +8,8 @@ immunity events via NeuralBus. Antibodies vervallen na 7 dagen (half-life decay)
 Singleton: ``get_black_box()``.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import threading

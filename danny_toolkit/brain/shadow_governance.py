@@ -20,6 +20,8 @@ onherroepelijk getagd is — bij problemen kan alles met #@* in één keer
 worden gewist zonder de 15 hoofdmodules te beschadigen.
 """
 
+from __future__ import annotations
+
 import logging
 import re
 import threading

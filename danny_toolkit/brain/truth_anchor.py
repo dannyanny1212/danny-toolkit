@@ -6,6 +6,8 @@ RAG-bronnen. Gebruikt een lichtgewicht Cross-Encoder (ms-marco-MiniLM)
 die op CPU draait. Gate voor _rag_enrich in de swarm pipeline.
 """
 
+from __future__ import annotations
+
 import logging
 
 try:

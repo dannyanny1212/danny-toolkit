@@ -19,6 +19,8 @@ Gebruik:
         print(rapport.reden_blokkade)
 """
 
+from __future__ import annotations
+
 import logging
 import re
 import threading

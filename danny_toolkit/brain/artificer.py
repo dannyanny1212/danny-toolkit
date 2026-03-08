@@ -6,6 +6,8 @@ met AST parsing en sandboxed executie, slaat op in skills registry.
 Always-forge: geen hergebruik van stale scripts, registry is history-only.
 """
 
+from __future__ import annotations
+
 import ast
 import json
 import logging

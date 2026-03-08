@@ -290,7 +290,8 @@ class Config:
     # SQLite Performance Tuning (hardware-optimized for 32 GB RAM + SATA SSD)
     SQLITE_CACHE_SIZE = int(os.environ.get("SQLITE_CACHE_SIZE", "-64000"))  # 64 MB (negative = KB)
     SQLITE_MMAP_SIZE = int(os.environ.get("SQLITE_MMAP_SIZE", "268435456"))  # 256 MB memory-mapped I/O
-    SQLITE_BUSY_TIMEOUT = int(os.environ.get("SQLITE_BUSY_TIMEOUT", "10000"))  # 10s
+    SQLITE_BUSY_TIMEOUT = int(os.environ.get("SQLITE_BUSY_TIMEOUT", "10000"))  # 10s (PRAGMA, ms)
+    SQLITE_CONNECT_TIMEOUT = SQLITE_BUSY_TIMEOUT // 1000  # sqlite3.connect timeout (seconds)
 
     @staticmethod
     def apply_sqlite_perf(conn):

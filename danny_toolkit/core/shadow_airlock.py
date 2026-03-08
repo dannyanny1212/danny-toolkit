@@ -22,6 +22,8 @@ Gebruik:
     airlock.start_periodiek(interval=60)      # Blokkerende loop
 """
 
+from __future__ import annotations
+
 import hashlib
 import logging
 import os

@@ -29,6 +29,8 @@ Gebruik:
     synapse.record_interaction("bitcoin prijs", ["CIPHER"], 1200, 350)
 """
 
+from __future__ import annotations
+
 import hashlib
 import logging
 import math

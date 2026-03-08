@@ -6,6 +6,8 @@ valid classes, functions, and methods. Rejects LLM-generated code that
 references symbols which do not exist.
 """
 
+from __future__ import annotations
+
 import ast
 import logging
 import os

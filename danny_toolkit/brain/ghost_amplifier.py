@@ -16,6 +16,8 @@ Gebruik:
     # Recursieve verdieping: elke laag voegt detail toe
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import threading

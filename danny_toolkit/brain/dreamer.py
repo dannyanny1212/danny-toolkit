@@ -593,7 +593,7 @@ Sets the model attribute to the LLM model specified in the configuration."""
         try:
             import sqlite3
             db_pad = str(Config.DATA_DIR / "cortical_stack.db")
-            conn = sqlite3.connect(db_pad, timeout=10)
+            conn = sqlite3.connect(db_pad, timeout=Config.SQLITE_CONNECT_TIMEOUT)
             Config.apply_sqlite_perf(conn)
 
             # Zoek samenvattingen die nog te lang zijn

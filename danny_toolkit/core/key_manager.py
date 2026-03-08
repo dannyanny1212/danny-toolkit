@@ -11,6 +11,8 @@ Groq free tier limieten per key:
   - qwen3-32b:      60 RPM / 6K TPM / 500K TPD
 """
 
+from __future__ import annotations
+
 import asyncio
 import os
 import time
