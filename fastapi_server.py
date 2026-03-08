@@ -422,17 +422,30 @@ async def verify_api_key(
 
 
 async def verify_ui_key(
+    request: Request,
+    response: Response,
     key: str = Query(None, description="API key via query param"),
     x_api_key: str = Header(None, description="API key via header"),
     ui_token: str = Cookie(None, description="API key via cookie"),
 ):
-    """Auth voor UI routes — accepteert query param, header, of cookie."""
+    """Auth voor UI routes — accepteert query param, header, of cookie.
+
+    Refresht de cookie bij elke request zodat actieve sessies niet verlopen.
+    """
     token = key or x_api_key or ui_token
     if not token or token != FASTAPI_SECRET_KEY:
         raise HTTPException(
             status_code=401,
             detail="Authenticatie vereist. Gebruik ?key=<secret> of X-API-Key header.",
         )
+    # Auto-refresh cookie bij elke geauthenticeerde request
+    response.set_cookie(
+        key="ui_token",
+        value=FASTAPI_SECRET_KEY,
+        httponly=True,
+        samesite="strict",
+        max_age=86400,
+    )
     return token
 
 
@@ -1758,16 +1771,7 @@ if HAS_DASHBOARD:
     @app.get("/ui/", response_class=HTMLResponse, include_in_schema=False)
     async def dashboard(_key: str = Depends(verify_ui_key)):
         tmpl = _templates.get_template("dashboard.html")
-        response = HTMLResponse(tmpl.render())
-        # Zet cookie zodat HTMX partials automatisch geauthenticeerd zijn
-        response.set_cookie(
-            key="ui_token",
-            value=FASTAPI_SECRET_KEY,
-            httponly=True,
-            samesite="strict",
-            max_age=86400,  # 24 uur
-        )
-        return response
+        return HTMLResponse(tmpl.render())
 
     @app.get("/ui/partials/agents", response_class=HTMLResponse, include_in_schema=False)
     async def partial_agents(_key: str = Depends(verify_ui_key)):
