@@ -11,9 +11,11 @@ Features:
 - Geheugen en geschiedenis
 """
 
+import ast
 import json
 import logging
 import math
+import operator
 from datetime import datetime
 from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import clear_scherm, kleur, Kleur, succes, fout, waarschuwing
@@ -1433,6 +1435,114 @@ class RekenmachineApp:
 
         self._voeg_geschiedenis_toe(f"Afstand ({x1},{y1})-({x2},{y2})", afstand)
 
+    # ==================== SAFE MATH EVALUATOR ====================
+
+    # Toegestane AST node types voor veilige evaluatie
+    _SAFE_OPS = {
+        ast.Add: operator.add,
+        ast.Sub: operator.sub,
+        ast.Mult: operator.mul,
+        ast.Div: operator.truediv,
+        ast.FloorDiv: operator.floordiv,
+        ast.Mod: operator.mod,
+        ast.Pow: operator.pow,
+        ast.USub: operator.neg,
+        ast.UAdd: operator.pos,
+    }
+
+    # Toegestane math functies (naam → callable)
+    _SAFE_FUNCS = {
+        "math.sqrt": math.sqrt,
+        "math.sin": math.sin,
+        "math.cos": math.cos,
+        "math.tan": math.tan,
+        "math.log10": math.log10,
+        "math.log": math.log,
+        "math.ceil": math.ceil,
+        "math.floor": math.floor,
+        "math.fabs": math.fabs,
+        "abs": abs,
+        "round": round,
+    }
+
+    # Toegestane constanten
+    _SAFE_NAMES = {
+        "math.pi": math.pi,
+        "math.e": math.e,
+    }
+
+    def _safe_eval(self, expr: str) -> float:
+        """Evalueer wiskundige expressie via AST — geen code execution mogelijk.
+
+        Alleen numerieke literals, binaire/unaire ops, en whitelisted
+        math functies zijn toegestaan. Alles anders → ValueError.
+        """
+        tree = ast.parse(expr, mode="eval")
+        return self._eval_node(tree.body)
+
+    def _eval_node(self, node):
+        """Recursieve AST node evaluator (whitelist-only)."""
+        # Numerieke literal: 42, 3.14
+        if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+            return node.value
+
+        # Unaire operatie: -x, +x
+        if isinstance(node, ast.UnaryOp):
+            op_func = self._SAFE_OPS.get(type(node.op))
+            if op_func is None:
+                raise ValueError(f"Niet-toegestane operatie: {type(node.op).__name__}")
+            return op_func(self._eval_node(node.operand))
+
+        # Binaire operatie: x + y, x ** y
+        if isinstance(node, ast.BinOp):
+            op_func = self._SAFE_OPS.get(type(node.op))
+            if op_func is None:
+                raise ValueError(f"Niet-toegestane operatie: {type(node.op).__name__}")
+            left = self._eval_node(node.left)
+            right = self._eval_node(node.right)
+            # Bescherm tegen excessieve exponenten
+            if isinstance(node.op, ast.Pow) and isinstance(right, (int, float)) and abs(right) > 10000:
+                raise ValueError("Exponent te groot (max 10000)")
+            return op_func(left, right)
+
+        # Functie-aanroep: math.sqrt(16), abs(-5)
+        if isinstance(node, ast.Call):
+            func_name = self._get_func_name(node.func)
+            func = self._SAFE_FUNCS.get(func_name)
+            if func is None:
+                raise ValueError(f"Niet-toegestane functie: {func_name}")
+            args = [self._eval_node(arg) for arg in node.args]
+            return func(*args)
+
+        # Attribuut-toegang: math.pi, math.e (alleen constanten)
+        if isinstance(node, ast.Attribute):
+            full_name = self._get_func_name(node)
+            if full_name in self._SAFE_NAMES:
+                return self._SAFE_NAMES[full_name]
+            raise ValueError(f"Niet-toegestane naam: {full_name}")
+
+        # Naam (simpele variabele): ans-vervanging is al string-level
+        if isinstance(node, ast.Name):
+            raise ValueError(f"Niet-toegestane variabele: {node.id}")
+
+        raise ValueError(f"Niet-toegestane expressie: {type(node).__name__}")
+
+    @staticmethod
+    def _get_func_name(node) -> str:
+        """Extract volledige functienaam uit AST node (bv. 'math.sqrt')."""
+        if isinstance(node, ast.Name):
+            return node.id
+        if isinstance(node, ast.Attribute):
+            parts = []
+            current = node
+            while isinstance(current, ast.Attribute):
+                parts.append(current.attr)
+                current = current.value
+            if isinstance(current, ast.Name):
+                parts.append(current.id)
+            return ".".join(reversed(parts))
+        return "?"
+
     # ==================== EXPRESSIE PARSER ====================
 
     def _expressie_menu(self):
@@ -1472,12 +1582,8 @@ class RekenmachineApp:
                 expr = expr.replace("e", "math.e")
                 expr = expr.replace("ans", str(self.laatste_resultaat))
 
-                # Evalueer (veilig)
-                allowed = {
-                    "math": math,
-                    "__builtins__": {}
-                }
-                resultaat = eval(expr, allowed)
+                # Evalueer via safe AST parser (geen eval)
+                resultaat = self._safe_eval(expr)
 
                 print(kleur(f"  = {resultaat}", Kleur.GROEN))
                 self._voeg_geschiedenis_toe(expressie, resultaat)

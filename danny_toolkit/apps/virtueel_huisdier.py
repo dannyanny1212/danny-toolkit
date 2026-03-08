@@ -2296,8 +2296,7 @@ Maak het dromerig en fantasierijk."""
                 # Gebruik echte rekenmachine voor verificatie als beschikbaar
                 if echte_rekenmachine:
                     try:
-                        expr = f"{a}{op_sym.replace('x', '*').replace('^', '**')}{b}"
-                        result = eval(expr)  # Veilig want we controleren de input
+                        result = op_func(a, b)
                         print(f"  {naam} (via Rekenmachine): \"{int(result)}!\"")
                         intel_bonus += 1
                     except Exception as e:

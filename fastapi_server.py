@@ -30,11 +30,13 @@ logger = logging.getLogger(__name__)
 
 from dotenv import load_dotenv
 from fastapi import (
+    Cookie,
     Depends,
     FastAPI,
     File,
     Header,
     HTTPException,
+    Query,
     Request,
     Response,
     UploadFile,
@@ -65,11 +67,16 @@ if os.name == "nt":
 # .env laden
 load_dotenv(Path(__file__).parent / ".env")
 
-# WARNING: Wijzig deze sleutel in productie! Standaard is onveilig.
-FASTAPI_SECRET_KEY = os.getenv(
-    "FASTAPI_SECRET_KEY",
-    "verander-dit-naar-een-willekeurige-sleutel",
-)
+# Secret key: uit .env, of random fallback (geldig tot herstart)
+import secrets as _secrets
+_DEFAULT_SECRET = _secrets.token_urlsafe(32)
+FASTAPI_SECRET_KEY = os.getenv("FASTAPI_SECRET_KEY", "")
+if not FASTAPI_SECRET_KEY:
+    FASTAPI_SECRET_KEY = _DEFAULT_SECRET
+    logger.warning(
+        "FASTAPI_SECRET_KEY niet ingesteld — random key gegenereerd. "
+        "Stel in via .env voor persistente auth."
+    )
 FASTAPI_PORT = int(os.getenv("FASTAPI_PORT", "8000"))
 
 _SERVER_START_TIME = time.time()
@@ -414,6 +421,21 @@ async def verify_api_key(
     return x_api_key
 
 
+async def verify_ui_key(
+    key: str = Query(None, description="API key via query param"),
+    x_api_key: str = Header(None, description="API key via header"),
+    ui_token: str = Cookie(None, description="API key via cookie"),
+):
+    """Auth voor UI routes — accepteert query param, header, of cookie."""
+    token = key or x_api_key or ui_token
+    if not token or token != FASTAPI_SECRET_KEY:
+        raise HTTPException(
+            status_code=401,
+            detail="Authenticatie vereist. Gebruik ?key=<secret> of X-API-Key header.",
+        )
+    return token
+
+
 # ─── APP ────────────────────────────────────────────
 
 app = FastAPI(
@@ -476,7 +498,13 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost",
+        "http://127.0.0.1",
+        "http://localhost:8000",
+        "http://localhost:8501",
+        "http://localhost:8502",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -1728,12 +1756,12 @@ if HAS_DASHBOARD:
         return RedirectResponse(url="/ui/")
 
     @app.get("/ui/", response_class=HTMLResponse, include_in_schema=False)
-    async def dashboard():
+    async def dashboard(_key: str = Depends(verify_ui_key)):
         tmpl = _templates.get_template("dashboard.html")
         return HTMLResponse(tmpl.render())
 
     @app.get("/ui/partials/agents", response_class=HTMLResponse, include_in_schema=False)
-    async def partial_agents():
+    async def partial_agents(_key: str = Depends(verify_ui_key)):
         brain = _get_brain()
         agents = []
         if hasattr(brain, "nodes"):
@@ -1749,7 +1777,7 @@ if HAS_DASHBOARD:
         return HTMLResponse(tmpl.render(agents=agents))
 
     @app.get("/ui/partials/governor", response_class=HTMLResponse, include_in_schema=False)
-    async def partial_governor():
+    async def partial_governor(_key: str = Depends(verify_ui_key)):
         brain = _get_brain()
         stats = {}
         try:
@@ -1775,7 +1803,7 @@ if HAS_DASHBOARD:
         return HTMLResponse(tmpl.render(stats=stats))
 
     @app.get("/ui/partials/rate-limits", response_class=HTMLResponse, include_in_schema=False)
-    async def partial_rate_limits():
+    async def partial_rate_limits(_key: str = Depends(verify_ui_key)):
         limits = []
         try:
             from danny_toolkit.core.key_manager import get_key_manager
@@ -1802,7 +1830,7 @@ if HAS_DASHBOARD:
         return HTMLResponse(tmpl.render(limits=limits))
 
     @app.get("/ui/partials/cortex", response_class=HTMLResponse, include_in_schema=False)
-    async def partial_cortex():
+    async def partial_cortex(_key: str = Depends(verify_ui_key)):
         stats = {"nodes": 0, "edges": 0, "entities": 0, "triples": 0}
         try:
             from danny_toolkit.brain.cortex import TheCortex
@@ -1819,7 +1847,7 @@ if HAS_DASHBOARD:
         return HTMLResponse(tmpl.render(stats=stats))
 
     @app.get("/ui/partials/pipeline-metrics", response_class=HTMLResponse, include_in_schema=False)
-    async def partial_pipeline_metrics():
+    async def partial_pipeline_metrics(_key: str = Depends(verify_ui_key)):
         metrics = {}
         cache_stats = {}
         try:
@@ -1836,7 +1864,7 @@ if HAS_DASHBOARD:
         return HTMLResponse(tmpl.render(metrics=metrics, cache=cache_stats))
 
     @app.get("/ui/partials/observatory", response_class=HTMLResponse, include_in_schema=False)
-    async def partial_observatory():
+    async def partial_observatory(_key: str = Depends(verify_ui_key)):
         dashboard_data = {
             "totaal_modellen": 0,
             "beschikbare_modellen": 0,
@@ -1865,7 +1893,7 @@ if HAS_DASHBOARD:
         return HTMLResponse(tmpl.render(dashboard=dashboard_data))
 
     @app.get("/ui/events", include_in_schema=False)
-    async def sse_events():
+    async def sse_events(_key: str = Depends(verify_ui_key)):
         """SSE stream — polls NeuralBus elke 2s voor nieuwe events."""
         async def _event_generator():
             last_seen = 0
