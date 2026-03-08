@@ -4322,6 +4322,19 @@ class SwarmEngine:
 
 # ── SYNC WRAPPER ──
 
+async def _run_with_cleanup(coro):
+    """Run coroutine en sluit async clients voordat de loop stopt."""
+    try:
+        return await coro
+    finally:
+        try:
+            from danny_toolkit.core.key_manager import get_key_manager
+            km = get_key_manager()
+            await km.close_all_clients()
+        except Exception:
+            pass
+
+
 def run_swarm_sync(
     user_input, brain=None, callback=None,
 ):
@@ -4337,7 +4350,7 @@ def run_swarm_sync(
     """
     engine = SwarmEngine(brain=brain)
     return asyncio.run(
-        engine.run(user_input, callback)
+        _run_with_cleanup(engine.run(user_input, callback))
     )
 
 
@@ -4360,5 +4373,5 @@ def run_pipeline_sync(
         brain=brain, oracle=oracle,
     )
     return asyncio.run(
-        engine.execute_pipeline(taken, callback)
+        _run_with_cleanup(engine.execute_pipeline(taken, callback))
     )

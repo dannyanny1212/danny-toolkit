@@ -156,6 +156,9 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
         # Per-agent metrieken
         self._agents: dict[str, AgentMetrics] = {}
 
+        # Track async clients voor cleanup bij shutdown
+        self._async_clients: list = []
+
         # Globale rate limit state
         self._global_429_count = 0
         self._global_cooldown_tot = 0.0
@@ -481,7 +484,9 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
             )
             return None
 
-        return AsyncGroq(api_key=key)
+        client = AsyncGroq(api_key=key)
+        self._async_clients.append(client)
+        return client
 
     def create_sync_client(self, agent_naam: str = ""):
         """
@@ -540,7 +545,22 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
             )
             return None
 
-        return AsyncGroq(api_key=key)
+        client = AsyncGroq(api_key=key)
+        self._async_clients.append(client)
+        return client
+
+    async def close_all_clients(self):
+        """Sluit alle async clients voordat de event loop stopt.
+
+        Voorkomt 'Event loop is closed' RuntimeError bij shutdown.
+        """
+        clients = self._async_clients[:]
+        self._async_clients.clear()
+        for client in clients:
+            try:
+                await client.close()
+            except Exception:
+                pass
 
     # ------------------------------------------------------------------
     # Status & Diagnostiek
