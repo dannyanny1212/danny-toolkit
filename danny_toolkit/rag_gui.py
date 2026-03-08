@@ -1,18 +1,71 @@
 # danny_toolkit/rag_gui.py — RAG Desktop App (Tkinter)
-"""
-Danny Toolkit RAG GUI — GPU Inference & Document Search.
+"""Danny Toolkit RAG GUI — GPU Inference & Document Search.
 
-Knoppen: GPU Inference, RAG Chain, Index Documenten, Ask
+Knoppen: GPU Inference, RAG Chain, Index Documenten, Ask.
 Tekstvak voor vragen, output-venster, directory-picker.
+Donker thema met Consolas font, CUDA 12.1 GPU-acceleratie.
+
+Diamond Polish v6.11.0 — volledige type hints, docstrings, top-level imports.
 
 Entry point: danny-rag
 """
 
+from __future__ import annotations
+
+import logging
 import os
 import sys
 import threading
 import tkinter as tk
 from tkinter import filedialog, scrolledtext
+from typing import Callable
+
+logger = logging.getLogger(__name__)
+
+# ── Optionele zware imports (project conventie: try/except ImportError) ──
+
+try:
+    from llama_cpp import Llama
+    HAS_LLAMA = True
+except ImportError:
+    Llama = None  # type: ignore[assignment, misc]
+    HAS_LLAMA = False
+
+try:
+    from danny_toolkit.core.embeddings import get_torch_embedder
+    HAS_EMBEDDINGS = True
+except ImportError:
+    get_torch_embedder = None  # type: ignore[assignment, misc]
+    HAS_EMBEDDINGS = False
+
+try:
+    from danny_toolkit.core.faiss_index import FaissIndex
+    HAS_FAISS = True
+except ImportError:
+    FaissIndex = None  # type: ignore[assignment, misc]
+    HAS_FAISS = False
+
+try:
+    from danny_toolkit.pipelines.rag_chain import load_llm, generate_answer
+    HAS_RAG_CHAIN = True
+except ImportError:
+    load_llm = None  # type: ignore[assignment, misc]
+    generate_answer = None  # type: ignore[assignment, misc]
+    HAS_RAG_CHAIN = False
+
+try:
+    from danny_toolkit.core.doc_loader import load_directory
+    HAS_DOC_LOADER = True
+except ImportError:
+    load_directory = None  # type: ignore[assignment, misc]
+    HAS_DOC_LOADER = False
+
+try:
+    from danny_toolkit.core.index_store import IndexStore
+    HAS_INDEX_STORE = True
+except ImportError:
+    IndexStore = None  # type: ignore[assignment, misc]
+    HAS_INDEX_STORE = False
 
 # ── Donker thema ──
 BG = "#0d1117"
@@ -30,16 +83,25 @@ FG_PAARS = "#d55fde"
 FG_ROOD = "#f85149"
 
 CUDA_BIN = r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.1\bin"
+MODEL_PATH = r"C:\models\phi3.Q4_K_M.gguf"
 
 
 class RagGUI:
-    def __init__(self):
+    """RAG Desktop applicatie met donker thema en GPU-acceleratie.
+
+    Biedt vier operaties: GPU Inference (Phi-3 GGUF), RAG Chain (embeddings + LLM),
+    document indexering (FAISS), en Ask (retrieval + generatie). Alle zware taken
+    draaien op een daemon thread om de GUI responsief te houden.
+    """
+
+    def __init__(self) -> None:
+        """Initialiseer het hoofdvenster, CUDA pad en alle GUI-componenten."""
         self.root = tk.Tk()
         self.root.title("Danny Toolkit — RAG Desktop")
         self.root.configure(bg=BG)
         self.root.geometry("900x700")
         self.root.minsize(700, 500)
-        self.running = False
+        self.running: bool = False
 
         self._ensure_cuda_path()
         self._bouw_header()
@@ -48,14 +110,16 @@ class RagGUI:
         self._bouw_output()
         self._bouw_statusbalk()
 
-    def _ensure_cuda_path(self):
+    def _ensure_cuda_path(self) -> None:
+        """Voeg CUDA 12.1 bin directory toe aan PATH als deze ontbreekt."""
         if CUDA_BIN not in os.environ.get("PATH", ""):
             os.environ["PATH"] = CUDA_BIN + os.pathsep + os.environ.get("PATH", "")
 
     # ══════════════════════════════════════════
     # HEADER
     # ══════════════════════════════════════════
-    def _bouw_header(self):
+    def _bouw_header(self) -> None:
+        """Bouw de header balk met titel en subtitle labels."""
         header = tk.Frame(self.root, bg=BG_HEADER, pady=12)
         header.pack(fill="x")
 
@@ -76,7 +140,8 @@ class RagGUI:
     # ══════════════════════════════════════════
     # INPUT SECTIE
     # ══════════════════════════════════════════
-    def _bouw_input_sectie(self):
+    def _bouw_input_sectie(self) -> None:
+        """Bouw de input sectie met directory picker en vraag tekstveld."""
         frame = tk.Frame(self.root, bg=BG, pady=8)
         frame.pack(fill="x", padx=16)
 
@@ -127,7 +192,8 @@ class RagGUI:
     # ══════════════════════════════════════════
     # KNOPPEN
     # ══════════════════════════════════════════
-    def _bouw_knoppen(self):
+    def _bouw_knoppen(self) -> None:
+        """Bouw de vier actieknoppen (GPU, RAG Chain, Index, Ask) met hover-effecten."""
         frame = tk.Frame(self.root, bg=BG, pady=8)
         frame.pack(fill="x", padx=16)
 
@@ -157,7 +223,8 @@ class RagGUI:
     # ══════════════════════════════════════════
     # OUTPUT VENSTER
     # ══════════════════════════════════════════
-    def _bouw_output(self):
+    def _bouw_output(self) -> None:
+        """Bouw het scrollable output tekstveld met kleur-tags voor info/success/warn/error."""
         frame = tk.Frame(self.root, bg=BG, pady=4)
         frame.pack(fill="both", expand=True, padx=16)
 
@@ -186,7 +253,8 @@ class RagGUI:
     # ══════════════════════════════════════════
     # STATUSBALK
     # ══════════════════════════════════════════
-    def _bouw_statusbalk(self):
+    def _bouw_statusbalk(self) -> None:
+        """Bouw de statusbalk onderaan met status tekst en tech info label."""
         balk = tk.Frame(self.root, bg=BG_HEADER, pady=6)
         balk.pack(fill="x", side="bottom")
 
@@ -204,7 +272,13 @@ class RagGUI:
     # ══════════════════════════════════════════
     # OUTPUT HELPERS
     # ══════════════════════════════════════════
-    def _print(self, tekst, tag=None):
+    def _print(self, tekst: str, tag: str | None = None) -> None:
+        """Schrijf een regel naar het output venster, optioneel met kleur-tag.
+
+        Args:
+            tekst: De tekst om te tonen.
+            tag: Optionele tag voor kleur (info, success, warn, error, header).
+        """
         self.output.configure(state="normal")
         if tag:
             self.output.insert("end", tekst + "\n", tag)
@@ -213,26 +287,39 @@ class RagGUI:
         self.output.see("end")
         self.output.configure(state="disabled")
 
-    def _clear_output(self):
+    def _clear_output(self) -> None:
+        """Wis alle tekst uit het output venster."""
         self.output.configure(state="normal")
         self.output.delete("1.0", "end")
         self.output.configure(state="disabled")
 
-    def _set_status(self, tekst):
+    def _set_status(self, tekst: str) -> None:
+        """Update de statusbalk tekst."""
         self.status_var.set(tekst)
 
-    def _browse_directory(self):
+    def _browse_directory(self) -> None:
+        """Open een directory picker dialoog en sla het pad op."""
         d = filedialog.askdirectory(initialdir=self.dir_var.get())
         if d:
             self.dir_var.set(d)
 
-    def _get_vraag(self):
+    def _get_vraag(self) -> str:
+        """Lees en strip de huidige vraag uit het invoerveld."""
         return self.vraag_entry.get().strip()
 
     # ══════════════════════════════════════════
     # THREADED RUNNER
     # ══════════════════════════════════════════
-    def _run_threaded(self, naam, func):
+    def _run_threaded(self, naam: str, func: Callable[[], None]) -> None:
+        """Start een zware taak op een daemon thread met status-feedback.
+
+        Voorkomt dubbele uitvoering via de ``running`` vlag.
+        Toont header, status en vangt fouten op in het output venster.
+
+        Args:
+            naam: Naam van de operatie (getoond in header en statusbalk).
+            func: De callable die de zware logica bevat (draait off-main-thread).
+        """
         if self.running:
             self._print("Er draait al een taak. Wacht tot deze klaar is.", "warn")
             return
@@ -241,14 +328,16 @@ class RagGUI:
         self._print(f"=== {naam} ===", "header")
         self._set_status(f"Bezig: {naam}...")
 
-        def worker():
+        def worker() -> None:
+            """Daemon thread wrapper: voer func uit met error handling."""
             try:
                 func()
-                self.root.after(0, lambda: self._print(f"\nKlaar!", "success"))
+                self.root.after(0, lambda: self._print("\nKlaar!", "success"))
                 self.root.after(0, lambda: self._set_status("Gereed"))
-            except Exception as e:
-                self.root.after(0, lambda: self._print(f"\nFout: {e}", "error"))
-                self.root.after(0, lambda: self._set_status(f"Fout: {e}"))
+            except Exception as exc:
+                logger.exception("Fout in threaded taak '%s'", naam)
+                self.root.after(0, lambda: self._print(f"\nFout: {exc}", "error"))
+                self.root.after(0, lambda: self._set_status(f"Fout: {exc}"))
             finally:
                 self.running = False
 
@@ -258,18 +347,23 @@ class RagGUI:
     # ══════════════════════════════════════════
     # GPU INFERENCE
     # ══════════════════════════════════════════
-    def _run_gpu(self):
+    def _run_gpu(self) -> None:
+        """Start GPU Inference met Phi-3 GGUF model via llama_cpp."""
         vraag = self._get_vraag()
         if not vraag:
             self._print("Voer een vraag in.", "warn")
             return
 
-        def work():
-            self.root.after(0, lambda: self._print("Model laden: Phi-3 GGUF...", "info"))
-            from llama_cpp import Llama
+        def work() -> None:
+            """Laad Phi-3 GGUF en genereer een antwoord op de GPU."""
+            if not HAS_LLAMA:
+                self.root.after(0, lambda: self._print(
+                    "llama_cpp niet beschikbaar. Installeer met: pip install llama-cpp-python", "error"))
+                return
 
-            model_path = r"C:\models\phi3.Q4_K_M.gguf"
-            llm = Llama(model_path=model_path, n_gpu_layers=-1, n_ctx=4096, verbose=False)
+            self.root.after(0, lambda: self._print("Model laden: Phi-3 GGUF...", "info"))
+
+            llm = Llama(model_path=MODEL_PATH, n_gpu_layers=-1, n_ctx=4096, verbose=False)
 
             self.root.after(0, lambda: self._print("Genereren...\n", "info"))
 
@@ -284,17 +378,21 @@ class RagGUI:
     # ══════════════════════════════════════════
     # RAG CHAIN
     # ══════════════════════════════════════════
-    def _run_chain(self):
+    def _run_chain(self) -> None:
+        """Start de RAG Chain: embed demo-docs, zoek via FAISS, genereer antwoord."""
         vraag = self._get_vraag()
         if not vraag:
             self._print("Voer een vraag in.", "warn")
             return
 
-        def work():
+        def work() -> None:
+            """Voer de volledige RAG Chain uit: embed → retrieve → generate."""
+            if not HAS_EMBEDDINGS or not HAS_FAISS or not HAS_RAG_CHAIN:
+                self.root.after(0, lambda: self._print(
+                    "Vereiste modules niet beschikbaar (embeddings/faiss/rag_chain).", "error"))
+                return
+
             self.root.after(0, lambda: self._print("Embeddings laden...", "info"))
-            from danny_toolkit.core.embeddings import get_torch_embedder
-            from danny_toolkit.core.faiss_index import FaissIndex
-            from danny_toolkit.pipelines.rag_chain import load_llm, generate_answer
 
             docs = [
                 "PyTorch met CUDA draait nu op je RTX 3060 Ti.",
@@ -330,17 +428,21 @@ class RagGUI:
     # ══════════════════════════════════════════
     # INDEX DOCUMENTEN
     # ══════════════════════════════════════════
-    def _run_index(self):
+    def _run_index(self) -> None:
+        """Indexeer documenten uit de geselecteerde directory in FAISS."""
         directory = self.dir_var.get().strip()
         if not directory:
             self._print("Selecteer een directory.", "warn")
             return
 
-        def work():
+        def work() -> None:
+            """Laad documenten, bereken embeddings en bouw FAISS index."""
+            if not HAS_DOC_LOADER or not HAS_EMBEDDINGS or not HAS_INDEX_STORE:
+                self.root.after(0, lambda: self._print(
+                    "Vereiste modules niet beschikbaar (doc_loader/embeddings/index_store).", "error"))
+                return
+
             self.root.after(0, lambda: self._print(f"Directory: {directory}", "info"))
-            from danny_toolkit.core.doc_loader import load_directory
-            from danny_toolkit.core.embeddings import get_torch_embedder
-            from danny_toolkit.core.index_store import IndexStore
 
             chunks = load_directory(directory)
             if not chunks:
@@ -371,16 +473,19 @@ class RagGUI:
     # ══════════════════════════════════════════
     # ASK
     # ══════════════════════════════════════════
-    def _run_ask(self):
+    def _run_ask(self) -> None:
+        """Zoek in de FAISS index en genereer een antwoord met Phi-3 GGUF."""
         vraag = self._get_vraag()
         if not vraag:
             self._print("Voer een vraag in.", "warn")
             return
 
-        def work():
-            from danny_toolkit.core.embeddings import get_torch_embedder
-            from danny_toolkit.core.index_store import IndexStore
-            from llama_cpp import Llama
+        def work() -> None:
+            """Voer retrieval uit via IndexStore en genereer antwoord via Phi-3."""
+            if not HAS_EMBEDDINGS or not HAS_INDEX_STORE or not HAS_LLAMA:
+                self.root.after(0, lambda: self._print(
+                    "Vereiste modules niet beschikbaar (embeddings/index_store/llama_cpp).", "error"))
+                return
 
             store = IndexStore()
             if not store.exists():
@@ -403,8 +508,7 @@ class RagGUI:
             context = "\n\n".join(r["text"] for r in results)
 
             self.root.after(0, lambda: self._print("\nPhi-3 GGUF laden...", "info"))
-            model_path = r"C:\models\phi3.Q4_K_M.gguf"
-            llm = Llama(model_path=model_path, n_gpu_layers=-1, n_ctx=4096, verbose=False)
+            llm = Llama(model_path=MODEL_PATH, n_gpu_layers=-1, n_ctx=4096, verbose=False)
 
             prompt = (
                 f"<|user|>\n"
@@ -416,7 +520,7 @@ class RagGUI:
             output = llm(prompt, max_tokens=512, temperature=0.2, top_p=0.9)
             antwoord = output["choices"][0]["text"].strip()
 
-            self.root.after(0, lambda: self._print(f"\n{'='*50}", "header"))
+            self.root.after(0, lambda: self._print(f"\n{'=' * 50}", "header"))
             self.root.after(0, lambda: self._print(antwoord))
 
         self._run_threaded("Ask — Document RAG", work)
@@ -424,11 +528,13 @@ class RagGUI:
     # ══════════════════════════════════════════
     # RUN
     # ══════════════════════════════════════════
-    def run(self):
+    def run(self) -> None:
+        """Start de Tkinter main event loop."""
         self.root.mainloop()
 
 
-def main():
+def main() -> None:
+    """Entry point voor de RAG Desktop applicatie."""
     app = RagGUI()
     app.run()
 
