@@ -663,15 +663,37 @@ async def _stream_response(message: str, brain):
 
 @app.get(
     "/api/v1/health",
-    response_model=HealthResponse,
-    summary="Systeem gezondheid opvragen",
+    summary="L1 Pulse — razendsnelle health check (<100ms)",
     tags=["Systeem"],
 )
-async def health(
+async def health_pulse(
     _key: str = Depends(verify_api_key),
 ):
-    """Retourneer de status van het systeem,
-    inclusief Governor en circuit breaker.
+    """Ultra-lichte health check voor monitoring/k8s probes.
+
+    Geen brain loading, geen externe API calls, geen DB writes.
+    Antwoordt in <100ms.
+    """
+    uptime = time.time() - _SERVER_START_TIME
+    return {
+        "status": "online",
+        "version": "6.11.0",
+        "uptime_seconds": round(uptime, 1),
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
+@app.get(
+    "/api/v1/health/deep",
+    response_model=HealthResponse,
+    summary="L3 Deep Scan — volledige systeemdiagnose",
+    tags=["Systeem"],
+)
+async def health_deep(
+    _key: str = Depends(verify_api_key),
+):
+    """Uitgebreide gezondheidscheck: brain, Governor, Groq,
+    CorticalStack, disk, agents, caches, circuit breakers.
     """
     brain = _get_brain()
 
