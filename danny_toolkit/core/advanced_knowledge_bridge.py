@@ -47,22 +47,7 @@ CHUNK_SIZE = 350
 CHUNK_OVERLAP = 50
 DOCS_SUBDIR = "rag/documenten"
 
-# Alle 13 advanced kennisdocumenten
-ADVANCED_MODULES = [
-    "omega_rag_advanced_architecture.md",
-    "omega_mind_advanced.md",
-    "omega_body_advanced.md",
-    "omega_soul_advanced.md",
-    "omega_security_advanced.md",
-    "omega_wiring_advanced.md",
-    "omega_resources_advanced.md",
-    "omega_apps_advanced.md",
-    "omega_learning_advanced.md",
-    "omega_persona_advanced.md",
-    "omega_ui_advanced.md",
-    "omega_quests_advanced.md",
-    "omega_skills_advanced.md",
-]
+# Geen hardcoded lijst meer — find_md_files() scant dynamisch
 
 
 def _detect_base_dir() -> Path:
@@ -128,32 +113,37 @@ class AdvancedKnowledgeBridge:
         return self.base_dir / "data" / DOCS_SUBDIR
 
     def find_md_files(self) -> dict[str, Path]:
-        """Scan de hele toolkit recursief op advanced bestanden.
+        """Scan data/rag/documenten/ voor ALLE markdown kennis.
 
-        Fallback als bestanden niet op de verwachte locatie staan.
-        Retourneert dict van {bestandsnaam: pad}.
+        Geen hardcoded lijsten — pakt alles wat in de knowledge kluis staat.
+        Toekomstbestendig: drop een nieuw .md bestand, draai het script, klaar.
         """
+        docs_dir = self.doc_dir
         found: dict[str, Path] = {}
-        target_set = set(ADVANCED_MODULES)
 
-        # Eerst de verwachte locatie checken
-        for name in ADVANCED_MODULES:
-            expected = self.doc_dir / name
-            if expected.exists():
-                found[name] = expected
+        if not docs_dir.exists():
+            _geel = Kleur.FEL_GEEL if Kleur else None
+            print(kleur(f"  [SKIP] Doelmap niet gevonden: {docs_dir}", _geel))
+            return found
 
-        # Als niet alles gevonden: recursief zoeken
-        if len(found) < len(ADVANCED_MODULES):
-            missing = target_set - set(found.keys())
-            for path in self.base_dir.rglob("omega_*_advanced*.md"):
-                if path.name in missing:
-                    found[path.name] = path
+        for path in sorted(docs_dir.glob("*.md")):
+            found[path.name] = path
 
+        _cyaan = Kleur.FEL_CYAAN if Kleur else None
+        print(kleur(
+            f"  [SCAN] {len(found)} markdown bestanden in {docs_dir}",
+            _cyaan,
+        ))
         return found
 
     def ingest_all(self, doc_dir: str | None = None) -> int:
-        """Ingest alle 13 advanced modules. Retourneert totaal chunks."""
-        return self.ingest_modules(ADVANCED_MODULES, doc_dir=doc_dir)
+        """Ingest alle markdown bestanden uit de knowledge kluis."""
+        files = self.find_md_files() if doc_dir is None else None
+        if files is not None:
+            modules = list(files.keys())
+        else:
+            modules = [p.name for p in sorted(Path(doc_dir).glob("*.md"))]
+        return self.ingest_modules(modules, doc_dir=doc_dir)
 
     def ingest(self) -> int:
         """Autonome ingestie: vind en ingest alle advanced bestanden."""
@@ -226,7 +216,9 @@ class AdvancedKnowledgeBridge:
     ) -> int:
         """Ingest specifieke modules vanuit een directory."""
         if modules is None:
-            modules = ADVANCED_MODULES
+            # Dynamisch: scan de docs directory
+            target = Path(doc_dir) if doc_dir else self.doc_dir
+            modules = [p.name for p in sorted(target.glob("*.md"))]
 
         target_dir = Path(doc_dir) if doc_dir else self.doc_dir
 
