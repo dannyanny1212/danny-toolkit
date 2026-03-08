@@ -879,6 +879,85 @@ async def agents(
     return result
 
 
+# ─── G2: CorticalStack Memory ────────────────────────
+
+
+@app.get(
+    "/api/v1/memory/recent",
+    summary="Recente episodische herinneringen uit de CorticalStack",
+    tags=["System"],
+)
+async def memory_recent(
+    count: int = Query(default=20, ge=1, le=200),
+    _key: str = Depends(verify_api_key),
+):
+    """Haal de laatste N events uit episodic_memory op.
+
+    Lichte read-only query — geen brain loading nodig.
+    """
+    try:
+        from danny_toolkit.brain.cortical_stack import get_cortical_stack
+        stack = get_cortical_stack()
+        events = stack.get_recent_events(count=count)
+        return {
+            "count": len(events),
+            "events": events,
+        }
+    except Exception as e:
+        logger.error("CorticalStack read mislukt: %s", e)
+        raise HTTPException(status_code=503, detail=f"CorticalStack onbereikbaar: {e}")
+
+
+# ─── G3: GPU Status ──────────────────────────────────
+
+
+@app.get(
+    "/api/v1/gpu/status",
+    summary="Realtime GPU status — clocks, VRAM, temperatuur, power",
+    tags=["Systeem"],
+)
+async def gpu_status(
+    _key: str = Depends(verify_api_key),
+):
+    """Volledige GPU metrics via vram_manager.
+
+    Combineert torch VRAM info met nvidia-smi clock/power/temp data.
+    """
+    try:
+        from danny_toolkit.core.vram_manager import gpu_status as _gpu_status
+        return _gpu_status()
+    except Exception as e:
+        logger.error("GPU status ophalen mislukt: %s", e)
+        return {"beschikbaar": False, "error": str(e)}
+
+
+# ─── G6: Governor Rate Limits ────────────────────────
+
+
+@app.get(
+    "/api/v1/governor/rate-limits",
+    summary="Huidige token-usage en rate-limit status per agent",
+    tags=["Observatory"],
+)
+async def governor_rate_limits(
+    _key: str = Depends(verify_api_key),
+):
+    """Rate-limit overzicht: per-agent tokens, 429 counts, cooldowns.
+
+    Gebruikt SmartKeyManager.get_status() voor volledige diagnostiek.
+    """
+    try:
+        from danny_toolkit.core.key_manager import get_key_manager
+        km = get_key_manager()
+        status = km.get_status()
+        # Voeg agents in cooldown toe
+        status["agents_in_cooldown"] = list(km.get_agents_in_cooldown())
+        return status
+    except Exception as e:
+        logger.error("Rate-limit status ophalen mislukt: %s", e)
+        raise HTTPException(status_code=503, detail=f"KeyManager onbereikbaar: {e}")
+
+
 @app.post(
     "/api/v1/ingest",
     response_model=IngestResponse,
