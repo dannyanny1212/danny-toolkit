@@ -9,6 +9,7 @@ import time as _time
 import sys
 import os
 import psutil
+from pathlib import Path
 
 try:
     import pynvml
@@ -107,6 +108,45 @@ Input:focus {
     max-height: 12;
     overflow-y: auto;
 }
+
+.trinity-row {
+    height: 3fr;
+}
+
+.rag-row {
+    height: 2fr;
+}
+
+.rag-container {
+    height: 100%;
+    border: round #FF6EC7;
+    margin: 0 1;
+    background: #111827;
+}
+
+.rag-title {
+    content-align: center middle;
+    width: 100%;
+    background: #FF6EC7 15%;
+    color: #FF6EC7;
+    text-style: bold;
+    padding: 1;
+}
+
+#log_rag {
+    padding: 1 2;
+    height: 1fr;
+    scrollbar-color: #FF6EC7;
+    scrollbar-color-hover: #FFAB00;
+}
+
+.rag-status {
+    dock: top;
+    height: 1;
+    background: #0B0F19;
+    color: #FF6EC7;
+    padding: 0 2;
+}
 """
 
 class OmegaDashboardV4(App):
@@ -123,11 +163,11 @@ class OmegaDashboardV4(App):
     _select_mode = False
 
     def compose(self) -> ComposeResult:
-        """Bouw de Trinity Layout op."""
+        """Bouw de Trinity + RAG Layout op."""
         yield Header(show_clock=True)
 
         # De Drie Pilaren (Soul, Mind, Body)
-        with Horizontal():
+        with Horizontal(classes="trinity-row"):
             # LEFT: SOUL (Memory, RAG, Cortex) — smal
             with Vertical(classes="pillar-container pillar-side"):
                 yield Label("Ω SOUL", classes="pillar-title")
@@ -149,13 +189,39 @@ class OmegaDashboardV4(App):
                 self.log_body = RichLog(id="log_body", highlight=True, markup=True)
                 yield self.log_body
 
+        # BOTTOM: RAG SEARCH — 4de Kader (full width)
+        with Horizontal(classes="rag-row"):
+            with Vertical(classes="rag-container"):
+                yield Label("🔍 RAG SEARCH + GHOSTWRITER — Vector Store Zoeken & LLM Synthese", classes="rag-title")
+                self.rag_status = Static(
+                    "[dim]Store: Brain Memory | Docs: ... | Top-K: 5 | Min: 0.00[/]",
+                    classes="rag-status",
+                )
+                yield self.rag_status
+                self.log_rag = RichLog(id="log_rag", highlight=True, markup=True)
+                yield self.log_rag
+
         # De Sovereign Command Line
-        yield Input(placeholder="Ω SOVEREIGN COMMAND >> Typ een opdracht voor de MIND of 'help'...", id="cmd_input")
+        yield Input(placeholder="Ω COMMAND >> 'help' | rag <query> | rag:store | rag:topk N | rag:min 0.5", id="cmd_input")
 
         # Vaste Statusbalk onderaan
         self.status_bar = Static("🟢 ONLINE | 18 Agents | CPU: 3.6% | RAM: 42% | GPU: 2% | VRAM: 3724MB", id="status-bar")
         yield self.status_bar
         yield Footer()
+
+    # --- RAG Store definities ---
+    _RAG_STORES = {
+        "brain": Path(_ROOT) / "data" / "brain_memory" / "unified_vectors.json",
+        "rag": Path(_ROOT) / "data" / "rag" / "vector_db.json",
+        "knowledge": Path(_ROOT) / "data" / "knowledge_companion_vectors.json",
+        "legendary": Path(_ROOT) / "data" / "legendary_companion_vectors.json",
+    }
+    _RAG_STORE_LABELS = {
+        "brain": "Brain Memory (unified_vectors)",
+        "rag": "RAG Documenten (vector_db)",
+        "knowledge": "Knowledge Companion",
+        "legendary": "Legendary Companion",
+    }
 
     def on_mount(self) -> None:
         """Start de background tasks zodra de UI is geladen."""
@@ -171,11 +237,23 @@ class OmegaDashboardV4(App):
         self._engine_ready = False
         self._brain = None
 
+        # RAG Search state
+        self._rag_store_key = "brain"
+        self._rag_top_k = 5
+        self._rag_min_score = 0.0
+        self._rag_embedder = None
+        self._rag_store = None
+        self._rag_groq_client = None  # Eigen Groq key via AgentKeyManager
+        self._rag_ghost = True        # GhostWriter synthese aan/uit
+
         # Boot Brain + Soul sequentieel (voorkomt import lock deadlock)
         self._boot_brain_and_soul()
 
         # Start BODY telemetrie op achtergrond (geen brain imports)
         self._boot_body_telemetry()
+
+        # Boot RAG Search panel
+        self._boot_rag_panel()
 
         # 1-seconde real-time hardware monitor
         self.set_interval(1.0, self.update_status_bar)
@@ -424,17 +502,26 @@ class OmegaDashboardV4(App):
         # 2. Maak invoerveld leeg
         event.input.value = ""
 
-        # 3. Route commando
-        if commando.lower() in ("clear", "cls"):
+        # 3. Route commando — RAG commands eerst
+        if self._handle_rag_command(commando):
+            return
+        elif commando.lower() in ("clear", "cls"):
             self.action_clear_logs()
         elif commando.lower() == "help":
             self.log_mind.write(
                 "[bold cyan]Commando's:[/]\n"
-                "  [green]clear[/]     — Wis alle logs (of Ctrl+L)\n"
-                "  [green]help[/]      — Toon deze hulp\n"
-                "  [green]status[/]    — Engine status\n"
-                "  [green]swarm:[/]    — Forceer SwarmEngine (optioneel)\n"
-                "  [green]<tekst>[/]   — Auto-Router beslist: stream of swarm\n"
+                "  [green]clear[/]       — Wis alle logs (of Ctrl+L)\n"
+                "  [green]help[/]        — Toon deze hulp\n"
+                "  [green]status[/]      — Engine status\n"
+                "  [green]swarm:[/]      — Forceer SwarmEngine (optioneel)\n"
+                "  [green]<tekst>[/]     — Auto-Router beslist: stream of swarm\n"
+                "\n[bold #FF6EC7]RAG Search + GhostWriter:[/]\n"
+                "  [#FF6EC7]rag <query>[/]      — Zoek + GhostWriter synthese\n"
+                "  [#FF6EC7]rag:ghost[/]        — Toggle GhostWriter synthese (on/off)\n"
+                "  [#FF6EC7]rag:store[/]        — Toon/wissel stores (brain|rag|knowledge|legendary)\n"
+                "  [#FF6EC7]rag:topk <n>[/]     — Stel top-K in (1-50)\n"
+                "  [#FF6EC7]rag:min <score>[/]  — Stel min score in (0.0-1.0)\n"
+                "  [#FF6EC7]rag:stats[/]        — Toon store statistieken\n"
                 "\n[bold cyan]Sneltoetsen:[/]\n"
                 "  [green]Ctrl+S[/]    — Select Mode (tekst selecteren + copy)\n"
                 "  [green]Ctrl+L[/]    — Wis alle logs\n"
@@ -692,6 +779,455 @@ class OmegaDashboardV4(App):
                 f"\n[bold red]SWARM ERROR:[/] {e}",
             )
 
+    # =========================================================================
+    # RAG SEARCH TERMINAL — 4de Kader
+    # =========================================================================
+
+    @work(thread=True)
+    def _boot_rag_panel(self) -> None:
+        """Boot RAG panel — laad embedder + Groq client + standaard store."""
+        self.app.call_from_thread(
+            self.log_rag.write,
+            "[bold #FF6EC7]RAG SEARCH TERMINAL[/] booting...",
+        )
+
+        # --- Embedder ---
+        try:
+            from danny_toolkit.core.embeddings import get_embedder
+            self._rag_embedder = get_embedder(gebruik_voyage=True, gebruik_cache=True)
+            self.app.call_from_thread(
+                self.log_rag.write,
+                "[green]Embedder ONLINE[/] (Voyage 256d MRL)",
+            )
+        except Exception as e:
+            self.app.call_from_thread(
+                self.log_rag.write,
+                f"[bold red]Embedder FAILED:[/] {e}",
+            )
+            return
+
+        # --- Groq Client via AgentKeyManager (eigen key: GROQ_API_KEY_RAG) ---
+        try:
+            from danny_toolkit.core.key_manager import get_key_manager
+            km = get_key_manager()
+            self._rag_groq_client = km.create_sync_client("RAGSearch")
+            if self._rag_groq_client:
+                self.app.call_from_thread(
+                    self.log_rag.write,
+                    "[green]GhostWriter LLM ONLINE[/] (RAGSearch key, prio 2)",
+                )
+            else:
+                raise RuntimeError("Geen key beschikbaar")
+        except Exception as e:
+            # Fallback: directe Groq client
+            try:
+                from groq import Groq
+                key = os.getenv("GROQ_API_KEY", "")
+                if key:
+                    self._rag_groq_client = Groq(api_key=key)
+                    self.app.call_from_thread(
+                        self.log_rag.write,
+                        "[yellow]GhostWriter LLM ONLINE[/] (fallback key)",
+                    )
+                else:
+                    self.app.call_from_thread(
+                        self.log_rag.write,
+                        f"[yellow]GhostWriter LLM OFFLINE[/] — geen Groq key ({e})",
+                    )
+            except ImportError:
+                self.app.call_from_thread(
+                    self.log_rag.write,
+                    "[yellow]GhostWriter LLM OFFLINE[/] — groq package niet gevonden",
+                )
+
+        # --- Store laden ---
+        self._rag_load_store()
+
+        # Toon beschikbare stores
+        beschikbaar = []
+        for key, path in self._RAG_STORES.items():
+            exists = "✓" if path.exists() else "✗"
+            beschikbaar.append(f"  [{key}] {self._RAG_STORE_LABELS[key]} {exists}")
+        ghost_status = "[green]AAN[/]" if self._rag_ghost else "[red]UIT[/]"
+        self.app.call_from_thread(
+            self.log_rag.write,
+            "[cyan]Beschikbare stores:[/]\n" + "\n".join(beschikbaar),
+        )
+        self.app.call_from_thread(
+            self.log_rag.write,
+            f"\n[dim]GhostWriter synthese: {ghost_status}[/]"
+            "\n[dim]Commands: rag <query> | rag:ghost | rag:store | rag:topk N | rag:min 0.5 | rag:stats[/]",
+        )
+
+    def _rag_load_store(self) -> None:
+        """Laad de geselecteerde vector store."""
+        db_path = self._RAG_STORES[self._rag_store_key]
+        if not db_path.exists():
+            self.app.call_from_thread(
+                self.log_rag.write,
+                f"[yellow]Store '{self._rag_store_key}' niet gevonden: {db_path.name}[/]",
+            )
+            self._rag_store = None
+            self._rag_update_status()
+            return
+
+        try:
+            from danny_toolkit.core.vector_store import VectorStore
+            self._rag_store = VectorStore(
+                embedding_provider=self._rag_embedder, db_file=db_path,
+            )
+            stats = self._rag_store.statistieken()
+            self.app.call_from_thread(
+                self.log_rag.write,
+                f"[green]Store geladen:[/] [bold]{self._RAG_STORE_LABELS[self._rag_store_key]}[/] "
+                f"— {stats['totaal_documenten']} docs, "
+                f"{stats.get('embedding_dimensies', '?')}d embeddings",
+            )
+        except Exception as e:
+            self.app.call_from_thread(
+                self.log_rag.write,
+                f"[bold red]Store load failed:[/] {e}",
+            )
+            self._rag_store = None
+
+        self._rag_update_status()
+
+    def _rag_update_status(self) -> None:
+        """Update de RAG statusbalk."""
+        label = self._RAG_STORE_LABELS.get(self._rag_store_key, "?")
+        doc_count = self._rag_store.count() if self._rag_store else 0
+        ghost = "ON" if self._rag_ghost else "OFF"
+        llm = "LIVE" if self._rag_groq_client else "OFF"
+        status = (
+            f"[bold #FF6EC7]Store:[/] {label} | "
+            f"[bold]Docs:[/] {doc_count} | "
+            f"[bold]Top-K:[/] {self._rag_top_k} | "
+            f"[bold]Min:[/] {self._rag_min_score:.2f} | "
+            f"[bold]Ghost:[/] {ghost} | "
+            f"[bold]LLM:[/] {llm}"
+        )
+        self.app.call_from_thread(self.rag_status.update, status)
+
+    @work(thread=True)
+    def _rag_zoek(self, query: str) -> None:
+        """Voer RAG vector search uit — GhostWriter typewriter cast."""
+        if not self._rag_store:
+            self.app.call_from_thread(
+                self.log_rag.write,
+                "[bold red]Geen store geladen.[/] Gebruik: rag:store brain|rag|knowledge|legendary",
+            )
+            return
+
+        self.app.call_from_thread(
+            self.log_rag.write,
+            f"\n[bold #FFAB00]🔍 Zoekquery:[/] {query}",
+        )
+
+        t0 = _time.time()
+        try:
+            resultaten = self._rag_store.zoek(
+                query, top_k=self._rag_top_k, min_score=self._rag_min_score,
+            )
+        except Exception as e:
+            self.app.call_from_thread(
+                self.log_rag.write,
+                f"[bold red]Search ERROR:[/] {e}",
+            )
+            return
+
+        elapsed = _time.time() - t0
+
+        if not resultaten:
+            self.app.call_from_thread(
+                self.log_rag.write,
+                f"[yellow]Geen resultaten[/] (top_k={self._rag_top_k}, min={self._rag_min_score:.2f}) [{elapsed:.2f}s]",
+            )
+            return
+
+        self.app.call_from_thread(
+            self.log_rag.write,
+            f"[bold green]{len(resultaten)} resultaten[/] in {elapsed:.2f}s",
+        )
+
+        # GhostWriter Cast — resultaten één voor één met typewriter delay
+        for i, res in enumerate(resultaten, 1):
+            score = res["score"]
+            score_pct = score * 100
+
+            # Tri-Color score indicator
+            if score >= 0.8:
+                kleur = "green"
+                indicator = "●"
+            elif score >= 0.5:
+                kleur = "yellow"
+                indicator = "●"
+            else:
+                kleur = "red"
+                indicator = "●"
+
+            doc_id = res["id"]
+            if len(doc_id) > 50:
+                doc_id = doc_id[:47] + "..."
+
+            # Header lijn
+            self.app.call_from_thread(
+                self.log_rag.write,
+                f"[{kleur}]{indicator}[/] [bold]#{i}[/] [{kleur}]{score_pct:.1f}%[/] — [cyan]{doc_id}[/]",
+            )
+
+            # Tekst preview (max 300 chars voor compactheid in terminal)
+            tekst = res["tekst"].replace("\n", " ").strip()
+            if len(tekst) > 300:
+                tekst = tekst[:297] + "..."
+            self.app.call_from_thread(
+                self.log_rag.write,
+                f"  [dim]{tekst}[/]",
+            )
+
+            # Metadata op één lijn
+            meta = res.get("metadata", {})
+            if meta:
+                meta_parts = [f"{k}={v}" for k, v in meta.items() if k != "embedding"]
+                if meta_parts:
+                    meta_str = " | ".join(meta_parts[:5])
+                    if len(meta_str) > 120:
+                        meta_str = meta_str[:117] + "..."
+                    self.app.call_from_thread(
+                        self.log_rag.write,
+                        f"  [dim italic]meta: {meta_str}[/]",
+                    )
+
+            # GhostWriter typewriter delay tussen resultaten
+            _time.sleep(0.05)
+
+        # --- GhostWriter Synthese — LLM cast van RAG resultaten ---
+        if self._rag_ghost and self._rag_groq_client and resultaten:
+            self._rag_ghost_cast(query, resultaten)
+
+        self._rag_update_status()
+
+    def _rag_ghost_cast(self, query: str, resultaten: list) -> None:
+        """GhostWriter Cast — LLM synthese van RAG zoekresultaten.
+
+        Bouwt een context-prompt van de gevonden documenten, stuurt het
+        naar Groq via de eigen RAGSearch key, en cast het antwoord
+        token-voor-token (typewriter effect) in het RAG panel.
+        """
+        self.app.call_from_thread(
+            self.log_rag.write,
+            "\n[bold #FF6EC7]═══ GHOSTWRITER SYNTHESE ═══[/]",
+        )
+
+        # Bouw context van de top resultaten
+        context_parts = []
+        for i, res in enumerate(resultaten[:10], 1):
+            tekst = res["tekst"].strip()
+            if len(tekst) > 600:
+                tekst = tekst[:597] + "..."
+            score_pct = res["score"] * 100
+            context_parts.append(f"[Doc {i} | {score_pct:.0f}% match]\n{tekst}")
+
+        context = "\n\n".join(context_parts)
+
+        try:
+            from danny_toolkit.core.config import Config
+            model = Config.LLM_MODEL
+        except ImportError:
+            model = "meta-llama/llama-4-scout-17b-16e-instruct"
+
+        try:
+            # Track via KeyManager
+            try:
+                from danny_toolkit.core.key_manager import get_key_manager
+                km = get_key_manager()
+                km.registreer_request("RAGSearch")
+            except Exception:
+                pass
+
+            t0 = _time.time()
+            response = self._rag_groq_client.chat.completions.create(
+                model=model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "Je bent de Omega GhostWriter — een RAG synthese-agent. "
+                            "Je krijgt zoekresultaten uit een vector store en een gebruikersquery. "
+                            "Geef een beknopt, helder antwoord gebaseerd op de documenten. "
+                            "Gebruik Nederlands. Verwijs naar documenten met [Doc N]. "
+                            "Als de documenten het antwoord niet bevatten, zeg dat eerlijk."
+                        ),
+                    },
+                    {
+                        "role": "user",
+                        "content": (
+                            f"QUERY: {query}\n\n"
+                            f"GEVONDEN DOCUMENTEN:\n{context}\n\n"
+                            "Geef een synthese-antwoord op basis van bovenstaande documenten."
+                        ),
+                    },
+                ],
+                temperature=0.3,
+                max_tokens=1024,
+                stream=True,
+            )
+
+            # Typewriter cast — token voor token
+            full_text = ""
+            for chunk in response:
+                delta = chunk.choices[0].delta
+                token = getattr(delta, "content", None) or ""
+                if token:
+                    full_text += token
+                    # Verwijder <think> tags voor display
+                    display = re.sub(
+                        r"<think>.*?</think>\s*", "", full_text, flags=re.DOTALL,
+                    )
+                    if not display.strip():
+                        display = full_text
+                    self.app.call_from_thread(
+                        self.log_rag.write,
+                        f"\r[bold green]Ω GhostWriter:[/] {display.strip()[-200:]}",
+                    )
+                    _time.sleep(0.01)  # Typewriter snelheid
+
+            elapsed = _time.time() - t0
+
+            # Final clean output
+            clean_text = re.sub(
+                r"<think>.*?</think>\s*", "", full_text, flags=re.DOTALL,
+            ).strip()
+            if not clean_text:
+                clean_text = full_text.strip()
+
+            # Clear incremental lines en schrijf final result
+            self.app.call_from_thread(
+                self.log_rag.write,
+                f"\n[bold green]Ω GHOSTWRITER ANTWOORD:[/]\n{clean_text}",
+            )
+            self.app.call_from_thread(
+                self.log_rag.write,
+                f"[dim]Synthese in {elapsed:.1f}s | model: {model}[/]",
+            )
+
+            # Track tokens
+            try:
+                km.registreer_tokens("RAGSearch", full_text)
+            except Exception:
+                pass
+
+        except Exception as e:
+            self.app.call_from_thread(
+                self.log_rag.write,
+                f"[bold red]GhostWriter ERROR:[/] {e}",
+            )
+
+    def _handle_rag_command(self, commando: str) -> bool:
+        """Route RAG commands. Returns True als het een RAG command was."""
+        cmd_lower = commando.lower().strip()
+
+        # rag:store <name> — wissel van store
+        if cmd_lower.startswith("rag:store"):
+            parts = commando.split(maxsplit=1)
+            if len(parts) < 2 or parts[1].strip().replace("rag:store", "").strip() == "":
+                # Toon beschikbare stores
+                self.log_rag.write("[cyan]Beschikbare stores:[/]")
+                for key, label in self._RAG_STORE_LABELS.items():
+                    path = self._RAG_STORES[key]
+                    active = " [bold green]◄ ACTIEF[/]" if key == self._rag_store_key else ""
+                    exists = "[green]✓[/]" if path.exists() else "[red]✗[/]"
+                    self.log_rag.write(f"  {exists} [bold]{key}[/] — {label}{active}")
+                return True
+
+            store_key = parts[1].strip().split()[-1].lower()
+            if store_key not in self._RAG_STORES:
+                self.log_rag.write(
+                    f"[red]Onbekende store: '{store_key}'[/] — kies uit: {', '.join(self._RAG_STORES.keys())}"
+                )
+                return True
+            self._rag_store_key = store_key
+            self.log_rag.write(f"[#FF6EC7]Switching to:[/] {self._RAG_STORE_LABELS[store_key]}")
+            self._boot_rag_store_switch()
+            return True
+
+        # rag:topk <n>
+        if cmd_lower.startswith("rag:topk"):
+            parts = commando.split()
+            if len(parts) >= 2:
+                try:
+                    val = int(parts[-1])
+                    self._rag_top_k = max(1, min(val, 50))
+                    self.log_rag.write(f"[green]Top-K ingesteld op {self._rag_top_k}[/]")
+                    self._rag_update_status()
+                except ValueError:
+                    self.log_rag.write("[red]Gebruik: rag:topk <getal>[/]")
+            return True
+
+        # rag:min <score>
+        if cmd_lower.startswith("rag:min"):
+            parts = commando.split()
+            if len(parts) >= 2:
+                try:
+                    val = float(parts[-1])
+                    self._rag_min_score = max(0.0, min(val, 1.0))
+                    self.log_rag.write(f"[green]Min score ingesteld op {self._rag_min_score:.2f}[/]")
+                    self._rag_update_status()
+                except ValueError:
+                    self.log_rag.write("[red]Gebruik: rag:min <0.0-1.0>[/]")
+            return True
+
+        # rag:ghost — toggle GhostWriter synthese
+        if cmd_lower.startswith("rag:ghost"):
+            parts = commando.lower().split()
+            if len(parts) >= 2 and parts[-1] in ("on", "aan"):
+                self._rag_ghost = True
+            elif len(parts) >= 2 and parts[-1] in ("off", "uit"):
+                self._rag_ghost = False
+            else:
+                self._rag_ghost = not self._rag_ghost
+            status = "[green]AAN[/]" if self._rag_ghost else "[red]UIT[/]"
+            llm = "LIVE" if self._rag_groq_client else "OFFLINE"
+            self.log_rag.write(f"[#FF6EC7]GhostWriter synthese:[/] {status} (LLM: {llm})")
+            self._rag_update_status()
+            return True
+
+        # rag:stats — toon store statistieken
+        if cmd_lower == "rag:stats":
+            if self._rag_store:
+                stats = self._rag_store.statistieken()
+                self.log_rag.write("[bold cyan]═══ STORE STATISTIEKEN ═══[/]")
+                self.log_rag.write(f"  Documenten:    {stats['totaal_documenten']}")
+                self.log_rag.write(f"  Embedding dim: {stats.get('embedding_dimensies', 'N/A')}")
+                self.log_rag.write(f"  Queries:       {stats['queries_uitgevoerd']}")
+                self.log_rag.write(f"  Gem. tekstlen: {stats.get('gem_tekst_lengte', 'N/A')} chars")
+                grootte = stats.get("db_grootte_bytes", 0)
+                if grootte > 1024 * 1024:
+                    self.log_rag.write(f"  DB grootte:    {grootte / 1024 / 1024:.1f} MB")
+                elif grootte > 0:
+                    self.log_rag.write(f"  DB grootte:    {grootte / 1024:.1f} KB")
+                meta_velden = stats.get("metadata_velden", [])
+                if meta_velden:
+                    self.log_rag.write(f"  Meta-velden:   {', '.join(meta_velden[:10])}")
+            else:
+                self.log_rag.write("[yellow]Geen store geladen.[/]")
+            return True
+
+        # rag <query> — zoek
+        if cmd_lower.startswith("rag "):
+            query = commando[4:].strip()
+            if query:
+                self._rag_zoek(query)
+            else:
+                self.log_rag.write("[yellow]Gebruik: rag <zoekopdracht>[/]")
+            return True
+
+        return False
+
+    @work(thread=True)
+    def _boot_rag_store_switch(self) -> None:
+        """Herlaad store na switch (in worker thread)."""
+        self._rag_load_store()
+
     def action_toggle_select(self) -> None:
         """Toggle Select Mode — schakelt muisvangst uit zodat je tekst kunt selecteren."""
         self._select_mode = not self._select_mode
@@ -714,6 +1250,7 @@ class OmegaDashboardV4(App):
         self.log_soul.clear()
         self.log_mind.clear()
         self.log_body.clear()
+        self.log_rag.clear()
 
 if __name__ == "__main__":
     app = OmegaDashboardV4()
