@@ -646,7 +646,7 @@ def test_18_init_exports():
     rat_path = os.path.join(PROJECT_ROOT, "run_all_tests.py")
     with open(rat_path, "r", encoding="utf-8") as f:
         rat_source = f.read()
-    check("run_all_tests: 27 suites docstring", "27 test suites" in rat_source)
+    check("run_all_tests: 48 suites docstring", "48 test suites" in rat_source)
     check("run_all_tests: test_phase30.py entry",
           "test_phase30.py" in rat_source)
 
