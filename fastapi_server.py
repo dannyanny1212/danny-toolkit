@@ -958,6 +958,39 @@ async def governor_rate_limits(
         raise HTTPException(status_code=503, detail=f"KeyManager onbereikbaar: {e}")
 
 
+# ─── G4: Advanced Knowledge Search ───────────────────
+
+
+@app.get(
+    "/api/v1/knowledge/search",
+    summary="Doorzoek de 422 OMEGA Advanced Knowledge documenten",
+    tags=["RAG"],
+)
+async def knowledge_search(
+    query: str = Query(..., min_length=2, max_length=500, description="Zoekopdracht"),
+    n_results: int = Query(default=5, ge=1, le=20),
+    _key: str = Depends(verify_api_key),
+):
+    """Doorzoek de omega_advanced_skills ChromaDB collectie.
+
+    Bevat alle 15+ kennisdocumenten over architectuur, protocollen,
+    skills, quests, persona en UI-design. Draait thread-geïsoleerd
+    om asyncio event loop clashes te voorkomen.
+    """
+    try:
+        from danny_toolkit.core.advanced_knowledge_bridge import AdvancedKnowledgeBridge
+        bridge = AdvancedKnowledgeBridge()
+        result = bridge.raadpleeg_omega_skills(query=query, n_results=n_results)
+        if "error" in result:
+            raise HTTPException(status_code=503, detail=result["error"])
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Advanced Knowledge search mislukt: %s", e)
+        raise HTTPException(status_code=503, detail=f"Knowledge Bridge onbereikbaar: {e}")
+
+
 @app.post(
     "/api/v1/ingest",
     response_model=IngestResponse,
