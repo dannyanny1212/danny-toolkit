@@ -422,23 +422,22 @@ async def verify_api_key(
 
 
 async def verify_ui_key(
-    request: Request,
-    response: Response,
     key: str = Query(None, description="API key via query param"),
     x_api_key: str = Header(None, description="API key via header"),
     ui_token: str = Cookie(None, description="API key via cookie"),
 ):
-    """Auth voor UI routes — accepteert query param, header, of cookie.
-
-    Refresht de cookie bij elke request zodat actieve sessies niet verlopen.
-    """
+    """Auth voor UI routes — accepteert query param, header, of cookie."""
     token = key or x_api_key or ui_token
     if not token or token != FASTAPI_SECRET_KEY:
         raise HTTPException(
             status_code=401,
             detail="Authenticatie vereist. Gebruik ?key=<secret> of X-API-Key header.",
         )
-    # Auto-refresh cookie bij elke geauthenticeerde request
+    return token
+
+
+def _set_ui_cookie(response: Response) -> Response:
+    """Zet/ververs ui_token cookie op een response."""
     response.set_cookie(
         key="ui_token",
         value=FASTAPI_SECRET_KEY,
@@ -446,7 +445,7 @@ async def verify_ui_key(
         samesite="strict",
         max_age=86400,
     )
-    return token
+    return response
 
 
 # ─── APP ────────────────────────────────────────────
@@ -1771,7 +1770,7 @@ if HAS_DASHBOARD:
     @app.get("/ui/", response_class=HTMLResponse, include_in_schema=False)
     async def dashboard(_key: str = Depends(verify_ui_key)):
         tmpl = _templates.get_template("dashboard.html")
-        return HTMLResponse(tmpl.render())
+        return _set_ui_cookie(HTMLResponse(tmpl.render()))
 
     @app.get("/ui/partials/agents", response_class=HTMLResponse, include_in_schema=False)
     async def partial_agents(_key: str = Depends(verify_ui_key)):
@@ -1787,7 +1786,7 @@ if HAS_DASHBOARD:
                     "tasks_completed": node.tasks_completed,
                 })
         tmpl = _templates.get_template("partials/agent_grid.html")
-        return HTMLResponse(tmpl.render(agents=agents))
+        return _set_ui_cookie(HTMLResponse(tmpl.render(agents=agents)))
 
     @app.get("/ui/partials/governor", response_class=HTMLResponse, include_in_schema=False)
     async def partial_governor(_key: str = Depends(verify_ui_key)):
@@ -1813,7 +1812,7 @@ if HAS_DASHBOARD:
             logger.debug("Governor stats: %s", e)
             stats["Status"] = "NIET BESCHIKBAAR"
         tmpl = _templates.get_template("partials/governor.html")
-        return HTMLResponse(tmpl.render(stats=stats))
+        return _set_ui_cookie(HTMLResponse(tmpl.render(stats=stats)))
 
     @app.get("/ui/partials/rate-limits", response_class=HTMLResponse, include_in_schema=False)
     async def partial_rate_limits(_key: str = Depends(verify_ui_key)):
@@ -1840,7 +1839,7 @@ if HAS_DASHBOARD:
         except Exception as e:
             logger.debug("Rate limits: %s", e)
         tmpl = _templates.get_template("partials/rate_limits.html")
-        return HTMLResponse(tmpl.render(limits=limits))
+        return _set_ui_cookie(HTMLResponse(tmpl.render(limits=limits)))
 
     @app.get("/ui/partials/cortex", response_class=HTMLResponse, include_in_schema=False)
     async def partial_cortex(_key: str = Depends(verify_ui_key)):
@@ -1857,7 +1856,7 @@ if HAS_DASHBOARD:
         except Exception as e:
             logger.debug("Cortex stats: %s", e)
         tmpl = _templates.get_template("partials/cortex_stats.html")
-        return HTMLResponse(tmpl.render(stats=stats))
+        return _set_ui_cookie(HTMLResponse(tmpl.render(stats=stats)))
 
     @app.get("/ui/partials/pipeline-metrics", response_class=HTMLResponse, include_in_schema=False)
     async def partial_pipeline_metrics(_key: str = Depends(verify_ui_key)):
@@ -1874,7 +1873,7 @@ if HAS_DASHBOARD:
         except ImportError:
             pass
         tmpl = _templates.get_template("partials/pipeline_metrics.html")
-        return HTMLResponse(tmpl.render(metrics=metrics, cache=cache_stats))
+        return _set_ui_cookie(HTMLResponse(tmpl.render(metrics=metrics, cache=cache_stats)))
 
     @app.get("/ui/partials/observatory", response_class=HTMLResponse, include_in_schema=False)
     async def partial_observatory(_key: str = Depends(verify_ui_key)):
@@ -1903,7 +1902,7 @@ if HAS_DASHBOARD:
         except Exception as e:
             logger.debug("Observatory partial: %s", e)
         tmpl = _templates.get_template("partials/observatory.html")
-        return HTMLResponse(tmpl.render(dashboard=dashboard_data))
+        return _set_ui_cookie(HTMLResponse(tmpl.render(dashboard=dashboard_data)))
 
     @app.get("/ui/events", include_in_schema=False)
     async def sse_events(_key: str = Depends(verify_ui_key)):
