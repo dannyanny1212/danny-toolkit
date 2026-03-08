@@ -454,7 +454,7 @@ app = FastAPI(
     title="Danny Toolkit API — Golden Master v6.11.0",
     description=(
         "## Omega Sovereign Core REST API\n\n"
-        "176 modules | 28/28 test suites | Phase 100+\n\n"
+        "176+ modules | 48 test suites | Phase 52+\n\n"
         "### Endpoints\n"
         "- **Swarm**: Query de SwarmEngine, bekijk agents, decomponeer doelen\n"
         "- **Systeem**: Health checks, heartbeat, metrics, configuratie\n"
