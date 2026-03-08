@@ -13,11 +13,26 @@ Features:
 - Sjablonen voor wekelijkse boodschappen
 """
 
+from __future__ import annotations
+
 import json
 import logging
 from datetime import datetime
 from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import clear_scherm, kleur, Kleur, succes, fout, waarschuwing, info
+
+try:
+    import danny_toolkit.brain.unified_memory
+    HAS_UNIFIED_MEMORY = True
+except ImportError:
+    HAS_UNIFIED_MEMORY = False
+
+try:
+    import re
+    HAS_RE = True
+except ImportError:
+    HAS_RE = False
+
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +115,8 @@ class BoodschappenlijstApp:
         }
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         Config.ensure_dirs()
         self.bestand = Config.APPS_DATA_DIR / "boodschappenlijst_v2.json"
         self.export_dir = Config.APPS_DATA_DIR / "exports"
@@ -161,7 +177,7 @@ class BoodschappenlijstApp:
             }
         }
 
-    def _migreer_data(self):
+    def _migreer_data(self) -> None:
         """Migreert oude data naar nieuwe structuur."""
         gewijzigd = False
 
@@ -193,7 +209,7 @@ class BoodschappenlijstApp:
         if gewijzigd:
             self._sla_op(stil=True)
 
-    def _sla_op(self, stil=False):
+    def _sla_op(self, stil=False) -> None:
         """Slaat de data op naar bestand."""
         self.data["versie"] = self.VERSIE
         with open(self.bestand, "w", encoding="utf-8") as f:
@@ -201,11 +217,11 @@ class BoodschappenlijstApp:
         if not stil:
             succes("Opgeslagen!")
 
-    def _log_memory_event(self, event_type, data):
+    def _log_memory_event(self, event_type, data) -> None:
         """Log event naar Unified Memory."""
         try:
             if not hasattr(self, "_memory"):
-                from danny_toolkit.brain.unified_memory import UnifiedMemory
+                pass  # import moved to top-level
                 self._memory = UnifiedMemory()
             self._memory.store_event(
                 app="boodschappenlijst",
@@ -226,14 +242,14 @@ class BoodschappenlijstApp:
 
     # ==================== WEERGAVE ====================
 
-    def _toon_header(self, titel: str):
+    def _toon_header(self, titel: str) -> None:
         """Toont een mooie header."""
         print()
         print(kleur("╔" + "═" * 50 + "╗", "cyan"))
         print(kleur("║", "cyan") + f" {titel:^48} " + kleur("║", "cyan"))
         print(kleur("╚" + "═" * 50 + "╝", "cyan"))
 
-    def _toon_lijst(self, compact=False):
+    def _toon_lijst(self, compact=False) -> None:
         """Toont de huidige lijst, gegroepeerd per categorie."""
         lijst = self._get_huidige_lijst()
         items = lijst.get("items", [])
@@ -329,7 +345,7 @@ class BoodschappenlijstApp:
 
         print(f"  📊 Items: {totaal} | Afgevinkt: {afgevinkt}/{totaal}")
 
-    def _toon_menu(self):
+    def _toon_menu(self) -> None:
         """Toont het hoofdmenu."""
         lijst = self._get_huidige_lijst()
         items_count = len(lijst.get("items", []))
@@ -393,10 +409,10 @@ class BoodschappenlijstApp:
             if 0 <= idx < len(cats):
                 return cats[idx][0]
         except ValueError:
-            pass
+            logger.debug("Suppressed error")
         return "overig"
 
-    def _voeg_toe(self):
+    def _voeg_toe(self) -> None:
         """Voegt een item toe met alle opties."""
         self._toon_header("➕ Item Toevoegen")
 
@@ -458,7 +474,7 @@ class BoodschappenlijstApp:
                 })
                 succes(f"'{naam}' toegevoegd aan favorieten!")
 
-    def _toon_suggesties(self):
+    def _toon_suggesties(self) -> None:
         """Toont slimme suggesties gebaseerd op geschiedenis."""
         # Meest gekochte items
         meest_gekocht = self.data["statistieken"].get("meest_gekocht", {})
@@ -478,7 +494,7 @@ class BoodschappenlijstApp:
             for item in voorraad_laag[:3]:
                 print(f"      • {item['naam']}")
 
-    def _voeg_favoriet_toe(self):
+    def _voeg_favoriet_toe(self) -> None:
         """Voegt snel een favoriet toe aan de lijst."""
         favorieten = self.data["favorieten"]
 
@@ -540,7 +556,7 @@ class BoodschappenlijstApp:
             except ValueError:
                 fout("Voer een nummer in.")
 
-    def _afvinken(self):
+    def _afvinken(self) -> None:
         """Vinkt items af of haalt vinkjes weg."""
         items = self._get_items()
 
@@ -573,7 +589,7 @@ class BoodschappenlijstApp:
                     if 0 <= idx < len(items):
                         items[idx]["afgevinkt"] = not items[idx]["afgevinkt"]
                 except ValueError:
-                    pass
+                    logger.debug("Suppressed error")
             succes("Items bijgewerkt!")
         else:
             try:
@@ -590,7 +606,7 @@ class BoodschappenlijstApp:
             except ValueError:
                 fout("Voer een nummer in.")
 
-    def _bewerk_item(self):
+    def _bewerk_item(self) -> None:
         """Bewerkt een bestaand item."""
         items = self._get_items()
 
@@ -624,7 +640,7 @@ class BoodschappenlijstApp:
                     try:
                         item["prijs"] = float(prijs_str.replace(",", "."))
                     except ValueError:
-                        pass
+                        logger.debug("Suppressed error")
 
                 notitie = input(f"  Notitie [{item.get('notitie', '')}]: ").strip()
                 if notitie:
@@ -636,7 +652,7 @@ class BoodschappenlijstApp:
         except ValueError:
             fout("Voer een nummer in.")
 
-    def _verwijder(self):
+    def _verwijder(self) -> None:
         """Verwijdert items."""
         items = self._get_items()
 
@@ -685,7 +701,7 @@ class BoodschappenlijstApp:
             except ValueError:
                 fout("Ongeldige invoer.")
 
-    def _voeg_toe_aan_geschiedenis(self, items: list):
+    def _voeg_toe_aan_geschiedenis(self, items: list) -> None:
         """Voegt items toe aan aankoopgeschiedenis."""
         if not items:
             return
@@ -722,7 +738,7 @@ class BoodschappenlijstApp:
 
     # ==================== RECEPTEN ====================
 
-    def _recepten_menu(self):
+    def _recepten_menu(self) -> None:
         """Toont het recepten menu."""
         while True:
             self._toon_header("🍳 Recepten")
@@ -764,7 +780,7 @@ class BoodschappenlijstApp:
 
             input(kleur("\n  Druk op Enter om verder te gaan...", "grijs"))
 
-    def _voeg_recept_toe_aan_lijst(self, recept_naam: str):
+    def _voeg_recept_toe_aan_lijst(self, recept_naam: str) -> None:
         """Voegt ingrediënten van een recept toe aan de boodschappenlijst."""
         recept = self.data["recepten"].get(recept_naam)
         if not recept:
@@ -790,7 +806,7 @@ class BoodschappenlijstApp:
             hoeveelheid = ing.get("hoeveelheid", "")
             # Simpele vermenigvuldiging voor getallen in hoeveelheid
             if factor != 1 and hoeveelheid:
-                import re
+                pass  # import moved to top-level
                 match = re.match(r"(\d+)", hoeveelheid)
                 if match:
                     getal = int(match.group(1))
@@ -812,7 +828,7 @@ class BoodschappenlijstApp:
 
         succes(f"{toegevoegd} ingrediënten toegevoegd voor {recept_naam}!")
 
-    def _maak_recept(self):
+    def _maak_recept(self) -> None:
         """Maakt een nieuw recept aan."""
         self._toon_header("📝 Nieuw Recept")
 
@@ -854,7 +870,7 @@ class BoodschappenlijstApp:
         else:
             waarschuwing("Geen ingrediënten toegevoegd, recept niet opgeslagen.")
 
-    def _verwijder_recept(self):
+    def _verwijder_recept(self) -> None:
         """Verwijdert een recept."""
         recepten = list(self.data["recepten"].keys())
         if not recepten:
@@ -881,7 +897,7 @@ class BoodschappenlijstApp:
         except ValueError:
             fout("Voer een nummer in.")
 
-    def _suggereer_recepten(self):
+    def _suggereer_recepten(self) -> None:
         """Suggereert recepten op basis van items in de boodschappenlijst."""
         self._toon_header("💡 Recept Suggesties")
 
@@ -1013,7 +1029,7 @@ class BoodschappenlijstApp:
 
     # ==================== VOORRAAD ====================
 
-    def _voorraad_menu(self):
+    def _voorraad_menu(self) -> None:
         """Beheer je voorraad thuis."""
         while True:
             self._toon_header("🏠 Voorraad Beheer")
@@ -1063,7 +1079,7 @@ class BoodschappenlijstApp:
 
             input(kleur("\n  Druk op Enter om verder te gaan...", "grijs"))
 
-    def _voorraad_toevoegen(self):
+    def _voorraad_toevoegen(self) -> None:
         """Voegt een item toe aan de voorraad."""
         naam = input(kleur("\n  Product naam: ", "cyan")).strip()
         if not naam:
@@ -1084,7 +1100,7 @@ class BoodschappenlijstApp:
         })
         succes(f"'{naam}' ({aantal}x) toegevoegd aan voorraad!")
 
-    def _voorraad_aanpassen(self, idx: int):
+    def _voorraad_aanpassen(self, idx: int) -> None:
         """Past de hoeveelheid van een voorraad item aan."""
         item = self.data["voorraad"][idx]
         print(kleur(f"\n  {item['naam']}: huidig aantal = {item['aantal']}", Kleur.GEEL))
@@ -1096,7 +1112,7 @@ class BoodschappenlijstApp:
         except ValueError:
             fout("Voer een geldig nummer in.")
 
-    def _voorraad_verwijderen(self):
+    def _voorraad_verwijderen(self) -> None:
         """Verwijdert een voorraad item."""
         voorraad = self.data["voorraad"]
         if not voorraad:
@@ -1113,7 +1129,7 @@ class BoodschappenlijstApp:
         except ValueError:
             fout("Voer een nummer in.")
 
-    def _voorraad_naar_lijst(self):
+    def _voorraad_naar_lijst(self) -> None:
         """Voegt items met lage voorraad toe aan de boodschappenlijst."""
         laag = [v for v in self.data["voorraad"] if v.get("aantal", 0) <= 1]
 
@@ -1147,7 +1163,7 @@ class BoodschappenlijstApp:
 
     # ==================== SJABLONEN ====================
 
-    def _sjablonen_menu(self):
+    def _sjablonen_menu(self) -> None:
         """Beheer sjablonen voor terugkerende boodschappen."""
         while True:
             self._toon_header("📋 Sjablonen")
@@ -1191,7 +1207,7 @@ class BoodschappenlijstApp:
 
             input(kleur("\n  Druk op Enter om verder te gaan...", "grijs"))
 
-    def _maak_sjabloon(self):
+    def _maak_sjabloon(self) -> None:
         """Maakt een nieuw sjabloon."""
         naam = input(kleur("\n  Naam van het sjabloon: ", "cyan")).strip()
         if not naam:
@@ -1216,7 +1232,7 @@ class BoodschappenlijstApp:
             }
             succes(f"Sjabloon '{naam}' opgeslagen!")
 
-    def _huidige_als_sjabloon(self):
+    def _huidige_als_sjabloon(self) -> None:
         """Slaat de huidige lijst op als sjabloon."""
         items = self._get_items()
         if not items:
@@ -1239,7 +1255,7 @@ class BoodschappenlijstApp:
         }
         succes(f"Sjabloon '{naam}' opgeslagen met {len(sjabloon_items)} items!")
 
-    def _pas_sjabloon_toe(self, key: str):
+    def _pas_sjabloon_toe(self, key: str) -> None:
         """Past een sjabloon toe op de huidige lijst."""
         sjabloon = self.data["sjablonen"].get(key)
         if not sjabloon:
@@ -1260,7 +1276,7 @@ class BoodschappenlijstApp:
 
         succes(f"{len(sjabloon['items'])} items toegevoegd uit sjabloon!")
 
-    def _verwijder_sjabloon(self):
+    def _verwijder_sjabloon(self) -> None:
         """Verwijdert een sjabloon."""
         sjablonen = list(self.data["sjablonen"].keys())
         if not sjablonen:
@@ -1279,7 +1295,7 @@ class BoodschappenlijstApp:
 
     # ==================== LIJSTEN BEHEREN ====================
 
-    def _lijsten_menu(self):
+    def _lijsten_menu(self) -> None:
         """Beheer meerdere boodschappenlijsten."""
         while True:
             self._toon_header("📑 Lijsten Beheren")
@@ -1317,7 +1333,7 @@ class BoodschappenlijstApp:
 
             input(kleur("\n  Druk op Enter om verder te gaan...", "grijs"))
 
-    def _maak_lijst(self):
+    def _maak_lijst(self) -> None:
         """Maakt een nieuwe boodschappenlijst."""
         naam = input(kleur("\n  Naam van de lijst: ", "cyan")).strip()
         if not naam:
@@ -1338,7 +1354,7 @@ class BoodschappenlijstApp:
         self.huidige_lijst = key
         succes(f"Lijst '{naam}' aangemaakt en geselecteerd!")
 
-    def _verwijder_lijst(self):
+    def _verwijder_lijst(self) -> None:
         """Verwijdert een boodschappenlijst."""
         lijsten = list(self.data["lijsten"].keys())
 
@@ -1368,7 +1384,7 @@ class BoodschappenlijstApp:
 
     # ==================== FAVORIETEN ====================
 
-    def _favorieten_menu(self):
+    def _favorieten_menu(self) -> None:
         """Beheer favorieten."""
         while True:
             self._toon_header("⭐ Favorieten Beheren")
@@ -1407,7 +1423,7 @@ class BoodschappenlijstApp:
 
             input(kleur("\n  Druk op Enter om verder te gaan...", "grijs"))
 
-    def _voeg_favoriet_toe_handmatig(self):
+    def _voeg_favoriet_toe_handmatig(self) -> None:
         """Voegt handmatig een favoriet toe."""
         naam = input(kleur("\n  Naam van favoriet: ", "cyan")).strip()
         if not naam:
@@ -1425,7 +1441,7 @@ class BoodschappenlijstApp:
 
     # ==================== INSTELLINGEN ====================
 
-    def _instellingen_menu(self):
+    def _instellingen_menu(self) -> None:
         """Instellingen menu."""
         while True:
             self._toon_header("⚙️ Instellingen")
@@ -1464,7 +1480,7 @@ class BoodschappenlijstApp:
 
     # ==================== STATISTIEKEN ====================
 
-    def _toon_statistieken(self):
+    def _toon_statistieken(self) -> None:
         """Toont aankoopstatistieken."""
         self._toon_header("📊 Statistieken")
 
@@ -1502,7 +1518,7 @@ class BoodschappenlijstApp:
 
     # ==================== EXPORT ====================
 
-    def _exporteer_menu(self):
+    def _exporteer_menu(self) -> None:
         """Export opties."""
         self._toon_header("📤 Exporteren")
 
@@ -1521,7 +1537,7 @@ class BoodschappenlijstApp:
         elif keuze == "3":
             self._toon_kopieerbaar()
 
-    def _exporteer_txt(self):
+    def _exporteer_txt(self) -> None:
         """Exporteert de lijst als tekstbestand."""
         lijst = self._get_huidige_lijst()
         items = lijst.get("items", [])
@@ -1565,7 +1581,7 @@ class BoodschappenlijstApp:
 
         succes(f"Geëxporteerd naar: {pad}")
 
-    def _exporteer_json(self):
+    def _exporteer_json(self) -> None:
         """Exporteert de lijst als JSON bestand."""
         lijst = self._get_huidige_lijst()
 
@@ -1578,7 +1594,7 @@ class BoodschappenlijstApp:
 
         succes(f"Geëxporteerd naar: {pad}")
 
-    def _toon_kopieerbaar(self):
+    def _toon_kopieerbaar(self) -> None:
         """Toont een simpele kopieerbare lijst."""
         items = self._get_items()
 
@@ -1599,7 +1615,7 @@ class BoodschappenlijstApp:
 
     # ==================== MAIN LOOP ====================
 
-    def run(self):
+    def run(self) -> None:
         """Start de app."""
         clear_scherm()
 

@@ -16,30 +16,49 @@ Dependencies (hergebruikt, geen nieuwe):
   edge-tts / pyttsx3 (Quest X)
 """
 
+from __future__ import annotations
+
 from danny_toolkit.core.utils import kleur, Kleur, info, succes, fout
+import logging
+
+logger = logging.getLogger(__name__)
+
+try:
+    import danny_toolkit.quests.listener_protocol
+    HAS_LISTENER_PROTOCOL = True
+except ImportError:
+    HAS_LISTENER_PROTOCOL = False
+
+try:
+    import danny_toolkit.quests.voice_protocol
+    HAS_VOICE_PROTOCOL = True
+except ImportError:
+    HAS_VOICE_PROTOCOL = False
+
 
 
 class DialogueProtocol:
     """Quest XII: The Dialogue - Pixel converseert."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self._listener = None  # Lazy ListenerProtocol
         self._voice = None     # Lazy VoiceProtocol
         self.actief = False
         self.rondes = 0
         self.geschiedenis = []  # Lijst van (danny, pixel) tuples
 
-    def _get_listener(self):
+    def _get_listener(self) -> None:
         """Lazy-init listener."""
         if self._listener is None:
-            from danny_toolkit.quests.listener_protocol import ListenerProtocol
+            pass  # import moved to top-level
             self._listener = ListenerProtocol()
         return self._listener
 
-    def _get_voice(self):
+    def _get_voice(self) -> None:
         """Lazy-init voice."""
         if self._voice is None:
-            from danny_toolkit.quests.voice_protocol import VoiceProtocol
+            pass  # import moved to top-level
             self._voice = VoiceProtocol()
         return self._voice
 
@@ -67,7 +86,7 @@ class DialogueProtocol:
             )
         return True, "Gereed"
 
-    def start(self, verwerk_fn=None, mood_fn=None):
+    def start(self, verwerk_fn=None, mood_fn=None) -> None:
         """
         Start continue dialoog-modus.
 
@@ -172,7 +191,7 @@ class DialogueProtocol:
                 Kleur.DIM,
             ))
 
-    def run_simulation(self):
+    def run_simulation(self) -> None:
         """Demo zonder OmegaAI koppeling."""
         kan, reden = self.can_start()
         if not kan:

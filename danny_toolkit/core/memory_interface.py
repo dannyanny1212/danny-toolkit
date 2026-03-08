@@ -1,6 +1,8 @@
 """
 Memory Interface — Grens-bewaker tussen /core/ en /brain/.
 
+from __future__ import annotations
+
 Core modules importeren HIER vandaan, nooit direct uit /brain/.
 Brain modules registreren hun implementaties via register_*().
 
@@ -29,19 +31,19 @@ _governor_factory = None
 _unified_memory_factory = None
 
 
-def register_cortical_stack(stack):
+def register_cortical_stack(stack: object) -> None:
     """Registreer CorticalStack singleton (aangeroepen vanuit brain startup)."""
     global _cortical_stack
     _cortical_stack = stack
 
 
-def register_governor_factory(factory):
+def register_governor_factory(factory: object) -> None:
     """Registreer OmegaGovernor factory (callable die instantie retourneert)."""
     global _governor_factory
     _governor_factory = factory
 
 
-def register_unified_memory_factory(factory):
+def register_unified_memory_factory(factory: object) -> None:
     """Registreer UnifiedMemory factory."""
     global _unified_memory_factory
     _unified_memory_factory = factory
@@ -51,7 +53,7 @@ def register_unified_memory_factory(factory):
 # Accessors — core modules gebruiken deze functies
 # ------------------------------------------------------------------
 
-def get_cortical_stack():
+def get_cortical_stack() -> None:
     """Haal CorticalStack op als geregistreerd, anders lazy-load poging.
 
     Returns None als niet beschikbaar.
@@ -70,7 +72,7 @@ def get_cortical_stack():
         return None
 
 
-def get_governor():
+def get_governor() -> None:
     """Haal OmegaGovernor op via factory, of None."""
     if _governor_factory is not None:
         try:
@@ -85,7 +87,7 @@ def get_governor():
         return None
 
 
-def get_unified_memory():
+def get_unified_memory() -> None:
     """Haal UnifiedMemory op via factory, of None."""
     if _unified_memory_factory is not None:
         try:
@@ -103,7 +105,7 @@ def get_unified_memory():
 # Convenience — veelgebruikte operaties (fire-and-forget)
 # ------------------------------------------------------------------
 
-def log_to_cortical(actor, action, details=None, source="system"):
+def log_to_cortical(actor: object, action: object, details: object=None, source: object="system") -> None:
     """Log event naar CorticalStack als beschikbaar (fire-and-forget).
 
     Gooit nooit een exception — veilig om overal te gebruiken.

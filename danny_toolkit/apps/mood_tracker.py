@@ -2,11 +2,20 @@
 Mood Tracker v2.0 - AI-Powered stemming tracker.
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import datetime, timedelta
 from collections import Counter
 from danny_toolkit.core.utils import clear_scherm
 from danny_toolkit.apps.base_app import BaseApp
+
+try:
+    import danny_toolkit.brain.unified_memory
+    HAS_UNIFIED_MEMORY = True
+except ImportError:
+    HAS_UNIFIED_MEMORY = False
+
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +23,8 @@ logger = logging.getLogger(__name__)
 class MoodTrackerApp(BaseApp):
     """AI-Powered mood tracker voor stemming en emoties."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         super().__init__("mood.json")
 
         self.stemmingen = {
@@ -37,11 +47,11 @@ class MoodTrackerApp(BaseApp):
             "streak": 0
         }
 
-    def _log_memory_event(self, event_type, data):
+    def _log_memory_event(self, event_type, data) -> None:
         """Log event naar Unified Memory."""
         try:
             if not hasattr(self, "_memory"):
-                from danny_toolkit.brain.unified_memory import UnifiedMemory
+                pass  # import moved to top-level
                 self._memory = UnifiedMemory()
             self._memory.store_event(
                 app="mood_tracker",
@@ -51,7 +61,7 @@ class MoodTrackerApp(BaseApp):
         except Exception as e:
             logger.debug("Memory event error: %s", e)
 
-    def run(self):
+    def run(self) -> None:
         """Start de mood tracker."""
         while True:
             clear_scherm()
@@ -102,7 +112,7 @@ class MoodTrackerApp(BaseApp):
 
             input("\nDruk op Enter...")
 
-    def _toon_recente_mood(self):
+    def _toon_recente_mood(self) -> None:
         """Toon meest recente mood."""
         vandaag = datetime.now().date().isoformat()
         vandaag_entries = [
@@ -116,7 +126,7 @@ class MoodTrackerApp(BaseApp):
         else:
             print("|  Nog geen mood gelogd vandaag                     |")
 
-    def _log_mood(self):
+    def _log_mood(self) -> None:
         """Log je huidige stemming."""
         print("\n--- MOOD LOGGEN ---")
         print("\nHoe voel je je nu?\n")
@@ -148,7 +158,7 @@ class MoodTrackerApp(BaseApp):
                     if 0 <= i < len(self.activiteiten)
                 ]
             except ValueError:
-                pass
+                logger.debug("Suppressed error")
 
         # Optionele notitie
         notitie = input("\nNotitie (optioneel): ").strip()
@@ -183,7 +193,7 @@ class MoodTrackerApp(BaseApp):
         print(f"\n[OK] Mood gelogd: {emoji} {naam}")
         print(f"     Streak: {self.data['streak']} dagen!")
 
-    def _bekijk_vandaag(self):
+    def _bekijk_vandaag(self) -> None:
         """Bekijk mood entries van vandaag."""
         print("\n--- VANDAAG ---")
 
@@ -205,7 +215,7 @@ class MoodTrackerApp(BaseApp):
             if e.get("notitie"):
                 print(f"        Notitie: {e['notitie'][:40]}")
 
-    def _week_overzicht(self):
+    def _week_overzicht(self) -> None:
         """Toon mood overzicht van afgelopen week."""
         print("\n--- WEEK OVERZICHT ---")
 
@@ -232,7 +242,7 @@ class MoodTrackerApp(BaseApp):
             else:
                 print(f"  {dag_naam}  ---")
 
-    def _statistieken(self):
+    def _statistieken(self) -> None:
         """Toon mood statistieken."""
         print("\n--- STATISTIEKEN ---")
 
@@ -270,7 +280,7 @@ class MoodTrackerApp(BaseApp):
             beste = max(per_dag.items(), key=lambda x: sum(x[1])/len(x[1]))
             print(f"\n  Beste dag: {beste[0]} (gem: {sum(beste[1])/len(beste[1]):.1f})")
 
-    def _mood_patronen(self):
+    def _mood_patronen(self) -> None:
         """Analyseer mood patronen."""
         print("\n--- MOOD PATRONEN ---")
 
@@ -364,7 +374,7 @@ class MoodTrackerApp(BaseApp):
 
         return context
 
-    def _ai_mood_analyse(self):
+    def _ai_mood_analyse(self) -> None:
         """AI analyseert je mood patronen diepgaand."""
         print("\n--- AI MOOD ANALYSE ---")
 
@@ -406,7 +416,7 @@ Houd het persoonlijk en empathisch. Antwoord in het Nederlands."""
         else:
             print("[!] AI niet beschikbaar.")
 
-    def _ai_welzijns_tips(self):
+    def _ai_welzijns_tips(self) -> None:
         """AI geeft gepersonaliseerde welzijnstips."""
         print("\n--- AI WELZIJNS TIPS ---")
 
@@ -454,7 +464,7 @@ Wees empathisch en ondersteunend. Antwoord in het Nederlands met bullet points."
         else:
             print("[!] AI niet beschikbaar.")
 
-    def _ai_mood_voorspelling(self):
+    def _ai_mood_voorspelling(self) -> None:
         """AI voorspelt mood trends."""
         print("\n--- AI MOOD VOORSPELLING ---")
 
@@ -497,7 +507,7 @@ Antwoord in het Nederlands."""
         else:
             print("[!] AI niet beschikbaar.")
 
-    def _ai_dagboek_reflectie(self):
+    def _ai_dagboek_reflectie(self) -> None:
         """AI helpt met dagelijkse reflectie."""
         print("\n--- AI DAGBOEK REFLECTIE ---")
 

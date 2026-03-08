@@ -1,5 +1,7 @@
 # danny_toolkit/pipelines/rag_chain.py
 
+from __future__ import annotations
+
 import gc
 
 try:
@@ -13,16 +15,20 @@ import torch
 from danny_toolkit.core.embeddings import TorchGPUEmbeddings, get_torch_embedder
 from danny_toolkit.core.faiss_index import FaissIndex
 from danny_toolkit.brain.citation_marshall import CitationMarshall
+import logging
+
+logger = logging.getLogger(__name__)
 
 
-def _flush_vram():
+def _flush_vram() -> None:
     """Force garbage collection and flush CUDA cache."""
     gc.collect()
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
 
 
-def load_llm(model_name="microsoft/Phi-3-mini-4k-instruct"):
+def load_llm(model_name="microsoft/Phi-3-mini-4k-instruct") -> None:
+    """Load llm."""
     if not _HAS_TRANSFORMERS:
         raise ImportError(
             "rag_chain vereist 'transformers'. "
@@ -37,7 +43,8 @@ def load_llm(model_name="microsoft/Phi-3-mini-4k-instruct"):
     return tokenizer, model
 
 
-def generate_answer(tokenizer, model, question, context, max_context_tokens=3072):
+def generate_answer(tokenizer, model, question, context, max_context_tokens=3072) -> None:
+    """Generate answer."""
     # Truncate context to stay within model's 4k window
     context_ids = tokenizer.encode(context, add_special_tokens=False)
     if len(context_ids) > max_context_tokens:
@@ -70,7 +77,8 @@ def generate_answer(tokenizer, model, question, context, max_context_tokens=3072
     return tokenizer.decode(answer_ids, skip_special_tokens=True)
 
 
-def run_rag_chain():
+def run_rag_chain() -> None:
+    """Run rag chain."""
     print("=== GPU-RAG Chain ===")
 
     # 1. Documenten

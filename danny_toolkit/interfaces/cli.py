@@ -16,6 +16,8 @@ Features:
 Gebruik: python danny_toolkit/interfaces/cli.py
 """
 
+from __future__ import annotations
+
 import os
 
 # Forceer TQDM en HuggingFace om stil te zijn
@@ -74,6 +76,13 @@ try:
     from swarm_core import run_chain_pipeline
 except ImportError as e:
     print(f"CRITICAL Import Error: {e}")
+
+try:
+    import rich.syntax
+    HAS_SYNTAX = True
+except ImportError:
+    HAS_SYNTAX = False
+
     sys.exit(1)
 
 console = Console()
@@ -82,14 +91,15 @@ console = Console()
 class CosmicConsole:
     """Async terminal interface voor Project Omega."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self.brain = None
         self.engine = None
         self.boot_log = ""
         self.chain_mode = False
         self.session_active = True
 
-    def _load_brain(self):
+    def _load_brain(self) -> None:
         """Laad PrometheusBrain met boot capture."""
         console.print(
             "[dim]Federation wordt gewekt...[/dim]"
@@ -100,7 +110,7 @@ class CosmicConsole:
         self.boot_log = buf.getvalue()
         self.engine = SwarmEngine(self.brain)
 
-    def _get_governor_label(self):
+    def _get_governor_label(self) -> None:
         """Geeft governor status als kleur-label."""
         try:
             report = (
@@ -118,7 +128,7 @@ class CosmicConsole:
             logger.debug("Governor status retrieval failed: %s", e)
             return "[dim]UNKNOWN[/dim]"
 
-    def _render_header(self):
+    def _render_header(self) -> None:
         """Toont de HUD (Heads Up Display)."""
         gov = self._get_governor_label()
 
@@ -138,7 +148,7 @@ class CosmicConsole:
             border_style="cyan",
         ))
 
-    def _handle_command(self, cmd):
+    def _handle_command(self, cmd) -> None:
         """Verwerkt slash commando's."""
         cmd = cmd.lower().strip()
 
@@ -194,7 +204,7 @@ class CosmicConsole:
 
         return False
 
-    def _show_status(self):
+    def _show_status(self) -> None:
         """Toon Governor health + agent grid."""
         try:
             report = (
@@ -291,7 +301,7 @@ class CosmicConsole:
             console.print(table)
             console.print()
 
-    def _render_payload(self, p, elapsed=0.0):
+    def _render_payload(self, p, elapsed=0.0) -> None:
         """Render een SwarmPayload naar de console."""
         console.print(
             f"\n[bold]> {p.agent}[/bold]"
@@ -311,7 +321,7 @@ class CosmicConsole:
             )
             code = p.content
             if isinstance(code, str) and code.strip():
-                from rich.syntax import Syntax
+                pass  # import moved to top-level
                 syntax = Syntax(
                     code, "python",
                     theme="monokai",
@@ -360,7 +370,7 @@ class CosmicConsole:
                 )
             console.print(info, justify="right")
 
-    def _render_chain_result(self, chain_result):
+    def _render_chain_result(self, chain_result) -> None:
         """Render chain pipeline resultaat."""
         if not isinstance(chain_result, dict):
             console.print(Panel(
@@ -399,7 +409,7 @@ class CosmicConsole:
             border_style="yellow",
         ))
 
-    async def start(self):
+    async def start(self) -> None:
         """Hoofdloop van de console."""
         console.clear()
 

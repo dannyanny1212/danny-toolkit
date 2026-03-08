@@ -6,6 +6,8 @@ visuele architectuurkaart van het project. Twee modes:
 metadata-only (lichtgewicht) en query-mode (semantisch).
 """
 
+from __future__ import annotations
+
 import os
 import sys
 from pathlib import Path
@@ -18,6 +20,28 @@ if os.name == "nt":
         sys.stderr.reconfigure(encoding="utf-8")
 
 from danny_toolkit.core.utils import kleur, Kleur, clear_scherm
+import logging
+
+logger = logging.getLogger(__name__)
+
+try:
+    import chromadb
+    HAS_CHROMADB = True
+except ImportError:
+    HAS_CHROMADB = False
+
+try:
+    import danny_toolkit.core.embeddings
+    HAS_EMBEDDINGS = True
+except ImportError:
+    HAS_EMBEDDINGS = False
+
+try:
+    import io
+    HAS_IO = True
+except ImportError:
+    HAS_IO = False
+
 
 # ─── Paden (zelfde als config.py in root) ───
 _ROOT = Path(__file__).parent.parent.parent
@@ -42,7 +66,7 @@ CLUSTER_QUERIES = {
 class ProjectMap:
     """Visuele RAG-gestuurde projectkaart."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes a new instance, setting default values for internal state variables.
 
  Sets the following instance variables to None:
@@ -55,10 +79,10 @@ class ProjectMap:
 
     # ─── ChromaDB connecties ───
 
-    def _get_collection(self):
+    def _get_collection(self) -> None:
         """Metadata-only (lichtgewicht, geen model)."""
         if self._collection is None:
-            import chromadb
+            pass  # import moved to top-level
             client = chromadb.PersistentClient(
                 path=str(_CHROMA_DIR)
             )
@@ -67,14 +91,14 @@ class ProjectMap:
             )
         return self._collection
 
-    def _get_query_collection(self):
+    def _get_query_collection(self) -> None:
         """Met embedding functie (voor .query())."""
         if self._query_collection is None:
-            import chromadb
-            from danny_toolkit.core.embeddings import get_chroma_embed_fn
+            pass  # import moved to top-level
+            pass  # import moved to top-level
 
             # Suppress model load spam
-            import io as _io
+            pass  # import moved to top-level
             _old_stdout = sys.stdout
             _old_stderr = sys.stderr
             sys.stdout = _io.StringIO()
@@ -98,7 +122,7 @@ class ProjectMap:
 
     # ─── Data verzameling ───
 
-    def _verzamel_bronnen(self):
+    def _verzamel_bronnen(self) -> None:
         """Haal alle metadata op, groepeer per directory."""
         if self._bronnen is not None:
             return self._bronnen
@@ -142,7 +166,7 @@ class ProjectMap:
 
     # ─── Render methodes ───
 
-    def render_header(self):
+    def render_header(self) -> None:
         """Toon ASCII header met statistieken."""
         bronnen = self._verzamel_bronnen()
         totaal_chunks = sum(
@@ -175,7 +199,7 @@ class ProjectMap:
         )
         print(header)
 
-    def render_boom(self):
+    def render_boom(self) -> None:
         """Toon ASCII directory tree met chunk-aantallen."""
         bronnen = self._verzamel_bronnen()
 
@@ -241,7 +265,7 @@ class ProjectMap:
                     f"{kleur(f'    ... +{overige} meer', Kleur.DIM)}"
                 )
 
-    def render_domeinen(self):
+    def render_domeinen(self) -> None:
         """Toon horizontale balk-grafiek per module."""
         bronnen = self._verzamel_bronnen()
 
@@ -288,7 +312,7 @@ class ProjectMap:
                 f"{kleur(f'{percentage * 100:.0f}%', Kleur.DIM)}"
             )
 
-    def render_clusters(self):
+    def render_clusters(self) -> None:
         """Toon semantische clusters via RAG queries."""
         print(kleur(
             "\n─── SEMANTISCHE CLUSTERS ───",
@@ -342,7 +366,7 @@ class ProjectMap:
                     f"→ {kleur(f'Fout: {e}', Kleur.ROOD)}"
                 )
 
-    def zoek(self, query):
+    def zoek(self, query) -> None:
         """Zoek in de RAG en toon resultaten."""
         print(kleur(
             f"\n  Zoeken naar: \"{query}\"...",
@@ -384,7 +408,7 @@ class ProjectMap:
                 Kleur.FEL_ROOD,
             ))
 
-    def bestand_info(self, naam):
+    def bestand_info(self, naam) -> None:
         """Toon info over een specifiek bestand."""
         bronnen = self._verzamel_bronnen()
 
@@ -405,7 +429,7 @@ class ProjectMap:
                 Kleur.DIM,
             ))
 
-    def render(self):
+    def render(self) -> None:
         """Volledige kaart (header + boom + domeinen)."""
         self.render_header()
         self.render_boom()
@@ -413,7 +437,7 @@ class ProjectMap:
 
     # ─── Interactieve modus ───
 
-    def run(self):
+    def run(self) -> None:
         """Start interactieve Project Map CLI."""
         clear_scherm()
         print(kleur("""

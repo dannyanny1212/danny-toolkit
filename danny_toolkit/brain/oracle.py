@@ -12,6 +12,8 @@ Gebruik:
     agent.run()
 """
 
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
@@ -128,7 +130,7 @@ class OracleAgent(Agent):
     5. execute_mission()    -> extern plan uitvoeren
     """
 
-    def __init__(self, persist=True):
+    def __init__(self, persist: object=True) -> None:
         """Initializes an Oracle agent.
 
  Args:
@@ -155,7 +157,7 @@ class OracleAgent(Agent):
     # ─── Lazy Properties ───
 
     @property
-    def body(self):
+    def body(self) -> None:
         """Lazy KineticUnit — geen import overhead."""
         if self._body is None:
             from kinesis import KineticUnit
@@ -164,7 +166,7 @@ class OracleAgent(Agent):
         return self._body
 
     @property
-    def eye(self):
+    def eye(self) -> None:
         """Lazy PixelEye — geen import overhead."""
         if self._eye is None:
             from danny_toolkit.skills.pixel_eye import PixelEye
@@ -173,7 +175,7 @@ class OracleAgent(Agent):
         return self._eye
 
     @property
-    def repair_protocol(self):
+    def repair_protocol(self) -> None:
         """Lazy SelfRepairProtocol."""
         if self._repair_protocol is None:
             from danny_toolkit.core.self_repair import (
@@ -189,7 +191,7 @@ class OracleAgent(Agent):
         return self._repair_protocol
 
     @property
-    def kennis_collectie(self):
+    def kennis_collectie(self) -> None:
         """Lazy ChromaDB collectie (danny_knowledge)."""
         if self._collection is not None:
             return self._collection
@@ -231,7 +233,7 @@ class OracleAgent(Agent):
             logger.debug("ChromaDB collectie laden mislukt: %s", e)
             return None
 
-    def _zoek_kennis(self, zoekterm, n_results=5):
+    def _zoek_kennis(self, zoekterm: object, n_results: object=5) -> None:
         """Zoek relevante kennis in ChromaDB.
 
         Args:
@@ -276,7 +278,7 @@ class OracleAgent(Agent):
 
     # ─── WAV-Loop Kern ───
 
-    def _extract_text(self, response):
+    def _extract_text(self, response: object) -> None:
         """Extraheer tekst uit een API response.
 
         Args:
@@ -293,7 +295,7 @@ class OracleAgent(Agent):
                 tekst += block.text
         return tekst
 
-    async def _plan(self, doelstelling):
+    async def _plan(self, doelstelling: object) -> None:
         """LLM genereert een plan als JSON stappen.
 
         Args:
@@ -366,7 +368,7 @@ class OracleAgent(Agent):
 
         return stappen
 
-    def _parse_plan_json(self, tekst):
+    def _parse_plan_json(self, tekst: str) -> None:
         """Parse JSON stappen uit LLM output.
 
         Zoekt naar een JSON array in de tekst,
@@ -401,7 +403,7 @@ class OracleAgent(Agent):
 
         return []
 
-    def _execute(self, stap):
+    def _execute(self, stap: object) -> None:
         """Voer een actie-stap uit via KineticUnit.
 
         Args:
@@ -437,7 +439,7 @@ class OracleAgent(Agent):
             self.log(fout_msg, Kleur.ROOD)
             return fout_msg
 
-    def _execute_zoek_kennis(self, args):
+    def _execute_zoek_kennis(self, args: object) -> None:
         """Voer zoek_kennis actie uit voor de LLM.
 
         Args:
@@ -475,7 +477,7 @@ class OracleAgent(Agent):
         )
         return resultaat
 
-    def _verify(self, verwachting):
+    def _verify(self, verwachting: object) -> None:
         """Verifieer via PixelEye of het resultaat klopt.
 
         Args:
@@ -501,7 +503,7 @@ class OracleAgent(Agent):
 
         return result
 
-    def _parse_stap_json(self, tekst):
+    def _parse_stap_json(self, tekst: str) -> None:
         """Parse een enkele stap-dict uit LLM output.
 
         Args:
@@ -533,7 +535,7 @@ class OracleAgent(Agent):
 
         return None
 
-    async def _diagnose_and_fix(self, stap, verificatie):
+    async def _diagnose_and_fix(self, stap: object, verificatie: object) -> None:
         """Diagnose + fix voor een gefaalde stap.
 
         Twee-staps correctie:
@@ -618,7 +620,7 @@ class OracleAgent(Agent):
 
         return nieuwe_stap
 
-    async def _execute_plan(self, stappen):
+    async def _execute_plan(self, stappen: object) -> None:
         """Voer een lijst stappen uit met WAV-loop.
 
         Gedeelde kern voor fulfill_will() en
@@ -719,7 +721,7 @@ class OracleAgent(Agent):
 
         return resultaten
 
-    def _exporteer_repair_log(self):
+    def _exporteer_repair_log(self) -> None:
         """Exporteer repair_history naar bestand."""
         if not self.repair_history:
             return
@@ -765,7 +767,7 @@ class OracleAgent(Agent):
                 Kleur.ROOD,
             )
 
-    def _ingest_lessons_learned(self):
+    def _ingest_lessons_learned(self) -> None:
         """Ingest repair entries als lessons learned
         in ChromaDB.
 
@@ -844,8 +846,8 @@ class OracleAgent(Agent):
                 )
 
     def _wrap_resultaten(
-        self, doelstelling, resultaten, start
-    ):
+        self, doelstelling: object, resultaten: object, start
+    ) -> None:
         """Wrap resultaten in standaard output format.
 
         Args:
@@ -908,7 +910,7 @@ class OracleAgent(Agent):
             "tijd": elapsed,
         }
 
-    async def fulfill_will(self, doelstelling):
+    async def fulfill_will(self, doelstelling: object) -> None:
         """Volledige WAV-loop: Will -> Action -> Verify.
 
         Genereert een plan via LLM en voert het uit.
@@ -944,7 +946,7 @@ class OracleAgent(Agent):
             doelstelling, resultaten, start
         )
 
-    async def execute_mission(self, intentie, plan):
+    async def execute_mission(self, intentie: object, plan: object) -> None:
         """Voer een kant-en-klaar plan uit.
 
         Verschil met fulfill_will(): slaat LLM planning
@@ -978,8 +980,8 @@ class OracleAgent(Agent):
     # ─── Repair Plan Generator ───
 
     async def generate_repair_plan(
-        self, fout_beschrijving, taak,
-    ):
+        self, fout_beschrijving: object, taak: object,
+    ) -> None:
         """Genereer repair plan voor gefaalde taak.
 
         Gebruikt een apart repair-prompt (NIET de
@@ -1095,7 +1097,7 @@ class OracleAgent(Agent):
 
     # ─── Interactieve CLI ───
 
-    def run(self):
+    def run(self) -> None:
         """Start de interactieve Oracle Agent CLI."""
         clear_scherm()
         print(kleur("""
@@ -1286,7 +1288,7 @@ class OracleAgent(Agent):
         self._ingest_lessons_learned()
         input("\n  Druk op Enter...")
 
-    def _toon_plan(self, stappen):
+    def _toon_plan(self, stappen: object) -> None:
         """Toon een plan in leesbaar formaat."""
         if not stappen:
             print(kleur(
@@ -1319,7 +1321,7 @@ class OracleAgent(Agent):
                 Kleur.GEEL,
             ))
 
-    def _toon_resultaat(self, result):
+    def _toon_resultaat(self, result: object) -> None:
         """Toon WAV-loop resultaat."""
         geslaagd = result.get("geslaagd", False)
         stappen = result.get("stappen", [])

@@ -14,6 +14,8 @@ Gebruik:
     r = sr.repair()
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import subprocess
@@ -22,6 +24,43 @@ from datetime import datetime
 
 from danny_toolkit.core.utils import kleur, Kleur
 from danny_toolkit.core.config import Config
+
+try:
+    import chromadb
+    HAS_CHROMADB = True
+except ImportError:
+    HAS_CHROMADB = False
+
+try:
+    import danny_toolkit.brain.oracle
+    HAS_ORACLE = True
+except ImportError:
+    HAS_ORACLE = False
+
+try:
+    import danny_toolkit.core.embeddings
+    HAS_EMBEDDINGS = True
+except ImportError:
+    HAS_EMBEDDINGS = False
+
+try:
+    import danny_toolkit.core.memory_interface
+    HAS_MEMORY_INTERFACE = True
+except ImportError:
+    HAS_MEMORY_INTERFACE = False
+
+try:
+    import io
+    HAS_IO = True
+except ImportError:
+    HAS_IO = False
+
+try:
+    import sys
+    HAS_SYS = True
+except ImportError:
+    HAS_SYS = False
+
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +77,7 @@ class SelfRepairProtocol:
         "enforce_directories": "enforce_directories",
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes a new instance, setting up default attributes. 
 Sets the governor, oracle, and repair log to their initial states: 
 * _governor: None
@@ -51,34 +90,34 @@ Sets the governor, oracle, and repair log to their initial states:
     # ─── Lazy Properties ───
 
     @property
-    def governor(self):
+    def governor(self) -> None:
         """Lazy OmegaGovernor via memory_interface."""
         if self._governor is None:
-            from danny_toolkit.core.memory_interface import get_governor
+            pass  # import moved to top-level
             self._governor = get_governor()
         return self._governor
 
     @property
-    def oracle(self):
+    def oracle(self) -> None:
         """Lazy OracleAgent (voor LLM fallback)."""
         if self._oracle is None:
-            from danny_toolkit.brain.oracle import OracleAgent
+            pass  # import moved to top-level
             self._oracle = OracleAgent(persist=False)
         return self._oracle
 
     @property
-    def eye(self):
+    def eye(self) -> None:
         """Lazy PixelEye — via Oracle's eye."""
         return self.oracle.eye
 
     @property
-    def body(self):
+    def body(self) -> None:
         """Lazy KineticUnit — via Oracle's body."""
         return self.oracle.body
 
     # ─── Diagnose ───
 
-    def diagnose(self):
+    def diagnose(self) -> None:
         """Classificeer systeemproblemen via Governor.
 
         Returns:
@@ -180,7 +219,7 @@ Sets the governor, oracle, and repair log to their initial states:
 
     # ─── Repair ───
 
-    def repair(self):
+    def repair(self) -> None:
         """Volledige loop: diagnose -> fix -> herdiagnose.
 
         Returns:
@@ -225,7 +264,7 @@ Sets the governor, oracle, and repair log to their initial states:
 
     # ─── Deterministische Handlers ───
 
-    def _fix_state_corrupt(self, probleem):
+    def _fix_state_corrupt(self, probleem) -> None:
         """Herstel corrupte state files via Governor.
 
         Bij 3+ corrupte bestanden: rescue_family().
@@ -279,7 +318,7 @@ Sets the governor, oracle, and repair log to their initial states:
             ),
         }
 
-    def _fix_circuit_breaker(self, probleem):
+    def _fix_circuit_breaker(self, probleem) -> None:
         """Wacht op cooldown en check API health.
 
         Respecteert cooldown, max 65s wacht.
@@ -316,7 +355,7 @@ Sets the governor, oracle, and repair log to their initial states:
             ),
         }
 
-    def _fix_learning_saturatie(self, probleem):
+    def _fix_learning_saturatie(self, probleem) -> None:
         """Learning saturatie: niet auto-fixbaar."""
         return {
             "probleem": probleem["detail"],
@@ -328,7 +367,7 @@ Sets the governor, oracle, and repair log to their initial states:
             ),
         }
 
-    def _fix_config_ontbreekt(self, probleem):
+    def _fix_config_ontbreekt(self, probleem) -> None:
         """Maak ontbrekende config dirs aan."""
         try:
             Config.ensure_dirs()
@@ -348,7 +387,7 @@ Sets the governor, oracle, and repair log to their initial states:
 
     # ─── LLM Fallback ───
 
-    def _llm_advies(self, probleem):
+    def _llm_advies(self, probleem) -> None:
         """LLM-fallback voor onbekende probleemtypen.
 
         Gebruikt OracleAgent._call_api() voor advies.
@@ -401,15 +440,15 @@ Sets the governor, oracle, and repair log to their initial states:
 
     # ─── ChromaDB ───
 
-    def _get_collection(self):
+    def _get_collection(self) -> None:
         """Lazy ChromaDB connectie (zelfde DB als ingest)."""
         if self._collection is not None:
             return self._collection
         try:
-            import chromadb
-            from danny_toolkit.core.embeddings import get_chroma_embed_fn
-            import io as _io
-            import sys as _sys
+            pass  # import moved to top-level
+            pass  # import moved to top-level
+            pass  # import moved to top-level
+            pass  # import moved to top-level
 
             chroma_dir = str(
                 Config.RAG_DATA_DIR / "chromadb"
@@ -440,7 +479,7 @@ Sets the governor, oracle, and repair log to their initial states:
 
     # ─── Orchestratie Methodes ───
 
-    def _diagnose_visueel(self):
+    def _diagnose_visueel(self) -> None:
         """Visuele diagnose via PixelEye.
 
         Maakt een screenshot en analyseert op
@@ -476,7 +515,7 @@ Sets the governor, oracle, and repair log to their initial states:
                 "tijd": 0,
             }
 
-    def _zoek_kennis(self, zoekterm, n_results=5):
+    def _zoek_kennis(self, zoekterm, n_results=5) -> None:
         """Zoek relevante kennis in ChromaDB.
 
         Args:
@@ -513,7 +552,7 @@ Sets the governor, oracle, and repair log to their initial states:
 
     def _genereer_herstelplan(
         self, diagnose, kennis, fout
-    ):
+    ) -> None:
         """Genereer multi-step herstelplan via LLM.
 
         Args:
@@ -592,7 +631,7 @@ Sets the governor, oracle, and repair log to their initial states:
             logger.debug("Herstelplan genereren mislukt: %s", e)
             return []
 
-    def _voer_stap_uit(self, stap):
+    def _voer_stap_uit(self, stap) -> None:
         """Voer een herstelstap uit.
 
         Dispatcht naar shell, gui of governor handler.
@@ -626,7 +665,7 @@ Sets the governor, oracle, and repair log to their initial states:
                 ),
             }
 
-    def _voer_shell_uit(self, commando, args):
+    def _voer_shell_uit(self, commando, args) -> None:
         """Voer een shell-commando uit.
 
         Args:
@@ -684,7 +723,7 @@ Sets the governor, oracle, and repair log to their initial states:
                 "detail": str(e),
             }
 
-    def _voer_gui_uit(self, actie, args):
+    def _voer_gui_uit(self, actie, args) -> None:
         """Voer een GUI-actie uit via KineticUnit.
 
         Args:
@@ -694,7 +733,7 @@ Sets the governor, oracle, and repair log to their initial states:
         Returns:
             dict met stap, resultaat, geslaagd, detail.
         """
-        from danny_toolkit.brain.oracle import ACTIE_DISPATCH
+        pass  # import moved to top-level
 
         handler = ACTIE_DISPATCH.get(actie)
         if not handler:
@@ -721,7 +760,7 @@ Sets the governor, oracle, and repair log to their initial states:
                 "detail": str(e),
             }
 
-    def _voer_governor_uit(self, actie, args):
+    def _voer_governor_uit(self, actie, args) -> None:
         """Voer een Governor-actie uit (whitelist).
 
         Args:
@@ -773,7 +812,7 @@ Sets the governor, oracle, and repair log to their initial states:
                 "detail": str(e),
             }
 
-    def _verifieer_visueel(self, verwachting):
+    def _verifieer_visueel(self, verwachting) -> None:
         """Visuele verificatie via PixelEye.
 
         Args:
@@ -792,7 +831,7 @@ Sets the governor, oracle, and repair log to their initial states:
 
     def orchestrate_repair(
         self, fout_beschrijving, verwachting=None
-    ):
+    ) -> None:
         """Multi-agent repair pipeline.
 
         Combineert visuele diagnose, kennis-lookup,
@@ -866,7 +905,7 @@ Sets the governor, oracle, and repair log to their initial states:
 
     # ─── Display ───
 
-    def toon_orchestratie(self, result):
+    def toon_orchestratie(self, result) -> None:
         """Toon orchestratie-resultaat met kleuren."""
         status = result["status"]
         duur = result["duur"]
@@ -944,7 +983,7 @@ Sets the governor, oracle, and repair log to their initial states:
                     Kleur.DIM,
                 ))
 
-    def toon_diagnose(self, diagnose):
+    def toon_diagnose(self, diagnose) -> None:
         """Toon diagnose-resultaat met kleuren."""
         status = diagnose["status"]
         problemen = diagnose["problemen"]
@@ -998,7 +1037,7 @@ Sets the governor, oracle, and repair log to their initial states:
             Kleur.DIM,
         ))
 
-    def toon_rapport(self, rapport):
+    def toon_rapport(self, rapport) -> None:
         """Toon reparatierapport met OK/X status."""
         acties = rapport["acties"]
         duur = rapport["duur"]

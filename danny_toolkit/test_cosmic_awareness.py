@@ -1,5 +1,6 @@
 """
 Cosmic Awareness Test - Totale Systeem Verificatie
+
 ===================================================
 
 Test ALLE subsystemen en cross-module integratie:
@@ -17,6 +18,8 @@ Test ALLE subsystemen en cross-module integratie:
 Gebruik: python -m danny_toolkit.test_cosmic_awareness
 """
 
+from __future__ import annotations
+
 import sys
 import time
 from datetime import datetime
@@ -32,26 +35,30 @@ D = "\033[2m"   # Dim
 W = "\033[0m"   # Reset
 
 
-def ok(tekst):
+def ok(tekst: str) -> None:
+    """Ok."""
     print(f"  {G}[OK]{W} {tekst}")
 
 
-def fail(tekst):
+def fail(tekst: str) -> None:
+    """Fail."""
     print(f"  {R}[FAIL]{W} {tekst}")
 
 
-def warn(tekst):
+def warn(tekst: str) -> None:
+    """Warn."""
     print(f"  {Y}[WARN]{W} {tekst}")
 
 
-def header(tekst):
+def header(tekst: str) -> None:
+    """Header."""
     print(f"\n{'=' * 60}")
     print(f"  {tekst}")
     print(f"{'=' * 60}")
 
 
 # ─── TEST 1: Alle 51 Apps Laden ────────────────────────────
-def test_alle_apps_laden():
+def test_alle_apps_laden() -> None:
     """Test of alle 51 apps importeerbaar en instantieerbaar zijn."""
     header("TEST 1: Alle 51 Apps Laden")
 
@@ -142,7 +149,7 @@ def test_alle_apps_laden():
 
 
 # ─── TEST 2: Alle 5 Quests ─────────────────────────────────
-def test_quests():
+def test_quests() -> None:
     """Test of alle 5 quest protocols initialiseerbaar zijn."""
     header("TEST 2: Quest Protocols (IX-XIII)")
 
@@ -188,7 +195,7 @@ def test_quests():
 
 
 # ─── TEST 3: Daemon Subsystemen ─────────────────────────────
-def test_daemon():
+def test_daemon() -> None:
     """Test Daemon + Sensorium + Limbic + Metabolisme."""
     header("TEST 3: Digital Daemon Subsystemen")
 
@@ -242,7 +249,7 @@ def test_daemon():
 
 
 # ─── TEST 4: Central Brain + Memory ────────────────────────
-def test_central_brain():
+def test_central_brain() -> None:
     """Test Central Brain en Unified Memory."""
     header("TEST 4: Central Brain + Unified Memory")
 
@@ -284,7 +291,7 @@ def test_central_brain():
 
 
 # ─── TEST 5: Governor ──────────────────────────────────────
-def test_governor():
+def test_governor() -> None:
     """Test Governor startup check."""
     header("TEST 5: Omega Governor")
 
@@ -305,7 +312,7 @@ def test_governor():
 
 
 # ─── TEST 6: NexusBridge ──────────────────────────────────
-def test_nexus_bridge():
+def test_nexus_bridge() -> None:
     """Test NexusBridge connectie."""
     header("TEST 6: NEXUS Brain Bridge")
 
@@ -351,7 +358,7 @@ def test_nexus_bridge():
 
 
 # ─── TEST 7: Trinity Symbiosis ─────────────────────────────
-def test_trinity():
+def test_trinity() -> None:
     """Test Trinity Symbiosis (Mind + Soul + Body)."""
     header("TEST 7: Trinity Symbiosis")
 
@@ -405,7 +412,7 @@ def test_trinity():
 
 
 # ─── TEST 8: Prometheus Brain (17 nodes) ───────────────────
-def test_prometheus():
+def test_prometheus() -> None:
     """Test of alle 17 Prometheus nodes online komen."""
     header("TEST 8: Prometheus Brain — 17 Nodes")
 
@@ -487,7 +494,7 @@ def test_prometheus():
 
 
 # ─── TEST 9: Sanctuary Dashboard ──────────────────────────
-def test_sanctuary():
+def test_sanctuary() -> None:
     """Test Sanctuary Dashboard (4 render modi)."""
     header("TEST 9: Sanctuary Dashboard")
 
@@ -530,7 +537,7 @@ def test_sanctuary():
 
 
 # ─── TEST 10: Morning Protocol Heartbeat ───────────────────
-def test_morning_heartbeat():
+def test_morning_heartbeat() -> None:
     """Test Morning Protocol heartbeat check."""
     header("TEST 10: Morning Protocol Heartbeat")
 
@@ -572,7 +579,7 @@ def test_morning_heartbeat():
 
 
 # ─── MAIN ──────────────────────────────────────────────────
-def main():
+def main() -> None:
     """Draai de Cosmic Awareness Test."""
     print()
     print(f"{M}{'=' * 60}{W}")

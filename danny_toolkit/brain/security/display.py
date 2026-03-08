@@ -16,8 +16,13 @@ Bevat SecurityDisplayMixin met:
 Geëxtraheerd uit security_research.py (Fase C.2 monoliet split).
 """
 
+from __future__ import annotations
+
 from danny_toolkit.core.utils import kleur, Kleur
 from danny_toolkit.brain.security.config import Ernst, _ERNST_KLEUR
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class SecurityDisplayMixin:
@@ -29,7 +34,7 @@ class SecurityDisplayMixin:
     - self.volledig_rapport()
     """
 
-    def toon_rapport(self, rapport=None):
+    def toon_rapport(self, rapport=None) -> None:
         """Toon visueel rapport (zelfde stijl als FileGuard)."""
         if rapport is None:
             rapport = self.volledig_rapport()
@@ -323,7 +328,8 @@ class SecurityDisplayMixin:
 
     # -- CLI sub-displays --
 
-    def _toon_wallet_resultaat(self, r):
+    def _toon_wallet_resultaat(self, r) -> None:
+        """Toon wallet resultaat."""
         bev = r.get("bevindingen", [])
         bal = r.get("balances", {})
         print(kleur(
@@ -363,7 +369,8 @@ class SecurityDisplayMixin:
                     Kleur.DIM,
                 ))
 
-    def _toon_markt_resultaat(self, r):
+    def _toon_markt_resultaat(self, r) -> None:
+        """Toon markt resultaat."""
         prijzen = r.get("prijzen", {})
         alerts = r.get("alerts", [])
         print(kleur(
@@ -392,7 +399,8 @@ class SecurityDisplayMixin:
                 ),
             ))
 
-    def _toon_audit_resultaat(self, r):
+    def _toon_audit_resultaat(self, r) -> None:
+        """Toon audit resultaat."""
         bev = r.get("bevindingen", [])
         print(kleur(
             f"\n  CODE AUDIT: {r.get('gescand', 0)}"
@@ -415,7 +423,8 @@ class SecurityDisplayMixin:
                 ek,
             ))
 
-    def _toon_systeem_resultaat(self, r):
+    def _toon_systeem_resultaat(self, r) -> None:
+        """Toon systeem resultaat."""
         print(kleur(
             "\n  SYSTEEM:", Kleur.FEL_GEEL,
         ))
@@ -464,7 +473,8 @@ class SecurityDisplayMixin:
                 ),
             ))
 
-    def _toon_rag_resultaat(self, r):
+    def _toon_rag_resultaat(self, r) -> None:
+        """Toon rag resultaat."""
         chroma = r.get("chromadb_hits", [])
         stack = r.get("stack_hits", [])
         print(kleur(
@@ -485,7 +495,8 @@ class SecurityDisplayMixin:
                 Kleur.DIM,
             ))
 
-    def _toon_alerts(self):
+    def _toon_alerts(self) -> None:
+        """Toon alerts."""
         alerts = self.get_alerts()
         print(kleur(
             f"\n  ALERTS ({len(alerts)}):",
@@ -507,7 +518,8 @@ class SecurityDisplayMixin:
                 ek,
             ))
 
-    def _toon_forensisch_resultaat(self, r):
+    def _toon_forensisch_resultaat(self, r) -> None:
+        """Toon forensisch resultaat."""
         bev = r.get("bevindingen", [])
         det = r.get("details", {})
         print(kleur(
@@ -541,7 +553,8 @@ class SecurityDisplayMixin:
                 f"    [FOUT] {f_err}", Kleur.ROOD,
             ))
 
-    def _toon_balance(self, r):
+    def _toon_balance(self, r) -> None:
+        """Toon balance."""
         bal = r.get("balances", {})
         print(kleur(
             f"\n  BALANCES ({len(bal)} wallets):",
@@ -569,7 +582,8 @@ class SecurityDisplayMixin:
                 f"    [FOUT] {f_err}", Kleur.ROOD,
             ))
 
-    def _toon_status(self):
+    def _toon_status(self) -> None:
+        """Toon status."""
         status = self.get_status()
         print(kleur(
             "\n  ENGINE STATUS:", Kleur.FEL_CYAAN,

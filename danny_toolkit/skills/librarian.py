@@ -1,6 +1,8 @@
 """
 TheLibrarian — De Bibliothecaris van Project Omega.
 
+from __future__ import annotations
+
 Beheert de Knowledge Base: leest bestanden, chunked
 tekst en slaat op in ChromaDB met sentence-transformer
 embeddings (paraphrase-multilingual-mpnet-base-v2).
@@ -81,7 +83,8 @@ class TheLibrarian:
     ChromaDB met sentence-transformer embeddings.
     """
 
-    def __init__(self, reset=False):
+    def __init__(self, reset: object=False) -> None:
+        """Init  ."""
         console.print(
             "[bold cyan]Initializing"
             " The Librarian...[/bold cyan]"
@@ -136,7 +139,7 @@ class TheLibrarian:
         # Phase 34: Lazy ShardRouter
         self._shard_router = None
 
-    def _get_shard_router(self):
+    def _get_shard_router(self) -> None:
         """Lazy init ShardRouter (Phase 34)."""
         if self._shard_router is not None:
             return self._shard_router
@@ -155,7 +158,7 @@ class TheLibrarian:
 
     # ─── Bestandslezers ───
 
-    def _lees_pdf(self, pad):
+    def _lees_pdf(self, pad: object) -> None:
         """Lees tekst uit een PDF bestand."""
         try:
             from pypdf import PdfReader
@@ -173,7 +176,7 @@ class TheLibrarian:
             )
             return ""
 
-    def _lees_tekst(self, pad):
+    def _lees_tekst(self, pad: object) -> None:
         """Lees tekst uit een tekstbestand."""
         encodings = ["utf-8", "latin-1", "cp1252"]
         for enc in encodings:
@@ -186,7 +189,7 @@ class TheLibrarian:
         )
         return ""
 
-    def _lees_bestand(self, pad):
+    def _lees_bestand(self, pad: object) -> None:
         """Lees een bestand op basis van extensie."""
         if pad.suffix.lower() == ".pdf":
             return self._lees_pdf(pad)
@@ -194,7 +197,7 @@ class TheLibrarian:
 
     # ─── Scanner ───
 
-    def scan_bestanden(self, pad) -> List[Path]:
+    def scan_bestanden(self, pad: object) -> List[Path]:
         """Vind alle ondersteunde bestanden recursief."""
         pad = Path(pad)
         if not pad.exists():
@@ -217,8 +220,8 @@ class TheLibrarian:
 
     # ─── Chunking ───
 
-    def chunk_text(self, text, chunk_size=CHUNK_SIZE,
-                   overlap=CHUNK_OVERLAP) -> List[str]:
+    def chunk_text(self, text: str, chunk_size: object=CHUNK_SIZE,
+                   overlap: object=CHUNK_OVERLAP) -> List[str]:
         """Hakt tekst in overlappende chunks."""
         from danny_toolkit.core.document_processor import (
             DocumentProcessor,
@@ -234,8 +237,8 @@ class TheLibrarian:
 
     # ─── Ingest Pipeline ───
 
-    def ingest(self, pad, chunk_size=CHUNK_SIZE,
-               overlap=CHUNK_OVERLAP):
+    def ingest(self, pad: object, chunk_size: object=CHUNK_SIZE,
+               overlap: object=CHUNK_OVERLAP) -> None:
         """Hoofdproces: scan -> lees -> chunk -> opslaan.
         """
         start_time = time.time()
@@ -427,9 +430,9 @@ class TheLibrarian:
 
     # ─── Single File Ingest ───
 
-    def ingest_file(self, pad,
-                    chunk_size=CHUNK_SIZE,
-                    overlap=CHUNK_OVERLAP) -> int:
+    def ingest_file(self, pad: object,
+                    chunk_size: object=CHUNK_SIZE,
+                    overlap: object=CHUNK_OVERLAP) -> int:
         """Indexeer één bestand naar ChromaDB.
 
         Returns:
@@ -486,7 +489,7 @@ class TheLibrarian:
 
     # ─── Stats ───
 
-    def toon_stats(self):
+    def toon_stats(self) -> None:
         """Toon database statistieken."""
         totaal = self.collection.count()
 
@@ -571,7 +574,7 @@ class TheLibrarian:
 
     # ─── Query (voor MemexAgent) ───
 
-    def query(self, vraag, n_results=5):
+    def query(self, vraag: object, n_results: object=5) -> None:
         """Doorzoek de knowledge base."""
         results = self.collection.query(
             query_texts=[vraag],
@@ -585,7 +588,7 @@ class TheLibrarian:
 
     # ─── Lessons Learned ───
 
-    def ingest_repair_logs(self):
+    def ingest_repair_logs(self) -> None:
         """Ingest repair logs als Lessons Learned."""
         if not REPAIR_LOG_PAD.exists():
             console.print(
@@ -676,8 +679,8 @@ class TheLibrarian:
             )
 
     def query_met_lessen(
-        self, vraag, n_results=5, n_lessen=3
-    ):
+        self, vraag: object, n_results: object=5, n_lessen: object=3
+    ) -> None:
         """Doorzoek knowledge base + lessons learned."""
         resultaten = self.query(vraag, n_results)
 

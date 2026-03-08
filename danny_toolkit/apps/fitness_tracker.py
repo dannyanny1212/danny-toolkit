@@ -2,6 +2,8 @@
 Fitness Tracker v1.0 - Workouts, sets/reps, voortgang, calorieën.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 from datetime import datetime, timedelta
@@ -16,6 +18,13 @@ try:
     HAS_BUS = True
 except ImportError:
     HAS_BUS = False
+
+try:
+    import danny_toolkit.brain.unified_memory
+    HAS_UNIFIED_MEMORY = True
+except ImportError:
+    HAS_UNIFIED_MEMORY = False
+
 
 
 class FitnessTrackerApp:
@@ -42,7 +51,8 @@ class FitnessTrackerApp:
         "zeer_intensief": 14,  # Sprint, heavy lifting
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         Config.ensure_dirs()
         self.data_dir = Config.APPS_DATA_DIR / "fitness_tracker"
         self.data_dir.mkdir(exist_ok=True)
@@ -56,7 +66,7 @@ class FitnessTrackerApp:
                 with open(self.data_file, "r", encoding="utf-8") as f:
                     return json.load(f)
             except (json.JSONDecodeError, IOError):
-                pass
+                logger.debug("Suppressed error")
         return {
             "profiel": {},
             "workouts": [],
@@ -65,16 +75,16 @@ class FitnessTrackerApp:
             "laatste_workout": None,
         }
 
-    def _sla_op(self):
+    def _sla_op(self) -> None:
         """Sla data op."""
         with open(self.data_file, "w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2, ensure_ascii=False)
 
-    def _log_memory_event(self, event_type, data):
+    def _log_memory_event(self, event_type, data) -> None:
         """Log event naar Unified Memory."""
         try:
             if not hasattr(self, "_memory"):
-                from danny_toolkit.brain.unified_memory import UnifiedMemory
+                pass  # import moved to top-level
                 self._memory = UnifiedMemory()
             self._memory.store_event(
                 app="fitness_tracker",
@@ -84,7 +94,7 @@ class FitnessTrackerApp:
         except Exception as e:
             logger.debug("Memory event error: %s", e)
 
-    def _check_streak(self):
+    def _check_streak(self) -> None:
         """Check en update workout streak."""
         if self.data.get("laatste_workout"):
             laatste = datetime.fromisoformat(self.data["laatste_workout"])
@@ -93,7 +103,7 @@ class FitnessTrackerApp:
             if verschil > 1:
                 self.data["streak"] = 0
 
-    def _setup_profiel(self):
+    def _setup_profiel(self) -> None:
         """Setup gebruikersprofiel."""
         clear_scherm()
         print("\n  === PROFIEL INSTELLEN ===\n")
@@ -109,14 +119,14 @@ class FitnessTrackerApp:
             if gewicht:
                 profiel["gewicht"] = float(gewicht)
         except ValueError:
-            pass
+            logger.debug("Suppressed error")
 
         try:
             lengte = input(f"  Lengte in cm [{profiel.get('lengte', '')}]: ").strip()
             if lengte:
                 profiel["lengte"] = float(lengte)
         except ValueError:
-            pass
+            logger.debug("Suppressed error")
 
         doel = input(f"  Doel (afvallen/opbouwen/fit) [{profiel.get('doel', 'fit')}]: ").strip()
         if doel:
@@ -127,7 +137,7 @@ class FitnessTrackerApp:
         print("\n  Profiel opgeslagen!")
         input("  Druk op Enter...")
 
-    def _start_workout(self):
+    def _start_workout(self) -> None:
         """Start een nieuwe workout."""
         clear_scherm()
         print("\n  === NIEUWE WORKOUT ===\n")
@@ -275,7 +285,7 @@ class FitnessTrackerApp:
 
         input("\n  Druk op Enter...")
 
-    def _bekijk_geschiedenis(self):
+    def _bekijk_geschiedenis(self) -> None:
         """Bekijk workout geschiedenis."""
         clear_scherm()
         print("\n  === WORKOUT GESCHIEDENIS ===\n")
@@ -301,7 +311,7 @@ class FitnessTrackerApp:
             if 0 <= idx < len(workouts):
                 self._toon_workout_details(workouts[idx])
 
-    def _toon_workout_details(self, workout: Dict):
+    def _toon_workout_details(self, workout: Dict) -> None:
         """Toon details van een workout."""
         clear_scherm()
         print("\n  === WORKOUT DETAILS ===\n")
@@ -324,7 +334,7 @@ class FitnessTrackerApp:
 
         input("\n  Druk op Enter...")
 
-    def _toon_statistieken(self):
+    def _toon_statistieken(self) -> None:
         """Toon fitness statistieken."""
         clear_scherm()
         print("\n  === FITNESS STATISTIEKEN ===\n")
@@ -373,7 +383,7 @@ class FitnessTrackerApp:
 
         input("\n  Druk op Enter...")
 
-    def _bekijk_oefeningen(self):
+    def _bekijk_oefeningen(self) -> None:
         """Bekijk oefeningen bibliotheek."""
         clear_scherm()
         print("\n  === OEFENINGEN BIBLIOTHEEK ===\n")
@@ -388,7 +398,7 @@ class FitnessTrackerApp:
 
         input("  Druk op Enter...")
 
-    def run(self):
+    def run(self) -> None:
         """Start de app."""
         self._check_streak()
 

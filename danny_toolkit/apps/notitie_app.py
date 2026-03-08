@@ -2,10 +2,19 @@
 Notitie App v2.0 - AI-Powered Notities maken en organiseren.
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import datetime
 from danny_toolkit.core.utils import clear_scherm
 from danny_toolkit.apps.base_app import BaseApp
+
+try:
+    import danny_toolkit.brain.unified_memory
+    HAS_UNIFIED_MEMORY = True
+except ImportError:
+    HAS_UNIFIED_MEMORY = False
+
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +22,8 @@ logger = logging.getLogger(__name__)
 class NotitieApp(BaseApp):
     """Een AI-powered app voor het maken en organiseren van notities."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         super().__init__("notities.json")
         self.notities = self.data
 
@@ -27,11 +37,11 @@ class NotitieApp(BaseApp):
             ]
         }
 
-    def _log_memory_event(self, event_type, data):
+    def _log_memory_event(self, event_type, data) -> None:
         """Log event naar Unified Memory."""
         try:
             if not hasattr(self, "_memory"):
-                from danny_toolkit.brain.unified_memory import UnifiedMemory
+                pass  # import moved to top-level
                 self._memory = UnifiedMemory()
             self._memory.store_event(
                 app="notitie_app",
@@ -41,7 +51,7 @@ class NotitieApp(BaseApp):
         except Exception as e:
             logger.debug("Memory event error: %s", e)
 
-    def run(self):
+    def run(self) -> None:
         """Start de notitie app."""
         while True:
             clear_scherm()
@@ -92,7 +102,7 @@ class NotitieApp(BaseApp):
 
             input("\nDruk op Enter...")
 
-    def _nieuwe_notitie(self):
+    def _nieuwe_notitie(self) -> None:
         """Maak een nieuwe notitie."""
         print("\n--- NIEUWE NOTITIE ---")
 
@@ -138,7 +148,7 @@ class NotitieApp(BaseApp):
         })
         print(f"\n[OK] Notitie '{titel}' opgeslagen!")
 
-    def _bekijk_notities(self):
+    def _bekijk_notities(self) -> None:
         """Bekijk alle notities."""
         print("\n--- ALLE NOTITIES ---")
 
@@ -176,9 +186,9 @@ class NotitieApp(BaseApp):
                         print(f"{'=' * 50}")
                         break
             except ValueError:
-                pass
+                logger.debug("Suppressed error")
 
-    def _zoek_notitie(self):
+    def _zoek_notitie(self) -> None:
         """Zoek in notities."""
         zoekterm = input("\nZoekterm: ").strip().lower()
         if not zoekterm:
@@ -193,7 +203,7 @@ class NotitieApp(BaseApp):
         for n in resultaten:
             print(f"  {n['id']}. {n['titel']} [{n['categorie']}]")
 
-    def _verwijder_notitie(self):
+    def _verwijder_notitie(self) -> None:
         """Verwijder een notitie."""
         self._bekijk_notities()
         try:
@@ -207,9 +217,9 @@ class NotitieApp(BaseApp):
                         print("[OK] Notitie verwijderd!")
                     break
         except ValueError:
-            pass
+            logger.debug("Suppressed error")
 
-    def _beheer_categorieen(self):
+    def _beheer_categorieen(self) -> None:
         """Beheer categorieen."""
         print("\n--- CATEGORIEEN ---")
         for i, cat in enumerate(self.notities["categorieen"], 1):
@@ -228,7 +238,7 @@ class NotitieApp(BaseApp):
 
     # ==================== AI FUNCTIES ====================
 
-    def _ai_samenvatting(self):
+    def _ai_samenvatting(self) -> None:
         """AI maakt een samenvatting van een notitie."""
         print("\n--- AI SAMENVATTING ---")
 
@@ -268,7 +278,7 @@ Inhoud: {notitie['inhoud']}"""
         except (ValueError, IndexError):
             print("[!] Ongeldige keuze.")
 
-    def _ai_brainstorm(self):
+    def _ai_brainstorm(self) -> None:
         """AI helpt met brainstormen over een onderwerp."""
         print("\n--- AI BRAINSTORM ---")
 
@@ -319,7 +329,7 @@ Antwoord in het Nederlands."""
         else:
             print("[!] AI niet beschikbaar.")
 
-    def _ai_categoriseer(self):
+    def _ai_categoriseer(self) -> None:
         """AI suggereert categorien voor notities."""
         print("\n--- AI CATEGORISEER ---")
 
@@ -370,7 +380,7 @@ Antwoord met alleen de categorie naam, niets anders."""
         self._sla_op()
         print("\n[OK] Categorisatie voltooid!")
 
-    def _ai_schrijfhulp(self):
+    def _ai_schrijfhulp(self) -> None:
         """AI helpt met het schrijven of verbeteren van notities."""
         print("\n--- AI SCHRIJFHULP ---")
         print("\n  1. Notitie uitbreiden")
@@ -386,7 +396,7 @@ Antwoord met alleen de categorie naam, niets anders."""
         elif keuze == "3":
             self._ai_dicteren()
 
-    def _ai_uitbreiden(self):
+    def _ai_uitbreiden(self) -> None:
         """AI breidt een korte notitie uit."""
         if not self.notities["notities"]:
             print("[!] Geen notities beschikbaar.")
@@ -426,7 +436,7 @@ Schrijf de uitgebreide versie in het Nederlands."""
         except (ValueError, IndexError):
             print("[!] Ongeldige keuze.")
 
-    def _ai_verbeteren(self):
+    def _ai_verbeteren(self) -> None:
         """AI verbetert spelling en stijl van een notitie."""
         if not self.notities["notities"]:
             print("[!] Geen notities beschikbaar.")
@@ -466,7 +476,7 @@ Geef alleen de verbeterde tekst terug, in het Nederlands."""
         except (ValueError, IndexError):
             print("[!] Ongeldige keuze.")
 
-    def _ai_dicteren(self):
+    def _ai_dicteren(self) -> None:
         """AI helpt met het structureren van gedicteerde gedachten."""
         print("\n--- AI DICTEREN ---")
         print("Typ je gedachten (ongestructureerd is OK):")

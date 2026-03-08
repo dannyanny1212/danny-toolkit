@@ -1,5 +1,7 @@
 """
 PRISM DASHBOARD — Omega Sovereign Command UI v1.0.
+from __future__ import annotations
+
 ===================================================
 
 Live monitoring dashboard voor het Omega Sovereign Core.
@@ -92,7 +94,7 @@ st.markdown("""
 # ══════════════════════════════════════════════════════════════
 
 @st.cache_resource
-def load_bus():
+def load_bus() -> None:
     """NeuralBus singleton — read-only."""
     try:
         from danny_toolkit.core.neural_bus import get_bus
@@ -102,7 +104,7 @@ def load_bus():
 
 
 @st.cache_resource
-def load_waakhuis():
+def load_waakhuis() -> None:
     """WaakhuisMonitor singleton."""
     try:
         from danny_toolkit.brain.waakhuis import get_waakhuis
@@ -112,7 +114,7 @@ def load_waakhuis():
 
 
 @st.cache_resource
-def load_cortical_stack():
+def load_cortical_stack() -> None:
     """CorticalStack singleton."""
     try:
         from danny_toolkit.brain.cortical_stack import get_cortical_stack
@@ -122,7 +124,7 @@ def load_cortical_stack():
 
 
 @st.cache_resource
-def load_memory_interface():
+def load_memory_interface() -> None:
     """SecureMemoryInterface singleton."""
     try:
         from danny_toolkit.omega_sovereign_core.memory_interface import (
@@ -134,7 +136,7 @@ def load_memory_interface():
 
 
 @st.cache_resource
-def load_event_signer():
+def load_event_signer() -> None:
     """EventSigner singleton."""
     try:
         from danny_toolkit.omega_sovereign_core.event_signing import (
@@ -146,7 +148,7 @@ def load_event_signer():
 
 
 @st.cache_resource
-def load_hallucination_shield():
+def load_hallucination_shield() -> None:
     """HallucinatieSchild singleton."""
     try:
         from danny_toolkit.brain.hallucination_shield import (
@@ -158,7 +160,7 @@ def load_hallucination_shield():
 
 
 @st.cache_resource
-def load_lockdown_manager():
+def load_lockdown_manager() -> None:
     """LockdownManager singleton."""
     try:
         from danny_toolkit.omega_sovereign_core.lockdown import (
@@ -173,7 +175,7 @@ def load_lockdown_manager():
 #  HEADER
 # ══════════════════════════════════════════════════════════════
 
-def render_header():
+def render_header() -> None:
     """Top banner met systeemstatus."""
     lockdown = load_lockdown_manager()
     is_locked = lockdown.is_locked if lockdown else False
@@ -233,7 +235,7 @@ def _event_color(event_type: str) -> str:
     return _TRI_COLOR_MAP.get(event_type, "cyan")
 
 
-def render_pulse():
+def render_pulse() -> None:
     """Panel 1: Live NeuralBus event stream."""
     st.markdown('<div class="prism-header">THE PULSE &mdash; NEURAL BUS LIVE FEED</div>',
                 unsafe_allow_html=True)
@@ -269,7 +271,7 @@ def render_pulse():
             for ev_dict in event_list:
                 all_events.append(ev_dict)
     except Exception:
-        pass
+        logger.debug("Suppressed error")
 
     # Sorteer op timestamp (nieuwste eerst)
     all_events.sort(key=lambda e: e.get("timestamp", ""), reverse=True)
@@ -305,7 +307,7 @@ def render_pulse():
 #  PANEL 2: THE SHIELD — Signing & Hallucination Stats
 # ══════════════════════════════════════════════════════════════
 
-def render_shield():
+def render_shield() -> None:
     """Panel 2: EventSigner + HallucinatieSchild statistieken."""
     st.markdown('<div class="prism-header">THE SHIELD &mdash; AEGIS SECURITY LAYER</div>',
                 unsafe_allow_html=True)
@@ -380,7 +382,7 @@ def render_shield():
 #  PANEL 3: THE VAULT — Hash-Chain & Memory Interface
 # ══════════════════════════════════════════════════════════════
 
-def render_vault():
+def render_vault() -> None:
     """Panel 3: Hash-chain integriteit & CorticalStack."""
     st.markdown('<div class="prism-header">THE VAULT &mdash; MEMORY INTEGRITY</div>',
                 unsafe_allow_html=True)
@@ -461,7 +463,7 @@ _KNOWN_BRAIN_AGENTS = [
 ]
 
 
-def render_swarm():
+def render_swarm() -> None:
     """Panel 4: Agent gezondheidsscores & hardware status."""
     st.markdown('<div class="prism-header">THE SWARM &mdash; AGENT HEALTH MONITOR</div>',
                 unsafe_allow_html=True)
@@ -569,14 +571,17 @@ def render_swarm():
         if stale:
             st.warning(f"Stale agents (>60s geen activiteit): {', '.join(stale)}")
     except Exception:
-        pass
+        logger.debug("Suppressed error")
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # ══════════════════════════════════════════════════════════════
 #  SIDEBAR
 # ══════════════════════════════════════════════════════════════
 
-def render_sidebar():
+def render_sidebar() -> None:
     """Sidebar met configuratie en acties."""
     with st.sidebar:
         st.markdown("### Prism Controls")
@@ -625,7 +630,7 @@ def render_sidebar():
 #  MAIN LAYOUT
 # ══════════════════════════════════════════════════════════════
 
-def main():
+def main() -> None:
     """Render het complete Prism Dashboard."""
     render_header()
     refresh_interval = render_sidebar()

@@ -13,10 +13,15 @@ Spelers:
 - [GOVERNOR] (Tier 2): Blokkeert als Bio-Auth faalt
 """
 
+from __future__ import annotations
+
 import time
 import random
 import hashlib
 import sys
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Probeer rich te importeren, val terug op simpele print
 try:
@@ -35,10 +40,11 @@ except ImportError:
 class PulseProtocol:
     """Bio-Digital Bridge: Hart -> Stress -> Crypto."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self.wallet_balance = 10.5
 
-    def vita_heartbeat(self):
+    def vita_heartbeat(self) -> None:
         """[VITA] Genereert hartslag data."""
         base_bpm = 60
         fluctuation = random.randint(-5, 45)
@@ -52,7 +58,7 @@ class PulseProtocol:
 
         return {"bpm": bpm, "hrv": hrv}
 
-    def iolaax_analyze(self, bio_data):
+    def iolaax_analyze(self, bio_data) -> None:
         """[IOLAAX] Berekent Stress Score."""
         stress_score = (
             (bio_data["bpm"] / 2) - (bio_data["hrv"] / 4)
@@ -61,7 +67,7 @@ class PulseProtocol:
         is_calm = stress_score < 35
         return is_calm, stress_score
 
-    def cipher_sign(self, bio_data):
+    def cipher_sign(self, bio_data) -> None:
         """[CIPHER] Tekent de transactie."""
         salt = str(bio_data["bpm"])
         tx_hash = hashlib.sha256(
@@ -69,7 +75,7 @@ class PulseProtocol:
         ).hexdigest()[:12]
         return tx_hash
 
-    def run_simulation(self):
+    def run_simulation(self) -> None:
         """Draai de Pulse Protocol simulatie."""
         if not RICH_AVAILABLE:
             print("--- START SIMULATIE (Tekst Mode) ---")
@@ -116,7 +122,7 @@ class PulseProtocol:
                     row[4],
                 )
 
-    def _step(self, i):
+    def _step(self, i) -> None:
         """Voert een logische stap uit."""
         bio = self.vita_heartbeat()
         calm, score = self.iolaax_analyze(bio)

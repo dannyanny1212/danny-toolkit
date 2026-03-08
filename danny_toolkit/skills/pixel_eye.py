@@ -1,6 +1,8 @@
 """
 PixelEye — Het Oog van Project Omega.
 
+from __future__ import annotations
+
 Standalone vision skill via Ollama LLaVA.
 Analyseert afbeeldingen, screenshots, vergelijkt
 beelden — alles lokaal zonder API rate limits.
@@ -43,7 +45,8 @@ class PixelEye:
         print(result["analyse"])
     """
 
-    def __init__(self, model=None):
+    def __init__(self, model: object=None) -> None:
+        """Init  ."""
         self.model = model or VISION_MODEL
         self._analyses = 0
         self._totale_tijd = 0.0
@@ -62,7 +65,7 @@ class PixelEye:
 
     # ─── Kern: Vision Call ───
 
-    def _vision_call(self, image_path, prompt):
+    def _vision_call(self, image_path: object, prompt: str) -> None:
         """Stuur een afbeelding naar Ollama LLaVA.
 
         Args:
@@ -100,7 +103,7 @@ class PixelEye:
 
     # ─── Publieke API ───
 
-    def analyze_image(self, pad, vraag=None):
+    def analyze_image(self, pad: object, vraag: object=None) -> None:
         """Analyseer een afbeelding.
 
         Args:
@@ -158,7 +161,7 @@ class PixelEye:
             "pad": str(pad),
         }
 
-    def analyze_screen(self, vraag=None):
+    def analyze_screen(self, vraag: object=None) -> None:
         """Maak screenshot en analyseer.
 
         Args:
@@ -200,7 +203,7 @@ class PixelEye:
             screenshot_path, vraag
         )
 
-    def describe(self, pad):
+    def describe(self, pad: object) -> None:
         """Korte beschrijving van een afbeelding.
 
         Args:
@@ -235,7 +238,7 @@ class PixelEye:
 
         return result
 
-    def compare(self, pad1, pad2):
+    def compare(self, pad1: object, pad2: object) -> None:
         """Vergelijk twee afbeeldingen.
 
         Args:
@@ -315,7 +318,7 @@ class PixelEye:
             "pad2": str(pad2),
         }
 
-    def toon_stats(self):
+    def toon_stats(self) -> None:
         """Toon vision statistieken."""
         console.print(Panel(
             "[bold magenta]PIXEL EYE STATS"
@@ -365,7 +368,7 @@ class PixelEye:
 
     # ─── Screenshot Helper ───
 
-    def _screenshot(self, naam):
+    def _screenshot(self, naam: str) -> None:
         """Maak screenshot en sla op.
 
         Args:
@@ -394,7 +397,7 @@ class PixelEye:
 
     # ─── Golden Master Management ───
 
-    def save_golden(self, naam, pad=None):
+    def save_golden(self, naam: str, pad: object=None) -> None:
         """Sla een screenshot op als golden master.
 
         Als pad=None, maak screenshot van huidig scherm.
@@ -432,7 +435,7 @@ class PixelEye:
         )
         return str(doel)
 
-    def compare_golden(self, naam, vraag=None):
+    def compare_golden(self, naam: str, vraag: object=None) -> None:
         """Maak screenshot en vergelijk met golden master.
 
         Args:
@@ -535,7 +538,7 @@ class PixelEye:
             "tijd": elapsed,
         }
 
-    def list_goldens(self):
+    def list_goldens(self) -> None:
         """Toon alle opgeslagen golden masters.
 
         Returns:
@@ -552,8 +555,8 @@ class PixelEye:
     # ─── Visual Logic Gate ───
 
     def verify_action(
-        self, actie_fn, beschrijving, timeout=5
-    ):
+        self, actie_fn: object, beschrijving: object, timeout: object=5
+    ) -> None:
         """Voer actie uit en verifieer visueel.
 
         1. Screenshot VOOR
@@ -673,7 +676,7 @@ class PixelEye:
             "tijd": elapsed,
         }
 
-    def check_state(self, verwachting):
+    def check_state(self, verwachting: object) -> None:
         """Controleer of het scherm matcht met verwachting.
 
         Puur beschrijvend — geen actie nodig.

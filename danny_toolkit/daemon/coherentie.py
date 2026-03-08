@@ -1,5 +1,7 @@
 """
 Coherentie Monitor — CPU+GPU Load Correlatie Detector
+from __future__ import annotations
+
 =====================================================
 
 Detecteert onafhankelijke CPU/GPU werking, wat kan wijzen
@@ -32,7 +34,7 @@ logger = logging.getLogger(__name__)
 class CoherentieMonitor:
     """Meet CPU/GPU correlatie en detecteert anomalieen."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes the object and checks for the availability of NVML (NVIDIA Management Library) for GPU monitoring. 
 If NVML initialization is successful, sets `_nvml_beschikbaar` to True; otherwise, logs a debug message indicating that GPU monitoring is not available. 
 Parameters: None 
@@ -46,11 +48,11 @@ Raises: Exception - if NVML initialization fails, caught and logged for debuggin
         except Exception as e:
             logger.debug("NVML init failed (no GPU monitoring): %s", e)
 
-    def _meet_cpu(self):
+    def _meet_cpu(self) -> None:
         """Meet huidig CPU-gebruik (percentage)."""
         return psutil.cpu_percent(interval=0)
 
-    def _meet_gpu(self):
+    def _meet_gpu(self) -> None:
         """Meet huidig GPU-gebruik (percentage).
 
         Returns:
@@ -71,7 +73,7 @@ Raises: Exception - if NVML initialization fails, caught and logged for debuggin
             logger.debug("GPU utilization read failed: %s", e)
             return 0.0
 
-    def _bereken_correlatie(self, cpu_reeks, gpu_reeks):
+    def _bereken_correlatie(self, cpu_reeks: object, gpu_reeks: object) -> None:
         """Bereken Pearson correlatie tussen twee reeksen.
 
         Args:
@@ -107,7 +109,7 @@ Raises: Exception - if NVML initialization fails, caught and logged for debuggin
 
         return cov / (std_cpu * std_gpu)
 
-    def _beoordeel(self, cpu_reeks, gpu_reeks, correlatie):
+    def _beoordeel(self, cpu_reeks: object, gpu_reeks: object, correlatie: object) -> None:
         """Bepaal verdict op basis van metingen.
 
         Args:
@@ -161,7 +163,7 @@ Raises: Exception - if NVML initialization fails, caught and logged for debuggin
             "CPU en GPU werken coherent",
         )
 
-    def scan(self, samples=20, interval=0.5):
+    def scan(self, samples: object=20, interval: object=0.5) -> None:
         """Voer een volledige coherentie-scan uit.
 
         Meet CPU en GPU gebruik over meerdere samples en

@@ -5,6 +5,8 @@ Start alle 57 apps via knoppen, gegroepeerd per sectie.
 Entry point: danny-gui
 """
 
+from __future__ import annotations
+
 import logging
 import subprocess
 import sys
@@ -133,7 +135,8 @@ SECTIES = {
 class ScrollFrame(tk.Frame):
     """Scrollbaar frame via canvas + scrollbar patroon."""
 
-    def __init__(self, parent, **kw):
+    def __init__(self, parent, **kw) -> None:
+        """Init  ."""
         super().__init__(parent, bg=BG, **kw)
 
         self.canvas = tk.Canvas(
@@ -166,20 +169,24 @@ class ScrollFrame(tk.Frame):
         self.inner.bind("<Enter>", self._bind_muiswiel)
         self.inner.bind("<Leave>", self._unbind_muiswiel)
 
-    def _on_canvas_resize(self, event):
+    def _on_canvas_resize(self, event) -> None:
+        """On canvas resize."""
         self.canvas.itemconfig(
             self.canvas_window, width=event.width,
         )
 
-    def _bind_muiswiel(self, _event):
+    def _bind_muiswiel(self, _event) -> None:
+        """Bind muiswiel."""
         self.canvas.bind_all(
             "<MouseWheel>", self._on_muiswiel,
         )
 
-    def _unbind_muiswiel(self, _event):
+    def _unbind_muiswiel(self, _event) -> None:
+        """Unbind muiswiel."""
         self.canvas.unbind_all("<MouseWheel>")
 
-    def _on_muiswiel(self, event):
+    def _on_muiswiel(self, event) -> None:
+        """On muiswiel."""
         self.canvas.yview_scroll(
             int(-1 * (event.delta / 120)), "units",
         )
@@ -188,7 +195,8 @@ class ScrollFrame(tk.Frame):
 class DannyToolkitGUI:
     """Hoofdvenster voor Danny Toolkit GUI."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self.root = tk.Tk()
         self.sessie_nr = 1
         self.app_runs = 0
@@ -213,7 +221,8 @@ class DannyToolkitGUI:
         # Poll elke 2 seconden of processen nog draaien
         self._poll_processen()
 
-    def _configureer_venster(self):
+    def _configureer_venster(self) -> None:
+        """Configureer venster."""
         self.root.title(
             "Danny Toolkit v6.11.0 // OMEGA_SOVEREIGN"
         )
@@ -227,7 +236,8 @@ class DannyToolkitGUI:
         except tk.TclError as e:
             logger.debug("Icoon instellen mislukt: %s", e)
 
-    def _bouw_header(self):
+    def _bouw_header(self) -> None:
+        """Bouw header."""
         header = tk.Frame(self.root, bg=BG_HEADER, pady=10)
         header.pack(fill="x")
 
@@ -249,7 +259,8 @@ class DannyToolkitGUI:
         )
         self.stats_label.pack(pady=(4, 0))
 
-    def _stats_tekst(self):
+    def _stats_tekst(self) -> None:
+        """Stats tekst."""
         nu = datetime.now().strftime("%H:%M")
         actief = len(self.processen)
         actief_txt = (
@@ -261,7 +272,7 @@ class DannyToolkitGUI:
             f"{len(APP_NAMEN)} apps{actief_txt}  |  {nu}"
         )
 
-    def _bouw_secties(self, parent):
+    def _bouw_secties(self, parent) -> None:
         """Bouw 2x2 grid van sectie frames."""
         parent.columnconfigure(0, weight=1, uniform="col")
         parent.columnconfigure(1, weight=1, uniform="col")
@@ -278,7 +289,8 @@ class DannyToolkitGUI:
 
     def _bouw_sectie_frame(
         self, parent, naam, info, rij, kolom
-    ):
+    ) -> None:
+        """Bouw sectie frame."""
         kleur = SECTIE_KLEUREN[info["kleur"]]
         keys = info["keys"]
         aantal = len(keys)
@@ -304,7 +316,8 @@ class DannyToolkitGUI:
             naam_app = APP_NAMEN.get(key, f"App {key}")
             self._maak_app_knop(frame, key, naam_app, kleur)
 
-    def _maak_app_knop(self, parent, key, naam, kleur):
+    def _maak_app_knop(self, parent, key, naam, kleur) -> None:
+        """Maak app knop."""
         tekst = f"[{key}] {naam}"
 
         knop = tk.Button(
@@ -340,7 +353,7 @@ class DannyToolkitGUI:
             lambda e, k=key: self._on_hover(k, False),
         )
 
-    def _on_hover(self, key, entering):
+    def _on_hover(self, key, entering) -> None:
         """Hover effect dat actieve state respecteert."""
         knop, _kleur = self.knoppen[key]
         if key in self.processen:
@@ -349,7 +362,7 @@ class DannyToolkitGUI:
             bg = BG_KNOP_HOVER if entering else BG_KNOP
         knop.configure(bg=bg)
 
-    def _markeer_actief(self, key):
+    def _markeer_actief(self, key) -> None:
         """Markeer knop als actief (groen stip + achtergrond)."""
         knop, _kleur = self.knoppen[key]
         naam = APP_NAMEN.get(key, f"App {key}")
@@ -359,7 +372,7 @@ class DannyToolkitGUI:
             bg=BG_KNOP_ACTIEF,
         )
 
-    def _markeer_inactief(self, key):
+    def _markeer_inactief(self, key) -> None:
         """Reset knop naar normale staat."""
         knop, kleur = self.knoppen[key]
         naam = APP_NAMEN.get(key, f"App {key}")
@@ -369,7 +382,7 @@ class DannyToolkitGUI:
             bg=BG_KNOP,
         )
 
-    def _start_app(self, key, naam):
+    def _start_app(self, key, naam) -> None:
         """Start app in nieuw cmd venster via subprocess."""
         self.app_runs += 1
         self.stats_label.configure(text=self._stats_tekst())
@@ -397,7 +410,8 @@ class DannyToolkitGUI:
         except OSError as e:
             self._update_status(f"Fout bij starten: {e}")
 
-    def _bouw_statusbalk(self):
+    def _bouw_statusbalk(self) -> None:
+        """Bouw statusbalk."""
         balk = tk.Frame(self.root, bg=BG_HEADER, pady=6)
         balk.pack(fill="x", side="bottom")
 
@@ -420,13 +434,15 @@ class DannyToolkitGUI:
         )
         versie.pack(side="right", padx=12)
 
-    def _update_status(self, tekst):
+    def _update_status(self, tekst) -> None:
+        """Update status."""
         self.status_var.set(tekst)
 
-    def _update_actief_teller(self):
+    def _update_actief_teller(self) -> None:
+        """Update actief teller."""
         self.stats_label.configure(text=self._stats_tekst())
 
-    def _poll_processen(self):
+    def _poll_processen(self) -> None:
         """Check elke 2s welke processen nog draaien."""
         gestopt = []
         for key, proc in self.processen.items():
@@ -445,11 +461,12 @@ class DannyToolkitGUI:
         # Herplan volgende poll
         self.root.after(2000, self._poll_processen)
 
-    def run(self):
+    def run(self) -> None:
+        """Run."""
         self.root.mainloop()
 
 
-def main():
+def main() -> None:
     """Entry point voor danny-gui commando."""
     app = DannyToolkitGUI()
     app.run()

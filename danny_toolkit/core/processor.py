@@ -6,10 +6,14 @@ en houdt statistieken bij. Werkt samen met
 TheLibrarian voor bestandslezers en ChromaDB opslag.
 """
 
+from __future__ import annotations
+
 import logging
 import time
 
 from tqdm import tqdm
+
+logger = logging.getLogger(__name__)
 
 
 class BatchProcessor:
@@ -19,7 +23,7 @@ class BatchProcessor:
     en houdt statistieken bij.
     """
 
-    def __init__(self, librarian_instance):
+    def __init__(self, librarian_instance) -> None:
         """
         Args:
             librarian_instance: Een instantie van
@@ -39,7 +43,7 @@ class BatchProcessor:
 
     def _strategy_fixed_size(
         self, text, size=500, overlap=50
-    ):
+    ) -> None:
         """Standaard: Woord-gebaseerde chunks."""
         woorden = text.split()
         chunks = []
@@ -51,7 +55,7 @@ class BatchProcessor:
                 chunks.append(chunk)
         return chunks
 
-    def _strategy_paragraph(self, text):
+    def _strategy_paragraph(self, text) -> None:
         """Splitsen op witregels
         (artikelen/wetteksten).
         """
@@ -61,7 +65,7 @@ class BatchProcessor:
             if len(p.strip()) > 50
         ]
 
-    def _strategy_code(self, text):
+    def _strategy_code(self, text) -> None:
         """Splitsen op class/def definities."""
         lines = text.split("\n")
         chunks = []
@@ -93,7 +97,7 @@ class BatchProcessor:
 
     def process_batch(
         self, files, method="fixed", chunk_size=500
-    ):
+    ) -> None:
         """Verwerkt een lijst met bestanden.
 
         Args:
@@ -192,7 +196,7 @@ class BatchProcessor:
         self.stats["end_time"] = time.time()
         return self.stats
 
-    def print_report(self):
+    def print_report(self) -> None:
         """Print een samenvatting."""
         duration = (
             self.stats["end_time"]
