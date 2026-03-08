@@ -32,7 +32,7 @@ from danny_toolkit.core.config import Config
 logger = logging.getLogger(__name__)
 
 try:
-    from danny_toolkit.core.key_manager import AgentKeyManager
+    from danny_toolkit.core.key_manager import get_key_manager
     HAS_KEY_MANAGER = True
 except ImportError:
     HAS_KEY_MANAGER = False
@@ -197,7 +197,8 @@ class GroqModelWorker(ModelWorker):
         self._client = None
         try:
             if HAS_KEY_MANAGER:
-                self._client = AgentKeyManager.create_async_client("ModelSync")
+                km = get_key_manager()
+                self._client = km.create_async_client("ModelSync")
             if not self._client:
                 from groq import AsyncGroq
                 self._client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))

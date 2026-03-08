@@ -46,7 +46,7 @@ except ImportError:
     HAS_GROQ = False
 
 try:
-    from danny_toolkit.core.key_manager import AgentKeyManager
+    from danny_toolkit.core.key_manager import get_key_manager
     HAS_KEY_MANAGER = True
 except ImportError:
     HAS_KEY_MANAGER = False
@@ -195,7 +195,8 @@ The Groq client is initialized lazily, attempting to create a synchronous client
         # Lazy Groq client
         try:
             if HAS_KEY_MANAGER:
-                self._groq_client = AgentKeyManager.create_sync_client("Arbitrator")
+                km = get_key_manager()
+                self._groq_client = km.create_sync_client("Arbitrator")
             if not self._groq_client and HAS_GROQ:
                 self._groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
         except Exception as e:

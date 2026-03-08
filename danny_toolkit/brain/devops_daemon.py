@@ -170,6 +170,8 @@ class DevOpsDaemon:
         Returns:
             Dict met groq_ok (bool), latency_ms (float), status (str).
         """
+        if self.client is None:
+            return {"groq_ok": False, "latency_ms": 0, "status": "no_client"}
         start = time.time()
         try:
             await self.client.chat.completions.create(

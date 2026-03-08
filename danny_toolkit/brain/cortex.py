@@ -175,43 +175,44 @@ The initialization process involves:
         if not self._stack:
             return
         try:
-            self._stack._conn.execute("""
-                CREATE TABLE IF NOT EXISTS entities (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    naam TEXT UNIQUE NOT NULL,
-                    type TEXT DEFAULT 'onbekend',
-                    beschrijving TEXT DEFAULT '',
-                    first_seen TEXT NOT NULL,
-                    last_seen TEXT NOT NULL,
-                    mention_count INTEGER DEFAULT 1
-                )
-            """)
-            self._stack._conn.execute("""
-                CREATE TABLE IF NOT EXISTS knowledge_graph (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    entity_a TEXT NOT NULL,
-                    relatie TEXT NOT NULL,
-                    entity_b TEXT NOT NULL,
-                    confidence REAL DEFAULT 0.5,
-                    bron TEXT DEFAULT 'system',
-                    learned_at TEXT NOT NULL,
-                    UNIQUE(entity_a, relatie, entity_b)
-                )
-            """)
-            # Indexes voor snelle graph traversal
-            self._stack._conn.execute("""
-                CREATE INDEX IF NOT EXISTS idx_kg_entity_a
-                ON knowledge_graph(entity_a)
-            """)
-            self._stack._conn.execute("""
-                CREATE INDEX IF NOT EXISTS idx_kg_entity_b
-                ON knowledge_graph(entity_b)
-            """)
-            self._stack._conn.execute("""
-                CREATE INDEX IF NOT EXISTS idx_entities_mention
-                ON entities(mention_count DESC)
-            """)
-            self._stack._conn.commit()
+            with self._stack._lock:
+                self._stack._conn.execute("""
+                    CREATE TABLE IF NOT EXISTS entities (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        naam TEXT UNIQUE NOT NULL,
+                        type TEXT DEFAULT 'onbekend',
+                        beschrijving TEXT DEFAULT '',
+                        first_seen TEXT NOT NULL,
+                        last_seen TEXT NOT NULL,
+                        mention_count INTEGER DEFAULT 1
+                    )
+                """)
+                self._stack._conn.execute("""
+                    CREATE TABLE IF NOT EXISTS knowledge_graph (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        entity_a TEXT NOT NULL,
+                        relatie TEXT NOT NULL,
+                        entity_b TEXT NOT NULL,
+                        confidence REAL DEFAULT 0.5,
+                        bron TEXT DEFAULT 'system',
+                        learned_at TEXT NOT NULL,
+                        UNIQUE(entity_a, relatie, entity_b)
+                    )
+                """)
+                # Indexes voor snelle graph traversal
+                self._stack._conn.execute("""
+                    CREATE INDEX IF NOT EXISTS idx_kg_entity_a
+                    ON knowledge_graph(entity_a)
+                """)
+                self._stack._conn.execute("""
+                    CREATE INDEX IF NOT EXISTS idx_kg_entity_b
+                    ON knowledge_graph(entity_b)
+                """)
+                self._stack._conn.execute("""
+                    CREATE INDEX IF NOT EXISTS idx_entities_mention
+                    ON entities(mention_count DESC)
+                """)
+                self._stack._conn.commit()
         except Exception as e:
             print(f"{Kleur.ROOD}[Cortex] Tabel-fout: {e}{Kleur.RESET}")
 
@@ -220,9 +221,10 @@ The initialization process involves:
         if self._graph is None or not self._stack:
             return
         try:
-            rows = self._stack._conn.execute(
-                "SELECT entity_a, relatie, entity_b, confidence FROM knowledge_graph"
-            ).fetchall()
+            with self._stack._lock:
+                rows = self._stack._conn.execute(
+                    "SELECT entity_a, relatie, entity_b, confidence FROM knowledge_graph"
+                ).fetchall()
             for row in rows:
                 self._graph.add_edge(
                     row[0], row[2],
@@ -299,26 +301,27 @@ The initialization process involves:
 
         if self._stack:
             try:
-                # Upsert entities
-                for naam in (entity_a, entity_b):
+                with self._stack._lock:
+                    # Upsert entities
+                    for naam in (entity_a, entity_b):
+                        self._stack._conn.execute("""
+                            INSERT INTO entities (naam, first_seen, last_seen, mention_count)
+                            VALUES (?, ?, ?, 1)
+                            ON CONFLICT(naam) DO UPDATE SET
+                                last_seen = excluded.last_seen,
+                                mention_count = mention_count + 1
+                        """, (naam, now, now))
+
+                    # Insert triple
                     self._stack._conn.execute("""
-                        INSERT INTO entities (naam, first_seen, last_seen, mention_count)
-                        VALUES (?, ?, ?, 1)
-                        ON CONFLICT(naam) DO UPDATE SET
-                            last_seen = excluded.last_seen,
-                            mention_count = mention_count + 1
-                    """, (naam, now, now))
+                        INSERT INTO knowledge_graph (entity_a, relatie, entity_b, confidence, bron, learned_at)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                        ON CONFLICT(entity_a, relatie, entity_b) DO UPDATE SET
+                            confidence = MAX(confidence, excluded.confidence),
+                            learned_at = excluded.learned_at
+                    """, (entity_a, relatie, entity_b, confidence, bron, now))
 
-                # Insert triple
-                self._stack._conn.execute("""
-                    INSERT INTO knowledge_graph (entity_a, relatie, entity_b, confidence, bron, learned_at)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                    ON CONFLICT(entity_a, relatie, entity_b) DO UPDATE SET
-                        confidence = MAX(confidence, excluded.confidence),
-                        learned_at = excluded.learned_at
-                """, (entity_a, relatie, entity_b, confidence, bron, now))
-
-                self._stack._conn.commit()
+                    self._stack._conn.commit()
             except Exception as e:
                 print(f"{Kleur.ROOD}[Cortex] Write-fout: {e}{Kleur.RESET}")
 
@@ -387,13 +390,14 @@ The initialization process involves:
         if not self._stack:
             return []
         try:
-            rows = self._stack._conn.execute("""
-                SELECT entity_b FROM knowledge_graph
-                WHERE entity_a = ? AND confidence >= ?
-                UNION
-                SELECT entity_a FROM knowledge_graph
-                WHERE entity_b = ? AND confidence >= ?
-            """, (entity, min_confidence, entity, min_confidence)).fetchall()
+            with self._stack._lock:
+                rows = self._stack._conn.execute("""
+                    SELECT entity_b FROM knowledge_graph
+                    WHERE entity_a = ? AND confidence >= ?
+                    UNION
+                    SELECT entity_a FROM knowledge_graph
+                    WHERE entity_b = ? AND confidence >= ?
+                """, (entity, min_confidence, entity, min_confidence)).fetchall()
             return [row[0] for row in rows]
         except Exception as e:
             logger.debug("Related entities query error: %s", e)
@@ -404,13 +408,14 @@ The initialization process involves:
         if not self._stack:
             return ""
         try:
-            rows = self._stack._conn.execute("""
-                SELECT entity_a, relatie, entity_b, confidence
-                FROM knowledge_graph
-                WHERE entity_a = ? OR entity_b = ?
-                ORDER BY confidence DESC
-                LIMIT 20
-            """, (entity, entity)).fetchall()
+            with self._stack._lock:
+                rows = self._stack._conn.execute("""
+                    SELECT entity_a, relatie, entity_b, confidence
+                    FROM knowledge_graph
+                    WHERE entity_a = ? OR entity_b = ?
+                    ORDER BY confidence DESC
+                    LIMIT 20
+                """, (entity, entity)).fetchall()
 
             if not rows:
                 return ""
@@ -445,9 +450,10 @@ The initialization process involves:
         if self._stack:
             try:
                 # Zoek welke bekende entiteiten in de query voorkomen
-                all_entities = self._stack._conn.execute(
-                    "SELECT naam FROM entities ORDER BY mention_count DESC LIMIT 200"
-                ).fetchall()
+                with self._stack._lock:
+                    all_entities = self._stack._conn.execute(
+                        "SELECT naam FROM entities ORDER BY mention_count DESC LIMIT 200"
+                    ).fetchall()
                 matched = [
                     row[0] for row in all_entities
                     if row[0].lower() in query.lower()
@@ -517,12 +523,13 @@ The initialization process involves:
 
         if self._stack:
             try:
-                stats["db_entities"] = self._stack._conn.execute(
-                    "SELECT COUNT(*) FROM entities"
-                ).fetchone()[0]
-                stats["db_triples"] = self._stack._conn.execute(
-                    "SELECT COUNT(*) FROM knowledge_graph"
-                ).fetchone()[0]
+                with self._stack._lock:
+                    stats["db_entities"] = self._stack._conn.execute(
+                        "SELECT COUNT(*) FROM entities"
+                    ).fetchone()[0]
+                    stats["db_triples"] = self._stack._conn.execute(
+                        "SELECT COUNT(*) FROM knowledge_graph"
+                    ).fetchone()[0]
             except Exception as e:
                 logger.debug("Stats DB error: %s", e)
 
