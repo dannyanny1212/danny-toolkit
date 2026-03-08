@@ -182,6 +182,13 @@ _CATEGORY_KEYWORDS: dict[str, list[str]] = {
         "omega_core",
     ],
 
+    # GPU Control
+    r"gpu.*clock|gpu.*mhz|gpu.*performance|gpu.*power|nvidia.*smi|"
+    r"gpu.*reset|gpu.*boost|gpu.*status|gpu.*temp|zet.*gpu|"
+    r"clock.*speed|overclock|underclock|power.*mode": [
+        "gpu_control",
+    ],
+
     # OMEGA Advanced Knowledge (architectuur, protocollen, skills, quests)
     r"architectuur|protocol|skill|quest|raadpleeg|omega.*skill|"
     r"advanced.*knowledge|interne.*werking|hoe.*werkt|pixel.*eye|"
@@ -301,7 +308,8 @@ knowledge_companion: AI knowledge companion
 legendary_companion: evolved AI companion + hunt
 omega_core: system scan/health/tiers/memory/neural
 omega_advanced_knowledge: OMEGA advanced architecture/protocols/skills/quests/learning/persona/UI knowledge from vector DB
-local_bridge: localhost/dev-server page reading (read-only)"""
+local_bridge: localhost/dev-server page reading (read-only)
+gpu_control: GPU clock/power management via nvidia-smi"""
 
 
 class ToolDispatcher:
@@ -442,5 +450,5 @@ _APP_MANIFEST_NAMES = frozenset({
     "dream_journal", "time_capsule", "rekenmachine", "unit_converter",
     "wachtwoord_generator", "nlp_studio", "ml_studio", "vector_studio",
     "advanced_questions", "knowledge_companion", "legendary_companion",
-    "omega_core", "omega_advanced_knowledge", "local_bridge",
+    "omega_core", "omega_advanced_knowledge", "local_bridge", "gpu_control",
 })

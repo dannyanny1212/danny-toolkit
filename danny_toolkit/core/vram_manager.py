@@ -207,3 +207,98 @@ class vram_guard:
 def get_vram_guard() -> VRAMBudgetGuard:
     """Return the module-level VRAMBudgetGuard singleton."""
     return _vram_guard
+
+
+# =============================================================================
+# GPU CLOCK CONTROL — nvidia-smi clock lock voor AI workloads
+# =============================================================================
+
+_VALID_CLOCK_RANGE = (210, 2100)  # RTX 3060 Ti: idle=210, max boost=2100
+
+
+def gpu_set_clocks(min_mhz: int = 1000, max_mhz: int = 2100) -> dict:
+    """Lock GPU core clocks via nvidia-smi.
+
+    Args:
+        min_mhz: Minimum clock speed in MHz (default 1000).
+        max_mhz: Maximum clock speed in MHz (default 2100).
+
+    Returns:
+        Dict met status, min_mhz, max_mhz, en eventuele error.
+    """
+    import subprocess
+
+    lo, hi = _VALID_CLOCK_RANGE
+    min_mhz = max(lo, min(min_mhz, hi))
+    max_mhz = max(min_mhz, min(max_mhz, hi))
+
+    try:
+        result = subprocess.run(
+            ["nvidia-smi", "-lgc", f"{min_mhz},{max_mhz}"],
+            capture_output=True, text=True, timeout=10,
+        )
+        if result.returncode != 0:
+            err = result.stderr.strip() or result.stdout.strip()
+            logger.error("nvidia-smi -lgc failed: %s", err)
+            return {"status": "error", "error": err}
+
+        logger.info("GPU clocks locked: %d-%d MHz", min_mhz, max_mhz)
+        return {"status": "ok", "min_mhz": min_mhz, "max_mhz": max_mhz}
+    except FileNotFoundError:
+        return {"status": "error", "error": "nvidia-smi niet gevonden"}
+    except subprocess.TimeoutExpired:
+        return {"status": "error", "error": "nvidia-smi timeout (10s)"}
+
+
+def gpu_reset_clocks() -> dict:
+    """Reset GPU clocks naar standaard (auto-boost)."""
+    import subprocess
+
+    try:
+        result = subprocess.run(
+            ["nvidia-smi", "-rgc"],
+            capture_output=True, text=True, timeout=10,
+        )
+        if result.returncode != 0:
+            err = result.stderr.strip() or result.stdout.strip()
+            return {"status": "error", "error": err}
+
+        logger.info("GPU clocks reset to default")
+        return {"status": "ok", "mode": "auto-boost"}
+    except FileNotFoundError:
+        return {"status": "error", "error": "nvidia-smi niet gevonden"}
+    except subprocess.TimeoutExpired:
+        return {"status": "error", "error": "nvidia-smi timeout (10s)"}
+
+
+def gpu_status() -> dict:
+    """Volledige GPU status: clocks, power, temperatuur, VRAM."""
+    import subprocess
+
+    base = vram_rapport()
+
+    try:
+        result = subprocess.run(
+            ["nvidia-smi",
+             "--query-gpu=clocks.gr,clocks.max.gr,clocks.mem,clocks.max.mem,"
+             "power.draw,power.limit,pstate,temperature.gpu",
+             "--format=csv,noheader"],
+            capture_output=True, text=True, timeout=10,
+        )
+        if result.returncode == 0:
+            parts = [p.strip() for p in result.stdout.strip().split(",")]
+            if len(parts) >= 8:
+                base.update({
+                    "clock_mhz": int(parts[0].replace(" MHz", "")),
+                    "clock_max_mhz": int(parts[1].replace(" MHz", "")),
+                    "mem_clock_mhz": int(parts[2].replace(" MHz", "")),
+                    "mem_clock_max_mhz": int(parts[3].replace(" MHz", "")),
+                    "power_w": float(parts[4].replace(" W", "")),
+                    "power_limit_w": float(parts[5].replace(" W", "")),
+                    "pstate": parts[6],
+                    "temp_c": int(parts[7].replace(" C", "")),
+                })
+    except (FileNotFoundError, subprocess.TimeoutExpired, ValueError) as exc:
+        base["clock_error"] = str(exc)
+
+    return base

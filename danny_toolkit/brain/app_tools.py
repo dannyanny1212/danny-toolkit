@@ -1578,6 +1578,44 @@ APP_TOOLS: Dict[str, AppDefinition] = {
             ),
         ]
     ),
+
+    # === GPU CONTROL — nvidia-smi Clock Management ===
+    "gpu_control": AppDefinition(
+        naam="gpu_control",
+        beschrijving="GPU clock en power management — lock/reset clocks, status opvragen (nvidia-smi)",
+        categorie=AppCategorie.SYSTEEM,
+        module_path="danny_toolkit.core.vram_manager",
+        class_name=None,
+        prioriteit=8,
+        acties=[
+            AppActie(
+                naam="gpu_set_clocks",
+                beschrijving="Lock GPU core clocks op een minimum en maximum MHz (bijv. 1000-2100 voor AI workloads)",
+                parameters={
+                    "min_mhz": {
+                        "type": "integer",
+                        "description": "Minimum clock speed in MHz (default 1000)",
+                        "required": False
+                    },
+                    "max_mhz": {
+                        "type": "integer",
+                        "description": "Maximum clock speed in MHz (default 2100)",
+                        "required": False
+                    }
+                }
+            ),
+            AppActie(
+                naam="gpu_reset_clocks",
+                beschrijving="Reset GPU clocks naar auto-boost (standaard power management)",
+                parameters={}
+            ),
+            AppActie(
+                naam="gpu_status",
+                beschrijving="Volledige GPU status: clocks, power, temperatuur, VRAM gebruik",
+                parameters={}
+            ),
+        ]
+    ),
 }
 
 

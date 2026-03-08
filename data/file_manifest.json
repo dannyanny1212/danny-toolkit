@@ -96,7 +96,7 @@
     "danny_toolkit/brain/__main__.py": "5eedea952876e87582055591320f71db140ac3ed0e6f59be08aa16e0c3dd51a2",
     "danny_toolkit/brain/adversarial_tribunal.py": "c5b58b7ad96b3a58e7d575305f22dcb9c304505b9000c413b64b4b3878e19215",
     "danny_toolkit/brain/agent_factory.py": "3f36c7df46f9d43c547cadb8d765fd82f4500d0bc6cfe2089b2d7cb2265b3aad",
-    "danny_toolkit/brain/app_tools.py": "e9f755a50f99e76b5f9d8791cbe3682950df75cae730b5211bb3f794cc2487de",
+    "danny_toolkit/brain/app_tools.py": "366b296f361ad833f781e80e17e88228ed84182dd00b8251b702a935a2360b3a",
     "danny_toolkit/brain/arbitrator.py": "89e5e7e9055ae1be5c8e19c0ba4ae0d455cb2bc13b9a75b64efdd2ae8c02a69d",
     "danny_toolkit/brain/artificer.py": "c7eec8674e02af114ef60d6cc5e4933151de5490dcfa234bb0b0436413770cf8",
     "danny_toolkit/brain/black_box.py": "b37e2a9971bdeecaafd87d8f614ebd3d39c52b276391b7f4ca3043659e67dedc",
@@ -144,7 +144,7 @@
     "danny_toolkit/brain/strategist.py": "f2662ac5c3fe3013fa8a20fa1642a807b91ae9f0a1bd1a9bbfc70e4bfcf046d9",
     "danny_toolkit/brain/synapse.py": "498d42391ba205492ae2677d0ffeb962170eecbe5da0786bd64b7d4d12390692",
     "danny_toolkit/brain/the_mirror.py": "a6347c78aec7ebe453a306b1674ade24a27dd5046bb48bf8921f8b24263b7522",
-    "danny_toolkit/brain/tool_dispatcher.py": "fe519656702e7fa806de9205f3edee6e9c7de311e3de4f6bd6472266a533feef",
+    "danny_toolkit/brain/tool_dispatcher.py": "e9fe5e87e384ce61eae913a28e7409fb785fcec4a7d79b2037f4d900a7b5ef0a",
     "danny_toolkit/brain/tribunal.py": "4ce320c089379d0815e9fcb8cf2a0b87ca9b6fe79b94ca06d81e6faf55030481",
     "danny_toolkit/brain/trinity_models.py": "d878d896d2691b11564a007a3d3cffd58e99f81ff48f9a56042abdaa33838aaa",
     "danny_toolkit/brain/trinity_omega.py": "446f9511ebab5fc9f06481c7275ee6d2b76313105a031db96ae0c9c76525ccaf",
@@ -197,7 +197,7 @@
     "danny_toolkit/core/startup_validator.py": "1e0fb813f835700d122731b8e1780503e685834f533835802d061f1ea75197d0",
     "danny_toolkit/core/utils.py": "7528ac8f663e16e6d9ffca6f29a8818506bb410ac6e4894b5c699ac7b45632c7",
     "danny_toolkit/core/vector_store.py": "1b4addabb65e5ff50536095396ee57934bea38c5e29cd001b1d1e3fcdb08b349",
-    "danny_toolkit/core/vram_manager.py": "274e3cb53cdb9054059676ffad9984d3a3fa660cd2cf7063ad2546092166dfaf",
+    "danny_toolkit/core/vram_manager.py": "5f0789c0904f41e1bf1e64ef74097ab58e16b0cdd194d19585fd502f82015c05",
     "danny_toolkit/core/web_scraper.py": "789041d573fd7f0b88b56e5f8b965febc60a5aadfb1e7137581a241c51950b34",
     "danny_toolkit/daemon/__init__.py": "e7950fb5d5dab57a66da7e22511aadc36acab8c74cabc2384ea6c8273b5a5f4d",
     "danny_toolkit/daemon/coherentie.py": "a9b78df82181161f0a7575ec40176661d5b51911c5cd8a1d0ef66cc29e1e1be5",
@@ -270,7 +270,7 @@
     "danny_toolkit/web/templates/partials/rag_results.html": "785b341da3044a796c18b2bd623f2b4afe4a882833e5ac650616ecbddafc04da",
     "danny_toolkit/web/templates/partials/rag_search.html": "1a5b996f004b92fe52b40e144b1348b1e338366f0509fe0e7bd0e23902276337",
     "danny_toolkit/web/templates/partials/rate_limits.html": "77025918767da7393bf42374a4da45283c9d669821eaae9576828fa86894a3e7",
-    "data/file_manifest.json": "15057c2f525060ee19f36dc3022852067f23efa5cf68b02ccbcedce3e50f9354",
+    "data/file_manifest.json": "3dffd97801f91dbde9d62464ff072e0a72267d9e4e6acf11c8a200998887231a",
     "data/omega_v4.ico": "8e0dccfa9c1d28d282721aede6a8a5e140b1208fe4a1041b05b605d9eeeee3ba",
     "data/omega_v4_256.png": "e3ba9d94ae9b2974c692b47a589836413549e4acd8aba06def17be517656c1af",
     "data/rag/documenten/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -385,5 +385,5 @@
     "tests/test_swarm_stress.py": "43e0c0a757276cbc273b401ded943786f2a549e760656d335a4c35a9e33f8707"
   },
   "aantal": 383,
-  "gegenereerd": "2026-03-08T10:51:39.862335"
+  "gegenereerd": "2026-03-08T12:21:43.589512"
 }
