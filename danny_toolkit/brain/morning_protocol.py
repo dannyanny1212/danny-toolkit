@@ -236,7 +236,7 @@ def load_previous_benchmark() -> Optional[BenchmarkResult]:
     benchmark_file = Config.DATA_DIR / "brain" / "last_benchmark.json"
     if benchmark_file.exists():
         try:
-            with open(benchmark_file, "r") as f:
+            with open(benchmark_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 return BenchmarkResult(
                     latency_ms=data["latency_ms"],
@@ -257,7 +257,7 @@ def save_benchmark(result: BenchmarkResult):
     benchmark_file = Config.DATA_DIR / "brain" / "last_benchmark.json"
     benchmark_file.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(benchmark_file, "w") as f:
+    with open(benchmark_file, "w", encoding="utf-8") as f:
         json.dump({
             "latency_ms": result.latency_ms,
             "memory_mb": result.memory_mb,

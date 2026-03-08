@@ -1075,7 +1075,8 @@ class ShadowCortex:
         if not hasattr(self, "_summary_conn") or self._summary_conn is None:
             db_path = str(Config.DATA_DIR / "cortical_stack.db")
             self._summary_conn = sqlite3.connect(
-                db_path, timeout=10, check_same_thread=False,
+                db_path, timeout=Config.SQLITE_CONNECT_TIMEOUT,
+                check_same_thread=False,
             )
             Config.apply_sqlite_perf(self._summary_conn)
         return self._summary_conn
@@ -1119,7 +1120,6 @@ class ShadowCortex:
                 "SELECT doc_hash, samenvatting FROM shadow_summaries WHERE doc_id = ?",
                 (doc_id,),
             ).fetchone()
-            conn.close()
             if row and row[0] == doc_hash:
                 logger.debug("%sSummary already fresh for %s", SHADOW_PREFIX, doc_id)
                 return row[1]
@@ -1297,7 +1297,6 @@ class ShadowCortex:
                     COALESCE(SUM(gebruik_count), 0) as summaries_served
                    FROM shadow_summaries"""
             ).fetchone()
-            conn.close()
 
             invested = row[0]
             saved = row[1]

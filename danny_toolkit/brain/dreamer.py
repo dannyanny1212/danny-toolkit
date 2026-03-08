@@ -210,13 +210,14 @@ Sets the model attribute to the LLM model specified in the configuration."""
             _cx_gemerged = 0
 
             # Prune triples met confidence < 0.2
-            if hasattr(cortex, "_db") and cortex._db:
+            if hasattr(cortex, "_stack") and cortex._stack:
                 try:
-                    cursor = cortex._db.execute(
-                        "DELETE FROM knowledge_graph WHERE confidence < 0.2"
-                    )
-                    _cx_gepruned = cursor.rowcount
-                    cortex._db.commit()
+                    with cortex._stack._lock:
+                        cursor = cortex._stack._conn.execute(
+                            "DELETE FROM knowledge_graph WHERE confidence < 0.2"
+                        )
+                        _cx_gepruned = cursor.rowcount
+                        cortex._stack._conn.commit()
                 except Exception as e:
                     logger.debug("Cortex triple prune fout: %s", e)
 

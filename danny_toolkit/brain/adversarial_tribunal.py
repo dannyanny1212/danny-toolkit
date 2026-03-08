@@ -129,7 +129,7 @@ class AdversarialTribunal:
         # Direct Anthropic
         if self._provider == "anthropic" and self._client:
             response = self._client.messages.create(
-                model="claude-sonnet-4-5-20250929",
+                model="claude-sonnet-4-5-20250514",
                 max_tokens=1500,
                 system=system,
                 messages=[{"role": "user", "content": user_message}],
