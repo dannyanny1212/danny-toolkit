@@ -179,7 +179,7 @@ async def cmd_status(update, context):
         f"Governor: {gov_status}\n"
         f"Circuit Breaker: {cb_status}\n"
         f"Nodes: {actief}/{totaal} actief\n"
-        f"Versie: 6.0.0\n"
+        f"Versie: 6.11.0\n"
         f"Tijd: {nu}\n"
     )
     await update.message.reply_text(tekst)
