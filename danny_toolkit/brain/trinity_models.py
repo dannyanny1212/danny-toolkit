@@ -13,10 +13,15 @@ Zero dependencies — alleen stdlib.
 Geëxtraheerd uit trinity_omega.py (Fase C.2 monoliet split).
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # --- STAP 1: HET NIEUWE DNA (17 NODES) ---
@@ -55,7 +60,7 @@ class CosmicRole(Enum):
     EVOLUTION = "self_evolution"     # De Evolutie
 
     @classmethod
-    def get_tier(cls, role):
+    def get_tier(cls, role) -> None:
         """Geeft het hierarchie-niveau van een node."""
         if role in [cls.PIXEL, cls.IOLAAX, cls.NEXUS]:
             return 1  # God Tier
@@ -140,7 +145,8 @@ class OmegaSwarm:
 
     def __init__(
         self, count=347, governor="The Keeper"
-    ):
+    ) -> None:
+        """Init  ."""
         self.count = count
         self.governor = governor
         self.status = "AUTONOMOUS_LEARNING"
@@ -160,9 +166,11 @@ class OmegaSwarm:
 
     @property
     def total_agents(self) -> int:
+        """Total agents."""
         return self.count
 
     def to_dict(self) -> Dict:
+        """To dict."""
         return {
             "miners": self.miners,
             "testers": self.testers,

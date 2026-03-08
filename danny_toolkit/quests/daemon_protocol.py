@@ -13,20 +13,33 @@ Spelers:
 - METABOLISME    (energie)     - Levenskracht
 """
 
+from __future__ import annotations
+
 from danny_toolkit.core.utils import kleur, Kleur, succes, fout, info
+import logging
+
+logger = logging.getLogger(__name__)
+
+try:
+    import danny_toolkit.daemon.daemon_core
+    HAS_DAEMON_CORE = True
+except ImportError:
+    HAS_DAEMON_CORE = False
+
 
 
 class DaemonProtocol:
     """Quest II: The Daemon - Het digitale organisme."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self.daemon = None
         self._init_daemon()
 
-    def _init_daemon(self):
+    def _init_daemon(self) -> None:
         """Initialiseer de Digital Daemon."""
         try:
-            from danny_toolkit.daemon.daemon_core import DigitalDaemon
+            pass  # import moved to top-level
             self.daemon = DigitalDaemon()
         except Exception as e:
             self.daemon = None
@@ -49,7 +62,7 @@ class DaemonProtocol:
             "status": "operationeel",
         }
 
-    def run_simulation(self):
+    def run_simulation(self) -> None:
         """Demo: toon daemon status en heartbeat."""
         print(kleur(
             "  QUEST II: THE DAEMON\n"

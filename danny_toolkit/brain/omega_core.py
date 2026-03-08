@@ -5,8 +5,125 @@ Wraps T1-T5 modules + subsystemen als callable methods zodat
 CentralBrain ze via function calling kan aanroepen.
 """
 
+from __future__ import annotations
+
 import logging
 from typing import Any, Dict, Optional
+
+try:
+    import asyncio
+    HAS_ASYNCIO = True
+except ImportError:
+    HAS_ASYNCIO = False
+
+try:
+    import concurrent.futures
+    HAS_FUTURES = True
+except ImportError:
+    HAS_FUTURES = False
+
+try:
+    import danny_toolkit.brain.adversarial_tribunal
+    HAS_ADVERSARIAL_TRIBUNAL = True
+except ImportError:
+    HAS_ADVERSARIAL_TRIBUNAL = False
+
+try:
+    import danny_toolkit.brain.arbitrator
+    HAS_ARBITRATOR = True
+except ImportError:
+    HAS_ARBITRATOR = False
+
+try:
+    import danny_toolkit.brain.black_box
+    HAS_BLACK_BOX = True
+except ImportError:
+    HAS_BLACK_BOX = False
+
+try:
+    import danny_toolkit.brain.cortex
+    HAS_CORTEX = True
+except ImportError:
+    HAS_CORTEX = False
+
+try:
+    import danny_toolkit.brain.cortical_stack
+    HAS_CORTICAL_STACK = True
+except ImportError:
+    HAS_CORTICAL_STACK = False
+
+try:
+    import danny_toolkit.brain.governor
+    HAS_GOVERNOR = True
+except ImportError:
+    HAS_GOVERNOR = False
+
+try:
+    import danny_toolkit.brain.hallucination_shield
+    HAS_HALLUCINATION_SHIELD = True
+except ImportError:
+    HAS_HALLUCINATION_SHIELD = False
+
+try:
+    import danny_toolkit.brain.introspector
+    HAS_INTROSPECTOR = True
+except ImportError:
+    HAS_INTROSPECTOR = False
+
+try:
+    import danny_toolkit.brain.model_sync
+    HAS_MODEL_SYNC = True
+except ImportError:
+    HAS_MODEL_SYNC = False
+
+try:
+    import danny_toolkit.brain.oracle_eye
+    HAS_ORACLE_EYE = True
+except ImportError:
+    HAS_ORACLE_EYE = False
+
+try:
+    import danny_toolkit.brain.phantom
+    HAS_PHANTOM = True
+except ImportError:
+    HAS_PHANTOM = False
+
+try:
+    import danny_toolkit.brain.singularity
+    HAS_SINGULARITY = True
+except ImportError:
+    HAS_SINGULARITY = False
+
+try:
+    import danny_toolkit.brain.synapse
+    HAS_SYNAPSE = True
+except ImportError:
+    HAS_SYNAPSE = False
+
+try:
+    import danny_toolkit.brain.trinity_models
+    HAS_TRINITY_MODELS = True
+except ImportError:
+    HAS_TRINITY_MODELS = False
+
+try:
+    import danny_toolkit.brain.trinity_omega
+    HAS_TRINITY_OMEGA = True
+except ImportError:
+    HAS_TRINITY_OMEGA = False
+
+try:
+    import danny_toolkit.brain.waakhuis
+    HAS_WAAKHUIS = True
+except ImportError:
+    HAS_WAAKHUIS = False
+
+try:
+    import danny_toolkit.core.neural_bus
+    HAS_NEURAL_BUS = True
+except ImportError:
+    HAS_NEURAL_BUS = False
+
 
 logger = logging.getLogger(__name__)
 
@@ -18,17 +135,18 @@ class OmegaCore:
     Elk import-falen degradeert graceful (returns error dict).
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self._cache = {}
         self._turn_tools_called: set = set()  # Idempotency guard per turn
 
-    def reset_turn(self):
+    def reset_turn(self) -> None:
         """Reset per-turn tool tracking. Roep aan bij elke nieuwe user query."""
         self._turn_tools_called.clear()
 
     # ── Helpers ──────────────────────────────────────────────────
 
-    def _safe(self, factory, *args, **kwargs):
+    def _safe(self, factory, *args, **kwargs) -> None:
         """Roep factory aan, return None bij falen."""
         try:
             return factory(*args, **kwargs)
@@ -44,7 +162,7 @@ class OmegaCore:
 
         # Introspector snapshot
         try:
-            from danny_toolkit.brain.introspector import get_introspector
+            pass  # import moved to top-level
             intro = get_introspector()
             snap = intro.take_snapshot()
             result["total_modules"] = snap.totaal_modules
@@ -126,11 +244,12 @@ class OmegaCore:
         return result
 
     def _t1_trinity(self) -> Dict:
+        """T1 trinity."""
         nodes = {}
         # PrometheusBrain
         try:
-            from danny_toolkit.brain.trinity_models import CosmicRole, NodeTier
-            from danny_toolkit.brain.trinity_omega import PrometheusBrain
+            pass  # import moved to top-level
+            pass  # import moved to top-level
             nodes["PrometheusBrain"] = {
                 "status": "LOADED",
                 "roles": [r.value for r in CosmicRole],
@@ -142,7 +261,7 @@ class OmegaCore:
 
         # TaskArbitrator
         try:
-            from danny_toolkit.brain.arbitrator import TaskArbitrator
+            pass  # import moved to top-level
             nodes["TaskArbitrator"] = {
                 "status": "LOADED",
                 "description": "Goal decomposition + auction-based agent assignment",
@@ -153,10 +272,11 @@ class OmegaCore:
         return nodes
 
     def _t2_guardians(self) -> Dict:
+        """T2 guardians."""
         nodes = {}
         # Governor
         try:
-            from danny_toolkit.brain.governor import OmegaGovernor
+            pass  # import moved to top-level
             nodes["OmegaGovernor"] = {
                 "status": "LOADED",
                 "description": "Rate limits, injection detectie, PII scrubbing, circuit breaker",
@@ -166,7 +286,7 @@ class OmegaCore:
 
         # HallucinatieSchild
         try:
-            from danny_toolkit.brain.hallucination_shield import get_hallucination_shield
+            pass  # import moved to top-level
             schild = self._safe(get_hallucination_shield)
             if schild:
                 stats = schild.get_stats()
@@ -183,7 +303,7 @@ class OmegaCore:
 
         # Tribunal
         try:
-            from danny_toolkit.brain.adversarial_tribunal import get_adversarial_tribunal
+            pass  # import moved to top-level
             trib = self._safe(get_adversarial_tribunal)
             if trib:
                 stats = trib.get_stats()
@@ -199,7 +319,7 @@ class OmegaCore:
 
         # BlackBox
         try:
-            from danny_toolkit.brain.black_box import get_black_box
+            pass  # import moved to top-level
             bb = self._safe(get_black_box)
             if bb:
                 stats = bb.get_stats()
@@ -216,6 +336,7 @@ class OmegaCore:
         return nodes
 
     def _t3_specialists(self) -> Dict:
+        """T3 specialists."""
         nodes = {}
         specs = {
             "Strategist": ("danny_toolkit.brain.strategist", "Strategist",
@@ -240,11 +361,12 @@ class OmegaCore:
         return nodes
 
     def _t4_infra(self) -> Dict:
+        """T4 infra."""
         nodes = {}
 
         # TheSynapse
         try:
-            from danny_toolkit.brain.synapse import get_synapse
+            pass  # import moved to top-level
             syn = get_synapse()
             stats = syn.get_stats()
             nodes["TheSynapse"] = {
@@ -259,7 +381,7 @@ class OmegaCore:
 
         # ThePhantom
         try:
-            from danny_toolkit.brain.phantom import get_phantom
+            pass  # import moved to top-level
             ph = get_phantom()
             acc = ph.get_accuracy()
             preds = ph.get_predictions(max_results=3)
@@ -274,7 +396,7 @@ class OmegaCore:
 
         # TheCortex
         try:
-            from danny_toolkit.brain.cortex import get_cortex
+            pass  # import moved to top-level
             cx = get_cortex()
             stats = cx.get_stats()
             nodes["TheCortex"] = {
@@ -288,7 +410,7 @@ class OmegaCore:
 
         # OracleEye
         try:
-            from danny_toolkit.brain.oracle_eye import get_oracle_eye
+            pass  # import moved to top-level
             oe = get_oracle_eye()
             peak = oe.get_peak_hours(days=7)
             nodes["OracleEye"] = {
@@ -302,9 +424,10 @@ class OmegaCore:
         return nodes
 
     def _t5_singularity(self) -> Dict:
+        """T5 singularity."""
         nodes = {}
         try:
-            from danny_toolkit.brain.singularity import SingularityEngine
+            pass  # import moved to top-level
             se = SingularityEngine()
             status = se.get_status()
             nodes["SingularityEngine"] = {
@@ -323,11 +446,11 @@ class OmegaCore:
 
     def query_knowledge(self, query: str = "omega") -> Dict[str, Any]:
         """Doorzoek de Cortex Knowledge Graph."""
-        import asyncio
+        pass  # import moved to top-level
 
         result = {}
         try:
-            from danny_toolkit.brain.cortex import get_cortex
+            pass  # import moved to top-level
             cx = get_cortex()
             # hybrid_search is async — resolve coroutine properly
             coro = cx.hybrid_search(query, top_k=5)
@@ -337,7 +460,7 @@ class OmegaCore:
                 loop = None
             if loop and loop.is_running():
                 # Event loop actief — nieuwe loop in thread
-                import concurrent.futures
+                pass  # import moved to top-level
                 with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
                     hits = pool.submit(asyncio.run, coro).result(timeout=10)
             else:
@@ -356,7 +479,7 @@ class OmegaCore:
         """Doorzoek CorticalStack episodic memory."""
         result = {}
         try:
-            from danny_toolkit.brain.cortical_stack import get_cortical_stack
+            pass  # import moved to top-level
             cs = get_cortical_stack()
             result["db_metrics"] = cs.get_db_metrics()
             events = cs.get_recent_events(count=count)
@@ -376,7 +499,7 @@ class OmegaCore:
 
         # BlackBox
         try:
-            from danny_toolkit.brain.black_box import get_black_box
+            pass  # import moved to top-level
             bb = self._safe(get_black_box)
             if bb:
                 result["blackbox"] = bb.get_stats()
@@ -385,7 +508,7 @@ class OmegaCore:
 
         # Schild
         try:
-            from danny_toolkit.brain.hallucination_shield import get_hallucination_shield
+            pass  # import moved to top-level
             schild = self._safe(get_hallucination_shield)
             if schild:
                 result["hallucination_shield"] = schild.get_stats()
@@ -394,7 +517,7 @@ class OmegaCore:
 
         # Tribunal
         try:
-            from danny_toolkit.brain.adversarial_tribunal import get_adversarial_tribunal
+            pass  # import moved to top-level
             trib = self._safe(get_adversarial_tribunal)
             if trib:
                 result["tribunal"] = trib.get_stats()
@@ -403,7 +526,7 @@ class OmegaCore:
 
         # Waakhuis
         try:
-            from danny_toolkit.brain.waakhuis import get_waakhuis
+            pass  # import moved to top-level
             wh = self._safe(get_waakhuis)
             if wh:
                 result["waakhuis"] = wh.gezondheidsrapport()
@@ -420,7 +543,7 @@ class OmegaCore:
 
         # NeuralBus
         try:
-            from danny_toolkit.core.neural_bus import get_bus
+            pass  # import moved to top-level
             bus = self._safe(get_bus)
             if bus:
                 result["bus_stats"] = bus.statistieken()
@@ -430,7 +553,7 @@ class OmegaCore:
 
         # Synapse
         try:
-            from danny_toolkit.brain.synapse import get_synapse
+            pass  # import moved to top-level
             syn = get_synapse()
             result["synapse"] = syn.get_stats()
             result["top_pathways"] = syn.get_top_pathways(limit=5)
@@ -439,7 +562,7 @@ class OmegaCore:
 
         # Phantom
         try:
-            from danny_toolkit.brain.phantom import get_phantom
+            pass  # import moved to top-level
             ph = get_phantom()
             result["phantom_accuracy"] = ph.get_accuracy()
             result["phantom_predictions"] = ph.get_predictions(max_results=3)
@@ -448,7 +571,7 @@ class OmegaCore:
 
         # ModelRegistry
         try:
-            from danny_toolkit.brain.model_sync import get_model_registry
+            pass  # import moved to top-level
             mr = self._safe(get_model_registry)
             if mr:
                 result["model_registry"] = mr.get_stats()

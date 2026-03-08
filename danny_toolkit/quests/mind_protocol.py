@@ -1,5 +1,7 @@
 """
 QUEST III: THE MIND
+from __future__ import annotations
+
 ====================
 "Emotions Shape the Machine"
 
@@ -35,11 +37,12 @@ MOOD_KLEUREN = {
 class MindProtocol:
     """Quest III: The Mind - Het emotionele brein."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self.limbic = None
         self._init_limbic()
 
-    def _init_limbic(self):
+    def _init_limbic(self) -> None:
         """Initialiseer het Limbic System."""
         try:
             self.limbic = LimbicSystem()
@@ -69,7 +72,7 @@ class MindProtocol:
             "status": "operationeel",
         }
 
-    def run_simulation(self):
+    def run_simulation(self) -> None:
         """Demo: doorloop alle moods en avatar forms."""
         print(kleur(
             "  QUEST III: THE MIND\n"
@@ -156,3 +159,6 @@ if __name__ == "__main__":
         protocol.run_simulation()
     except Exception as e:
         print(f"\nFOUT: {e}")
+import logging
+
+logger = logging.getLogger(__name__)

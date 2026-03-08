@@ -13,6 +13,8 @@ Data is hypothetisch maar gebaseerd op werkelijke trends:
 Gebruik: python -m danny_toolkit.apps.energie_vs_tech
 """
 
+from __future__ import annotations
+
 import logging
 
 import matplotlib
@@ -24,7 +26,7 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 
-def genereer_data():
+def genereer_data() -> None:
     """Genereer hypothetische dataset 2020-2030."""
     jaren = np.arange(2020, 2031)
 
@@ -65,7 +67,7 @@ def genereer_data():
     }
 
 
-def plot_correlatie(data, output_pad):
+def plot_correlatie(data, output_pad) -> None:
     """Plot 3-panel grafiek."""
     fig, axes = plt.subplots(3, 1, figsize=(12, 14))
     fig.suptitle(
@@ -206,7 +208,7 @@ def plot_correlatie(data, output_pad):
     return corr
 
 
-def main():
+def main() -> None:
     """Hoofdprogramma."""
     print()
     print("=" * 60)

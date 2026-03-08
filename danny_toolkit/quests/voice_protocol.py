@@ -16,9 +16,14 @@ Mood -> Emotion mapping:
   SICK     -> SAD       (Diep, zwak)
 """
 
+from __future__ import annotations
+
 from danny_toolkit.core.utils import kleur, Kleur, info, succes, fout
 from danny_toolkit.core.emotional_voice import EmotionalVoice, Emotion
 from danny_toolkit.daemon.limbic_system import Mood
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # Voorbeeldzinnen per mood (Nederlands)
@@ -50,14 +55,15 @@ class VoiceProtocol:
         Mood.SICK: Emotion.SAD,
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self.voice = EmotionalVoice(preferred_voice="nl")
 
     def mood_to_emotion(self, mood: Mood) -> Emotion:
         """Vertaal daemon mood naar voice emotion."""
         return self.MOOD_TO_EMOTION.get(mood, Emotion.NEUTRAL)
 
-    def speak(self, text, mood=None):
+    def speak(self, text, mood=None) -> None:
         """Spreek tekst met mood-bepaalde emotie."""
         if mood is not None:
             emotion = self.mood_to_emotion(mood)
@@ -65,11 +71,11 @@ class VoiceProtocol:
             emotion = None  # Auto-detect door voice engine
         self.voice.speak(text, emotion=emotion)
 
-    def get_status(self):
+    def get_status(self) -> None:
         """Toon voice engine status."""
         return self.voice.get_status()
 
-    def run_simulation(self):
+    def run_simulation(self) -> None:
         """Demo: doorloop alle 9 moods met voorbeeldzinnen."""
         print(kleur(
             "  QUEST X: THE VOICE - Mood Simulatie\n"

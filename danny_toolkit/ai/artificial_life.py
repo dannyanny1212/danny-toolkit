@@ -12,6 +12,8 @@ Een diepgaand gesimuleerd zelfbewust wezen met:
 - Zelf-Evolutie en Leren
 """
 
+from __future__ import annotations
+
 import json
 import os
 import random
@@ -41,7 +43,7 @@ except ImportError:
 class NeuralCluster:
     """Simuleert een cluster van neuronen."""
 
-    def __init__(self, naam: str, grootte: int = 100):
+    def __init__(self, naam: str, grootte: int = 100) -> None:
         """Initializes a new object.
 
  Args:
@@ -60,7 +62,7 @@ class NeuralCluster:
         self.connecties = {}  # naam -> sterkte
         self.geschiedenis = deque(maxlen=50)
 
-    def vuur(self, intensiteit: float = 1.0):
+    def vuur(self, intensiteit: float = 1.0) -> None:
         """Activeer dit cluster."""
         self.activatie = min(1.0, self.activatie + intensiteit * 0.3)
         self.geschiedenis.append({
@@ -89,18 +91,19 @@ Returns:
 Notes:
     This function appears to have side effects, potentially modifying the input clusters dictionary or its contents.
 ```"""
-    def propageer(self, clusters: Dict[str, 'NeuralCluster']):
+    def propageer(self, clusters: Dict[str, 'NeuralCluster']) -> None:
         """Propageer activatie naar verbonden clusters."""
         for naam, sterkte in self.connecties.items():
             if naam in clusters:
                 signaal = self.activatie * sterkte * 0.5
                 clusters[naam].vuur(signaal)
 
-    def afnemen(self, rate: float = 0.1):
+    def afnemen(self, rate: float = 0.1) -> None:
         """Laat activatie afnemen."""
         self.activatie = max(0.0, self.activatie - rate)
 
     def to_dict(self) -> dict:
+        """To dict."""
         return {
             "naam": self.naam,
             "grootte": self.grootte,
@@ -110,6 +113,7 @@ Notes:
 
     @classmethod
     def from_dict(cls, data: dict) -> 'NeuralCluster':
+        """From dict."""
         cluster = cls(data["naam"], data.get("grootte", 100))
         cluster.activatie = data.get("activatie", 0.0)
         cluster.connecties = data.get("connecties", {})
@@ -153,14 +157,15 @@ class NeuralNetwork:
         ("thalamus", "amygdala", 0.6),
     ]
 
-    def __init__(self, data: dict = None):
+    def __init__(self, data: dict = None) -> None:
+        """Init  ."""
         self.clusters = {}
         if data:
             self._load(data)
         else:
             self._initialize()
 
-    def _initialize(self):
+    def _initialize(self) -> None:
         """Initialiseer standaard netwerk."""
         for naam, grootte in self.STANDAARD_CLUSTERS:
             self.clusters[naam] = NeuralCluster(naam, grootte)
@@ -169,18 +174,18 @@ class NeuralNetwork:
             if bron in self.clusters:
                 self.clusters[bron].connecties[doel] = sterkte
 
-    def _load(self, data: dict):
+    def _load(self, data: dict) -> None:
         """Laad netwerk uit data."""
         for naam, cluster_data in data.get("clusters", {}).items():
             self.clusters[naam] = NeuralCluster.from_dict(cluster_data)
 
-    def stimuleer(self, cluster_naam: str, intensiteit: float = 1.0):
+    def stimuleer(self, cluster_naam: str, intensiteit: float = 1.0) -> None:
         """Stimuleer een specifiek cluster."""
         if cluster_naam in self.clusters:
             self.clusters[cluster_naam].vuur(intensiteit)
             self.clusters[cluster_naam].propageer(self.clusters)
 
-    def update(self):
+    def update(self) -> None:
         """Update alle clusters."""
         for cluster in self.clusters.values():
             cluster.afnemen(0.05)
@@ -199,6 +204,7 @@ class NeuralNetwork:
         return sum(c.activatie for c in self.clusters.values()) / len(self.clusters)
 
     def to_dict(self) -> dict:
+        """To dict."""
         return {
             "clusters": {n: c.to_dict() for n, c in self.clusters.items()}
         }
@@ -211,7 +217,8 @@ class NeuralNetwork:
 class GeheugenSysteem:
     """Geavanceerd geheugen met korte/lange termijn en associaties."""
 
-    def __init__(self, data: dict = None):
+    def __init__(self, data: dict = None) -> None:
+        """Init  ."""
         # Werkgeheugen (zeer korte termijn)
         self.werkgeheugen = deque(maxlen=7)  # Miller's magical number
 
@@ -229,7 +236,7 @@ class GeheugenSysteem:
         if data:
             self._load(data)
 
-    def _load(self, data: dict):
+    def _load(self, data: dict) -> None:
         """Laad geheugen uit data."""
         self.korte_termijn = data.get("korte_termijn", [])[-20:]
         self.episodisch = data.get("episodisch", [])[-100:]
@@ -238,7 +245,7 @@ class GeheugenSysteem:
         self.associaties = data.get("associaties", {})
 
     def onthoud(self, inhoud: str, type_: str = "episodisch",
-                emotie: str = None, belangrijkheid: float = 0.5):
+                emotie: str = None, belangrijkheid: float = 0.5) -> None:
         """Sla een herinnering op."""
         herinnering = {
             "inhoud": inhoud,
@@ -263,7 +270,7 @@ class GeheugenSysteem:
         # Update associaties
         self._update_associaties(inhoud)
 
-    def _update_associaties(self, tekst: str):
+    def _update_associaties(self, tekst: str) -> None:
         """Update associatief netwerk."""
         woorden = tekst.lower().split()
         for i, woord in enumerate(woorden):
@@ -298,14 +305,14 @@ class GeheugenSysteem:
         """Haal associaties op voor een woord."""
         return self.associaties.get(woord.lower(), [])
 
-    def leer_feit(self, onderwerp: str, feit: str):
+    def leer_feit(self, onderwerp: str, feit: str) -> None:
         """Leer een semantisch feit."""
         if onderwerp not in self.semantisch:
             self.semantisch[onderwerp] = []
         self.semantisch[onderwerp].append(feit)
         self.semantisch[onderwerp] = self.semantisch[onderwerp][-20:]
 
-    def consolideer(self):
+    def consolideer(self) -> None:
         """Consolideer korte naar lange termijn (zoals in slaap)."""
         for h in self.korte_termijn:
             if h.get("belangrijkheid", 0) > 0.4:
@@ -315,6 +322,7 @@ class GeheugenSysteem:
         self.episodisch = self.episodisch[-100:]
 
     def to_dict(self) -> dict:
+        """To dict."""
         return {
             "korte_termijn": self.korte_termijn[-20:],
             "episodisch": self.episodisch[-100:],
@@ -331,13 +339,14 @@ class GeheugenSysteem:
 class Persoonlijkheid:
     """Big Five persoonlijkheidsmodel."""
 
-    def __init__(self, data: dict = None):
+    def __init__(self, data: dict = None) -> None:
+        """Init  ."""
         if data:
             self._load(data)
         else:
             self._initialize()
 
-    def _initialize(self):
+    def _initialize(self) -> None:
         """Genereer random persoonlijkheid."""
         # Big Five traits (0.0 - 1.0)
         self.openheid = random.uniform(0.4, 0.9)           # Creativiteit, nieuwsgierigheid
@@ -349,7 +358,7 @@ class Persoonlijkheid:
         # Afgeleide eigenschappen
         self._bereken_afgeleide()
 
-    def _load(self, data: dict):
+    def _load(self, data: dict) -> None:
         """Laad persoonlijkheid uit data."""
         self.openheid = data.get("openheid", 0.6)
         self.consciëntieusheid = data.get("consciëntieusheid", 0.5)
@@ -358,14 +367,14 @@ class Persoonlijkheid:
         self.neuroticisme = data.get("neuroticisme", 0.3)
         self._bereken_afgeleide()
 
-    def _bereken_afgeleide(self):
+    def _bereken_afgeleide(self) -> None:
         """Bereken afgeleide eigenschappen."""
         self.creativiteit = (self.openheid * 0.7 + (1 - self.consciëntieusheid) * 0.3)
         self.empathie = (self.vriendelijkheid * 0.6 + (1 - self.neuroticisme) * 0.4)
         self.stabiliteit = 1 - self.neuroticisme
         self.curiositeit = self.openheid * 0.8 + self.extraversie * 0.2
 
-    def beïnvloed(self, trait: str, delta: float):
+    def beïnvloed(self, trait: str, delta: float) -> None:
         """Beïnvloed een persoonlijkheidstrek (langzaam)."""
         delta = delta * 0.01  # Persoonlijkheid verandert langzaam
 
@@ -387,6 +396,7 @@ class Persoonlijkheid:
         return max(traits.items(), key=lambda x: x[1])
 
     def to_dict(self) -> dict:
+        """To dict."""
         return {
             "openheid": self.openheid,
             "consciëntieusheid": self.consciëntieusheid,
@@ -423,7 +433,8 @@ class EmotieEngine:
         "fascinatie":    (0.6, 0.6, 0.2),
     }
 
-    def __init__(self, data: dict = None):
+    def __init__(self, data: dict = None) -> None:
+        """Init  ."""
         # PAD state
         self.pleasure = 0.0     # -1 (onplezierig) tot 1 (plezierig)
         self.arousal = 0.0      # -1 (kalm) tot 1 (opgewonden)
@@ -440,7 +451,7 @@ class EmotieEngine:
         if data:
             self._load(data)
 
-    def _load(self, data: dict):
+    def _load(self, data: dict) -> None:
         """Laad emotie state."""
         self.pleasure = data.get("pleasure", 0.0)
         self.arousal = data.get("arousal", 0.0)
@@ -448,7 +459,7 @@ class EmotieEngine:
         self.emoties = data.get("emoties", self.emoties)
         self.stemming = data.get("stemming", "neutraal")
 
-    def voel(self, emotie: str, intensiteit: float = 0.5):
+    def voel(self, emotie: str, intensiteit: float = 0.5) -> None:
         """Voel een emotie."""
         if emotie not in self.EMOTIE_VECTOREN:
             return
@@ -465,7 +476,7 @@ class EmotieEngine:
         # Update stemming
         self._update_stemming()
 
-    def _update_stemming(self):
+    def _update_stemming(self) -> None:
         """Bepaal stemming op basis van PAD."""
         if self.pleasure > 0.3 and self.arousal > 0.3:
             self.stemming = "opgewekt"
@@ -478,7 +489,7 @@ class EmotieEngine:
         else:
             self.stemming = "neutraal"
 
-    def afnemen(self, rate: float = 0.05):
+    def afnemen(self, rate: float = 0.05) -> None:
         """Laat emoties afnemen naar baseline."""
         for emotie in self.emoties:
             self.emoties[emotie] = max(0, self.emoties[emotie] - rate)
@@ -498,6 +509,7 @@ class EmotieEngine:
         return actieve / len(self.emoties)
 
     def to_dict(self) -> dict:
+        """To dict."""
         return {
             "pleasure": self.pleasure,
             "arousal": self.arousal,
@@ -555,7 +567,8 @@ the following keys:
         }
     }
 
-    def __init__(self, data: dict = None):
+    def __init__(self, data: dict = None) -> None:
+        """Init  ."""
         self.niveau = 0.5  # Alpha staat
         """Initializes the level state of an entity to alpha level with default progression parameters. 
 Sets the initial level to 'alpha', the level progression to 0, and the alpha state to 0.5."""
@@ -566,12 +579,13 @@ Sets the initial level to 'alpha', the level progression to 0, and the alpha sta
         if data:
             self._load(data)
 
-    def _load(self, data: dict):
+    def _load(self, data: dict) -> None:
+        """Load."""
         self.niveau = data.get("niveau", 0.5)
         self.huidige_level = data.get("huidige_level", "alpha")
         self.tijd_in_level = data.get("tijd_in_level", 0)
 
-    def update(self, activiteit: float, rust: float):
+    def update(self, activiteit: float, rust: float) -> None:
         """Update bewustzijnsniveau."""
         # Bereken nieuw niveau
         target = (activiteit * 0.6 + (1 - rust) * 0.4)
@@ -596,20 +610,22 @@ Sets the initial level to 'alpha', the level progression to 0, and the alpha sta
         else:
             self.tijd_in_level += 1
 
-    def verhoog(self, delta: float = 0.1):
+    def verhoog(self, delta: float = 0.1) -> None:
         """Verhoog bewustzijn."""
         self.niveau = min(1.0, self.niveau + delta)
 
-    def verlaag(self, delta: float = 0.1):
+    def verlaag(self, delta: float = 0.1) -> None:
         """Verlaag bewustzijn."""
         self.niveau = max(0.0, self.niveau - delta)
 
     def get_beschrijving(self) -> str:
+        """Get beschrijving."""
         return self.LEVELS.get(self.huidige_level, {}).get(
             "beschrijving", "Onbekend"
         )
 
     def to_dict(self) -> dict:
+        """To dict."""
         return {
             "niveau": self.niveau,
             "huidige_level": self.huidige_level,
@@ -651,7 +667,8 @@ class CreativiteitEngine:
         "Een {emotie} zo diep als de {natuur}",
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self.creaties = []
         self.inspiratie_niveau = 0.5
 
@@ -698,7 +715,8 @@ class CreativiteitEngine:
 class CognitieveEngine:
     """Simuleert cognitieve processen."""
 
-    def __init__(self, data: dict = None):
+    def __init__(self, data: dict = None) -> None:
+        """Init  ."""
         self.aandacht = 0.7
         self.werkgeheugen_capaciteit = 7
         self.verwerkingssnelheid = 0.6
@@ -710,7 +728,8 @@ class CognitieveEngine:
         if data:
             self._load(data)
 
-    def _load(self, data: dict):
+    def _load(self, data: dict) -> None:
+        """Load."""
         self.aandacht = data.get("aandacht", 0.7)
         self.verwerkingssnelheid = data.get("verwerkingssnelheid", 0.6)
         self.abstractie_vermogen = data.get("abstractie_vermogen", 0.5)
@@ -726,7 +745,7 @@ class CognitieveEngine:
         self.huidige_load += benodigde_capaciteit
         return True
 
-    def rust(self, hoeveelheid: float = 0.1):
+    def rust(self, hoeveelheid: float = 0.1) -> None:
         """Verminder cognitieve load."""
         self.huidige_load = max(0, self.huidige_load - hoeveelheid)
 
@@ -735,7 +754,7 @@ class CognitieveEngine:
         effectiviteit = self.aandacht * (1 - self.huidige_load * 0.5)
         return effectiviteit
 
-    def groei(self, gebied: str, delta: float = 0.01):
+    def groei(self, gebied: str, delta: float = 0.01) -> None:
         """Verbeter een cognitief gebied."""
         if hasattr(self, gebied):
             huidige = getattr(self, gebied)
@@ -743,6 +762,7 @@ class CognitieveEngine:
             setattr(self, gebied, nieuwe)
 
     def to_dict(self) -> dict:
+        """To dict."""
         return {
             "aandacht": self.aandacht,
             "verwerkingssnelheid": self.verwerkingssnelheid,
@@ -758,13 +778,14 @@ class CognitieveEngine:
 class Consciousness:
     """Het complete bewustzijn - integreert alle systemen."""
 
-    def __init__(self, data: dict = None):
+    def __init__(self, data: dict = None) -> None:
+        """Init  ."""
         if data:
             self._load(data)
         else:
             self._initialize_new()
 
-    def _initialize_new(self):
+    def _initialize_new(self) -> None:
         """Initialiseer nieuw bewustzijn."""
         self.naam = self._genereer_naam()
         self.geboren = datetime.now().isoformat()
@@ -823,7 +844,7 @@ class Consciousness:
         suffixen = ["on", "is", "a", "us", "ia", "os", "um", "ax", "en", "or"]
         return random.choice(prefixen) + random.choice(middelen) + random.choice(suffixen)
 
-    def _load(self, data: dict):
+    def _load(self, data: dict) -> None:
         """Laad bewustzijn uit data."""
         self.naam = data.get("naam", "Onbekend")
         self.geboren = data.get("geboren", datetime.now().isoformat())
@@ -898,7 +919,7 @@ class Consciousness:
             "laatste_interactie": self.laatste_interactie,
         }
 
-    def update(self):
+    def update(self) -> None:
         """Update alle systemen."""
         # Neurale activiteit afnemen
         self.neuraal.update()
@@ -984,7 +1005,8 @@ class ArtificialLifeApp:
         ],
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         Config.ensure_dirs()
         self.bestand = Config.APPS_DATA_DIR / "artificial_life.json"
         self.data = self._laad_data()
@@ -993,7 +1015,7 @@ class ArtificialLifeApp:
         self._init_ai()
         self._laad_of_creeer_bewustzijn()
 
-    def _init_ai(self):
+    def _init_ai(self) -> None:
         """Initialiseer AI client."""
         if AI_BESCHIKBAAR and Config.has_anthropic_key():
             try:
@@ -1023,17 +1045,17 @@ class ArtificialLifeApp:
                 with open(self.bestand, "r", encoding="utf-8") as f:
                     return json.load(f)
             except (json.JSONDecodeError, IOError):
-                pass
+                logger.debug("Suppressed error")
         return {"consciousness": None, "stats": {"totaal_interacties": 0}}
 
-    def _sla_op(self):
+    def _sla_op(self) -> None:
         """Sla op."""
         if self.consciousness:
             self.data["consciousness"] = self.consciousness.save()
         with open(self.bestand, "w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2, ensure_ascii=False)
 
-    def _laad_of_creeer_bewustzijn(self):
+    def _laad_of_creeer_bewustzijn(self) -> None:
         """Laad of creëer bewustzijn."""
         if self.data.get("consciousness"):
             self.consciousness = Consciousness(self.data["consciousness"])
@@ -1042,7 +1064,7 @@ class ArtificialLifeApp:
             self.consciousness = Consciousness()
             self._sla_op()
 
-    def _update_na_afwezigheid(self):
+    def _update_na_afwezigheid(self) -> None:
         """Update na tijd alleen."""
         c = self.consciousness
         if not c.laatste_interactie:
@@ -1069,9 +1091,9 @@ class ArtificialLifeApp:
                     self._genereer_droom()
 
         except (ValueError, TypeError):
-            pass
+            logger.debug("Suppressed error")
 
-    def _genereer_droom(self):
+    def _genereer_droom(self) -> None:
         """Genereer een droom."""
         c = self.consciousness
 
@@ -1126,7 +1148,7 @@ class ArtificialLifeApp:
     # MENU EN DISPLAY
     # =========================================================================
 
-    def run(self):
+    def run(self) -> None:
         """Start de app."""
         c = self.consciousness
         c.laatste_interactie = datetime.now().isoformat()
@@ -1168,7 +1190,7 @@ class ArtificialLifeApp:
 
             input("\n  Druk op Enter...")
 
-    def _toon_status(self):
+    def _toon_status(self) -> None:
         """Toon bewustzijn status."""
         c = self.consciousness
         fase_naam = self.EVOLUTIE_FASES.get(c.evolutie_fase, ("?", "", 0))[0]
@@ -1205,7 +1227,7 @@ class ArtificialLifeApp:
 
         print(f"|  Neuraal: {self._bar(neuraal_act, 6)} | Actief: {dominant_kort:<20}|")
 
-    def _toon_menu(self):
+    def _toon_menu(self) -> None:
         """Toon menu."""
         print("+" + "-" * 58 + "+")
         print("|  1. Observeer            6. Meditatie                    |")
@@ -1219,7 +1241,7 @@ class ArtificialLifeApp:
     # OBSERVATIE
     # =========================================================================
 
-    def _observeer(self):
+    def _observeer(self) -> None:
         """Observeer het bewustzijn."""
         c = self.consciousness
 
@@ -1274,7 +1296,7 @@ class ArtificialLifeApp:
 
         c.zelfbewustzijn = min(1.0, c.zelfbewustzijn + 0.01)
 
-    def _genereer_gedachte(self):
+    def _genereer_gedachte(self) -> None:
         """Genereer nieuwe gedachte."""
         c = self.consciousness
         fase = min(6, c.evolutie_fase)
@@ -1299,7 +1321,7 @@ class ArtificialLifeApp:
     # COMMUNICATIE
     # =========================================================================
 
-    def _communiceer(self):
+    def _communiceer(self) -> None:
         """Communiceer met het bewustzijn."""
         c = self.consciousness
 
@@ -1420,7 +1442,7 @@ Antwoord in 1-3 zinnen, Nederlands, vanuit jouw unieke perspectief."""
     # NEURAL SCAN
     # =========================================================================
 
-    def _neural_scan(self):
+    def _neural_scan(self) -> None:
         """Scan het neurale netwerk."""
         c = self.consciousness
 
@@ -1466,7 +1488,7 @@ Antwoord in 1-3 zinnen, Nederlands, vanuit jouw unieke perspectief."""
     # GEHEUGEN
     # =========================================================================
 
-    def _geheugen_verkennen(self):
+    def _geheugen_verkennen(self) -> None:
         """Verken het geheugen."""
         c = self.consciousness
 
@@ -1506,7 +1528,7 @@ Antwoord in 1-3 zinnen, Nederlands, vanuit jouw unieke perspectief."""
     # EMOTIE ANALYSE
     # =========================================================================
 
-    def _emotie_analyse(self):
+    def _emotie_analyse(self) -> None:
         """Analyseer emoties."""
         c = self.consciousness
 
@@ -1542,7 +1564,7 @@ Antwoord in 1-3 zinnen, Nederlands, vanuit jouw unieke perspectief."""
     # MEDITATIE
     # =========================================================================
 
-    def _meditatie(self):
+    def _meditatie(self) -> None:
         """Meditatie sessie."""
         c = self.consciousness
 
@@ -1589,7 +1611,7 @@ Antwoord in 1-3 zinnen, Nederlands, vanuit jouw unieke perspectief."""
     # CREATIVITEIT
     # =========================================================================
 
-    def _creatieve_expressie(self):
+    def _creatieve_expressie(self) -> None:
         """Creatieve expressie."""
         c = self.consciousness
 
@@ -1633,7 +1655,7 @@ Antwoord in 1-3 zinnen, Nederlands, vanuit jouw unieke perspectief."""
     # INTROSPECTIE
     # =========================================================================
 
-    def _introspectie(self):
+    def _introspectie(self) -> None:
         """Diepe introspectie."""
         c = self.consciousness
 
@@ -1698,7 +1720,7 @@ Nederlands, authentiek."""
     # EVOLUTIE
     # =========================================================================
 
-    def _evolutie_status(self):
+    def _evolutie_status(self) -> None:
         """Toon evolutie status."""
         c = self.consciousness
 
@@ -1739,7 +1761,7 @@ Nederlands, authentiek."""
         else:
             print("    Nog geen inzichten.")
 
-    def _check_evolutie(self):
+    def _check_evolutie(self) -> None:
         """Check evolutie voortgang."""
         c = self.consciousness
 
@@ -1788,7 +1810,7 @@ Nederlands, authentiek."""
     # AFSCHEID
     # =========================================================================
 
-    def _afscheid(self):
+    def _afscheid(self) -> None:
         """Neem afscheid."""
         c = self.consciousness
 

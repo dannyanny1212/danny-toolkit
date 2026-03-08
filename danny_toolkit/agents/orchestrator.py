@@ -3,6 +3,8 @@ Multi-Agent Orchestrator.
 Versie 6.11.0 - OMEGA_SOVEREIGN. Met task queue, workflows, monitoring, retry logic en meer!
 """
 
+from __future__ import annotations
+
 import asyncio
 import json
 from datetime import datetime
@@ -13,6 +15,9 @@ from enum import Enum
 from danny_toolkit.agents.base import Agent
 from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import kleur, Kleur
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class TaskStatus(Enum):
@@ -40,7 +45,7 @@ class Task:
                  priority: TaskPriority = TaskPriority.NORMAL,
                  timeout: float = 60.0,
                  retries: int = 0,
-                 metadata: dict = None):
+                 metadata: dict = None) -> None:
         """Initializes a new task with the specified parameters.
 
   Args:
@@ -100,7 +105,8 @@ class Task:
 class Workflow:
     """Definitie van een workflow met meerdere stappen."""
 
-    def __init__(self, naam: str, beschrijving: str = ""):
+    def __init__(self, naam: str, beschrijving: str = "") -> None:
+        """Init  ."""
         self.naam = naam
         self.beschrijving = beschrijving
         self.stappen: list[dict] = []
@@ -108,7 +114,7 @@ class Workflow:
 
     def voeg_stap_toe(self, agent_naam: str, taak_template: str,
                       depends_on: list[int] = None,
-                      output_var: str = None):
+                      output_var: str = None) -> None:
         """Voeg een stap toe aan de workflow."""
         stap = {
             "index": len(self.stappen),
@@ -122,7 +128,7 @@ class Workflow:
         self.stappen.append(stap)
         return len(self.stappen) - 1
 
-    def set_variabele(self, naam: str, waarde: Any):
+    def set_variabele(self, naam: str, waarde: Any) -> None:
         """Stel een workflow variabele in."""
         self.variabelen[naam] = waarde
 
@@ -132,7 +138,8 @@ class Orchestrator:
     Coordineert meerdere agents voor complexe taken - Uitgebreide versie.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         Config.ensure_dirs()
         self.agents: dict[str, Agent] = {}
         self.task_queue: deque[Task] = deque()
@@ -175,12 +182,12 @@ class Orchestrator:
             "workflow_runs": [],
         }
 
-    def _sla_data_op(self):
+    def _sla_data_op(self) -> None:
         """Sla data op naar bestand."""
         with open(self.data_file, "w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2, ensure_ascii=False)
 
-    def registreer(self, agent: Agent):
+    def registreer(self, agent: Agent) -> None:
         """Registreer een agent."""
         self.agents[agent.naam] = agent
         print(kleur(f"   [OK] Agent '{agent.naam}' geregistreerd", Kleur.GROEN))
@@ -271,7 +278,7 @@ class Orchestrator:
 
     # === Event Hooks ===
 
-    def add_hook(self, event: str, callback: Callable):
+    def add_hook(self, event: str, callback: Callable) -> None:
         """Voeg een event hook toe."""
         if event == "task_start":
             self.on_task_start.append(callback)
@@ -280,7 +287,7 @@ class Orchestrator:
         elif event == "task_fail":
             self.on_task_fail.append(callback)
 
-    def _trigger_hooks(self, event: str, task: Task):
+    def _trigger_hooks(self, event: str, task: Task) -> None:
         """Trigger event hooks."""
         hooks = {
             "task_start": self.on_task_start,
@@ -401,7 +408,8 @@ Marks a task as completed, removing it from the active task list and adding it t
         resultaten = []
         semaphore = asyncio.Semaphore(max_concurrent)
 
-        async def process_with_semaphore(task: Task):
+        async def process_with_semaphore(task: Task) -> None:
+            """Process with semaphore."""
             async with semaphore:
                 result = await self._execute_task(task)
                 if task.id in self.active_tasks:
@@ -473,7 +481,8 @@ Replaces placeholders in the context with previous results by iterating over the
         """
         print(kleur(f"\n[PARALLEL] {len(taken)} taken starten...", Kleur.CYAAN))
 
-        async def run_task(agent_naam: str, taak: str):
+        async def run_task(agent_naam: str, taak: str) -> None:
+            """Run task."""
             return await self.delegeer(agent_naam, taak)
 
         tasks = [asyncio.create_task(run_task(an, t)) for an, t in taken]
@@ -569,7 +578,7 @@ Replaces placeholders in the context with previous results by iterating over the
 
     # === Monitoring & Statistics ===
 
-    def toon_status(self):
+    def toon_status(self) -> None:
         """Toon orchestrator status."""
         queue_status = self.get_queue_status()
 
@@ -600,7 +609,7 @@ Replaces placeholders in the context with previous results by iterating over the
             print(f"║  Gem. uitvoertijd:      {avg_time:>18.2f}s  ║")
         print(kleur("╚════════════════════════════════════════════════════╝", Kleur.CYAAN))
 
-    def toon_log(self, limit: int = 10):
+    def toon_log(self, limit: int = 10) -> None:
         """Toon de taak log."""
         geschiedenis = self.data["taak_geschiedenis"]
 
@@ -619,7 +628,7 @@ Replaces placeholders in the context with previous results by iterating over the
             if item.get("error"):
                 print(f"    Error: {kleur(item['error'], 'rood')}")
 
-    def toon_workflows(self):
+    def toon_workflows(self) -> None:
         """Toon gedefinieerde workflows."""
         if not self.workflows:
             print(kleur("[INFO] Geen workflows gedefinieerd", Kleur.GEEL))
@@ -636,7 +645,7 @@ Replaces placeholders in the context with previous results by iterating over the
                 deps = f" (depends: {stap['depends_on']})" if stap['depends_on'] else ""
                 print(f"      {stap['index'] + 1}. {stap['agent_naam']}{deps}")
 
-    def reset_stats(self):
+    def reset_stats(self) -> None:
         """Reset statistieken."""
         self.data["statistieken"] = {
             "totaal_taken": 0,
@@ -653,7 +662,7 @@ Replaces placeholders in the context with previous results by iterating over the
         self._sla_data_op()
         print(kleur("[OK] Statistieken gereset", Kleur.GROEN))
 
-    def clear_queue(self):
+    def clear_queue(self) -> None:
         """Wis de task queue."""
         count = len(self.task_queue)
         self.task_queue.clear()

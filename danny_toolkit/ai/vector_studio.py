@@ -3,6 +3,8 @@ Vector Data Studio v1.0 - Visualiseer, Analyseer, Converteer, Deel.
 Een geavanceerde app voor vectordata visualisatie en analyse.
 """
 
+from __future__ import annotations
+
 import json
 import math
 import random
@@ -11,6 +13,16 @@ from pathlib import Path
 from typing import List, Dict, Optional, Tuple
 from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import clear_scherm
+import logging
+
+logger = logging.getLogger(__name__)
+
+try:
+    import hashlib
+    HAS_HASHLIB = True
+except ImportError:
+    HAS_HASHLIB = False
+
 
 
 class VectorStudioApp:
@@ -18,7 +30,7 @@ class VectorStudioApp:
 
     VERSIE = "1.0"
 
-    def __init__(self):
+    def __init__(self) -> None:
         """`__init__`: Initializes a new instance of the class. 
 Ensures required directories exist, sets up data directory and loads existing project data. 
 Attributes:
@@ -42,7 +54,7 @@ Attributes:
                 with open(self.projects_file, "r", encoding="utf-8") as f:
                     return json.load(f)
             except (json.JSONDecodeError, IOError):
-                pass
+                logger.debug("Suppressed error")
         return {
             "versie": "1.0",
             "projecten": [],
@@ -53,7 +65,7 @@ Attributes:
             }
         }
 
-    def _sla_op(self):
+    def _sla_op(self) -> None:
         """Sla projecten data op."""
         self.data["statistieken"]["laatste_activiteit"] = datetime.now().isoformat()
         with open(self.projects_file, "w", encoding="utf-8") as f:
@@ -142,7 +154,7 @@ Attributes:
     # HOOFDMENU
     # =========================================================================
 
-    def run(self):
+    def run(self) -> None:
         """Hoofdmenu."""
         while True:
             clear_scherm()
@@ -171,7 +183,7 @@ Attributes:
             elif keuze == "5":
                 self._instellingen_menu()
 
-    def _toon_header(self):
+    def _toon_header(self) -> None:
         """Toon header met project info."""
         print("+" + "=" * 50 + "+")
         print("|        VECTOR DATA STUDIO v1.0                   |")
@@ -195,7 +207,7 @@ Attributes:
     # VISUALISATIE MENU
     # =========================================================================
 
-    def _visualize_menu(self):
+    def _visualize_menu(self) -> None:
         """Visualisatie submenu."""
         while True:
             clear_scherm()
@@ -228,7 +240,7 @@ Attributes:
 
             input("\nDruk op Enter...")
 
-    def _plot_2d_pca(self):
+    def _plot_2d_pca(self) -> None:
         """2D scatter plot met PCA."""
         print("\n--- 2D SCATTER PLOT (PCA) ---")
 
@@ -294,7 +306,7 @@ Attributes:
         if len(labels) > 10:
             print(f"    ... en {len(labels) - 10} meer")
 
-    def _plot_3d_ascii(self):
+    def _plot_3d_ascii(self) -> None:
         """3D ASCII visualisatie."""
         print("\n--- 3D VISUALISATIE (ASCII) ---")
 
@@ -329,7 +341,8 @@ No parameters or return values are used."""
         y_vals = [r[1] for r in reduced]
         z_vals = [r[2] for r in reduced]
 
-        def normalize(vals):
+        def normalize(vals) -> None:
+            """Normalize."""
             mn, mx = min(vals), max(vals)
             rng = mx - mn if mx != mn else 1
             return [(v - mn) / rng for v in vals]
@@ -358,7 +371,7 @@ No parameters or return values are used."""
         print("  " + "=" * 44)
         print("  Diepte: . = ver  @ = dichtbij")
 
-    def _show_similarity_heatmap(self):
+    def _show_similarity_heatmap(self) -> None:
         """Toon similarity matrix als heatmap."""
         print("\n--- SIMILARITY HEATMAP ---")
 
@@ -408,7 +421,7 @@ No parameters or return values are used."""
         print(f"\n  Legenda: [1.0]={heat_chars[3]*4} "
               f"[0.5]={heat_chars[2]*4} [0.0]={heat_chars[0]*4}")
 
-    def _show_cluster_map(self):
+    def _show_cluster_map(self) -> None:
         """Toon cluster visualisatie."""
         print("\n--- CLUSTER MAP ---")
 
@@ -479,7 +492,7 @@ No parameters or return values are used."""
 
         return clusters
 
-    def _show_word_cloud(self):
+    def _show_word_cloud(self) -> None:
         """Toon word cloud van teksten."""
         print("\n--- WORD CLOUD ---")
 
@@ -534,7 +547,7 @@ No parameters or return values are used."""
     # ANALYSE MENU
     # =========================================================================
 
-    def _analyze_menu(self):
+    def _analyze_menu(self) -> None:
         """Analyse submenu."""
         while True:
             clear_scherm()
@@ -567,7 +580,7 @@ No parameters or return values are used."""
 
             input("\nDruk op Enter...")
 
-    def _show_statistics(self):
+    def _show_statistics(self) -> None:
         """Toon statistieken dashboard."""
         print("\n" + "=" * 48)
         print("          VECTOR STUDIO DASHBOARD")
@@ -690,7 +703,7 @@ No parameters or return values are used."""
 
         return max(0, score)
 
-    def _find_similar(self):
+    def _find_similar(self) -> None:
         """Vind vergelijkbare vectoren."""
         print("\n--- VIND VERGELIJKBARE VECTOREN ---")
 
@@ -735,7 +748,7 @@ No parameters or return values are used."""
             bar = "█" * int(sim * 10)
             print(f"  {sim:.3f} {bar:<10} {tekst}")
 
-    def _detect_outliers(self):
+    def _detect_outliers(self) -> None:
         """Detecteer outliers."""
         print("\n--- OUTLIER DETECTIE ---")
 
@@ -774,7 +787,7 @@ No parameters or return values are used."""
             print(f"  [{avg_sim:.2f}] {tekst}")
             print(f"         ID: {i}, Gemiddelde similarity: {avg_sim:.3f}")
 
-    def _cluster_analysis(self):
+    def _cluster_analysis(self) -> None:
         """Gedetailleerde cluster analyse."""
         print("\n--- CLUSTER ANALYSE ---")
 
@@ -828,7 +841,7 @@ No parameters or return values are used."""
 
         print("\n" + "=" * 48)
 
-    def _quality_assessment(self):
+    def _quality_assessment(self) -> None:
         """Beoordeel kwaliteit van embeddings."""
         print("\n--- KWALITEITS BEOORDELING ---")
 
@@ -923,7 +936,7 @@ No parameters or return values are used."""
     # CONVERTER MENU
     # =========================================================================
 
-    def _converter_menu(self):
+    def _converter_menu(self) -> None:
         """Converter submenu."""
         while True:
             clear_scherm()
@@ -953,7 +966,7 @@ No parameters or return values are used."""
 
             input("\nDruk op Enter...")
 
-    def _import_data(self):
+    def _import_data(self) -> None:
         """Import data wizard."""
         print("\n--- IMPORT DATA ---")
         print("\nFormaten:")
@@ -973,7 +986,7 @@ No parameters or return values are used."""
         elif keuze == "4":
             self._import_vectorstore()
 
-    def _import_json(self):
+    def _import_json(self) -> None:
         """Import vanuit JSON bestand."""
         print("\n[JSON Import]")
         pad = input("Pad naar JSON bestand: ").strip()
@@ -1013,7 +1026,7 @@ No parameters or return values are used."""
         except (json.JSONDecodeError, IOError) as e:
             print(f"[!] Import fout: {e}")
 
-    def _import_csv(self):
+    def _import_csv(self) -> None:
         """Import vanuit CSV bestand."""
         print("\n[CSV Import]")
         pad = input("Pad naar CSV bestand: ").strip()
@@ -1063,7 +1076,7 @@ No parameters or return values are used."""
         except IOError as e:
             print(f"[!] Import fout: {e}")
 
-    def _import_txt(self):
+    def _import_txt(self) -> None:
         """Import teksten uit TXT bestand."""
         print("\n[TXT Import]")
         pad = input("Pad naar TXT bestand: ").strip()
@@ -1107,7 +1120,7 @@ No parameters or return values are used."""
         except IOError as e:
             print(f"[!] Import fout: {e}")
 
-    def _import_vectorstore(self):
+    def _import_vectorstore(self) -> None:
         """Import vanuit bestaande VectorStore."""
         print("\n[VectorStore Import]")
 
@@ -1156,7 +1169,7 @@ No parameters or return values are used."""
 
     def _dummy_embedding(self, tekst: str, dims: int = 256) -> list:
         """Genereer dummy embedding op basis van tekst hash."""
-        import hashlib
+        pass  # import moved to top-level
         vector = [0.0] * dims
 
         woorden = tekst.lower().split()
@@ -1173,7 +1186,7 @@ No parameters or return values are used."""
 
         return vector
 
-    def _export_data(self):
+    def _export_data(self) -> None:
         """Export data wizard."""
         print("\n--- EXPORT DATA ---")
 
@@ -1197,7 +1210,7 @@ No parameters or return values are used."""
         elif keuze == "3":
             self._export_markdown(vectors_data, project_naam)
 
-    def _export_json(self, vectors: list, naam: str):
+    def _export_json(self, vectors: list, naam: str) -> None:
         """Export naar JSON."""
         output_path = Config.OUTPUT_DIR / f"{naam}_vectors.json"
 
@@ -1213,7 +1226,7 @@ No parameters or return values are used."""
 
         print(f"[OK] Geexporteerd naar: {output_path}")
 
-    def _export_csv(self, vectors: list, naam: str):
+    def _export_csv(self, vectors: list, naam: str) -> None:
         """Export naar CSV."""
         output_path = Config.OUTPUT_DIR / f"{naam}_vectors.csv"
 
@@ -1231,7 +1244,7 @@ No parameters or return values are used."""
 
         print(f"[OK] Geexporteerd naar: {output_path}")
 
-    def _export_markdown(self, vectors: list, naam: str):
+    def _export_markdown(self, vectors: list, naam: str) -> None:
         """Export naar Markdown rapport."""
         output_path = Config.OUTPUT_DIR / f"{naam}_rapport.md"
 
@@ -1255,7 +1268,7 @@ No parameters or return values are used."""
 
         print(f"[OK] Rapport geexporteerd naar: {output_path}")
 
-    def _text_to_vector(self):
+    def _text_to_vector(self) -> None:
         """Converteer tekst naar vector."""
         print("\n--- TEKST NAAR VECTOR ---")
 
@@ -1283,7 +1296,7 @@ No parameters or return values are used."""
                 self._save_current_project()
                 print("[OK] Toegevoegd!")
 
-    def _batch_convert(self):
+    def _batch_convert(self) -> None:
         """Batch conversie van teksten."""
         print("\n--- BATCH CONVERSIE ---")
 
@@ -1323,7 +1336,7 @@ No parameters or return values are used."""
     # PROJECTEN MENU
     # =========================================================================
 
-    def _projects_menu(self):
+    def _projects_menu(self) -> None:
         """Projecten en samenwerking submenu."""
         while True:
             clear_scherm()
@@ -1362,7 +1375,7 @@ No parameters or return values are used."""
 
             input("\nDruk op Enter...")
 
-    def _create_project(self):
+    def _create_project(self) -> None:
         """Maak nieuw project."""
         print("\n--- NIEUW PROJECT ---")
 
@@ -1406,7 +1419,7 @@ No parameters or return values are used."""
         print(f"\n[OK] Project '{naam}' aangemaakt!")
         print(f"     ID: {project_id}")
 
-    def _create_project_with_vectors(self, naam: str, vectors: list):
+    def _create_project_with_vectors(self, naam: str, vectors: list) -> None:
         """Maak project met bestaande vectoren."""
         project_id = f"proj_{len(self.data['projecten']) + 1:03d}"
 
@@ -1440,7 +1453,7 @@ No parameters or return values are used."""
         self.huidig_project = project
         self.vectors = vectors
 
-    def _load_project(self):
+    def _load_project(self) -> None:
         """Laad een project."""
         print("\n--- PROJECT LADEN ---")
 
@@ -1477,7 +1490,7 @@ No parameters or return values are used."""
         except (ValueError, IOError) as e:
             print(f"[!] Laden mislukt: {e}")
 
-    def _view_projects(self):
+    def _view_projects(self) -> None:
         """Bekijk alle projecten."""
         print("\n--- ALLE PROJECTEN ---")
 
@@ -1496,7 +1509,7 @@ No parameters or return values are used."""
             if p.get("beschrijving"):
                 print(f"  {p['beschrijving'][:50]}")
 
-    def _add_comment(self):
+    def _add_comment(self) -> None:
         """Voeg commentaar toe aan vector of project."""
         print("\n--- COMMENTAAR TOEVOEGEN ---")
 
@@ -1549,7 +1562,7 @@ No parameters or return values are used."""
             except ValueError:
                 print("[!] Ongeldig nummer.")
 
-    def _view_history(self):
+    def _view_history(self) -> None:
         """Bekijk versie historie."""
         print("\n--- VERSIE HISTORIE ---")
 
@@ -1568,7 +1581,7 @@ No parameters or return values are used."""
             print(f"  Vectoren: {v['vectors_count']}")
             print(f"  {v.get('beschrijving', '')}")
 
-    def _delete_project(self):
+    def _delete_project(self) -> None:
         """Verwijder een project."""
         print("\n--- PROJECT VERWIJDEREN ---")
 
@@ -1607,7 +1620,7 @@ No parameters or return values are used."""
         except (ValueError, IOError) as e:
             print(f"[!] Verwijderen mislukt: {e}")
 
-    def _save_current_project(self):
+    def _save_current_project(self) -> None:
         """Sla huidig project op."""
         if not self.huidig_project:
             return
@@ -1636,7 +1649,7 @@ No parameters or return values are used."""
     # INSTELLINGEN
     # =========================================================================
 
-    def _instellingen_menu(self):
+    def _instellingen_menu(self) -> None:
         """Instellingen menu."""
         print("\n--- INSTELLINGEN ---")
 

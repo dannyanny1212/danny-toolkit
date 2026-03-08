@@ -1,5 +1,7 @@
 """
 QUEST VI: THE BRAIN
+from __future__ import annotations
+
 ====================
 "The Orchestrator Thinks"
 
@@ -22,11 +24,12 @@ logger = logging.getLogger(__name__)
 class BrainProtocol:
     """Quest VI: The Brain - De AI orkestrator."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self.brain = None
         self._init_brain()
 
-    def _init_brain(self):
+    def _init_brain(self) -> None:
         """Initialiseer Central Brain."""
         try:
             from danny_toolkit.brain.central_brain import CentralBrain
@@ -52,7 +55,7 @@ class BrainProtocol:
             "status": "operationeel",
         }
 
-    def run_simulation(self):
+    def run_simulation(self) -> None:
         """Demo: toon brain status en capabilities."""
         print(kleur(
             "  QUEST VI: THE BRAIN\n"

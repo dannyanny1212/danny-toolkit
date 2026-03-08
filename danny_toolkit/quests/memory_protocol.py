@@ -12,14 +12,20 @@ Gebruik:
     protocol.run_simulation()
 """
 
+from __future__ import annotations
+
 from danny_toolkit.core.utils import kleur, Kleur, succes, fout
 from danny_toolkit.brain.cortical_stack import get_cortical_stack
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class MemoryProtocol:
     """Quest XIV: THE MEMORY - Persistent Geheugen."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self.stack = get_cortical_stack()
 
     def get_status(self) -> dict:
@@ -35,7 +41,7 @@ class MemoryProtocol:
             "totals": db_stats,
         }
 
-    def run_simulation(self):
+    def run_simulation(self) -> None:
         """Voer 4 tests uit met visuele output."""
         print(kleur(
             "\n  ╔═══════════════════════════════════════╗",

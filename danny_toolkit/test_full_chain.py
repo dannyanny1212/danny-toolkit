@@ -1,5 +1,7 @@
 """
 Test Full Chain - Chain of Command Verificatie
+from __future__ import annotations
+
 ==============================================
 
 Uitgebreide test van de multi-node orchestratie:
@@ -21,7 +23,7 @@ from danny_toolkit.brain.trinity_omega import (
 )
 
 
-def test_domain_detection(brain: PrometheusBrain):
+def test_domain_detection(brain: PrometheusBrain) -> None:
     """Test 1: DOMAIN_KEYWORDS multi-domein detectie."""
     print("\n" + "=" * 60)
     print("  TEST 1: Domain Detection (keyword matching)")
@@ -80,7 +82,7 @@ def test_domain_detection(brain: PrometheusBrain):
     return failed == 0
 
 
-def test_chain_multi_domain(brain: PrometheusBrain):
+def test_chain_multi_domain(brain: PrometheusBrain) -> None:
     """Test 2: Chain of Command met multi-domein query."""
     print("\n" + "=" * 60)
     print("  TEST 2: Chain of Command - Multi-Domain")
@@ -177,7 +179,7 @@ def test_chain_multi_domain(brain: PrometheusBrain):
     return failed == 0
 
 
-def test_chain_single_domain(brain: PrometheusBrain):
+def test_chain_single_domain(brain: PrometheusBrain) -> None:
     """Test 3: Chain of Command met single-domein query."""
     print("\n" + "=" * 60)
     print("  TEST 3: Chain of Command - Single Domain")
@@ -219,7 +221,7 @@ def test_chain_single_domain(brain: PrometheusBrain):
     return failed == 0
 
 
-def test_chain_no_domain(brain: PrometheusBrain):
+def test_chain_no_domain(brain: PrometheusBrain) -> None:
     """Test 4: Chain of Command zonder herkenbaar domein."""
     print("\n" + "=" * 60)
     print("  TEST 4: Chain of Command - Geen Domein (Fallback)")
@@ -261,7 +263,7 @@ def test_chain_no_domain(brain: PrometheusBrain):
     return failed == 0
 
 
-def test_chain_three_domains(brain: PrometheusBrain):
+def test_chain_three_domains(brain: PrometheusBrain) -> None:
     """Test 5: Chain of Command met 3 domeinen."""
     print("\n" + "=" * 60)
     print("  TEST 5: Chain of Command - 3 Domeinen")
@@ -310,7 +312,7 @@ def test_chain_three_domains(brain: PrometheusBrain):
     return failed == 0
 
 
-def test_hub_spoke_pipeline(brain: PrometheusBrain):
+def test_hub_spoke_pipeline(brain: PrometheusBrain) -> None:
     """Test 6: Hub & Spoke routing pipeline."""
     print("\n" + "=" * 60)
     print("  TEST 6: Hub & Spoke Pipeline")
@@ -378,7 +380,7 @@ def test_hub_spoke_pipeline(brain: PrometheusBrain):
     return failed == 0
 
 
-def main():
+def main() -> None:
     """Draai alle Chain of Command tests."""
     print()
     print("=" * 60)

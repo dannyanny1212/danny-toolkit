@@ -10,6 +10,8 @@ Geavanceerde ML concepten:
 - Prompt Engineering
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import time
@@ -39,6 +41,13 @@ try:
 except ImportError:
     ANTHROPIC_BESCHIKBAAR = False
 
+try:
+    import transformers
+    HAS_TRANSFORMERS = True
+except ImportError:
+    HAS_TRANSFORMERS = False
+
+
 
 # =============================================================================
 # TOKENIZER COMPONENTEN
@@ -55,7 +64,7 @@ class SimpleTokenizer:
         "<EOS>": 3,
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes the object by setting up the vocabulary.
 
 Sets the initial vocabulary with special tokens and then builds the basic vocabulary.
@@ -65,7 +74,7 @@ Attributes:
         self.vocab = dict(self.SPECIAL_TOKENS)
         self._build_basic_vocab()
 
-    def _build_basic_vocab(self):
+    def _build_basic_vocab(self) -> None:
         """Bouw basis vocabulary."""
         # Voeg letters toe
         for i, char in enumerate("abcdefghijklmnopqrstuvwxyz"):
@@ -147,7 +156,8 @@ Attributes:
 class SimpleEmbedding:
     """Simpele embedding generator voor demonstratie."""
 
-    def __init__(self, dim: int = 128):
+    def __init__(self, dim: int = 128) -> None:
+        """Init  ."""
         self.dim = dim
 
     def embed(self, text: str) -> List[float]:
@@ -189,12 +199,13 @@ class SimpleEmbedding:
 class TextGenerator:
     """Text generator met verschillende backends."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self.hf_pipeline = None
         self.anthropic_client = None
         self._init_backends()
 
-    def _init_backends(self):
+    def _init_backends(self) -> None:
         """Initialiseer beschikbare backends."""
         if ANTHROPIC_BESCHIKBAAR and Config.has_anthropic_key():
             self.anthropic_client = Anthropic()
@@ -271,12 +282,13 @@ Laten we dit stap voor stap doordenken:"""
 class SimpleRAG:
     """Simpel RAG (Retrieval-Augmented Generation) systeem."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self.documents = []
         self.embedder = SimpleEmbedding(dim=64)
         self.doc_embeddings = []
 
-    def add_document(self, text: str, metadata: dict = None):
+    def add_document(self, text: str, metadata: dict = None) -> None:
         """Voeg document toe aan de kennisbank."""
         embedding = self.embedder.embed(text)
         self.documents.append({
@@ -453,7 +465,8 @@ class MLStudioApp:
 
     VERSIE = "1.0"
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         Config.ensure_dirs()
         self.data_dir = Config.APPS_DATA_DIR / "ml_studio"
         self.data_dir.mkdir(exist_ok=True)
@@ -476,24 +489,24 @@ class MLStudioApp:
                 with open(self.data_file, "r", encoding="utf-8") as f:
                     return json.load(f)
             except (json.JSONDecodeError, IOError):
-                pass
+                logger.debug("Suppressed error")
         return {
             "generaties": [],
             "rag_documenten": [],
             "experimenten": [],
         }
 
-    def _sla_op(self):
+    def _sla_op(self) -> None:
         """Sla data op."""
         with open(self.data_file, "w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2, ensure_ascii=False)
 
-    def _laad_rag_docs(self):
+    def _laad_rag_docs(self) -> None:
         """Laad opgeslagen RAG documenten."""
         for doc in self.data.get("rag_documenten", []):
             self.rag.add_document(doc["text"], doc.get("metadata"))
 
-    def _text_generation(self):
+    def _text_generation(self) -> None:
         """Text generation lab."""
         clear_scherm()
         print("\n  === TEXT GENERATION LAB ===\n")
@@ -552,7 +565,7 @@ class MLStudioApp:
 
         input("\n  Druk op Enter...")
 
-    def _chain_of_thought(self):
+    def _chain_of_thought(self) -> None:
         """Chain-of-Thought prompting demo."""
         clear_scherm()
         print("\n  === CHAIN-OF-THOUGHT PROMPTING ===\n")
@@ -588,7 +601,7 @@ class MLStudioApp:
 
         input("\n  Druk op Enter...")
 
-    def _rag_demo(self):
+    def _rag_demo(self) -> None:
         """RAG (Retrieval-Augmented Generation) demo."""
         while True:
             clear_scherm()
@@ -689,7 +702,7 @@ class MLStudioApp:
                     print("  Kennisbank gewist!")
                 input("\n  Druk op Enter...")
 
-    def _tokenizer_lab(self):
+    def _tokenizer_lab(self) -> None:
         """Tokenizer visualisatie lab."""
         clear_scherm()
         print("\n  === TOKENIZER LAB ===\n")
@@ -730,7 +743,7 @@ class MLStudioApp:
         # Als HF beschikbaar, vergelijk met echte tokenizer
         if HF_BESCHIKBAAR:
             try:
-                from transformers import GPT2Tokenizer
+                pass  # import moved to top-level
                 gpt2_tok = GPT2Tokenizer.from_pretrained('gpt2')
                 gpt2_tokens = gpt2_tok.tokenize(tekst)
                 gpt2_ids = gpt2_tok.encode(tekst)
@@ -743,7 +756,7 @@ class MLStudioApp:
 
         input("\n  Druk op Enter...")
 
-    def _embedding_explorer(self):
+    def _embedding_explorer(self) -> None:
         """Embedding explorer."""
         clear_scherm()
         print("\n  === EMBEDDING EXPLORER ===\n")
@@ -806,7 +819,7 @@ class MLStudioApp:
 
         input("\n  Druk op Enter...")
 
-    def _prompt_engineering(self):
+    def _prompt_engineering(self) -> None:
         """Prompt engineering templates."""
         while True:
             clear_scherm()
@@ -866,9 +879,9 @@ class MLStudioApp:
                     input("\n  Druk op Enter...")
 
             except (ValueError, IndexError):
-                pass
+                logger.debug("Suppressed error")
 
-    def _model_benchmark(self):
+    def _model_benchmark(self) -> None:
         """Vergelijk model prestaties."""
         clear_scherm()
         print("\n  === MODEL BENCHMARK ===\n")
@@ -924,7 +937,7 @@ class MLStudioApp:
 
         input("\n  Druk op Enter...")
 
-    def _statistieken(self):
+    def _statistieken(self) -> None:
         """Toon statistieken."""
         clear_scherm()
         print("\n  === ML STUDIO STATISTIEKEN ===\n")
@@ -954,7 +967,7 @@ class MLStudioApp:
 
         input("\n  Druk op Enter...")
 
-    def run(self):
+    def run(self) -> None:
         """Start de app."""
         while True:
             clear_scherm()

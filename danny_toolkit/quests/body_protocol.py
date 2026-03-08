@@ -1,5 +1,7 @@
 """
 QUEST V: THE BODY
+from __future__ import annotations
+
 ==================
 "The Organism Feeds and Burns"
 
@@ -21,11 +23,12 @@ from danny_toolkit.daemon.metabolisme import (
 class BodyProtocol:
     """Quest V: The Body - Het metabolisme."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self.metabolisme = None
         self._init_metabolisme()
 
-    def _init_metabolisme(self):
+    def _init_metabolisme(self) -> None:
         """Initialiseer het Metabolisme."""
         try:
             self.metabolisme = Metabolisme()
@@ -53,7 +56,7 @@ class BodyProtocol:
             "status": "operationeel",
         }
 
-    def run_simulation(self):
+    def run_simulation(self) -> None:
         """Demo: toon metabolische staat en niveaus."""
         print(kleur(
             "  QUEST V: THE BODY\n"
@@ -152,3 +155,6 @@ if __name__ == "__main__":
         protocol.run_simulation()
     except Exception as e:
         print(f"\nFOUT: {e}")
+import logging
+
+logger = logging.getLogger(__name__)

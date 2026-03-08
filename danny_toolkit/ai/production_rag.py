@@ -3,6 +3,8 @@ Production RAG Systeem met echte embeddings.
 Versie 2.0 - Met conversatie geheugen, analytics, filtering en meer!
 """
 
+from __future__ import annotations
+
 import json
 import re
 from pathlib import Path
@@ -15,12 +17,22 @@ from danny_toolkit.core.embeddings import get_embedder
 from danny_toolkit.core.vector_store import VectorStore
 from danny_toolkit.core.document_processor import DocumentProcessor
 from danny_toolkit.core.generator import Generator
+import logging
+
+logger = logging.getLogger(__name__)
+
+try:
+    import urllib.request
+    HAS_REQUEST = True
+except ImportError:
+    HAS_REQUEST = False
+
 
 
 class ProductionRAG:
     """Compleet productie-klaar RAG systeem - Uitgebreide versie."""
 
-    def __init__(self, gebruik_voyage: bool = True):
+    def __init__(self, gebruik_voyage: bool = True) -> None:
         """Initializes a Production RAG (Retrieval-Augmented Generation) system.
 
 ### Args
@@ -127,7 +139,7 @@ It also performs various checks, such as ensuring the existence of required dire
                         data[key][sub_key] = sub_value
         return data
 
-    def _sla_data_op(self):
+    def _sla_data_op(self) -> None:
         """Sla data op naar bestand."""
         self.data["statistieken"]["laatste_gebruik"] = datetime.now().isoformat()
         with open(self.data_file, "w", encoding="utf-8") as f:
@@ -169,7 +181,7 @@ It also performs various checks, such as ensuring the existence of required dire
 
         return context
 
-    def indexeer(self, bron, tags: list = None):
+    def indexeer(self, bron, tags: list = None) -> None:
         """Indexeer documenten uit bestand of map."""
         print(kleur("\n[INDEXEREN] Documenten laden...", Kleur.CYAAN))
 
@@ -261,7 +273,7 @@ It also performs various checks, such as ensuring the existence of required dire
         print(kleur(f"\n[URL] Fetching: {url[:50]}...", Kleur.CYAAN))
 
         try:
-            import urllib.request
+            pass  # import moved to top-level
             with urllib.request.urlopen(url, timeout=10) as response:
                 html = response.read().decode("utf-8")
 
@@ -428,7 +440,7 @@ It also performs various checks, such as ensuring the existence of required dire
 
         return resultaten
 
-    def stats(self):
+    def stats(self) -> None:
         """Toon uitgebreide statistieken."""
         s = self.data["statistieken"]
 
@@ -460,7 +472,7 @@ It also performs various checks, such as ensuring the existence of required dire
         print(f"║  Generator:             {gen:>20}  ║")
         print(kleur("╚════════════════════════════════════════════════════╝", Kleur.CYAAN))
 
-    def _toon_documenten(self):
+    def _toon_documenten(self) -> None:
         """Toon geïndexeerde documenten."""
         if not self.document_metadata:
             print(kleur("[!] Geen documenten geïndexeerd.", Kleur.ROOD))
@@ -475,7 +487,7 @@ It also performs various checks, such as ensuring the existence of required dire
                   f"Chunks: {meta.get('chunks', '?')} | "
                   f"Tags: {tags_str}")
 
-    def _toon_tags(self):
+    def _toon_tags(self) -> None:
         """Toon alle tags."""
         if not self.data["tags"]:
             print(kleur("[!] Geen tags gedefinieerd.", Kleur.ROOD))
@@ -490,7 +502,7 @@ It also performs various checks, such as ensuring the existence of required dire
             if len(docs) > 5:
                 print(f"    ... en {len(docs) - 5} meer")
 
-    def _toon_geschiedenis(self):
+    def _toon_geschiedenis(self) -> None:
         """Toon query geschiedenis."""
         geschiedenis = self.data["query_geschiedenis"]
 
@@ -506,7 +518,7 @@ It also performs various checks, such as ensuring the existence of required dire
             print(f"  {i}. [{datum}] \"{vraag}\"")
             print(f"     Resultaten: {item['resultaten']}, Score: {item['top_score']:.3f}")
 
-    def _instellingen_menu(self):
+    def _instellingen_menu(self) -> None:
         """Instellingen aanpassen."""
         while True:
             inst = self.data["instellingen"]
@@ -535,7 +547,7 @@ It also performs various checks, such as ensuring the existence of required dire
                     if 1 <= nieuwe <= 20:
                         inst["top_k"] = nieuwe
                 except ValueError:
-                    pass
+                    logger.debug("Suppressed error")
             elif keuze == "2":
                 inst["gebruik_conversatie"] = not inst["gebruik_conversatie"]
                 if not inst["gebruik_conversatie"]:
@@ -547,7 +559,7 @@ It also performs various checks, such as ensuring the existence of required dire
 
             self._sla_data_op()
 
-    def _export_resultaten(self, vraag: str, antwoord: str):
+    def _export_resultaten(self, vraag: str, antwoord: str) -> None:
         """Exporteer vraag en antwoord."""
         export_dir = Config.DATA_DIR / "rag_exports"
         export_dir.mkdir(exist_ok=True)
@@ -566,7 +578,7 @@ It also performs various checks, such as ensuring the existence of required dire
 
         print(kleur(f"\n[OK] Geëxporteerd naar: {bestand}", Kleur.GROEN))
 
-    def _toon_help(self):
+    def _toon_help(self) -> None:
         """Toon help informatie."""
         print(kleur("\n╔════════════════════════════════════════════════════╗", Kleur.CYAAN))
         print(kleur("║           PRODUCTION RAG HELP                      ║", Kleur.CYAAN))
@@ -590,7 +602,7 @@ It also performs various checks, such as ensuring the existence of required dire
         print("║  • Conversatie geheugen onthoudt context           ║")
         print(kleur("╚════════════════════════════════════════════════════╝", Kleur.CYAAN))
 
-    def _laad_demo_data(self):
+    def _laad_demo_data(self) -> None:
         """Laad demo documenten."""
         demo_docs = {
             "ai_engineering": {
@@ -668,7 +680,7 @@ Testing:
         for doc_id, data in demo_docs.items():
             self.indexeer_tekst(data["tekst"], doc_id, data["tags"])
 
-    def _voeg_document_toe(self):
+    def _voeg_document_toe(self) -> None:
         """Interactief document toevoegen."""
         print(kleur("\n=== DOCUMENT TOEVOEGEN ===", Kleur.GEEL))
         print("  1. Bestand/map pad")
@@ -711,7 +723,7 @@ Testing:
                 doc_id = input("Document ID: ").strip() or "document"
                 self.indexeer_tekst(tekst, doc_id, tags)
 
-    def run(self):
+    def run(self) -> None:
         """Start de interactieve RAG modus."""
         clear_scherm()
         print(kleur("\n╔════════════════════════════════════════════════════╗", Kleur.CYAAN))

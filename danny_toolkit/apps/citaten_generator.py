@@ -2,6 +2,8 @@
 Citaten Generator v2.0 - AI-Powered inspirerende citaten.
 """
 
+from __future__ import annotations
+
 import logging
 import random
 from datetime import datetime
@@ -14,7 +16,8 @@ logger = logging.getLogger(__name__)
 class CitatenGeneratorApp(BaseApp):
     """AI-Powered citaten generator."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         super().__init__("citaten.json")
 
         # Ingebouwde citaten
@@ -61,7 +64,7 @@ class CitatenGeneratorApp(BaseApp):
             }
         }
 
-    def run(self):
+    def run(self) -> None:
         """Start de citaten generator."""
         while True:
             clear_scherm()
@@ -109,7 +112,7 @@ class CitatenGeneratorApp(BaseApp):
 
             input("\nDruk op Enter...")
 
-    def _toon_citaat_van_de_dag(self):
+    def _toon_citaat_van_de_dag(self) -> None:
         """Toon het citaat van de dag."""
         vandaag = datetime.now().date().isoformat()
 
@@ -129,7 +132,7 @@ class CitatenGeneratorApp(BaseApp):
         print(f"|  \"{kort}\"")
         print(f"|    - {cvd['auteur']:<45}|")
 
-    def _willekeurig_citaat(self):
+    def _willekeurig_citaat(self) -> None:
         """Toon een willekeurig citaat."""
         # Combineer ingebouwde en eigen citaten
         alle_citaten = self.citaten.copy()
@@ -173,7 +176,7 @@ class CitatenGeneratorApp(BaseApp):
             else:
                 print("[i] Dit citaat staat al in je favorieten.")
 
-    def _zoek_citaat(self):
+    def _zoek_citaat(self) -> None:
         """Zoek naar citaten."""
         print("\n--- CITAAT ZOEKEN ---")
 
@@ -197,7 +200,7 @@ class CitatenGeneratorApp(BaseApp):
             print(f"\n  {i}. \"{kort}\"")
             print(f"     - {auteur}")
 
-    def _eigen_citaat(self):
+    def _eigen_citaat(self) -> None:
         """Voeg een eigen citaat toe."""
         print("\n--- EIGEN CITAAT TOEVOEGEN ---")
 
@@ -219,7 +222,7 @@ class CitatenGeneratorApp(BaseApp):
 
         print(f"\n[OK] Citaat toegevoegd!")
 
-    def _bekijk_favorieten(self):
+    def _bekijk_favorieten(self) -> None:
         """Bekijk favoriete citaten."""
         print("\n--- FAVORIETEN ---")
 
@@ -242,9 +245,9 @@ class CitatenGeneratorApp(BaseApp):
                     self._sla_op()
                     print(f"[OK] Verwijderd uit favorieten.")
             except ValueError:
-                pass
+                logger.debug("Suppressed error")
 
-    def _eigen_citaten(self):
+    def _eigen_citaten(self) -> None:
         """Bekijk eigen citaten."""
         print("\n--- EIGEN CITATEN ---")
 
@@ -258,7 +261,7 @@ class CitatenGeneratorApp(BaseApp):
 
     # ==================== AI FUNCTIES ====================
 
-    def _ai_citaat_genereren(self):
+    def _ai_citaat_genereren(self) -> None:
         """AI genereert een citaat over een thema."""
         print("\n--- AI CITAAT GENEREREN ---")
 
@@ -304,7 +307,7 @@ AUTEUR: AI Wijsheid"""
                     self._sla_op()
                     print("[OK] Citaat opgeslagen!")
 
-    def _ai_citaat_uitleg(self):
+    def _ai_citaat_uitleg(self) -> None:
         """AI legt een citaat uit."""
         print("\n--- AI CITAAT UITLEG ---")
 
@@ -345,7 +348,7 @@ Helder en inspirerend. Nederlands."""
         if response:
             print(f"\n[AI Uitleg]:\n{response}")
 
-    def _ai_persoonlijk_citaat(self):
+    def _ai_persoonlijk_citaat(self) -> None:
         """AI maakt een persoonlijk citaat voor jou."""
         print("\n--- AI PERSOONLIJK CITAAT ---")
 

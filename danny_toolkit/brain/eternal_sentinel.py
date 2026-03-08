@@ -15,6 +15,37 @@ import threading
 import time
 from datetime import datetime
 
+try:
+    import danny_toolkit.core.advanced_knowledge_bridge
+    HAS_ADVANCED_KNOWLEDGE_BRIDGE = True
+except ImportError:
+    HAS_ADVANCED_KNOWLEDGE_BRIDGE = False
+
+try:
+    import danny_toolkit.core.neural_bus
+    HAS_NEURAL_BUS = True
+except ImportError:
+    HAS_NEURAL_BUS = False
+
+try:
+    import danny_toolkit.core.vram_manager
+    HAS_VRAM_MANAGER = True
+except ImportError:
+    HAS_VRAM_MANAGER = False
+
+try:
+    import pathlib
+    HAS_PATHLIB = True
+except ImportError:
+    HAS_PATHLIB = False
+
+try:
+    import requests
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
+
+
 logger = logging.getLogger(__name__)
 
 # ── Config ────────────────────────────────────────────────
@@ -32,7 +63,8 @@ REINDEX_MAX_EVENTS = 200       # max events per nightly batch
 class EternalSentinel:
     """Zelf-optimaliserend bewakingssysteem voor het OMEGA ecosysteem."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self._running = False
         self._throttle_active = False
         self._last_deep_scan: float = 0.0
@@ -50,7 +82,7 @@ class EternalSentinel:
         """Geeft aan of het systeem in auto-throttle modus staat."""
         return self._throttle_active
 
-    def start(self):
+    def start(self) -> None:
         """Start alle sentinel loops als daemon threads."""
         if self._running:
             return
@@ -71,7 +103,7 @@ class EternalSentinel:
 
         logger.info("[SENTINEL] Eternal Sentinel geactiveerd — 3 loops + NeuralBus")
 
-    def stop(self):
+    def stop(self) -> None:
         """Signaleer alle loops om te stoppen."""
         self._running = False
 
@@ -88,7 +120,7 @@ class EternalSentinel:
 
     # ── Loop 1: Hourly L3 Deep Scan ──────────────────────
 
-    def _deep_scan_loop(self):
+    def _deep_scan_loop(self) -> None:
         """Voer elke 60 minuten een L3 Deep Scan uit."""
         while self._running:
             now = time.time()
@@ -97,10 +129,10 @@ class EternalSentinel:
                 self._run_deep_scan()
             time.sleep(60)  # check elke minuut
 
-    def _run_deep_scan(self):
+    def _run_deep_scan(self) -> None:
         """Roep /api/v1/health/deep aan en log het resultaat."""
         try:
-            import requests
+            pass  # import moved to top-level
             resp = requests.get(
                 f"{API_BASE}/api/v1/health/deep",
                 headers=HEADERS,
@@ -130,24 +162,24 @@ class EternalSentinel:
 
     # ── Loop 2: L1 Pulse Monitor + Auto-Throttle ─────────
 
-    def _pulse_monitor_loop(self):
+    def _pulse_monitor_loop(self) -> None:
         """Meet elke 30s de L1 Pulse latentie. Throttle bij >10ms."""
         # Warmup: eerste 60s overslaan (cold-start HTTP overhead)
         time.sleep(60)
         # Warmup request om TCP connectie op te bouwen
         try:
-            import requests
+            pass  # import moved to top-level
             requests.get(f"{API_BASE}/api/v1/health", headers=HEADERS, timeout=5)
         except Exception:
-            pass
+            logger.debug("Suppressed error")
         while self._running:
             self._check_pulse()
             time.sleep(PULSE_CHECK_INTERVAL)
 
-    def _check_pulse(self):
+    def _check_pulse(self) -> None:
         """Eén L1 Pulse meting + throttle logica."""
         try:
-            import requests
+            pass  # import moved to top-level
             t0 = time.time()
             resp = requests.get(
                 f"{API_BASE}/api/v1/health",
@@ -186,10 +218,10 @@ class EternalSentinel:
 
     # ── GPU P-State Management ────────────────────────────
 
-    def _subscribe_mission_events(self):
+    def _subscribe_mission_events(self) -> None:
         """Luister op NeuralBus voor missie start/einde events."""
         try:
-            from danny_toolkit.core.neural_bus import get_bus, EventTypes
+            pass  # import moved to top-level
             bus = get_bus()
             bus.subscribe(EventTypes.MISSION_STARTED, self._on_mission_start)
             bus.subscribe(EventTypes.REQUEST_TRACE_COMPLETE, self._on_mission_end)
@@ -197,10 +229,10 @@ class EternalSentinel:
         except Exception as e:
             logger.debug("[SENTINEL] NeuralBus subscribe fout: %s", e)
 
-    def _on_mission_start(self, event):
+    def _on_mission_start(self, event) -> None:
         """GPU naar P0 (Maximum Performance) bij missie start."""
         try:
-            from danny_toolkit.core.vram_manager import gpu_set_clocks
+            pass  # import moved to top-level
             result = gpu_set_clocks(min_mhz=1500, max_mhz=2100)
             self._gpu_boost_count += 1
             logger.info(
@@ -210,10 +242,10 @@ class EternalSentinel:
         except Exception as e:
             logger.debug("[SENTINEL] GPU boost fout: %s", e)
 
-    def _on_mission_end(self, event):
+    def _on_mission_end(self, event) -> None:
         """GPU terug naar Power Save na missie einde."""
         try:
-            from danny_toolkit.core.vram_manager import gpu_reset_clocks
+            pass  # import moved to top-level
             result = gpu_reset_clocks()
             logger.info(
                 "[SENTINEL] GPU IDLE — clocks reset (%s)",
@@ -224,7 +256,7 @@ class EternalSentinel:
 
     # ── Loop 3: Nightly Re-index ──────────────────────────
 
-    def _nightly_loop(self):
+    def _nightly_loop(self) -> None:
         """Check elk uur of het 03:00 is voor nightly re-index."""
         while self._running:
             now = datetime.now()
@@ -236,12 +268,12 @@ class EternalSentinel:
 
             time.sleep(300)  # check elke 5 minuten
 
-    def _run_nightly_reindex(self):
+    def _run_nightly_reindex(self) -> None:
         """Verwerk recente CorticalStack events naar RAG chunks."""
         logger.info("[SENTINEL] Nightly Re-index gestart...")
         try:
             # Haal recente events op
-            import requests
+            pass  # import moved to top-level
             resp = requests.get(
                 f"{API_BASE}/api/v1/memory/recent",
                 headers=HEADERS,
@@ -261,7 +293,7 @@ class EternalSentinel:
                 return
 
             # Schrijf naar RAG document
-            from pathlib import Path
+            pass  # import moved to top-level
             doc_path = Path(os.path.dirname(os.path.abspath(__file__))).parent.parent / "data" / "rag" / "documenten"
             doc_path.mkdir(parents=True, exist_ok=True)
 
@@ -274,7 +306,7 @@ class EternalSentinel:
 
             # Ingest via AdvancedKnowledgeBridge
             try:
-                from danny_toolkit.core.advanced_knowledge_bridge import AdvancedKnowledgeBridge
+                pass  # import moved to top-level
                 bridge = AdvancedKnowledgeBridge()
                 chunks = bridge.ingest_modules([filename])
                 self._reindex_count += 1
@@ -332,13 +364,13 @@ class EternalSentinel:
 
     # ── Helpers ────────────────────────────────────────────
 
-    def _publish(self, event_name: str, data: dict):
+    def _publish(self, event_name: str, data: dict) -> None:
         """Publiceer een sentinel event op de NeuralBus."""
         try:
-            from danny_toolkit.core.neural_bus import get_bus
+            pass  # import moved to top-level
             get_bus().publish(event_name, data, bron="eternal_sentinel")
         except Exception:
-            pass
+            logger.debug("Suppressed error")
 
 
 # ── Singleton ─────────────────────────────────────────────

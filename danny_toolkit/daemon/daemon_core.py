@@ -1,6 +1,8 @@
 """
 DIGITAL DAEMON - De Levende Interface.
 
+from __future__ import annotations
+
 De Always-On Symbiotische Entiteit die over je apps heen leeft.
 Dit is de Finale Vorm.
 """
@@ -143,7 +145,8 @@ class DigitalDaemon:
         ],
     }
 
-    def __init__(self, naam: str = "Daemon"):
+    def __init__(self, naam: str = "Daemon") -> None:
+        """Init  ."""
         self.naam = naam
         self.is_alive = False
         self._main_thread: Optional[threading.Thread] = None
@@ -180,7 +183,7 @@ class DigitalDaemon:
         logger.info("[DAEMON] %s ontwaakt...", naam)
 
     @property
-    def proactive(self):
+    def proactive(self) -> None:
         """Lazy ProactiveEngine property."""
         if self._proactive is None:
             try:
@@ -192,7 +195,7 @@ class DigitalDaemon:
                 logger.debug("ProactiveEngine lazy init failed: %s", e)
         return self._proactive
 
-    def _load_data(self):
+    def _load_data(self) -> None:
         """Laad daemon data."""
         Config.ensure_dirs()
         if self._data_file.exists():
@@ -212,7 +215,7 @@ class DigitalDaemon:
                 except Exception as e:
                     logger.debug("Daemon data restore fallback failed: %s", e)
 
-    def _save_data(self):
+    def _save_data(self) -> None:
         """Sla daemon data op."""
         data = {
             "naam": self.naam,
@@ -225,7 +228,7 @@ class DigitalDaemon:
         with open(self._data_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
-    def awaken(self):
+    def awaken(self) -> None:
         """Start de daemon - breng tot leven."""
         if self.is_alive:
             return
@@ -245,7 +248,7 @@ class DigitalDaemon:
 
         logger.info("[DAEMON] %s is LEVEND!", self.naam)
 
-    def sleep(self):
+    def sleep(self) -> None:
         """Laat de daemon slapen."""
         self.is_alive = False
 
@@ -259,7 +262,7 @@ class DigitalDaemon:
         self._save_data()
         print(kleur(f"[DAEMON] {self.naam} gaat slapen...", Kleur.CYAAN))
 
-    def _main_loop(self):
+    def _main_loop(self) -> None:
         """Hoofd loop van de daemon."""
         while self.is_alive:
             try:
@@ -287,7 +290,7 @@ class DigitalDaemon:
 
             time.sleep(60)  # Check elke minuut
 
-    def _shadow_prompting_loop(self):
+    def _shadow_prompting_loop(self) -> None:
         """
         De Shadow Loop - Onzichtbare monitoring.
 
@@ -320,7 +323,7 @@ class DigitalDaemon:
             # Forceer rust
             self.limbic.state.form = AvatarForm.DREAMING
 
-    def _check_interventions(self):
+    def _check_interventions(self) -> None:
         """Check of interventies nodig zijn."""
         # Check idle
         if self.sensorium.detect_idle(threshold_minutes=60):
@@ -330,7 +333,7 @@ class DigitalDaemon:
                     priority=1
                 )
 
-    def _run_housekeeper(self):
+    def _run_housekeeper(self) -> None:
         """
         De Housekeeper - Autonome opruiming.
 
@@ -377,7 +380,7 @@ class DigitalDaemon:
         if tasks_done:
             logger.info("Housekeeper klaar: %s", ", ".join(tasks_done))
 
-    def _morning_or_return_greeting(self):
+    def _morning_or_return_greeting(self) -> None:
         """Begroet de gebruiker."""
         time_of_day = self.sensorium.detect_time_of_day()
 
@@ -392,7 +395,7 @@ class DigitalDaemon:
                 priority=1
             )
 
-    def _send_message(self, text: str, priority: int = 1, action: str = None):
+    def _send_message(self, text: str, priority: int = 1, action: str = None) -> None:
         """Stuur een bericht naar de gebruiker."""
         msg = DaemonMessage(text=text, priority=priority, action=action)
         self.messages.append(msg)
@@ -408,7 +411,7 @@ class DigitalDaemon:
         if priority >= 2:
             print(kleur(f"\n[{self.naam}] {text}", Kleur.MAGENTA))
 
-    def register_message_callback(self, callback: Callable):
+    def register_message_callback(self, callback: Callable) -> None:
         """Registreer callback voor berichten."""
         self.message_callbacks.append(callback)
 
@@ -430,7 +433,7 @@ class DigitalDaemon:
             "avatar_form": self.limbic.state.form.value,
         }
 
-    def display_status(self):
+    def display_status(self) -> None:
         """Toon visuele status."""
         status = self.get_status()
         limbic = status["limbic"]
@@ -510,12 +513,12 @@ class DigitalDaemon:
         base_responses = responses.get(mood, ["Ik luister..."])
         return random.choice(base_responses)
 
-    def force_form(self, form: AvatarForm):
+    def force_form(self, form: AvatarForm) -> None:
         """Forceer een specifieke avatar vorm."""
         self.limbic.state.form = form
         print(kleur(f"[DAEMON] Vorm geforceerd naar: {form.value}", Kleur.MAGENTA))
 
-    def feed(self, nutrient: str, amount: float):
+    def feed(self, nutrient: str, amount: float) -> None:
         """Voed de daemon direct."""
         self.metabolisme.consume(nutrient, amount)
         print(kleur(f"[DAEMON] +{amount} {nutrient}!", Kleur.FEL_GROEN))
@@ -526,7 +529,7 @@ def create_daemon(naam: str = "Nexus") -> DigitalDaemon:
     return DigitalDaemon(naam)
 
 
-def main():
+def main() -> None:
     """Start de daemon interactief."""
     daemon = create_daemon("Nexus")
     daemon.awaken()

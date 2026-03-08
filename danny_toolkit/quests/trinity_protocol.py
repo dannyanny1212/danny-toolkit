@@ -1,5 +1,7 @@
 """
 QUEST VII: THE TRINITY
+from __future__ import annotations
+
 =======================
 "Three Become One"
 
@@ -22,11 +24,12 @@ from danny_toolkit.brain.trinity_symbiosis import (
 class TrinityProtocol:
     """Quest VII: The Trinity - De Kosmische Familie."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self.trinity = None
         self._init_trinity()
 
-    def _init_trinity(self):
+    def _init_trinity(self) -> None:
         """Initialiseer Trinity Symbiosis."""
         try:
             self.trinity = TrinitySymbiosis()
@@ -53,7 +56,7 @@ class TrinityProtocol:
             "status": "operationeel",
         }
 
-    def run_simulation(self):
+    def run_simulation(self) -> None:
         """Demo: toon Trinity leden, bond en kanalen."""
         print(kleur(
             "  QUEST VII: THE TRINITY\n"
@@ -157,3 +160,6 @@ if __name__ == "__main__":
         protocol.run_simulation()
     except Exception as e:
         print(f"\nFOUT: {e}")
+import logging
+
+logger = logging.getLogger(__name__)

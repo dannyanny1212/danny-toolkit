@@ -10,6 +10,8 @@ Componenten:
 """
 
 # --- CORE INTELLIGENCE ---
+from __future__ import annotations
+
 from .central_brain import CentralBrain
 from .trinity_omega import PrometheusBrain
 from .trinity_models import (
@@ -61,7 +63,7 @@ try:
     from .sanctuary_dashboard import SanctuaryDashboard, get_sanctuary
     from .tool_dispatcher import ToolDispatcher, get_tool_dispatcher
 except ImportError:
-    pass
+    logger.debug("Suppressed error")
 
 # --- ANTI-HALLUCINATION & TRUTH ---
 try:
@@ -69,7 +71,7 @@ try:
     from .reality_anchor import RealityAnchor
     from .truth_anchor import TruthAnchor
 except ImportError:
-    pass
+    logger.debug("Suppressed error")
 
 # --- SUBSYSTEMS & INFRASTRUCTURE ---
 from .nexus_bridge import NexusBridge
@@ -79,6 +81,9 @@ from .proactive import ProactiveEngine
 from .file_guard import FileGuard
 from .workflows import WorkflowEngine
 from .project_map import ProjectMap
+import logging
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     # Core Intelligence

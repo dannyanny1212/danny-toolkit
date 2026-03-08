@@ -18,6 +18,8 @@ Gebruik:
     sc.store("GhostWriter", query, response, payload_type="text", payload_meta={})
 """
 
+from __future__ import annotations
+
 import hashlib
 import json
 import logging
@@ -39,6 +41,13 @@ try:
     HAS_NUMPY = True
 except ImportError:
     HAS_NUMPY = False
+
+try:
+    import danny_toolkit.core.embeddings
+    HAS_EMBEDDINGS = True
+except ImportError:
+    HAS_EMBEDDINGS = False
+
 
 
 class SemanticCache:
@@ -70,7 +79,7 @@ class SemanticCache:
     _MAX_ENTRIES_PER_AGENT = 500
     _EVICT_INTERVAL = 100  # Elke N writes, verwijder verlopen entries
 
-    def __init__(self, db_path: Path = None):
+    def __init__(self, db_path: Path = None) -> None:
         """Initializes a new instance of the class.
 
  Args:
@@ -96,7 +105,7 @@ class SemanticCache:
 
         self._init_db()
 
-    def _init_db(self):
+    def _init_db(self) -> None:
         """Maak SQLite database + tabel aan."""
         try:
             conn = sqlite3.connect(str(self._db_path), timeout=Config.SQLITE_CONNECT_TIMEOUT)
@@ -144,13 +153,13 @@ class SemanticCache:
         Config.apply_sqlite_perf(conn)
         return conn
 
-    def _get_embed_provider(self):
+    def _get_embed_provider(self) -> None:
         """Lazy init van CachedEmbeddingProvider."""
         if self._embed_init_tried:
             return self._embed_provider
         self._embed_init_tried = True
         try:
-            from danny_toolkit.core.embeddings import VoyageEmbeddings, CachedEmbeddingProvider
+            pass  # import moved to top-level
             voyage = VoyageEmbeddings()
             self._embed_provider = CachedEmbeddingProvider(voyage)
             logger.debug("SemanticCache: Voyage embedding provider geladen")
@@ -273,7 +282,7 @@ class SemanticCache:
                     try:
                         meta = json.loads(p_meta) if p_meta else {}
                     except (json.JSONDecodeError, TypeError):
-                        pass
+                        logger.debug("Suppressed error")
                     return {
                         "content": response,
                         "type": p_type or "text",
@@ -319,7 +328,7 @@ class SemanticCache:
                 try:
                     meta = json.loads(p_meta) if p_meta else {}
                 except (json.JSONDecodeError, TypeError):
-                    pass
+                    logger.debug("Suppressed error")
                 return {
                     "content": response,
                     "type": p_type or "text",
@@ -329,7 +338,7 @@ class SemanticCache:
                 conn.close()
 
     def store(self, agent_naam: str, query: str, response: str,
-              payload_type: str = "text", payload_meta: dict = None):
+              payload_type: str = "text", payload_meta: dict = None) -> None:
         """Sla een LLM response op in de cache (inclusief payload staat).
 
         Skip als agent geblacklist, niet geconfigureerd,
@@ -410,7 +419,7 @@ class SemanticCache:
             self._write_count = 0
             self.evict_expired()
 
-    def evict_expired(self):
+    def evict_expired(self) -> None:
         """Verwijder alle verlopen cache entries."""
         now = time.time()
         with self._lock:
@@ -471,7 +480,7 @@ class SemanticCache:
             logger.debug("SemanticCache stats fout: %s", e)
             return {"total_entries": 0, "total_hits": 0, "error": str(e)}
 
-    def clear(self, agent: str = None):
+    def clear(self, agent: str = None) -> None:
         """Wis cache entries. Optioneel per agent."""
         with self._lock:
             try:

@@ -2,12 +2,21 @@
 Recipe Generator v1.0 - AI recepten, ingrediënten tracker, meal planning.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import random
 from typing import List, Dict, Optional
 from danny_toolkit.core.utils import clear_scherm
 from danny_toolkit.apps.base_app import BaseApp
+
+try:
+    import re
+    HAS_RE = True
+except ImportError:
+    HAS_RE = False
+
 
 logger = logging.getLogger(__name__)
 
@@ -86,16 +95,17 @@ class RecipeGeneratorApp(BaseApp):
         },
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         super().__init__("recipe_generator/data.json")
         self._laatste_health = None
         self._laatste_weer = None
 
-    def _on_health_status_change(self, event):
+    def _on_health_status_change(self, event) -> None:
         """Ontvang fitness updates via NeuralBus."""
         self._laatste_health = event.data
 
-    def _on_weather_update(self, event):
+    def _on_weather_update(self, event) -> None:
         """Ontvang weer updates via NeuralBus."""
         self._laatste_weer = event.data
 
@@ -149,7 +159,7 @@ Geef het recept in dit exacte JSON formaat (alleen de JSON, geen andere tekst):
             if not tekst:
                 return None
             # Probeer JSON te extraheren
-            import re
+            pass  # import moved to top-level
             match = re.search(r'\{.*\}', tekst, re.DOTALL)
             if match:
                 return json.loads(match.group())
@@ -178,7 +188,7 @@ Geef het recept in dit exacte JSON formaat (alleen de JSON, geen andere tekst):
         # Fallback: random basis recept
         return random.choice(self.BASIS_RECEPTEN)
 
-    def _beheer_voorraad(self):
+    def _beheer_voorraad(self) -> None:
         """Beheer ingrediënten voorraad."""
         while True:
             clear_scherm()
@@ -257,7 +267,7 @@ Geef het recept in dit exacte JSON formaat (alleen de JSON, geen andere tekst):
                 print(f"  {len(items)} items toegevoegd!")
                 input("  Druk op Enter...")
 
-    def _genereer_recept(self):
+    def _genereer_recept(self) -> None:
         """Genereer een recept."""
         clear_scherm()
         print("\n  === RECEPT GENERATOR ===\n")
@@ -310,7 +320,7 @@ Geef het recept in dit exacte JSON formaat (alleen de JSON, geen andere tekst):
 
         input("\n  Druk op Enter...")
 
-    def _toon_recept(self, recept: Dict):
+    def _toon_recept(self, recept: Dict) -> None:
         """Toon een recept mooi geformatteerd."""
         print("  " + "=" * 50)
         print(f"  {recept['naam'].upper()}")
@@ -325,7 +335,7 @@ Geef het recept in dit exacte JSON formaat (alleen de JSON, geen andere tekst):
         for i, stap in enumerate(recept.get("stappen", []), 1):
             print(f"    {i}. {stap}")
 
-    def _weekmenu_planner(self):
+    def _weekmenu_planner(self) -> None:
         """Plan weekmenu."""
         clear_scherm()
         print("\n  === WEEKMENU PLANNER ===\n")
@@ -396,7 +406,7 @@ Geef het recept in dit exacte JSON formaat (alleen de JSON, geen andere tekst):
             print("  Menu gewist!")
             input("  Druk op Enter...")
 
-    def _bekijk_favorieten(self):
+    def _bekijk_favorieten(self) -> None:
         """Bekijk favoriete recepten."""
         clear_scherm()
         print("\n  === FAVORIETE RECEPTEN ===\n")
@@ -419,7 +429,7 @@ Geef het recept in dit exacte JSON formaat (alleen de JSON, geen andere tekst):
                 self._toon_recept(favorieten[idx])
                 input("\n  Druk op Enter...")
 
-    def run(self):
+    def run(self) -> None:
         """Start de app."""
         while True:
             clear_scherm()

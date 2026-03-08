@@ -10,6 +10,8 @@ Gebruik:
     rapport = valideer_opstart()
 """
 
+from __future__ import annotations
+
 import os
 import sys
 import uuid
@@ -93,7 +95,7 @@ def valideer_opstart(strict: bool = False) -> dict:
     return rapport
 
 
-def _check_api_key(rapport, env_var, provider, fataal=True):
+def _check_api_key(rapport, env_var, provider, fataal=True) -> None:
     """Controleer API key aanwezigheid en format."""
     check = {"naam": env_var, "status": "OK", "fataal": fataal}
 
@@ -110,7 +112,7 @@ def _check_api_key(rapport, env_var, provider, fataal=True):
 
     # Gebruik ConfigValidator als beschikbaar
     try:
-        from danny_toolkit.core.config import ConfigValidator
+        pass  # import moved to top-level
         is_valid, message = ConfigValidator.valideer_api_key(
             value, provider,
         )
@@ -134,12 +136,12 @@ def _check_api_key(rapport, env_var, provider, fataal=True):
     rapport["checks"].append(check)
 
 
-def _check_data_dir(rapport):
+def _check_data_dir(rapport) -> None:
     """Controleer of DATA_DIR schrijfbaar is."""
     check = {"naam": "DATA_DIR_schrijfbaar", "status": "OK", "fataal": True}
 
     try:
-        from danny_toolkit.core.config import Config
+        pass  # import moved to top-level
         data_dir = Config.DATA_DIR
     except ImportError:
         data_dir = Path("data")
@@ -157,7 +159,7 @@ def _check_data_dir(rapport):
     rapport["checks"].append(check)
 
 
-def _check_optional_deps(rapport):
+def _check_optional_deps(rapport) -> None:
     """Controleer optionele dependencies."""
     deps = ["chromadb", "ollama", "groq"]
     beschikbaar = []
@@ -180,13 +182,20 @@ def _check_optional_deps(rapport):
     rapport["checks"].append(check)
 
 
-def _check_env_file(rapport):
+def _check_env_file(rapport) -> None:
     """Controleer of .env bestand bestaat."""
     try:
-        from danny_toolkit.core.config import Config
+        pass  # import moved to top-level
         env_path = Config.BASE_DIR / ".env"
     except ImportError:
         env_path = Path(".env")
+
+try:
+    import danny_toolkit.core.config
+    HAS_CONFIG = True
+except ImportError:
+    HAS_CONFIG = False
+
 
     check = {
         "naam": "env_bestand",

@@ -2,10 +2,19 @@
 Habit Tracker v2.0 - AI-Powered gewoonte tracker.
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import datetime, timedelta
 from danny_toolkit.core.utils import clear_scherm
 from danny_toolkit.apps.base_app import BaseApp
+
+try:
+    import danny_toolkit.brain.unified_memory
+    HAS_UNIFIED_MEMORY = True
+except ImportError:
+    HAS_UNIFIED_MEMORY = False
+
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +22,8 @@ logger = logging.getLogger(__name__)
 class HabitTrackerApp(BaseApp):
     """AI-Powered habit tracker voor betere gewoontes."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         super().__init__("habits.json")
 
     def _get_default_data(self) -> dict:
@@ -24,11 +34,11 @@ class HabitTrackerApp(BaseApp):
             "streaks": {}
         }
 
-    def _log_memory_event(self, event_type, data):
+    def _log_memory_event(self, event_type, data) -> None:
         """Log event naar Unified Memory."""
         try:
             if not hasattr(self, "_memory"):
-                from danny_toolkit.brain.unified_memory import UnifiedMemory
+                pass  # import moved to top-level
                 self._memory = UnifiedMemory()
             self._memory.store_event(
                 app="habit_tracker",
@@ -38,7 +48,7 @@ class HabitTrackerApp(BaseApp):
         except Exception as e:
             logger.debug("Memory event error: %s", e)
 
-    def run(self):
+    def run(self) -> None:
         """Start de habit tracker."""
         while True:
             clear_scherm()
@@ -89,7 +99,7 @@ class HabitTrackerApp(BaseApp):
 
             input("\nDruk op Enter...")
 
-    def _toon_vandaag_status(self):
+    def _toon_vandaag_status(self) -> None:
         """Toon status voor vandaag."""
         vandaag = datetime.now().date().isoformat()
         voltooid = self.data["history"].get(vandaag, [])
@@ -103,7 +113,7 @@ class HabitTrackerApp(BaseApp):
         else:
             print("|  Geen habits - voeg er een toe!                   |")
 
-    def _nieuwe_habit(self):
+    def _nieuwe_habit(self) -> None:
         """Voeg een nieuwe habit toe."""
         print("\n--- NIEUWE HABIT ---")
 
@@ -150,7 +160,7 @@ class HabitTrackerApp(BaseApp):
 
         print(f"\n[OK] Habit '{naam}' toegevoegd!")
 
-    def _voltooien_habit(self):
+    def _voltooien_habit(self) -> None:
         """Markeer een habit als voltooid voor vandaag."""
         if not self.data["habits"]:
             print("\n[!] Geen habits om te voltooien!")
@@ -213,7 +223,7 @@ class HabitTrackerApp(BaseApp):
         except ValueError:
             print("[!] Voer een geldig nummer in!")
 
-    def _bekijk_habits(self):
+    def _bekijk_habits(self) -> None:
         """Bekijk alle habits."""
         print("\n--- ALLE HABITS ---")
 
@@ -229,7 +239,7 @@ class HabitTrackerApp(BaseApp):
             if h.get("beschrijving"):
                 print(f"     Info: {h['beschrijving']}")
 
-    def _statistieken(self):
+    def _statistieken(self) -> None:
         """Toon habit statistieken."""
         print("\n--- STATISTIEKEN ---")
 
@@ -263,7 +273,7 @@ class HabitTrackerApp(BaseApp):
             streak = self.data["streaks"].get(str(h["id"]), 0)
             print(f"    - {h['naam']}: {count}x voltooid, streak: {streak}")
 
-    def _verwijder_habit(self):
+    def _verwijder_habit(self) -> None:
         """Verwijder een habit."""
         self._bekijk_habits()
 
@@ -311,7 +321,7 @@ class HabitTrackerApp(BaseApp):
 
         return context
 
-    def _ai_motivatie(self):
+    def _ai_motivatie(self) -> None:
         """AI geeft gepersonaliseerde motivatie."""
         print("\n--- AI MOTIVATIE ---")
 
@@ -344,7 +354,7 @@ Geef 2-3 energieke zinnen. Wees specifiek. Nederlands."""
         if response:
             print(f"\n💪 {response}")
 
-    def _ai_habit_suggesties(self):
+    def _ai_habit_suggesties(self) -> None:
         """AI suggereert nieuwe habits."""
         print("\n--- AI HABIT SUGGESTIES ---")
         print("\n  1. Gezondheid    2. Productiviteit")
@@ -369,7 +379,7 @@ Geef 2-3 energieke zinnen. Wees specifiek. Nederlands."""
         if response:
             print(f"\n[AI Suggesties]:\n{response}")
 
-    def _ai_streak_analyse(self):
+    def _ai_streak_analyse(self) -> None:
         """AI analyseert streak patronen."""
         print("\n--- AI STREAK ANALYSE ---")
 
@@ -391,7 +401,7 @@ Geef: sterke punten, verbeterpunten, 2 tips. Nederlands."""
         if response:
             print(f"\n[Analyse]:\n{response}")
 
-    def _ai_habit_coach(self):
+    def _ai_habit_coach(self) -> None:
         """AI habit coach voor vragen."""
         print("\n--- AI HABIT COACH ---")
 

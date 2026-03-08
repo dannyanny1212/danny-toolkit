@@ -3,6 +3,8 @@ Mini-RAG Systeem - Eenvoudige RAG implementatie.
 Versie 2.0 - Met TF-IDF, BM25, meerdere formaten, AI integratie en meer!
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import math
@@ -18,6 +20,13 @@ from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import clear_scherm, kleur, Kleur
 from danny_toolkit.core.embeddings import TFIDFEmbeddings
 from danny_toolkit.core.document_processor import DocumentProcessor
+
+try:
+    import anthropic
+    HAS_ANTHROPIC = True
+except ImportError:
+    HAS_ANTHROPIC = False
+
 
 
 class MiniRAG:
@@ -44,7 +53,7 @@ class MiniRAG:
         "sliding": "Sliding window met overlap",
     }
 
-    def __init__(self, documenten_map: Path = None):
+    def __init__(self, documenten_map: Path = None) -> None:
         """Initializes a new instance of the class.
 
  Args:
@@ -117,7 +126,7 @@ class MiniRAG:
                         data[key][sub_key] = sub_value
         return data
 
-    def _sla_data_op(self):
+    def _sla_data_op(self) -> None:
         """Sla data op naar bestand."""
         self.data["statistieken"]["laatste_gebruik"] = datetime.now().isoformat()
         with open(self.data_file, "w", encoding="utf-8") as f:
@@ -128,7 +137,7 @@ class MiniRAG:
         # Probeer Claude
         if Config.has_anthropic_key():
             try:
-                import anthropic
+                pass  # import moved to top-level
                 self.ai_client = anthropic.Anthropic(api_key=Config.ANTHROPIC_API_KEY)
                 self.ai_provider = "claude"
                 return True
@@ -276,7 +285,7 @@ class MiniRAG:
 
         return "\n".join(delen)
 
-    def indexeer(self, toon_voortgang: bool = True):
+    def indexeer(self, toon_voortgang: bool = True) -> None:
         """Indexeer alle documenten."""
         if toon_voortgang:
             print(kleur("\n[INDEXEREN] Documenten laden...", Kleur.CYAAN))
@@ -564,7 +573,7 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
         keywords = sorted(self.tfidf_embedder.idf.items(), key=lambda x: x[1], reverse=True)
         return keywords[:top_n]
 
-    def _toon_document_info(self, doc_idx: int):
+    def _toon_document_info(self, doc_idx: int) -> None:
         """Toon gedetailleerde info over een document."""
         if doc_idx < 0 or doc_idx >= len(self.documenten):
             print(kleur("[!] Ongeldig document nummer.", Kleur.ROOD))
@@ -600,7 +609,7 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
             for term, score in top_terms:
                 print(f"  • {term} ({score:.3f})")
 
-    def _toon_statistieken(self):
+    def _toon_statistieken(self) -> None:
         """Toon uitgebreide statistieken."""
         stats = self.data["statistieken"]
 
@@ -632,7 +641,7 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
         print(f"║  AI antwoorden:         {ai_status:>20}  ║")
         print(kleur("╚════════════════════════════════════════════════════╝", Kleur.CYAAN))
 
-    def _toon_zoekgeschiedenis(self):
+    def _toon_zoekgeschiedenis(self) -> None:
         """Toon recente zoekgeschiedenis."""
         geschiedenis = self.data["zoekgeschiedenis"]
 
@@ -647,7 +656,7 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
             print(f"  {i}. [{datum}] \"{item['vraag'][:40]}...\"")
             print(f"     Resultaten: {item['resultaten']}, Top score: {item['top_score']:.3f}")
 
-    def _beheer_favorieten(self):
+    def _beheer_favorieten(self) -> None:
         """Beheer favoriete vragen."""
         while True:
             print(kleur("\n=== FAVORIETE VRAGEN ===", Kleur.GEEL))
@@ -688,9 +697,9 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
                         print("-" * 50)
                         print(antwoord)
                 except ValueError:
-                    pass
+                    logger.debug("Suppressed error")
 
-    def _instellingen_menu(self):
+    def _instellingen_menu(self) -> None:
         """Instellingen aanpassen."""
         while True:
             inst = self.data["instellingen"]
@@ -727,21 +736,21 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
                         inst["chunk_grootte"] = nieuwe
                         self.chunk_grootte = nieuwe
                 except ValueError:
-                    pass
+                    logger.debug("Suppressed error")
             elif keuze == "3":
                 try:
                     nieuwe = int(input("Nieuwe top K (1-20): "))
                     if 1 <= nieuwe <= 20:
                         inst["top_k"] = nieuwe
                 except ValueError:
-                    pass
+                    logger.debug("Suppressed error")
             elif keuze == "4":
                 try:
                     nieuwe = float(input("Nieuwe min. score (0.01-0.5): "))
                     if 0.01 <= nieuwe <= 0.5:
                         inst["min_score"] = nieuwe
                 except ValueError:
-                    pass
+                    logger.debug("Suppressed error")
             elif keuze == "5":
                 inst["gebruik_ai"] = not inst["gebruik_ai"]
                 if inst["gebruik_ai"] and not self.ai_client:
@@ -753,7 +762,7 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
 
             self._sla_data_op()
 
-    def _toon_help(self):
+    def _toon_help(self) -> None:
         """Toon hulp informatie."""
         print(kleur("\n╔════════════════════════════════════════════════════╗", Kleur.CYAAN))
         print(kleur("║              MINI-RAG HELP                         ║", Kleur.CYAAN))
@@ -775,7 +784,7 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
         print("║  • Zet AI aan voor betere antwoorden               ║")
         print(kleur("╚════════════════════════════════════════════════════╝", Kleur.CYAAN))
 
-    def _toon_documenten(self):
+    def _toon_documenten(self) -> None:
         """Toon lijst van geïndexeerde documenten."""
         if not self.documenten:
             print(kleur("[!] Geen documenten geïndexeerd.", Kleur.ROOD))
@@ -797,9 +806,9 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
                 idx = int(keuze) - 1
                 self._toon_document_info(idx)
             except ValueError:
-                pass
+                logger.debug("Suppressed error")
 
-    def _toon_keywords(self):
+    def _toon_keywords(self) -> None:
         """Toon belangrijkste keywords."""
         if not self.tfidf_embedder or not self.tfidf_embedder.idf:
             print(kleur("[!] Geen index beschikbaar.", Kleur.ROOD))
@@ -813,7 +822,7 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
             bar = "█" * bar_len
             print(f"  {i:2}. {term:<20} {bar} ({score:.2f})")
 
-    def run(self):
+    def run(self) -> None:
         """Start de interactieve Mini-RAG modus."""
         clear_scherm()
         print(kleur("\n╔════════════════════════════════════════════════════╗", Kleur.CYAAN))

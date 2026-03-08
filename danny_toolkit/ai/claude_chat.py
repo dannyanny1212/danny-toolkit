@@ -3,6 +3,8 @@ AI Chat App - Interactieve chat met Claude API.
 Versie 2.0 - Met persona's, templates, geschiedenis, export en meer!
 """
 
+from __future__ import annotations
+
 import json
 import os
 import re
@@ -11,6 +13,16 @@ from pathlib import Path
 
 from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import clear_scherm, kleur, Kleur
+import logging
+
+logger = logging.getLogger(__name__)
+
+try:
+    import anthropic
+    HAS_ANTHROPIC = True
+except ImportError:
+    HAS_ANTHROPIC = False
+
 
 
 class ClaudeChatApp:
@@ -148,7 +160,7 @@ class ClaudeChatApp:
         },
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes a new instance of the class, setting up essential attributes and loading existing chat data.
 
  Configures the necessary directories and sets default values for the provider, client, model, and other instance variables. 
@@ -207,7 +219,7 @@ class ClaudeChatApp:
                         data[key][sub_key] = sub_value
         return data
 
-    def _sla_data_op(self):
+    def _sla_data_op(self) -> None:
         """Sla data op naar bestand."""
         self.data["statistieken"]["laatste_gebruik"] = datetime.now().isoformat()
         with open(self.data_file, "w", encoding="utf-8") as f:
@@ -218,7 +230,7 @@ class ClaudeChatApp:
         # Probeer Claude
         if Config.has_anthropic_key():
             try:
-                import anthropic
+                pass  # import moved to top-level
                 self.client = anthropic.Anthropic(api_key=Config.ANTHROPIC_API_KEY)
                 self.model = Config.CLAUDE_MODEL
                 self.provider = "claude"
@@ -282,7 +294,7 @@ class ClaudeChatApp:
             return self.data["custom_personas"][self.huidige_persona]
         return self.PERSONAS["assistent"]
 
-    def _toon_help(self):
+    def _toon_help(self) -> None:
         """Toon alle beschikbare commando's."""
         print(kleur("\n╔════════════════════════════════════════════════════╗", Kleur.CYAAN))
         print(kleur("║            BESCHIKBARE COMMANDO'S                  ║", Kleur.CYAAN))
@@ -313,7 +325,7 @@ class ClaudeChatApp:
         print("║  stop/quit   - Afsluiten                             ║")
         print(kleur("╚════════════════════════════════════════════════════╝", Kleur.CYAAN))
 
-    def _toon_personas(self):
+    def _toon_personas(self) -> None:
         """Toon beschikbare persona's."""
         print(kleur("\n╔════════════════════════════════════════════════════╗", Kleur.MAGENTA))
         print(kleur("║              BESCHIKBARE PERSONA'S                 ║", Kleur.MAGENTA))
@@ -357,7 +369,7 @@ class ClaudeChatApp:
                            f"{persona['naam']}", Kleur.GROEN))
                 self.conversatie = []
 
-    def _maak_custom_persona(self):
+    def _maak_custom_persona(self) -> None:
         """Maak een nieuwe custom persona."""
         print(kleur("\n=== NIEUWE PERSONA MAKEN ===", Kleur.GEEL))
 
@@ -388,7 +400,7 @@ class ClaudeChatApp:
         self.huidige_persona = key
         self.conversatie = []
 
-    def _toon_templates(self):
+    def _toon_templates(self) -> None:
         """Toon beschikbare templates."""
         print(kleur("\n╔════════════════════════════════════════════════════╗", Kleur.GEEL))
         print(kleur("║              PROMPT TEMPLATES                      ║", Kleur.GEEL))
@@ -412,9 +424,9 @@ class ClaudeChatApp:
             if 0 <= idx < len(keys):
                 self._gebruik_template(keys[idx])
         except ValueError:
-            pass
+            logger.debug("Suppressed error")
 
-    def _gebruik_template(self, template_key: str):
+    def _gebruik_template(self, template_key: str) -> None:
         """Gebruik een specifieke template."""
         template = self.TEMPLATES[template_key]
         prompt = template["prompt"]
@@ -444,7 +456,7 @@ class ClaudeChatApp:
         except KeyError as e:
             print(kleur(f"[!] Ontbrekende waarde: {e}", Kleur.ROOD))
 
-    def _save_gesprek(self):
+    def _save_gesprek(self) -> None:
         """Sla het huidige gesprek op."""
         if not self.conversatie:
             print(kleur("[!] Geen gesprek om op te slaan.", Kleur.ROOD))
@@ -468,7 +480,7 @@ class ClaudeChatApp:
 
         print(kleur(f"\n[OK] Gesprek '{naam}' opgeslagen!", Kleur.GROEN))
 
-    def _load_gesprek(self):
+    def _load_gesprek(self) -> None:
         """Laad een eerder gesprek."""
         gesprekken = self.data.get("gesprekken", {})
 
@@ -501,9 +513,9 @@ class ClaudeChatApp:
                 print(f"    Persona: {self._get_huidige_persona()['naam']}")
                 print(f"    Berichten: {len(self.conversatie)}")
         except ValueError:
-            pass
+            logger.debug("Suppressed error")
 
-    def _toon_history(self):
+    def _toon_history(self) -> None:
         """Toon de huidige gespreksgeschiedenis."""
         if not self.conversatie:
             print(kleur("[!] Geen berichten in huidige conversatie.", Kleur.ROOD))
@@ -518,7 +530,7 @@ class ClaudeChatApp:
             print(f"\n{i}. [{rol}]")
             print(f"   {content}")
 
-    def _export_gesprek(self):
+    def _export_gesprek(self) -> None:
         """Exporteer het gesprek naar een bestand."""
         if not self.conversatie:
             print(kleur("[!] Geen gesprek om te exporteren.", Kleur.ROOD))
@@ -551,7 +563,7 @@ class ClaudeChatApp:
         elif keuze == "3":
             self._export_txt(export_dir / f"{bestandsnaam}.txt", persona)
 
-    def _export_markdown(self, path: Path, persona: dict):
+    def _export_markdown(self, path: Path, persona: dict) -> None:
         """Exporteer naar Markdown."""
         content = f"# Chat Export - {datetime.now().strftime('%d-%m-%Y %H:%M')}\n\n"
         content += f"**Persona:** {persona['emoji']} {persona['naam']}\n\n"
@@ -571,7 +583,7 @@ class ClaudeChatApp:
 
         print(kleur(f"\n[OK] Geëxporteerd naar: {path}", Kleur.GROEN))
 
-    def _export_html(self, path: Path, persona: dict):
+    def _export_html(self, path: Path, persona: dict) -> None:
         """Exporteer naar HTML met styling."""
         html = f"""<!DOCTYPE html>
 <html lang="nl">
@@ -667,7 +679,7 @@ class ClaudeChatApp:
 
         print(kleur(f"\n[OK] Geëxporteerd naar: {path}", Kleur.GROEN))
 
-    def _export_txt(self, path: Path, persona: dict):
+    def _export_txt(self, path: Path, persona: dict) -> None:
         """Exporteer naar plain text."""
         content = f"Chat Export - {datetime.now().strftime('%d-%m-%Y %H:%M')}\n"
         content += f"Persona: {persona['naam']}\n"
@@ -684,7 +696,7 @@ class ClaudeChatApp:
 
         print(kleur(f"\n[OK] Geëxporteerd naar: {path}", Kleur.GROEN))
 
-    def _extraheer_code(self):
+    def _extraheer_code(self) -> None:
         """Extraheer code uit het laatste AI antwoord."""
         if not self.conversatie:
             print(kleur("[!] Geen conversatie.", Kleur.ROOD))
@@ -741,9 +753,9 @@ class ClaudeChatApp:
 
                 print(kleur(f"\n[OK] Code opgeslagen naar: {path}", Kleur.GROEN))
         except ValueError:
-            pass
+            logger.debug("Suppressed error")
 
-    def _snelle_vertaling(self):
+    def _snelle_vertaling(self) -> None:
         """Snelle vertaling tool."""
         print(kleur("\n=== SNELLE VERTALING ===", Kleur.GEEL))
 
@@ -800,7 +812,7 @@ class ClaudeChatApp:
         except Exception as e:
             print(kleur(f"[!] Fout: {e}", Kleur.ROOD))
 
-    def _beheer_favorieten(self):
+    def _beheer_favorieten(self) -> None:
         """Beheer favoriete prompts."""
         while True:
             print(kleur("\n=== FAVORIETE PROMPTS ===", Kleur.GEEL))
@@ -829,9 +841,9 @@ class ClaudeChatApp:
                     if 0 <= idx < len(favorieten):
                         self._gebruik_favoriet(favorieten[idx])
                 except ValueError:
-                    pass
+                    logger.debug("Suppressed error")
 
-    def _voeg_favoriet_toe(self):
+    def _voeg_favoriet_toe(self) -> None:
         """Voeg een nieuwe favoriete prompt toe."""
         naam = input("Naam voor deze favoriet: ").strip()
         print("Prompt (eindig met lege regel):")
@@ -858,7 +870,7 @@ class ClaudeChatApp:
 
         print(kleur("[OK] Favoriet toegevoegd!", Kleur.GROEN))
 
-    def _gebruik_favoriet(self, favoriet: dict):
+    def _gebruik_favoriet(self, favoriet: dict) -> None:
         """Gebruik een favoriete prompt."""
         print(kleur(f"\n=== {favoriet['naam']} ===", Kleur.GEEL))
         print(favoriet["prompt"])
@@ -884,7 +896,7 @@ class ClaudeChatApp:
             self._sla_data_op()
             print(kleur("[OK] Favoriet verwijderd.", Kleur.GROEN))
 
-    def _toon_stats(self):
+    def _toon_stats(self) -> None:
         """Toon statistieken."""
         stats = self.data["statistieken"]
         sessie_duur = datetime.now() - self.sessie_start
@@ -914,7 +926,7 @@ class ClaudeChatApp:
         print(f"║  Persona:               {persona['naam']:>20}  ║")
         print(kleur("╚════════════════════════════════════════════════════╝", Kleur.CYAAN))
 
-    def _toon_welkom(self):
+    def _toon_welkom(self) -> None:
         """Toon welkomstbericht."""
         persona = self._get_huidige_persona()
 
@@ -928,7 +940,7 @@ class ClaudeChatApp:
         print("║  Typ 'stop' om af te sluiten                       ║")
         print(kleur("╚════════════════════════════════════════════════════╝", Kleur.CYAAN))
 
-    def run(self):
+    def run(self) -> None:
         """Start de chat app."""
         clear_scherm()
         print(kleur("\n╔════════════════════════════════════════════════════╗", Kleur.CYAAN))

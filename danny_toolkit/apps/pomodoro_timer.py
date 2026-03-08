@@ -2,11 +2,20 @@
 Pomodoro Timer v2.0 - AI-Powered focus timer.
 """
 
+from __future__ import annotations
+
 import logging
 import time
 from datetime import datetime, timedelta
 from danny_toolkit.core.utils import clear_scherm
 from danny_toolkit.apps.base_app import BaseApp
+
+try:
+    import danny_toolkit.brain.unified_memory
+    HAS_UNIFIED_MEMORY = True
+except ImportError:
+    HAS_UNIFIED_MEMORY = False
+
 
 logger = logging.getLogger(__name__)
 
@@ -14,11 +23,13 @@ logger = logging.getLogger(__name__)
 class PomodoroTimerApp(BaseApp):
     """AI-Powered Pomodoro techniek timer."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         super().__init__("pomodoro_stats.json")
         self.stats = self.data
 
     def _get_default_data(self) -> dict:
+        """Get default data."""
         return {
             "totaal_pomodoros": 0,
             "totaal_minuten": 0,
@@ -27,11 +38,11 @@ class PomodoroTimerApp(BaseApp):
             "sessies": []
         }
 
-    def _log_memory_event(self, event_type, data):
+    def _log_memory_event(self, event_type, data) -> None:
         """Log event naar Unified Memory."""
         try:
             if not hasattr(self, "_memory"):
-                from danny_toolkit.brain.unified_memory import UnifiedMemory
+                pass  # import moved to top-level
                 self._memory = UnifiedMemory()
             self._memory.store_event(
                 app="pomodoro_timer",
@@ -41,7 +52,7 @@ class PomodoroTimerApp(BaseApp):
         except Exception as e:
             logger.debug("Memory event error: %s", e)
 
-    def run(self):
+    def run(self) -> None:
         """Start de pomodoro timer."""
         while True:
             clear_scherm()
@@ -92,7 +103,7 @@ class PomodoroTimerApp(BaseApp):
                 self._ai_productiviteit_analyse()
                 input("\nDruk op Enter...")
 
-    def _start_timer(self, minuten: int, type_timer: str):
+    def _start_timer(self, minuten: int, type_timer: str) -> None:
         """Start een timer."""
         clear_scherm()
         print(f"\n{'=' * 50}")
@@ -160,7 +171,7 @@ class PomodoroTimerApp(BaseApp):
 
         input("\nDruk op Enter...")
 
-    def _aangepaste_timer(self):
+    def _aangepaste_timer(self) -> None:
         """Start een aangepaste timer."""
         try:
             minuten = int(input("\nAantal minuten: ").strip())
@@ -170,7 +181,7 @@ class PomodoroTimerApp(BaseApp):
             print("[!] Ongeldig aantal minuten!")
             input("\nDruk op Enter...")
 
-    def _toon_statistieken(self):
+    def _toon_statistieken(self) -> None:
         """Toon pomodoro statistieken."""
         clear_scherm()
         print("\n" + "=" * 50)
@@ -193,7 +204,7 @@ class PomodoroTimerApp(BaseApp):
 
     # ==================== AI FUNCTIES ====================
 
-    def _ai_focus_tips(self):
+    def _ai_focus_tips(self) -> None:
         """AI geeft focus tips."""
         print("\n--- AI FOCUS TIPS ---")
 
@@ -220,7 +231,7 @@ Varieer tussen mindset en praktische tips. Nederlands."""
         if response:
             print(f"\n[AI Focus Tips]:\n{response}")
 
-    def _ai_motivatie(self):
+    def _ai_motivatie(self) -> None:
         """AI geeft motivatie boost."""
         print("\n--- AI MOTIVATIE ---")
 
@@ -243,7 +254,7 @@ Vier hun voortgang. Nederlands."""
         if response:
             print(f"\n🔥 {response}")
 
-    def _ai_productiviteit_analyse(self):
+    def _ai_productiviteit_analyse(self) -> None:
         """AI analyseert productiviteit patronen."""
         print("\n--- AI PRODUCTIVITEIT ANALYSE ---")
 

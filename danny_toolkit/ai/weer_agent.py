@@ -16,6 +16,8 @@ Features:
 - Kleurrijke terminal output
 """
 
+from __future__ import annotations
+
 import json
 import math
 import random
@@ -24,6 +26,9 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 
 from danny_toolkit.core.utils import clear_scherm, kleur, Kleur
+import logging
+
+logger = logging.getLogger(__name__)
 
 try:
     from danny_toolkit.core.neural_bus import get_bus, EventTypes
@@ -183,7 +188,7 @@ class WeerAgentApp:
         9: ["ambrosia"], 10: [], 11: [], 12: []
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes a new instance of the class, setting default properties and loading existing data.
 
  Sets the instance name to "WeerWijzer" and initializes an empty memory dictionary.
@@ -204,7 +209,7 @@ class WeerAgentApp:
                 with open(self.data_bestand, "r", encoding="utf-8") as f:
                     return json.load(f)
             except (json.JSONDecodeError, IOError):
-                pass
+                logger.debug("Suppressed error")
         return {
             "versie": self.VERSIE,
             "favoriete_locaties": [],
@@ -212,7 +217,7 @@ class WeerAgentApp:
             "totaal_queries": 0,
         }
 
-    def _sla_data_op(self):
+    def _sla_data_op(self) -> None:
         """Sla data op."""
         self.data_bestand.parent.mkdir(parents=True, exist_ok=True)
         with open(self.data_bestand, "w", encoding="utf-8") as f:
@@ -572,7 +577,8 @@ are handled internally by the function."""
         alerts = []
 
         # Code kleuren
-        def maak_alert(type_naam, niveau, bericht, icon):
+        def maak_alert(type_naam, niveau, bericht, icon) -> None:
+            """Maak alert."""
             kleur_map = {"ROOD": Kleur.ROOD, "ORANJE": "oranje", "GEEL": Kleur.GEEL}
             return {
                 "type": type_naam,
@@ -783,7 +789,7 @@ are handled internally by the function."""
 
     # ==================== WEERGAVE ====================
 
-    def _toon_steden_lijst(self):
+    def _toon_steden_lijst(self) -> None:
         """Toont beschikbare steden per regio."""
         print("\n" + kleur("Beschikbare steden:", Kleur.GEEL))
 
@@ -802,7 +808,7 @@ are handled internally by the function."""
                 steden_str += f" (+{len(steden)-6})"
             print(f"  {kleur(regio, 'cyaan')}: {steden_str}")
 
-    def _toon_menu(self):
+    def _toon_menu(self) -> None:
         """Toon het hoofdmenu."""
         print()
         print(kleur("+" + "=" * 55 + "+", Kleur.CYAAN))
@@ -849,7 +855,7 @@ are handled internally by the function."""
 
         return locatie
 
-    def _toon_weer_compact(self, weer: dict):
+    def _toon_weer_compact(self, weer: dict) -> None:
         """Toon compact weeroverzicht."""
         print(f"\n{weer['icon']} {kleur(weer['stad'], 'cyaan')} - {weer['conditie'].title()}")
         print(f"   Temperatuur: {kleur(str(weer['temp']) + '°C', 'geel')}", end="")
@@ -860,7 +866,7 @@ are handled internally by the function."""
 
     def _toon_volledig_rapport(self, weer: dict, voorspelling: list, alerts: list,
                                advies: str, activiteiten: list, sport: dict,
-                               pollen: dict, lucht: dict, zon: dict, maanfase: dict):
+                               pollen: dict, lucht: dict, zon: dict, maanfase: dict) -> None:
         """Toon volledig weerrapport."""
         print("\n" + kleur("=" * 60, Kleur.CYAAN))
         print(kleur("              COMPLEET WEERRAPPORT", Kleur.GEEL))
@@ -947,7 +953,7 @@ are handled internally by the function."""
 
         print("\n" + kleur("=" * 60, Kleur.CYAAN))
 
-    def _toon_voorspelling_uur(self, voorspelling: list, stad: str):
+    def _toon_voorspelling_uur(self, voorspelling: list, stad: str) -> None:
         """Toon uur-voor-uur voorspelling."""
         print(f"\n{kleur('[UUR-VOOR-UUR VOORSPELLING]', 'geel')} {stad}")
         print("  " + "-" * 50)
@@ -957,7 +963,7 @@ are handled internally by the function."""
             print(f"  {uur_data['uur']}: {uur_data['icon']} {uur_data['temp']:>2}°C  "
                   f"{kleur(str(uur_data['neerslag_kans']) + '%', neerslag_kleur)} neerslag")
 
-    def _toon_vergelijking(self, vergelijk: dict):
+    def _toon_vergelijking(self, vergelijk: dict) -> None:
         """Toon vergelijking tussen twee steden."""
         w1 = vergelijk["stad1"]
         w2 = vergelijk["stad2"]
@@ -975,7 +981,7 @@ are handled internally by the function."""
         print(f"  {kleur('Warmste:', 'geel')} {vergelijk['warmste']}")
         print(f"  {kleur('Minste wind:', 'geel')} {vergelijk['minst_wind']}")
 
-    def _beheer_favorieten(self):
+    def _beheer_favorieten(self) -> None:
         """Beheer favoriete locaties."""
         print(f"\n{kleur('FAVORIETE LOCATIES', 'cyaan')}")
         print("-" * 40)
@@ -1012,7 +1018,7 @@ are handled internally by the function."""
                     self._sla_data_op()
                     print(kleur(f"{verwijderd} verwijderd!", Kleur.GROEN))
             except ValueError:
-                pass
+                logger.debug("Suppressed error")
 
     # ==================== AGENTIC LOOP ====================
 
@@ -1127,7 +1133,7 @@ are handled internally by the function."""
 
         return alles_ok
 
-    def run(self):
+    def run(self) -> None:
         """Start de interactieve weer agent."""
         clear_scherm()
         print(kleur("+" + "=" * 58 + "+", Kleur.CYAAN))

@@ -1,6 +1,8 @@
 """
 Dreamer — Overnight REM Cycle (v6.0 Invention).
 
+from __future__ import annotations
+
 Draait om 04:00 via daemon heartbeat. Voert uit: CorticalStack backup,
 vacuum, retention policy, GhostWriter auto-docstrings, TheMirror
 user profiling, Phantom anticipation, en Synapse pathway plasticity.
@@ -60,7 +62,7 @@ class Dreamer:
     3. Reflect: Update user profile via TheMirror
     4. Pre-Compute: Anticipate tomorrow's needs
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes the instance with a Groq API client and model configuration.
 
 If the key manager is available, creates an asynchronous Groq client using the key manager; 
@@ -78,7 +80,7 @@ Sets the model attribute to the LLM model specified in the configuration."""
             self.client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
         self.model = Config.LLM_MODEL
 
-    async def rem_cycle(self):
+    async def rem_cycle(self) -> None:
         """Full REM cycle — run at 04:00 via daemon_heartbeat."""
         logger.info("🌙 Entering REM cycle (System Optimization)...")
 
@@ -276,7 +278,7 @@ Sets the model attribute to the LLM model specified in the configuration."""
 
         print(f"{Kleur.GROEN}🌙 REM cycle complete.{Kleur.RESET}")
 
-    def _backup_cortical_stack(self):
+    def _backup_cortical_stack(self) -> None:
         """Create a compressed backup of cortical_stack.db."""
         if not HAS_STACK:
             return
@@ -297,7 +299,7 @@ Sets the model attribute to the LLM model specified in the configuration."""
                 except Exception as e:
                     logger.debug("REM taak mislukt: %s", e)
 
-    def _apply_retention(self):
+    def _apply_retention(self) -> None:
         """Apply data retention policy to prune old rows."""
         if not HAS_STACK:
             return
@@ -314,7 +316,7 @@ Sets the model attribute to the LLM model specified in the configuration."""
         except Exception as e:
             print(f"{Kleur.ROOD}🗑️ Retention error: {e}{Kleur.RESET}")
 
-    def _rotate_logs(self):
+    def _rotate_logs(self) -> None:
         """Verwijder oude log bestanden uit data/logs/."""
         try:
             from danny_toolkit.core.log_rotation import roteer_logs
@@ -324,7 +326,7 @@ Sets the model attribute to the LLM model specified in the configuration."""
         except Exception as e:
             logger.debug("Log rotation error: %s", e)
 
-    def _vacuum(self):
+    def _vacuum(self) -> None:
         """Optimize the CorticalStack SQLite database."""
         if not HAS_STACK:
             return
@@ -337,7 +339,7 @@ Sets the model attribute to the LLM model specified in the configuration."""
         except Exception as e:
             print(f"{Kleur.ROOD}🧹 Vacuum error: {e}{Kleur.RESET}")
 
-    async def _compress(self):
+    async def _compress(self) -> None:
         """Summarize last 24h of events into a daily digest."""
         if not HAS_STACK:
             return
@@ -408,7 +410,7 @@ Sets the model attribute to the LLM model specified in the configuration."""
             print(f"{Kleur.ROOD}🔮 Anticipation error: {e}{Kleur.RESET}")
             return None
 
-    async def _shadow_summarization(self, max_docs: int = 10):
+    async def _shadow_summarization(self, max_docs: int = 10) -> None:
         """REM Fase 5.7: Shadow pre-summarization of RAG documents.
 
         Gebruikt de Dreamer's eigen Groq client (GROQ_API_KEY_OVERNIGHT)
@@ -588,7 +590,7 @@ Sets the model attribute to the LLM model specified in the configuration."""
             logger.debug("Shadow summarization error: %s", e)
             print(f"{Kleur.ROOD}📑 Shadow summarization error: {e}{Kleur.RESET}")
 
-    async def _recursive_refine(self, drempel: int = 25, max_docs: int = 20):
+    async def _recursive_refine(self, drempel: int = 25, max_docs: int = 20) -> None:
         """Fase 31: Recursive Refiner — dubbele pers naar Super-Tokens.
 
         Samenvattingen die nog te veel tokens bevatten (>drempel) worden
@@ -707,7 +709,7 @@ Sets the model attribute to the LLM model specified in the configuration."""
                 except Exception as e:
                     logger.debug("DB close error: %s", e)
 
-    async def _research_failures(self):
+    async def _research_failures(self) -> None:
         """Research top failure topics via VoidWalker."""
         try:
             from danny_toolkit.brain.black_box import get_black_box

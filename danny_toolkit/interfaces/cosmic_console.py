@@ -19,6 +19,8 @@ Features:
 Gebruik: python -m danny_toolkit.interfaces.cosmic_console
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import sys
@@ -106,7 +108,7 @@ AGENT_COLORS = {
 
 # --- GOVERNOR & BOOT ---
 
-def show_governor_status(brain):
+def show_governor_status(brain) -> None:
     """Toon compacte Governor health status."""
     try:
         report = brain.governor.get_health_report()
@@ -146,7 +148,7 @@ def show_governor_status(brain):
         )
 
 
-def show_boot_log(boot_log):
+def show_boot_log(boot_log) -> None:
     """Toon boot log in een dim panel."""
     if boot_log.strip():
         console.print(Panel(
@@ -156,7 +158,7 @@ def show_boot_log(boot_log):
         ))
 
 
-def show_status(brain):
+def show_status(brain) -> None:
     """Toon Governor health + agent grid per tier."""
     show_governor_status(brain)
     console.print()
@@ -221,7 +223,7 @@ def show_status(brain):
 
 # --- PAYLOAD RENDERING ---
 
-def render_payload(p, elapsed=0.0):
+def render_payload(p, elapsed=0.0) -> None:
     """Render een SwarmPayload naar de console."""
     color = AGENT_COLORS.get(p.agent, "white")
     console.print(
@@ -368,7 +370,7 @@ def render_payload(p, elapsed=0.0):
         )
 
 
-def render_chain_result(chain_result):
+def render_chain_result(chain_result) -> None:
     """Render chain pipeline resultaat."""
     if not isinstance(chain_result, dict):
         console.print(Panel(
@@ -413,13 +415,14 @@ def render_chain_result(chain_result):
 class CosmicConsole:
     """Async terminal interface voor Project Omega."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self.brain = None
         self.boot_log = ""
         self.engine = None
         self.chain_mode = False
 
-    def _load_brain(self):
+    def _load_brain(self) -> None:
         """Laad PrometheusBrain met boot capture."""
         console.print(
             "[dim]Federation wordt gewekt...[/dim]"
@@ -430,7 +433,7 @@ class CosmicConsole:
         self.boot_log = buf.getvalue()
         self.engine = SwarmEngine(self.brain)
 
-    def print_banner(self):
+    def print_banner(self) -> None:
         """Toon header banner."""
         console.clear()
         console.print(Panel(
@@ -439,7 +442,7 @@ class CosmicConsole:
             border_style="blue",
         ))
 
-    async def ingest_wizard(self):
+    async def ingest_wizard(self) -> None:
         """RAG ingest wizard."""
         try:
             path = Prompt.ask(
@@ -464,7 +467,7 @@ class CosmicConsole:
             f" ({count} chunks in DB)[/bold green]"
         )
 
-    async def start(self):
+    async def start(self) -> None:
         """Hoofdloop van de console."""
         self.print_banner()
 

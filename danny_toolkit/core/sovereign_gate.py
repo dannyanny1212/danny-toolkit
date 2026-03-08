@@ -13,6 +13,8 @@ Laws 6-9: Security Hardening (Phase Golden Master)
   9. Max Boot Frequency    — Max 10 boots per minuut
 """
 
+from __future__ import annotations
+
 import ctypes
 import hashlib
 import json
@@ -22,6 +24,9 @@ import sys
 import time
 
 import psutil
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # ── Constanten ──────────────────────────────────────────────
@@ -40,12 +45,12 @@ _MAX_BOOTS_PER_MINUTE = 10
 _HASH_FILE = os.path.join(_DATA_DIR, ".gate_hash")
 
 
-def _ensure_data_dir():
+def _ensure_data_dir() -> None:
     """Maak data directory als het niet bestaat."""
     os.makedirs(_DATA_DIR, exist_ok=True)
 
 
-def _audit_log(status: str, law: str, detail: str = ""):
+def _audit_log(status: str, law: str, detail: str = "") -> None:
     """Schrijf audit regel naar logbestand."""
     try:
         _ensure_data_dir()
@@ -57,14 +62,14 @@ def _audit_log(status: str, law: str, detail: str = ""):
         pass  # Audit log mag nooit de gate blokkeren
 
 
-def _gate_fail(law: str, message: str):
+def _gate_fail(law: str, message: str) -> None:
     """Registreer een failure en exit."""
     _audit_log("DENIED", law, message)
     _record_failure()
     sys.exit(f"\U0001f6a8 [GATE] {message}")
 
 
-def _record_failure():
+def _record_failure() -> None:
     """Tel een gefaalde poging voor brute force tracking."""
     try:
         _ensure_data_dir()
@@ -86,10 +91,10 @@ def _record_failure():
         with open(_LOCKOUT_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f)
     except Exception:
-        pass
+        logger.debug("Suppressed error")
 
 
-def _record_boot():
+def _record_boot() -> None:
     """Registreer een succesvolle boot voor frequency tracking."""
     try:
         _ensure_data_dir()
@@ -106,7 +111,7 @@ def _record_boot():
         with open(_BOOT_TRACKER, "w", encoding="utf-8") as f:
             json.dump(data, f)
     except Exception:
-        pass
+        logger.debug("Suppressed error")
 
 
 def _compute_self_hash() -> str:
@@ -122,7 +127,7 @@ def _compute_self_hash() -> str:
         return ""
 
 
-def lock_environment():
+def lock_environment() -> None:
     """
     THE SOVEREIGN GATE — 9 Security Laws.
     Executes before Omega boots. If any check fails, the process dies instantly.
@@ -145,7 +150,7 @@ def lock_environment():
                     f"Too many failed attempts. Try again in {remaining}s."
                 )
     except (json.JSONDecodeError, KeyError):
-        pass
+        logger.debug("Suppressed error")
 
     # ═══════════════════════════════════════════════════════
     #  LAW 9: MAX BOOT FREQUENCY (anti fork-bomb)
@@ -163,7 +168,7 @@ def lock_environment():
                     "Possible fork-bomb detected.",
                 )
     except (json.JSONDecodeError, KeyError):
-        pass
+        logger.debug("Suppressed error")
 
     # ═══════════════════════════════════════════════════════
     #  LAW 1: THE ROOT LAW

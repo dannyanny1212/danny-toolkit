@@ -1,6 +1,8 @@
 """
 Brain CLI v2.0 — Omega Sovereign Command Interface.
 
+from __future__ import annotations
+
 5-Laags Agent Commander met RAG-gestuurde architectuur bewustzijn.
 Alle 50+ agents worden via dit centraal punt aangestuurd, gemonitord
 en gedocumenteerd. Elke .md wordt live gequeryd via de RAG pipeline.
@@ -177,7 +179,7 @@ class BrainCLI:
 
     VERSIE = "2.0.0"
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes the Omega Brain CLI, loads the central brain, and checks RAG availability.
 
  Args: 
@@ -219,7 +221,7 @@ class BrainCLI:
             logger.debug("RAG query fout: %s", e)
             return []
 
-    def _print_header(self, titel: str):
+    def _print_header(self, titel: str) -> None:
         """Print Omega header."""
         clear_scherm()
         print(kleur("""
@@ -237,10 +239,12 @@ class BrainCLI:
         print(kleur(f"  {titel}", Kleur.GEEL))
         print()
 
-    def _print_divider(self):
+    def _print_divider(self) -> None:
+        """Print divider."""
         print(kleur("  " + "─" * 60, Kleur.CYAAN))
 
-    def _print_laag_header(self, nummer: int, naam: str):
+    def _print_laag_header(self, nummer: int, naam: str) -> None:
+        """Print laag header."""
         print(kleur(f"\n  ═══ LAAG {nummer}: {naam.upper()} ═══", Kleur.MAGENTA))
 
     # ─── SYSTEM STATUS ────────────────────────────────────────
@@ -293,7 +297,7 @@ class BrainCLI:
 
     # ─── HOOFDMENU ────────────────────────────────────────────
 
-    def run(self):
+    def run(self) -> None:
         """Start de Omega Brain CLI."""
         while True:
             self._print_header("Omega Sovereign Command Interface")
@@ -383,7 +387,7 @@ class BrainCLI:
 
     # ─── LAAG DETAIL VIEW ────────────────────────────────────
 
-    def _laag_detail(self, laag_nr: int):
+    def _laag_detail(self, laag_nr: int) -> None:
         """Toon gedetailleerde view van een agent laag."""
         lagen = {
             1: LAAG_1_SWARM,
@@ -443,7 +447,7 @@ class BrainCLI:
 
         input("\n  Druk op Enter...")
 
-    def _probe_brain_agents(self):
+    def _probe_brain_agents(self) -> None:
         """Probe brain agents voor live status."""
         print(kleur("\n  Live Agent Probes:", Kleur.CYAAN))
         probes = [
@@ -461,7 +465,7 @@ class BrainCLI:
             except Exception as e:
                 print(f"     {kleur('[--]', 'geel')} {naam}: {type(e).__name__}")
 
-    def _probe_daemons(self):
+    def _probe_daemons(self) -> None:
         """Probe daemon status."""
         print(kleur("\n  Daemon Status:", Kleur.CYAAN))
 
@@ -490,7 +494,7 @@ class BrainCLI:
 
     # ─── CHAT MODE ────────────────────────────────────────────
 
-    def _chat_mode(self):
+    def _chat_mode(self) -> None:
         """Interactieve chat met Central Brain."""
         self._print_header("Chat met Central Brain")
 
@@ -530,7 +534,7 @@ class BrainCLI:
 
     # ─── WORKFLOW MENU ────────────────────────────────────────
 
-    def _workflow_menu(self):
+    def _workflow_menu(self) -> None:
         """Workflow selectie."""
         self._print_header("Workflow Selectie")
 
@@ -560,7 +564,7 @@ class BrainCLI:
                     self._run_workflow(wf["key"])
                     break
 
-    def _run_workflow(self, workflow_naam: str):
+    def _run_workflow(self, workflow_naam: str) -> None:
         """Voer een workflow uit."""
         self._print_header(f"Workflow: {workflow_naam}")
 
@@ -593,7 +597,7 @@ class BrainCLI:
 
     # ─── RAG QUERY MENU ──────────────────────────────────────
 
-    def _rag_query_menu(self):
+    def _rag_query_menu(self) -> None:
         """Interactieve RAG query interface."""
         self._print_header("RAG Query — Kennisbank Zoeken")
 
@@ -637,7 +641,7 @@ class BrainCLI:
 
     # ─── RAG GATE ─────────────────────────────────────────────
 
-    def _rag_gate_menu(self):
+    def _rag_gate_menu(self) -> None:
         """RAG Gate validatie via patchday protocol."""
         self._print_header("RAG Gate — Pre-Execution Validatie")
 
@@ -664,7 +668,7 @@ class BrainCLI:
 
     # ─── DOCUMENTATIE OVERZICHT ───────────────────────────────
 
-    def _docs_overzicht(self):
+    def _docs_overzicht(self) -> None:
         """Toon overzicht van alle project documentatie."""
         self._print_header("Documentatie — Alle .md Bestanden")
 
@@ -693,7 +697,7 @@ class BrainCLI:
 
     # ─── ARCHITECTUUR SCAN ────────────────────────────────────
 
-    def _architectuur_scan(self):
+    def _architectuur_scan(self) -> None:
         """Automatische architectuur scan over alle 5 lagen."""
         self._print_header("Architectuur Scan — Live Systeem Verificatie")
 
@@ -799,7 +803,7 @@ class BrainCLI:
 
     # ─── INTROSPECTOR ─────────────────────────────────────────
 
-    def _introspector(self):
+    def _introspector(self) -> None:
         """Systeem introspectie via brain modules."""
         self._print_header("Introspector — Systeem Health")
 
@@ -848,7 +852,7 @@ class BrainCLI:
 
     # ─── BRAIN STATS ──────────────────────────────────────────
 
-    def _brain_stats(self):
+    def _brain_stats(self) -> None:
         """Brain statistieken en memory status."""
         self._print_header("Brain Statistieken")
 
@@ -882,7 +886,7 @@ class BrainCLI:
         input("\n  Druk op Enter...")
 
 
-def main():
+def main() -> None:
     """Start Omega Brain CLI."""
     cli = BrainCLI()
     cli.run()

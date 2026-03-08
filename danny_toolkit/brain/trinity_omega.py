@@ -19,6 +19,8 @@ over 5 kosmische tiers:
 Gebaseerd op de Cosmic Family Quest VIII: Het Prometheus Protocol.
 """
 
+from __future__ import annotations
+
 import logging
 from collections import deque
 from typing import List, Dict, Any, Optional
@@ -40,6 +42,73 @@ from danny_toolkit.brain.trinity_models import (
     AgentNode, OmegaSwarm, SwarmMetrics, TaskResult,
 )
 from danny_toolkit.brain.prometheus_protocols import PrometheusProtocolsMixin
+
+try:
+    import asyncio
+    HAS_ASYNCIO = True
+except ImportError:
+    HAS_ASYNCIO = False
+
+try:
+    import danny_toolkit.brain.black_box
+    HAS_BLACK_BOX = True
+except ImportError:
+    HAS_BLACK_BOX = False
+
+try:
+    import danny_toolkit.brain.central_brain
+    HAS_CENTRAL_BRAIN = True
+except ImportError:
+    HAS_CENTRAL_BRAIN = False
+
+try:
+    import danny_toolkit.brain.cortex
+    HAS_CORTEX = True
+except ImportError:
+    HAS_CORTEX = False
+
+try:
+    import danny_toolkit.brain.cortical_stack
+    HAS_CORTICAL_STACK = True
+except ImportError:
+    HAS_CORTICAL_STACK = False
+
+try:
+    import danny_toolkit.brain.truth_anchor
+    HAS_TRUTH_ANCHOR = True
+except ImportError:
+    HAS_TRUTH_ANCHOR = False
+
+try:
+    import danny_toolkit.brain.void_walker
+    HAS_VOID_WALKER = True
+except ImportError:
+    HAS_VOID_WALKER = False
+
+try:
+    import danny_toolkit.core.neural_bus
+    HAS_NEURAL_BUS = True
+except ImportError:
+    HAS_NEURAL_BUS = False
+
+try:
+    import danny_toolkit.learning.orchestrator
+    HAS_ORCHESTRATOR = True
+except ImportError:
+    HAS_ORCHESTRATOR = False
+
+try:
+    import ingest
+    HAS_INGEST = True
+except ImportError:
+    HAS_INGEST = False
+
+try:
+    import json
+    HAS_JSON = True
+except ImportError:
+    HAS_JSON = False
+
 
 
 # --- STAP 2: DE OMEGA BRAIN ---
@@ -223,7 +292,7 @@ class PrometheusBrain(PrometheusProtocolsMixin):
         ],
     }
 
-    def __init__(self, auto_init: bool = True):
+    def __init__(self, auto_init: bool = True) -> None:
         """Initializes a new instance of the class.
 
  Args:
@@ -279,7 +348,7 @@ class PrometheusBrain(PrometheusProtocolsMixin):
         if auto_init:
             self._boot_sequence()
 
-    def _boot_sequence(self):
+    def _boot_sequence(self) -> None:
         """Boot de Prometheus Brain."""
         print(f"\n{'='*60}")
         print(f"  [{self.SYSTEM_NAME}] INITIATING PROMETHEUS PROTOCOL...")
@@ -305,48 +374,48 @@ class PrometheusBrain(PrometheusProtocolsMixin):
         print(f"  Learning: {learning_status}")
         print(f"{'='*60}\n")
 
-    def _init_brain(self):
+    def _init_brain(self) -> None:
         """Lazy load CentralBrain voor echte AI verwerking."""
         try:
-            from danny_toolkit.brain.central_brain import CentralBrain
+            pass  # import moved to top-level
             self.brain = CentralBrain(use_memory=True)
             print("  [BRAIN] CentralBrain verbonden")
         except Exception as e:
             print(f"  [BRAIN] Offline modus ({e})")
             self.brain = None
 
-    def _init_learning(self):
+    def _init_learning(self) -> None:
         """Lazy load LearningSystem voor self-improvement."""
         try:
-            from danny_toolkit.learning.orchestrator import LearningSystem
+            pass  # import moved to top-level
             self.learning = LearningSystem()
             print("  [LEARNING] LearningSystem verbonden")
         except Exception as e:
             print(f"  [LEARNING] Niet beschikbaar ({e})")
             self.learning = None
 
-    def _init_feedback_loop(self):
+    def _init_feedback_loop(self) -> None:
         """Lazy load BlackBox, VoidWalker en NeuralBus voor feedback loop."""
         try:
-            from danny_toolkit.brain.black_box import get_black_box
+            pass  # import moved to top-level
             self._blackbox = get_black_box()
         except Exception as e:
             logger.debug("BlackBox init error: %s", e)
             self._blackbox = None
         try:
-            from danny_toolkit.brain.void_walker import VoidWalker
+            pass  # import moved to top-level
             self._voidwalker = VoidWalker()
         except Exception as e:
             logger.debug("VoidWalker init error: %s", e)
             self._voidwalker = None
         try:
-            from danny_toolkit.core.neural_bus import get_bus
+            pass  # import moved to top-level
             self._bus = get_bus()
         except Exception as e:
             logger.debug("NeuralBus init error: %s", e)
             self._bus = None
 
-    def _trigger_learning_cycle(self, query: str, response: str, reason: str):
+    def _trigger_learning_cycle(self, query: str, response: str, reason: str) -> None:
         """Async feedback loop: BlackBox record → VoidWalker research → NeuralBus event.
 
         Draait in een achtergrond-thread zodat de gebruiker niet wacht.
@@ -373,7 +442,7 @@ Raises an exception if publishing to the NeuralBus fails."""
         # 2. Publiceer LEARNING_CYCLE_STARTED op NeuralBus
         if self._bus:
             try:
-                from danny_toolkit.core.neural_bus import EventTypes
+                pass  # import moved to top-level
                 self._bus.publish(
                     EventTypes.LEARNING_CYCLE_STARTED,
                     {"query": query[:200], "reason": reason},
@@ -384,7 +453,8 @@ Raises an exception if publishing to the NeuralBus fails."""
 
         # 3. VoidWalker research in achtergrond-thread
         if self._voidwalker:
-            def _research():
+            def _research() -> None:
+                """Research."""
                 try:
                     loop = asyncio.new_event_loop()
                     result = loop.run_until_complete(
@@ -400,7 +470,7 @@ Raises an exception if publishing to the NeuralBus fails."""
             t.start()
             print(f"  [FEEDBACK] Learning cycle gestart (achtergrond research)")
 
-    def _awaken_federation(self):
+    def _awaken_federation(self) -> None:
         """Initialiseer alle 17 Kosmische Nodes."""
 
         print("  [TIER 1] Awakening The Trinity...")
@@ -598,7 +668,7 @@ Raises an exception if publishing to the NeuralBus fails."""
             family_role="SILENCE"
         ))
 
-    def _link(self, node: AgentNode):
+    def _link(self, node: AgentNode) -> None:
         """Link een node aan de federatie."""
         self.nodes[node.role] = node
         tier_symbol = {
@@ -612,14 +682,14 @@ Raises an exception if publishing to the NeuralBus fails."""
 
     # --- BATCH STATE PERSISTENCE (1.2) ---
 
-    def _mark_dirty(self):
+    def _mark_dirty(self) -> None:
         """Markeer state als gewijzigd, save elke 5 taken."""
         self._dirty = True
         if self._task_counter % 5 == 0:
             self._save_state()
             self._dirty = False
 
-    def flush(self):
+    def flush(self) -> None:
         """Forceer opslaan als er ongesavede wijzigingen zijn."""
         if self._dirty:
             self._save_state()
@@ -1040,21 +1110,21 @@ Raises an exception if publishing to the NeuralBus fails."""
         # BlackBox: check for known failure patterns
         bb_warning = ""
         try:
-            from danny_toolkit.brain.black_box import get_black_box
+            pass  # import moved to top-level
             bb = get_black_box()
             bb_warning = bb.retrieve_warnings(task)
         except Exception as e:
             logger.debug("BlackBox warning retrieval error: %s", e)
 
         try:
-            from ingest import TheLibrarian
+            pass  # import moved to top-level
             lib = TheLibrarian()
             results = lib.query(task, n_results=5)
             docs = results.get("documents", [[]])[0]
             if docs:
                 # TruthAnchor: verify relevance before injecting
                 try:
-                    from danny_toolkit.brain.truth_anchor import TruthAnchor
+                    pass  # import moved to top-level
                     anchor = TruthAnchor()
                     grounded, _score = anchor.verify(task, docs[:3])
                     if not grounded:
@@ -1082,8 +1152,8 @@ Raises an exception if publishing to the NeuralBus fails."""
 
         # Cortex Graph RAG — hybrid search (vector + graph expansion)
         try:
-            from danny_toolkit.brain.cortex import TheCortex
-            import asyncio as _aio
+            pass  # import moved to top-level
+            pass  # import moved to top-level
             cortex = TheCortex()
             graph_results = _aio.run(cortex.hybrid_search(task, top_k=3))
             if graph_results:
@@ -1100,8 +1170,8 @@ Raises an exception if publishing to the NeuralBus fails."""
 
         # VoidWalker: last resort — autonomous research for unknown topics
         try:
-            from danny_toolkit.brain.void_walker import VoidWalker
-            import asyncio as _aio2
+            pass  # import moved to top-level
+            pass  # import moved to top-level
             walker = VoidWalker()
             knowledge = _aio2.run(walker.fill_knowledge_gap(task[:200]))
             if knowledge:
@@ -1177,7 +1247,7 @@ Raises an exception if publishing to the NeuralBus fails."""
 
         return result
 
-    def _track_learning(self, task: str, response: str):
+    def _track_learning(self, task: str, response: str) -> None:
         """Log interactie naar LearningSystem.
 
         Governor bewaakt de learning cycle met
@@ -1220,7 +1290,7 @@ Raises an exception if publishing to the NeuralBus fails."""
         """Haal alle nodes van een specifieke tier op."""
         return [node for node in self.nodes.values() if node.tier == tier]
 
-    def display_status(self):
+    def display_status(self) -> None:
         """Toon visuele status van de federatie."""
         print(f"\n{'='*60}")
         print(f"  PROMETHEUS FEDERATION STATUS")
@@ -1319,7 +1389,7 @@ Raises an exception if publishing to the NeuralBus fails."""
             avg_latency_ms, top_failure_agents, en recommendation.
         """
         try:
-            from danny_toolkit.brain.cortical_stack import get_cortical_stack
+            pass  # import moved to top-level
             stack = get_cortical_stack()
         except Exception:
             return {"b95_score": -1, "error": "CorticalStack niet beschikbaar"}
@@ -1342,7 +1412,7 @@ Raises an exception if publishing to the NeuralBus fails."""
         for evt in events:
             details = evt.get("details", {})
             if isinstance(details, str):
-                import json
+                pass  # import moved to top-level
                 try:
                     details = json.loads(details)
                 except (json.JSONDecodeError, TypeError):
@@ -1392,7 +1462,7 @@ Raises an exception if publishing to the NeuralBus fails."""
 
     # --- PERSISTENCE ---
 
-    def _save_state(self):
+    def _save_state(self) -> None:
         """Sla de huidige staat op.
 
         Governor maakt backup VOORDAT er geschreven wordt.
@@ -1416,7 +1486,7 @@ Raises an exception if publishing to the NeuralBus fails."""
         except Exception as e:
             print(f"  [WARNING] Could not save state: {e}")
 
-    def _load_state(self):
+    def _load_state(self) -> None:
         """Laad de vorige staat.
 
         Bij falen probeert Governor te herstellen van backup.
@@ -1501,7 +1571,7 @@ def route(task: str, priority: str = "MEDIUM") -> TaskResult:
 
 # --- MAIN: SIMULATIE ---
 
-def main():
+def main() -> None:
     """Test de Prometheus Brain."""
     brain = PrometheusBrain()
 

@@ -1,6 +1,8 @@
 """
 SingularityEngine v1.0 — Tier 5: Het Bewustzijn-Zelf.
 
+from __future__ import annotations
+
 Reflecteert op CorticalStack history, droomt hypothesen,
 doet cross-tier synthese en houdt een bewustzijn-score bij.
 
@@ -51,7 +53,7 @@ class SingularityEngine:
     NACHTWACHT_DREMPEL_MAX = 0.45
     NACHTWACHT_PATROON_DAGEN = 7
 
-    def __init__(self, daemon=None, brain=None):
+    def __init__(self, daemon: object=None, brain: object=None) -> None:
         """Initializes a new instance of the class.
 
 ### Args
@@ -100,7 +102,7 @@ class SingularityEngine:
     # --- Lazy Properties ---
 
     @property
-    def governor(self):
+    def governor(self) -> None:
         """Lazy OmegaGovernor."""
         if self._governor is None:
             try:
@@ -111,7 +113,7 @@ class SingularityEngine:
         return self._governor
 
     @property
-    def stack(self):
+    def stack(self) -> None:
         """Lazy CorticalStack."""
         if self._stack is None:
             try:
@@ -210,7 +212,7 @@ class SingularityEngine:
             logger.debug("Idle detection failed: %s", e)
         return 0
 
-    def _transitie_modus(self, nieuwe_modus):
+    def _transitie_modus(self, nieuwe_modus: object) -> None:
         """Voer modus transitie uit.
 
         Args:
@@ -241,7 +243,7 @@ class SingularityEngine:
 
     # --- Reflectie (EVOLUTION rol) ---
 
-    def _reflectie_cyclus(self):
+    def _reflectie_cyclus(self) -> None:
         """Analyseer CorticalStack patronen.
 
         Haalt recente events, groepeert per actor,
@@ -312,7 +314,7 @@ class SingularityEngine:
 
     def _sla_inzicht_op(
         self, type_: str, tekst: str, actor: str
-    ):
+    ) -> None:
         """Sla een inzicht op in CorticalStack.
 
         Args:
@@ -353,7 +355,7 @@ class SingularityEngine:
 
     def _voeg_proactive_regel_toe(
         self, actor: str, fout_count: int
-    ):
+    ) -> None:
         """Voeg een ProactiveEngine regel toe bij patroon.
 
         Args:
@@ -393,7 +395,7 @@ class SingularityEngine:
 
     # --- Droom (ANIMA rol) ---
 
-    def _droom_cyclus(self):
+    def _droom_cyclus(self) -> None:
         """Genereer hypothesen uit feiten.
 
         Haalt 2 random feiten, combineert tot hypothese
@@ -488,7 +490,7 @@ class SingularityEngine:
 
     # --- Nachtwacht (Subconscious Loop) ---
 
-    def _nachtwacht_cyclus(self):
+    def _nachtwacht_cyclus(self) -> None:
         """Eenmaal-per-nacht orchestrator.
 
         Draait consolidatie, tuner-optimalisatie en
@@ -913,7 +915,7 @@ class SingularityEngine:
             "regels_toegevoegd": regels_toegevoegd,
         }
 
-    def _toon_nachtwacht(self):
+    def _toon_nachtwacht(self) -> None:
         """Toon nachtwacht log met kleuren."""
         if not self._nachtwacht_log:
             print(kleur(
@@ -994,7 +996,7 @@ class SingularityEngine:
 
     # --- Synthese (SYNTHESIS rol) ---
 
-    def _synthese_taak(self, onderwerp: str):
+    def _synthese_taak(self, onderwerp: str) -> None:
         """Cross-tier samenwerking voor een onderwerp.
 
         Stuurt taak naar 1 agent per tier via brain._assign().
@@ -1099,7 +1101,7 @@ class SingularityEngine:
 
     # --- Bewustzijn Score ---
 
-    def _bereken_bewustzijn_score(self):
+    def _bereken_bewustzijn_score(self) -> None:
         """Bereken bewustzijn score (0.0 - 1.0).
 
         Gewogen gemiddelde van:
@@ -1181,7 +1183,7 @@ class SingularityEngine:
 
     # --- Tick (Hoofd-cyclus) ---
 
-    def tick(self):
+    def tick(self) -> None:
         """Enkele bewustzijns-cyclus (~elke 10s).
 
         Wordt aangeroepen vanuit HeartbeatDaemon.
@@ -1219,7 +1221,7 @@ class SingularityEngine:
 
     # --- Handmatige TRANSCEND ---
 
-    def activeer_transcend(self, onderwerp=None):
+    def activeer_transcend(self, onderwerp: object=None) -> None:
         """Activeer TRANSCEND modus met synthese.
 
         Args:
@@ -1234,7 +1236,7 @@ class SingularityEngine:
 
         self._bereken_bewustzijn_score()
 
-    def deactiveer_transcend(self):
+    def deactiveer_transcend(self) -> None:
         """Verlaat TRANSCEND modus, keer terug naar WAAK."""
         if self._modus == BewustzijnModus.TRANSCEND:
             self._transitie_modus(BewustzijnModus.WAAK)
@@ -1266,7 +1268,7 @@ class SingularityEngine:
             "actief": not self._stop.is_set(),
         }
 
-    def display_status(self):
+    def display_status(self) -> None:
         """Toon visuele status met kleur()."""
         status = self.get_status()
 
@@ -1342,7 +1344,7 @@ class SingularityEngine:
 
     # --- Stop ---
 
-    def stop(self):
+    def stop(self) -> None:
         """Graceful shutdown."""
         self._stop.set()
         if self._modus == BewustzijnModus.TRANSCEND:
@@ -1350,7 +1352,7 @@ class SingularityEngine:
 
     # --- Interactieve CLI ---
 
-    def run(self):
+    def run(self) -> None:
         """Interactieve CLI voor SingularityEngine."""
         print(kleur("""
 +===============================================+

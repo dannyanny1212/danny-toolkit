@@ -2,6 +2,8 @@
 Agenda Planner v2.0 - AI-Powered planning assistent.
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import datetime, timedelta
 from danny_toolkit.core.utils import clear_scherm
@@ -15,7 +17,8 @@ class AgendaPlannerApp(BaseApp):
 
     PUBLICEERT = ["agenda_update"]
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         super().__init__("agenda.json")
 
     def _get_default_data(self) -> dict:
@@ -26,7 +29,7 @@ class AgendaPlannerApp(BaseApp):
             "herinneringen": []
         }
 
-    def run(self):
+    def run(self) -> None:
         """Start de agenda planner."""
         while True:
             clear_scherm()
@@ -77,7 +80,7 @@ class AgendaPlannerApp(BaseApp):
 
             input("\nDruk op Enter...")
 
-    def _toon_vandaag(self):
+    def _toon_vandaag(self) -> None:
         """Toon afspraken voor vandaag."""
         vandaag = datetime.now().date().isoformat()
         afspraken = [
@@ -99,7 +102,7 @@ class AgendaPlannerApp(BaseApp):
         if taken:
             print(f"|  Open taken: {len(taken):<36}|")
 
-    def _nieuwe_afspraak(self):
+    def _nieuwe_afspraak(self) -> None:
         """Voeg een nieuwe afspraak toe."""
         print("\n--- NIEUWE AFSPRAAK ---")
 
@@ -157,7 +160,7 @@ class AgendaPlannerApp(BaseApp):
 
         print(f"\n[OK] Afspraak '{titel}' toegevoegd voor {datum.strftime('%d-%m-%Y')}!")
 
-    def _nieuwe_taak(self):
+    def _nieuwe_taak(self) -> None:
         """Voeg een nieuwe taak toe."""
         print("\n--- NIEUWE TAAK ---")
 
@@ -196,7 +199,7 @@ class AgendaPlannerApp(BaseApp):
 
         print(f"\n[OK] Taak '{titel}' toegevoegd!")
 
-    def _week_overzicht(self):
+    def _week_overzicht(self) -> None:
         """Toon overzicht van deze week."""
         print("\n--- WEEK OVERZICHT ---")
 
@@ -228,7 +231,7 @@ class AgendaPlannerApp(BaseApp):
             else:
                 print("    Geen afspraken")
 
-    def _alle_afspraken(self):
+    def _alle_afspraken(self) -> None:
         """Bekijk alle afspraken."""
         print("\n--- ALLE AFSPRAKEN ---")
 
@@ -257,7 +260,7 @@ class AgendaPlannerApp(BaseApp):
                 datum = datetime.fromisoformat(a["datum"]).strftime("%d-%m")
                 print(f"    {a['id']}. {datum} - {a['titel'][:25]}")
 
-    def _beheer_taken(self):
+    def _beheer_taken(self) -> None:
         """Beheer taken."""
         print("\n--- TAKEN ---")
 
@@ -300,9 +303,9 @@ class AgendaPlannerApp(BaseApp):
                         print(f"[OK] Taak '{t['titel']}' voltooid!")
                         break
             except ValueError:
-                pass
+                logger.debug("Suppressed error")
 
-    def _verwijder_afspraak(self):
+    def _verwijder_afspraak(self) -> None:
         """Verwijder een afspraak."""
         self._alle_afspraken()
 
@@ -320,7 +323,7 @@ class AgendaPlannerApp(BaseApp):
                         print("[OK] Afspraak verwijderd!")
                     break
         except ValueError:
-            pass
+            logger.debug("Suppressed error")
 
     # ==================== AI FUNCTIES ====================
 
@@ -350,7 +353,7 @@ class AgendaPlannerApp(BaseApp):
 
         return context
 
-    def _ai_dag_planning(self):
+    def _ai_dag_planning(self) -> None:
         """AI helpt met dagplanning."""
         print("\n--- AI DAG PLANNING ---")
 
@@ -387,7 +390,7 @@ Praktisch en uitvoerbaar. Nederlands."""
         if response:
             print(f"\n[AI Dagplanning]:\n{response}")
 
-    def _ai_prioriteiten(self):
+    def _ai_prioriteiten(self) -> None:
         """AI helpt met prioriteiten stellen."""
         print("\n--- AI PRIORITEITEN ---")
 
@@ -425,7 +428,7 @@ Wees specifiek. Nederlands."""
         if response:
             print(f"\n[AI Prioriteiten]:\n{response}")
 
-    def _ai_productiviteit_tips(self):
+    def _ai_productiviteit_tips(self) -> None:
         """AI geeft productiviteit tips."""
         print("\n--- AI PRODUCTIVITEIT TIPS ---")
 

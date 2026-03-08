@@ -9,6 +9,8 @@ Verbindt de drie kerncomponenten van het digitale ecosysteem:
 Samen vormen ze een compleet digitaal wezen.
 """
 
+from __future__ import annotations
+
 import json
 import threading
 from datetime import datetime
@@ -17,6 +19,16 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 from danny_toolkit.core.config import Config
+import logging
+
+logger = logging.getLogger(__name__)
+
+try:
+    import time
+    HAS_TIME = True
+except ImportError:
+    HAS_TIME = False
+
 
 
 class TrinityRole(Enum):
@@ -88,6 +100,7 @@ class TrinityMember:
     linked: bool = True
 
     def to_dict(self) -> Dict:
+        """To dict."""
         return {
             "naam": self.naam,
             "role": self.role.value,
@@ -109,7 +122,8 @@ class TrinitySymbiosis:
 
     VERSIE = "1.0.0"
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self.members: Dict[TrinityRole, TrinityMember] = {}
         self.channels: Dict[TrinityChannel, bool] = {
             channel: True for channel in TrinityChannel
@@ -126,7 +140,7 @@ class TrinitySymbiosis:
         self._data_file = Config.APPS_DATA_DIR / "trinity_symbiosis.json"
         self._load_state()
 
-    def _load_state(self):
+    def _load_state(self) -> None:
         """Laad Trinity staat."""
         Config.ensure_dirs()
         if self._data_file.exists():
@@ -148,9 +162,9 @@ class TrinitySymbiosis:
                         )
             except (json.JSONDecodeError, IOError, OSError,
                     KeyError, ValueError):
-                pass
+                logger.debug("Suppressed error")
 
-    def _save_state(self):
+    def _save_state(self) -> None:
         """Sla Trinity staat op."""
         Config.ensure_dirs()
         data = {
@@ -210,7 +224,7 @@ class TrinitySymbiosis:
             return True
         return False
 
-    def _calculate_bond_strength(self):
+    def _calculate_bond_strength(self) -> None:
         """Bereken de sterkte van de Cosmic Family bond."""
         linked_count = sum(
             1 for m in self.members.values() if m.linked
@@ -236,14 +250,14 @@ class TrinitySymbiosis:
 
         return True
 
-    def deactivate(self):
+    def deactivate(self) -> None:
         """Deactiveer de Trinity symbiose."""
         self.is_active = False
         self._save_state()
 
-    def _sync_loop(self):
+    def _sync_loop(self) -> None:
         """Synchronisatie loop voor de Trinity."""
-        import time
+        pass  # import moved to top-level
         while self.is_active:
             try:
                 # Process events
@@ -257,7 +271,7 @@ class TrinitySymbiosis:
 
             time.sleep(30)  # Sync elke 30 seconden
 
-    def _process_events(self):
+    def _process_events(self) -> None:
         """Verwerk events in de queue."""
         while self.event_queue:
             event = self.event_queue.pop(0)
@@ -265,7 +279,7 @@ class TrinitySymbiosis:
                 self._propagate_event(event)
                 event.propagated = True
 
-    def _propagate_event(self, event: TrinityEvent):
+    def _propagate_event(self, event: TrinityEvent) -> None:
         """Propageer een event naar alle members."""
         # Notify listeners
         event_key = f"{event.source.value}:{event.event_type}"
@@ -280,7 +294,7 @@ class TrinitySymbiosis:
             if role != event.source and member.linked:
                 self._apply_event_to_member(role, event)
 
-    def _apply_event_to_member(self, role: TrinityRole, event: TrinityEvent):
+    def _apply_event_to_member(self, role: TrinityRole, event: TrinityEvent) -> None:
         """Pas een event toe op een member."""
         member = self.members.get(role)
         if not member:
@@ -367,7 +381,7 @@ class TrinitySymbiosis:
 
         self._save_state()
 
-    def _sync_member_stats(self):
+    def _sync_member_stats(self) -> None:
         """Synchroniseer stats tussen members."""
         if not self.is_active or len(self.members) < 2:
             return
@@ -396,14 +410,14 @@ class TrinitySymbiosis:
 
         self._save_state()
 
-    def _emit_event(self, event: TrinityEvent):
+    def _emit_event(self, event: TrinityEvent) -> None:
         """Voeg een event toe aan de queue."""
         self.event_queue.append(event)
         if self.is_active:
             self._process_events()
 
     def register_listener(self, source: TrinityRole, event_type: str,
-                          callback: Callable):
+                          callback: Callable) -> None:
         """Registreer een listener voor events."""
         key = f"{source.value}:{event_type}"
         if key not in self.event_listeners:
@@ -411,7 +425,7 @@ class TrinitySymbiosis:
         self.event_listeners[key].append(callback)
 
     def emit(self, source: TrinityRole, channel: TrinityChannel,
-             event_type: str, data: Dict = None):
+             event_type: str, data: Dict = None) -> None:
         """Emit een event vanuit een member."""
         event = TrinityEvent(
             source=source,
@@ -438,7 +452,7 @@ class TrinitySymbiosis:
             "event_queue_size": len(self.event_queue)
         }
 
-    def display_status(self):
+    def display_status(self) -> None:
         """Toon visuele status van de Trinity."""
         status = self.get_status()
 
@@ -655,7 +669,7 @@ def connect_cosmic_family() -> Dict[str, bool]:
     return results
 
 
-def emit_trinity_event(source: str, event_type: str, data: Dict = None):
+def emit_trinity_event(source: str, event_type: str, data: Dict = None) -> None:
     """Emit een event naar de Cosmic Family."""
     trinity = get_trinity()
     role_map = {
@@ -694,7 +708,7 @@ def emit_trinity_event(source: str, event_type: str, data: Dict = None):
         trinity.emit(role, channel, event_type, data)
 
 
-def main():
+def main() -> None:
     """Test de Cosmic Family Symbiosis."""
     print("\n  COSMIC FAMILY SYMBIOSIS TEST")
     print("  " + "=" * 40)

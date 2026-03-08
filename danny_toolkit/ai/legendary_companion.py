@@ -11,6 +11,8 @@ Upgrades:
 4. Audio-First - Emotionele spraak met sentiment detectie
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import random
@@ -44,6 +46,19 @@ try:
     HUNT_AVAILABLE = True
 except ImportError:
     HUNT_AVAILABLE = False
+
+try:
+    import asyncio
+    HAS_ASYNCIO = True
+except ImportError:
+    HAS_ASYNCIO = False
+
+try:
+    import math
+    HAS_MATH = True
+except ImportError:
+    HAS_MATH = False
+
     UltimateHunt = None
 
 
@@ -380,12 +395,12 @@ PERSONALITY_MODIFIERS = {
 class SpacedRepetition:
     """SuperMemo-2 gebaseerd spaced repetition systeem."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes the object, setting up an empty dictionary to store reviews. 
 The reviews are stored as key-value pairs in the `self.reviews` dictionary."""
         self.reviews = {}  # doc_id -> review data
 
-    def add_item(self, doc_id: str, content: str):
+    def add_item(self, doc_id: str, content: str) -> None:
         """Voeg nieuw item toe voor review."""
         self.reviews[doc_id] = {
             "content": content[:500],  # Eerste 500 chars
@@ -414,7 +429,7 @@ The reviews are stored as key-value pairs in the `self.reviews` dictionary."""
         due.sort(key=lambda x: x["next_review"])
         return due[:limit]
 
-    def review_item(self, doc_id: str, quality: int):
+    def review_item(self, doc_id: str, quality: int) -> None:
         """
         Review een item met kwaliteit 0-5.
 
@@ -475,7 +490,8 @@ The reviews are stored as key-value pairs in the `self.reviews` dictionary."""
 class DreamEngine:
     """Genereert inzichten door verbanden te leggen."""
 
-    def __init__(self, vector_store: VectorStore):
+    def __init__(self, vector_store: VectorStore) -> None:
+        """Init  ."""
         self.vector_store = vector_store
         self.dreams = []
         self.last_dream_date = None
@@ -588,7 +604,8 @@ class LegendaryCompanion:
 
     VERSIE = "1.0.0"
 
-    def __init__(self, naam: str = None):
+    def __init__(self, naam: str = None) -> None:
+        """Init  ."""
         Config.ensure_dirs()
 
         # Data bestanden
@@ -693,7 +710,7 @@ class LegendaryCompanion:
             "created": datetime.now().isoformat(),
         }
 
-    def _sla_op(self):
+    def _sla_op(self) -> None:
         """Sla data op."""
         self.data["spaced_repetition"] = self.spaced_rep.to_dict()
         self.data["dreams"] = self.dream_engine.dreams
@@ -705,7 +722,7 @@ class LegendaryCompanion:
     # EVOLUTION SYSTEM
     # =========================================================================
 
-    def _update_evolution(self):
+    def _update_evolution(self) -> None:
         """Update evolutie vorm gebaseerd op flavor stats."""
         stats = self.data["flavor_stats"]
 
@@ -964,7 +981,7 @@ Antwoord in karakter, gebaseerd op de context."""
                 "error": "Hunt module niet beschikbaar"
             }
 
-        import asyncio
+        pass  # import moved to top-level
 
         # Maak hunter met companion naam
         hunter = UltimateHunt(pet_name=self.data.get("naam", "Buddy"))
@@ -1006,7 +1023,7 @@ Antwoord in karakter, gebaseerd op de context."""
         if not HUNT_AVAILABLE:
             return {"success": False, "error": "Hunt niet beschikbaar"}
 
-        import asyncio
+        pass  # import moved to top-level
 
         hunter = UltimateHunt(pet_name=self.data.get("naam", "Buddy"))
 
@@ -1023,7 +1040,7 @@ Antwoord in karakter, gebaseerd op de context."""
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    def hunt_feedback(self, was_good: bool, source: str = None):
+    def hunt_feedback(self, was_good: bool, source: str = None) -> None:
         """Good Boy / Bad Dog feedback voor hunt."""
         if was_good:
             self.data["xp"] += 10
@@ -1151,10 +1168,10 @@ ANTWOORD: [het antwoord]"""
 
     def _calculate_level(self) -> int:
         """Bereken level."""
-        import math
+        pass  # import moved to top-level
         return max(1, int(math.sqrt(self.data["xp"] / 100)) + 1)
 
-    def toon_status(self):
+    def toon_status(self) -> None:
         """Print status."""
         status = self.status()
         form = self._get_current_form()
@@ -1186,7 +1203,7 @@ ANTWOORD: [het antwoord]"""
     # INTERACTIVE CLI
     # =========================================================================
 
-    def run(self):
+    def run(self) -> None:
         """Start interactieve modus."""
         clear_scherm()
 
@@ -1298,7 +1315,7 @@ ANTWOORD: [het antwoord]"""
                         else:
                             print(kleur(f"[REVIEW] We proberen het morgen opnieuw!", Kleur.GEEL))
                     except ValueError:
-                        pass
+                        logger.debug("Suppressed error")
                 else:
                     print(kleur("[OK] Geen quizzes op dit moment!", Kleur.GROEN))
 
@@ -1372,7 +1389,8 @@ ANTWOORD: [het antwoord]"""
 class LegendaryCompanionApp:
     """Wrapper voor launcher."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self._companion = None
 
     """`Gets the companion associated with this object. 
@@ -1383,7 +1401,7 @@ Returns:
 Note:
     The companion object is lazily loaded and may be None if not explicitly set.`"""
     @property
-    def companion(self):
+    def companion(self) -> None:
         """Gets the companion object, initializing it if necessary. 
 Returns: The companion object associated with the current instance."""
         if self._companion is None:
@@ -1391,7 +1409,8 @@ Returns: The companion object associated with the current instance."""
             self._companion = LegendaryCompanion()
         return self._companion
 
-    def run(self):
+    def run(self) -> None:
+        """Run."""
         self.companion.run()
 
     # Delegate methods voor Central Brain
@@ -1406,18 +1425,23 @@ Returns: The companion object associated with the current instance."""
         return self.companion.ask(question)
 
     def feed(self, text: str, doc_id: str = None) -> dict:
+        """Feed."""
         return self.companion.feed(text, doc_id)
 
     def feed_file(self, path: str) -> dict:
+        """Feed file."""
         return self.companion.feed_file(path)
 
     def get_quiz(self) -> Optional[dict]:
+        """Get quiz."""
         return self.companion.get_quiz()
 
     def answer_quiz(self, doc_id: str, quality: int) -> dict:
+        """Answer quiz."""
         return self.companion.answer_quiz(doc_id, quality)
 
     def status(self) -> dict:
+        """Status."""
         return self.companion.status()
 
     # Aliassen voor app_tools.py compatibiliteit
@@ -1512,12 +1536,12 @@ Returns: The companion object associated with the current instance."""
         """Hunt met extra context."""
         return self.companion.hunt_with_context(query, notes, agenda)
 
-    def hunt_feedback(self, was_good: bool, source: str = None):
+    def hunt_feedback(self, was_good: bool, source: str = None) -> None:
         """Good Boy / Bad Dog feedback."""
         self.companion.hunt_feedback(was_good, source)
 
 
-def main():
+def main() -> None:
     """**Main entry point for the Legendary Companion application.
 
 Instantiates the LegendaryCompanionApp and executes its run method to start the application.**"""

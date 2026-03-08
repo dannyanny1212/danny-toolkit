@@ -3,6 +3,8 @@ Tool system voor agents.
 Versie 6.11.0 - OMEGA_SOVEREIGN. Met categorieën, permissions, caching, metrics en meer!
 """
 
+from __future__ import annotations
+
 import asyncio
 import json
 import time
@@ -14,6 +16,22 @@ from enum import Enum
 
 from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import kleur, Kleur
+import logging
+
+logger = logging.getLogger(__name__)
+
+try:
+    import inspect
+    HAS_INSPECT = True
+except ImportError:
+    HAS_INSPECT = False
+
+try:
+    import re
+    HAS_RE = True
+except ImportError:
+    HAS_RE = False
+
 
 
 class ToolCategory(Enum):
@@ -90,7 +108,7 @@ class ToolMetrics:
     snelste_call: Optional[float] = None
     langzaamste_call: Optional[float] = None
 
-    def registreer_call(self, execution_time: float, success: bool, cached: bool):
+    def registreer_call(self, execution_time: float, success: bool, cached: bool) -> None:
         """Registreer een tool call."""
         self.totaal_calls += 1
         self.laatste_call = datetime.now()
@@ -154,7 +172,8 @@ Args:
     max_size (int): The maximum number of cached results to store."""
     """Cache systeem voor tool resultaten."""
 
-    def __init__(self, max_size: int = 100, default_ttl: int = 300):
+    def __init__(self, max_size: int = 100, default_ttl: int = 300) -> None:
+        """Init  ."""
         self.cache: dict[str, dict] = {}
         self.max_size = max_size
         self.default_ttl = default_ttl  # seconds
@@ -179,7 +198,7 @@ Args:
 
         return entry["data"]
 
-    def set(self, tool_naam: str, params: dict, data: Any, ttl: int = None):
+    def set(self, tool_naam: str, params: dict, data: Any, ttl: int = None) -> None:
         """Sla resultaat op in cache."""
         # Verwijder oudste entries als cache vol is
         while len(self.cache) >= self.max_size:
@@ -195,7 +214,7 @@ Args:
             "expires": datetime.now() + timedelta(seconds=ttl),
         }
 
-    def invalidate(self, tool_naam: str = None):
+    def invalidate(self, tool_naam: str = None) -> None:
         """Invalideer cache entries."""
         if tool_naam is None:
             self.cache.clear()
@@ -251,11 +270,12 @@ class ToolHistoryEntry:
 class ToolHistory:
     """Bijhouden van tool gebruik geschiedenis."""
 
-    def __init__(self, max_entries: int = 1000):
+    def __init__(self, max_entries: int = 1000) -> None:
+        """Init  ."""
         self.entries: list[ToolHistoryEntry] = []
         self.max_entries = max_entries
 
-    def add(self, entry: ToolHistoryEntry):
+    def add(self, entry: ToolHistoryEntry) -> None:
         """Voeg entry toe aan history."""
         self.entries.append(entry)
 
@@ -282,7 +302,7 @@ class ToolHistory:
         failures = [e for e in self.entries if not e.result.success]
         return list(reversed(failures[-count:]))
 
-    def get_repair_tagged(self, count=100):
+    def get_repair_tagged(self, count=100) -> None:
         """Haal repair-tagged entries op."""
         tagged = [
             e for e in self.entries
@@ -290,7 +310,7 @@ class ToolHistory:
         ]
         return list(reversed(tagged[-count:]))
 
-    def repair_stats(self):
+    def repair_stats(self) -> None:
         """Statistieken over repair-tagged calls."""
         tagged = [
             e for e in self.entries
@@ -325,7 +345,7 @@ class ToolHistory:
             "unique_tools": tools_used,
         }
 
-    def clear(self):
+    def clear(self) -> None:
         """Wis history."""
         self.entries.clear()
 
@@ -392,7 +412,7 @@ class ToolValidator:
                 if "maxLength" in param_schema and len(param_value) > param_schema["maxLength"]:
                     return False, f"Parameter '{param_name}' mag maximaal {param_schema['maxLength']} tekens zijn"
                 if "pattern" in param_schema:
-                    import re
+                    pass  # import moved to top-level
                     if not re.match(param_schema["pattern"], param_value):
                         return False, f"Parameter '{param_name}' voldoet niet aan patroon"
 
@@ -483,7 +503,8 @@ class Tool:
 class ToolRegistry:
     """Beheert alle beschikbare tools met uitgebreide features."""
 
-    def __init__(self, enable_cache: bool = True, enable_history: bool = True):
+    def __init__(self, enable_cache: bool = True, enable_history: bool = True) -> None:
+        """Init  ."""
         self.tools: dict[str, Tool] = {}
         self.aliases: dict[str, str] = {}
         self.metrics: dict[str, ToolMetrics] = {}
@@ -506,7 +527,7 @@ class ToolRegistry:
         self.data_dir = Config.DATA_DIR / "tools"
         self.data_dir.mkdir(exist_ok=True)
 
-    def register(self, tool: Tool):
+    def register(self, tool: Tool) -> None:
         """Registreer een tool."""
         self.tools[tool.naam] = tool
         self.metrics[tool.naam] = ToolMetrics()
@@ -738,7 +759,7 @@ class ToolRegistry:
         result: ToolResult,
         agent_naam: str = None,
         metadata: dict = None
-    ):
+    ) -> None:
         """Registreer een tool execution."""
         # Update metrics
         if tool_naam in self.metrics:
@@ -759,7 +780,7 @@ class ToolRegistry:
             )
             self.history.add(entry)
 
-    def _trigger_hooks(self, hooks: list[Callable], *args):
+    def _trigger_hooks(self, hooks: list[Callable], *args) -> None:
         """Trigger event hooks."""
         for hook in hooks:
             try:
@@ -767,12 +788,12 @@ class ToolRegistry:
             except Exception as e:
                 self._log(f"Hook error: {e}", Kleur.ROOD)
 
-    def _log(self, bericht: str, kleur_naam: str = Kleur.CYAAN):
+    def _log(self, bericht: str, kleur_naam: str = Kleur.CYAAN) -> None:
         """Log een bericht."""
         timestamp = datetime.now().strftime("%H:%M:%S")
         print(f"{kleur(f'[{timestamp}] [ToolRegistry]', kleur_naam)} {bericht}")
 
-    def add_hook(self, event: str, callback: Callable):
+    def add_hook(self, event: str, callback: Callable) -> None:
         """Voeg een event hook toe."""
         hooks = {
             "execute": self.on_execute,
@@ -795,13 +816,13 @@ class ToolRegistry:
             return []
         return [e.to_dict() for e in self.history.get_recent(count)]
 
-    def clear_cache(self, tool_naam: str = None):
+    def clear_cache(self, tool_naam: str = None) -> None:
         """Wis cache."""
         if self.cache:
             self.cache.invalidate(tool_naam)
             self._log(f"Cache gewist{f' voor {tool_naam}' if tool_naam else ''}")
 
-    def clear_history(self):
+    def clear_history(self) -> None:
         """Wis history."""
         if self.history:
             self.history.clear()
@@ -825,7 +846,7 @@ class ToolRegistry:
             return True
         return False
 
-    def toon_overzicht(self):
+    def toon_overzicht(self) -> None:
         """Toon een overzicht van alle tools."""
         print(kleur("\n" + "=" * 60, Kleur.CYAAN))
         print(kleur("TOOL REGISTRY OVERZICHT", Kleur.GEEL))
@@ -854,7 +875,7 @@ class ToolRegistry:
             if hist_stats['totaal'] > 0:
                 print(f"  Succes: {hist_stats['successes']}, Failures: {hist_stats['failures']}")
 
-    def toon_tool_help(self, naam: str):
+    def toon_tool_help(self, naam: str) -> None:
         """Toon help voor een specifieke tool."""
         tool = self.get(naam)
         if tool:
@@ -872,7 +893,7 @@ class ToolRegistry:
             "timestamp": datetime.now().isoformat(),
         }
 
-    def save_stats(self):
+    def save_stats(self) -> None:
         """Sla statistieken op naar bestand."""
         stats_file = self.data_dir / "tool_stats.json"
         try:
@@ -908,7 +929,7 @@ def maak_tool(
     """
     if parameters is None:
         # Probeer parameters af te leiden uit functie signature
-        import inspect
+        pass  # import moved to top-level
         sig = inspect.signature(functie)
         parameters = {}
         for param_name, param in sig.parameters.items():
@@ -945,7 +966,7 @@ def tool_decorator(
     beschrijving: str = None,
     categorie: ToolCategory = ToolCategory.ALGEMEEN,
     **kwargs
-):
+) -> None:
     """
     Decorator om een functie als tool te registreren.
 
@@ -955,6 +976,7 @@ def tool_decorator(
             return f"Resultaat: {param1}"
     """
     def decorator(func: Callable) -> Tool:
+        """Decorator."""
         tool_naam = naam or func.__name__
         tool_beschrijving = beschrijving or func.__doc__ or "Geen beschrijving"
 

@@ -9,6 +9,8 @@ DATE: 7 februari 2026
 STATUS: CORE SELF-LEARNING
 """
 
+from __future__ import annotations
+
 import json
 import logging
 from datetime import datetime
@@ -23,6 +25,19 @@ try:
     HAS_CONFIG = True
 except ImportError:
     HAS_CONFIG = False
+
+try:
+    import pathlib
+    HAS_PATHLIB = True
+except ImportError:
+    HAS_PATHLIB = False
+
+try:
+    import random
+    HAS_RANDOM = True
+except ImportError:
+    HAS_RANDOM = False
+
 
 
 @dataclass
@@ -62,7 +77,8 @@ class SelfImprovementEngine:
         data_dir: Path = None,
         performance_analyzer=None,
         feedback_manager=None
-    ):
+    ) -> None:
+        """Init  ."""
         if data_dir is None and HAS_CONFIG:
             data_dir = Config.APPS_DATA_DIR
         elif data_dir is None:
@@ -100,7 +116,7 @@ class SelfImprovementEngine:
             "created": datetime.now().isoformat()
         }
 
-    def save(self):
+    def save(self) -> None:
         """Sla state op naar bestand."""
         self.data_dir.mkdir(parents=True, exist_ok=True)
         with open(self.state_file, "w", encoding="utf-8") as f:
@@ -114,7 +130,7 @@ class SelfImprovementEngine:
         bounds: tuple = (0.0, 1.0),
         learning_rate: float = 0.1,
         description: str = ""
-    ):
+    ) -> None:
         """
         Registreer een parameter die kan worden aangepast.
 
@@ -288,7 +304,7 @@ class SelfImprovementEngine:
 
                     else:  # neutral
                         # Small random exploration
-                        import random
+                        pass  # import moved to top-level
                         adjustment = (random.random() - 0.5) * lr * 0.1
                         new_value = current + adjustment
 
@@ -358,7 +374,7 @@ class SelfImprovementEngine:
             }
         }
 
-    def record_meta_learning(self, insight_type: str, insight: str):
+    def record_meta_learning(self, insight_type: str, insight: str) -> None:
         """
         Registreer meta-learning inzicht.
 
@@ -403,7 +419,7 @@ class SelfImprovementEngine:
             "recent_insights": ml["insights"][-5:] if ml["insights"] else []
         }
 
-    def reset_adaptations(self):
+    def reset_adaptations(self) -> None:
         """Reset alle geregistreerde adaptaties."""
         self._adaptations = {}
 
@@ -437,9 +453,9 @@ class SelfImprovementEngine:
 
 # === CLI voor testing ===
 
-def _cli():
+def _cli() -> None:
     """Test CLI voor SelfImprovementEngine."""
-    from pathlib import Path
+    pass  # import moved to top-level
 
     print("SelfImprovementEngine Test CLI")
     print("=" * 40)

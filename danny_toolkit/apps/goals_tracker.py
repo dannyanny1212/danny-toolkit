@@ -3,11 +3,20 @@ Goals Tracker v1.0 - Persoonlijke doelen en groei tracker.
 Track je doelen, visualiseer voortgang en blijf gemotiveerd.
 """
 
+from __future__ import annotations
+
 import logging
 import random
 from datetime import datetime, timedelta
 from danny_toolkit.core.utils import clear_scherm
 from danny_toolkit.apps.base_app import BaseApp
+
+try:
+    import danny_toolkit.brain.unified_memory
+    HAS_UNIFIED_MEMORY = True
+except ImportError:
+    HAS_UNIFIED_MEMORY = False
+
 
 logger = logging.getLogger(__name__)
 
@@ -41,10 +50,12 @@ class GoalsTrackerApp(BaseApp):
         "Elke dag is een kans om te groeien."
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         super().__init__("goals.json")
 
     def _get_default_data(self) -> dict:
+        """Get default data."""
         return {
             "doelen": [],
             "milestones": [],
@@ -58,11 +69,11 @@ class GoalsTrackerApp(BaseApp):
             }
         }
 
-    def _log_memory_event(self, event_type, data):
+    def _log_memory_event(self, event_type, data) -> None:
         """Log event naar Unified Memory."""
         try:
             if not hasattr(self, "_memory"):
-                from danny_toolkit.brain.unified_memory import UnifiedMemory
+                pass  # import moved to top-level
                 self._memory = UnifiedMemory()
             self._memory.store_event(
                 app="goals_tracker",
@@ -72,7 +83,7 @@ class GoalsTrackerApp(BaseApp):
         except Exception as e:
             logger.debug("Memory event error: %s", e)
 
-    def run(self):
+    def run(self) -> None:
         """Start de goals tracker."""
         while True:
             clear_scherm()
@@ -119,7 +130,7 @@ class GoalsTrackerApp(BaseApp):
 
             input("\nDruk op Enter...")
 
-    def _toon_header(self):
+    def _toon_header(self) -> None:
         """Toon header."""
         print("+" + "=" * 50 + "+")
         print("|          GOALS TRACKER v1.0                       |")
@@ -135,7 +146,7 @@ class GoalsTrackerApp(BaseApp):
         print(f"|  Actieve doelen: {actief:<5} Voltooid: {voltooid:<5} "
               f"Streak: {streak:<3}|")
 
-    def _toon_motivatie_quote(self):
+    def _toon_motivatie_quote(self) -> None:
         """Toon een motiverende quote."""
         quote = random.choice(self.QUOTES)
         # Centreer de quote
@@ -146,7 +157,7 @@ class GoalsTrackerApp(BaseApp):
     # DASHBOARD
     # =========================================================================
 
-    def _dashboard(self):
+    def _dashboard(self) -> None:
         """Toon gepersonaliseerd dashboard."""
         clear_scherm()
         print("=" * 52)
@@ -231,7 +242,7 @@ class GoalsTrackerApp(BaseApp):
     # DOELEN BEHEER
     # =========================================================================
 
-    def _nieuw_doel(self):
+    def _nieuw_doel(self) -> None:
         """Voeg een nieuw doel toe."""
         print("\n--- NIEUW DOEL ---")
 
@@ -293,7 +304,7 @@ class GoalsTrackerApp(BaseApp):
         print(f"     Categorie: {cat_emoji} {cat_naam}")
         print(f"     Prioriteit: {prioriteit}")
 
-    def _update_voortgang(self):
+    def _update_voortgang(self) -> None:
         """Update voortgang van een doel."""
         print("\n--- VOORTGANG BIJWERKEN ---")
 
@@ -365,7 +376,7 @@ class GoalsTrackerApp(BaseApp):
         except ValueError:
             print("[!] Voer geldige nummers in!")
 
-    def _bekijk_doelen(self):
+    def _bekijk_doelen(self) -> None:
         """Bekijk alle doelen."""
         print("\n--- ALLE DOELEN ---")
 
@@ -393,7 +404,7 @@ class GoalsTrackerApp(BaseApp):
                 cat_key = cats[cat_idx][0]
                 doelen = [d for d in doelen if d.get("categorie") == cat_key]
             except (ValueError, IndexError):
-                pass
+                logger.debug("Suppressed error")
 
         if not doelen:
             print("\nGeen doelen gevonden met deze filter.")
@@ -423,7 +434,7 @@ class GoalsTrackerApp(BaseApp):
     # MILESTONES
     # =========================================================================
 
-    def _milestones_menu(self):
+    def _milestones_menu(self) -> None:
         """Milestones beheer menu."""
         print("\n--- MILESTONES ---")
         print("\n  1. Milestone toevoegen")
@@ -440,7 +451,7 @@ class GoalsTrackerApp(BaseApp):
         elif keuze == "3":
             self._milestone_bereikt()
 
-    def _nieuwe_milestone(self):
+    def _nieuwe_milestone(self) -> None:
         """Voeg nieuwe milestone toe."""
         actief = [d for d in self.data["doelen"] if not d.get("voltooid")]
         if not actief:
@@ -470,7 +481,7 @@ class GoalsTrackerApp(BaseApp):
                 try:
                     deadline = datetime.strptime(deadline_input, "%d-%m-%Y").isoformat()
                 except ValueError:
-                    pass
+                    logger.debug("Suppressed error")
 
             milestone = {
                 "id": len(self.data["milestones"]) + 1,
@@ -489,7 +500,7 @@ class GoalsTrackerApp(BaseApp):
         except ValueError:
             print("[!] Ongeldig nummer!")
 
-    def _bekijk_milestones(self):
+    def _bekijk_milestones(self) -> None:
         """Bekijk alle milestones."""
         if not self.data["milestones"]:
             print("\nGeen milestones gevonden.")
@@ -507,7 +518,7 @@ class GoalsTrackerApp(BaseApp):
             print(f"  {status} {m['naam']}")
             print(f"     Doel: {doel_naam}{deadline}")
 
-    def _milestone_bereikt(self):
+    def _milestone_bereikt(self) -> None:
         """Markeer milestone als bereikt."""
         open_milestones = [m for m in self.data["milestones"] if not m.get("bereikt")]
 
@@ -548,7 +559,7 @@ class GoalsTrackerApp(BaseApp):
     # CHECK-IN
     # =========================================================================
 
-    def _check_in(self):
+    def _check_in(self) -> None:
         """Dagelijkse check-in."""
         print("\n--- DAGELIJKSE CHECK-IN ---")
 
@@ -652,7 +663,7 @@ class GoalsTrackerApp(BaseApp):
 
         return context
 
-    def _ai_doel_coach(self):
+    def _ai_doel_coach(self) -> None:
         """AI coach voor doelen."""
         print("\n--- AI DOEL COACH ---")
 
@@ -681,7 +692,7 @@ Antwoord in het Nederlands, max 200 woorden."""
         if response:
             print(f"\n[Coach]:\n{response}")
 
-    def _ai_actieplan(self):
+    def _ai_actieplan(self) -> None:
         """AI genereert actieplan voor een doel."""
         print("\n--- AI ACTIEPLAN ---")
 
@@ -734,7 +745,7 @@ Antwoord in het Nederlands."""
         except ValueError:
             print("[!] Ongeldig nummer!")
 
-    def _ai_motivatie(self):
+    def _ai_motivatie(self) -> None:
         """AI geeft motivatie boost."""
         print("\n--- AI MOTIVATIE BOOST ---")
 

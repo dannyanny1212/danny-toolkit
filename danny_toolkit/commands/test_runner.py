@@ -11,9 +11,14 @@ Usage:
 
     danny ci                      # Volledige CI pipeline (= --stress --coverage)
 """
+from __future__ import annotations
+
 import subprocess
 import sys
 import time
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def _run(cmd: list[str], label: str) -> int:
@@ -25,7 +30,7 @@ def _run(cmd: list[str], label: str) -> int:
     return result.returncode
 
 
-def main():
+def main() -> None:
     """Entry point voor `danny test`."""
     args = sys.argv[1:]
 
@@ -57,7 +62,7 @@ def main():
     sys.exit(rc)
 
 
-def ci():
+def ci() -> None:
     """Entry point voor `danny ci` — lokale CI pipeline.
 
     Draait exact wat GitHub Actions doet:

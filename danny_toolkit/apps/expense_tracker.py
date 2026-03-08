@@ -2,11 +2,20 @@
 Expense Tracker v2.0 - AI-Powered uitgaven tracker.
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import datetime
 from collections import defaultdict
 from danny_toolkit.core.utils import clear_scherm
 from danny_toolkit.apps.base_app import BaseApp
+
+try:
+    import danny_toolkit.brain.unified_memory
+    HAS_UNIFIED_MEMORY = True
+except ImportError:
+    HAS_UNIFIED_MEMORY = False
+
 
 logger = logging.getLogger(__name__)
 
@@ -14,10 +23,12 @@ logger = logging.getLogger(__name__)
 class ExpenseTrackerApp(BaseApp):
     """AI-Powered uitgaven en budget tracker."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         super().__init__("expenses.json")
 
     def _get_default_data(self) -> dict:
+        """Get default data."""
         return {
             "uitgaven": [],
             "inkomsten": [],
@@ -29,11 +40,11 @@ class ExpenseTrackerApp(BaseApp):
             "budget": {}
         }
 
-    def _log_memory_event(self, event_type, data):
+    def _log_memory_event(self, event_type, data) -> None:
         """Log event naar Unified Memory."""
         try:
             if not hasattr(self, "_memory"):
-                from danny_toolkit.brain.unified_memory import UnifiedMemory
+                pass  # import moved to top-level
                 self._memory = UnifiedMemory()
             self._memory.store_event(
                 app="expense_tracker",
@@ -43,7 +54,7 @@ class ExpenseTrackerApp(BaseApp):
         except Exception as e:
             logger.debug("Memory event error: %s", e)
 
-    def run(self):
+    def run(self) -> None:
         """Start de expense tracker."""
         while True:
             clear_scherm()
@@ -94,7 +105,7 @@ class ExpenseTrackerApp(BaseApp):
 
             input("\nDruk op Enter...")
 
-    def _toon_saldo(self):
+    def _toon_saldo(self) -> None:
         """Toon huidig saldo."""
         totaal_inkomen = sum(i["bedrag"] for i in self.data["inkomsten"])
         totaal_uitgaven = sum(u["bedrag"] for u in self.data["uitgaven"])
@@ -107,7 +118,7 @@ class ExpenseTrackerApp(BaseApp):
         padding = " " * max(0, 38 - len(saldo_str))
         print(f"|  Saldo: {saldo_str}{padding}|")
 
-    def _voeg_uitgave_toe(self):
+    def _voeg_uitgave_toe(self) -> None:
         """Voeg een uitgave toe."""
         print("\n--- UITGAVE TOEVOEGEN ---")
 
@@ -160,7 +171,7 @@ class ExpenseTrackerApp(BaseApp):
                 print(f"[!] Let op: Budget voor {categorie} overschreden!")
                 print(f"    Uitgegeven: €{maand_uitgaven:.2f} / Budget: €{budget:.2f}")
 
-    def _voeg_inkomen_toe(self):
+    def _voeg_inkomen_toe(self) -> None:
         """Voeg inkomen toe."""
         print("\n--- INKOMEN TOEVOEGEN ---")
 
@@ -190,7 +201,7 @@ class ExpenseTrackerApp(BaseApp):
 
         print(f"\n[OK] Inkomen van €{bedrag:.2f} toegevoegd!")
 
-    def _maand_overzicht(self):
+    def _maand_overzicht(self) -> None:
         """Toon overzicht van deze maand."""
         print("\n--- MAAND OVERZICHT ---")
 
@@ -216,7 +227,7 @@ class ExpenseTrackerApp(BaseApp):
             for u in uitgaven[-5:]:
                 print(f"    - €{u['bedrag']:.2f} ({u['categorie']})")
 
-    def _per_categorie(self):
+    def _per_categorie(self) -> None:
         """Toon uitgaven per categorie."""
         print("\n--- UITGAVEN PER CATEGORIE ---")
 
@@ -248,7 +259,7 @@ class ExpenseTrackerApp(BaseApp):
             print(f"  {cat:15} €{bedrag:7.2f}{budget_str}")
             print(f"                  {bar} {percentage:.0f}%")
 
-    def _budget_instellen(self):
+    def _budget_instellen(self) -> None:
         """Stel maandelijks budget in per categorie."""
         print("\n--- BUDGET INSTELLEN ---")
 
@@ -278,7 +289,7 @@ class ExpenseTrackerApp(BaseApp):
         except (ValueError, IndexError):
             print("[!] Ongeldige invoer!")
 
-    def _alle_transacties(self):
+    def _alle_transacties(self) -> None:
         """Bekijk alle transacties."""
         print("\n--- ALLE TRANSACTIES ---")
 
@@ -329,7 +340,7 @@ class ExpenseTrackerApp(BaseApp):
 
         return context
 
-    def _ai_uitgaven_analyse(self):
+    def _ai_uitgaven_analyse(self) -> None:
         """AI analyseert je uitgavenpatronen."""
         print("\n--- AI UITGAVEN ANALYSE ---")
 
@@ -365,7 +376,7 @@ Wees specifiek en praktisch. Nederlands."""
         if response:
             print(f"\n[AI Analyse]:\n{response}")
 
-    def _ai_budget_advies(self):
+    def _ai_budget_advies(self) -> None:
         """AI geeft budget advies."""
         print("\n--- AI BUDGET ADVIES ---")
 
@@ -397,7 +408,7 @@ Praktisch en haalbaar. Nederlands."""
         if response:
             print(f"\n[AI Budget Advies]:\n{response}")
 
-    def _ai_spaartips(self):
+    def _ai_spaartips(self) -> None:
         """AI geeft spaartips."""
         print("\n--- AI SPAARTIPS ---")
 

@@ -12,14 +12,20 @@ Spelers:
 - CONFIG (paden, API keys, thema's) - Systeemconfiguratie
 """
 
+from __future__ import annotations
+
 from danny_toolkit.core.utils import kleur, Kleur, succes, fout, info
 from danny_toolkit.core.config import Config, Thema, Taal
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class CoreProtocol:
     """Quest I: The Core - Het fundament van het ecosysteem."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self.config = Config
         self.thema = Thema
         self.taal = Taal
@@ -39,7 +45,7 @@ class CoreProtocol:
             "status": "operationeel",
         }
 
-    def run_simulation(self):
+    def run_simulation(self) -> None:
         """Demo: test alle core utilities."""
         print(kleur(
             "  QUEST I: THE CORE\n"

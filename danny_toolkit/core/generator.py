@@ -4,9 +4,21 @@ Versie 2.0 - Met streaming, retry logic en templates.
 Ondersteunt: Claude API
 """
 
+from __future__ import annotations
+
 import time
 from typing import Generator as TypingGenerator, Callable
 from danny_toolkit.core.config import Config
+import logging
+
+logger = logging.getLogger(__name__)
+
+try:
+    import anthropic
+    HAS_ANTHROPIC = True
+except ImportError:
+    HAS_ANTHROPIC = False
+
 
 
 # =============================================================================
@@ -101,7 +113,7 @@ class RetryConfig:
     def __init__(self, max_pogingen: int = 3,
                  basis_wachttijd: float = 1.0,
                  max_wachttijd: float = 30.0,
-                 exponentieel: bool = True):
+                 exponentieel: bool = True) -> None:
         """
         Initialiseer retry configuratie.
 
@@ -139,7 +151,7 @@ def met_retry(func: Callable, retry_config: RetryConfig = None,
     config = retry_config or RetryConfig()
     excepties = retry_excepties or (Exception,)
 
-    def wrapper(*args, **kwargs):
+    def wrapper(*args, **kwargs) -> None:
         """```python
 "Retry a function with exponential backoff in case of specified exceptions.
 
@@ -184,7 +196,7 @@ class Generator:
     """Genereert antwoorden met Claude API."""
 
     def __init__(self, provider: str = "auto", api_key: str = None,
-                 retry_config: RetryConfig = None):
+                 retry_config: RetryConfig = None) -> None:
         """
         Initialiseer generator.
 
@@ -220,9 +232,9 @@ class Generator:
         else:
             raise ValueError(f"Onbekende provider: {provider}")
 
-    def _init_claude(self, api_key: str = None):
+    def _init_claude(self, api_key: str = None) -> None:
         """Initialiseer Claude API."""
-        import anthropic
+        pass  # import moved to top-level
         self.client = anthropic.Anthropic(
             api_key=api_key or Config.ANTHROPIC_API_KEY
         )
@@ -277,7 +289,8 @@ class Generator:
                             max_tokens: int) -> str:
         """Roep API aan met retry logic."""
 
-        def _api_call():
+        def _api_call() -> None:
+            """Api call."""
             return self._call_api(systeem, user, max_tokens)
 
         try:
@@ -308,13 +321,13 @@ class Generator:
                 f"Provider '{self.provider}' niet ondersteund"
             )
 
-    def _update_token_stats(self, response):
+    def _update_token_stats(self, response) -> None:
         """Update token statistieken voor Claude."""
         try:
             self._statistieken["tokens_in"] += response.usage.input_tokens
             self._statistieken["tokens_uit"] += response.usage.output_tokens
         except AttributeError:
-            pass
+            logger.debug("Suppressed error")
 
     # =========================================================================
     # STREAMING
@@ -465,7 +478,7 @@ class Generator:
     """Resets the statistics. 
 Reinitializes the statistics dictionary with default values. 
 Currently resets the 'api_calls' counter to 0."""
-    def reset_statistieken(self):
+    def reset_statistieken(self) -> None:
         """Reset statistieken."""
         self._statistieken = {
             "api_calls": 0,
@@ -482,7 +495,8 @@ Currently resets the 'api_calls' counter to 0."""
 class ClaudeGenerator(Generator):
     """Specifieke generator voor Claude."""
 
-    def __init__(self, api_key: str = None, retry_config: RetryConfig = None):
+    def __init__(self, api_key: str = None, retry_config: RetryConfig = None) -> None:
+        """Init  ."""
         super().__init__(
             provider="claude",
             api_key=api_key,

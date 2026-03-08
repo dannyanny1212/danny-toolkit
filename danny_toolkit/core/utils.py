@@ -3,6 +3,8 @@ Gedeelde hulpfuncties voor Danny Toolkit.
 Versie 2.0 - Met kleuren, progress bar, tabel formatter en logging.
 """
 
+from __future__ import annotations
+
 import os
 import sys
 import time
@@ -11,6 +13,8 @@ import subprocess
 from datetime import datetime
 from pathlib import Path
 from typing import List
+
+logger = logging.getLogger(__name__)
 
 
 # =============================================================================
@@ -62,12 +66,12 @@ class Kleur:
     _enabled = True
 
     @classmethod
-    def aan(cls):
+    def aan(cls) -> None:
         """Zet kleuren aan."""
         cls._enabled = True
 
     @classmethod
-    def uit(cls):
+    def uit(cls) -> None:
         """Zet kleuren uit."""
         cls._enabled = False
 
@@ -122,7 +126,7 @@ class ProgressBar:
     """Visuele voortgangsbalk voor de terminal."""
 
     def __init__(self, totaal: int, breedte: int = 40, prefix: str = "",
-                 suffix: str = "", vulling: str = "█", leeg: str = "░"):
+                 suffix: str = "", vulling: str = "█", leeg: str = "░") -> None:
         """
         Initialiseer progress bar.
 
@@ -143,7 +147,7 @@ class ProgressBar:
         self.huidig = 0
         self.start_tijd = time.time()
 
-    def update(self, huidig: int = None):
+    def update(self, huidig: int = None) -> None:
         """Update de progress bar."""
         if huidig is not None:
             self.huidig = huidig
@@ -179,7 +183,7 @@ class ProgressBar:
         secs = int(seconden % 60)
         return f"{minuten:02d}:{secs:02d}"
 
-    def finish(self):
+    def finish(self) -> None:
         """Markeer als voltooid."""
         self.update(self.totaal)
 
@@ -190,7 +194,7 @@ class Spinner:
     FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
     FRAMES_SIMPLE = ["|", "/", "-", "\\"]
 
-    def __init__(self, bericht: str = "Laden...", gebruik_unicode: bool = True):
+    def __init__(self, bericht: str = "Laden...", gebruik_unicode: bool = True) -> None:
         """
         Initialiseer spinner.
 
@@ -203,13 +207,13 @@ class Spinner:
         self.frame_idx = 0
         self.actief = False
 
-    def spin(self):
+    def spin(self) -> None:
         """Toon volgende frame."""
         frame = self.frames[self.frame_idx % len(self.frames)]
         print(f"\r{frame} {self.bericht}", end="", flush=True)
         self.frame_idx += 1
 
-    def stop(self, succes_bericht: str = None):
+    def stop(self, succes_bericht: str = None) -> None:
         """Stop de spinner."""
         if succes_bericht:
             print(f"\r✓ {succes_bericht}          ")
@@ -224,7 +228,7 @@ class Spinner:
 class TabelFormatter:
     """Formatteert data als ASCII tabellen."""
 
-    def __init__(self, headers: List[str], uitlijning: List[str] = None):
+    def __init__(self, headers: List[str], uitlijning: List[str] = None) -> None:
         """
         Initialiseer tabel formatter.
 
@@ -237,7 +241,7 @@ class TabelFormatter:
         self.rijen = []
         self.kolom_breedtes = [len(h) for h in headers]
 
-    def voeg_rij_toe(self, *waarden):
+    def voeg_rij_toe(self, *waarden) -> None:
         """Voeg een rij toe aan de tabel."""
         rij = [str(w) for w in waarden]
         # Pad met lege strings als nodig
@@ -299,11 +303,11 @@ class TabelFormatter:
 
         return "\n".join(lijnen)
 
-    def print(self):
+    def print(self) -> None:
         """Print de tabel naar stdout."""
         print(self.render())
 
-    def wis(self):
+    def wis(self) -> None:
         """Wis alle rijen."""
         self.rijen = []
         self.kolom_breedtes = [len(h) for h in self.headers]
@@ -352,7 +356,8 @@ class ToolkitLogger:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         if ToolkitLogger._initialized:
             return
 
@@ -373,7 +378,7 @@ class ToolkitLogger:
 
         ToolkitLogger._initialized = True
 
-    def setup_bestand(self, log_dir: Path):
+    def setup_bestand(self, log_dir: Path) -> None:
         """Setup file logging."""
         if self._file_handler:
             return
@@ -392,27 +397,27 @@ class ToolkitLogger:
         self._file_handler.setFormatter(file_format)
         self.logger.addHandler(self._file_handler)
 
-    def debug(self, bericht: str):
+    def debug(self, bericht: str) -> None:
         """Log debug bericht."""
         self.logger.debug(bericht)
 
-    def info(self, bericht: str):
+    def info(self, bericht: str) -> None:
         """Log info bericht."""
         self.logger.info(bericht)
 
-    def waarschuwing(self, bericht: str):
+    def waarschuwing(self, bericht: str) -> None:
         """Log waarschuwing."""
         self.logger.warning(bericht)
 
-    def fout(self, bericht: str):
+    def fout(self, bericht: str) -> None:
         """Log fout."""
         self.logger.error(bericht)
 
-    def kritiek(self, bericht: str):
+    def kritiek(self, bericht: str) -> None:
         """Log kritieke fout."""
         self.logger.critical(bericht)
 
-    def exceptie(self, bericht: str):
+    def exceptie(self, bericht: str) -> None:
         """Log exceptie met traceback."""
         self.logger.exception(bericht)
 
@@ -432,22 +437,22 @@ def get_logger() -> ToolkitLogger:
     return _logger
 
 
-def log_debug(bericht: str):
+def log_debug(bericht: str) -> None:
     """Snelle debug log."""
     get_logger().debug(bericht)
 
 
-def log_info(bericht: str):
+def log_info(bericht: str) -> None:
     """Snelle info log."""
     get_logger().info(bericht)
 
 
-def log_waarschuwing(bericht: str):
+def log_waarschuwing(bericht: str) -> None:
     """Snelle waarschuwing log."""
     get_logger().waarschuwing(bericht)
 
 
-def log_fout(bericht: str):
+def log_fout(bericht: str) -> None:
     """Snelle fout log."""
     get_logger().fout(bericht)
 
@@ -456,14 +461,14 @@ def log_fout(bericht: str):
 # BESTAANDE FUNCTIES (VERBETERD)
 # =============================================================================
 
-def fix_encoding():
+def fix_encoding() -> None:
     """Fix Windows encoding voor emoji's en speciale tekens."""
     if sys.platform == "win32":
         if hasattr(sys.stdout, "reconfigure"):
             sys.stdout.reconfigure(encoding="utf-8")
 
 
-def clear_scherm():
+def clear_scherm() -> None:
     """Maakt het scherm leeg."""
     if os.name == "nt":
         subprocess.run(["cmd", "/c", "cls"], shell=False)
@@ -472,7 +477,7 @@ def clear_scherm():
 
 
 def toon_banner(titel: str, emoji: str = "", breedte: int = 60,
-                kleur_code: str = None):
+                kleur_code: str = None) -> None:
     """Toont een mooie banner."""
     if kleur_code and Kleur._enabled:
         titel = kleur(titel, kleur_code)
@@ -521,7 +526,7 @@ def vraag_bevestiging(vraag: str, standaard: bool = None) -> bool:
         print("Voer 'j' of 'n' in.")
 
 
-def druk_enter(bericht: str = None):
+def druk_enter(bericht: str = None) -> None:
     """Wacht op Enter toets."""
     bericht = bericht or "Druk op Enter om verder te gaan..."
     input(f"\n{bericht}")

@@ -3,12 +3,17 @@ Advanced Questions v1.0 - Geavanceerde vragen stellen met AI.
 Diepgaande vraag-antwoord sessies, Socratische dialoog, en meer.
 """
 
+from __future__ import annotations
+
 import json
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional
 from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import clear_scherm
+import logging
+
+logger = logging.getLogger(__name__)
 
 # AI Integration
 try:
@@ -16,6 +21,13 @@ try:
     AI_BESCHIKBAAR = True
 except ImportError:
     AI_BESCHIKBAAR = False
+
+try:
+    import random
+    HAS_RANDOM = True
+except ImportError:
+    HAS_RANDOM = False
+
 
 
 class AdvancedQuestionsApp:
@@ -90,7 +102,7 @@ Help de gebruiker om inzichten om te zetten in concrete stappen."""
         "Welke keuze zou je overdoen als je kon?",
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes the advanced questions handler. 
 Ensures the required data directories exist, sets up the data storage location, 
 loads existing data, and establishes an Anthropic client if the Anthropic API key 
@@ -111,18 +123,18 @@ is available and AI functionality is enabled."""
                 with open(self.data_file, "r", encoding="utf-8") as f:
                     return json.load(f)
             except (json.JSONDecodeError, IOError):
-                pass
+                logger.debug("Suppressed error")
         return {
             "sessies": [],
             "favoriete_vragen": [],
         }
 
-    def _sla_op(self):
+    def _sla_op(self) -> None:
         """Sla data op."""
         with open(self.data_file, "w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2, ensure_ascii=False)
 
-    def _start_sessie(self, mode: str):
+    def _start_sessie(self, mode: str) -> None:
         """Start een vraag-sessie."""
         if not self.client:
             print("\n  AI niet beschikbaar. Stel ANTHROPIC_API_KEY in.")
@@ -221,7 +233,7 @@ is available and AI functionality is enabled."""
 
         input("\n  Druk op Enter...")
 
-    def _kies_mode(self):
+    def _kies_mode(self) -> None:
         """Kies vraag mode."""
         clear_scherm()
         print("\n  === KIES VRAAG MODE ===\n")
@@ -237,14 +249,14 @@ is available and AI functionality is enabled."""
             if 1 <= keuze <= len(modes):
                 self._start_sessie(modes[keuze - 1])
         except (ValueError, IndexError):
-            pass
+            logger.debug("Suppressed error")
 
-    def _diepe_vraag(self):
+    def _diepe_vraag(self) -> None:
         """Krijg een diepe vraag om over na te denken."""
         clear_scherm()
         print("\n  === DIEPE VRAAG ===\n")
 
-        import random
+        pass  # import moved to top-level
         vraag = random.choice(self.DIEPE_VRAGEN)
 
         print("  " + "-" * 50)
@@ -274,7 +286,7 @@ is available and AI functionality is enabled."""
 
         input("\n  Druk op Enter...")
 
-    def _vraag_verdieping(self):
+    def _vraag_verdieping(self) -> None:
         """Verdiep een eigen vraag met AI hulp."""
         if not self.client:
             print("\n  AI niet beschikbaar. Stel ANTHROPIC_API_KEY in.")
@@ -316,7 +328,7 @@ etc."""
 
         input("\n  Druk op Enter...")
 
-    def _bekijk_sessies(self):
+    def _bekijk_sessies(self) -> None:
         """Bekijk eerdere sessies."""
         clear_scherm()
         print("\n  === EERDERE SESSIES ===\n")
@@ -355,7 +367,7 @@ etc."""
 
                 input("\n  Druk op Enter...")
 
-    def _stel_eigen_vraag(self):
+    def _stel_eigen_vraag(self) -> None:
         """Stel een directe vraag aan AI."""
         if not self.client:
             print("\n  AI niet beschikbaar. Stel ANTHROPIC_API_KEY in.")
@@ -409,7 +421,7 @@ etc."""
 
         input("\n  Druk op Enter...")
 
-    def run(self):
+    def run(self) -> None:
         """Start de app."""
         while True:
             clear_scherm()

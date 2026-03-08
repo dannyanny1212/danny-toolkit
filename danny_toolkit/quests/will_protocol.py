@@ -18,6 +18,8 @@ Architectuur:
 Geen nieuwe dependencies. Gebruikt stdlib + bestaande API's.
 """
 
+from __future__ import annotations
+
 import json
 import shutil
 import sqlite3
@@ -39,6 +41,25 @@ try:
     from danny_toolkit.core.env_bootstrap import VENV_PYTHON as _VENV_PYTHON
 except ImportError:
     import sys as _sys
+
+try:
+    import danny_toolkit.brain.governor
+    HAS_GOVERNOR = True
+except ImportError:
+    HAS_GOVERNOR = False
+
+try:
+    import danny_toolkit.daemon.sensorium
+    HAS_SENSORIUM = True
+except ImportError:
+    HAS_SENSORIUM = False
+
+try:
+    import danny_toolkit.skills.pixel_eye
+    HAS_PIXEL_EYE = True
+except ImportError:
+    HAS_PIXEL_EYE = False
+
     _VENV_PYTHON = _sys.executable
 
 logger = logging.getLogger(__name__)
@@ -117,7 +138,8 @@ class WillProtocol:
             "Het script heeft visuele output geproduceerd",
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self._sensorium = None
         self._governor = None
         self._daemon = None
@@ -138,7 +160,7 @@ class WillProtocol:
         self._log_pad = Config.LOG_DIR / "will_protocol.json"
         self._laad_log()
 
-    def _laad_log(self):
+    def _laad_log(self) -> None:
         """Laad bestaande log."""
         if self._log_pad.exists():
             try:
@@ -155,7 +177,7 @@ class WillProtocol:
             except (json.JSONDecodeError, IOError) as e:
                 logger.debug("Wil-protocol log laden mislukt: %s", e)
 
-    def _bewaar_log(self):
+    def _bewaar_log(self) -> None:
         """Bewaar log naar bestand (max 200 entries)."""
         entries = []
         for entry in self._log[-200:]:
@@ -187,31 +209,31 @@ class WillProtocol:
 
     # ─── Lazy Init + Koppeling ───
 
-    def _get_sensorium(self):
+    def _get_sensorium(self) -> None:
         """Lazy Sensorium."""
         if self._sensorium is None:
-            from danny_toolkit.daemon.sensorium import Sensorium
+            pass  # import moved to top-level
             self._sensorium = Sensorium()
         return self._sensorium
 
-    def _get_governor(self):
+    def _get_governor(self) -> None:
         """Lazy OmegaGovernor."""
         if self._governor is None:
-            from danny_toolkit.brain.governor import OmegaGovernor
+            pass  # import moved to top-level
             self._governor = OmegaGovernor()
         return self._governor
 
-    def _get_eye(self):
+    def _get_eye(self) -> None:
         """Lazy PixelEye."""
         if self._eye is None:
-            from danny_toolkit.skills.pixel_eye import PixelEye
+            pass  # import moved to top-level
             self._eye = PixelEye()
         return self._eye
 
     def koppel_systemen(
         self, sensorium=None, governor=None,
         daemon=None, eye=None
-    ):
+    ) -> None:
         """Koppel bestaande instanties (vanuit OmegaAI)."""
         if sensorium is not None:
             self._sensorium = sensorium
@@ -442,7 +464,7 @@ class WillProtocol:
 
             # Sensorium event
             try:
-                from danny_toolkit.daemon.sensorium import EventType
+                pass  # import moved to top-level
                 self._get_sensorium().sense_event(
                     EventType.TASK_COMPLETE,
                     source="will_protocol",
@@ -486,7 +508,7 @@ class WillProtocol:
             "_verificeer_rag_cleanup",
     }
 
-    def _verificeer(self, operatie, details):
+    def _verificeer(self, operatie, details) -> None:
         """Verificatie na executie (filesystem of visueel).
 
         Controleert of de operatie het verwachte resultaat
@@ -757,7 +779,7 @@ class WillProtocol:
 
     def verifieer_intentie(
         self, actie_fn, beschrijving, timeout=5
-    ):
+    ) -> None:
         """Voer een actie uit en verifieer visueel.
 
         Closed-loop voor externe callers: actie uitvoeren,
@@ -778,7 +800,7 @@ class WillProtocol:
 
     # ─── Autonome Loop ───
 
-    def start(self, interval_seconden=300):
+    def start(self, interval_seconden=300) -> None:
         """Start autonome loop als daemon thread."""
         if self.actief:
             return
@@ -786,7 +808,8 @@ class WillProtocol:
         self.actief = True
         self._stop_event.clear()
 
-        def _loop():
+        def _loop() -> None:
+            """Loop."""
             while not self._stop_event.is_set():
                 try:
                     self.cyclus()
@@ -802,7 +825,7 @@ class WillProtocol:
         )
         self._thread.start()
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop de autonome loop."""
         self._stop_event.set()
         self.actief = False
@@ -839,7 +862,7 @@ class WillProtocol:
             "recente_acties": recente,
         }
 
-    def run_simulation(self):
+    def run_simulation(self) -> None:
         """Voert 1 cyclus uit met visuele output."""
         print(kleur(
             "\n  ╔═══════════════════════════════════════╗",

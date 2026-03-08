@@ -2,6 +2,8 @@
 Dream Journal v1.0 - Log dromen, analyseer patronen, ontdek symbolen.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import random
@@ -10,6 +12,13 @@ from collections import Counter
 from typing import Dict
 from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import clear_scherm
+
+try:
+    import danny_toolkit.brain.unified_memory
+    HAS_UNIFIED_MEMORY = True
+except ImportError:
+    HAS_UNIFIED_MEMORY = False
+
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +74,8 @@ class DreamJournalApp:
         "verward", "vredig", "angstig", "opgewonden", "nostalgisch",
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         Config.ensure_dirs()
         self.data_dir = Config.APPS_DATA_DIR / "dream_journal"
         self.data_dir.mkdir(exist_ok=True)
@@ -79,7 +89,7 @@ class DreamJournalApp:
                 with open(self.data_file, "r", encoding="utf-8") as f:
                     return json.load(f)
             except (json.JSONDecodeError, IOError):
-                pass
+                logger.debug("Suppressed error")
         return {
             "dromen": [],
             "symbolen_count": {},
@@ -87,16 +97,16 @@ class DreamJournalApp:
             "laatste_log": None,
         }
 
-    def _sla_op(self):
+    def _sla_op(self) -> None:
         """Sla data op."""
         with open(self.data_file, "w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2, ensure_ascii=False)
 
-    def _log_memory_event(self, event_type, data):
+    def _log_memory_event(self, event_type, data) -> None:
         """Log event naar Unified Memory."""
         try:
             if not hasattr(self, "_memory"):
-                from danny_toolkit.brain.unified_memory import UnifiedMemory
+                pass  # import moved to top-level
                 self._memory = UnifiedMemory()
             self._memory.store_event(
                 app="dream_journal",
@@ -106,7 +116,7 @@ class DreamJournalApp:
         except Exception as e:
             logger.debug("Memory event error: %s", e)
 
-    def _log_droom(self):
+    def _log_droom(self) -> None:
         """Log een nieuwe droom."""
         clear_scherm()
         print("\n  === NIEUWE DROOM LOGGEN ===\n")
@@ -215,7 +225,7 @@ class DreamJournalApp:
 
         input("\n  Druk op Enter...")
 
-    def _bekijk_dromen(self):
+    def _bekijk_dromen(self) -> None:
         """Bekijk dromen geschiedenis."""
         clear_scherm()
         print("\n  === DROMEN GESCHIEDENIS ===\n")
@@ -242,7 +252,7 @@ class DreamJournalApp:
             if 0 <= idx < len(dromen):
                 self._toon_droom_details(dromen[idx])
 
-    def _toon_droom_details(self, droom: Dict):
+    def _toon_droom_details(self, droom: Dict) -> None:
         """Toon details van een droom."""
         clear_scherm()
         print("\n  " + "=" * 50)
@@ -270,7 +280,7 @@ class DreamJournalApp:
 
         input("\n  Druk op Enter...")
 
-    def _analyseer_patronen(self):
+    def _analyseer_patronen(self) -> None:
         """Analyseer droom patronen."""
         clear_scherm()
         print("\n  === DROOM ANALYSE ===\n")
@@ -322,7 +332,7 @@ class DreamJournalApp:
 
         input("\n  Druk op Enter...")
 
-    def _symbolen_gids(self):
+    def _symbolen_gids(self) -> None:
         """Toon symbolen gids."""
         clear_scherm()
         print("\n  === DROOM SYMBOLEN GIDS ===\n")
@@ -337,7 +347,7 @@ class DreamJournalApp:
 
         input("\n  Druk op Enter...")
 
-    def _zoek_dromen(self):
+    def _zoek_dromen(self) -> None:
         """Zoek in dromen."""
         clear_scherm()
         print("\n  === ZOEK IN DROMEN ===\n")
@@ -371,7 +381,7 @@ class DreamJournalApp:
 
         input("\n  Druk op Enter...")
 
-    def _random_interpretatie(self):
+    def _random_interpretatie(self) -> None:
         """Genereer een random droom interpretatie."""
         clear_scherm()
         print("\n  === DROOM INTERPRETATIE ===\n")
@@ -425,7 +435,7 @@ class DreamJournalApp:
 
         input("\n  Druk op Enter...")
 
-    def run(self):
+    def run(self) -> None:
         """Start de app."""
         while True:
             clear_scherm()

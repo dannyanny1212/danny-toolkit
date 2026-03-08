@@ -1,6 +1,8 @@
 # danny_toolkit/brain/model_sync.py
 """
 Multi-Model Sync — Generaal Mode (Phase 41, Invention #25).
+from __future__ import annotations
+
 ============================================================
 Externe AI-modellen (GPT, Claude, Gemini, etc.) als huurlingen voor de Swarm.
 
@@ -95,7 +97,7 @@ class ModelWorker:
     - Performance tracking (Generaal's geheugen)
     """
 
-    def __init__(self, profile: ModelProfile):
+    def __init__(self, profile: ModelProfile) -> None:
         """**Initializes a new instance with the given profile.
 
  Args:
@@ -128,7 +130,7 @@ class ModelWorker:
         """Controleer of de worker beschikbaar is."""
         return self.profile.available and not self._circuit_open
 
-    def _record_failure(self):
+    def _record_failure(self) -> None:
         """Registreer een API fout. 3 fails → circuit open."""
         self._fail_count += 1
         self._perf["failures"] += 1
@@ -138,12 +140,12 @@ class ModelWorker:
                         self.profile.provider, self.profile.model_id,
                         self._fail_count)
 
-    def _record_success(self):
+    def _record_success(self) -> None:
         """Registreer een succesvolle call (passed 95% Barrier)."""
         self._fail_count = 0
         self._perf["successes"] += 1
 
-    def _record_barrier_rejection(self):
+    def _record_barrier_rejection(self) -> None:
         """Registreer een 95% Barrière-afwijzing (model ontslagen)."""
         self._perf["barrier_rejections"] += 1
 
@@ -178,7 +180,8 @@ class ModelWorker:
 class GroqModelWorker(ModelWorker):
     """Worker voor Groq API (primaire provider)."""
 
-    def __init__(self, profile: ModelProfile = None):
+    def __init__(self, profile: ModelProfile = None) -> None:
+        """Init  ."""
         if profile is None:
             profile = ModelProfile(
                 provider="groq",
@@ -306,7 +309,8 @@ class GroqModelWorker(ModelWorker):
 class AnthropicModelWorker(ModelWorker):
     """Worker voor Anthropic Claude API."""
 
-    def __init__(self, profile: ModelProfile = None):
+    def __init__(self, profile: ModelProfile = None) -> None:
+        """Init  ."""
         if profile is None:
             profile = ModelProfile(
                 provider="anthropic",
@@ -385,7 +389,8 @@ class AnthropicModelWorker(ModelWorker):
 class OpenAIModelWorker(ModelWorker):
     """Worker voor OpenAI API (GPT-4o-mini, etc.)."""
 
-    def __init__(self, profile: ModelProfile = None):
+    def __init__(self, profile: ModelProfile = None) -> None:
+        """Init  ."""
         if profile is None:
             profile = ModelProfile(
                 provider="openai",
@@ -462,7 +467,8 @@ class OpenAIModelWorker(ModelWorker):
 class NVIDIAModelWorker(ModelWorker):
     """Worker voor NVIDIA NIM API (OpenAI-compatible)."""
 
-    def __init__(self, profile: ModelProfile = None):
+    def __init__(self, profile: ModelProfile = None) -> None:
+        """Init  ."""
         if profile is None:
             nim_model = getattr(Config, "NVIDIA_NIM_MODEL",
                                 "qwen/qwen2.5-coder-32b-instruct")
@@ -545,7 +551,8 @@ class GeminiModelWorker(ModelWorker):
     Key via GOOGLE_API_KEY of GEMINI_API_KEY env var.
     """
 
-    def __init__(self, profile: ModelProfile = None):
+    def __init__(self, profile: ModelProfile = None) -> None:
+        """Init  ."""
         if profile is None:
             gemini_model = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
             profile = ModelProfile(
@@ -624,7 +631,8 @@ class GeminiModelWorker(ModelWorker):
 class OllamaModelWorker(ModelWorker):
     """Worker voor lokale Ollama modellen."""
 
-    def __init__(self, profile: ModelProfile = None):
+    def __init__(self, profile: ModelProfile = None) -> None:
+        """Init  ."""
         if profile is None:
             profile = ModelProfile(
                 provider="ollama",
@@ -696,11 +704,12 @@ class ModelRegistry:
     Thread-safe via Lock.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self._workers: Dict[str, ModelWorker] = {}
         self._lock = threading.Lock()
 
-    def auto_discover(self):
+    def auto_discover(self) -> None:
         """Check env vars en registreer beschikbare workers automatisch."""
         # Groq — primary (llama-4-scout)
         if os.getenv("GROQ_API_KEY"):
@@ -768,7 +777,7 @@ class ModelRegistry:
 
         logger.info("ModelRegistry: %d workers ontdekt", len(self._workers))
 
-    def register(self, worker: ModelWorker):
+    def register(self, worker: ModelWorker) -> None:
         """Registreer een worker handmatig."""
         key = f"{worker.profile.provider}/{worker.profile.model_id}"
         with self._lock:

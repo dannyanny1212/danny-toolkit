@@ -11,6 +11,8 @@ Features:
 - Geheugen en geschiedenis
 """
 
+from __future__ import annotations
+
 import ast
 import json
 import logging
@@ -19,6 +21,13 @@ import operator
 from datetime import datetime
 from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import clear_scherm, kleur, Kleur, succes, fout, waarschuwing
+
+try:
+    import collections
+    HAS_COLLECTIONS = True
+except ImportError:
+    HAS_COLLECTIONS = False
+
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +100,8 @@ class RekenmachineApp:
         "CNY": 7.82
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         Config.ensure_dirs()
         self.bestand = Config.APPS_DATA_DIR / "rekenmachine.json"
         self.data = self._laad_data()
@@ -115,13 +125,13 @@ class RekenmachineApp:
             }
         }
 
-    def _sla_op(self):
+    def _sla_op(self) -> None:
         """Slaat data op."""
         self.data["geheugen"] = self.geheugen
         with open(self.bestand, "w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2, ensure_ascii=False)
 
-    def _voeg_geschiedenis_toe(self, berekening: str, resultaat: float):
+    def _voeg_geschiedenis_toe(self, berekening: str, resultaat: float) -> None:
         """Voegt berekening toe aan geschiedenis."""
         self.data["geschiedenis"].append({
             "berekening": berekening,
@@ -135,7 +145,7 @@ class RekenmachineApp:
         self.data["statistieken"]["berekeningen"] += 1
         self.laatste_resultaat = resultaat
 
-    def _toon_header(self, titel: str):
+    def _toon_header(self, titel: str) -> None:
         """Toont een mooie header."""
         print()
         print(kleur("╔" + "═" * 50 + "╗", "cyan"))
@@ -173,7 +183,7 @@ class RekenmachineApp:
 
     # ==================== BASIS BEREKENINGEN ====================
 
-    def _basis_menu(self):
+    def _basis_menu(self) -> None:
         """Toont basis berekeningen menu."""
         while True:
             self._toon_header("🔢 Basis Berekeningen")
@@ -268,7 +278,7 @@ class RekenmachineApp:
 
     # ==================== WETENSCHAPPELIJK ====================
 
-    def _wetenschap_menu(self):
+    def _wetenschap_menu(self) -> None:
         """Wetenschappelijke berekeningen menu."""
         while True:
             self._toon_header("🔬 Wetenschappelijk")
@@ -443,7 +453,7 @@ class RekenmachineApp:
 
             input(kleur("\n  Druk op Enter om verder te gaan...", "grijs"))
 
-    def _toon_constanten(self):
+    def _toon_constanten(self) -> None:
         """Toont alle beschikbare constanten."""
         self._toon_header("📐 Wiskundige Constanten")
         print()
@@ -451,7 +461,7 @@ class RekenmachineApp:
             print(f"    {kleur(key, 'groen'):8} {symbool:3} = {waarde:<20} {kleur(beschrijving, 'grijs')}")
         print(kleur("\n  Tip: Typ de naam (bijv. 'pi') als invoer!", Kleur.GEEL))
 
-    def _graden_radialen(self):
+    def _graden_radialen(self) -> None:
         """Converteert tussen graden en radialen."""
         print(kleur("\n  1. Graden → Radialen", Kleur.GEEL))
         print(kleur("  2. Radialen → Graden", Kleur.GEEL))
@@ -467,7 +477,7 @@ class RekenmachineApp:
             graden = math.degrees(radialen)
             self._toon_resultaat(f"{radialen} rad → °", graden)
 
-    def _afronden_menu(self):
+    def _afronden_menu(self) -> None:
         """Afrondingsfuncties menu."""
         print(kleur("\n  Afronden:", Kleur.GEEL))
         print("    1. Floor (naar beneden)")
@@ -495,7 +505,7 @@ class RekenmachineApp:
 
     # ==================== EENHEDEN ====================
 
-    def _eenheden_menu(self):
+    def _eenheden_menu(self) -> None:
         """Eenheden conversie menu."""
         while True:
             self._toon_header("📏 Eenheden Omrekenen")
@@ -528,7 +538,7 @@ class RekenmachineApp:
 
             input(kleur("\n  Druk op Enter om verder te gaan...", "grijs"))
 
-    def _converteer_eenheid(self, categorie: str, eenheden: dict):
+    def _converteer_eenheid(self, categorie: str, eenheden: dict) -> None:
         """Generieke eenheden conversie."""
         print(kleur(f"\n  Beschikbare {categorie.lower()} eenheden:", Kleur.GEEL))
         eenheid_lijst = list(eenheden.keys())
@@ -553,7 +563,7 @@ class RekenmachineApp:
         except (ValueError, IndexError):
             fout("Ongeldige invoer.")
 
-    def _converteer_temperatuur(self):
+    def _converteer_temperatuur(self) -> None:
         """Temperatuur conversie."""
         print(kleur("\n  Temperatuur eenheden:", Kleur.GEEL))
         print("    1. Celsius (°C)")
@@ -596,7 +606,7 @@ class RekenmachineApp:
 
     # ==================== FINANCIEEL ====================
 
-    def _financieel_menu(self):
+    def _financieel_menu(self) -> None:
         """Financiële berekeningen menu."""
         while True:
             self._toon_header("💰 Financiële Berekeningen")
@@ -646,7 +656,7 @@ class RekenmachineApp:
 
             input(kleur("\n  Druk op Enter om verder te gaan...", "grijs"))
 
-    def _btw_berekenen(self):
+    def _btw_berekenen(self) -> None:
         """BTW berekeningen."""
         print(kleur("\n  BTW berekening:", Kleur.GEEL))
         print("    1. BTW toevoegen aan bedrag")
@@ -679,7 +689,7 @@ class RekenmachineApp:
             print(kleur(f"  BTW ({btw_pct}%): €{btw:.2f}", Kleur.GROEN))
             self._voeg_geschiedenis_toe(f"{btw_pct}% van €{bedrag}", btw)
 
-    def _korting_berekenen(self):
+    def _korting_berekenen(self) -> None:
         """Korting berekening."""
         bedrag = self._get_getal("Originele prijs (€): ")
         korting_pct = self._get_getal("Korting percentage: ")
@@ -694,7 +704,7 @@ class RekenmachineApp:
 
         self._voeg_geschiedenis_toe(f"€{bedrag} - {korting_pct}%", nieuw)
 
-    def _percentage_van(self):
+    def _percentage_van(self) -> None:
         """Percentage van een bedrag."""
         percentage = self._get_getal("Percentage: ")
         bedrag = self._get_getal("Van bedrag: ")
@@ -702,7 +712,7 @@ class RekenmachineApp:
         resultaat = bedrag * (percentage / 100)
         self._toon_resultaat(f"{percentage}% van {bedrag}", resultaat)
 
-    def _enkelvoudige_rente(self):
+    def _enkelvoudige_rente(self) -> None:
         """Enkelvoudige rente berekening."""
         hoofdsom = self._get_getal("Hoofdsom (€): ")
         rente = self._get_getal("Jaarlijkse rente (%): ")
@@ -717,7 +727,7 @@ class RekenmachineApp:
 
         self._voeg_geschiedenis_toe(f"Enkelvoudige rente: €{hoofdsom} @ {rente}%", totaal)
 
-    def _samengestelde_rente(self):
+    def _samengestelde_rente(self) -> None:
         """Samengestelde rente berekening."""
         hoofdsom = self._get_getal("Hoofdsom (€): ")
         rente = self._get_getal("Jaarlijkse rente (%): ")
@@ -734,7 +744,7 @@ class RekenmachineApp:
 
         self._voeg_geschiedenis_toe(f"Samengestelde rente: €{hoofdsom} @ {rente}%", totaal)
 
-    def _lening_berekenen(self):
+    def _lening_berekenen(self) -> None:
         """Lening/hypotheek maandlasten berekening."""
         hoofdsom = self._get_getal("Leenbedrag (€): ")
         rente = self._get_getal("Jaarlijkse rente (%): ")
@@ -761,7 +771,7 @@ class RekenmachineApp:
 
         self._voeg_geschiedenis_toe(f"Lening €{hoofdsom}: maandlast", maandlast)
 
-    def _valuta_omrekenen(self):
+    def _valuta_omrekenen(self) -> None:
         """Valuta conversie."""
         print(kleur("\n  Beschikbare valuta:", Kleur.GEEL))
         valuta_lijst = list(self.VALUTA_KOERSEN.keys())
@@ -787,7 +797,7 @@ class RekenmachineApp:
         except (ValueError, IndexError):
             fout("Ongeldige invoer.")
 
-    def _winstmarge(self):
+    def _winstmarge(self) -> None:
         """Winstmarge berekening."""
         inkoop = self._get_getal("Inkoopprijs (€): ")
         verkoop = self._get_getal("Verkoopprijs (€): ")
@@ -802,7 +812,7 @@ class RekenmachineApp:
         print(kleur(f"  Winstmarge: {marge_pct:.1f}%", Kleur.GEEL))
         print(kleur(f"  Markup: {markup_pct:.1f}%", Kleur.GEEL))
 
-    def _fooi_berekenen(self):
+    def _fooi_berekenen(self) -> None:
         """Fooi/tip berekening."""
         rekening = self._get_getal("Rekeningbedrag (€): ")
         fooi_pct = self._get_getal("Fooi percentage [15]: ") or 15
@@ -821,7 +831,7 @@ class RekenmachineApp:
 
     # ==================== STATISTIEKEN ====================
 
-    def _statistieken_menu(self):
+    def _statistieken_menu(self) -> None:
         """Statistieken berekeningen menu."""
         while True:
             self._toon_header("📊 Statistieken")
@@ -870,7 +880,7 @@ class RekenmachineApp:
                     self._toon_resultaat("Mediaan", resultaat)
 
                 elif keuze == "3":
-                    from collections import Counter
+                    pass  # import moved to top-level
                     teller = Counter(getallen)
                     max_freq = max(teller.values())
                     modi = [k for k, v in teller.items() if v == max_freq]
@@ -908,7 +918,7 @@ class RekenmachineApp:
 
             input(kleur("\n  Druk op Enter om verder te gaan...", "grijs"))
 
-    def _alle_statistieken(self, getallen: list):
+    def _alle_statistieken(self, getallen: list) -> None:
         """Berekent alle statistieken."""
         n = len(getallen)
         som = sum(getallen)
@@ -938,7 +948,7 @@ class RekenmachineApp:
 
     # ==================== GEZONDHEID ====================
 
-    def _gezondheid_menu(self):
+    def _gezondheid_menu(self) -> None:
         """Gezondheidsberekeningen menu."""
         while True:
             self._toon_header("❤️ Gezondheidsberekeningen")
@@ -976,7 +986,7 @@ class RekenmachineApp:
 
             input(kleur("\n  Druk op Enter om verder te gaan...", "grijs"))
 
-    def _bmi_berekenen(self):
+    def _bmi_berekenen(self) -> None:
         """BMI berekening."""
         gewicht = self._get_getal("Gewicht (kg): ")
         lengte = self._get_getal("Lengte (cm): ")
@@ -1007,7 +1017,7 @@ class RekenmachineApp:
         print("    25-30   : Overgewicht")
         print("    > 30    : Obesitas")
 
-    def _ideaal_gewicht(self):
+    def _ideaal_gewicht(self) -> None:
         """Berekent ideaal gewicht."""
         lengte = self._get_getal("Lengte (cm): ")
         print(kleur("\n  Geslacht:", Kleur.GEEL))
@@ -1030,7 +1040,7 @@ class RekenmachineApp:
         print(kleur(f"  Ideaal gewicht (BMI 22): {bmi_ideaal:.1f} kg", Kleur.GROEN))
         print(kleur(f"  Gezond bereik: {18.5 * lengte_m**2:.1f} - {24.9 * lengte_m**2:.1f} kg", Kleur.GEEL))
 
-    def _calorieen_berekenen(self):
+    def _calorieen_berekenen(self) -> None:
         """Berekent dagelijkse caloriebehoefte."""
         gewicht = self._get_getal("Gewicht (kg): ")
         lengte = self._get_getal("Lengte (cm): ")
@@ -1056,7 +1066,7 @@ class RekenmachineApp:
         print(f"    Zeer actief (6-7x/week):        {bmr * 1.725:.0f} kcal")
         print(f"    Extra actief (atleet):          {bmr * 1.9:.0f} kcal")
 
-    def _hartslag_zones(self):
+    def _hartslag_zones(self) -> None:
         """Berekent hartslag trainingszones."""
         leeftijd = self._get_getal("Leeftijd (jaren): ")
 
@@ -1070,7 +1080,7 @@ class RekenmachineApp:
         print(f"    Zone 4 (80-90%): {max_hr*0.8:.0f}-{max_hr*0.9:.0f} bpm - Anaerobe zone")
         print(f"    Zone 5 (90-100%): {max_hr*0.9:.0f}-{max_hr:.0f} bpm - Maximum")
 
-    def _waterinname(self):
+    def _waterinname(self) -> None:
         """Berekent aanbevolen waterinname."""
         gewicht = self._get_getal("Gewicht (kg): ")
 
@@ -1085,7 +1095,7 @@ class RekenmachineApp:
 
     # ==================== MEETKUNDE ====================
 
-    def _meetkunde_menu(self):
+    def _meetkunde_menu(self) -> None:
         """Meetkundige berekeningen menu."""
         while True:
             self._toon_header("📐 Meetkunde")
@@ -1152,7 +1162,7 @@ class RekenmachineApp:
 
             input(kleur("\n  Druk op Enter om verder te gaan...", "grijs"))
 
-    def _cirkel_berekening(self):
+    def _cirkel_berekening(self) -> None:
         """Berekent omtrek en oppervlakte van een cirkel."""
         straal = self._get_getal("Straal: ")
         if straal <= 0:
@@ -1168,7 +1178,7 @@ class RekenmachineApp:
 
         self._voeg_geschiedenis_toe(f"Cirkel r={straal}", oppervlakte)
 
-    def _rechthoek_berekening(self):
+    def _rechthoek_berekening(self) -> None:
         """Berekent omtrek en oppervlakte van een rechthoek."""
         lengte = self._get_getal("Lengte: ")
         breedte = self._get_getal("Breedte: ")
@@ -1187,7 +1197,7 @@ class RekenmachineApp:
 
         self._voeg_geschiedenis_toe(f"Rechthoek {lengte}x{breedte}", oppervlakte)
 
-    def _driehoek_berekening(self):
+    def _driehoek_berekening(self) -> None:
         """Berekent omtrek en oppervlakte van een driehoek."""
         print(kleur("\n  Berekeningswijze:", Kleur.GEEL))
         print("    1. Basis en hoogte")
@@ -1227,7 +1237,7 @@ class RekenmachineApp:
 
             self._voeg_geschiedenis_toe(f"Driehoek {a},{b},{c}", oppervlakte)
 
-    def _vierkant_berekening(self):
+    def _vierkant_berekening(self) -> None:
         """Berekent omtrek en oppervlakte van een vierkant."""
         zijde = self._get_getal("Zijde: ")
         if zijde <= 0:
@@ -1245,7 +1255,7 @@ class RekenmachineApp:
 
         self._voeg_geschiedenis_toe(f"Vierkant z={zijde}", oppervlakte)
 
-    def _trapezium_berekening(self):
+    def _trapezium_berekening(self) -> None:
         """Berekent oppervlakte van een trapezium."""
         a = self._get_getal("Evenwijdige zijde a: ")
         b = self._get_getal("Evenwijdige zijde b: ")
@@ -1261,7 +1271,7 @@ class RekenmachineApp:
 
         self._voeg_geschiedenis_toe(f"Trapezium", oppervlakte)
 
-    def _parallellogram_berekening(self):
+    def _parallellogram_berekening(self) -> None:
         """Berekent oppervlakte van een parallellogram."""
         basis = self._get_getal("Basis: ")
         hoogte = self._get_getal("Hoogte: ")
@@ -1276,7 +1286,7 @@ class RekenmachineApp:
 
         self._voeg_geschiedenis_toe(f"Parallellogram", oppervlakte)
 
-    def _bol_berekening(self):
+    def _bol_berekening(self) -> None:
         """Berekent oppervlakte en volume van een bol."""
         straal = self._get_getal("Straal: ")
         if straal <= 0:
@@ -1292,7 +1302,7 @@ class RekenmachineApp:
 
         self._voeg_geschiedenis_toe(f"Bol r={straal}", volume)
 
-    def _kubus_berekening(self):
+    def _kubus_berekening(self) -> None:
         """Berekent oppervlakte en volume van een kubus."""
         zijde = self._get_getal("Zijde: ")
         if zijde <= 0:
@@ -1310,7 +1320,7 @@ class RekenmachineApp:
 
         self._voeg_geschiedenis_toe(f"Kubus z={zijde}", volume)
 
-    def _cilinder_berekening(self):
+    def _cilinder_berekening(self) -> None:
         """Berekent oppervlakte en volume van een cilinder."""
         straal = self._get_getal("Straal: ")
         hoogte = self._get_getal("Hoogte: ")
@@ -1330,7 +1340,7 @@ class RekenmachineApp:
 
         self._voeg_geschiedenis_toe(f"Cilinder r={straal} h={hoogte}", volume)
 
-    def _kegel_berekening(self):
+    def _kegel_berekening(self) -> None:
         """Berekent oppervlakte en volume van een kegel."""
         straal = self._get_getal("Straal: ")
         hoogte = self._get_getal("Hoogte: ")
@@ -1352,7 +1362,7 @@ class RekenmachineApp:
 
         self._voeg_geschiedenis_toe(f"Kegel r={straal} h={hoogte}", volume)
 
-    def _piramide_berekening(self):
+    def _piramide_berekening(self) -> None:
         """Berekent volume van een piramide."""
         print(kleur("\n  Grondvlak type:", Kleur.GEEL))
         print("    1. Rechthoekig grondvlak")
@@ -1382,7 +1392,7 @@ class RekenmachineApp:
 
         self._voeg_geschiedenis_toe(f"Piramide h={hoogte}", volume)
 
-    def _pythagoras_berekening(self):
+    def _pythagoras_berekening(self) -> None:
         """Berekent ontbrekende zijde met Pythagoras."""
         print(kleur("\n  Wat wil je berekenen?", Kleur.GEEL))
         print("    1. Schuine zijde (c)")
@@ -1415,7 +1425,7 @@ class RekenmachineApp:
 
             self._voeg_geschiedenis_toe(f"Pythagoras c={c}", andere)
 
-    def _afstand_berekening(self):
+    def _afstand_berekening(self) -> None:
         """Berekent afstand tussen twee punten."""
         print(kleur("\n  Voer coördinaten in:", Kleur.GEEL))
         x1 = self._get_getal("Punt 1 - x: ")
@@ -1480,7 +1490,7 @@ class RekenmachineApp:
         tree = ast.parse(expr, mode="eval")
         return self._eval_node(tree.body)
 
-    def _eval_node(self, node):
+    def _eval_node(self, node) -> None:
         """Recursieve AST node evaluator (whitelist-only)."""
         # Numerieke literal: 42, 3.14
         if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
@@ -1545,7 +1555,7 @@ class RekenmachineApp:
 
     # ==================== EXPRESSIE PARSER ====================
 
-    def _expressie_menu(self):
+    def _expressie_menu(self) -> None:
         """Directe expressie invoer."""
         self._toon_header("⌨️ Expressie Calculator")
 
@@ -1593,7 +1603,7 @@ class RekenmachineApp:
 
     # ==================== GEHEUGEN ====================
 
-    def _geheugen_menu(self):
+    def _geheugen_menu(self) -> None:
         """Geheugen en geschiedenis menu."""
         while True:
             self._toon_header("💾 Geheugen & Geschiedenis")
@@ -1635,7 +1645,7 @@ class RekenmachineApp:
 
             input(kleur("\n  Druk op Enter om verder te gaan...", "grijs"))
 
-    def _toon_geschiedenis(self):
+    def _toon_geschiedenis(self) -> None:
         """Toont berekeningsgeschiedenis."""
         geschiedenis = self.data.get("geschiedenis", [])
 
@@ -1648,7 +1658,7 @@ class RekenmachineApp:
             datum = entry["datum"][:10]
             print(f"    {datum}: {entry['berekening']} = {entry['resultaat']}")
 
-    def _toon_rekenmachine_stats(self):
+    def _toon_rekenmachine_stats(self) -> None:
         """Toont rekenmachine statistieken."""
         stats = self.data.get("statistieken", {})
 
@@ -1657,7 +1667,7 @@ class RekenmachineApp:
 
     # ==================== HULPFUNCTIES ====================
 
-    def _toon_resultaat(self, berekening: str, resultaat: float):
+    def _toon_resultaat(self, berekening: str, resultaat: float) -> None:
         """Toont het resultaat en slaat op."""
         print()
         print(kleur("  ┌" + "─" * 40 + "┐", Kleur.GROEN))
@@ -1667,7 +1677,7 @@ class RekenmachineApp:
 
         self._voeg_geschiedenis_toe(berekening, resultaat)
 
-    def _toon_hoofdmenu(self):
+    def _toon_hoofdmenu(self) -> None:
         """Toont het hoofdmenu."""
         print()
         print(kleur("┌" + "─" * 44 + "┐", "cyan"))
@@ -1704,7 +1714,7 @@ class RekenmachineApp:
 
     # ==================== MAIN ====================
 
-    def run(self):
+    def run(self) -> None:
         """Start de app."""
         clear_scherm()
 

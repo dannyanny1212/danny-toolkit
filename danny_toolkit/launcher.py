@@ -1,5 +1,7 @@
 """
 Danny Toolkit Launcher - Hoofdmenu.
+from __future__ import annotations
+
 Versie 6.11.0 - OMEGA_SOVEREIGN Rich Dashboard met thema's, kleuren, statistieken en meer.
 """
 
@@ -106,10 +108,11 @@ from rich.prompt import Prompt
 class DaemonApp:
     """Wrapper voor Digital Daemon in launcher."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self.daemon = None
 
-    def run(self):
+    def run(self) -> None:
         """Start de daemon interactief."""
         from danny_toolkit.core.utils import clear_scherm, kleur
 
@@ -196,10 +199,11 @@ class DaemonApp:
 class TrinityApp:
     """Wrapper voor Trinity Symbiosis in launcher."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self.trinity = None
 
-    def run(self):
+    def run(self) -> None:
         """Start de Trinity Symbiosis interface."""
         from danny_toolkit.core.utils import clear_scherm, kleur
 
@@ -284,7 +288,7 @@ class TrinityApp:
         print(kleur("\n  Trinity gedeactiveerd.", Kleur.CYAAN))
         input("\n  Druk op Enter...")
 
-    def _run_test(self):
+    def _run_test(self) -> None:
         """Voer een symbiose test uit."""
         from danny_toolkit.core.utils import kleur
         import time
@@ -319,7 +323,7 @@ class TrinityApp:
 class OmegaApp:
     """Wrapper voor Omega AI in launcher."""
 
-    def run(self):
+    def run(self) -> None:
         """Start Omega AI."""
         omega = OmegaAI()
         omega.start()
@@ -332,7 +336,7 @@ class OmegaApp:
 class SanctuaryApp:
     """Wrapper voor Sanctuary Dashboard in launcher."""
 
-    def run(self):
+    def run(self) -> None:
         """Start het Sanctuary Dashboard interactief."""
         from danny_toolkit.core.utils import clear_scherm, kleur
 
@@ -417,7 +421,7 @@ class SanctuaryApp:
 class DreamMonitorApp:
     """Wrapper voor Cosmic Dream Monitor in launcher."""
 
-    def run(self):
+    def run(self) -> None:
         """Start de Dream Monitor."""
         from danny_toolkit.core.utils import clear_scherm
 
@@ -449,7 +453,7 @@ class DreamMonitorApp:
 class NexusBridgeApp:
     """Wrapper voor NEXUS Brain Bridge in launcher."""
 
-    def run(self):
+    def run(self) -> None:
         """Start de Nexus Bridge interactief."""
         from danny_toolkit.core.utils import clear_scherm
 
@@ -541,7 +545,7 @@ class NexusBridgeApp:
 class VisualNexusApp:
     """Wrapper voor Visual Nexus in launcher."""
 
-    def run(self):
+    def run(self) -> None:
         """Start de Visual Nexus."""
         build_visual_nexus()
         input("\n  Druk op Enter...")
@@ -554,7 +558,7 @@ class VisualNexusApp:
 class PrometheusApp:
     """Wrapper voor Prometheus Brain in launcher."""
 
-    def run(self):
+    def run(self) -> None:
         """Start Prometheus Brain interactief."""
         from danny_toolkit.core.utils import clear_scherm
 
@@ -681,7 +685,7 @@ class PrometheusApp:
 class PixelEyeApp:
     """Wrapper voor Pixel Eye in launcher."""
 
-    def run(self):
+    def run(self) -> None:
         """Start Pixel Eye interactief."""
         from danny_toolkit.core.utils import clear_scherm
         from danny_toolkit.skills.pixel_eye import PixelEye
@@ -919,7 +923,7 @@ class PixelEyeApp:
 class ProjectMapApp:
     """Wrapper voor Project Map in launcher."""
 
-    def run(self):
+    def run(self) -> None:
         """Start de Project Map interactief."""
         pm = ProjectMap()
         pm.run()
@@ -932,7 +936,7 @@ class ProjectMapApp:
 class OracleAgentApp:
     """Wrapper voor Oracle Agent in launcher."""
 
-    def run(self):
+    def run(self) -> None:
         """Start de Oracle Agent interactief."""
         from danny_toolkit.brain.oracle import OracleAgent
 
@@ -947,7 +951,7 @@ class OracleAgentApp:
 class VoiceProtocolApp:
     """Wrapper voor Voice Protocol in launcher."""
 
-    def run(self):
+    def run(self) -> None:
         """Start Voice Protocol simulatie."""
         from danny_toolkit.quests.voice_protocol import VoiceProtocol
 
@@ -970,7 +974,8 @@ class VoiceProtocolApp:
 class ListenerProtocolApp:
     """Wrapper voor Listener Protocol in launcher."""
 
-    def run(self):
+    def run(self) -> None:
+        """Run."""
         from danny_toolkit.quests.listener_protocol import ListenerProtocol
 
         print(kleur(
@@ -992,7 +997,8 @@ class ListenerProtocolApp:
 class DialogueProtocolApp:
     """Wrapper voor Dialogue Protocol in launcher."""
 
-    def run(self):
+    def run(self) -> None:
+        """Run."""
         from danny_toolkit.quests.dialogue_protocol import DialogueProtocol
         print(kleur(
             "\n  QUEST XII: THE DIALOGUE\n"
@@ -1013,7 +1019,8 @@ class DialogueProtocolApp:
 class WillProtocolApp:
     """Wrapper voor Will Protocol in launcher."""
 
-    def run(self):
+    def run(self) -> None:
+        """Run."""
         from danny_toolkit.quests.will_protocol import WillProtocol
 
         print(kleur(
@@ -1035,7 +1042,7 @@ class WillProtocolApp:
 class HeartbeatApp:
     """Wrapper voor Heartbeat Daemon v2.0 in launcher."""
 
-    def run(self):
+    def run(self) -> None:
         """Start de Heartbeat Daemon met SwarmEngine."""
         import io
         from contextlib import redirect_stdout
@@ -1083,7 +1090,7 @@ class HeartbeatApp:
 class SingularityApp:
     """Wrapper voor Singularity Engine in launcher."""
 
-    def run(self):
+    def run(self) -> None:
         """Start de Singularity Engine interactief."""
         engine = SingularityEngine()
         engine.run()
@@ -1092,7 +1099,7 @@ class SingularityApp:
 class SecurityResearchApp:
     """Wrapper voor Security Research Engine in launcher."""
 
-    def run(self):
+    def run(self) -> None:
         """Start de Security Research Engine interactief."""
         engine = SecurityResearchEngine()
         engine.run()
@@ -1101,7 +1108,7 @@ class SecurityResearchApp:
 class PulseProtocolApp:
     """Wrapper voor Pulse Protocol in launcher."""
 
-    def run(self):
+    def run(self) -> None:
         """Start Pulse Protocol simulatie."""
         from danny_toolkit.quests.pulse_protocol import PulseProtocol
 
@@ -1124,7 +1131,7 @@ class PulseProtocolApp:
 class SovereignDashboardGUIApp:
     """Wrapper voor Sovereign Dashboard (CustomTkinter GUI) in launcher."""
 
-    def run(self):
+    def run(self) -> None:
         """Start de Sovereign Dashboard GUI."""
         import sovereign_app
         sovereign_app.main()
@@ -1133,7 +1140,7 @@ class SovereignDashboardGUIApp:
 class FastAPIApp:
     """Wrapper voor FastAPI Server in launcher."""
 
-    def run(self):
+    def run(self) -> None:
         """Start de FastAPI server."""
         from danny_toolkit.core.utils import clear_scherm
 
@@ -1178,7 +1185,7 @@ class FastAPIApp:
 class TelegramBotApp:
     """Wrapper voor Telegram Bot in launcher."""
 
-    def run(self):
+    def run(self) -> None:
         """Start de Telegram bot."""
         from danny_toolkit.core.utils import clear_scherm
 
@@ -1259,7 +1266,8 @@ BANNER_RETRO = r"""
 class LauncherStats:
     """Beheert launcher statistieken en recente apps."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         Config.ensure_dirs()
         self.stats_file = Config.APPS_DATA_DIR / "launcher_stats.json"
         self.data = self._laad()
@@ -1279,12 +1287,12 @@ class LauncherStats:
             "eerste_gebruik": datetime.now().isoformat()
         }
 
-    def _opslaan(self):
+    def _opslaan(self) -> None:
         """Sla statistieken op."""
         with open(self.stats_file, "w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2, ensure_ascii=False)
 
-    def registreer_gebruik(self, app_naam: str):
+    def registreer_gebruik(self, app_naam: str) -> None:
         """Registreer dat een app is gebruikt."""
         # Update gebruik teller
         if app_naam not in self.data["gebruik"]:
@@ -1299,7 +1307,7 @@ class LauncherStats:
 
         self._opslaan()
 
-    def registreer_sessie(self):
+    def registreer_sessie(self) -> None:
         """Registreer een nieuwe sessie."""
         self.data["totaal_sessies"] += 1
         self._opslaan()
@@ -1459,7 +1467,8 @@ class Launcher:
         "sd": "60", # Sovereign Dashboard
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         fix_encoding()
         Config.ensure_dirs()
 
@@ -1468,7 +1477,7 @@ class Launcher:
             from danny_toolkit.core.startup_validator import valideer_opstart
             valideer_opstart()
         except ImportError:
-            pass
+            logger.debug("Suppressed error")
 
         Config.laad_voorkeuren()
         self.stats = LauncherStats()
@@ -1476,7 +1485,7 @@ class Launcher:
         self.console = Console()
         self._file_guard_check()
 
-    def _file_guard_check(self):
+    def _file_guard_check(self) -> None:
         """Voer FileGuard integriteitscheck uit bij startup."""
         try:
             guard = FileGuard()
@@ -1507,7 +1516,7 @@ class Launcher:
         }
         return kleur(tekst, kleuren.get(type_, ""))
 
-    def toon_menu(self):
+    def toon_menu(self) -> None:
         """Toont het Rich-powered hoofdmenu dashboard."""
         clear_scherm()
         con = self.console
@@ -1605,7 +1614,8 @@ class Launcher:
         ]
 
         # ── Helper: maak tabel met rijen ──
-        def _build_table(titel, items, kleur_stijl, met_label=False):
+        def _build_table(titel: object, items: list, kleur_stijl: object, met_label: object=False) -> None:
+            """Build table."""
             tbl = Table(
                 expand=True,
                 show_header=False,
@@ -1714,7 +1724,7 @@ class Launcher:
         ))
         con.print()
 
-    def toon_help(self):
+    def toon_help(self) -> None:
         """Toont help en sneltoetsen."""
         clear_scherm()
         print(self._kleur_tekst("\n  ═══ HELP & SNELTOETSEN ═══\n", "categorie"))
@@ -1778,7 +1788,7 @@ class Launcher:
 
         input("  Druk op Enter om terug te gaan...")
 
-    def toon_info(self):
+    def toon_info(self) -> None:
         """Toont informatie en statistieken."""
         clear_scherm()
         print(self._kleur_tekst("\n  ═══ INFO & STATISTIEKEN ═══\n", "categorie"))
@@ -1819,7 +1829,7 @@ class Launcher:
 
         input("  Druk op Enter om terug te gaan...")
 
-    def toon_instellingen(self):
+    def toon_instellingen(self) -> None:
         """Toont en beheert instellingen."""
         while True:
             clear_scherm()
@@ -1910,7 +1920,7 @@ class Launcher:
                     print("\n  Geannuleerd.")
                 input("  Druk op Enter...")
 
-    def zoek_apps(self, zoekterm: str = None):
+    def zoek_apps(self, zoekterm: str = None) -> None:
         """Zoek apps op naam."""
         if not zoekterm:
             zoekterm = input("\n  Zoekterm: ").strip().lower()
@@ -1941,7 +1951,7 @@ class Launcher:
             return keuze
         return None
 
-    def start_app(self, key: str):
+    def start_app(self, key: str) -> None:
         """Start een app op basis van key."""
         if key not in self.APPS:
             print(fout(f"\n  Ongeldige keuze: {key}"))
@@ -1965,7 +1975,7 @@ class Launcher:
                 traceback.print_exc()
             input("\n  Druk op Enter om terug te gaan...")
 
-    def run(self, direct_start: str = None):
+    def run(self, direct_start: str = None) -> None:
         """Start de launcher."""
         # Direct start via command line
         if direct_start:
@@ -2041,7 +2051,7 @@ class Launcher:
                 input("  Druk op Enter...")
 
 
-def main():
+def main() -> None:
     """Hoofdfunctie van de launcher."""
     # Check voor command line argumenten
     direct_start = None

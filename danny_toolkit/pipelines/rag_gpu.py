@@ -1,9 +1,12 @@
 # danny_toolkit/pipelines/rag_gpu.py
 
+from __future__ import annotations
+
 from danny_toolkit.core.embeddings import get_torch_embedder
 from danny_toolkit.core.faiss_index import FaissIndex
 
-def run_demo():
+def run_demo() -> None:
+    """Run demo."""
     print("=== GPU-RAG Pipeline Demo ===")
 
     # 1. Documenten

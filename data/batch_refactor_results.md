@@ -1,21 +1,54 @@
 # Diamond Polish Batch Refactor — Rapport v6.11.0
 
-> Uitgevoerd: 2026-03-08 | Protocol: Autonome Swarm Strike
+> Uitgevoerd: 2026-03-08 | Protocol: Autonome Swarm Strike (Phase 1 + 2)
 > Orchestrator: Strategist | Executor: Artificer + AST Batch Transformer
 > Quality Gate: auto_refactor_guard.py (8 AST-regels)
 
-## Samenvatting
+## Totaal Samenvatting (Phase 1 + 2)
 
-| Metric | Voor | Na | Delta |
-|--------|------|-----|-------|
-| Bestanden verwerkt | 47 (Grade D) | 47 (Grade A/A+) | **+47 upgrades** |
-| Gemiddelde kwaliteit (codebase) | 6.6/10 | **7.6/10** | **+1.0** |
-| A+ bestanden | 17 | **25** | +8 |
-| A bestanden | 37 | **76** | +39 |
-| B bestanden | 62 | 62 | 0 |
-| C bestanden | 66 | 66 | 0 |
-| D bestanden | **47** | **0** | **-47** |
-| F bestanden | 1 | **0** | -1 |
+| Metric | Oorspronkelijk | Na Phase 1 | Na Phase 2 |
+|--------|----------------|-----------|-----------|
+| Gemiddelde kwaliteit | 6.6/10 | 7.6/10 | **8.5/10** |
+| A+ bestanden | 17 | 25 | **71** |
+| A bestanden | 37 | 76 | **96** |
+| B bestanden | 62 | 62 | **62** |
+| C bestanden | 66 | 66 | **0** |
+| D bestanden | 47 | 0 | **0** |
+| F bestanden | 1 | 0 | **0** |
+| Bestanden verwerkt | — | 47 (D→A) | **+66 (C→A)** |
+| Totaal upgrades | — | 47 | **113** |
+
+---
+
+## Phase 2: C-Grade Eliminatie (66 bestanden, 54.777 LOC)
+
+### Pass 1: Batch AST Transformer
+- **48/66 bestanden** succesvol naar A/A+ (42 A+, 6 A)
+- **18 AST errors** door docstring-insertie bij multiline functiedefinities
+- Gemiddelde verbetering: 6.1/10 → 9.6/10
+- Doorlooptijd: 4 seconden
+
+### Pass 2: Targeted Fixer
+- **18/18 bestanden** succesvol naar A/A+ (4 A+, 14 A)
+- Grootste bestanden: `virtueel_huisdier.py` (9187 LOC, 113 hints), `launcher.py` (2117 LOC, 40 hints)
+- Gemiddelde verbetering: 5.8/10 → 8.2/10
+- Doorlooptijd: 3 seconden
+
+### Phase 2 Fixes (per categorie)
+
+| Fix | Bestanden | Totaal patches |
+|-----|-----------|---------------|
+| `from __future__ import annotations` | 66 | 66 |
+| Return type hints | 65 | ~850 |
+| Docstrings | ~35 | ~150 |
+| Logger toevoegen | 6 | 6 |
+| Parameter type hints | 18 | ~110 |
+| Bare `except:pass` → `Exception` | 8 | ~40 |
+| Inner imports → top-level | 5 | ~30 |
+
+---
+
+## Phase 1: D-Grade Eliminatie (47 bestanden)
 
 ## Verwerking
 

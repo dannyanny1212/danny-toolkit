@@ -16,6 +16,8 @@ Features:
 - Experience en leveling
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import random
@@ -358,7 +360,8 @@ class SchatzoekApp:
         "extra_leven": {"prijs": 50, "beschrijving": "Extra leven bij dood"}
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         Config.ensure_dirs()
         self.save_file = Config.APPS_DATA_DIR / "schatzoek_v2.json"
         self.data = self._laad_data()
@@ -418,12 +421,12 @@ class SchatzoekApp:
             }
         }
 
-    def _sla_op(self):
+    def _sla_op(self) -> None:
         """Slaat data op."""
         with open(self.save_file, "w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2, ensure_ascii=False)
 
-    def _init_game_state(self):
+    def _init_game_state(self) -> None:
         """Initialiseert game state variabelen."""
         self.grid_grootte = 7
         self.speler_positie = (0, 0)
@@ -448,14 +451,14 @@ class SchatzoekApp:
 
     # ==================== UI HELPERS ====================
 
-    def _toon_header(self, titel: str):
+    def _toon_header(self, titel: str) -> None:
         """Toont een mooie header."""
         print()
         print(kleur("╔" + "═" * 50 + "╗", "cyan"))
         print(kleur("║", "cyan") + f" {titel:^48} " + kleur("║", "cyan"))
         print(kleur("╚" + "═" * 50 + "╝", "cyan"))
 
-    def _toon_profiel(self):
+    def _toon_profiel(self) -> None:
         """Toont speler profiel."""
         p = self.data["profiel"]
         s = self.data["statistieken"]
@@ -477,7 +480,7 @@ class SchatzoekApp:
                   abs(pos[1] - self.speler_positie[1])
         return afstand <= self.zicht_radius
 
-    def _toon_grid(self):
+    def _toon_grid(self) -> None:
         """Toont het speelveld met fog of war."""
         biome_info = self.BIOMES.get(self.biome, self.BIOMES["bos"])
 
@@ -522,7 +525,7 @@ class SchatzoekApp:
                     print("· ", end="")
             print()
 
-    def _toon_status(self):
+    def _toon_status(self) -> None:
         """Toont status balk."""
         p = self.data["profiel"]
         char_class = self.CLASSES.get(p["class"], self.CLASSES["ontdekker"])
@@ -549,7 +552,7 @@ class SchatzoekApp:
 
     # ==================== LEVEL GENERATIE ====================
 
-    def _genereer_level(self, settings: dict, biome: str = "bos", is_boss: bool = False):
+    def _genereer_level(self, settings: dict, biome: str = "bos", is_boss: bool = False) -> None:
         """Genereert een nieuw level."""
         self._init_game_state()
         self.grid_grootte = settings.get("grid", 7)
@@ -733,7 +736,7 @@ class SchatzoekApp:
 
         return True
 
-    def _check_tile(self):
+    def _check_tile(self) -> None:
         """Checkt de huidige tile voor items/events."""
         pos = self.speler_positie
 
@@ -787,7 +790,7 @@ class SchatzoekApp:
         if self.boss and pos == self.boss["positie"]:
             self._gevecht_boss()
 
-    def _neem_schade(self, schade: int):
+    def _neem_schade(self, schade: int) -> None:
         """Verwerkt schade aan speler."""
         # Check schild
         if "schild" in self.actieve_effecten:
@@ -805,7 +808,7 @@ class SchatzoekApp:
         if self.speler_hp <= 0:
             self.speler_hp = 0
 
-    def _gevecht_monster(self, pos: tuple):
+    def _gevecht_monster(self, pos: tuple) -> None:
         """Gevecht met een monster."""
         monster = self.monsters[pos]
 
@@ -914,7 +917,7 @@ class SchatzoekApp:
             self._check_achievement("eerste_monster", self.data["statistieken"]["monsters_verslagen"] >= 1)
             self._check_achievement("tien_monsters", self.data["statistieken"]["monsters_verslagen"] >= 10)
 
-    def _gevecht_boss(self):
+    def _gevecht_boss(self) -> None:
         """Gevecht met een boss."""
         self._toon_header(f"👑 BOSS FIGHT: {self.boss['naam']}!")
 
@@ -979,7 +982,7 @@ class SchatzoekApp:
             self._check_achievement("alle_bosses", self.data["statistieken"]["bosses_verslagen"] >= 7)
             self.boss = None
 
-    def _toon_inventory_gevecht(self):
+    def _toon_inventory_gevecht(self) -> None:
         """Toont inventory tijdens gevecht."""
         inv = self.data["inventory"]
         if not inv:
@@ -1009,11 +1012,11 @@ class SchatzoekApp:
                     self.data["inventory"].remove(item)
                     return "bom"  # Special return voor gevecht
         except (ValueError, IndexError):
-            pass
+            logger.debug("Suppressed error")
 
     # ==================== MONSTER AI ====================
 
-    def _beweeg_monsters(self):
+    def _beweeg_monsters(self) -> None:
         """Beweegt alle monsters richting de speler."""
         if "onzichtbaar" in self.actieve_effecten:
             return
@@ -1128,7 +1131,7 @@ class SchatzoekApp:
 
         return True
 
-    def _gebruik_machete(self):
+    def _gebruik_machete(self) -> None:
         """Machete: kap nabije muren/obstakels weg."""
         x, y = self.speler_positie
         verwijderd = 0
@@ -1139,7 +1142,7 @@ class SchatzoekApp:
                 verwijderd += 1
         succes(f"🔪 Machete! {verwijderd} obstakels weggekapt!")
 
-    def _gebruik_kompas(self):
+    def _gebruik_kompas(self) -> None:
         """Kompas: toont richting naar dichtstbijzijnde schat."""
         niet_gevonden = self.schatten - self.gevonden_schatten
         if not niet_gevonden:
@@ -1151,7 +1154,7 @@ class SchatzoekApp:
         richting = self._krijg_richting(dichtstbij)
         print(kleur(f"\n  🧭 De schat ligt richting: {richting}", Kleur.GEEL))
 
-    def _gebruik_radar(self):
+    def _gebruik_radar(self) -> None:
         """Radar: toont afstand tot alle schatten."""
         niet_gevonden = self.schatten - self.gevonden_schatten
         if not niet_gevonden:
@@ -1163,7 +1166,7 @@ class SchatzoekApp:
             afstand = self._bereken_afstand(self.speler_positie, schat)
             print(f"    Schat {i}: {afstand} stappen")
 
-    def _gebruik_teleport(self):
+    def _gebruik_teleport(self) -> None:
         """Teleport: spring naar een positie."""
         try:
             coords = input(kleur("  Teleport naar (x,y): ", "cyan")).strip()
@@ -1183,7 +1186,7 @@ class SchatzoekApp:
         except ValueError:
             fout("Gebruik format: x,y (bijv: 3,4)")
 
-    def _gebruik_bom(self):
+    def _gebruik_bom(self) -> None:
         """Bom: vernietigt nabije muren en monsters."""
         x, y = self.speler_positie
         vernietigde = 0
@@ -1244,7 +1247,7 @@ class SchatzoekApp:
 
     # ==================== XP & LEVELING ====================
 
-    def _geef_xp(self, xp: int):
+    def _geef_xp(self, xp: int) -> None:
         """Geeft XP aan de speler."""
         self.data["profiel"]["xp"] += xp
         self.data["profiel"]["totaal_xp"] += xp
@@ -1259,7 +1262,7 @@ class SchatzoekApp:
 
     # ==================== ACHIEVEMENTS ====================
 
-    def _check_achievement(self, achievement_id: str, voorwaarde: bool):
+    def _check_achievement(self, achievement_id: str, voorwaarde: bool) -> None:
         """Checkt en unlockt een achievement."""
         if voorwaarde and achievement_id not in self.data["achievements"]:
             self.data["achievements"].append(achievement_id)
@@ -1267,7 +1270,7 @@ class SchatzoekApp:
             print(kleur(f"\n  🏆 ACHIEVEMENT UNLOCKED: {ach.get('naam', achievement_id)}!", Kleur.GEEL))
             self._geef_xp(ach.get("xp", 0))
 
-    def _toon_achievements(self):
+    def _toon_achievements(self) -> None:
         """Toont alle achievements."""
         self._toon_header("🏆 Achievements")
 
@@ -1284,7 +1287,7 @@ class SchatzoekApp:
 
     # ==================== SHOP ====================
 
-    def _toon_shop(self):
+    def _toon_shop(self) -> None:
         """Toont de shop."""
         while True:
             self._toon_header("🏪 Shop")
@@ -1315,13 +1318,13 @@ class SchatzoekApp:
                     else:
                         fout("Niet genoeg muntjes!")
             except ValueError:
-                pass
+                logger.debug("Suppressed error")
 
             input(kleur("\n  Druk op Enter...", "grijs"))
 
     # ==================== GAME MODES ====================
 
-    def _campagne_menu(self):
+    def _campagne_menu(self) -> None:
         """Campagne mode menu."""
         while True:
             self._toon_header("⚔️ Campagne Modus")
@@ -1353,7 +1356,7 @@ class SchatzoekApp:
 
             input(kleur("\n  Druk op Enter...", "grijs"))
 
-    def _speel_campagne_level(self, level_idx: int):
+    def _speel_campagne_level(self, level_idx: int) -> None:
         """Speelt een campagne level."""
         level = self.CAMPAGNE_LEVELS[level_idx]
         self.data["campagne"]["huidig_level"] = level_idx
@@ -1402,7 +1405,7 @@ class SchatzoekApp:
 
         self._sla_op()
 
-    def _toon_einde_campagne(self):
+    def _toon_einde_campagne(self) -> None:
         """Toont einde van campagne."""
         clear_scherm()
         print(kleur("""
@@ -1417,7 +1420,7 @@ class SchatzoekApp:
     ╚═══════════════════════════════════════════════════╝
         """, Kleur.GEEL))
 
-    def _vrij_spel_menu(self):
+    def _vrij_spel_menu(self) -> None:
         """Vrij spel menu."""
         self._toon_header("🎮 Vrij Spel")
 
@@ -1452,7 +1455,7 @@ class SchatzoekApp:
 
         self._sla_op()
 
-    def _dagelijkse_uitdaging(self):
+    def _dagelijkse_uitdaging(self) -> None:
         """Dagelijkse uitdaging."""
         vandaag = str(date.today())
 
@@ -1586,7 +1589,7 @@ class SchatzoekApp:
         input(kleur("\n  Druk op Enter...", "grijs"))
         return "verloren"
 
-    def _toon_inventory_menu(self):
+    def _toon_inventory_menu(self) -> None:
         """Toont inventory menu."""
         inv = self.data["inventory"]
         if not inv:
@@ -1611,11 +1614,11 @@ class SchatzoekApp:
             if 0 <= idx < len(inv):
                 self._gebruik_powerup(inv[idx])
         except ValueError:
-            pass
+            logger.debug("Suppressed error")
 
         input(kleur("\n  Druk op Enter...", "grijs"))
 
-    def _check_highscore(self, moeilijkheid: str, stappen: int):
+    def _check_highscore(self, moeilijkheid: str, stappen: int) -> None:
         """Checkt en slaat highscore op."""
         scores = self.data["highscores"].get(moeilijkheid, [])
         is_highscore = len(scores) < 5 or (scores and stappen < scores[-1]["stappen"])
@@ -1628,7 +1631,7 @@ class SchatzoekApp:
             scores.sort(key=lambda x: x["stappen"])
             self.data["highscores"][moeilijkheid] = scores[:5]
 
-    def _toon_highscores(self):
+    def _toon_highscores(self) -> None:
         """Toont highscores."""
         self._toon_header("🏆 Highscores")
 
@@ -1641,7 +1644,7 @@ class SchatzoekApp:
             else:
                 print(kleur("    Nog geen scores!", "grijs"))
 
-    def _kies_class(self):
+    def _kies_class(self) -> None:
         """Laat speler een class kiezen."""
         self._toon_header("🎭 Kies je Class")
 
@@ -1658,11 +1661,11 @@ class SchatzoekApp:
                 self.data["profiel"]["class"] = classes[idx]
                 succes(f"Je speelt nu als {self.CLASSES[classes[idx]]['naam']}!")
         except ValueError:
-            pass
+            logger.debug("Suppressed error")
 
     # ==================== MAIN MENU ====================
 
-    def _toon_hoofdmenu(self):
+    def _toon_hoofdmenu(self) -> None:
         """Toont het hoofdmenu."""
         print()
         print(kleur("┌" + "─" * 44 + "┐", "cyan"))
@@ -1692,7 +1695,7 @@ class SchatzoekApp:
 
         print(kleur("└" + "─" * 44 + "┘", "cyan"))
 
-    def run(self):
+    def run(self) -> None:
         """Start de app."""
         clear_scherm()
 

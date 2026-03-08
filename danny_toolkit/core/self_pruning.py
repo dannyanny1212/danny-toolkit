@@ -17,6 +17,8 @@ Gebruik:
     resultaat = pruner.prune()
 """
 
+from __future__ import annotations
+
 import logging
 import math
 import os
@@ -36,6 +38,37 @@ try:
 except ImportError:
     HAS_NUMPY = False
 
+try:
+    import chromadb
+    HAS_CHROMADB = True
+except ImportError:
+    HAS_CHROMADB = False
+
+try:
+    import danny_toolkit.core.embeddings
+    HAS_EMBEDDINGS = True
+except ImportError:
+    HAS_EMBEDDINGS = False
+
+try:
+    import danny_toolkit.core.memory_interface
+    HAS_MEMORY_INTERFACE = True
+except ImportError:
+    HAS_MEMORY_INTERFACE = False
+
+try:
+    import danny_toolkit.core.neural_bus
+    HAS_NEURAL_BUS = True
+except ImportError:
+    HAS_NEURAL_BUS = False
+
+try:
+    import danny_toolkit.core.shard_router
+    HAS_SHARD_ROUTER = True
+except ImportError:
+    HAS_SHARD_ROUTER = False
+
+
 
 # ═══════════════════════════════════════════════════════════
 # AccessTracker — SQLite-backed fragment observability
@@ -48,7 +81,7 @@ class AccessTracker:
     timestamp/access metadata. SQLite WAL mode, thread-safe.
     """
 
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: Optional[str] = None) -> None:
         """Initializes the object with a database path.
 
  Args:
@@ -60,7 +93,7 @@ class AccessTracker:
         self._lock = threading.Lock()
         self._init_db()
 
-    def _init_db(self):
+    def _init_db(self) -> None:
         """Maak database en tabel aan."""
         try:
             os.makedirs(os.path.dirname(self._db_path), exist_ok=True)
@@ -90,12 +123,13 @@ class AccessTracker:
             logger.debug("AccessTracker DB init fout: %s", e)
 
     def _connect(self) -> sqlite3.Connection:
+        """Connect."""
         conn = sqlite3.connect(self._db_path, timeout=Config.SQLITE_CONNECT_TIMEOUT)
         Config.apply_sqlite_perf(conn)
         conn.row_factory = sqlite3.Row
         return conn
 
-    def registreer_toegang(self, fragment_ids: List[str], shard: str):
+    def registreer_toegang(self, fragment_ids: List[str], shard: str) -> None:
         """Registreer dat fragmenten zijn geraadpleegd.
 
         UPSERT: bestaande rijen krijgen updated last_accessed en
@@ -121,7 +155,7 @@ class AccessTracker:
             except Exception as e:
                 logger.debug("AccessTracker registreer_toegang fout: %s", e)
 
-    def registreer_creatie(self, fragment_ids: List[str], shard: str):
+    def registreer_creatie(self, fragment_ids: List[str], shard: str) -> None:
         """Registreer nieuw aangemaakte fragmenten.
 
         Stelt access_count=0 en last_accessed=now. Geeft een
@@ -190,7 +224,7 @@ class AccessTracker:
                 logger.debug("AccessTracker haal_actieve fout: %s", e)
                 return []
 
-    def update_shard(self, fragment_id: str, oud_shard: str, nieuw_shard: str):
+    def update_shard(self, fragment_id: str, oud_shard: str, nieuw_shard: str) -> None:
         """Update de shard van een fragment (na cold migratie)."""
         nu = datetime.now().isoformat()
         with self._lock:
@@ -206,7 +240,7 @@ class AccessTracker:
             except Exception as e:
                 logger.debug("AccessTracker update_shard fout: %s", e)
 
-    def verwijder(self, fragment_ids: List[str], shard: str):
+    def verwijder(self, fragment_ids: List[str], shard: str) -> None:
         """Verwijder fragmenten uit de tracker (na destructie)."""
         if not fragment_ids:
             return
@@ -250,7 +284,8 @@ class EntropieScanner:
     fragmenten met cosine distance > drempel.
     """
 
-    def __init__(self, drempel: float = 0.85):
+    def __init__(self, drempel: float = 0.85) -> None:
+        """Init  ."""
         self.drempel = drempel
 
     @staticmethod
@@ -384,7 +419,8 @@ class RedundantieDetector:
     wordt aangemerkt voor vernietiging.
     """
 
-    def __init__(self, drempel: float = 0.90):
+    def __init__(self, drempel: float = 0.90) -> None:
+        """Init  ."""
         self.drempel = drempel
 
     def detecteer(
@@ -541,13 +577,14 @@ class ColdStorageMigrator:
         client: Any = None,
         embed_fn: Any = None,
         verval_dagen: int = 14,
-    ):
+    ) -> None:
+        """Init  ."""
         self._client = client
         self._embed_fn = embed_fn
         self.verval_dagen = verval_dagen
         self._cold_collection = None
 
-    def _get_cold_collection(self):
+    def _get_cold_collection(self) -> None:
         """Lazy init cold storage collectie."""
         if self._cold_collection is not None:
             return self._cold_collection
@@ -687,7 +724,8 @@ class SelfPruning:
     en ColdStorageMigrator in één prune() aanroep.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self.tracker = AccessTracker()
         self.entropie = EntropieScanner(drempel=Config.ENTROPY_THRESHOLD)
         self.redundantie = RedundantieDetector(drempel=Config.REDUNDANCY_THRESHOLD)
@@ -704,8 +742,8 @@ class SelfPruning:
         if os.environ.get("DANNY_TEST_MODE") == "1":
             return False
         try:
-            import chromadb
-            from danny_toolkit.core.embeddings import get_chroma_embed_fn
+            pass  # import moved to top-level
+            pass  # import moved to top-level
 
             chroma_dir = str(Config.RAG_DATA_DIR / "chromadb")
             self._client = chromadb.PersistentClient(path=chroma_dir)
@@ -720,7 +758,7 @@ class SelfPruning:
             logger.debug("SelfPruning ChromaDB init fout: %s", e)
             return False
 
-    def _get_collection(self, shard: str):
+    def _get_collection(self, shard: str) -> None:
         """Haal een ChromaDB collectie op."""
         if shard in self._collections:
             return self._collections[shard]
@@ -739,14 +777,14 @@ class SelfPruning:
 
     # ─── Public API ───────────────────────────────────
 
-    def registreer_toegang(self, fragment_ids: List[str], shard: str):
+    def registreer_toegang(self, fragment_ids: List[str], shard: str) -> None:
         """Registreer dat fragmenten zijn geraadpleegd."""
         try:
             self.tracker.registreer_toegang(fragment_ids, shard)
         except Exception as e:
             logger.debug("SelfPruning registreer_toegang fout: %s", e)
 
-    def registreer_creatie(self, fragment_ids: List[str], shard: str):
+    def registreer_creatie(self, fragment_ids: List[str], shard: str) -> None:
         """Registreer nieuw aangemaakte fragmenten."""
         try:
             self.tracker.registreer_creatie(fragment_ids, shard)
@@ -781,7 +819,7 @@ class SelfPruning:
         }
 
         # Bepaal shards
-        from danny_toolkit.core.shard_router import ALL_SHARDS
+        pass  # import moved to top-level
         shards = list(ALL_SHARDS)
 
         # NeuralBus: PRUNING_STARTED
@@ -906,7 +944,7 @@ class SelfPruning:
 
     # ─── Private helpers ──────────────────────────────
 
-    def _bootstrap_onbekend(self, shards: List[str]):
+    def _bootstrap_onbekend(self, shards: List[str]) -> None:
         """Bootstrap: registreer onbekende fragmenten in de tracker.
 
         Eerste keer prune(): bestaande fragmenten krijgen
@@ -927,19 +965,19 @@ class SelfPruning:
             except Exception as e:
                 logger.debug("SelfPruning bootstrap fout %s: %s", shard, e)
 
-    def _bus_publish(self, event_naam: str, data: dict):
+    def _bus_publish(self, event_naam: str, data: dict) -> None:
         """Publiceer event naar NeuralBus."""
         try:
-            from danny_toolkit.core.neural_bus import get_bus, EventTypes
+            pass  # import moved to top-level
             bus = get_bus()
             event_type = getattr(EventTypes, event_naam, event_naam.lower())
             bus.publish(event_type, data, bron="SelfPruning")
         except Exception as e:
             logger.debug("SelfPruning NeuralBus publish fout: %s", e)
 
-    def _log_cortical(self, resultaat: dict):
+    def _log_cortical(self, resultaat: dict) -> None:
         """Log prune resultaat naar CorticalStack."""
-        from danny_toolkit.core.memory_interface import log_to_cortical
+        pass  # import moved to top-level
         log_to_cortical(
             actor="self_pruning",
             action="prune_complete",

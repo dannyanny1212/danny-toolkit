@@ -12,18 +12,24 @@ Spelers:
 - NUTRITION   (voedingswaarde) - Event -> energie mapping
 """
 
+from __future__ import annotations
+
 from danny_toolkit.core.utils import kleur, Kleur, succes, fout, info
 from danny_toolkit.daemon.sensorium import Sensorium, EventType
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class SensesProtocol:
     """Quest IV: The Senses - De zintuigen van het organisme."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self.sensorium = None
         self._init_sensorium()
 
-    def _init_sensorium(self):
+    def _init_sensorium(self) -> None:
         """Initialiseer het Sensorium."""
         try:
             self.sensorium = Sensorium()
@@ -52,7 +58,7 @@ class SensesProtocol:
             "status": "operationeel",
         }
 
-    def run_simulation(self):
+    def run_simulation(self) -> None:
         """Demo: toon event types en nutrition mapping."""
         print(kleur(
             "  QUEST IV: THE SENSES\n"

@@ -1,6 +1,8 @@
 """
 ProactiveEngine v1.0 — Van Reactief naar Levend.
 
+from __future__ import annotations
+
 Verbindt Sensorium, HeartbeatDaemon, PipelineTuner en
 Governor tot een proactief systeem dat zelf acties triggert
 op basis van regels met condities, cooldowns en prioriteiten.
@@ -54,7 +56,7 @@ class ProactiveEngine:
     acties met Governor-goedkeuring en cooldowns.
     """
 
-    def __init__(self, daemon, brain=None):
+    def __init__(self, daemon: object, brain: object=None) -> None:
         """Initialiseer de ProactiveEngine.
 
         Args:
@@ -86,7 +88,7 @@ class ProactiveEngine:
     # ─── Lazy Properties ───
 
     @property
-    def governor(self):
+    def governor(self) -> None:
         """Lazy OmegaGovernor."""
         if self._governor is None:
             try:
@@ -97,7 +99,7 @@ class ProactiveEngine:
         return self._governor
 
     @property
-    def stack(self):
+    def stack(self) -> None:
         """Lazy CorticalStack."""
         if self._stack is None:
             try:
@@ -111,7 +113,7 @@ class ProactiveEngine:
 
     # ─── Standaard Regels ───
 
-    def _registreer_standaard_regels(self):
+    def _registreer_standaard_regels(self) -> None:
         """Registreer de 8 standaard proactieve regels."""
         self.regels = [
             # 1. CPU cleanup
@@ -222,7 +224,7 @@ class ProactiveEngine:
 
     # ─── Sensorium Binding ───
 
-    def _verbind_sensorium(self):
+    def _verbind_sensorium(self) -> None:
         """Registreer listeners bij Sensorium."""
         try:
             from danny_toolkit.daemon.sensorium import EventType
@@ -248,7 +250,7 @@ class ProactiveEngine:
 
     # ─── Event Handler ───
 
-    def _on_event(self, event):
+    def _on_event(self, event: object) -> None:
         """Ontvang Sensorium event en evalueer regels.
 
         Args:
@@ -257,7 +259,7 @@ class ProactiveEngine:
         state = self._bouw_state(event)
         self._evalueer_regels(state)
 
-    def _bouw_state(self, event=None) -> Dict[str, Any]:
+    def _bouw_state(self, event: object=None) -> Dict[str, Any]:
         """Bouw state dict vanuit alle subsystemen.
 
         Args:
@@ -368,7 +370,7 @@ class ProactiveEngine:
 
     # ─── Evaluatie ───
 
-    def _evalueer_regels(self, state: Dict):
+    def _evalueer_regels(self, state: Dict) -> None:
         """Evalueer alle regels tegen de state.
 
         Args:
@@ -408,7 +410,7 @@ class ProactiveEngine:
             except Exception as e:
                 logger.debug("Regel %s evaluatie failed: %s", regel.naam, e)
 
-    def _governor_check(self, regel) -> bool:
+    def _governor_check(self, regel: object) -> bool:
         """Check of Governor de actie toestaat.
 
         Args:
@@ -432,7 +434,7 @@ class ProactiveEngine:
 
     # ─── Uitvoering ───
 
-    def _voer_uit(self, regel, state: Dict):
+    def _voer_uit(self, regel: object, state: Dict) -> None:
         """Voer een getriggerde regel uit.
 
         Args:
@@ -462,7 +464,7 @@ class ProactiveEngine:
         # Log naar CorticalStack
         self._log_actie(regel, state)
 
-    def _run_swarm(self, prompt: str):
+    def _run_swarm(self, prompt: str) -> None:
         """Voer een SwarmEngine taak uit.
 
         Args:
@@ -477,7 +479,7 @@ class ProactiveEngine:
                 f"Swarm taak mislukt: {prompt[:50]}"
             )
 
-    def _run_repair(self):
+    def _run_repair(self) -> None:
         """Voer SelfRepairProtocol diagnose uit."""
         try:
             from danny_toolkit.core.self_repair import (
@@ -506,7 +508,7 @@ class ProactiveEngine:
                 "SelfRepair niet beschikbaar"
             )
 
-    def _voeg_melding_toe(self, tekst: str):
+    def _voeg_melding_toe(self, tekst: str) -> None:
         """Voeg melding toe aan de queue.
 
         Args:
@@ -520,7 +522,7 @@ class ProactiveEngine:
                 f"[{tijdstip}] {tekst}"
             )
 
-    def _log_actie(self, regel, state: Dict):
+    def _log_actie(self, regel: object, state: Dict) -> None:
         """Log proactieve actie naar CorticalStack.
 
         Args:
@@ -549,7 +551,7 @@ class ProactiveEngine:
 
     # ─── Timer Regels ───
 
-    def _check_timer_regels(self):
+    def _check_timer_regels(self) -> None:
         """Check tijd-gebaseerde regels.
 
         Moet elke 60s gecalled worden vanuit
@@ -577,7 +579,7 @@ class ProactiveEngine:
             self._meldingen.clear()
             return meldingen
 
-    def voeg_regel_toe(self, regel: ProactiveRule):
+    def voeg_regel_toe(self, regel: ProactiveRule) -> None:
         """Voeg een custom regel toe.
 
         Args:
@@ -593,7 +595,7 @@ class ProactiveEngine:
             )
         self.regels.append(regel)
 
-    def registreer_fout(self, fout_tekst: str):
+    def registreer_fout(self, fout_tekst: str) -> None:
         """Registreer een fout voor error tracking.
 
         Args:
@@ -606,7 +608,7 @@ class ProactiveEngine:
                 self._recente_fouten[-20:]
             )
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop de engine gracefully."""
         self._stop.set()
 

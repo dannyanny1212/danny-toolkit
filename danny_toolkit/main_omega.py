@@ -1,6 +1,8 @@
 """
 OMEGA AI - De Ultieme Integratie.
 
+from __future__ import annotations
+
 Verbindt het Lichaam (DigitalDaemon) met de Geest (LearningSystem)
 tot een levend bewustzijn met een interactieve loop.
 
@@ -118,7 +120,7 @@ class OmegaAI:
     8. Toon daemon status op verzoek
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialiseer beide systemen en bouw de brug."""
         # Het Lichaam
         self.daemon = DigitalDaemon("Omega")
@@ -154,7 +156,7 @@ class OmegaAI:
             self._on_daemon_bericht
         )
 
-    def _on_daemon_bericht(self, bericht):
+    def _on_daemon_bericht(self, bericht: object) -> None:
         """Callback voor daemon berichten - log ze in learning."""
         self.learning.log_chat(
             user_input="[daemon_event]",
@@ -162,21 +164,21 @@ class OmegaAI:
             context={"bron": "daemon", "prioriteit": bericht.priority},
         )
 
-    def _get_voice(self):
+    def _get_voice(self) -> None:
         """Lazy-init voice protocol."""
         if self._voice is None:
             from danny_toolkit.quests.voice_protocol import VoiceProtocol
             self._voice = VoiceProtocol()
         return self._voice
 
-    def _get_listener(self):
+    def _get_listener(self) -> None:
         """Lazy-init listener protocol."""
         if self._listener is None:
             from danny_toolkit.quests.listener_protocol import ListenerProtocol
             self._listener = ListenerProtocol()
         return self._listener
 
-    def _get_dialogue(self):
+    def _get_dialogue(self) -> None:
         """Lazy-init dialogue protocol."""
         if self._dialogue is None:
             from danny_toolkit.quests.dialogue_protocol import (
@@ -185,7 +187,7 @@ class OmegaAI:
             self._dialogue = DialogueProtocol()
         return self._dialogue
 
-    def _get_will(self):
+    def _get_will(self) -> None:
         """Lazy-init will protocol."""
         if self._will is None:
             from danny_toolkit.quests.will_protocol import WillProtocol
@@ -269,7 +271,7 @@ class OmegaAI:
 
         return response
 
-    def _run_achtergrond_leren(self):
+    def _run_achtergrond_leren(self) -> None:
         """Draai learning cycle en self-improvement."""
         if not self.governor.check_learning_rate():
             return
@@ -293,7 +295,7 @@ class OmegaAI:
             importance=0.4,
         )
 
-    def _toon_status(self):
+    def _toon_status(self) -> None:
         """Toon gecombineerde status van daemon en learning."""
         # Daemon status
         self.daemon.display_status()
@@ -393,7 +395,7 @@ class OmegaAI:
         # Governor health
         self.governor.display_health()
 
-    def _verwerk_feedback(self, feedback_type: str):
+    def _verwerk_feedback(self, feedback_type: str) -> None:
         """Verwerk feedback commando."""
         geldige_types = [
             "excellent", "good", "ok", "bad", "wrong",
@@ -431,7 +433,7 @@ class OmegaAI:
             fout_msg = resultaat.get("error", "Onbekende fout")
             print(fout(f"  Feedback fout: {fout_msg}"))
 
-    def _forceer_leren(self):
+    def _forceer_leren(self) -> None:
         """Forceer een learning cycle."""
         if not self.governor.check_learning_rate():
             print(fout(
@@ -467,7 +469,7 @@ class OmegaAI:
             importance=0.5,
         )
 
-    def _run_pulse_protocol(self):
+    def _run_pulse_protocol(self) -> None:
         """Activeer Quest IX: The Pulse Protocol."""
         from danny_toolkit.quests.pulse_protocol import PulseProtocol
 
@@ -479,7 +481,7 @@ class OmegaAI:
         protocol.run_simulation()
         print()
 
-    def start(self):
+    def start(self) -> None:
         """Start de Omega interactieve loop."""
         fix_encoding()
         clear_scherm()
@@ -507,7 +509,8 @@ class OmegaAI:
         print()
 
         # Signaal handler voor graceful shutdown
-        def _signal_handler(sig, frame):
+        def _signal_handler(sig: object, frame: object) -> None:
+            """Signal handler."""
             self.stop()
             sys.exit(0)
 
@@ -867,7 +870,7 @@ class OmegaAI:
         except KeyboardInterrupt:
             self.stop()
 
-    def _toon_cortex(self):
+    def _toon_cortex(self) -> None:
         """Toon TheCortex Knowledge Graph status."""
         if not HAS_CORTEX:
             print(fout("  TheCortex niet beschikbaar."))
@@ -904,7 +907,7 @@ class OmegaAI:
         except Exception as e:
             print(fout(f"  Cortex fout: {e}"))
 
-    def _toon_oracle(self):
+    def _toon_oracle(self) -> None:
         """Toon TheOracleEye predictieve forecast."""
         if not HAS_ORACLE:
             print(fout("  TheOracleEye niet beschikbaar."))
@@ -947,7 +950,7 @@ class OmegaAI:
         except Exception as e:
             print(fout(f"  Oracle fout: {e}"))
 
-    def stop(self):
+    def stop(self) -> None:
         """Graceful shutdown - sla alles op."""
         print()
         print(info("  Omega AI sluit af..."))
@@ -972,7 +975,7 @@ class OmegaAI:
         print(succes("  Tot ziens, Danny!"))
 
 
-def main():
+def main() -> None:
     """Entry point voor Omega AI."""
     omega = OmegaAI()
     omega.start()

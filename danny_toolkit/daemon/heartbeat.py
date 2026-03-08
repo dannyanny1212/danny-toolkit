@@ -1,6 +1,8 @@
 """
 Heartbeat Daemon v2.0 — Autonome Achtergrond-Daemon.
 
+from __future__ import annotations
+
 CPU/RAM monitoring, reflectie-cycli, autonome groei
 en SwarmEngine-taken (scheduled + interval).
 
@@ -96,7 +98,7 @@ class HeartbeatDaemon:
         },
     ]
 
-    def __init__(self, brain=None, daemon=None):
+    def __init__(self, brain: object=None, daemon: object=None) -> None:
         """### Class Initialization Docstring
 
 Initializes a new instance of the class.
@@ -199,7 +201,7 @@ Initializes a new instance of the class.
             thread_name_prefix="hb-worker",
         )
 
-    def _get_stack(self):
+    def _get_stack(self) -> None:
         """Lazy import CorticalStack."""
         if self._stack is None:
             try:
@@ -212,7 +214,7 @@ Initializes a new instance of the class.
                 self._stack = None
         return self._stack
 
-    def _get_engine(self):
+    def _get_engine(self) -> None:
         """Lazy import SwarmEngine."""
         if self._engine is None:
             try:
@@ -225,7 +227,7 @@ Initializes a new instance of the class.
                 self._engine = None
         return self._engine
 
-    def _get_proactive(self):
+    def _get_proactive(self) -> None:
         """Lazy import ProactiveEngine."""
         if self._proactive is None:
             if self._daemon is None:
@@ -242,7 +244,7 @@ Initializes a new instance of the class.
                 self._proactive = None
         return self._proactive
 
-    def _get_singularity(self):
+    def _get_singularity(self) -> None:
         """Lazy import SingularityEngine."""
         if self._singularity is None:
             try:
@@ -258,7 +260,7 @@ Initializes a new instance of the class.
                 self._singularity = None
         return self._singularity
 
-    def _get_security(self):
+    def _get_security(self) -> None:
         """Lazy import SecurityResearchEngine."""
         if self._security is None:
             try:
@@ -274,7 +276,7 @@ Initializes a new instance of the class.
                 self._security = None
         return self._security
 
-    def _get_devops(self):
+    def _get_devops(self) -> None:
         """Lazy import DevOpsDaemon."""
         if self._devops is None:
             try:
@@ -287,7 +289,7 @@ Initializes a new instance of the class.
                 self._devops = None
         return self._devops
 
-    def _run_devops_check(self):
+    def _run_devops_check(self) -> None:
         """Submit DevOps health check naar worker pool."""
         devops = self._get_devops()
         if devops is None:
@@ -302,7 +304,7 @@ Initializes a new instance of the class.
             self._execute_devops_check, devops
         )
 
-    def _execute_devops_check(self, devops):
+    def _execute_devops_check(self, devops: object) -> None:
         """Voer DevOps check uit (draait in worker thread)."""
         try:
             loop = asyncio.new_event_loop()
@@ -339,11 +341,11 @@ Initializes a new instance of the class.
 
     # ─── Morning Protocol ───
 
-    def _run_morning_protocol(self):
+    def _run_morning_protocol(self) -> None:
         """Run morning protocol headless (07:00 daily)."""
         self._worker_pool.submit(self._execute_morning_protocol)
 
-    def _execute_morning_protocol(self):
+    def _execute_morning_protocol(self) -> None:
         """Voer morning protocol uit (draait in worker thread)."""
         try:
             from danny_toolkit.brain.morning_protocol import (
@@ -402,7 +404,7 @@ Initializes a new instance of the class.
 
     # ─── Dream Observation ───
 
-    def _run_dream_observation(self):
+    def _run_dream_observation(self) -> None:
         """Log entity states tijdens nacht-uren (headless)."""
         try:
             from danny_toolkit.brain.dream_monitor import (
@@ -454,7 +456,7 @@ Initializes a new instance of the class.
 
     # ─── Swarm Taken ───
 
-    def _run_swarm_task(self, task_config):
+    def _run_swarm_task(self, task_config: object) -> None:
         """Submit een autonome Swarm taak naar de worker pool."""
         engine = self._get_engine()
         if engine is None:
@@ -471,7 +473,7 @@ Initializes a new instance of the class.
             self._execute_swarm_task, task_config
         )
 
-    def _execute_swarm_task(self, task_config):
+    def _execute_swarm_task(self, task_config: object) -> None:
         """Voer een Swarm taak uit (draait in worker thread)."""
         engine = self._get_engine()
         if engine is None:
@@ -521,7 +523,7 @@ Initializes a new instance of the class.
                 f"{name}: fout — {str(e)[:60]}",
             )
 
-    def _check_swarm_schedule(self):
+    def _check_swarm_schedule(self) -> None:
         """Check of er autonome taken moeten draaien."""
         now = datetime.now()
         current_time = now.strftime("%H:%M")
@@ -558,7 +560,7 @@ Initializes a new instance of the class.
                     ] = timestamp
                     self._run_swarm_task(task)
 
-    def _execute_security_scan(self, security):
+    def _execute_security_scan(self, security: object) -> None:
         """Voer security scan uit (draait in worker thread)."""
         try:
             security.volledig_rapport()
@@ -573,7 +575,7 @@ Initializes a new instance of the class.
 
     # ─── Monitor ───
 
-    def _monitor_system(self):
+    def _monitor_system(self) -> None:
         """Lees CPU en RAM gebruik."""
         if HAS_PSUTIL:
             self._cpu = psutil.cpu_percent(interval=0)
@@ -583,7 +585,7 @@ Initializes a new instance of the class.
             self._cpu = random.uniform(5.0, 45.0)
             self._ram = random.uniform(30.0, 70.0)
 
-    def _log_heartbeat(self):
+    def _log_heartbeat(self) -> None:
         """Log stats naar CorticalStack elke 30 beats."""
         if self._pulse_count % 30 != 0:
             return
@@ -606,7 +608,7 @@ Initializes a new instance of the class.
 
     # ─── Reflectie ───
 
-    def _reflection_cycle(self):
+    def _reflection_cycle(self) -> None:
         """Review recente events uit CorticalStack."""
         now = time.time()
         if now - self._last_reflection < self.REFLECTION_INTERVAL:
@@ -658,7 +660,7 @@ Initializes a new instance of the class.
 
     # ─── Groei ───
 
-    def _autonomous_growth(self):
+    def _autonomous_growth(self) -> None:
         """5% kans: re-index of leer nieuwe feiten."""
         if random.random() > self.GROWTH_CHANCE:
             return
@@ -703,7 +705,7 @@ Initializes a new instance of the class.
 
     # ─── Display ───
 
-    def _check_oracle_forecast(self):
+    def _check_oracle_forecast(self) -> None:
         """Vraag OracleEye om pre-warm advies."""
         try:
             from danny_toolkit.brain.oracle_eye import TheOracleEye
@@ -714,7 +716,7 @@ Initializes a new instance of the class.
         except Exception as e:
             logger.debug("Oracle forecast check failed: %s", e)
 
-    def _log_activity(self, type_: str, bericht: str):
+    def _log_activity(self, type_: str, bericht: str) -> None:
         """Voeg toe aan activity log (max 8)."""
         now = datetime.now().strftime("%H:%M:%S")
         self._activity.append(
@@ -853,7 +855,7 @@ Initializes a new instance of the class.
 
     # ─── Main Loop ───
 
-    def start(self):
+    def start(self) -> None:
         """Start de heartbeat daemon met Rich Live."""
         self._running = True
         self._start_time = datetime.now()
@@ -1040,14 +1042,14 @@ Initializes a new instance of the class.
                 "[/bold magenta]"
             )
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop de daemon en worker pool."""
         self._stop_event.set()
         self._running = False
         self._worker_pool.shutdown(wait=False)
 
 
-def main():
+def main() -> None:
     """Entry point voor heartbeat daemon."""
     import io
     import sys

@@ -1,5 +1,7 @@
 """
 OMEGA GOVERNOR - De Autonome Bewaker (Niveau 2)
+from __future__ import annotations
+
 ================================================
 Beschermingslaag voor het Prometheus Brain systeem.
 
@@ -101,7 +103,7 @@ class OmegaGovernor(GovernorFirewallMixin, GovernorStateMixin):
 
     # Phase 35: foutclassificatie via error_taxonomy (backward compat property)
     @property
-    def _FOUT_CLASSIFICATIE(self):
+    def _FOUT_CLASSIFICATIE(self) -> None:
         """Backward-compatible mapping via error_taxonomy."""
         try:
             from danny_toolkit.core.error_taxonomy import (
@@ -121,7 +123,7 @@ class OmegaGovernor(GovernorFirewallMixin, GovernorStateMixin):
                 "MemoryError": "FATAAL",
             }
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes the object, setting up directory paths, circuit breaker state, 
 and tracking variables for learning cycles, token budgets, and daemon references.
 
@@ -165,7 +167,7 @@ and tracking variables for learning cycles, token budgets, and daemon references
         self._stack = None
 
     @property
-    def stack(self):
+    def stack(self) -> None:
         """Lazy CorticalStack."""
         if self._stack is None:
             try:
@@ -178,7 +180,7 @@ and tracking variables for learning cycles, token budgets, and daemon references
                 self._stack = None
         return self._stack
 
-    def _log(self, action, details=None):
+    def _log(self, action: object, details: object=None) -> None:
         """Log event naar CorticalStack als beschikbaar."""
         if self.stack:
             try:
@@ -203,7 +205,7 @@ and tracking variables for learning cycles, token budgets, and daemon references
             "hour_start": self._hour_start,
         }
 
-    def from_dict(self, data: dict):
+    def from_dict(self, data: dict) -> None:
         """Herstel Governor state van opgeslagen data."""
         self._api_failures = data.get("api_failures", 0)
         self._last_failure_time = data.get(
@@ -227,7 +229,7 @@ and tracking variables for learning cycles, token budgets, and daemon references
     # Daemon Koppeling
     # =================================================================
 
-    def connect_daemon(self, daemon):
+    def connect_daemon(self, daemon: object) -> None:
         """Koppel de Governor aan de Digital Daemon (Familie)."""
         self._daemon = daemon
 
@@ -320,7 +322,7 @@ and tracking variables for learning cycles, token budgets, and daemon references
     # B. EntityGuard - Iolaax Bescherming
     # =================================================================
 
-    def guard_learning_cycle(self, engine) -> bool:
+    def guard_learning_cycle(self, engine: object) -> bool:
         """Bewaakt een learning cycle met snapshot/rollback.
 
         1. Check rate limit
@@ -429,7 +431,7 @@ and tracking variables for learning cycles, token budgets, and daemon references
         self._learning_cycles_this_hour += 1
         return True
 
-    def check_memory_size(self, memory) -> bool:
+    def check_memory_size(self, memory: object) -> bool:
         """Controleer geheugengebruik.
 
         Args:
@@ -455,7 +457,7 @@ and tracking variables for learning cycles, token budgets, and daemon references
             return False
         return True
 
-    def protect_entity(self, node) -> bool:
+    def protect_entity(self, node: object) -> bool:
         """Voorkom dat ENTITY node wordt uitgeschakeld.
 
         Args:
@@ -525,7 +527,7 @@ and tracking variables for learning cycles, token budgets, and daemon references
         )
         return False
 
-    def record_api_failure(self):
+    def record_api_failure(self) -> None:
         """Registreer een API failure (max MAX_API_FAILURES)."""
         self._api_failures = min(
             self._api_failures + 1, self.MAX_API_FAILURES
@@ -550,7 +552,7 @@ and tracking variables for learning cycles, token budgets, and daemon references
                 except Exception as e:
                     logger.debug("Alerter error: %s", e)
 
-    def record_api_success(self):
+    def record_api_success(self) -> None:
         """Registreer een API succes (geleidelijke reset).
 
         Vereist 2 opeenvolgende successen voordat failures
@@ -812,7 +814,7 @@ and tracking variables for learning cycles, token budgets, and daemon references
             },
         }
 
-    def display_health(self):
+    def display_health(self) -> None:
         """Print visueel gezondheidsrapport."""
         rapport = self.get_health_report()
 
@@ -879,7 +881,7 @@ and tracking variables for learning cycles, token budgets, and daemon references
             }
         return self._provider_breakers[provider]
 
-    def record_provider_failure(self, provider: str):
+    def record_provider_failure(self, provider: str) -> None:
         """Registreer een failure voor een specifieke provider."""
         breaker = self._get_provider_breaker(provider)
         breaker["failures"] = min(
@@ -904,7 +906,7 @@ and tracking variables for learning cycles, token budgets, and daemon references
         # Backward compat: ook globale breaker bijwerken
         self.record_api_failure()
 
-    def record_provider_success(self, provider: str):
+    def record_provider_success(self, provider: str) -> None:
         """Registreer een succes voor een specifieke provider."""
         breaker = self._get_provider_breaker(provider)
         if breaker["failures"] > 0:

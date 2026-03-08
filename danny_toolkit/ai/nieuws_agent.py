@@ -15,6 +15,8 @@ Features:
 - Leestijd schattingen
 """
 
+from __future__ import annotations
+
 import json
 import random
 import hashlib
@@ -25,12 +27,28 @@ from typing import List, Dict, Any, Optional
 
 from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import clear_scherm, kleur, Kleur
+import logging
+
+logger = logging.getLogger(__name__)
+
+try:
+    import os
+    HAS_OS = True
+except ImportError:
+    HAS_OS = False
+
+try:
+    import webbrowser
+    HAS_WEBBROWSER = True
+except ImportError:
+    HAS_WEBBROWSER = False
+
 
 
 class VectorDatabase:
     """Simpele vector database voor de nieuws agent."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes a new instance, setting up an empty list to store documents. 
 The list is stored in the `documenten` attribute."""
         self.documenten = []
@@ -72,7 +90,8 @@ The list is stored in the `documenten` attribute."""
 class WebZoeker:
     """Simuleert web search met uitgebreide nieuws database."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self.nieuws_database = {
             "ruimtevaart": [
                 {
@@ -436,12 +455,13 @@ class WebZoeker:
 class Agent:
     """Basis agent class met kleurrijke output."""
 
-    def __init__(self, naam: str, emoji: str, kleur_naam: str = Kleur.WIT):
+    def __init__(self, naam: str, emoji: str, kleur_naam: str = Kleur.WIT) -> None:
+        """Init  ."""
         self.naam = naam
         self.emoji = emoji
         self.kleur_naam = kleur_naam
 
-    def log(self, bericht: str, extra_kleur: str = None):
+    def log(self, bericht: str, extra_kleur: str = None) -> None:
         """Log een bericht met kleur."""
         k = extra_kleur or self.kleur_naam
         print(f"  {kleur(f'[{self.naam}]', k)} {bericht}")
@@ -450,7 +470,8 @@ class Agent:
 class ZoekerAgent(Agent):
     """Agent die informatie verzamelt."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         super().__init__("ZOEKER", "[S]", Kleur.CYAAN)
         self.web = WebZoeker()
         self.database = VectorDatabase()
@@ -494,7 +515,8 @@ class FeitencheckerAgent(Agent):
         "verboden", "dit verandert alles", "breaking", "exclusief"
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         super().__init__("CHECKER", "[C]", Kleur.GROEN)
         self.web = WebZoeker()
 
@@ -571,7 +593,8 @@ class BiasDetectorAgent(Agent):
         "sensationeel": ["schokkend", "ongelooflijk", "verbijsterend", "drama", "schandaal"],
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         super().__init__("BIAS", "[B]", Kleur.MAGENTA)
 
     def analyseer_bias(self, artikelen: list) -> list:
@@ -630,7 +653,8 @@ class SentimentAgent(Agent):
         "woede", "protest", "kritiek", "beschuldiging", "onderzoek"
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         super().__init__("SENTIMENT", "[S]", Kleur.GEEL)
 
     def analyseer(self, artikelen: list) -> list:
@@ -675,7 +699,8 @@ class SentimentAgent(Agent):
 class SamenvatterAgent(Agent):
     """Agent die samenvattingen genereert."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         super().__init__("SAMENVATTER", "[Z]", Kleur.CYAAN)
 
     def vat_samen(self, artikelen: list, onderwerp: str) -> str:
@@ -747,7 +772,8 @@ class SamenvatterAgent(Agent):
 class SchrijverAgent(Agent):
     """Agent die het rapport schrijft."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         super().__init__("SCHRIJVER", "[W]", Kleur.WIT)
 
     def schrijf_rapport(self, onderwerp: str, artikelen: list, samenvatting: str) -> dict:
@@ -796,7 +822,8 @@ class SchrijverAgent(Agent):
 class RapportGeneratorAgent(Agent):
     """Agent die rapporten genereert in verschillende formaten."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         super().__init__("GENERATOR", "[G]", Kleur.MAGENTA)
         Config.ensure_dirs()
         self.output_map = Config.RAPPORTEN_DIR
@@ -1065,7 +1092,8 @@ class NieuwsAgentApp:
         "10": "Klimaat",
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self.zoeker = ZoekerAgent()
         self.feitenchecker = FeitencheckerAgent()
         self.bias_detector = BiasDetectorAgent()
@@ -1085,7 +1113,7 @@ class NieuwsAgentApp:
                 with open(self.data_bestand, "r", encoding="utf-8") as f:
                     return json.load(f)
             except (json.JSONDecodeError, IOError):
-                pass
+                logger.debug("Suppressed error")
         return {
             "versie": self.VERSIE,
             "analyses_totaal": 0,
@@ -1098,13 +1126,13 @@ class NieuwsAgentApp:
             }
         }
 
-    def _sla_data_op(self):
+    def _sla_data_op(self) -> None:
         """Sla data op."""
         self.data_bestand.parent.mkdir(parents=True, exist_ok=True)
         with open(self.data_bestand, "w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2, ensure_ascii=False)
 
-    def toon_trending(self):
+    def toon_trending(self) -> None:
         """Toont trending topics met kleur."""
         print("\n" + kleur("=" * 55, Kleur.CYAAN))
         print(kleur("  TRENDING TOPICS", Kleur.GEEL))
@@ -1124,7 +1152,7 @@ class NieuwsAgentApp:
 
             print(f"  {i:2}. {topic['onderwerp']:<15} {topic['mentions']:>7,} mentions {trend_icon} {change}")
 
-    def toon_menu(self):
+    def toon_menu(self) -> None:
         """Toon het hoofdmenu."""
         print()
         print(kleur("+" + "=" * 55 + "+", Kleur.CYAAN))
@@ -1266,7 +1294,7 @@ class NieuwsAgentApp:
 
         return rapport_paden[0] if rapport_paden else ""
 
-    def dagelijkse_digest(self):
+    def dagelijkse_digest(self) -> None:
         """Genereer een dagelijkse digest van alle categorieen."""
         print("\n" + kleur("Dagelijkse digest genereren...", Kleur.GEEL))
 
@@ -1275,7 +1303,7 @@ class NieuwsAgentApp:
 
         print("\n" + kleur(digest, Kleur.CYAAN))
 
-    def vergelijk_categorieen(self):
+    def vergelijk_categorieen(self) -> None:
         """Vergelijk sentiment tussen categorieen."""
         print("\n" + kleur("=" * 55, Kleur.CYAAN))
         print(kleur("  CATEGORIE VERGELIJKING", Kleur.GEEL))
@@ -1298,7 +1326,7 @@ class NieuwsAgentApp:
 
             print(f"{categorie.title():<15} {pos_str:>18} {neg_str:>18} {neu_str:>18}")
 
-    def beheer_bookmarks(self):
+    def beheer_bookmarks(self) -> None:
         """Beheer bookmarks."""
         print("\n" + kleur("BOOKMARK BEHEER", Kleur.CYAAN))
         print("-" * 40)
@@ -1313,7 +1341,7 @@ class NieuwsAgentApp:
         print("  v. Verwijder bookmark")
         print("  0. Terug")
 
-    def toon_geschiedenis(self):
+    def toon_geschiedenis(self) -> None:
         """Toon analyse geschiedenis."""
         print("\n" + kleur("ANALYSE GESCHIEDENIS", Kleur.CYAAN))
         print("=" * 50)
@@ -1328,7 +1356,7 @@ class NieuwsAgentApp:
             datum = analyse["datum"][:10]
             print(f"  {datum} | {analyse['onderwerp']:<15} | {analyse['artikelen']} artikelen")
 
-    def toon_bron_statistieken(self):
+    def toon_bron_statistieken(self) -> None:
         """Toon statistieken per bron."""
         print("\n" + kleur("BRON STATISTIEKEN", Kleur.CYAAN))
         print("=" * 50)
@@ -1425,7 +1453,7 @@ class NieuwsAgentApp:
             "totaal_artikelen": sum(len(v) for v in alle_nieuws.values()),
         }
 
-    def run(self):
+    def run(self) -> None:
         """Start de interactieve nieuws agent."""
         clear_scherm()
         print(kleur("+" + "=" * 58 + "+", Kleur.CYAAN))
@@ -1453,8 +1481,8 @@ class NieuwsAgentApp:
                 if rapport_pad and rapport_pad.endswith(".html"):
                     print(f"\n{kleur('Wil je het rapport openen in je browser? (j/n)', 'cyaan')}")
                     if input("> ").lower().strip() == "j":
-                        import webbrowser
-                        import os
+                        pass  # import moved to top-level
+                        pass  # import moved to top-level
                         webbrowser.open(f"file://{os.path.abspath(rapport_pad)}")
                         print(kleur("Rapport geopend in browser!", Kleur.GROEN))
 

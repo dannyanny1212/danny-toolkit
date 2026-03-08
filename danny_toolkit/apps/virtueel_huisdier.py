@@ -1,5 +1,7 @@
 """
 Virtueel Huisdier App.
+from __future__ import annotations
+
 Versie 6.11.0 - VOLLEDIG AI-POWERED HUISDIER!
 
 Nu met:
@@ -32,15 +34,18 @@ from danny_toolkit.core.utils import clear_scherm
 logger = logging.getLogger(__name__)
 
 # Lazy imports voor AI integratie (om circulaire imports te voorkomen)
-def _get_boodschappenlijst():
+def _get_boodschappenlijst() -> None:
+    """Get boodschappenlijst."""
     from danny_toolkit.apps.boodschappenlijst import BoodschappenlijstApp
     return BoodschappenlijstApp()
 
-def _get_rekenmachine():
+def _get_rekenmachine() -> None:
+    """Get rekenmachine."""
     from danny_toolkit.apps.rekenmachine import RekenmachineApp
     return RekenmachineApp()
 
-def _get_nieuws_agent():
+def _get_nieuws_agent() -> None:
+    """Get nieuws agent."""
     try:
         from danny_toolkit.ai.nieuws_agent import NieuwsAgentApp
         return NieuwsAgentApp()
@@ -48,7 +53,8 @@ def _get_nieuws_agent():
         logger.debug("NieuwsAgent import error: %s", e)
         return None
 
-def _get_weer_agent():
+def _get_weer_agent() -> None:
+    """Get weer agent."""
     try:
         from danny_toolkit.ai.weer_agent import WeerAgentApp
         return WeerAgentApp()
@@ -56,7 +62,7 @@ def _get_weer_agent():
         logger.debug("WeerAgent import error: %s", e)
         return None
 
-def _get_claude_chat():
+def _get_claude_chat() -> None:
     """Lazy import voor Claude Chat met API client."""
     try:
         from danny_toolkit.ai.claude_chat import ClaudeChatApp
@@ -69,7 +75,7 @@ def _get_claude_chat():
         return None
 
 
-def _get_mood_tracker():
+def _get_mood_tracker() -> None:
     """Lazy import voor Mood Tracker."""
     try:
         from danny_toolkit.apps.mood_tracker import MoodTrackerApp
@@ -79,7 +85,7 @@ def _get_mood_tracker():
         return None
 
 
-def _get_habit_tracker():
+def _get_habit_tracker() -> None:
     """Lazy import voor Habit Tracker."""
     try:
         from danny_toolkit.apps.habit_tracker import HabitTrackerApp
@@ -89,7 +95,7 @@ def _get_habit_tracker():
         return None
 
 
-def _get_expense_tracker():
+def _get_expense_tracker() -> None:
     """Lazy import voor Expense Tracker."""
     try:
         from danny_toolkit.apps.expense_tracker import ExpenseTrackerApp
@@ -99,7 +105,7 @@ def _get_expense_tracker():
         return None
 
 
-def _get_agenda_planner():
+def _get_agenda_planner() -> None:
     """Lazy import voor Agenda Planner."""
     try:
         from danny_toolkit.apps.agenda_planner import AgendaPlannerApp
@@ -109,7 +115,7 @@ def _get_agenda_planner():
         return None
 
 
-def _get_pomodoro_timer():
+def _get_pomodoro_timer() -> None:
     """Lazy import voor Pomodoro Timer."""
     try:
         from danny_toolkit.apps.pomodoro_timer import PomodoroTimerApp
@@ -402,7 +408,8 @@ class VirtueelHuisdierApp:
         "6": {"naam": "Energie shake", "honger": 10, "energie": 30, "geluk": 5, "gezondheid": 5},
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         Config.ensure_dirs()
         self.bestand = Config.HUISDIER_FILE
         # Aparte permanente kennis opslag - blijft bestaan tot huisdier reset
@@ -411,7 +418,7 @@ class VirtueelHuisdierApp:
         # Learning System - lazy loaded voor performance
         self.learning = None
 
-    def _init_learning(self):
+    def _init_learning(self) -> None:
         """Initialiseer het Self-Learning System (lazy loaded)."""
         if self.learning is None:
             try:
@@ -431,7 +438,7 @@ class VirtueelHuisdierApp:
                 with open(self.kennis_bestand, "r", encoding="utf-8") as f:
                     return json.load(f)
             except (json.JSONDecodeError, IOError):
-                pass
+                logger.debug("Suppressed error")
         return {
             "feiten": [],
             "bronnen": [],
@@ -439,12 +446,12 @@ class VirtueelHuisdierApp:
             "totaal_sessies": 0
         }
 
-    def _sla_permanente_kennis_op(self, kennis: dict):
+    def _sla_permanente_kennis_op(self, kennis: dict) -> None:
         """Slaat kennis permanent op naar lokale PC."""
         with open(self.kennis_bestand, "w", encoding="utf-8") as f:
             json.dump(kennis, f, indent=2, ensure_ascii=False)
 
-    def _reset_permanente_kennis(self):
+    def _reset_permanente_kennis(self) -> None:
         """Reset alle permanente kennis (bij huisdier reset)."""
         if self.kennis_bestand.exists():
             self.kennis_bestand.unlink()
@@ -508,13 +515,13 @@ class VirtueelHuisdierApp:
 
         return data
 
-    def _sla_op(self):
+    def _sla_op(self) -> None:
         """Slaat het huisdier op."""
         self.huisdier["laatste_update"] = datetime.now().isoformat()
         with open(self.bestand, "w", encoding="utf-8") as f:
             json.dump(self.huisdier, f, indent=2, ensure_ascii=False)
 
-    def _log_memory_event(self, event_type, data):
+    def _log_memory_event(self, event_type: object, data: dict) -> None:
         """Log event naar Unified Memory."""
         try:
             if not hasattr(self, "_memory"):
@@ -647,7 +654,7 @@ Antwoord in het Nederlands."""
 
         return random.choice(type_responses)
 
-    def _ai_add_memory(self, event_type: str, description: str):
+    def _ai_add_memory(self, event_type: str, description: str) -> None:
         """Voeg een herinnering toe aan het AI geheugen."""
         if "ai_memory" not in self.huisdier:
             self.huisdier["ai_memory"] = []
@@ -717,7 +724,7 @@ Antwoord in het Nederlands."""
                 return True
         return False
 
-    def _nexus_revert(self):
+    def _nexus_revert(self) -> None:
         """NEXUS keert terug naar originele vorm."""
         if not self._is_nexus():
             return
@@ -783,7 +790,7 @@ Antwoord in het Nederlands."""
 
         return self.NEXUS_EVOLUTIE[current_stage]
 
-    def _nexus_command_center(self):
+    def _nexus_command_center(self) -> None:
         """NEXUS Command Center — alle exclusieve powers in één menu."""
         if not self._is_nexus():
             print("\n  Alleen beschikbaar voor NEXUS!")
@@ -838,7 +845,7 @@ Antwoord in het Nederlands."""
 
             input("\nDruk op Enter...")
 
-    def _nexus_omnimorf_menu(self):
+    def _nexus_omnimorf_menu(self) -> None:
         """Kies een huisdiervorm om naar te transformeren."""
         print(f"\n  ✧ OMNIMORF ✧ — Kies een vorm:")
         print()
@@ -858,7 +865,7 @@ Antwoord in het Nederlands."""
         except ValueError:
             print("  Ongeldige keuze.")
 
-    def _nexus_synthesis_menu(self):
+    def _nexus_synthesis_menu(self) -> None:
         """Combineer geleerde feiten tot nieuwe inzichten."""
         permanente_kennis = self._laad_permanente_kennis()
         feiten = permanente_kennis.get("feiten", [])
@@ -896,7 +903,7 @@ Antwoord in het Nederlands."""
         except (ValueError, IndexError):
             print("  Ongeldige invoer.")
 
-    def _nexus_kosmische_link(self):
+    def _nexus_kosmische_link(self) -> None:
         """NEXUS verbindt met het universum — levert een kosmisch inzicht."""
         h = self.huisdier
         evo = self._nexus_get_evolution()
@@ -929,7 +936,7 @@ Antwoord in het Nederlands."""
         if evo["naam"] == "OMEGA":
             self._unlock_achievement("nexus_omega")
 
-    def _nexus_show_evolution(self):
+    def _nexus_show_evolution(self) -> None:
         """Toon NEXUS evolutie voortgang."""
         h = self.huisdier
         dagen = h.get("leeftijd_dagen", 0)
@@ -947,7 +954,7 @@ Antwoord in het Nederlands."""
             print(f"  {marker} {info['naam']:<10} (dag {info['dagen']:>3}) "
                   f"| +{info['bonus']:>3} bonus | {info['ability']}{current}")
 
-    def _nexus_show_morphs(self):
+    def _nexus_show_morphs(self) -> None:
         """Toon NEXUS morph statistieken."""
         morphs = self.huisdier.get("nexus_morphs", {})
 
@@ -1064,7 +1071,7 @@ Maak het dromerig en fantasierijk."""
             return f"{naam} {theme}. In de droom leerde {naam} dat {fact[:60]}..."
         return f"{naam} {theme} en werd wakker met een glimlach."
 
-    def _ai_show_advisor(self):
+    def _ai_show_advisor(self) -> None:
         """Toon AI Activity Advisor in menu."""
         advies, prioriteit = self._ai_activity_advisor()
         print("\n  " + "=" * 48)
@@ -1197,7 +1204,7 @@ Maak het dromerig en fantasierijk."""
         input("\nDruk op Enter om verder te gaan...")
         return huisdier
 
-    def _bereken_tijd_verlies(self):
+    def _bereken_tijd_verlies(self) -> None:
         """Berekent hoeveel stats verloren zijn sinds laatste update."""
         laatste = datetime.fromisoformat(self.huisdier["laatste_update"])
         nu = datetime.now()
@@ -1237,7 +1244,7 @@ Maak het dromerig en fantasierijk."""
 
         return bonus
 
-    def _check_evolutie(self):
+    def _check_evolutie(self) -> None:
         """Check of huisdier kan evolueren."""
         dagen = self.huisdier["leeftijd_dagen"]
         huidig_stadium = self.huisdier["evolutie_stadium"]
@@ -1255,7 +1262,7 @@ Maak het dromerig en fantasierijk."""
                 elif stadium == 5:
                     self._unlock_achievement("evolutie_legende")
 
-    def _unlock_achievement(self, achievement_id: str):
+    def _unlock_achievement(self, achievement_id: str) -> None:
         """Unlock een achievement."""
         if achievement_id not in self.huisdier["achievements"]:
             if achievement_id in self.ACHIEVEMENTS:
@@ -1282,7 +1289,7 @@ Maak het dromerig en fantasierijk."""
         """Haal evolutie info op."""
         return self.EVOLUTIE_STADIA.get(self.huisdier["evolutie_stadium"], self.EVOLUTIE_STADIA[0])
 
-    def _toon_status(self):
+    def _toon_status(self) -> None:
         """Toont de status van het huisdier."""
         h = self.huisdier
         gemiddelde = (h["honger"] + h["energie"] + h["geluk"] + h["gezondheid"]) / 4
@@ -1320,7 +1327,7 @@ Maak het dromerig en fantasierijk."""
             trick_namen = [self.TRICKS[t]["naam"] for t in h["tricks_geleerd"] if t in self.TRICKS]
             print(f"  Tricks: {', '.join(trick_namen)}")
 
-    def _toon_menu(self):
+    def _toon_menu(self) -> None:
         """Toont het hoofdmenu."""
         # Laad permanente kennis voor display
         permanente_kennis = self._laad_permanente_kennis()
@@ -1415,7 +1422,7 @@ Maak het dromerig en fantasierijk."""
         print("|  0. Opslaan & Afsluiten        |")
         print("+================================+")
 
-    def _voeren(self):
+    def _voeren(self) -> None:
         """Voer het huisdier - met suggesties uit de ECHTE boodschappenlijst!"""
         naam = self.huisdier["naam"]
 
@@ -1515,7 +1522,7 @@ Maak het dromerig en fantasierijk."""
         if self.huisdier["stats"]["voedingen"] >= 50:
             self._unlock_achievement("50_voedingen")
 
-    def _spelen(self):
+    def _spelen(self) -> None:
         """Speelt met het huisdier - IQ bonus voor slimme huisdieren!"""
         if self.huisdier["energie"] < 2:
             print(f"\n{self.huisdier['naam']} is te moe om te spelen...")
@@ -1567,7 +1574,7 @@ Maak het dromerig en fantasierijk."""
                 print(f"\n  [IQ] {self.huisdier['naam']} zegt: \"{feit[:60]}...\"")
                 self.huisdier["ervaring"] += 5
 
-    def _slapen(self):
+    def _slapen(self) -> None:
         """Laat het huisdier slapen - met dromen voor extra beloningen!"""
         naam = self.huisdier["naam"]
         iq = self.huisdier.get("intelligentie", 0)
@@ -1604,7 +1611,7 @@ Maak het dromerig en fantasierijk."""
 
         print(f"*gaaap* {naam} is weer uitgerust!")
 
-    def _knuffelen(self):
+    def _knuffelen(self) -> None:
         """Knuffelt het huisdier - slimme huisdieren waarderen aandacht meer!"""
         naam = self.huisdier["naam"]
         iq = self.huisdier.get("intelligentie", 0)
@@ -1645,7 +1652,7 @@ Maak het dromerig en fantasierijk."""
         if self.huisdier["gezondheid"] == 100:
             self._unlock_achievement("perfecte_gezondheid")
 
-    def _dokter(self):
+    def _dokter(self) -> None:
         """Naar de dierenarts - met IQ korting en gezondheid tips!"""
         naam = self.huisdier["naam"]
         iq = self.huisdier.get("intelligentie", 0)
@@ -1720,7 +1727,7 @@ Maak het dromerig en fantasierijk."""
         # Ervaring voor doktersbezoek
         self.huisdier["ervaring"] += 5
 
-    def _mini_games(self):
+    def _mini_games(self) -> None:
         """Mini-games menu."""
         while True:
             print("\n+====================================+")
@@ -1763,7 +1770,7 @@ Maak het dromerig en fantasierijk."""
 
             input("\nDruk op Enter...")
 
-    def _game_raad_getal(self):
+    def _game_raad_getal(self) -> None:
         """Raad het getal spel."""
         if self.huisdier["munten"] < 5:
             print("\nJe hebt niet genoeg munten! (Nodig: 5)")
@@ -1795,7 +1802,7 @@ Maak het dromerig en fantasierijk."""
 
         print(f"\nHelaas! Het getal was {getal}.")
 
-    def _game_steen_papier_schaar(self):
+    def _game_steen_papier_schaar(self) -> None:
         """Steen papier schaar."""
         opties = ["steen", "papier", "schaar"]
 
@@ -1822,7 +1829,7 @@ Maak het dromerig en fantasierijk."""
             print(f"{self.huisdier['naam']} wint!")
             self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 5)
 
-    def _game_memory(self):
+    def _game_memory(self) -> None:
         """Simpel memory spel."""
         if self.huisdier["munten"] < 10:
             print("\nJe hebt niet genoeg munten! (Nodig: 10)")
@@ -1851,7 +1858,7 @@ Maak het dromerig en fantasierijk."""
         except ValueError:
             print("Ongeldige invoer!")
 
-    def _game_snelheid(self):
+    def _game_snelheid(self) -> None:
         """Snelheidstest."""
         print(f"\n{self.huisdier['naam']} wil je reflexen testen!")
         print("Druk op Enter zodra je 'NU!' ziet...")
@@ -1873,7 +1880,7 @@ Maak het dromerig en fantasierijk."""
         else:
             print(f"Te langzaam! {reactietijd:.3f}s")
 
-    def _game_verstoppertje(self):
+    def _game_verstoppertje(self) -> None:
         """Verstoppertje mini-game - zoek je huisdier!"""
         if self.huisdier["munten"] < 8:
             print("\nJe hebt niet genoeg munten! (Nodig: 8)")
@@ -1931,7 +1938,7 @@ Maak het dromerig en fantasierijk."""
         print(f"{self.huisdier['geluid']} - Beter geluk volgende keer!")
         self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 5)
 
-    def _game_race(self):
+    def _game_race(self) -> None:
         """Race mini-game - race tegen je huisdier!"""
         if self.huisdier["munten"] < 12:
             print("\nJe hebt niet genoeg munten! (Nodig: 12)")
@@ -1974,7 +1981,7 @@ Maak het dromerig en fantasierijk."""
             print("\nGelijkspel! +5 munten troostprijs!")
             self.huisdier["munten"] += 5
 
-    def _game_quiz(self):
+    def _game_quiz(self) -> None:
         """Quiz mini-game - beantwoord vragen over huisdieren!"""
         if self.huisdier["munten"] < 6:
             print("\nJe hebt niet genoeg munten! (Nodig: 6)")
@@ -2016,7 +2023,7 @@ Maak het dromerig en fantasierijk."""
         except (ValueError, IndexError):
             print("Ongeldige keuze!")
 
-    def _game_vangen(self):
+    def _game_vangen(self) -> None:
         """Vangen mini-game - vang het vallende object!"""
         if self.huisdier["munten"] < 10:
             print("\nJe hebt niet genoeg munten! (Nodig: 10)")
@@ -2061,7 +2068,7 @@ Maak het dromerig en fantasierijk."""
 
         self.huisdier["geluk"] = min(100, self.huisdier["geluk"] + 5)
 
-    def _game_schatzoek_avontuur(self):
+    def _game_schatzoek_avontuur(self) -> None:
         """Schatzoek avontuur - je huisdier gaat automatisch op schattenjacht!"""
         if self.huisdier["munten"] < 15:
             print("\nJe hebt niet genoeg munten! (Nodig: 15)")
@@ -2203,7 +2210,7 @@ Maak het dromerig en fantasierijk."""
         print(f"\n  {geluid}")
         self._sla_op()
 
-    def _check_game_achievements(self):
+    def _check_game_achievements(self) -> None:
         """Check game achievements."""
         self._unlock_achievement("mini_game_winnaar")
         if self.huisdier["stats"]["games_gewonnen"] >= 10:
@@ -2211,7 +2218,7 @@ Maak het dromerig en fantasierijk."""
 
     # ==================== HUISDIER WERK ====================
 
-    def _huisdier_werk(self):
+    def _huisdier_werk(self) -> None:
         """Menu voor huisdier werk activiteiten."""
         while True:
             print("\n+====================================+")
@@ -2238,7 +2245,7 @@ Maak het dromerig en fantasierijk."""
 
             input("\nDruk op Enter...")
 
-    def _werk_boodschappen(self):
+    def _werk_boodschappen(self) -> None:
         """Huisdier gaat boodschappen doen - integratie met ECHTE boodschappenlijst!"""
         if self.huisdier["munten"] < 10:
             print("\nJe hebt niet genoeg munten! (Nodig: 10)")
@@ -2393,7 +2400,7 @@ Maak het dromerig en fantasierijk."""
         print(f"\n  {geluid}")
         self._sla_op()
 
-    def _werk_wiskunde(self):
+    def _werk_wiskunde(self) -> None:
         """Huisdier lost wiskundige puzzels op - met ECHTE Rekenmachine!"""
         if self.huisdier["munten"] < 8:
             print("\nJe hebt niet genoeg munten! (Nodig: 8)")
@@ -2549,7 +2556,7 @@ Maak het dromerig en fantasierijk."""
         print(f"\n  {geluid}")
         self._sla_op()
 
-    def _werk_bug_jacht(self):
+    def _werk_bug_jacht(self) -> None:
         """Huisdier zoekt bugs in ECHTE code bestanden."""
         if self.huisdier["munten"] < 12:
             print("\nJe hebt niet genoeg munten! (Nodig: 12)")
@@ -2702,7 +2709,7 @@ Maak het dromerig en fantasierijk."""
 
     # ==================== HUISDIER LEREN (AI) ====================
 
-    def _huisdier_leren(self):
+    def _huisdier_leren(self) -> None:
         """Menu voor huisdier AI leeractiviteiten."""
         while True:
             intel = self.huisdier.get("intelligentie", 0)
@@ -2815,7 +2822,7 @@ Maak het dromerig en fantasierijk."""
 
             input("\nDruk op Enter...")
 
-    def _bekijk_kennisbibliotheek(self):
+    def _bekijk_kennisbibliotheek(self) -> None:
         """Bekijk alle permanent opgeslagen kennis."""
         naam = self.huisdier["naam"]
         permanente_kennis = self._laad_permanente_kennis()
@@ -2889,7 +2896,7 @@ Maak het dromerig en fantasierijk."""
         self._maak_nieuw_huisdier()
         return True
 
-    def _leren_rag(self):
+    def _leren_rag(self) -> None:
         """Huisdier leert van de ECHTE kennisbank - PERMANENT opgeslagen op lokale PC!"""
         if self.huisdier["munten"] < 10:
             print("\nJe hebt niet genoeg munten! (Nodig: 10)")
@@ -2985,7 +2992,7 @@ Maak het dromerig en fantasierijk."""
                             print(f"  [!] Kon {bestand.name} niet lezen")
 
         except ImportError:
-            pass
+            logger.debug("Suppressed error")
 
         if not echte_rag:
             print(f"  [!] Geen RAG beschikbaar, gebruik ingebouwde kennis...")
@@ -3261,7 +3268,7 @@ Maak het dromerig en fantasierijk."""
 
         self._sla_op()
 
-    def _leren_nieuws(self):
+    def _leren_nieuws(self) -> None:
         """Huisdier leest nieuws van de ECHTE Nieuws Agent."""
         if self.huisdier["munten"] < 8:
             print("\nJe hebt niet genoeg munten! (Nodig: 8)")
@@ -3327,7 +3334,7 @@ Maak het dromerig en fantasierijk."""
                             print(f"  [_] {naam} kende dit al...")
 
         except Exception as e:
-            pass
+            logger.debug("Suppressed error")
 
         if not echte_nieuws:
             print(f"  [!] Nieuws Agent niet beschikbaar, gebruik cache...")
@@ -3401,7 +3408,7 @@ Maak het dromerig en fantasierijk."""
 
         self._sla_op()
 
-    def _leren_weer(self):
+    def _leren_weer(self) -> None:
         """Huisdier checkt het weer met de ECHTE Weer Agent."""
         if self.huisdier["munten"] < 5:
             print("\nJe hebt niet genoeg munten! (Nodig: 5)")
@@ -3480,7 +3487,7 @@ Maak het dromerig en fantasierijk."""
                     intel_bonus += 1
 
         except Exception as e:
-            pass
+            logger.debug("Suppressed error")
 
         if not echte_weer:
             print(f"  {naam} kijkt naar buiten...")
@@ -3538,7 +3545,7 @@ Maak het dromerig en fantasierijk."""
 
         self._sla_op()
 
-    def _leren_ai_gesprek(self):
+    def _leren_ai_gesprek(self) -> None:
         """Huisdier heeft een gesprek met ECHTE Claude AI!"""
         if self.huisdier["munten"] < 15:
             print("\nJe hebt niet genoeg munten! (Nodig: 15)")
@@ -3891,7 +3898,7 @@ Antwoord in het Nederlands."""
 
         self._sla_op()
 
-    def _ai_code_helper(self):
+    def _ai_code_helper(self) -> None:
         """AI helpt met programmeren - code uitleggen en genereren!"""
         if self.huisdier["munten"] < 20:
             print("\nJe hebt niet genoeg munten! (Nodig: 20)")
@@ -4063,7 +4070,7 @@ Antwoord in het Nederlands."""
         print(f"\n  {geluid}")
         self._sla_op()
 
-    def _ai_quiz_master(self):
+    def _ai_quiz_master(self) -> None:
         """AI stelt quiz vragen om kennis te testen!"""
         if self.huisdier["munten"] < 12:
             print("\nJe hebt niet genoeg munten! (Nodig: 12)")
@@ -4180,7 +4187,7 @@ Antwoord in het Nederlands."""
         print(f"\n  {geluid}")
         self._sla_op()
 
-    def _ai_verhalen(self):
+    def _ai_verhalen(self) -> None:
         """AI genereert creatieve verhalen!"""
         if self.huisdier["munten"] < 18:
             print("\nJe hebt niet genoeg munten! (Nodig: 18)")
@@ -4291,7 +4298,7 @@ Antwoord in het Nederlands."""
         print(f"\n  {geluid}")
         self._sla_op()
 
-    def _ai_vertaler(self):
+    def _ai_vertaler(self) -> None:
         """AI vertaalt tekst naar andere talen!"""
         if self.huisdier["munten"] < 10:
             print("\nJe hebt niet genoeg munten! (Nodig: 10)")
@@ -4406,7 +4413,7 @@ Antwoord in het Nederlands."""
         print(f"\n  {geluid}")
         self._sla_op()
 
-    def _ai_flashcards(self):
+    def _ai_flashcards(self) -> None:
         """AI genereert flashcards voor het huisdier om te leren!"""
         if self.huisdier["munten"] < 12:
             print("\nJe hebt niet genoeg munten! (Nodig: 12)")
@@ -4533,7 +4540,7 @@ Antwoord in het Nederlands."""
         print(f"\n  {geluid}")
         self._sla_op()
 
-    def _ai_notities(self):
+    def _ai_notities(self) -> None:
         """AI helpt het huisdier slimme notities maken!"""
         if self.huisdier["munten"] < 8:
             print("\nJe hebt niet genoeg munten! (Nodig: 8)")
@@ -4621,7 +4628,7 @@ Antwoord in het Nederlands."""
         print(f"\n  {geluid}")
         self._sla_op()
 
-    def _ai_citaten(self):
+    def _ai_citaten(self) -> None:
         """Huisdier leert van inspirerende citaten!"""
         if self.huisdier["munten"] < 5:
             print("\nJe hebt niet genoeg munten! (Nodig: 5)")
@@ -4691,7 +4698,7 @@ Antwoord in het Nederlands."""
         print(f"\n  {geluid}")
         self._sla_op()
 
-    def _ai_code_review(self):
+    def _ai_code_review(self) -> None:
         """AI analyseert code en geeft feedback!"""
         if self.huisdier["munten"] < 15:
             print("\nJe hebt niet genoeg munten! (Nodig: 15)")
@@ -4796,7 +4803,7 @@ Code:
         print(f"\n  {geluid}")
         self._sla_op()
 
-    def _ai_production_rag(self):
+    def _ai_production_rag(self) -> None:
         """Gebruik het ECHTE Production RAG systeem!"""
         if self.huisdier["munten"] < 20:
             print("\nJe hebt niet genoeg munten! (Nodig: 20)")
@@ -4887,7 +4894,7 @@ Code:
         print(f"\n  {geluid}")
         self._sla_op()
 
-    def _ai_brainstorm(self):
+    def _ai_brainstorm(self) -> None:
         """AI helpt creatief brainstormen!"""
         if self.huisdier["munten"] < 18:
             print("\nJe hebt niet genoeg munten! (Nodig: 18)")
@@ -4994,7 +5001,7 @@ Code:
 
     # ==================== PRODUCTIVITEIT INTEGRATIES ====================
 
-    def _ai_mood_tracker(self):
+    def _ai_mood_tracker(self) -> None:
         """Huisdier helpt met stemming tracken en AI analyse!"""
         if self.huisdier["munten"] < 10:
             print("\nJe hebt niet genoeg munten! (Nodig: 10)")
@@ -5078,7 +5085,7 @@ Geef kort (2-3 zinnen) empathisch advies. Nederlands."""
         print(f"\n  {geluid}")
         self._sla_op()
 
-    def _ai_habit_coach(self):
+    def _ai_habit_coach(self) -> None:
         """Huisdier wordt je persoonlijke AI habit coach!"""
         if self.huisdier["munten"] < 12:
             print("\nJe hebt niet genoeg munten! (Nodig: 12)")
@@ -5173,7 +5180,7 @@ Geef 3 concrete tips om te beginnen. Kort en motiverend. Nederlands."""
         print(f"\n  {geluid}")
         self._sla_op()
 
-    def _ai_budget_advisor(self):
+    def _ai_budget_advisor(self) -> None:
         """Huisdier geeft AI-powered budget en spaartips!"""
         if self.huisdier["munten"] < 15:
             print("\nJe hebt niet genoeg munten! (Nodig: 15)")
@@ -5264,7 +5271,7 @@ Geef 3 concrete tips om te beginnen. Kort en motiverend. Nederlands."""
         print(f"\n  {geluid}")
         self._sla_op()
 
-    def _ai_dag_planner(self):
+    def _ai_dag_planner(self) -> None:
         """Huisdier helpt je dag plannen met AI!"""
         if self.huisdier["munten"] < 12:
             print("\nJe hebt niet genoeg munten! (Nodig: 12)")
@@ -5363,7 +5370,7 @@ Geef een ranking op urgentie/belang met korte uitleg. Nederlands."""
         print(f"\n  {geluid}")
         self._sla_op()
 
-    def _ai_focus_timer(self):
+    def _ai_focus_timer(self) -> None:
         """Huisdier geeft AI focus tips en motivatie!"""
         if self.huisdier["munten"] < 8:
             print("\nJe hebt niet genoeg munten! (Nodig: 8)")
@@ -5463,7 +5470,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
         print(f"\n  {geluid}")
         self._sla_op()
 
-    def _tricks_menu(self):
+    def _tricks_menu(self) -> None:
         """Tricks menu met CONDITIONERING systeem - leren door beloning!"""
         while True:
             geleerde = self.huisdier["tricks_geleerd"]
@@ -5527,25 +5534,25 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                     if 0 <= idx < len(in_training):
                         self._train_trick(in_training[idx][0])
                 except (ValueError, IndexError):
-                    pass
+                    logger.debug("Suppressed error")
             elif keuze.startswith("n") and len(keuze) > 1:
                 try:
                     idx = int(keuze[1:]) - 1
                     if 0 <= idx < len(beschikbaar):
                         self._start_trick_training(beschikbaar[idx][0])
                 except (ValueError, IndexError):
-                    pass
+                    logger.debug("Suppressed error")
             else:
                 try:
                     idx = int(keuze) - 1
                     if 0 <= idx < len(geleerde):
                         self._voer_trick_uit(geleerde[idx])
                 except (ValueError, IndexError):
-                    pass
+                    logger.debug("Suppressed error")
 
             input("\nDruk op Enter...")
 
-    def _start_trick_training(self, trick_id: str):
+    def _start_trick_training(self, trick_id: str) -> None:
         """Start training voor een nieuwe trick."""
         trick = self.TRICKS[trick_id]
         kosten = trick["moeilijkheid"] * 5  # Lagere kosten om te starten
@@ -5583,7 +5590,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
 
         self._sla_op()
 
-    def _train_trick(self, trick_id: str):
+    def _train_trick(self, trick_id: str) -> None:
         """Train een trick met CONDITIONERING - beloning en bestraffing."""
         trick = self.TRICKS[trick_id]
         training = self.huisdier["tricks_training"].get(trick_id, {})
@@ -5711,7 +5718,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
         self.huisdier["ervaring"] += 5
         self._sla_op()
 
-    def _trick_geleerd(self, trick_id: str, trick: dict):
+    def _trick_geleerd(self, trick_id: str, trick: dict) -> None:
         """Trick is volledig geleerd door conditionering!"""
         naam = self.huisdier["naam"]
         training = self.huisdier["tricks_training"].get(trick_id, {})
@@ -5760,7 +5767,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
         if len(self.huisdier["tricks_geleerd"]) == len(self.TRICKS):
             self._unlock_achievement("alle_tricks")
 
-    def _voer_trick_uit(self, trick_id: str):
+    def _voer_trick_uit(self, trick_id: str) -> None:
         """Voer een geleerde trick uit - perfectie verbetert met oefening!"""
         trick = self.TRICKS[trick_id]
         training = self.huisdier.get("tricks_training", {}).get(trick_id, {})
@@ -5804,7 +5811,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
 
         print(f"  +{beloning} munten! (Perfectie: {perfectie}%)")
 
-    def _winkel(self):
+    def _winkel(self) -> None:
         """Accessoires winkel."""
         while True:
             print("\n+================================+")
@@ -5848,11 +5855,11 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                     else:
                         print("\nJe hebt niet genoeg munten!")
             except (ValueError, IndexError):
-                pass
+                logger.debug("Suppressed error")
 
             input("\nDruk op Enter...")
 
-    def _achievements_bekijken(self):
+    def _achievements_bekijken(self) -> None:
         """Bekijk achievements."""
         print("\n+================================+")
         print("|       ACHIEVEMENTS             |")
@@ -5874,7 +5881,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
         print(f"| Totaal punten: {totaal_punten:<13}|")
         print("+================================+")
 
-    def _dagelijkse_bonus(self):
+    def _dagelijkse_bonus(self) -> None:
         """Claim dagelijkse bonus."""
         bonus_data = self.huisdier["dagelijkse_bonus"]
         nu = datetime.now().date()
@@ -5923,7 +5930,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
     # NIEUWE AVONTUREN FEATURES
     # ==========================================
 
-    def _get_seizoen_event(self):
+    def _get_seizoen_event(self) -> None:
         """Bepaal huidig seizoens event op basis van datum."""
         nu = datetime.now()
         maand = nu.month
@@ -5949,7 +5956,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                 return event
         return None
 
-    def _verkenning_mode(self):
+    def _verkenning_mode(self) -> None:
         """Verken verschillende locaties met je huisdier!"""
         if self.huisdier["energie"] < 2:
             print(f"\n{self.huisdier['naam']} is te moe om te verkennen!")
@@ -6121,7 +6128,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
 
         self._sla_op()
 
-    def _huisdier_dagboek(self):
+    def _huisdier_dagboek(self) -> None:
         """Bekijk het automatische dagboek van je huisdier."""
         naam = self.huisdier["naam"]
 
@@ -6153,7 +6160,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
         print(f"    Eerste herinnering: {self.huisdier['dagboek'][0]['datum'] if self.huisdier['dagboek'] else 'Nog geen'}")
         print(f"    Totaal entries: {len(self.huisdier['dagboek'])}")
 
-    def _voeg_dagboek_toe(self, tekst):
+    def _voeg_dagboek_toe(self, tekst: str) -> None:
         """Voeg een entry toe aan het dagboek."""
         if "dagboek" not in self.huisdier:
             self.huisdier["dagboek"] = []
@@ -6168,7 +6175,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
         if len(self.huisdier["dagboek"]) > 50:
             self.huisdier["dagboek"] = self.huisdier["dagboek"][-50:]
 
-    def _seizoens_events(self):
+    def _seizoens_events(self) -> None:
         """Seizoens events met speciale beloningen!"""
         naam = self.huisdier["naam"]
         geluid = self.huisdier["geluid"]
@@ -6260,9 +6267,9 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                 self._voeg_dagboek_toe(f"{event['naam']}: {act_naam}")
                 self._sla_op()
         except (ValueError, IndexError):
-            pass
+            logger.debug("Suppressed error")
 
-    def _competities(self):
+    def _competities(self) -> None:
         """Doe mee aan competities met je huisdier!"""
         naam = self.huisdier["naam"]
         geluid = self.huisdier["geluid"]
@@ -6403,7 +6410,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
 
         self._sla_op()
 
-    def _slapen_met_dromen(self):
+    def _slapen_met_dromen(self) -> None:
         """Slapen met kans op dromen voor extra beloningen."""
         naam = self.huisdier["naam"]
         geluid = self.huisdier["geluid"]
@@ -6484,7 +6491,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
     # LEVEN & ECONOMIE FEATURES
     # ==========================================
 
-    def _huisdier_huis(self):
+    def _huisdier_huis(self) -> None:
         """Bouw en decoreer het huis van je huisdier!"""
         naam = self.huisdier["naam"]
 
@@ -6561,7 +6568,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                         else:
                             print("\n  [!] Niet genoeg munten!")
                 except (ValueError, IndexError):
-                    pass
+                    logger.debug("Suppressed error")
 
             elif keuze == "2":
                 print("\n  Beschikbare meubels:")
@@ -6585,7 +6592,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                         else:
                             print("\n  [!] Je hebt dit meubel al!")
                 except (ValueError, IndexError):
-                    pass
+                    logger.debug("Suppressed error")
 
             elif keuze == "3":
                 print(f"\n  --- {naam}'s HUIS ---")
@@ -6600,7 +6607,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
 
             self._sla_op()
 
-    def _mini_farming(self):
+    def _mini_farming(self) -> None:
         """Verbouw gewassen voor voedsel en munten!"""
         naam = self.huisdier["naam"]
 
@@ -6690,7 +6697,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                         else:
                             print("\n  [!] Niet genoeg munten!")
                 except (ValueError, IndexError):
-                    pass
+                    logger.debug("Suppressed error")
 
             elif keuze == "2":
                 geoogst = []
@@ -6736,7 +6743,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
 
             self._sla_op()
 
-    def _crafting_werkplaats(self):
+    def _crafting_werkplaats(self) -> None:
         """Maak items van verzamelde materialen!"""
         naam = self.huisdier["naam"]
 
@@ -6843,11 +6850,11 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                     else:
                         print("\n  [!] Niet genoeg materialen!")
             except (ValueError, IndexError):
-                pass
+                logger.debug("Suppressed error")
 
             self._sla_op()
 
-    def _kook_keuken(self):
+    def _kook_keuken(self) -> None:
         """Kook maaltijden van ingrediënten!"""
         naam = self.huisdier["naam"]
 
@@ -6940,7 +6947,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                         else:
                             print("\n  [!] Niet genoeg munten!")
                 except (ValueError, IndexError):
-                    pass
+                    logger.debug("Suppressed error")
 
             elif keuze == "b":
                 if "farm" in self.huisdier and self.huisdier["farm"]["voorraad"]:
@@ -6979,11 +6986,11 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                         else:
                             print("\n  [!] Niet genoeg ingrediënten!")
                 except (ValueError, IndexError):
-                    pass
+                    logger.debug("Suppressed error")
 
             self._sla_op()
 
-    def _huisdier_bank(self):
+    def _huisdier_bank(self) -> None:
         """Spaar munten en verdien rente!"""
         naam = self.huisdier["naam"]
 
@@ -7065,7 +7072,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
     # SOCIAAL & DOELEN FEATURES
     # ==========================================
 
-    def _huisdier_vrienden(self):
+    def _huisdier_vrienden(self) -> None:
         """Ontmoet en bevriend NPC huisdieren!"""
         naam = self.huisdier["naam"]
 
@@ -7169,7 +7176,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
 
             self._sla_op()
 
-    def _dagelijkse_missies(self):
+    def _dagelijkse_missies(self) -> None:
         """Dagelijkse missies voor extra beloningen!"""
         naam = self.huisdier["naam"]
 
@@ -7254,7 +7261,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
 
             self._sla_op()
 
-    def _levensdoelen(self):
+    def _levensdoelen(self) -> None:
         """Lange termijn doelen om na te streven!"""
         naam = self.huisdier["naam"]
 
@@ -7349,7 +7356,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                     doelen["actief"] = doel_id
                     print(f"\n  [OK] Nieuw doel: {alle_doelen[doel_id]['naam']}")
             except (ValueError, IndexError):
-                pass
+                logger.debug("Suppressed error")
 
         elif keuze == "2":
             if doelen["actief"]:
@@ -7382,7 +7389,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
 
         self._sla_op()
 
-    def _foto_album(self):
+    def _foto_album(self) -> None:
         """Bekijk en maak foto's van speciale momenten!"""
         naam = self.huisdier["naam"]
 
@@ -7445,7 +7452,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
             else:
                 print("\n  [!] Geen foto's in album!")
 
-    def _maak_foto(self, beschrijving):
+    def _maak_foto(self, beschrijving: object) -> None:
         """Automatisch een foto maken bij speciale momenten."""
         if "album" not in self.huisdier:
             self.huisdier["album"] = {"fotos": [], "collecties": []}
@@ -7457,7 +7464,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
         }
         self.huisdier["album"]["fotos"].append(foto)
 
-    def _weer_station(self):
+    def _weer_station(self) -> None:
         """Bekijk het weer en hoe het je huisdier beïnvloedt!"""
         naam = self.huisdier["naam"]
 
@@ -7529,7 +7536,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
     # POWER-UPS & MAGIE FEATURES
     # ==========================================
 
-    def _evolutie_systeem(self):
+    def _evolutie_systeem(self) -> None:
         """Evolueer je huisdier naar nieuwe vormen!"""
         naam = self.huisdier["naam"]
         huisdier_type = self.huisdier["type"]
@@ -7620,7 +7627,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
 
         self._sla_op()
 
-    def _huisdier_gym(self):
+    def _huisdier_gym(self) -> None:
         """Train je huisdier's stats!"""
         naam = self.huisdier["naam"]
 
@@ -7696,7 +7703,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
 
             self._sla_op()
 
-    def _magie_spreuken(self):
+    def _magie_spreuken(self) -> None:
         """Leer en gebruik magische spreuken!"""
         naam = self.huisdier["naam"]
         iq = self.huisdier.get("intelligentie", 0)
@@ -7764,7 +7771,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                             magie["geleerde_spreuken"].append(sp_id)
                             print(f"\n  [MAGIE] {sp_data['naam']} geleerd!")
                 except (ValueError, IndexError):
-                    pass
+                    logger.debug("Suppressed error")
 
             elif keuze == "2":
                 if not magie["geleerde_spreuken"]:
@@ -7801,7 +7808,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                         else:
                             print(f"\n  [!] Niet genoeg mana! Nodig: {sp['mana']}")
                 except (ValueError, IndexError):
-                    pass
+                    logger.debug("Suppressed error")
 
             elif keuze == "3":
                 if self.huisdier["munten"] >= 20:
@@ -7817,7 +7824,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
     # ENTERTAINMENT FEATURES
     # ==========================================
 
-    def _schatkist_jacht(self):
+    def _schatkist_jacht(self) -> None:
         """Graaf naar verborgen schatten!"""
         naam = self.huisdier["naam"]
 
@@ -7901,7 +7908,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
             else:
                 print("    (nog geen zeldzame schatten)")
 
-    def _huisdier_restaurant(self):
+    def _huisdier_restaurant(self) -> None:
         """Run je eigen restaurant!"""
         naam = self.huisdier["naam"]
 
@@ -8009,7 +8016,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
 
             self._sla_op()
 
-    def _muziek_studio(self):
+    def _muziek_studio(self) -> None:
         """Maak en luister naar muziek!"""
         naam = self.huisdier["naam"]
 
@@ -8106,7 +8113,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
 
             self._sla_op()
 
-    def _arcade_hal(self):
+    def _arcade_hal(self) -> None:
         """Meer mini-games in de arcade!"""
         naam = self.huisdier["naam"]
 
@@ -8190,7 +8197,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
     # SPECIALE AVONTUREN FEATURES
     # ==========================================
 
-    def _tijdreizen(self):
+    def _tijdreizen(self) -> None:
         """Reis naar verschillende tijdperken!"""
         naam = self.huisdier["naam"]
 
@@ -8308,7 +8315,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
         self._voeg_dagboek_toe(f"Tijdreis naar {tp['naam']}!")
         self._sla_op()
 
-    def _magische_tuin(self):
+    def _magische_tuin(self) -> None:
         """Onderhoud een magische tuin met speciale planten!"""
         naam = self.huisdier["naam"]
 
@@ -8446,7 +8453,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
 
             self._sla_op()
 
-    def _geheime_missies(self):
+    def _geheime_missies(self) -> None:
         """Geheime spion missies voor grote beloningen!"""
         naam = self.huisdier["naam"]
 
@@ -8578,7 +8585,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
 
     # ==================== AI POWERED FEATURES ====================
 
-    def _ai_pet_chat(self):
+    def _ai_pet_chat(self) -> None:
         """Praat met je huisdier via AI - volledig gepersonaliseerd!"""
         naam = self.huisdier["naam"]
         geluid = self.huisdier["geluid"]
@@ -8677,7 +8684,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
         self._ai_add_memory("chat", f"Gezellig gesprek gehad ({gesprek_count} berichten)")
         self._sla_op()
 
-    def _ai_memory_lane(self):
+    def _ai_memory_lane(self) -> None:
         """Bekijk de herinneringen van je huisdier met AI context."""
         naam = self.huisdier["naam"]
         emoji = self.huisdier["emoji"]
@@ -8748,7 +8755,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
         print("\n  " + "-" * 50)
         print("  [TIP] Blijf spelen om meer herinneringen te maken!")
 
-    def _ai_enhanced_sleep(self):
+    def _ai_enhanced_sleep(self) -> None:
         """AI-enhanced slapen met gegenereerde dromen."""
         naam = self.huisdier["naam"]
         emoji = self.huisdier["emoji"]
@@ -8773,7 +8780,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
             self.huisdier["intelligentie"] = self.huisdier.get("intelligentie", 0) + 1
             print(f"\n  [LAMP] {naam} leerde iets in de droom! +1 IQ")
 
-    def _auto_mode(self):
+    def _auto_mode(self) -> None:
         """Automatische leer- en slaapmodus - huisdier leert en rust zelfstandig!"""
         naam = self.huisdier["naam"]
         geluid = self.huisdier["geluid"]
@@ -8995,7 +9002,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
 
         self._sla_op()
 
-    def _trigger_optimization(self):
+    def _trigger_optimization(self) -> None:
         """Trigger Learning System optimalisatie na sessie."""
         self._init_learning()
         if not self.learning:
@@ -9030,9 +9037,9 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
 
         except Exception as e:
             # Silently fail - learning is optional
-            pass
+            logger.debug("Suppressed error")
 
-    def run(self):
+    def run(self) -> None:
         """Start de app."""
         clear_scherm()
         print("+=======================================+")

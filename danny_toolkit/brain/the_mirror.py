@@ -6,6 +6,8 @@ interesses, communicatiestijl, kennisgebieden, en gewoonten. Gebruikt
 door Dreamer (REM cycle) voor anticipatie en personalisatie.
 """
 
+from __future__ import annotations
+
 import json
 import os
 
@@ -17,6 +19,9 @@ except ImportError:
 
 from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import Kleur
+import logging
+
+logger = logging.getLogger(__name__)
 
 try:
     from danny_toolkit.core.key_manager import get_key_manager
@@ -38,7 +43,7 @@ class TheMirror:
     Reads the CorticalStack (memories) to build a dynamic User Profile.
     Injects this profile into every AI interaction context.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes the instance with default configuration.
 
 Sets up the profile path, asynchronous client, and model.
@@ -58,7 +63,7 @@ Sets up the profile path, asynchronous client, and model.
             self.client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
         self.model = Config.LLM_MODEL
 
-    async def reflect(self):
+    async def reflect(self) -> None:
         """
         Analyzes the last 50 interactions to update the User Profile.
         Runs in background (e.g., daily).
@@ -135,6 +140,7 @@ Returns a formatted string instructing the model to adjust its responses accordi
         )
 
     def load_profile(self) -> dict:
+        """Load profile."""
         if self.profile_path.exists():
             try:
                 with open(self.profile_path, "r", encoding="utf-8") as f:
@@ -143,7 +149,7 @@ Returns a formatted string instructing the model to adjust its responses accordi
                 return {}
         return {}
 
-    def save_profile(self, data: str):
+    def save_profile(self, data: str) -> None:
         """Parse JSON string from Groq and save."""
         try:
             parsed = json.loads(data)

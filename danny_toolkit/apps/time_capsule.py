@@ -2,12 +2,21 @@
 Time Capsule v1.0 - Berichten naar je toekomstige zelf schrijven.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 from datetime import datetime, timedelta
 from typing import Dict
 from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import clear_scherm
+
+try:
+    import random
+    HAS_RANDOM = True
+except ImportError:
+    HAS_RANDOM = False
+
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +48,8 @@ class TimeCapsuleApp:
         "Wat hoop je te hebben bereikt als je dit leest?",
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         Config.ensure_dirs()
         self.data_dir = Config.APPS_DATA_DIR / "time_capsule"
         self.data_dir.mkdir(exist_ok=True)
@@ -59,12 +69,12 @@ class TimeCapsuleApp:
             "geopend": [],
         }
 
-    def _sla_op(self):
+    def _sla_op(self) -> None:
         """Sla data op."""
         with open(self.data_file, "w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2, ensure_ascii=False)
 
-    def _nieuwe_capsule(self):
+    def _nieuwe_capsule(self) -> None:
         """Maak nieuwe time capsule."""
         clear_scherm()
         print("\n  === NIEUWE TIME CAPSULE ===\n")
@@ -118,7 +128,7 @@ class TimeCapsuleApp:
         print("  (Beantwoord de vragen of schrijf vrij)")
         print("  Typ 'klaar' om te stoppen.\n")
 
-        import random
+        pass  # import moved to top-level
         beschikbare_prompts = list(self.PROMPTS)
         random.shuffle(beschikbare_prompts)
 
@@ -195,7 +205,7 @@ class TimeCapsuleApp:
 
         input("\n  Druk op Enter...")
 
-    def _bekijk_capsules(self):
+    def _bekijk_capsules(self) -> None:
         """Bekijk alle capsules."""
         clear_scherm()
         print("\n  === MIJN TIME CAPSULES ===\n")
@@ -256,7 +266,7 @@ class TimeCapsuleApp:
                     self._open_capsule(c)
                     return
 
-    def _open_capsule(self, capsule: Dict):
+    def _open_capsule(self, capsule: Dict) -> None:
         """Open een time capsule."""
         open_datum = datetime.fromisoformat(capsule["open_datum"])
         nu = datetime.now()
@@ -330,7 +340,7 @@ class TimeCapsuleApp:
 
         input("\n  Druk op Enter...")
 
-    def _snelle_notitie(self):
+    def _snelle_notitie(self) -> None:
         """Schrijf een snelle notitie voor later."""
         clear_scherm()
         print("\n  === SNELLE NOTITIE ===\n")
@@ -368,7 +378,7 @@ class TimeCapsuleApp:
         print(f"\n  Notitie opgeslagen voor {open_datum.strftime('%d-%m-%Y')}!")
         input("\n  Druk op Enter...")
 
-    def _check_herinneringen(self):
+    def _check_herinneringen(self) -> None:
         """Check of er capsules klaar zijn om te openen."""
         nu = datetime.now()
         te_openen = []
@@ -381,7 +391,7 @@ class TimeCapsuleApp:
 
         return te_openen
 
-    def _statistieken(self):
+    def _statistieken(self) -> None:
         """Toon statistieken."""
         clear_scherm()
         print("\n  === TIME CAPSULE STATISTIEKEN ===\n")
@@ -429,7 +439,7 @@ class TimeCapsuleApp:
 
         input("\n  Druk op Enter...")
 
-    def run(self):
+    def run(self) -> None:
         """Start de app."""
         # Check herinneringen bij start
         te_openen = self._check_herinneringen()

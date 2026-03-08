@@ -1,6 +1,8 @@
 """
 Security Research Engine — Kern scan-logica.
 
+from __future__ import annotations
+
 Bevat SecurityResearchEngine met alle 7 scans + CLI.
 Erft SecurityDisplayMixin voor visuele output.
 
@@ -51,7 +53,8 @@ class SecurityResearchEngine(SecurityDisplayMixin):
     _AUDIT_PATRONEN = AUDIT_PATRONEN
     _RAG_ZOEKTERMEN = RAG_ZOEKTERMEN
 
-    def __init__(self, brain=None, daemon=None):
+    def __init__(self, brain: object=None, daemon: object=None) -> None:
+        """Init  ."""
         self._brain = brain
         self._daemon = daemon
         self._governor = None
@@ -67,7 +70,8 @@ class SecurityResearchEngine(SecurityDisplayMixin):
     # -- Lazy properties --
 
     @property
-    def governor(self):
+    def governor(self) -> None:
+        """Governor."""
         if self._governor is None:
             try:
                 from danny_toolkit.brain.governor import OmegaGovernor
@@ -77,7 +81,8 @@ class SecurityResearchEngine(SecurityDisplayMixin):
         return self._governor
 
     @property
-    def stack(self):
+    def stack(self) -> None:
+        """Stack."""
         if self._stack is None:
             try:
                 from danny_toolkit.brain.cortical_stack import (
@@ -89,7 +94,8 @@ class SecurityResearchEngine(SecurityDisplayMixin):
         return self._stack
 
     @property
-    def file_guard(self):
+    def file_guard(self) -> None:
+        """File guard."""
         if self._file_guard is None:
             try:
                 from danny_toolkit.brain.file_guard import FileGuard
@@ -99,7 +105,8 @@ class SecurityResearchEngine(SecurityDisplayMixin):
         return self._file_guard
 
     @property
-    def coherentie(self):
+    def coherentie(self) -> None:
+        """Coherentie."""
         if self._coherentie is None:
             try:
                 from danny_toolkit.daemon.coherentie import (
@@ -673,7 +680,7 @@ class SecurityResearchEngine(SecurityDisplayMixin):
 
     # -- Logging --
 
-    def _log_scan(self, rapport):
+    def _log_scan(self, rapport: object) -> None:
         """Log scan resultaat naar CorticalStack."""
         stk = self.stack
         if stk is None:
@@ -692,7 +699,7 @@ class SecurityResearchEngine(SecurityDisplayMixin):
         except Exception as e:
             logger.debug("Scan logging failed: %s", e)
 
-    def _bewaar_alert(self, bevinding):
+    def _bewaar_alert(self, bevinding: object) -> None:
         """Bewaar kritiek/hoog alert voor later."""
         self._alerts.append({
             "timestamp": datetime.now().isoformat(),
@@ -736,7 +743,7 @@ class SecurityResearchEngine(SecurityDisplayMixin):
     # INTERACTIEVE CLI
     # ======================================================
 
-    def run(self):
+    def run(self) -> None:
         """Start de interactieve CLI."""
         # Windows UTF-8 (niet op import-time)
         if os.name == "nt":

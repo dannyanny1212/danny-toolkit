@@ -16,6 +16,8 @@ Features:
 - Analyse geschiedenis en export
 """
 
+from __future__ import annotations
+
 import re
 import ast
 import json
@@ -29,6 +31,13 @@ from typing import List, Dict, Any
 
 from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import clear_scherm, kleur, Kleur
+
+try:
+    import math
+    HAS_MATH = True
+except ImportError:
+    HAS_MATH = False
+
 
 logger = logging.getLogger(__name__)
 
@@ -119,7 +128,8 @@ class CodeAnalyseApp:
          "Gebruik 'if seq:' in plaats van 'if len(seq) > 0'"),
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self.huidig_bestand = None
         self.huidige_code = None
         self.huidige_tree = None
@@ -173,7 +183,7 @@ class CodeAnalyseApp:
         data["versie"] = self.VERSIE
         return data
 
-    def _sla_data_op(self):
+    def _sla_data_op(self) -> None:
         """Sla data op."""
         self.data_bestand.parent.mkdir(parents=True, exist_ok=True)
         with open(self.data_bestand, "w", encoding="utf-8") as f:
@@ -353,7 +363,7 @@ class CodeAnalyseApp:
 
         # Maintainability index (vereenvoudigd)
         # MI = 171 - 5.2 * ln(V) - 0.23 * G - 16.2 * ln(LOC)
-        import math
+        pass  # import moved to top-level
         loc = len(niet_lege)
         halstead_v = loc * math.log2(max(complexity, 1) + 1)  # Vereenvoudigd
         mi = 171 - 5.2 * math.log(halstead_v + 1) - 0.23 * complexity - 16.2 * math.log(loc + 1)
@@ -1140,7 +1150,7 @@ class CodeAnalyseApp:
 </html>"""
         return html
 
-    def bewaar_analyse(self):
+    def bewaar_analyse(self) -> None:
         """Bewaar huidige analyse in geschiedenis."""
         if not self.huidige_code:
             return
@@ -1192,7 +1202,7 @@ class CodeAnalyseApp:
 
     # ==================== INTERACTIEVE MODUS ====================
 
-    def _toon_menu(self):
+    def _toon_menu(self) -> None:
         """Toont het hoofdmenu met kleuren."""
         print()
         print(kleur("+" + "=" * 50 + "+", Kleur.CYAAN))
@@ -1232,7 +1242,7 @@ class CodeAnalyseApp:
         if self.huidig_bestand:
             print(kleur(f"  Geladen: {Path(self.huidig_bestand).name}", Kleur.GROEN))
 
-    def _laad_bestand_interactief(self):
+    def _laad_bestand_interactief(self) -> None:
         """Vraag gebruiker om bestand te laden."""
         print("\n" + kleur("BESTAND LADEN", Kleur.CYAAN))
         print("-" * 40)
@@ -1278,7 +1288,7 @@ class CodeAnalyseApp:
         # Bewaar in geschiedenis
         self.bewaar_analyse()
 
-    def _toon_project_analyse(self):
+    def _toon_project_analyse(self) -> None:
         """Analyseer een project."""
         print("\n" + kleur("PROJECT ANALYSE", Kleur.CYAAN))
         print("-" * 40)
@@ -1311,7 +1321,7 @@ class CodeAnalyseApp:
         for i, bestand in enumerate(resultaat['grootste_bestanden'][:5], 1):
             print(f"  {i}. {bestand['naam']}: {bestand['regels']} regels")
 
-    def _toon_volledige_analyse(self):
+    def _toon_volledige_analyse(self) -> None:
         """Voer volledige analyse uit."""
         if not self.huidige_code:
             print(kleur("\nLaad eerst een bestand (optie 1)!", Kleur.ROOD))
@@ -1372,7 +1382,7 @@ class CodeAnalyseApp:
 
         print("\n" + "=" * 60)
 
-    def _toon_security_scan(self):
+    def _toon_security_scan(self) -> None:
         """Toon security scan resultaten."""
         if not self.huidige_code:
             print(kleur("\nLaad eerst een bestand (optie 1)!", Kleur.ROOD))
@@ -1404,7 +1414,7 @@ class CodeAnalyseApp:
             for aanbeveling in result['aanbevelingen']:
                 print(f"  • {aanbeveling}")
 
-    def _toon_code_smells(self):
+    def _toon_code_smells(self) -> None:
         """Toon code smell detectie."""
         if not self.huidige_code:
             print(kleur("\nLaad eerst een bestand (optie 1)!", Kleur.ROOD))
@@ -1427,7 +1437,7 @@ class CodeAnalyseApp:
                 regel_str = f"Regel {smell['regel']}" if smell['regel'] > 0 else "Algemeen"
                 print(f"  {regel_str}: {smell['beschrijving']}")
 
-    def _toon_complexity(self):
+    def _toon_complexity(self) -> None:
         """Toon complexity analyse."""
         if not self.huidige_code:
             print(kleur("\nLaad eerst een bestand (optie 1)!", Kleur.ROOD))
@@ -1455,7 +1465,7 @@ class CodeAnalyseApp:
             for naam, comp in result['functie_complexity']:
                 print(f"  {naam}(): {comp}")
 
-    def _toon_performance(self):
+    def _toon_performance(self) -> None:
         """Toon performance check."""
         if not self.huidige_code:
             print(kleur("\nLaad eerst een bestand (optie 1)!", Kleur.ROOD))
@@ -1484,7 +1494,8 @@ class CodeAnalyseApp:
         gevonden_hashes = {}
 
         # Normaliseer regels (verwijder leading whitespace voor vergelijking)
-        def normaliseer(regel):
+        def normaliseer(regel) -> None:
+            """Normaliseer."""
             return regel.strip()
 
         # Zoek naar duplicate blokken van min_regels of meer
@@ -1536,7 +1547,7 @@ class CodeAnalyseApp:
             "min_blok_grootte": min_regels
         }
 
-    def _toon_duplicate_code(self):
+    def _toon_duplicate_code(self) -> None:
         """Toon duplicate code detectie."""
         if not self.huidige_code:
             print(kleur("\nLaad eerst een bestand (optie 1)!", Kleur.ROOD))
@@ -1703,7 +1714,7 @@ class CodeAnalyseApp:
 
         return result
 
-    def _toon_import_analyse(self):
+    def _toon_import_analyse(self) -> None:
         """Toon import analyse resultaten."""
         if not self.huidige_code:
             print(kleur("\nLaad eerst een bestand (optie 1)!", Kleur.ROOD))
@@ -1750,7 +1761,7 @@ class CodeAnalyseApp:
             for aanbeveling in result["aanbevelingen"]:
                 print(f"  • {aanbeveling}")
 
-    def _toon_formatting(self):
+    def _toon_formatting(self) -> None:
         """Toon formatting check en bied fix aan."""
         if not self.huidige_code:
             print(kleur("\nLaad eerst een bestand (optie 1)!", Kleur.ROOD))
@@ -1791,7 +1802,7 @@ class CodeAnalyseApp:
                         self.huidige_code = gefixte_code
                         print(kleur(f"Opgeslagen naar {Path(self.huidig_bestand).name}!", Kleur.GROEN))
 
-    def _toon_naming(self):
+    def _toon_naming(self) -> None:
         """Toon naming conventions check."""
         if not self.huidige_code:
             print(kleur("\nLaad eerst een bestand (optie 1)!", Kleur.ROOD))
@@ -1811,7 +1822,7 @@ class CodeAnalyseApp:
             for p in result['problemen'][:10]:
                 print(f"  Regel {p['regel']}: {p['type']} '{p['naam']}' moet {p['verwacht']} zijn")
 
-    def _toon_documentatie(self):
+    def _toon_documentatie(self) -> None:
         """Toon documentatie coverage."""
         if not self.huidige_code:
             print(kleur("\nLaad eerst een bestand (optie 1)!", Kleur.ROOD))
@@ -1844,7 +1855,7 @@ class CodeAnalyseApp:
             for k in result['klassen_zonder_docstring']:
                 print(f"    - {k['naam']} op regel {k['regel']}")
 
-    def _toon_type_hints(self):
+    def _toon_type_hints(self) -> None:
         """Toon type hint coverage."""
         if not self.huidige_code:
             print(kleur("\nLaad eerst een bestand (optie 1)!", Kleur.ROOD))
@@ -1869,7 +1880,7 @@ class CodeAnalyseApp:
                     info.append(f"{f['args_met_type']}/{f['args_totaal']} args getypt")
                 print(f"  {f['naam']}(): {', '.join(info)}")
 
-    def _toon_import_analyse(self):
+    def _toon_import_analyse(self) -> None:
         """Toon import analyse."""
         if not self.huidige_code:
             print(kleur("\nLaad eerst een bestand (optie 1)!", Kleur.ROOD))
@@ -1892,7 +1903,7 @@ class CodeAnalyseApp:
             for dup in result['duplicate_imports']:
                 print(f"  {dup}")
 
-    def _genereer_rapport_menu(self):
+    def _genereer_rapport_menu(self) -> None:
         """Menu voor rapport generatie."""
         if not self.huidige_code:
             print(kleur("\nLaad eerst een bestand (optie 1)!", Kleur.ROOD))
@@ -1928,7 +1939,7 @@ class CodeAnalyseApp:
             if len(rapport) > 2000:
                 print(kleur("\n... (output afgekapt)", "grijs"))
 
-    def _toon_geschiedenis(self):
+    def _toon_geschiedenis(self) -> None:
         """Toon analyse geschiedenis."""
         print("\n" + kleur("ANALYSE GESCHIEDENIS", Kleur.CYAAN))
         print("=" * 50)
@@ -1943,7 +1954,7 @@ class CodeAnalyseApp:
             datum = analyse['datum'][:10]
             print(f"  {datum} | {analyse['bestand']} | {analyse['regels']} regels | Security: {analyse['security_score']}")
 
-    def _toon_statistieken(self):
+    def _toon_statistieken(self) -> None:
         """Toon globale statistieken."""
         print("\n" + kleur("STATISTIEKEN", Kleur.CYAAN))
         print("=" * 50)
@@ -1956,7 +1967,7 @@ class CodeAnalyseApp:
         print(f"Code smells gevonden:    {stats['code_smells_gevonden']}")
         print(f"Fixes toegepast:         {stats['fixes_toegepast']}")
 
-    def run(self):
+    def run(self) -> None:
         """Start de interactieve app."""
         clear_scherm()
         print(kleur("+" + "=" * 50 + "+", Kleur.CYAAN))

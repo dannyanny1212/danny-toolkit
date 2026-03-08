@@ -25,7 +25,8 @@ logger = logging.getLogger(__name__)
 class ListenerProtocol:
     """Quest XI: The Listener - Pixel hoort Danny."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self._sr_available = self._check_speech_recognition()
         self._vosk_available = self._check_vosk()
         self.active_backend = self._select_backend()
@@ -59,14 +60,14 @@ class ListenerProtocol:
         else:
             return "none"
 
-    def _get_voice(self):
+    def _get_voice(self) -> None:
         """Lazy-init voice voor gesproken antwoord."""
         if self._voice is None:
             from danny_toolkit.quests.voice_protocol import VoiceProtocol
             self._voice = VoiceProtocol()
         return self._voice
 
-    def listen(self, timeout=5, taal="nl-NL") -> str | None:
+    def listen(self, timeout: object=5, taal: object="nl-NL") -> str | None:
         """
         Luister via microfoon, retourneer herkende tekst.
         Returns None als niets herkend.
@@ -78,7 +79,7 @@ class ListenerProtocol:
         else:
             return None
 
-    def _listen_sr(self, timeout, taal) -> str | None:
+    def _listen_sr(self, timeout: object, taal: object) -> str | None:
         """Luister via speech_recognition + Google STT."""
         import speech_recognition as sr
 
@@ -101,7 +102,7 @@ class ListenerProtocol:
         except (sr.UnknownValueError, sr.RequestError):
             return None
 
-    def _listen_vosk(self, timeout, taal) -> str | None:
+    def _listen_vosk(self, timeout: object, taal: object) -> str | None:
         """Luister via vosk (offline)."""
         try:
             import vosk
@@ -175,7 +176,7 @@ class ListenerProtocol:
             "vosk": self._vosk_available,
         }
 
-    def listen_and_respond(self, mood=None):
+    def listen_and_respond(self, mood: object=None) -> None:
         """
         Luister -> herken tekst -> spreek antwoord terug.
         De volledige voice-loop.
@@ -191,7 +192,7 @@ class ListenerProtocol:
             print(info("  Niets gehoord."))
             return None
 
-    def run_simulation(self):
+    def run_simulation(self) -> None:
         """
         Demo: test microfoon en spraakherkenning.
         1. Toon backend status
