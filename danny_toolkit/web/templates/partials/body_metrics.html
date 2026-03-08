@@ -1,0 +1,40 @@
+<div class="body-metrics">
+    {% if gpu.beschikbaar %}
+    <div class="stat-grid">
+        <div class="stat-item">
+            <div class="stat-value">{{ gpu.gpu_naam|default("GPU") }}</div>
+            <div class="stat-label">Device</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{ gpu.clock_mhz|default("?") }} MHz</div>
+            <div class="stat-label">Core Clock</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{ gpu.temp_c|default("?") }}°C</div>
+            <div class="stat-label">Temperatuur</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{ gpu.power_w|default("?") }}W</div>
+            <div class="stat-label">Power</div>
+        </div>
+    </div>
+    <div style="margin-top: 0.5rem;">
+        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.25rem;">
+            <span>VRAM</span>
+            <span>{{ gpu.in_gebruik_mb|default(0) }} / {{ gpu.totaal_mb|default(0) }} MB</span>
+        </div>
+        <div style="background: var(--bg-tertiary); border-radius: 4px; height: 12px; overflow: hidden;">
+            {% set pct = ((gpu.in_gebruik_mb|default(0)) / (gpu.totaal_mb|default(1)) * 100)|round(1) %}
+            <div style="height: 100%; width: {{ pct }}%;
+                        background: {{ '#44ff44' if pct < 70 else '#ffaa44' if pct < 90 else '#ff4444' }};
+                        transition: width 0.5s;">
+            </div>
+        </div>
+        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">
+            {{ gpu.vrij_mb|default(0) }} MB vrij | P-State: {{ gpu.pstate|default("?") }} | Max: {{ gpu.clock_max_mhz|default("?") }} MHz
+        </div>
+    </div>
+    {% else %}
+    <p style="color: var(--text-secondary);">GPU niet beschikbaar (CUDA offline)</p>
+    {% endif %}
+</div>

@@ -1,0 +1,58 @@
+<div class="governor-guard">
+    <div class="stat-grid">
+        <div class="stat-item">
+            <div class="stat-value">{{ status.keys_beschikbaar|default(0) }}</div>
+            <div class="stat-label">API Keys</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value {% if status.globale_429s|default(0) > 0 %}high{% else %}low{% endif %}">
+                {{ status.globale_429s|default(0) }}
+            </div>
+            <div class="stat-label">Globale 429s</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{ status.agents|default({})|length }}</div>
+            <div class="stat-label">Agents Actief</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value {% if status.agents_in_cooldown|default([])|length > 0 %}high{% else %}low{% endif %}">
+                {{ status.agents_in_cooldown|default([])|length }}
+            </div>
+            <div class="stat-label">In Cooldown</div>
+        </div>
+    </div>
+    {% if status.agents %}
+    <table class="rate-table" style="margin-top: 0.5rem;">
+    <thead>
+        <tr>
+            <th>Agent</th>
+            <th>Prio</th>
+            <th>RPM</th>
+            <th>TPM</th>
+            <th>Tokens Totaal</th>
+            <th>429s</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for naam, a in status.agents.items() %}
+        <tr>
+            <td>{{ naam }}</td>
+            <td>{{ a.prioriteit }}</td>
+            <td>{{ a.rpm_huidig }}</td>
+            <td>{{ a.tpm_huidig }}</td>
+            <td>{{ a.totaal_tokens }}</td>
+            <td class="{{ 'high' if a.totaal_429s > 0 else '' }}">{{ a.totaal_429s }}</td>
+            <td>
+                {% if a.in_cooldown %}
+                    <span style="color: #ffaa44;">COOLDOWN</span>
+                {% else %}
+                    <span style="color: #44ff44;">OK</span>
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+    </table>
+    {% endif %}
+</div>

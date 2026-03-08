@@ -86,6 +86,48 @@
         </div>
     </div>
 
+    <!-- Soul Pulse (G2: CorticalStack Memory) -->
+    <div class="card">
+        <div class="card-header">
+            Soul Pulse
+            <span class="htmx-indicator">laden...</span>
+        </div>
+        <div class="card-body"
+             hx-get="/ui/partials/soul-pulse"
+             hx-trigger="load, every 5s"
+             hx-indicator="closest .card">
+            <p style="color: var(--text-secondary);">Soul laden...</p>
+        </div>
+    </div>
+
+    <!-- Body Metrics (G3: GPU Status) -->
+    <div class="card">
+        <div class="card-header">
+            Body Metrics
+            <span class="htmx-indicator">laden...</span>
+        </div>
+        <div class="card-body"
+             hx-get="/ui/partials/body-metrics"
+             hx-trigger="load, every 2s"
+             hx-indicator="closest .card">
+            <p style="color: var(--text-secondary);">GPU laden...</p>
+        </div>
+    </div>
+
+    <!-- Governor Guard (G6: Rate Limits Deep) -->
+    <div class="card" style="grid-column: span 2;">
+        <div class="card-header">
+            Governor Guard
+            <span class="htmx-indicator">laden...</span>
+        </div>
+        <div class="card-body"
+             hx-get="/ui/partials/governor-guard"
+             hx-trigger="load, every 10s"
+             hx-indicator="closest .card">
+            <p style="color: var(--text-secondary);">Governor laden...</p>
+        </div>
+    </div>
+
     <!-- RAG Search -->
     <div class="card" style="grid-column: span 2;">
         <div class="card-header">

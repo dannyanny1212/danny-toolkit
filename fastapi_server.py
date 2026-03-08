@@ -2038,6 +2038,52 @@ if HAS_DASHBOARD:
         tmpl = _templates.get_template("partials/observatory.html")
         return _set_ui_cookie(HTMLResponse(tmpl.render(dashboard=dashboard_data)))
 
+    # ─── Soul Pulse (G2) ────────────────────────────
+
+    @app.get("/ui/partials/soul-pulse", response_class=HTMLResponse, include_in_schema=False)
+    async def partial_soul_pulse(_key: str = Depends(verify_ui_key)):
+        events = []
+        total = 0
+        try:
+            from danny_toolkit.brain.cortical_stack import get_cortical_stack
+            stack = get_cortical_stack()
+            events = stack.get_recent_events(count=10)
+            # Totaal events in de stack
+            row = stack._conn.execute("SELECT count(*) FROM episodic_memory").fetchone()
+            total = row[0] if row else 0
+        except Exception as e:
+            logger.debug("Soul pulse partial: %s", e)
+        tmpl = _templates.get_template("partials/soul_pulse.html")
+        return _set_ui_cookie(HTMLResponse(tmpl.render(events=events, total=total)))
+
+    # ─── Body Metrics (G3) ────────────────────────────
+
+    @app.get("/ui/partials/body-metrics", response_class=HTMLResponse, include_in_schema=False)
+    async def partial_body_metrics(_key: str = Depends(verify_ui_key)):
+        gpu = {"beschikbaar": False}
+        try:
+            from danny_toolkit.core.vram_manager import gpu_status as _gpu_status
+            gpu = _gpu_status()
+        except Exception as e:
+            logger.debug("Body metrics partial: %s", e)
+        tmpl = _templates.get_template("partials/body_metrics.html")
+        return _set_ui_cookie(HTMLResponse(tmpl.render(gpu=gpu)))
+
+    # ─── Governor Guard (G6) ──────────────────────────
+
+    @app.get("/ui/partials/governor-guard", response_class=HTMLResponse, include_in_schema=False)
+    async def partial_governor_guard(_key: str = Depends(verify_ui_key)):
+        status = {}
+        try:
+            from danny_toolkit.core.key_manager import get_key_manager
+            km = get_key_manager()
+            status = km.get_status()
+            status["agents_in_cooldown"] = list(km.get_agents_in_cooldown())
+        except Exception as e:
+            logger.debug("Governor guard partial: %s", e)
+        tmpl = _templates.get_template("partials/governor_guard.html")
+        return _set_ui_cookie(HTMLResponse(tmpl.render(status=status)))
+
     @app.get("/ui/events", include_in_schema=False)
     async def sse_events(_key: str = Depends(verify_ui_key)):
         """SSE stream — polls NeuralBus elke 2s voor nieuwe events."""

@@ -1,0 +1,36 @@
+<div class="soul-pulse">
+    <div class="stat-grid">
+        <div class="stat-item">
+            <div class="stat-value">{{ events|length }}</div>
+            <div class="stat-label">Recente Events</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{ total }}</div>
+            <div class="stat-label">Totaal in Soul</div>
+        </div>
+    </div>
+    {% if events %}
+    <table class="rate-table" style="margin-top: 0.5rem;">
+    <thead>
+        <tr>
+            <th>Tijd</th>
+            <th>Actor</th>
+            <th>Actie</th>
+            <th>Bron</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for ev in events[:10] %}
+        <tr>
+            <td style="white-space: nowrap;">{{ ev.timestamp[11:19] }}</td>
+            <td>{{ ev.actor }}</td>
+            <td>{{ ev.action }}</td>
+            <td style="color: var(--text-secondary);">{{ ev.source }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+    </table>
+    {% else %}
+    <p style="color: var(--text-secondary);">Geen recente herinneringen.</p>
+    {% endif %}
+</div>
