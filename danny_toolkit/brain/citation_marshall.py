@@ -1,9 +1,12 @@
 # danny_toolkit/brain/citation_marshall.py
 """
 Citation Marshall — Strict RAG Verification (Hallucination Detection)
+
 Uses TorchGPUEmbeddings masked mean pooling to mathematically verify
 if AI-generated claims are supported by retrieved source documents.
 """
+
+from __future__ import annotations
 
 import logging
 import re
@@ -37,7 +40,7 @@ class CitationMarshall:
     """
 
     def __init__(self, embedding_provider: "TorchGPUEmbeddings" = None,
-                 threshold: float = 0.65):
+                 threshold: float = 0.65) -> None:
         """Initializes a CitationMarshall instance.
 
  Args:
@@ -151,6 +154,6 @@ class CitationMarshall:
             "trust_rate": f"{self.stats['verified'] / total * 100:.1f}%" if total > 0 else "N/A"
         }
 
-    def reset_stats(self):
+    def reset_stats(self) -> None:
         """Reset verification counters."""
         self.stats = {"verified": 0, "flagged": 0, "uncited": 0}

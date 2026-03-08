@@ -1,7 +1,7 @@
 """
 Brain CLI v2.0 — Omega Sovereign Command Interface.
 
-from __future__ import annotations
+
 
 5-Laags Agent Commander met RAG-gestuurde architectuur bewustzijn.
 Alle 50+ agents worden via dit centraal punt aangestuurd, gemonitord
@@ -17,6 +17,8 @@ Lagen:
 Gebruik:
     python -m danny_toolkit.brain.brain_cli
 """
+
+from __future__ import annotations
 
 import json
 import logging

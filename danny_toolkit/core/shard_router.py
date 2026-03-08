@@ -10,6 +10,8 @@ Singleton via get_shard_router().
 Backward compatible: Config.SHARD_ENABLED=False (default) = legacy danny_knowledge.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import threading
@@ -78,7 +80,7 @@ class ShardRouter:
     over meerdere shards met merge op distance.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes a new instance of the class.
 
  Attributes:
@@ -91,7 +93,7 @@ class ShardRouter:
         self._embed_fn = None
         self._lock = threading.Lock()
 
-    def _ensure_client(self):
+    def _ensure_client(self) -> None:
         """Lazy init ChromaDB client + embedding functie."""
         if self._client is not None:
             return True
@@ -128,7 +130,7 @@ class ShardRouter:
             logger.debug("ShardRouter ChromaDB init fout: %s", e)
             return False
 
-    def _get_collection(self, shard_naam: str):
+    def _get_collection(self, shard_naam: str) -> None:
         """Haal of maak een shard collectie."""
         if shard_naam in self._collections:
             return self._collections[shard_naam]

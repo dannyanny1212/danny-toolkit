@@ -52,6 +52,7 @@ _BOX_RT = "╣"
 
 
 def _box_top(title: str = "") -> str:
+    """Box top."""
     if title:
         pad = _W - 4 - len(title)
         return f"{_BOX_TL}{_BOX_H} {title} {_BOX_H * pad}{_BOX_TR}"
@@ -59,6 +60,7 @@ def _box_top(title: str = "") -> str:
 
 
 def _box_mid(title: str = "") -> str:
+    """Box mid."""
     if title:
         pad = _W - 4 - len(title)
         return f"{_BOX_LT}{_BOX_H} {title} {_BOX_H * pad}{_BOX_RT}"
@@ -66,10 +68,12 @@ def _box_mid(title: str = "") -> str:
 
 
 def _box_bot() -> str:
+    """Box bot."""
     return f"{_BOX_BL}{_BOX_H * (_W - 2)}{_BOX_BR}"
 
 
 def _box_row(text: str) -> str:
+    """Box row."""
     inner = _W - 4
     return f"{_BOX_V} {text:<{inner}} {_BOX_V}"
 
@@ -137,7 +141,7 @@ class SanctuaryDashboard:
 
     VERSION = "3.0 SOVEREIGN"
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialiseer het Sanctuary Dashboard."""
         Config.ensure_dirs()
 
@@ -163,7 +167,7 @@ class SanctuaryDashboard:
         # Add initial log
         self._log("SOVEREIGN", "Omega Dashboard v3.0 initialized", "INFO")
 
-    def _load_entities(self):
+    def _load_entities(self) -> None:
         """Laad entity data van disk."""
         # Pixel (SOUL)
         pixel_data = self._load_json(self.huisdier_path)
@@ -226,7 +230,7 @@ class SanctuaryDashboard:
             last_action=f"{len(children)} children protected"
         )
 
-    def _init_metrics(self):
+    def _init_metrics(self) -> None:
         """Initialiseer systeem metrics."""
         # Central Brain
         try:
@@ -302,7 +306,7 @@ class SanctuaryDashboard:
             ]
         )
 
-    def _init_background_processes(self):
+    def _init_background_processes(self) -> None:
         """Initialiseer achtergrond processen."""
         self.background_processes = {
             "memory_consolidation": {
@@ -341,7 +345,7 @@ class SanctuaryDashboard:
                 logger.debug("JSON load error for %s: %s", path, e)
         return None
 
-    def _log(self, source: str, message: str, level: str = "INFO"):
+    def _log(self, source: str, message: str, level: str = "INFO") -> None:
         """Voeg log entry toe."""
         self.logs.append(LogEntry(
             timestamp=datetime.now(),
@@ -386,7 +390,7 @@ class SanctuaryDashboard:
 
         return sum(scores) / len(scores) if scores else 0
 
-    def set_hibernation(self):
+    def set_hibernation(self) -> None:
         """Zet systeem in hibernation modus."""
         self.state = SystemState.HIBERNATING
 
@@ -405,7 +409,7 @@ class SanctuaryDashboard:
 
         self._log("SYSTEM", "Hibernation Protocol Activated", "INFO")
 
-    def set_awakening(self):
+    def set_awakening(self) -> None:
         """Activeer awakening modus."""
         self.state = SystemState.AWAKENING
 
@@ -637,7 +641,7 @@ class SanctuaryDashboard:
             lines.append(_box_row(""))
             lines.append(_box_row(f"  BRAIN VERSION    {brain_ver}"))
         except Exception:
-            pass
+            logger.debug("Suppressed error")
 
         # Python / venv info
         py_ver = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
@@ -1003,38 +1007,38 @@ def get_sanctuary() -> SanctuaryDashboard:
     return _sanctuary_instance
 
 
-def show_hibernation():
+def show_hibernation() -> None:
     """Toon hibernation dashboard."""
     sanctuary = get_sanctuary()
     print(sanctuary.render_hibernation_dashboard())
 
 
-def show_awakening():
+def show_awakening() -> None:
     """Toon awakening dashboard."""
     sanctuary = get_sanctuary()
     print(sanctuary.render_awakening_dashboard())
 
 
-def show_live():
+def show_live() -> None:
     """Toon live dashboard."""
     sanctuary = get_sanctuary()
     print(sanctuary.render_live_dashboard())
 
 
-def show_biology():
+def show_biology() -> None:
     """Toon biologische analogie."""
     sanctuary = get_sanctuary()
     print(sanctuary.render_biology_explanation())
 
 
-def goodnight():
+def goodnight() -> None:
     """Volledige goodnight sequence."""
     sanctuary = get_sanctuary()
     print(sanctuary.render_hibernation_dashboard())
     print(sanctuary.render_biology_explanation())
 
 
-def goodmorning():
+def goodmorning() -> None:
     """Volledige goodmorning sequence."""
     sanctuary = get_sanctuary()
     print(sanctuary.render_awakening_dashboard())

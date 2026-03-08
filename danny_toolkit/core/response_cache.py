@@ -1,6 +1,7 @@
 """
 ResponseCache — Hash-based LLM response cache with TTL.
 
+
 Caches deterministic (temperature <= 0.4) API responses to avoid
 redundant calls. Bounded at 200 entries with FIFO eviction.
 
@@ -16,6 +17,8 @@ Gebruik:
     # ... API call ...
     cache.put(model, messages, temperature, response)
 """
+
+from __future__ import annotations
 
 import hashlib
 import json
@@ -35,7 +38,7 @@ class ResponseCache:
     _DEFAULT_TTL = 300  # 5 minutes
     _MAX_TEMPERATURE = 0.4  # Only cache deterministic-ish responses
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes a caching object.
 
  Attributes:
@@ -92,7 +95,7 @@ class ResponseCache:
         temperature: float,
         response: str,
         ttl: int = None,
-    ):
+    ) -> None:
         """Store a response in the cache.
 
         Only caches when temperature <= _MAX_TEMPERATURE.
@@ -126,7 +129,7 @@ class ResponseCache:
                 ),
             }
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear all cached entries."""
         with self._lock:
             self._cache.clear()

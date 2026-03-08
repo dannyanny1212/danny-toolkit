@@ -1,6 +1,7 @@
 """
 Docker Sandbox — Isolatie-laag voor Artificer code-executie.
 
+
 Biedt defense-in-depth: code draait in een Docker container
 zonder netwerk, met geheugen- en CPU-limieten.
 
@@ -12,6 +13,8 @@ Gebruik:
     sandbox = get_sandbox()
     result = sandbox.run_script(script_path, workspace, timeout=30)
 """
+
+from __future__ import annotations
 
 import logging
 import os
@@ -137,7 +140,8 @@ class DockerSandbox(BaseSandbox):
 
     IMAGE = "python:3.11-slim"
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self._available = self._check_docker()
 
     @staticmethod
@@ -156,6 +160,7 @@ class DockerSandbox(BaseSandbox):
 
     @property
     def available(self) -> bool:
+        """Available."""
         return self._available
 
     def run_script(
@@ -164,6 +169,7 @@ class DockerSandbox(BaseSandbox):
         workspace: str,
         timeout: int = 30,
     ) -> SandboxResult:
+        """Run script."""
         if not self._available:
             return SandboxResult(
                 stdout="",

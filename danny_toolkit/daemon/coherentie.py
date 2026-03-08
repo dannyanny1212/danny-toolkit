@@ -1,6 +1,6 @@
 """
 Coherentie Monitor — CPU+GPU Load Correlatie Detector
-from __future__ import annotations
+
 
 =====================================================
 
@@ -22,6 +22,8 @@ Gebruik:
     rapport = monitor.scan()
     print(rapport["verdict"])
 """
+
+from __future__ import annotations
 
 import logging
 import math

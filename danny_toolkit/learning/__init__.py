@@ -1,6 +1,7 @@
 """
 Self-Learning System voor Danny Toolkit.
 
+
 Dit systeem combineert alle AI-componenten tot een self-learning en
 self-improving systeem dat:
 - Alle interacties logt en analyseert
@@ -22,14 +23,19 @@ Architectuur:
         └── SelfImprovementEngine (Self-Learning Core)
 """
 
-from .memory import UnifiedMemory
-from .tracker import InteractionTracker
-from .patterns import PatternRecognizer
-from .optimizer import KnowledgeOptimizer
-from .orchestrator import LearningSystem
-from .feedback_manager import FeedbackManager
-from .performance_analyzer import PerformanceAnalyzer
-from .self_improvement import SelfImprovementEngine
+from __future__ import annotations
+
+from danny_toolkit.learning.memory import UnifiedMemory
+from danny_toolkit.learning.tracker import InteractionTracker
+from danny_toolkit.learning.patterns import PatternRecognizer
+from danny_toolkit.learning.optimizer import KnowledgeOptimizer
+from danny_toolkit.learning.orchestrator import LearningSystem
+from danny_toolkit.learning.feedback_manager import FeedbackManager
+from danny_toolkit.learning.performance_analyzer import PerformanceAnalyzer
+from danny_toolkit.learning.self_improvement import SelfImprovementEngine
+import logging
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "UnifiedMemory",

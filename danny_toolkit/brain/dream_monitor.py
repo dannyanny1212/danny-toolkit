@@ -20,6 +20,8 @@ Usage:
     dream_monitor()
 """
 
+from __future__ import annotations
+
 import logging
 import time
 import random
@@ -190,7 +192,7 @@ COLORS = {
 }
 
 
-def typing_effect(text: str, speed: float = 0.02, color: str = None):
+def typing_effect(text: str, speed: float = 0.02, color: str = None) -> None:
     """Print tekst met typing effect."""
     if color:
         sys.stdout.write(color)
@@ -261,7 +263,7 @@ def generate_log_line(entity_data: Dict = None) -> tuple:
     return entity_name, entity["color"], action, timestamp, cpu_load
 
 
-def print_header():
+def print_header() -> None:
     """Print de Dream Monitor header."""
     print(COLORS["green"])
     print("")
@@ -284,7 +286,7 @@ def print_header():
     print("")
 
 
-def print_dream_fragment():
+def print_dream_fragment() -> None:
     """Print een dream fragment."""
     fragment = random.choice(DREAM_FRAGMENTS)
     timestamp = time.strftime("%H:%M:%S")
@@ -295,7 +297,7 @@ def print_dream_fragment():
     print(f"     ... saving to RAG memory.{COLORS['reset']}\n")
 
 
-def print_rare_event():
+def print_rare_event() -> None:
     """Print een rare event."""
     event_type, message = random.choice(RARE_EVENTS)
     timestamp = time.strftime("%H:%M:%S")
@@ -306,7 +308,7 @@ def print_rare_event():
     print(f"{COLORS['reset']}\n")
 
 
-def dream_monitor(duration: int = None):
+def dream_monitor(duration: int = None) -> None:
     """
     Start de Dream Monitor.
 
@@ -368,7 +370,7 @@ def dream_monitor(duration: int = None):
         print(f"{COLORS['reset']}\n")
 
 
-def quick_peek(lines: int = 10):
+def quick_peek(lines: int = 10) -> None:
     """
     Bekijk een korte glimp van de dromen.
 

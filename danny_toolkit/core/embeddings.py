@@ -104,7 +104,7 @@ class VoyageEmbeddings(EmbeddingProvider):
 
     naam = "voyage"
 
-    def __init__(self, api_key: str = None):
+    def __init__(self, api_key: str = None) -> None:
         """### Docstring
 
 Initializes the Voyage AI client.
@@ -153,7 +153,8 @@ class HashEmbeddings(EmbeddingProvider):
 
     naam = "hash"
 
-    def __init__(self, dimensies: int = 256):
+    def __init__(self, dimensies: int = 256) -> None:
+        """Init  ."""
         self.dimensies = dimensies
         print(f"   [OK] Hash Embeddings ({dimensies}d)")
 
@@ -204,7 +205,7 @@ class TFIDFEmbeddings(EmbeddingProvider):
 
     naam = "tfidf"
 
-    def __init__(self, dimensies: int = 512, min_df: int = 1, max_df: float = 0.95):
+    def __init__(self, dimensies: int = 512, min_df: int = 1, max_df: float = 0.95) -> None:
         """
         Initialiseer TF-IDF embedder.
 
@@ -241,7 +242,7 @@ class TFIDFEmbeddings(EmbeddingProvider):
             woorden.append(huidig)
         return woorden
 
-    def fit(self, documenten: List[str]):
+    def fit(self, documenten: List[str]) -> None:
         """
         Bouw vocabulary en bereken IDF waarden.
 
@@ -321,7 +322,7 @@ class EmbeddingCache:
 
     _SAVE_INTERVAL = 50  # auto-save every N writes
 
-    def __init__(self, cache_bestand: Path = None, max_grootte: int = 10000):
+    def __init__(self, cache_bestand: Path = None, max_grootte: int = 10000) -> None:
         """
         Initialiseer cache.
 
@@ -345,7 +346,7 @@ class EmbeddingCache:
         content = f"{provider}:{Config.EMBEDDING_DIM}:{tekst}"
         return hashlib.sha256(content.encode()).hexdigest()
 
-    def _laad(self):
+    def _laad(self) -> None:
         """Laad cache van disk."""
         if self.cache_bestand.exists():
             try:
@@ -357,7 +358,7 @@ class EmbeddingCache:
             except (json.JSONDecodeError, IOError):
                 self.cache = OrderedDict()
 
-    def _opslaan(self):
+    def _opslaan(self) -> None:
         """Sla cache op naar disk."""
         self.cache_bestand.parent.mkdir(parents=True, exist_ok=True)
         with open(self.cache_bestand, "w", encoding="utf-8") as f:
@@ -382,7 +383,7 @@ class EmbeddingCache:
         self.misses += 1
         return None
 
-    def set(self, tekst: str, provider: str, embedding: list):
+    def set(self, tekst: str, provider: str, embedding: list) -> None:
         """Voeg embedding toe aan cache."""
         key = self._hash_tekst(tekst, provider)
 
@@ -403,11 +404,11 @@ class EmbeddingCache:
             self._opslaan()
             self._writes_since_save = 0
 
-    def opslaan(self):
+    def opslaan(self) -> None:
         """Expliciet opslaan."""
         self._opslaan()
 
-    def wis(self):
+    def wis(self) -> None:
         """Wis de hele cache."""
         self.cache = OrderedDict()
         self.hits = 0
@@ -432,7 +433,7 @@ class EmbeddingCache:
 class CachedEmbeddingProvider(EmbeddingProvider):
     """Wrapper die caching toevoegt aan een embedding provider."""
 
-    def __init__(self, provider: EmbeddingProvider, cache: EmbeddingCache = None):
+    def __init__(self, provider: EmbeddingProvider, cache: EmbeddingCache = None) -> None:
         """
         Initialiseer gecachte provider.
 
@@ -481,7 +482,7 @@ class CachedEmbeddingProvider(EmbeddingProvider):
         self.cache.set(query, self.provider.naam, embedding)
         return embedding
 
-    def opslaan_cache(self):
+    def opslaan_cache(self) -> None:
         """Sla cache op."""
         self.cache.opslaan()
 
@@ -499,7 +500,8 @@ class VoyageChromaEmbedding:
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         import voyageai
         self.client = voyageai.Client(
             api_key=Config.VOYAGE_API_KEY
@@ -507,11 +509,11 @@ class VoyageChromaEmbedding:
         self.model = Config.VOYAGE_MODEL
         self._target_dim = Config.EMBEDDING_DIM
 
-    def name(self):
+    def name(self) -> None:
         """ChromaDB protocol: unieke naam."""
         return "VoyageChromaEmbedding"
 
-    def embed_query(self, query=None, *, input=None) -> list:
+    def embed_query(self, query: str=None, *, input=None) -> list:
         """Embed een enkele query — vereist door ChromaDB query_texts.
 
         Gebruikt input_type='query' voor optimale retrieval-scoring.
@@ -571,7 +573,7 @@ class VoyageChromaEmbedding:
         )
 
 
-def get_chroma_embed_fn():
+def get_chroma_embed_fn() -> None:
     """Geeft ChromaDB embedding functie.
 
     Voyage AI als key beschikbaar, anders
@@ -598,7 +600,8 @@ def get_chroma_embed_fn():
 class EmbeddingBenchmark:
     """Benchmark tool voor embedding providers."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self.resultaten: List[dict] = []
 
     def benchmark_provider(self, provider: EmbeddingProvider, teksten: List[str],
@@ -768,7 +771,8 @@ class TorchGPUEmbeddings(EmbeddingProvider):
 
     naam = "torch_gpu"
 
-    def __init__(self, model_name: str = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"):
+    def __init__(self, model_name: str = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2") -> None:
+        """Init  ."""
         if not _HAS_TORCH_GPU:
             raise ImportError("TorchGPUEmbeddings vereist 'transformers' en 'torch'. Installeer met: pip install transformers torch")
         self.model_name = model_name
@@ -796,14 +800,14 @@ class TorchGPUEmbeddings(EmbeddingProvider):
             str(self.device).upper(), self.dimensies,
         )
 
-    def _masked_mean_pool(self, last_hidden_state, attention_mask):
+    def _masked_mean_pool(self, last_hidden_state: object, attention_mask: object) -> None:
         """Mean pooling met attention mask (negeert padding tokens)."""
         mask = attention_mask.unsqueeze(-1).float()
         summed = (last_hidden_state * mask).sum(dim=1)
         counts = mask.sum(dim=1).clamp(min=1e-9)
         return summed / counts
 
-    def _embed_batch(self, texts):
+    def _embed_batch(self, texts: object) -> None:
         """Embed een enkele batch teksten."""
         enc = self.tokenizer(
             texts,
@@ -841,7 +845,7 @@ class TorchGPUEmbeddings(EmbeddingProvider):
             return min(default * 2, 128)
         return default
 
-    def embed(self, texts, batch_size: int = 0):
+    def embed(self, texts: object, batch_size: int = 0) -> None:
         """Embed texts with adaptive batch sizing + VRAM budget guard.
 
         batch_size=0 (default) uses adaptive sizing based on CPU/VRAM load.
@@ -883,7 +887,7 @@ def get_torch_embedder(
     return _torch_gpu_instance
 
 
-def force_flush_embeddings():
+def force_flush_embeddings() -> None:
     """Noodrem: vernietigt het embedding model en leegt VRAM.
 
     Gebruik wanneer Ollama of een ander proces alle VRAM opeist.

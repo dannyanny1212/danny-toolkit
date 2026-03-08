@@ -3,6 +3,8 @@ NLP Studio v1.0 - Natuurlijke Taalverwerking & Machine Learning.
 Een compleet systeem voor tekstanalyse, classificatie en begrip.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import os
@@ -346,7 +348,7 @@ class SentimentAnalyzer:
 class TFIDFVectorizer:
     """TF-IDF vectorisatie."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes a new instance of the class, setting up data structures for term frequency-inverse document frequency (TF-IDF) calculations.
 
 Sets the following instance variables:
@@ -357,7 +359,7 @@ Sets the following instance variables:
         self.idf = {}
         self.doc_count = 0
 
-    def fit(self, documenten: List[str]):
+    def fit(self, documenten: List[str]) -> None:
         """Train de vectorizer op documenten."""
         self.doc_count = len(documenten)
         doc_freq = Counter()
@@ -410,17 +412,18 @@ Sets the following instance variables:
 class NaiveBayesClassifier:
     """Naive Bayes tekst classifier."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self.class_counts = Counter()
         self.word_counts = defaultdict(Counter)
         self.vocabulary = set()
         self.total_docs = 0
 
-    def train(self, documenten: List[str], labels: List[str]):
+    def train(self, documenten: List[str], labels: List[str]) -> None:
         """Train de classifier."""
         self.fit(documenten, labels)
 
-    def fit(self, documenten: List[str], labels: List[str]):
+    def fit(self, documenten: List[str], labels: List[str]) -> None:
         """Train de classifier (alias voor train)."""
         self.total_docs = len(documenten)
 
@@ -474,7 +477,7 @@ class NaiveBayesClassifier:
             "total_docs": self.total_docs
         }
 
-    def load(self, data: dict):
+    def load(self, data: dict) -> None:
         """Laad model."""
         self.class_counts = Counter(data.get("class_counts", {}))
         self.word_counts = defaultdict(Counter)
@@ -487,16 +490,17 @@ class NaiveBayesClassifier:
 class KNNClassifier:
     """K-Nearest Neighbors classifier."""
 
-    def __init__(self, k: int = 3):
+    def __init__(self, k: int = 3) -> None:
+        """Init  ."""
         self.k = k
         self.training_data = []
         self.vectorizer = TFIDFVectorizer()
 
-    def train(self, documenten: List[str], labels: List[str]):
+    def train(self, documenten: List[str], labels: List[str]) -> None:
         """Train de classifier."""
         self.fit(documenten, labels)
 
-    def fit(self, documenten: List[str], labels: List[str]):
+    def fit(self, documenten: List[str], labels: List[str]) -> None:
         """Train de classifier (alias voor train)."""
         vectors = self.vectorizer.fit_transform(documenten)
         self.training_data = list(zip(vectors, labels))
@@ -567,12 +571,13 @@ class IntentRecognizer:
         ]
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self.custom_intents = {}
         self.classifier = NaiveBayesClassifier()
         self._train_builtin()
 
-    def _train_builtin(self):
+    def _train_builtin(self) -> None:
         """Train op ingebouwde intents."""
         docs = []
         labels = []
@@ -585,7 +590,7 @@ class IntentRecognizer:
         if docs:
             self.classifier.train(docs, labels)
 
-    def add_intent(self, intent: str, voorbeelden: List[str]):
+    def add_intent(self, intent: str, voorbeelden: List[str]) -> None:
         """Voeg custom intent toe."""
         self.custom_intents[intent] = voorbeelden
 
@@ -616,7 +621,8 @@ class NLPStudioApp:
 
     VERSIE = "1.0"
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         Config.ensure_dirs()
         self.bestand = Config.APPS_DATA_DIR / "nlp_studio.json"
         self.data = self._laad_data()
@@ -641,7 +647,7 @@ class NLPStudioApp:
         self.client = None
         self._init_ai()
 
-    def _init_ai(self):
+    def _init_ai(self) -> None:
         """Initialiseer AI client."""
         if AI_BESCHIKBAAR:
             api_key = os.environ.get("ANTHROPIC_API_KEY")
@@ -674,7 +680,7 @@ class NLPStudioApp:
                 with open(self.bestand, "r", encoding="utf-8") as f:
                     return json.load(f)
             except (json.JSONDecodeError, IOError):
-                pass
+                logger.debug("Suppressed error")
         return {
             "modellen": {},
             "training_data": {},
@@ -685,22 +691,22 @@ class NLPStudioApp:
             }
         }
 
-    def _sla_op(self):
+    def _sla_op(self) -> None:
         """Sla data op."""
         with open(self.bestand, "w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2, ensure_ascii=False)
 
-    def _laad_modellen(self):
+    def _laad_modellen(self) -> None:
         """Laad getrainde modellen."""
         if "nb_classifier" in self.data.get("modellen", {}):
             self.nb_classifier.load(self.data["modellen"]["nb_classifier"])
 
-    def _sla_modellen_op(self):
+    def _sla_modellen_op(self) -> None:
         """Sla getrainde modellen op."""
         self.data["modellen"]["nb_classifier"] = self.nb_classifier.save()
         self._sla_op()
 
-    def run(self):
+    def run(self) -> None:
         """Start de app."""
         while True:
             clear_scherm()
@@ -732,7 +738,7 @@ class NLPStudioApp:
 
             input("\nDruk op Enter...")
 
-    def _toon_header(self):
+    def _toon_header(self) -> None:
         """Toon header."""
         print("+" + "=" * 54 + "+")
         print("|             NLP STUDIO v1.0                          |")
@@ -745,7 +751,7 @@ class NLPStudioApp:
         print(f"|  Geanalyseerd: {stats['teksten_geanalyseerd']:<8} "
               f"Modellen: {stats['modellen_getraind']:<12}|")
 
-    def _toon_menu(self):
+    def _toon_menu(self) -> None:
         """Toon menu."""
         print("+" + "-" * 54 + "+")
         print("|  [ANALYSE]                                           |")
@@ -770,7 +776,7 @@ class NLPStudioApp:
     # ANALYSE FUNCTIES
     # =========================================================================
 
-    def _tekst_analyse(self):
+    def _tekst_analyse(self) -> None:
         """Volledige tekst analyse."""
         print("\n--- TEKST ANALYSE ---")
 
@@ -825,7 +831,7 @@ class NLPStudioApp:
         self.data["stats"]["teksten_geanalyseerd"] += 1
         self._sla_op()
 
-    def _sentiment_analyse(self):
+    def _sentiment_analyse(self) -> None:
         """Sentiment analyse."""
         print("\n--- SENTIMENT ANALYSE ---")
 
@@ -862,7 +868,7 @@ class NLPStudioApp:
         self.data["stats"]["teksten_geanalyseerd"] += 1
         self._sla_op()
 
-    def _entity_herkenning(self):
+    def _entity_herkenning(self) -> None:
         """Named Entity Recognition."""
         print("\n--- ENTITY HERKENNING (NER) ---")
 
@@ -893,7 +899,7 @@ class NLPStudioApp:
         self.data["stats"]["teksten_geanalyseerd"] += 1
         self._sla_op()
 
-    def _keyword_extractie(self):
+    def _keyword_extractie(self) -> None:
         """Keyword extractie met TF-IDF."""
         print("\n--- KEYWORD EXTRACTIE ---")
 
@@ -934,7 +940,7 @@ class NLPStudioApp:
     # MACHINE LEARNING FUNCTIES
     # =========================================================================
 
-    def _tekst_classificatie(self):
+    def _tekst_classificatie(self) -> None:
         """Classificeer tekst met getraind model."""
         print("\n--- TEKST CLASSIFICATIE ---")
 
@@ -962,7 +968,7 @@ class NLPStudioApp:
         self.data["stats"]["teksten_geanalyseerd"] += 1
         self._sla_op()
 
-    def _train_classifier(self):
+    def _train_classifier(self) -> None:
         """Train een classifier."""
         print("\n--- TRAIN CLASSIFIER ---")
 
@@ -979,7 +985,7 @@ class NLPStudioApp:
         elif keuze == "3":
             self._laad_demo_model()
 
-    def _train_nieuw_model(self):
+    def _train_nieuw_model(self) -> None:
         """Train nieuw model."""
         print("\n[Nieuw Model Trainen]")
         print("\nVoer training data in:")
@@ -1013,7 +1019,7 @@ class NLPStudioApp:
         print(f"\n[OK] Model getraind met {len(documenten)} voorbeelden!")
         print(f"     Klassen: {', '.join(set(labels))}")
 
-    def _voeg_training_data_toe(self):
+    def _voeg_training_data_toe(self) -> None:
         """Voeg extra training data toe."""
         if self.nb_classifier.total_docs == 0:
             print("\n[!] Geen bestaand model. Maak eerst een nieuw model.")
@@ -1058,7 +1064,7 @@ class NLPStudioApp:
 
             print(f"\n[OK] {len(documenten)} voorbeelden toegevoegd!")
 
-    def _laad_demo_model(self):
+    def _laad_demo_model(self) -> None:
         """Laad demo sentiment model."""
         print("\n[Demo Model Laden]")
 
@@ -1097,7 +1103,7 @@ class NLPStudioApp:
         print(f"\n[OK] Demo model geladen!")
         print(f"     {len(documenten)} voorbeelden (positief/negatief)")
 
-    def _intent_herkenning(self):
+    def _intent_herkenning(self) -> None:
         """Intent herkenning."""
         print("\n--- INTENT HERKENNING ---")
 
@@ -1129,7 +1135,7 @@ class NLPStudioApp:
         self.data["stats"]["teksten_geanalyseerd"] += 1
         self._sla_op()
 
-    def _tekst_vergelijking(self):
+    def _tekst_vergelijking(self) -> None:
         """Vergelijk teksten op similarity."""
         print("\n--- TEKST VERGELIJKING ---")
 
@@ -1182,7 +1188,7 @@ class NLPStudioApp:
     # AI FUNCTIES
     # =========================================================================
 
-    def _ai_analyse(self):
+    def _ai_analyse(self) -> None:
         """AI-powered tekst analyse."""
         print("\n--- AI TEKST ANALYSE ---")
 

@@ -366,7 +366,7 @@ class ProjectMap:
                     f"→ {kleur(f'Fout: {e}', Kleur.ROOD)}"
                 )
 
-    def zoek(self, query) -> None:
+    def zoek(self, query: str) -> None:
         """Zoek in de RAG en toon resultaten."""
         print(kleur(
             f"\n  Zoeken naar: \"{query}\"...",
@@ -408,7 +408,7 @@ class ProjectMap:
                 Kleur.FEL_ROOD,
             ))
 
-    def bestand_info(self, naam) -> None:
+    def bestand_info(self, naam: str) -> None:
         """Toon info over een specifiek bestand."""
         bronnen = self._verzamel_bronnen()
 

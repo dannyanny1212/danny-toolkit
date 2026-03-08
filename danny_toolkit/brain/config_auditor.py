@@ -7,6 +7,8 @@ pad validiteit en detecteert config drift via SHA-256 snapshots.
 Singleton via get_config_auditor().
 """
 
+from __future__ import annotations
+
 import hashlib
 import logging
 import os
@@ -149,7 +151,7 @@ class ConfigAuditor:
     paden en detecteert env-var drift via SHA-256.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes the object with default state.
 
  Sets up the baseline and last rapport attributes.
@@ -405,7 +407,7 @@ class ConfigAuditor:
 
     # ─── Integraties ─────────────────────────────────
 
-    def _publiceer_events(self, rapport: AuditRapport):
+    def _publiceer_events(self, rapport: AuditRapport) -> None:
         """Publiceer audit resultaten naar NeuralBus."""
         try:
             from danny_toolkit.core.neural_bus import (
@@ -439,7 +441,7 @@ class ConfigAuditor:
         except Exception as e:
             logger.debug("ConfigAuditor NeuralBus fout: %s", e)
 
-    def _log_to_cortical(self, rapport: AuditRapport):
+    def _log_to_cortical(self, rapport: AuditRapport) -> None:
         """Log audit resultaat naar CorticalStack."""
         try:
             from danny_toolkit.brain.cortical_stack import (
@@ -459,7 +461,7 @@ class ConfigAuditor:
         except Exception as e:
             logger.debug("ConfigAuditor CorticalStack fout: %s", e)
 
-    def _log_to_blackbox(self, rapport: AuditRapport):
+    def _log_to_blackbox(self, rapport: AuditRapport) -> None:
         """Registreer kritieke schendingen in BlackBox failure memory."""
         try:
             from danny_toolkit.brain.black_box import get_black_box
@@ -480,7 +482,7 @@ class ConfigAuditor:
         except Exception as e:
             logger.debug("ConfigAuditor BlackBox fout: %s", e)
 
-    def _alert(self, rapport: AuditRapport):
+    def _alert(self, rapport: AuditRapport) -> None:
         """Stuur alert bij kritieke schendingen."""
         try:
             from danny_toolkit.core.alerter import (
@@ -501,7 +503,7 @@ class ConfigAuditor:
 
     # ─── Rapport weergave ────────────────────────────
 
-    def toon_rapport(self, rapport: Optional[AuditRapport] = None):
+    def toon_rapport(self, rapport: Optional[AuditRapport] = None) -> None:
         """Print leesbaar audit rapport naar console."""
         rapport = rapport or self._last_rapport
         if not rapport:

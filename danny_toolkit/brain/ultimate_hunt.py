@@ -12,6 +12,8 @@ Fases:
 5. PRESENTING - Trophy presentatie met gamificatie
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import re
@@ -46,7 +48,7 @@ class HuntStatus(Enum):
     SAD = ("sad", "Laat oren hangen...", "[:(]")
     ERROR = ("error", "Geschrokken!", "[!?!]")
 
-    def __init__(self, key: str, beschrijving: str, emoji: str):
+    def __init__(self, key: str, beschrijving: str, emoji: str) -> None:
         """Initializes a new instance.
 
  Args:
@@ -134,7 +136,7 @@ class HuntAnimator:
     ]
 
     @classmethod
-    def show_status(cls, status: HuntStatus, message: str = "", bron: str = ""):
+    def show_status(cls, status: HuntStatus, message: str = "", bron: str = "") -> None:
         """Toon hunt status met animatie."""
         # Kleur per status type
         kleur_map = {
@@ -165,7 +167,7 @@ class HuntAnimator:
         print(kleur(line, color))
 
     @classmethod
-    def show_trophy(cls, result: HuntResult):
+    def show_trophy(cls, result: HuntResult) -> None:
         """Toon gevonden trofee."""
         trophy_icons = {
             "treasure": "[***SCHATKIST***]",
@@ -311,11 +313,12 @@ class ContextAnalyzer:
 class HuntRouter:
     """Router die bepaalt waar te zoeken."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self.source_handlers = {}
         self._register_default_handlers()
 
-    def _register_default_handlers(self):
+    def _register_default_handlers(self) -> None:
         """Registreer standaard bron handlers."""
         self.source_handlers = {
             "rag": self._search_rag,
@@ -327,7 +330,7 @@ class HuntRouter:
         }
 
     async def hunt(self, context: HuntContext,
-                   status_callback=None) -> List[HuntResult]:
+                   status_callback: object=None) -> List[HuntResult]:
         """
         Voer de jacht uit over meerdere bronnen.
 
@@ -499,7 +502,8 @@ class UltimateHunt:
     de perfecte informatie te vangen.
     """
 
-    def __init__(self, pet_name: str = "Buddy"):
+    def __init__(self, pet_name: str = "Buddy") -> None:
+        """Init  ."""
         self.pet_name = pet_name
         self.router = HuntRouter()
         self.analyzer = ContextAnalyzer()
@@ -515,7 +519,7 @@ class UltimateHunt:
             "archive": 1.0,
         }
 
-    def _status_callback(self, status: HuntStatus, message: str = "", bron: str = ""):
+    def _status_callback(self, status: HuntStatus, message: str = "", bron: str = "") -> None:
         """Callback voor status updates."""
         HuntAnimator.show_status(status, message, bron)
 
@@ -652,7 +656,7 @@ class UltimateHunt:
 
         return "\n".join(lines)
 
-    def give_feedback(self, was_good: bool, source: str = None):
+    def give_feedback(self, was_good: bool, source: str = None) -> None:
         """
         Good Boy / Bad Dog feedback.
 

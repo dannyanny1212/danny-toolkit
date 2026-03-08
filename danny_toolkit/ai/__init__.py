@@ -1,11 +1,17 @@
 """AI module - RAG en AI systemen.
 
+
 Lazy imports — modules worden pas geladen bij eerste gebruik.
 Voorkomt dat zware afhankelijkheden (Claude API, ProductionRAG)
 stiekem geactiveerd worden wanneer een enkele AI-app geladen wordt.
 """
 
+from __future__ import annotations
+
 import importlib as _importlib
+import logging
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "MiniRAG",

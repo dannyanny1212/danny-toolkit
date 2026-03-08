@@ -30,6 +30,8 @@ try:
 except ImportError:
     _HAS_TORCH = False
 
+import subprocess
+
 logger = logging.getLogger(__name__)
 
 # Drempel in MB — waarschuw als minder dan dit vrij is
@@ -124,7 +126,8 @@ class VRAMBudgetGuard:
             model.embed(texts)
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self._lock = threading.Lock()
         self._holder: str | None = None
 
@@ -164,7 +167,7 @@ class VRAMBudgetGuard:
         logger.debug("VRAM budget acquired by '%s' (required=%d MB)", name, required_mb)
         return True
 
-    def release(self):
+    def release(self) -> None:
         """Release the VRAM budget slot."""
         holder = self._holder
         self._holder = None
@@ -190,7 +193,8 @@ class vram_guard:
             model.embed(texts)
     """
 
-    def __init__(self, name: str, required_mb: int = 0, blocking: bool = True):
+    def __init__(self, name: str, required_mb: int = 0, blocking: bool = True) -> None:
+        """Init  ."""
         self._name = name
         self._required_mb = required_mb
         self._blocking = blocking
@@ -226,7 +230,6 @@ def gpu_set_clocks(min_mhz: int = 1000, max_mhz: int = 2100) -> dict:
     Returns:
         Dict met status, min_mhz, max_mhz, en eventuele error.
     """
-    import subprocess
 
     lo, hi = _VALID_CLOCK_RANGE
     min_mhz = max(lo, min(min_mhz, hi))
@@ -252,7 +255,6 @@ def gpu_set_clocks(min_mhz: int = 1000, max_mhz: int = 2100) -> dict:
 
 def gpu_reset_clocks() -> dict:
     """Reset GPU clocks naar standaard (auto-boost)."""
-    import subprocess
 
     try:
         result = subprocess.run(
@@ -273,7 +275,6 @@ def gpu_reset_clocks() -> dict:
 
 def gpu_status() -> dict:
     """Volledige GPU status: clocks, power, temperatuur, VRAM."""
-    import subprocess
 
     base = vram_rapport()
 

@@ -7,6 +7,8 @@ Bevat:
 - _ERNST_KLEUR    — Kleur mapping per ernst
 """
 
+from __future__ import annotations
+
 import hashlib
 import json
 import logging
@@ -76,7 +78,7 @@ class SecurityConfig:
     Danny vult zelf wallet adressen in.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes a new instance, ensuring required directories exist, 
 loading initial data, and setting default configuration values. 
 Configures the pad and tracks hash changes."""
@@ -105,13 +107,13 @@ Configures the pad and tracks hash changes."""
                 self._verifieer_hash(data)
                 return data
             except (json.JSONDecodeError, IOError):
-                pass
+                logger.debug("Suppressed error")
 
         # Eerste keer: schrijf defaults
         self._schrijf(_DEFAULT_CONFIG)
         return dict(_DEFAULT_CONFIG)
 
-    def _schrijf(self, data: dict):
+    def _schrijf(self, data: dict) -> None:
         """Schrijf config naar bestand."""
         with open(
             self._pad, "w", encoding="utf-8"
@@ -121,7 +123,7 @@ Configures the pad and tracks hash changes."""
             )
         self._schrijf_hash(data)
 
-    def opslaan(self):
+    def opslaan(self) -> None:
         """Sla huidige config op."""
         self._schrijf(self._data)
 
@@ -136,7 +138,7 @@ Configures the pad and tracks hash changes."""
             inhoud.encode("utf-8")
         ).hexdigest()
 
-    def _schrijf_hash(self, data: dict):
+    def _schrijf_hash(self, data: dict) -> None:
         """Sla config hash op naar apart bestand."""
         try:
             h = self._bereken_hash(data)
@@ -147,7 +149,7 @@ Configures the pad and tracks hash changes."""
         except Exception as e:
             logger.debug("Config hash schrijven failed: %s", e)
 
-    def _verifieer_hash(self, data: dict):
+    def _verifieer_hash(self, data: dict) -> None:
         """Controleer of config niet extern gewijzigd is."""
         if not _CONFIG_HASH_PAD.exists():
             # Eerste keer, maak hash aan
@@ -177,7 +179,7 @@ Configures the pad and tracks hash changes."""
             logger.debug("Config hash verificatie failed: %s", e)
             self._hash_gewijzigd = False
 
-    def herbereken_hash(self):
+    def herbereken_hash(self) -> None:
         """Herbereken en sla config hash op."""
         self._schrijf_hash(self._data)
         self._hash_gewijzigd = False
@@ -188,18 +190,22 @@ Configures the pad and tracks hash changes."""
 
     @property
     def wallets(self) -> dict:
+        """Wallets."""
         return self._data.get("wallets", {})
 
     @property
     def watchlist(self) -> list:
+        """Watchlist."""
         return self._data.get("watchlist", [])
 
     @property
     def drempels(self) -> dict:
+        """Drempels."""
         return self._data.get("drempels", {})
 
     @property
     def audit_bestanden(self) -> list:
+        """Audit bestanden."""
         return self._data.get("audit_bestanden", [])
 
     def heeft_wallets(self) -> bool:
@@ -209,7 +215,7 @@ Configures the pad and tracks hash changes."""
                 return True
         return False
 
-    def toon(self):
+    def toon(self) -> None:
         """Toon huidige configuratie."""
         print(kleur(
             "\n  SECURITY CONFIG",

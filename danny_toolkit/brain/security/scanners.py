@@ -1,10 +1,16 @@
 """
 Security Scanners — Audit patronen en RAG zoektermen.
 
+
 Constanten-only bestand. Scan-methoden blijven in engine.py.
 """
 
+from __future__ import annotations
+
 from danny_toolkit.brain.security.config import Ernst
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # Code audit patronen (uitgebreid van SentinelValidator)

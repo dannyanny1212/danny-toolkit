@@ -1,5 +1,6 @@
 """
 SHADOW PERMISSIONS — Wat Shadows WEL Mogen
+
 ============================================
 Expliciete whitelist van acties die #@* shadow entiteiten
 mogen uitvoeren. Alles wat hier NIET staat is verboden.
@@ -8,6 +9,8 @@ Hiërarchie:
     Danny > OmegaGovernor > ShadowGovernance > ShadowPermissions
     Governance (verboden) overschrijft permissions (toegestaan) altijd.
 """
+
+from __future__ import annotations
 
 import logging
 from typing import Optional
@@ -22,7 +25,7 @@ class ShadowPermission:
 
     __slots__ = ("code", "beschrijving", "scope", "actief")
 
-    def __init__(self, code: str, beschrijving: str, scope: str = "shadow"):
+    def __init__(self, code: str, beschrijving: str, scope: str = "shadow") -> None:
         """Initializes a new instance with the given properties.
 
   Args:
@@ -194,12 +197,13 @@ class ShadowPermissions:
         permissions.exit_shadow_zone()    # Alle permissions → False
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self._blueprint = list(ALLOWED_PERMISSIONS)  # Origineel — nooit wijzigen
         self.permissions = []  # Leeg buiten shadow zone
         self._in_shadow_zone = False
 
-    def enter_shadow_zone(self):
+    def enter_shadow_zone(self) -> None:
         """Activeer permissions — mag ALLEEN vanuit VirtualTwin.consult().
 
         Herstelt de volledige permission lijst vanuit de blueprint.
@@ -215,7 +219,7 @@ class ShadowPermissions:
             SHADOW_PREFIX, len(self.permissions),
         )
 
-    def exit_shadow_zone(self):
+    def exit_shadow_zone(self) -> None:
         """Verwijder ALLE permissions — shadow heeft buiten de zone GEEN rechten.
 
         De lijst wordt volledig geleegd, niet alleen gedeactiveerd.

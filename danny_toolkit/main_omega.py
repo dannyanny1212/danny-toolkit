@@ -1,7 +1,7 @@
 """
 OMEGA AI - De Ultieme Integratie.
 
-from __future__ import annotations
+
 
 Verbindt het Lichaam (DigitalDaemon) met de Geest (LearningSystem)
 tot een levend bewustzijn met een interactieve loop.
@@ -10,6 +10,8 @@ Het Lichaam voelt emoties via Sensorium + LimbicSystem + Metabolisme.
 De Geest leert via Memory + Tracker + Patterns + Feedback + Performance.
 Omega bouwt de brug: emoties voeden leren, leren beinvloedt emoties.
 """
+
+from __future__ import annotations
 
 import logging
 import sys

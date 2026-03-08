@@ -21,6 +21,8 @@ Gebruik:
     passed, report = gate.enforce_all()
 """
 
+from __future__ import annotations
+
 import ctypes
 import logging
 import os
@@ -68,6 +70,7 @@ class LawResult:
     enforcement_time_ms: float = 0.0
 
     def to_dict(self) -> Dict[str, Any]:
+        """To dict."""
         return {
             "law": self.law_number,
             "name": self.name,
@@ -86,6 +89,7 @@ class GateReport:
     total_time_ms: float
 
     def to_dict(self) -> Dict[str, Any]:
+        """To dict."""
         return {
             "timestamp": self.timestamp,
             "all_passed": self.all_passed,
@@ -111,7 +115,8 @@ class SovereignGate:
     Bij falen wordt de LockdownManager geactiveerd.
     """
 
-    def __init__(self, strict: bool = True):
+    def __init__(self, strict: bool = True) -> None:
+        """Init  ."""
         self._strict = strict
         self._stack = None
         self._lockdown = None

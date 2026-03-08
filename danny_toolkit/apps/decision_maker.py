@@ -2,6 +2,8 @@
 Decision Maker v1.0 - Pro/con analyse, weighted scoring, random picker.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import random
@@ -43,7 +45,8 @@ class DecisionMakerApp:
         ],
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         Config.ensure_dirs()
         self.data_dir = Config.APPS_DATA_DIR / "decision_maker"
         self.data_dir.mkdir(exist_ok=True)
@@ -63,12 +66,12 @@ class DecisionMakerApp:
             "snelle_keuzes": [],
         }
 
-    def _sla_op(self):
+    def _sla_op(self) -> None:
         """Sla data op."""
         with open(self.data_file, "w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2, ensure_ascii=False)
 
-    def _random_picker(self):
+    def _random_picker(self) -> None:
         """Random keuze maken."""
         clear_scherm()
         print("\n  === RANDOM PICKER ===\n")
@@ -111,7 +114,7 @@ class DecisionMakerApp:
 
         input("\n  Druk op Enter...")
 
-    def _pro_con_analyse(self):
+    def _pro_con_analyse(self) -> None:
         """Pro/Con analyse voor een beslissing."""
         clear_scherm()
         print("\n  === PRO/CON ANALYSE ===\n")
@@ -196,7 +199,7 @@ class DecisionMakerApp:
 
         input("\n  Druk op Enter...")
 
-    def _weighted_scoring(self):
+    def _weighted_scoring(self) -> None:
         """Gewogen score vergelijking van meerdere opties."""
         clear_scherm()
         print("\n  === GEWOGEN VERGELIJKING ===\n")
@@ -327,7 +330,7 @@ class DecisionMakerApp:
 
         input("\n  Druk op Enter...")
 
-    def _ja_nee_helper(self):
+    def _ja_nee_helper(self) -> None:
         """Simpele ja/nee beslissing met vragen."""
         clear_scherm()
         print("\n  === JA/NEE HELPER ===\n")
@@ -382,7 +385,7 @@ class DecisionMakerApp:
 
         input("\n  Druk op Enter...")
 
-    def _bekijk_geschiedenis(self):
+    def _bekijk_geschiedenis(self) -> None:
         """Bekijk eerdere beslissingen."""
         clear_scherm()
         print("\n  === BESLISSINGEN GESCHIEDENIS ===\n")
@@ -431,7 +434,7 @@ class DecisionMakerApp:
 
                 input("\n  Druk op Enter...")
 
-    def _coin_flip(self):
+    def _coin_flip(self) -> None:
         """Simpele munt opgooi."""
         clear_scherm()
         print("\n  === MUNT OPGOOIEN ===\n")
@@ -452,7 +455,7 @@ class DecisionMakerApp:
 
         input("\n  Druk op Enter...")
 
-    def run(self):
+    def run(self) -> None:
         """Start de app."""
         while True:
             clear_scherm()

@@ -3,6 +3,8 @@ Music Composer v1.0 - Genereer melodieën, akkoorden en drumpatronen.
 ASCII-gebaseerde muziek compositie tool.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import random
@@ -111,7 +113,8 @@ class MuziekTheorie:
 class MelodieGenerator:
     """Genereer melodieën."""
 
-    def __init__(self, toonladder: List[str]):
+    def __init__(self, toonladder: List[str]) -> None:
+        """Init  ."""
         self.toonladder = toonladder
 
     def genereer(self, lengte: int = 8, stijl: str = "random") -> List[str]:
@@ -170,7 +173,8 @@ class MusicComposerApp:
 
     VERSIE = "1.0"
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         Config.ensure_dirs()
         self.data_dir = Config.APPS_DATA_DIR / "music_composer"
         self.data_dir.mkdir(exist_ok=True)
@@ -187,12 +191,12 @@ class MusicComposerApp:
                 logger.debug("Composities load error: %s", e)
         return []
 
-    def _sla_op(self):
+    def _sla_op(self) -> None:
         """Sla composities op."""
         with open(self.composities_file, "w", encoding="utf-8") as f:
             json.dump(self.composities, f, indent=2, ensure_ascii=False)
 
-    def _teken_piano_roll(self, melodie: List[str], toonladder: List[str]):
+    def _teken_piano_roll(self, melodie: List[str], toonladder: List[str]) -> None:
         """Teken melodie als piano roll."""
         print("\n  PIANO ROLL:")
         print("  " + "-" * (len(melodie) * 4 + 10))
@@ -214,7 +218,7 @@ class MusicComposerApp:
             beats += f" {i+1:2} "
         print(beats)
 
-    def _teken_drum_patroon(self, patroon: Dict[str, List[int]]):
+    def _teken_drum_patroon(self, patroon: Dict[str, List[int]]) -> None:
         """Teken drum patroon."""
         print("\n  DRUM PATROON (16 stappen):")
         print("  " + "-" * 70)
@@ -237,7 +241,7 @@ class MusicComposerApp:
         print("  " + "-" * 70)
         print("         | 1  2  3  4 | 5  6  7  8 | 9 10 11 12 |13 14 15 16 |")
 
-    def _teken_akkoord(self, noten: List[str], naam: str):
+    def _teken_akkoord(self, noten: List[str], naam: str) -> None:
         """Teken akkoord als ASCII."""
         print(f"\n  {naam}:")
         print("  +" + "-" * 20 + "+")
@@ -245,7 +249,7 @@ class MusicComposerApp:
             print(f"  | {noot:3} {'#' * 15} |")
         print("  +" + "-" * 20 + "+")
 
-    def _genereer_melodie(self):
+    def _genereer_melodie(self) -> None:
         """Genereer een nieuwe melodie."""
         clear_scherm()
         print("\n  === MELODIE GENERATOR ===\n")
@@ -295,7 +299,7 @@ class MusicComposerApp:
 
         input("\n  Druk op Enter...")
 
-    def _genereer_akkoorden(self):
+    def _genereer_akkoorden(self) -> None:
         """Genereer akkoord progressie."""
         clear_scherm()
         print("\n  === AKKOORD PROGRESSIE ===\n")
@@ -348,7 +352,7 @@ class MusicComposerApp:
 
         input("\n  Druk op Enter...")
 
-    def _genereer_drums(self):
+    def _genereer_drums(self) -> None:
         """Genereer drum patroon."""
         clear_scherm()
         print("\n  === DRUM PATROON GENERATOR ===\n")
@@ -405,7 +409,7 @@ class MusicComposerApp:
 
         input("\n  Druk op Enter...")
 
-    def _bekijk_composities(self):
+    def _bekijk_composities(self) -> None:
         """Bekijk opgeslagen composities."""
         clear_scherm()
         print("\n  === OPGESLAGEN COMPOSITIES ===\n")
@@ -443,7 +447,7 @@ class MusicComposerApp:
 
                 input("\n  Druk op Enter...")
 
-    def _toonladder_referentie(self):
+    def _toonladder_referentie(self) -> None:
         """Toon toonladder referentie."""
         clear_scherm()
         print("\n  === TOONLADDER REFERENTIE ===\n")
@@ -464,7 +468,7 @@ class MusicComposerApp:
 
         input("\n  Druk op Enter...")
 
-    def run(self):
+    def run(self) -> None:
         """Start de app."""
         while True:
             clear_scherm()

@@ -7,6 +7,8 @@ Definieert de drie hoofd workflows:
 3. Second Brain Loop - Nieuws, RAG, decision making
 """
 
+from __future__ import annotations
+
 import asyncio
 from collections import deque
 from datetime import datetime
@@ -328,7 +330,7 @@ class WorkflowEngine:
     - Error handling
     """
 
-    def __init__(self, app_executor: Callable = None):
+    def __init__(self, app_executor: Callable = None) -> None:
         """
         Initialiseer workflow engine.
 
@@ -340,7 +342,7 @@ class WorkflowEngine:
         self.running_workflows: Dict[str, WorkflowDefinition] = {}
         self.workflow_history: deque = deque(maxlen=500)
 
-    def set_executor(self, executor: Callable):
+    def set_executor(self, executor: Callable) -> None:
         """Set de app executor."""
         self.app_executor = executor
 

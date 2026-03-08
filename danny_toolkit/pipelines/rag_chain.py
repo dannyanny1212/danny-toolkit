@@ -27,7 +27,7 @@ def _flush_vram() -> None:
         torch.cuda.empty_cache()
 
 
-def load_llm(model_name="microsoft/Phi-3-mini-4k-instruct") -> None:
+def load_llm(model_name: object="microsoft/Phi-3-mini-4k-instruct") -> None:
     """Load llm."""
     if not _HAS_TRANSFORMERS:
         raise ImportError(
@@ -43,7 +43,7 @@ def load_llm(model_name="microsoft/Phi-3-mini-4k-instruct") -> None:
     return tokenizer, model
 
 
-def generate_answer(tokenizer, model, question, context, max_context_tokens=3072) -> None:
+def generate_answer(tokenizer: object, model: object, question: object, context: object, max_context_tokens: object=3072) -> None:
     """Generate answer."""
     # Truncate context to stay within model's 4k window
     context_ids = tokenizer.encode(context, add_special_tokens=False)

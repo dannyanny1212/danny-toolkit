@@ -5,6 +5,8 @@ Detecteert emotie in tekst en genereert spraak met emotionele modulatie.
 Ondersteunt: ElevenLabs (premium), Edge-TTS (gratis), pyttsx3 (offline).
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import re
@@ -169,7 +171,7 @@ class EmotionalVoice:
         "warm": "EXAVITQu4vr4xnSDxMaL",  # Bella
     }
 
-    def __init__(self, preferred_voice: str = "nl"):
+    def __init__(self, preferred_voice: str = "nl") -> None:
         """
         Initialiseer de voice engine.
 
@@ -365,10 +367,9 @@ class EmotionalVoice:
                 logger.debug("espeak-ng audio generatie mislukt: %s", e)
 
             # Fallback naar Python module
-            import asyncio
             import edge_tts
 
-            async def generate():
+            async def generate() -> None:
                 """### Docstring
 
 Generate an audio file using edge-tts.
@@ -427,10 +428,9 @@ Generate an audio file using edge-tts.
 
         return None
 
-    def _play_audio(self, audio_path: Path):
+    def _play_audio(self, audio_path: Path) -> None:
         """Speel audio bestand af."""
         try:
-            import platform
             system = platform.system()
 
             if system == "Windows":
@@ -455,6 +455,10 @@ Generate an audio file using edge-tts.
         except Exception as e:
             print(f"Audio playback error: {e}")
 
+import sys
+import asyncio
+import platform
+
 
 # Convenience functies
 def speak(text: str, emotion: Emotion = None) -> Optional[Path]:
@@ -468,10 +472,8 @@ def analyze_emotion(text: str) -> Tuple[Emotion, float]:
     return SentimentAnalyzer.analyze(text)
 
 
-def install_dependencies():
+def install_dependencies() -> None:
     """Installeer benodigde dependencies voor voice."""
-    import subprocess
-    import sys
 
     packages = ["edge-tts", "pyttsx3"]
 

@@ -846,7 +846,7 @@ class OracleAgent(Agent):
                 )
 
     def _wrap_resultaten(
-        self, doelstelling: object, resultaten: object, start
+        self, doelstelling: object, resultaten: object, start: float
     ) -> None:
         """Wrap resultaten in standaard output format.
 

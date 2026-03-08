@@ -1,6 +1,6 @@
 """
 Test Full Chain - Chain of Command Verificatie
-from __future__ import annotations
+
 
 ==============================================
 
@@ -13,6 +13,8 @@ Uitgebreide test van de multi-node orchestratie:
 
 Gebruik: python -m danny_toolkit.test_full_chain
 """
+
+from __future__ import annotations
 
 import sys
 import time

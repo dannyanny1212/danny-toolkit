@@ -4,6 +4,8 @@ Tijd Info v2.0 - Tijdweergave en tijdzone-informatie.
 Toont epoch-tijd, lokale tijd, UTC, en tijdsverschillen.
 """
 
+from __future__ import annotations
+
 import logging
 import time
 from datetime import datetime, timezone
@@ -16,13 +18,15 @@ logger = logging.getLogger(__name__)
 class TijdInfoApp(BaseApp):
     """Tijdweergave app met epoch, lokaal, UTC en opgeslagen momenten."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         super().__init__("tijd_info.json")
 
     def _get_default_data(self) -> dict:
+        """Get default data."""
         return {"opgeslagen_momenten": []}
 
-    def run(self):
+    def run(self) -> None:
         """Start de tijd info app."""
         while True:
             clear_scherm()
@@ -60,7 +64,7 @@ class TijdInfoApp(BaseApp):
                 print("  Ongeldige keuze.")
                 input("\n  [Enter] om door te gaan...")
 
-    def _toon_huidige_tijd(self):
+    def _toon_huidige_tijd(self) -> None:
         """Toon uitgebreide tijdinformatie."""
         nu = time.time()
         lokaal = datetime.now()
@@ -73,7 +77,7 @@ class TijdInfoApp(BaseApp):
         print(f"|  Tijdzone:          {time.tzname[0]:<34} |")
         print(f"|  UTC offset:        {lokaal.astimezone().strftime('%z'):<34} |")
 
-    def _sla_moment_op(self):
+    def _sla_moment_op(self) -> None:
         """Sla het huidige moment op met een label."""
         label = input("\n  Label voor dit moment: ").strip()
         if not label:
@@ -91,7 +95,7 @@ class TijdInfoApp(BaseApp):
         print(f"  Moment '{label}' opgeslagen op {moment['lokaal']}")
         input("\n  [Enter] om door te gaan...")
 
-    def _toon_momenten(self):
+    def _toon_momenten(self) -> None:
         """Toon alle opgeslagen momenten."""
         momenten = self.data["opgeslagen_momenten"]
         if not momenten:
@@ -105,7 +109,7 @@ class TijdInfoApp(BaseApp):
             print(f"  {i:<4} {m['label']:<25} {m['lokaal']:<22} {m['epoch']:.2f}")
         input("\n  [Enter] om door te gaan...")
 
-    def _tijd_sinds_moment(self):
+    def _tijd_sinds_moment(self) -> None:
         """Bereken verstreken tijd sinds een opgeslagen moment."""
         momenten = self.data["opgeslagen_momenten"]
         if not momenten:
@@ -128,7 +132,7 @@ class TijdInfoApp(BaseApp):
             print("  Voer een nummer in.")
         input("\n  [Enter] om door te gaan...")
 
-    def _epoch_naar_datum(self):
+    def _epoch_naar_datum(self) -> None:
         """Converteer een epoch timestamp naar leesbare datum."""
         try:
             epoch = float(input("\n  Epoch timestamp: "))
@@ -141,7 +145,7 @@ class TijdInfoApp(BaseApp):
             print("  Ongeldige timestamp.")
         input("\n  [Enter] om door te gaan...")
 
-    def _wis_momenten(self):
+    def _wis_momenten(self) -> None:
         """Wis alle opgeslagen momenten."""
         if not self.data["opgeslagen_momenten"]:
             print("\n  Geen momenten om te wissen.")

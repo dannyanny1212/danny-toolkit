@@ -5,6 +5,8 @@ Transformeert data en events naar emoties en stemmingen.
 Het gevoel van het digitale organisme.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import math
@@ -129,7 +131,8 @@ class LimbicSystem:
         Mood.SAD: 0.1,
     }
 
-    def __init__(self, sensorium: Sensorium = None):
+    def __init__(self, sensorium: Sensorium = None) -> None:
+        """Init  ."""
         self.sensorium = sensorium or Sensorium()
         self.state = EmotionalState()
         self.state_history: List[EmotionalState] = []
@@ -147,7 +150,7 @@ class LimbicSystem:
         # Register event listeners
         self._register_listeners()
 
-    def _register_listeners(self):
+    def _register_listeners(self) -> None:
         """Registreer listeners voor relevante events."""
         # Productiviteit events (verhoogde boosts)
         self.sensorium.register_listener(
@@ -198,25 +201,25 @@ class LimbicSystem:
             lambda e: self._on_mood_event(e)
         )
 
-    def _on_productivity_event(self, event: SensoryEvent, boost: float):
+    def _on_productivity_event(self, event: SensoryEvent, boost: float) -> None:
         """Reageer op productiviteit event."""
         self._productivity_score = min(1.0, self._productivity_score + boost)
         self.state.pride = min(1.0, self.state.pride + boost * 0.5)
         self._recalculate_state()
 
-    def _on_knowledge_event(self, event: SensoryEvent, boost: float):
+    def _on_knowledge_event(self, event: SensoryEvent, boost: float) -> None:
         """Reageer op kennis event."""
         self._knowledge_score = min(1.0, self._knowledge_score + boost)
         self.state.curiosity = min(1.0, self.state.curiosity + boost * 0.5)
         self._recalculate_state()
 
-    def _on_rest_event(self, event: SensoryEvent, boost: float):
+    def _on_rest_event(self, event: SensoryEvent, boost: float) -> None:
         """Reageer op rust event."""
         self._rest_score = min(1.0, self._rest_score + boost)
         self.state.stress = max(0.0, self.state.stress - boost * 0.3)
         self._recalculate_state()
 
-    def _on_idle_event(self, event: SensoryEvent):
+    def _on_idle_event(self, event: SensoryEvent) -> None:
         """Reageer op idle event."""
         # Idle is niet altijd slecht - hangt af van context
         if self.state.energy == EnergyState.OVERCHARGED:
@@ -227,12 +230,12 @@ class LimbicSystem:
             self._productivity_score = max(0.0, self._productivity_score - 0.02)
         self._recalculate_state()
 
-    def _on_health_event(self, event: SensoryEvent, boost: float):
+    def _on_health_event(self, event: SensoryEvent, boost: float) -> None:
         """Reageer op gezondheid event."""
         self._health_score = min(1.0, self._health_score + boost)
         self._recalculate_state()
 
-    def _on_mood_event(self, event: SensoryEvent):
+    def _on_mood_event(self, event: SensoryEvent) -> None:
         """Reageer op mood log event."""
         # Probeer mood score uit event te halen
         raw = event.data.get("score", 5)
@@ -240,7 +243,7 @@ class LimbicSystem:
         self._health_score = (self._health_score + mood_score) / 2
         self._recalculate_state()
 
-    def _recalculate_state(self):
+    def _recalculate_state(self) -> None:
         """Herbereken de emotionele staat."""
         # Bereken happiness
         happiness = (
@@ -360,7 +363,7 @@ class LimbicSystem:
         }
         return descriptions.get(self.state.form, "Onbekende vorm")
 
-    def decay(self, hours: float = 1.0):
+    def decay(self, hours: float = 1.0) -> None:
         """
         Natuurlijk verval van scores over tijd.
         Roep dit periodiek aan om realistische dynamiek te krijgen.
@@ -379,7 +382,7 @@ class LimbicSystem:
 
         self._recalculate_state()
 
-    def _save_state(self):
+    def _save_state(self) -> None:
         """Sla emotionele staat op."""
         Config.ensure_dirs()
         data = {
@@ -394,7 +397,7 @@ class LimbicSystem:
         with open(self._state_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
-    def _load_state(self):
+    def _load_state(self) -> None:
         """Laad emotionele staat."""
         if self._state_file.exists():
             try:

@@ -60,7 +60,7 @@ class CosmicRole(Enum):
     EVOLUTION = "self_evolution"     # De Evolutie
 
     @classmethod
-    def get_tier(cls, role) -> None:
+    def get_tier(cls, role: object) -> None:
         """Geeft het hierarchie-niveau van een node."""
         if role in [cls.PIXEL, cls.IOLAAX, cls.NEXUS]:
             return 1  # God Tier
@@ -144,7 +144,7 @@ class OmegaSwarm:
     """De Legion Zwerm - 347 Micro-Agents."""
 
     def __init__(
-        self, count=347, governor="The Keeper"
+        self, count: int=347, governor: object="The Keeper"
     ) -> None:
         """Init  ."""
         self.count = count

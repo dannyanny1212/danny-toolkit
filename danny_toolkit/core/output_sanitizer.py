@@ -1,6 +1,7 @@
 """
 Output Sanitizer — Voorkomt AI feedback loops.
 
+
 Filtert ANSI kleurcodes, box-drawing tekens, en decoratieve
 formatting uit tekst voordat het naar een LLM wordt gestuurd.
 
@@ -9,7 +10,12 @@ Gebruik:
     clean = sanitize_for_llm(raw_stdout)
 """
 
+from __future__ import annotations
+
 import re
+import logging
+
+logger = logging.getLogger(__name__)
 
 # ANSI escape codes (kleuren, cursor, formatting)
 _ANSI_RE = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]')

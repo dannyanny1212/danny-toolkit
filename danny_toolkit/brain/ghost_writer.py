@@ -1,6 +1,7 @@
 """
 GhostWriter — AST Scanner + Auto-Docstring Generator.
 
+
 Scant Python bestanden op functies zonder docstring, genereert
 Google-style docstrings via Groq, en schrijft ze optioneel terug
 naar het bronbestand. CorticalStack dedup voorkomt herverwerking.
@@ -12,6 +13,8 @@ Gebruik:
     await writer.haunt(dry_run=True)   # print suggesties
     await writer.haunt(dry_run=False)  # schrijf terug naar bestanden
 """
+
+from __future__ import annotations
 
 import ast
 import logging
@@ -62,7 +65,8 @@ class GhostWriter:
     # Provider volgorde voor token generatie (snelste eerst)
     PROVIDER_CHAIN = ["groq", "nvidia_nim", "gemini", "ollama"]
 
-    def __init__(self, watch_dir: str = None):
+    def __init__(self, watch_dir: str = None) -> None:
+        """Init  ."""
         self.watch_dir = watch_dir or str(Config.BASE_DIR / "danny_toolkit")
         # Primary Groq client (backward-compatible)
         if not HAS_GROQ:
@@ -83,7 +87,7 @@ class GhostWriter:
             "per_provider": {},
         }
 
-    async def haunt(self, dry_run: bool = True, max_functies: int = 10):
+    async def haunt(self, dry_run: bool = True, max_functies: int = 10) -> None:
         """Scan voor functies zonder docstring en genereer/pas ze toe.
 
         Args:
@@ -173,7 +177,7 @@ class GhostWriter:
             logger.debug("GhostWriter _inspect_file fout: %s", e)
             return 0
 
-    def _get_registry(self):
+    def _get_registry(self) -> None:
         """Lazy init ModelRegistry met auto-discover."""
         if self._registry is None and HAS_REGISTRY:
             try:
@@ -183,7 +187,7 @@ class GhostWriter:
                 logger.debug("GhostWriter registry init fout: %s", e)
         return self._registry
 
-    def _track_tokens(self, provider: str, tokens: int):
+    def _track_tokens(self, provider: str, tokens: int) -> None:
         """Track token verbruik per provider."""
         self._token_stats["totaal_tokens"] += tokens
         self._token_stats["totaal_calls"] += 1
@@ -291,7 +295,7 @@ class GhostWriter:
 
     def _write_back(
         self, filepath: str, source: str,
-        node, docstring: str,
+        node: object, docstring: str,
     ) -> bool:
         """Voeg gegenereerde docstring in het bronbestand in.
 
@@ -365,7 +369,7 @@ class GhostWriter:
     def _log_suggestion(
         self, filepath: str, func_name: str,
         docstring: str, applied: bool,
-    ):
+    ) -> None:
         """Log gegenereerde suggestie naar CorticalStack."""
         try:
             if not HAS_STACK:

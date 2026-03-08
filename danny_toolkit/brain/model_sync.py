@@ -1,7 +1,7 @@
 # danny_toolkit/brain/model_sync.py
 """
 Multi-Model Sync — Generaal Mode (Phase 41, Invention #25).
-from __future__ import annotations
+
 
 ============================================================
 Externe AI-modellen (GPT, Claude, Gemini, etc.) als huurlingen voor de Swarm.
@@ -20,6 +20,8 @@ Gebruik:
     registry.auto_discover()
     workers = registry.get_available()
 """
+
+from __future__ import annotations
 
 import logging
 import os

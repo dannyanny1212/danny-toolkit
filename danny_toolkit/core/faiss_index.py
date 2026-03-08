@@ -1,4 +1,6 @@
 # danny_toolkit/core/faiss_index.py
+from __future__ import annotations
+
 import logging
 import math
 import threading
@@ -12,7 +14,7 @@ logger = logging.getLogger(__name__)
 _FLAT_THRESHOLD = 256
 
 
-def _to_numpy_f32(t: torch.Tensor):
+def _to_numpy_f32(t: torch.Tensor) -> None:
     """Safely convert any torch tensor (CPU or CUDA) to float32 numpy."""
     if t.is_cuda:
         t = t.cpu()
@@ -28,7 +30,7 @@ class FaissIndex:
     - Otherwise: use CPU index
     """
 
-    def __init__(self, dim: int, nlist: int = 1024):
+    def __init__(self, dim: int, nlist: int = 1024) -> None:
         """**Initializes a new instance.
 
 ### Args
@@ -51,7 +53,7 @@ class FaissIndex:
         self.trained = False
         self._lock = threading.Lock()
 
-    def _build_index(self, n: int):
+    def _build_index(self, n: int) -> None:
         """Build the appropriate index based on dataset size."""
         if n < _FLAT_THRESHOLD:
             cpu_index = faiss.IndexFlatL2(self.dim)
@@ -72,7 +74,7 @@ class FaissIndex:
             self.index = cpu_index
             self.gpu = False
 
-    def train(self, xb: torch.Tensor):
+    def train(self, xb: torch.Tensor) -> None:
         """Train the index (if needed) and add vectors. Safe to call once."""
         xb_np = _to_numpy_f32(xb)
         n = xb_np.shape[0]
@@ -89,7 +91,7 @@ class FaissIndex:
             self.index.add(xb_np)
             self.trained = True
 
-    def add(self, xb: torch.Tensor):
+    def add(self, xb: torch.Tensor) -> None:
         """Add vectors to an already-trained index."""
         if self.index is None:
             raise RuntimeError("Index is not built yet — call train() first.")
@@ -97,7 +99,7 @@ class FaissIndex:
         with self._lock:
             self.index.add(xb_np)
 
-    def search(self, xq: torch.Tensor, k: int = 5):
+    def search(self, xq: torch.Tensor, k: int = 5) -> None:
         """Search the index for the k nearest neighbours."""
         if self.index is None:
             raise RuntimeError("Index is not built yet — call train() first.")

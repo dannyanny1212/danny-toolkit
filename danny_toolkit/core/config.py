@@ -1,7 +1,10 @@
 """
 Centrale configuratie voor Danny Toolkit.
+
 Versie 6.11.0 - OMEGA_SOVEREIGN. Met thema's, talen en validatie.
 """
+
+from __future__ import annotations
 
 import logging
 import os
@@ -294,7 +297,7 @@ class Config:
     SQLITE_CONNECT_TIMEOUT = SQLITE_BUSY_TIMEOUT // 1000  # sqlite3.connect timeout (seconds)
 
     @staticmethod
-    def apply_sqlite_perf(conn):
+    def apply_sqlite_perf(conn: object) -> None:
         """Apply hardware-optimized PRAGMAs to a SQLite connection."""
         conn.execute(f"PRAGMA cache_size = {Config.SQLITE_CACHE_SIZE}")
         conn.execute(f"PRAGMA mmap_size = {Config.SQLITE_MMAP_SIZE}")
@@ -361,7 +364,7 @@ class Config:
     _debug_mode = False
 
     @classmethod
-    def ensure_dirs(cls):
+    def ensure_dirs(cls) -> None:
         """Maak alle directories aan indien nodig."""
         dirs = [
             cls.DATA_DIR,
@@ -452,7 +455,7 @@ class Config:
         return Taal.get(cls._taal)
 
     @classmethod
-    def set_taal(cls, code: str):
+    def set_taal(cls, code: str) -> None:
         """Stel taal in."""
         if code in Taal.TALEN:
             cls._taal = code
@@ -464,7 +467,7 @@ class Config:
         return Thema.get(cls._thema)
 
     @classmethod
-    def set_thema(cls, naam: str):
+    def set_thema(cls, naam: str) -> None:
         """Stel thema in."""
         if naam in Thema.THEMAS:
             cls._thema = naam
@@ -476,13 +479,13 @@ class Config:
         return cls._debug_mode
 
     @classmethod
-    def set_debug(cls, aan: bool):
+    def set_debug(cls, aan: bool) -> None:
         """Zet debug mode aan/uit."""
         cls._debug_mode = aan
         cls._sla_voorkeuren_op()
 
     @classmethod
-    def _sla_voorkeuren_op(cls):
+    def _sla_voorkeuren_op(cls) -> None:
         """Sla gebruikersvoorkeuren op."""
         cls.ensure_dirs()
         voorkeuren = {
@@ -500,7 +503,7 @@ class Config:
                   f" opgeslagen: {e}")
 
     @classmethod
-    def laad_voorkeuren(cls):
+    def laad_voorkeuren(cls) -> None:
         """Laad gebruikersvoorkeuren."""
         if cls.CONFIG_FILE.exists():
             try:

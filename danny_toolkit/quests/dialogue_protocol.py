@@ -86,7 +86,7 @@ class DialogueProtocol:
             )
         return True, "Gereed"
 
-    def start(self, verwerk_fn=None, mood_fn=None) -> None:
+    def start(self, verwerk_fn: object=None, mood_fn: object=None) -> None:
         """
         Start continue dialoog-modus.
 

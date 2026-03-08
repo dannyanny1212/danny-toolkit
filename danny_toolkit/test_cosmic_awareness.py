@@ -20,9 +20,13 @@ Gebruik: python -m danny_toolkit.test_cosmic_awareness
 
 from __future__ import annotations
 
+import importlib
+import logging
 import sys
 import time
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 
 # ─── Kleuren ────────────────────────────────────────────────
@@ -108,7 +112,6 @@ def test_alle_apps_laden() -> None:
 
     for nummer, naam, module_pad, class_naam in apps:
         try:
-            import importlib
             mod = importlib.import_module(module_pad)
             cls = getattr(mod, class_naam)
             ok(f"[{nummer:>2}] {naam}")
@@ -174,7 +177,6 @@ def test_quests() -> None:
     passed = 0
     for nummer, naam, module_pad, class_naam in quests:
         try:
-            import importlib
             mod = importlib.import_module(module_pad)
             cls = getattr(mod, class_naam)
             instance = cls()

@@ -148,7 +148,7 @@ class CosmicConsole:
             border_style="cyan",
         ))
 
-    def _handle_command(self, cmd) -> None:
+    def _handle_command(self, cmd: object) -> None:
         """Verwerkt slash commando's."""
         cmd = cmd.lower().strip()
 
@@ -301,7 +301,7 @@ class CosmicConsole:
             console.print(table)
             console.print()
 
-    def _render_payload(self, p, elapsed=0.0) -> None:
+    def _render_payload(self, p: object, elapsed: object=0.0) -> None:
         """Render een SwarmPayload naar de console."""
         console.print(
             f"\n[bold]> {p.agent}[/bold]"
@@ -370,7 +370,7 @@ class CosmicConsole:
                 )
             console.print(info, justify="right")
 
-    def _render_chain_result(self, chain_result) -> None:
+    def _render_chain_result(self, chain_result: object) -> None:
         """Render chain pipeline resultaat."""
         if not isinstance(chain_result, dict):
             console.print(Panel(

@@ -2,6 +2,8 @@
 Flashcards v2.0 - AI-Powered digitale flashcards.
 """
 
+from __future__ import annotations
+
 import logging
 import random
 from datetime import datetime, timedelta
@@ -14,10 +16,12 @@ logger = logging.getLogger(__name__)
 class FlashcardsApp(BaseApp):
     """AI-Powered spaced repetition flashcards."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         super().__init__("flashcards.json")
 
     def _get_default_data(self) -> dict:
+        """Get default data."""
         return {
             "decks": [],
             "stats": {
@@ -26,7 +30,7 @@ class FlashcardsApp(BaseApp):
             }
         }
 
-    def run(self):
+    def run(self) -> None:
         """Start de flashcard app."""
         while True:
             clear_scherm()
@@ -78,7 +82,7 @@ class FlashcardsApp(BaseApp):
 
             input("\nDruk op Enter...")
 
-    def _nieuw_deck(self):
+    def _nieuw_deck(self) -> None:
         """Maak een nieuw deck."""
         print("\n--- NIEUW DECK ---")
 
@@ -121,7 +125,7 @@ class FlashcardsApp(BaseApp):
         except ValueError:
             return None
 
-    def _kaart_toevoegen(self):
+    def _kaart_toevoegen(self) -> None:
         """Voeg een kaart toe aan een deck."""
         print("\n--- KAART TOEVOEGEN ---")
 
@@ -155,7 +159,7 @@ class FlashcardsApp(BaseApp):
         self._sla_op()
         print(f"\nDeck '{deck['naam']}' heeft nu {len(deck['kaarten'])} kaarten.")
 
-    def _studeren(self):
+    def _studeren(self) -> None:
         """Studeer kaarten met spaced repetition."""
         print("\n--- STUDEREN ---")
 
@@ -229,7 +233,7 @@ class FlashcardsApp(BaseApp):
         else:
             print("  Blijf oefenen, je wordt steeds beter!")
 
-    def _bekijk_decks(self):
+    def _bekijk_decks(self) -> None:
         """Bekijk alle decks en kaarten."""
         print("\n--- ALLE DECKS ---")
 
@@ -247,7 +251,7 @@ class FlashcardsApp(BaseApp):
             if len(d["kaarten"]) > 3:
                 print(f"    ... en {len(d['kaarten']) - 3} meer")
 
-    def _statistieken(self):
+    def _statistieken(self) -> None:
         """Toon leerstatistieken."""
         print("\n--- STATISTIEKEN ---")
 
@@ -276,7 +280,7 @@ class FlashcardsApp(BaseApp):
                 if count > 0:
                     print(f"    {niveau_namen[i]}: {count}")
 
-    def _verwijder_deck(self):
+    def _verwijder_deck(self) -> None:
         """Verwijder een deck."""
         deck = self._kies_deck()
         if not deck:
@@ -290,7 +294,7 @@ class FlashcardsApp(BaseApp):
 
     # ==================== AI FUNCTIES ====================
 
-    def _ai_kaarten_genereren(self):
+    def _ai_kaarten_genereren(self) -> None:
         """AI genereert flashcards over een onderwerp."""
         print("\n--- AI KAARTEN GENEREREN ---")
 
@@ -365,7 +369,7 @@ Varieer in moeilijkheid. Nederlands."""
                 self._sla_op()
                 print(f"[OK] {toegevoegd} kaarten toegevoegd aan '{deck['naam']}'!")
 
-    def _ai_uitleg(self):
+    def _ai_uitleg(self) -> None:
         """AI legt een concept uit."""
         print("\n--- AI UITLEG ---")
 
@@ -392,7 +396,7 @@ Geschikt voor studenten. Nederlands."""
         if response:
             print(f"\n[AI Uitleg]:\n{response}")
 
-    def _ai_quiz_mode(self):
+    def _ai_quiz_mode(self) -> None:
         """AI stelt vragen over je kaarten."""
         print("\n--- AI QUIZ MODE ---")
 

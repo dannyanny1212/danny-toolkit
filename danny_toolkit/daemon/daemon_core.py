@@ -1,11 +1,13 @@
 """
 DIGITAL DAEMON - De Levende Interface.
 
-from __future__ import annotations
+
 
 De Always-On Symbiotische Entiteit die over je apps heen leeft.
 Dit is de Finale Vorm.
 """
+
+from __future__ import annotations
 
 import json
 import logging

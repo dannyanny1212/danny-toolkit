@@ -1,7 +1,7 @@
 """
 ProactiveEngine v1.0 — Van Reactief naar Levend.
 
-from __future__ import annotations
+
 
 Verbindt Sensorium, HeartbeatDaemon, PipelineTuner en
 Governor tot een proactief systeem dat zelf acties triggert
@@ -14,6 +14,8 @@ Gebruik:
 
 Geen nieuwe dependencies.
 """
+
+from __future__ import annotations
 
 import threading
 import time

@@ -294,18 +294,24 @@ def fix_future(path: Path) -> bool:
 
     lines = source.splitlines(keepends=True)
 
-    # Vind de insert positie: na docstring en comments, voor eerste import
+    # Use AST to find module docstring end line, then insert after it
     insert_idx = 0
-    for i, line in enumerate(lines):
-        stripped = line.strip()
-        if stripped.startswith("#") or stripped.startswith('"""') or stripped.startswith("'''") or not stripped:
-            insert_idx = i + 1
-            continue
-        # Als we een docstring block zijn (multi-line), doorlopen
-        if i > 0 and ('"""' in lines[i - 1] or "'''" in lines[i - 1]):
-            insert_idx = i + 1
-            continue
-        break
+    if tree.body and isinstance(tree.body[0], ast.Expr) and isinstance(
+        getattr(tree.body[0], "value", None), ast.Constant
+    ) and isinstance(tree.body[0].value.value, str):
+        # Module has a docstring — insert after it
+        insert_idx = tree.body[0].end_lineno  # type: ignore[attr-defined]
+        # Skip blank lines after docstring
+        while insert_idx < len(lines) and not lines[insert_idx].strip():
+            insert_idx += 1
+    else:
+        # No docstring — skip shebang and encoding comments
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+            if stripped.startswith("#") or not stripped:
+                insert_idx = i + 1
+                continue
+            break
 
     lines.insert(insert_idx, "from __future__ import annotations\n\n")
     path.write_text("".join(lines), encoding="utf-8")

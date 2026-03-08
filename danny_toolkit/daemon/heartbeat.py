@@ -1,7 +1,7 @@
 """
 Heartbeat Daemon v2.0 — Autonome Achtergrond-Daemon.
 
-from __future__ import annotations
+
 
 CPU/RAM monitoring, reflectie-cycli, autonome groei
 en SwarmEngine-taken (scheduled + interval).
@@ -18,6 +18,8 @@ Of via launcher: app 52 / sneltoets 'hb'.
 Geen nieuwe dependencies: psutil is optioneel (zelfde
 patroon als morning_protocol.py), Rich is al geinstalleerd.
 """
+
+from __future__ import annotations
 
 import asyncio
 import os

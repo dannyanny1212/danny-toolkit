@@ -1,6 +1,6 @@
 """
 PRISM DASHBOARD — Omega Sovereign Command UI v1.0.
-from __future__ import annotations
+
 
 ===================================================
 
@@ -20,6 +20,8 @@ Beveiligingsconstraint:
 Gebruik:
     streamlit run danny_toolkit/apps/prism_dashboard.py --server.port 8501
 """
+
+from __future__ import annotations
 
 import os
 import sys

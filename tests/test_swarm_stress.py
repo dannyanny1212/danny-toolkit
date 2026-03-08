@@ -1,4 +1,6 @@
 # tests/test_swarm_stress.py — Stress & concurrency tests voor SwarmEngine
+from __future__ import annotations
+
 import asyncio
 import time
 

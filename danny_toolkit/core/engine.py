@@ -4,6 +4,8 @@ Alle danny_toolkit/ modules moeten via deze bridge importeren,
 niet direct `from swarm_engine import ...` (Diamond Polish Wet #1).
 """
 
+from __future__ import annotations
+
 import sys
 from pathlib import Path
 

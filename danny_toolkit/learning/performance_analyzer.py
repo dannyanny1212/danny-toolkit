@@ -8,6 +8,8 @@ AUTHOR: Danny Toolkit
 DATE: 7 februari 2026
 """
 
+from __future__ import annotations
+
 import json
 import logging
 
@@ -46,7 +48,8 @@ class PerformanceAnalyzer:
     MAX_METRICS = 1000
     TREND_WINDOW = 50  # Aantal datapunten voor trend analyse
 
-    def __init__(self, data_dir: Path = None):
+    def __init__(self, data_dir: Path = None) -> None:
+        """Init  ."""
         if data_dir is None and HAS_CONFIG:
             data_dir = Config.APPS_DATA_DIR
         elif data_dir is None:
@@ -74,7 +77,7 @@ class PerformanceAnalyzer:
             "last_update": None
         }
 
-    def save(self):
+    def save(self) -> None:
         """Sla metrics data op naar bestand."""
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self._data["last_update"] = datetime.now().isoformat()
@@ -87,7 +90,7 @@ class PerformanceAnalyzer:
         name: str,
         value: float,
         context: dict = None
-    ):
+    ) -> None:
         """
         Registreer een performance metric.
 
@@ -113,7 +116,7 @@ class PerformanceAnalyzer:
         self._update_trends(metric_type, name, value)
         self.save()
 
-    def _update_trends(self, metric_type: str, name: str, value: float):
+    def _update_trends(self, metric_type: str, name: str, value: float) -> None:
         """Update trend data voor een metric."""
         key = f"{metric_type}:{name}"
 
@@ -240,7 +243,7 @@ class PerformanceAnalyzer:
 
         return history[-limit:]
 
-    def set_baseline(self, metric_type: str, name: str, value: float):
+    def set_baseline(self, metric_type: str, name: str, value: float) -> None:
         """Stel een baseline in voor een metric."""
         key = f"{metric_type}:{name}"
         self._data["baselines"][key] = {
@@ -281,7 +284,7 @@ class PerformanceAnalyzer:
         metric_key: str,
         before: float,
         after: float
-    ):
+    ) -> None:
         """Registreer een significante verbetering."""
         improvement = {
             "timestamp": datetime.now().isoformat(),
@@ -310,9 +313,8 @@ class PerformanceAnalyzer:
 
 # === CLI voor testing ===
 
-def _cli():
+def _cli() -> None:
     """Test CLI voor PerformanceAnalyzer."""
-    from pathlib import Path
 
     print("PerformanceAnalyzer Test CLI")
     print("=" * 40)

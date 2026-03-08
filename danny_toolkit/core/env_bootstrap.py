@@ -8,6 +8,8 @@ Gebruik:
     from danny_toolkit.core.env_bootstrap import VENV_PYTHON, get_subprocess_env
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import sys
@@ -43,7 +45,7 @@ def get_subprocess_env(test_mode: bool = False) -> dict:
     return env
 
 
-def bootstrap():
+def bootstrap() -> None:
     """Idempotent bootstrap: laad .env en activeer GPU guard.
 
     Veilig om meerdere keren aan te roepen.

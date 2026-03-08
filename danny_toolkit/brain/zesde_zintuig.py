@@ -20,7 +20,7 @@ try:
         sys.stdout.reconfigure(encoding="utf-8")
         sys.stderr.reconfigure(encoding="utf-8")
 except Exception:
-    pass
+    logger.debug("Suppressed error")
 
 # ── Textual imports ──────────────────────────────────────────────
 from textual.app import App, ComposeResult
@@ -63,6 +63,7 @@ try:
 except ImportError:
     HAS_VRAM = False
     def vram_rapport() -> dict:
+        """Vram rapport."""
         return {"beschikbaar": False}
 
 
@@ -135,10 +136,12 @@ class VitalsPanel(Static):
     """
 
     def on_mount(self) -> None:
+        """On mount."""
         self.set_interval(2.0, self._refresh_vitals)
         self._refresh_vitals()
 
     def _refresh_vitals(self) -> None:
+        """Refresh vitals."""
         lines: List[str] = []
         lines.append("[bold cyan]═══ VITALS ═══[/]\n")
 
@@ -262,10 +265,12 @@ class NeuralStreamPanel(RichLog):
     """
 
     def __init__(self, **kwargs: Any) -> None:
+        """Init  ."""
         super().__init__(highlight=True, markup=True, wrap=True, **kwargs)
         self._subscribed = False
 
     def on_mount(self) -> None:
+        """On mount."""
         self.write("[bold cyan]═══ NEURAL STREAM ═══[/]\n")
         self._subscribe_bus()
         # Load recent history
@@ -299,7 +304,7 @@ class NeuralStreamPanel(RichLog):
                             self.write(f"[dim]{line}[/]")
                     self.write("[dim]── live feed ──[/]\n")
             except Exception:
-                pass
+                logger.debug("Suppressed error")
 
     def _on_bus_event(self, event: Any) -> None:
         """Handle incoming NeuralBus event (called from any thread)."""
@@ -322,7 +327,7 @@ class NeuralStreamPanel(RichLog):
             # Thread-safe write via call_from_thread
             self.app.call_from_thread(self.write, line)
         except Exception:
-            pass
+            logger.debug("Suppressed error")
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -342,10 +347,12 @@ class IntelligencePanel(Static):
     """
 
     def on_mount(self) -> None:
+        """On mount."""
         self.set_interval(5.0, self._refresh_intelligence)
         self._refresh_intelligence()
 
     def _refresh_intelligence(self) -> None:
+        """Refresh intelligence."""
         lines: List[str] = []
         lines.append("[bold magenta]═══ INTELLIGENCE ═══[/]\n")
 
@@ -457,6 +464,7 @@ class CommandBar(Input):
     """
 
     def __init__(self, **kwargs: Any) -> None:
+        """Init  ."""
         super().__init__(
             placeholder="flush | backup | antibodies | predict | scan | agents | quit",
             **kwargs,
@@ -501,6 +509,7 @@ class ZesdeZintuigApp(App):
     ]
 
     def compose(self) -> ComposeResult:
+        """Compose."""
         yield Header()
         with Horizontal(id="main-panels"):
             yield VitalsPanel()
@@ -514,6 +523,7 @@ class ZesdeZintuigApp(App):
         yield Footer()
 
     def on_mount(self) -> None:
+        """On mount."""
         self._log_stream("ZESDE ZINTUIG online — monitoring active")
 
     # ── Command input handler ─────────────────────────────────
@@ -645,7 +655,6 @@ class ZesdeZintuigApp(App):
     def _run_scan(self) -> None:
         """Run scan in background thread."""
         try:
-            from danny_toolkit.brain.omega_core import OmegaCore
             core = OmegaCore()
             result = core.system_scan()
             lines = [
@@ -714,7 +723,7 @@ class ZesdeZintuigApp(App):
             self.query_one(IntelligencePanel)._refresh_intelligence()
             self._log_stream("[green]All panels refreshed[/]")
         except Exception:
-            pass
+            logger.debug("Suppressed error")
 
     # ── Log helper ────────────────────────────────────────────
     def _log_stream(self, text: str) -> None:
@@ -724,7 +733,15 @@ class ZesdeZintuigApp(App):
             ts = datetime.now().strftime("%H:%M:%S")
             stream.write(f"[dim]{ts}[/] {text}")
         except Exception:
-            pass
+            logger.debug("Suppressed error")
+import logging
+
+try:
+    from danny_toolkit.brain.omega_core import OmegaCore
+except ImportError:
+    pass
+
+logger = logging.getLogger(__name__)
 
 
 # ═══════════════════════════════════════════════════════════════

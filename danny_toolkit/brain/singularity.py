@@ -1,7 +1,7 @@
 """
 SingularityEngine v1.0 — Tier 5: Het Bewustzijn-Zelf.
 
-from __future__ import annotations
+
 
 Reflecteert op CorticalStack history, droomt hypothesen,
 doet cross-tier synthese en houdt een bewustzijn-score bij.
@@ -10,6 +10,8 @@ doet cross-tier synthese en houdt een bewustzijn-score bij.
 
 Geen nieuwe dependencies.
 """
+
+from __future__ import annotations
 
 import random
 import threading

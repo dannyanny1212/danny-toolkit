@@ -1,13 +1,15 @@
 """
 Security Research Engine — Kern scan-logica.
 
-from __future__ import annotations
+
 
 Bevat SecurityResearchEngine met alle 7 scans + CLI.
 Erft SecurityDisplayMixin voor visuele output.
 
 Geëxtraheerd uit security_research.py (Fase C.2 monoliet split).
 """
+
+from __future__ import annotations
 
 import json
 import logging

@@ -29,7 +29,7 @@ class TruthAnchor:
 
     DEFAULT_DREMPEL = 0.45
 
-    def __init__(self, drempel=None):
+    def __init__(self, drempel: object=None) -> None:
         """Initializes a Truth Anchor instance.
 
  Args:

@@ -1,12 +1,15 @@
 """
 KnowledgeOptimizer - Consolideer en optimaliseer kennis.
 
+
 Features:
 - Consolideer gerelateerde feiten
 - Rank kennis op bruikbaarheid
 - Verwijder verouderde/duplicaat kennis
 - Intelligent pruning
 """
+
+from __future__ import annotations
 
 import json
 import logging
@@ -24,7 +27,7 @@ class KnowledgeOptimizer:
     MAX_FACTS = 500
     STALE_DAYS = 90
 
-    def __init__(self, unified_memory=None):
+    def __init__(self, unified_memory: object=None) -> None:
         """Initialiseer KnowledgeOptimizer.
 
         Args:
@@ -54,7 +57,7 @@ class KnowledgeOptimizer:
             "optimization_history": [],
         }
 
-    def _save_state(self):
+    def _save_state(self) -> None:
         """Sla optimizer state op."""
         with open(self.optimizer_file, "w", encoding="utf-8") as f:
             json.dump(self._state, f, indent=2, ensure_ascii=False)

@@ -13,6 +13,8 @@ Gebruik:
     ok, detail = fp.verify()
 """
 
+from __future__ import annotations
+
 import hashlib
 import json
 import logging
@@ -58,6 +60,7 @@ class FingerprintComponents:
     collected_at: str = field(default_factory=lambda: datetime.now().isoformat())
 
     def to_dict(self) -> Dict[str, str]:
+        """To dict."""
         return {
             "cpu_id": self.cpu_id,
             "mac_address": self.mac_address,
@@ -78,7 +81,8 @@ class HardwareFingerprint:
     Mismatch = potentiële kloon of VM-migratie → lockdown.
     """
 
-    def __init__(self, data_dir: Optional[Path] = None):
+    def __init__(self, data_dir: Optional[Path] = None) -> None:
+        """Init  ."""
         self._data_dir = Path(data_dir) if data_dir else Path(_DATA_DIR)
         self._master_path = self._data_dir / _MASTER_HASH_FILE
         self._components: Optional[FingerprintComponents] = None
@@ -93,7 +97,6 @@ class HardwareFingerprint:
         self._backends_loaded = True
         if not os.environ.get("DANNY_TEST_MODE"):
             try:
-                from danny_toolkit.brain.cortical_stack import get_cortical_stack
                 self._stack = get_cortical_stack()
             except ImportError:
                 logger.debug("CorticalStack niet beschikbaar voor fingerprint logging")
@@ -103,7 +106,6 @@ class HardwareFingerprint:
     def _collect_cpu_id(self) -> str:
         """Verzamel CPU identifier (Windows-specifiek via WMI, fallback naar platform)."""
         try:
-            import subprocess
             result = subprocess.run(
                 ["powershell", "-NoProfile", "-Command",
                  "(Get-CimInstance Win32_Processor).ProcessorId"],
@@ -135,7 +137,6 @@ class HardwareFingerprint:
     def _collect_motherboard_serial(self) -> str:
         """Verzamel moederbord serial (Windows WMI)."""
         try:
-            import subprocess
             result = subprocess.run(
                 ["powershell", "-NoProfile", "-Command",
                  "(Get-CimInstance Win32_BaseBoard).SerialNumber"],
@@ -291,6 +292,12 @@ class HardwareFingerprint:
                 )
             except Exception as e:
                 logger.debug("CorticalStack log mislukt: %s", e)
+
+try:
+    from danny_toolkit.brain.cortical_stack import get_cortical_stack
+except ImportError:
+    pass
+import subprocess
 
 
 # ── Singleton ──

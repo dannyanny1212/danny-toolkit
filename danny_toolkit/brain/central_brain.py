@@ -112,7 +112,7 @@ class CentralBrain:
     VERSIE = "1.1.0"
     MAX_HISTORY = 50
 
-    def __init__(self, use_memory: bool = True):
+    def __init__(self, use_memory: bool = True) -> None:
         """
         Initialiseer Central Brain.
 
@@ -269,7 +269,7 @@ class CentralBrain:
             "laatste_gebruik": None
         }
 
-    def _sla_stats_op(self):
+    def _sla_stats_op(self) -> None:
         """Sla statistieken op."""
         with open(self.data_file, "w", encoding="utf-8") as f:
             json.dump(self.stats, f, indent=2, ensure_ascii=False)
@@ -340,7 +340,7 @@ class CentralBrain:
         "self_evolution": "Je bent Evolution, zelf-evolutie.",
     }
 
-    def _execute_with_role(self, role, task: str) -> tuple:
+    def _execute_with_role(self, role: object, task: str) -> tuple:
         """Voer taak uit met rol-specifieke context.
 
         Brug-functie zodat SwarmEngine.BrainAgent dezelfde interface
@@ -388,7 +388,7 @@ class CentralBrain:
             logger.error("_execute_with_role fout (%s): %s", role_key, e)
             return (f"Agent {role_key} fout: {e}", elapsed, "ERROR")
 
-    def _register_all_apps(self):
+    def _register_all_apps(self) -> None:
         """Registreer alle apps uit APP_TOOLS."""
         for app_naam, app_def in APP_TOOLS.items():
             self.app_registry[app_naam] = app_def
@@ -571,7 +571,7 @@ class CentralBrain:
             if mirror_ctx:
                 mirror_section = f"\n{mirror_ctx}\n"
         except Exception:
-            pass
+            logger.debug("Suppressed error")
 
         # System message
         system_message = f"""Je bent Danny's AI assistant — de kern van het Omega ecosysteem.
@@ -621,7 +621,7 @@ Regels:
             model=model, max_tokens=max_tokens,
         )
 
-    async def genereer_stream(self, user_input: str, model: str = None):
+    async def genereer_stream(self, user_input: str, model: str = None) -> None:
         """Async generator — yieldt tokens voor live streaming.
 
         Fallback chain: Groq primary → Groq fallback (aparte key) → NVIDIA NIM.
@@ -731,7 +731,7 @@ Regels:
                 yield f"\n[bold red]STREAM ERROR ({label}):[/] {err}"
                 return
 
-    def _build_stream_chain(self, model: str = None):
+    def _build_stream_chain(self, model: str = None) -> None:
         """Bouw streaming fallback chain: Groq primary → Groq fallback → NIM.
 
         Returns:
@@ -787,7 +787,7 @@ Regels:
                     {"temperature": 0.2, "max_tokens": 4096},  # NIM-specifiek
                 ))
             except ImportError:
-                pass
+                logger.debug("Suppressed error")
 
         return chain
 
@@ -819,7 +819,7 @@ Regels:
             "resource_exhausted", "quota",
         ])
 
-    def _parse_text_tool_calls(self, text: str):
+    def _parse_text_tool_calls(self, text: str) -> None:
         """Detecteer en parse tool calls die als tekst zijn beschreven.
 
         Herkent patronen zoals:
@@ -1120,7 +1120,7 @@ Regels:
         ))
         return self._format_tool_results(tool_results)
 
-    def _build_openai_tools(self, selected_apps=None):
+    def _build_openai_tools(self, selected_apps: object=None) -> None:
         """Converteer tool definitions naar OpenAI function-calling format.
 
         Args:
@@ -1161,7 +1161,7 @@ Regels:
             })
         return tools
 
-    def _get_provider_chain(self, system_message, use_tools, max_tokens, model=None):
+    def _get_provider_chain(self, system_message: object, use_tools: object, max_tokens: int, model: object=None) -> None:
         """Bouw geordende provider chain, skip circuit-broken providers.
 
         Returns:
@@ -1348,7 +1348,7 @@ Regels:
     # Single-provider attempt methods (geen fallback-logica!)
     # ----------------------------------------------------------
 
-    def _attempt_groq(self, remaining_turns, system_message, use_tools, model, max_tokens):
+    def _attempt_groq(self, remaining_turns: object, system_message: object, use_tools: object, model: object, max_tokens: int) -> None:
         """Groq attempt met tool-calling loop.
 
         Returns:
@@ -1512,7 +1512,8 @@ Regels:
                                 if all(parse_tool_call(tc.function.name))
                             ]
 
-                            def _run_in_thread():
+                            def _run_in_thread() -> None:
+                                """Run in thread."""
                                 loop = asyncio.new_event_loop()
                                 try:
                                     return loop.run_until_complete(
@@ -1687,7 +1688,7 @@ Regels:
         ))
         return (None, turns_used)
 
-    def _attempt_anthropic(self, remaining_turns, system_message, use_tools, client):
+    def _attempt_anthropic(self, remaining_turns: object, system_message: object, use_tools: object, client: object) -> None:
         """Anthropic attempt met tool-calling loop.
 
         Returns:
@@ -1772,7 +1773,7 @@ Regels:
         # Turns uitgeput
         return (None, turns_used)
 
-    def _attempt_nvidia_nim(self, system_message):
+    def _attempt_nvidia_nim(self, system_message: object) -> None:
         """NVIDIA NIM single-attempt (geen tool calling).
 
         Returns:
@@ -1796,7 +1797,7 @@ Regels:
         content = resp.choices[0].message.content or ""
         return (content, 1)
 
-    def _attempt_huggingface(self, system_message):
+    def _attempt_huggingface(self, system_message: object) -> None:
         """HuggingFace Inference single-attempt (geen tool calling).
 
         Returns:
@@ -1817,7 +1818,7 @@ Regels:
         content = resp.choices[0].message.content or ""
         return (content, 1)
 
-    def _attempt_ollama(self, system_message):
+    def _attempt_ollama(self, system_message: object) -> None:
         """Ollama lokale single-attempt (geen tool calling).
 
         Returns:
@@ -1862,7 +1863,7 @@ Regels:
             return True
         return False
 
-    def _provider_fail(self, key: str):
+    def _provider_fail(self, key: str) -> None:
         """Registreer faal voor specifieke provider."""
         import time as _time
         cb = self._provider_breakers.get(key)
@@ -1870,7 +1871,7 @@ Regels:
             cb["fails"] = min(cb["fails"] + 1, self._breaker_max)
             cb["last_fail"] = _time.time()
 
-    def _provider_success(self, key: str):
+    def _provider_success(self, key: str) -> None:
         """Registreer succes — reset provider breaker."""
         cb = self._provider_breakers.get(key)
         if cb is not None:
@@ -1920,7 +1921,7 @@ Regels:
         return header + body + footer
 
     @staticmethod
-    def _extract_summary(tool_id: str, data) -> str:
+    def _extract_summary(tool_id: str, data: dict) -> str:
         """Extract key metrics uit bekende tool resultaten."""
         tid = tool_id.lower()
 
@@ -2562,7 +2563,7 @@ Regels:
             "statistieken": self.stats
         }
 
-    def clear_conversation(self):
+    def clear_conversation(self) -> None:
         """Wis conversation history."""
         with self._history_lock:
             self.conversation_history.clear()

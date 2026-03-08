@@ -1,6 +1,7 @@
 """
 Governor State Mixin — Backup, restore en state validatie.
 
+
 Bevat GovernorStateMixin met:
 - backup_state()      — Backup met rotatie
 - restore_state()     — Herstel van backup
@@ -13,6 +14,8 @@ Plus top-level rescue_family() functie (backward compat).
 Geëxtraheerd uit governor.py (Fase C.2 monoliet split).
 Mixin leest constanten via self.* (OmegaGovernor attributen).
 """
+
+from __future__ import annotations
 
 import json
 import logging
@@ -181,7 +184,7 @@ class GovernorStateMixin:
 
         return rapport
 
-    def _rotate_backups(self, file_path: Path):
+    def _rotate_backups(self, file_path: Path) -> None:
         """Roteer backups: verwijder oudste als >MAX.
 
         Backup nummering: .1.json (nieuwst) tot .3.json (oudst).

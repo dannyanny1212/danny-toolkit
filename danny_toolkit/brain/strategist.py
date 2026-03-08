@@ -6,6 +6,8 @@ de juiste swarm agents, en chaint resultaten. Bevat search-query
 meta-filter om tool name leakage in LLM-plannen te voorkomen.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import os
@@ -103,7 +105,7 @@ class Strategist:
         3. Route — passes output of step N into input of step N+1
         4. Synthesize — presents final result
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes the instance with required clients and components.
 
  Args:
@@ -352,7 +354,6 @@ class Strategist:
         Returns:
             Scan resultaat als leesbare tekst met score en issues.
         """
-        from pathlib import Path
 
         # Probeer een .py pad te extraheren uit de details
         words = details.replace("\\", "/").split()
@@ -401,7 +402,7 @@ class Strategist:
             logger.warning("Guard scan failed for %s: %s", target, e)
             return f"[refactor_guard] Scan failed: {e}"
 
-    def _publish_event(self, event_type, data: dict):
+    def _publish_event(self, event_type: object, data: dict) -> None:
         """Publiceer event op NeuralBus als beschikbaar."""
         if self._bus and event_type:
             try:
@@ -409,7 +410,7 @@ class Strategist:
             except Exception as e:
                 logger.debug("NeuralBus publish error: %s", e)
 
-    def _log_event(self, action: str, details: Optional[dict] = None):
+    def _log_event(self, action: str, details: Optional[dict] = None) -> None:
         """Log naar CorticalStack als beschikbaar."""
         if self._stack:
             try:
@@ -421,3 +422,5 @@ class Strategist:
                 )
             except Exception as e:
                 logger.debug("CorticalStack log error: %s", e)
+
+from pathlib import Path

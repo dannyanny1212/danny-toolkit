@@ -23,6 +23,9 @@ if os.name == "nt":
 
 from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import kleur, Kleur
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 _MANIFEST_PAD = Config.DATA_DIR / "file_manifest.json"
@@ -31,7 +34,7 @@ _MANIFEST_PAD = Config.DATA_DIR / "file_manifest.json"
 class FileGuard:
     """Bewaakt de integriteit van bronbestanden."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes the object with repository root and manifest padding attributes.
 
 * Sets `repo_root` to the base directory specified in the Config.
@@ -124,7 +127,7 @@ class FileGuard:
 
     # ── Herstel ─────────────────────────────────────────
 
-    def herstel_bestanden(self, bestanden=None) -> dict:
+    def herstel_bestanden(self, bestanden: object=None) -> dict:
         """Herstel ontbrekende bestanden vanuit git HEAD.
 
         Args:
@@ -164,7 +167,7 @@ class FileGuard:
 
     # ── Rapport ─────────────────────────────────────────
 
-    def toon_rapport(self, rapport=None):
+    def toon_rapport(self, rapport: object=None) -> None:
         """Toon visueel rapport van integriteitscontrole."""
         if rapport is None:
             rapport = self.controleer_integriteit()

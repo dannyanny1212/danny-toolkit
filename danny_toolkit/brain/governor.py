@@ -1,6 +1,6 @@
 """
 OMEGA GOVERNOR - De Autonome Bewaker (Niveau 2)
-from __future__ import annotations
+
 
 ================================================
 Beschermingslaag voor het Prometheus Brain systeem.
@@ -14,6 +14,8 @@ Hiërarchie:
 De Governor luistert ALLEEN naar hard-coded regels,
 NIET naar andere agents.
 """
+
+from __future__ import annotations
 
 import json
 import logging

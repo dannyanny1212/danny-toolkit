@@ -67,7 +67,7 @@ try:
     from danny_toolkit.core.env_bootstrap import VENV_PYTHON, get_subprocess_env
 except ImportError:
     VENV_PYTHON = sys.executable
-    def get_subprocess_env(test_mode=False):
+    def get_subprocess_env(test_mode: object=False) -> None:
         """Returns a modified copy of the current environment variables.
 
 The returned dictionary contains all current environment variables, with the following overrides:
@@ -107,7 +107,7 @@ class ShadowAirlock:
     # Maximale bestandsgrootte (10 MB — bescherming tegen dumps)
     MAX_BESTANDSGROOTTE = 10 * 1024 * 1024
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Mappen instellen
         """Initializes the object by setting up directory mappings and statistics.
 
@@ -315,7 +315,7 @@ Ensures that the staging and production directories exist."""
             # Bij fout: staging bestand blijft behouden
             return None
 
-    def _trigger_ingest(self, bestanden: List[Path]):
+    def _trigger_ingest(self, bestanden: List[Path]) -> None:
         """Trigger batch ingest voor gepromoveerde bestanden.
 
         Roept ingest.py aan met de productie-map als pad.
@@ -360,7 +360,7 @@ Ensures that the staging and production directories exist."""
         except Exception as e:
             logger.error("Airlock: ingest trigger mislukt: %s", e)
 
-    def _log_naar_cortical(self, actie: str, details: dict):
+    def _log_naar_cortical(self, actie: str, details: dict) -> None:
         """Log airlock-activiteit naar CorticalStack."""
         _log_cortical_fn(
             actor="shadow_airlock",
@@ -457,7 +457,7 @@ Ensures that the staging and production directories exist."""
 
         return resultaat
 
-    def start_periodiek(self, interval: int = 60):
+    def start_periodiek(self, interval: int = 60) -> None:
         """Start een blokkerende periodieke scan-loop.
 
         Args:

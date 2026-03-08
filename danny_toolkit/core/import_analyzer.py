@@ -12,6 +12,8 @@ Gebruik:
     python -m danny_toolkit.core.import_analyzer --apply   # Voer fixes uit
 """
 
+from __future__ import annotations
+
 import ast
 import os
 import re
@@ -19,6 +21,9 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
+import logging
+
+logger = logging.getLogger(__name__)
 
 # --- Constanten ---
 
@@ -160,7 +165,7 @@ def detect_circular_risks(results: List[dict]) -> Dict[str, Set[str]]:
     visited = set()
     rec_stack = set()
 
-    def dfs(node: str, path: list):
+    def dfs(node: str, path: list) -> None:
         """**Performs a depth-first search on a graph to detect cycles.**
 
 *   Args:
@@ -261,7 +266,7 @@ def apply_fixes(results: List[dict], dry_run: bool = True) -> int:
 
 # --- Rapport ---
 
-def print_report(results: List[dict], cycles: Dict[str, Set[str]]):
+def print_report(results: List[dict], cycles: Dict[str, Set[str]]) -> None:
     """Print het volledige analyse-rapport."""
     print("=" * 70)
     print("IMPORT ANALYZER -- DEPENDENCY GRAPH RAPPORT")
@@ -340,7 +345,7 @@ def print_report(results: List[dict], cycles: Dict[str, Set[str]]):
 
 # --- Entry Point ---
 
-def main():
+def main() -> None:
     """Hoofdfunctie -- scan, analyseer, rapporteer."""
     args = sys.argv[1:]
 

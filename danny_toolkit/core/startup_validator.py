@@ -95,7 +95,7 @@ def valideer_opstart(strict: bool = False) -> dict:
     return rapport
 
 
-def _check_api_key(rapport, env_var, provider, fataal=True) -> None:
+def _check_api_key(rapport: object, env_var: object, provider: object, fataal: object=True) -> None:
     """Controleer API key aanwezigheid en format."""
     check = {"naam": env_var, "status": "OK", "fataal": fataal}
 
@@ -136,7 +136,7 @@ def _check_api_key(rapport, env_var, provider, fataal=True) -> None:
     rapport["checks"].append(check)
 
 
-def _check_data_dir(rapport) -> None:
+def _check_data_dir(rapport: object) -> None:
     """Controleer of DATA_DIR schrijfbaar is."""
     check = {"naam": "DATA_DIR_schrijfbaar", "status": "OK", "fataal": True}
 
@@ -159,7 +159,7 @@ def _check_data_dir(rapport) -> None:
     rapport["checks"].append(check)
 
 
-def _check_optional_deps(rapport) -> None:
+def _check_optional_deps(rapport: object) -> None:
     """Controleer optionele dependencies."""
     deps = ["chromadb", "ollama", "groq"]
     beschikbaar = []
@@ -182,7 +182,7 @@ def _check_optional_deps(rapport) -> None:
     rapport["checks"].append(check)
 
 
-def _check_env_file(rapport) -> None:
+def _check_env_file(rapport: object) -> None:
     """Controleer of .env bestand bestaat."""
     try:
         pass  # import moved to top-level

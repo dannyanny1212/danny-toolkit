@@ -1,5 +1,6 @@
 """
 INVENTION #12: THE DEVOPS DAEMON (Ouroboros Loop)
+
 =================================================
 Autonome CI-agent die test suites draait, failures analyseert
 via LLM, en diagnose + fix-suggesties genereert.
@@ -14,6 +15,8 @@ Gebruik:
     daemon = DevOpsDaemon()
     rapport = await daemon.auto_fix_cycle()
 """
+
+from __future__ import annotations
 
 import json
 import logging
@@ -97,7 +100,7 @@ class DevOpsDaemon:
     NOOIT auto-exec — alleen diagnose + suggesties.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes the DevOpsDaemon instance.
 
   If the Key Manager is available, creates an asynchronous Groq client using the Key Manager; 
@@ -533,7 +536,7 @@ class DevOpsDaemon:
     # Hulpmethoden
     # =================================================================
 
-    def _log_event(self, action: str, details: Optional[dict] = None):
+    def _log_event(self, action: str, details: Optional[dict] = None) -> None:
         """Log naar CorticalStack als beschikbaar."""
         if self._stack:
             try:
@@ -546,7 +549,7 @@ class DevOpsDaemon:
             except Exception as e:
                 logger.debug("CorticalStack log error: %s", e)
 
-    def _publish_event(self, sub_type: str, data: dict):
+    def _publish_event(self, sub_type: str, data: dict) -> None:
         """Publiceer event op NeuralBus als beschikbaar."""
         if self._bus:
             try:
@@ -576,7 +579,7 @@ class DevOpsDaemon:
 
         return pad
 
-    def _prune_old_reports(self, max_reports: int = 50):
+    def _prune_old_reports(self, max_reports: int = 50) -> None:
         """Verwijder oude rapporten, bewaar max_reports nieuwste."""
         try:
             rapporten = sorted(

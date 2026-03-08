@@ -18,6 +18,8 @@ Gebruik:
     safe_shutdown(component_name="brain_cli", state_data=agent.get_state())
 """
 
+from __future__ import annotations
+
 import atexit
 import logging
 import sys
@@ -46,7 +48,8 @@ class LifecycleManager:
     - Post-shutdown verificatie (is alles veilig opgeslagen?)
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self._lock = threading.Lock()
         self._registered: Dict[str, dict] = {}  # component -> metadata
         self._pre_shutdown_hooks: List[Callable] = []
@@ -60,17 +63,14 @@ class LifecycleManager:
         if self._bus is not None:
             return
         try:
-            from danny_toolkit.core.neural_bus import get_bus
             self._bus = get_bus()
         except (ImportError, Exception) as e:
             logger.debug("NeuralBus niet beschikbaar voor lifecycle: %s", e)
         try:
-            from danny_toolkit.omega_sovereign_core.event_signing import get_event_signer
             self._signer = get_event_signer()
         except (ImportError, Exception) as e:
             logger.debug("EventSigner niet beschikbaar voor lifecycle: %s", e)
         try:
-            from danny_toolkit.brain.cortical_stack import get_cortical_stack
             self._stack = get_cortical_stack()
         except (ImportError, Exception) as e:
             logger.debug("CorticalStack niet beschikbaar voor lifecycle: %s", e)
@@ -213,7 +213,6 @@ def safe_shutdown(
     if state_data:
         print(f"{Kleur.GEEL}  [3/4] Routing state naar Soul via Memory Interface...{Kleur.RESET}")
         try:
-            from danny_toolkit.omega_sovereign_core.memory_interface import secure_store_state
             ok, receipt = secure_store_state(component_name, state_data)
             if ok:
                 print(f"{Kleur.GROEN}  [OK] State veilig opgeslagen "
@@ -245,6 +244,23 @@ def safe_shutdown(
             )
         except Exception as e:
             logger.debug("CorticalStack lifecycle log mislukt: %s", e)
+
+try:
+    from danny_toolkit.omega_sovereign_core.memory_interface import secure_store_state
+except ImportError:
+    pass
+try:
+    from danny_toolkit.core.neural_bus import get_bus
+except ImportError:
+    pass
+try:
+    from danny_toolkit.omega_sovereign_core.event_signing import get_event_signer
+except ImportError:
+    pass
+try:
+    from danny_toolkit.brain.cortical_stack import get_cortical_stack
+except ImportError:
+    pass
 
     # ── Final status ──
     if success:

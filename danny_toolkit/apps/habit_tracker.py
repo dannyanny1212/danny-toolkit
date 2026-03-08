@@ -34,7 +34,7 @@ class HabitTrackerApp(BaseApp):
             "streaks": {}
         }
 
-    def _log_memory_event(self, event_type, data) -> None:
+    def _log_memory_event(self, event_type: object, data: dict) -> None:
         """Log event naar Unified Memory."""
         try:
             if not hasattr(self, "_memory"):

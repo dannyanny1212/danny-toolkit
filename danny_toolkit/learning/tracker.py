@@ -7,6 +7,8 @@ Houdt bij:
 - Gebruikerspatronen en voorkeuren
 """
 
+from __future__ import annotations
+
 import json
 import logging
 
@@ -23,7 +25,7 @@ class InteractionTracker:
 
     MAX_INTERACTIONS = 500
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialiseer InteractionTracker."""
         Config.ensure_dirs()
         self.data_dir = Config.APPS_DATA_DIR / "learning"
@@ -55,14 +57,14 @@ class InteractionTracker:
             },
         }
 
-    def save(self):
+    def save(self) -> None:
         """Sla data op naar disk."""
         if len(self._data["interactions"]) > self.MAX_INTERACTIONS:
             self._prune_old()
         with open(self.interactions_file, "w", encoding="utf-8") as f:
             json.dump(self._data, f, indent=2, ensure_ascii=False)
 
-    def _prune_old(self):
+    def _prune_old(self) -> None:
         """Verwijder oude interacties, behoud beste scores."""
         interactions = self._data["interactions"]
         interactions.sort(key=lambda x: x.get("success_score", 0), reverse=True)
@@ -118,13 +120,13 @@ class InteractionTracker:
 
         return interaction_id
 
-    def _update_avg_success(self):
+    def _update_avg_success(self) -> None:
         """Update gemiddelde success score."""
         scores = [i.get("success_score", 0.5) for i in self._data["interactions"]]
         if scores:
             self._data["stats"]["avg_success"] = sum(scores) / len(scores)
 
-    def update_success_score(self, interaction_id: str, new_score: float):
+    def update_success_score(self, interaction_id: str, new_score: float) -> None:
         """Update de success score van een interactie."""
         for interaction in self._data["interactions"]:
             if interaction["id"] == interaction_id:
@@ -274,7 +276,6 @@ class InteractionTracker:
 
     def clear_old(self, days: int = 90) -> int:
         """Verwijder interacties ouder dan X dagen."""
-        from datetime import timedelta
 
         cutoff = datetime.now() - timedelta(days=days)
         cutoff_str = cutoff.isoformat()

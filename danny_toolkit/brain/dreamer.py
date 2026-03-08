@@ -1,12 +1,14 @@
 """
 Dreamer — Overnight REM Cycle (v6.0 Invention).
 
-from __future__ import annotations
+
 
 Draait om 04:00 via daemon heartbeat. Voert uit: CorticalStack backup,
 vacuum, retention policy, GhostWriter auto-docstrings, TheMirror
 user profiling, Phantom anticipation, en Synapse pathway plasticity.
 """
+
+from __future__ import annotations
 
 import asyncio
 import json

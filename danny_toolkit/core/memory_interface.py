@@ -1,7 +1,7 @@
 """
 Memory Interface — Grens-bewaker tussen /core/ en /brain/.
 
-from __future__ import annotations
+
 
 Core modules importeren HIER vandaan, nooit direct uit /brain/.
 Brain modules registreren hun implementaties via register_*().
@@ -17,6 +17,8 @@ Gebruik:
     from danny_toolkit.core.memory_interface import register_cortical_stack
     register_cortical_stack(get_cortical_stack())
 """
+
+from __future__ import annotations
 
 import logging
 

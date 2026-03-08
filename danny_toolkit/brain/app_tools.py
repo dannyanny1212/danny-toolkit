@@ -1,13 +1,19 @@
 """
 App Tool Definitions voor Central Brain.
 
+
 Definieert alle 31+ apps als Anthropic-compatible tools met hun acties.
 Elke app wordt geregistreerd met beschrijving en callable acties.
 """
 
+from __future__ import annotations
+
 from typing import Dict, List, Optional
 from dataclasses import dataclass
 from enum import Enum
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class AppCategorie(Enum):

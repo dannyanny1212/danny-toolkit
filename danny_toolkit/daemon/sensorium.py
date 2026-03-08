@@ -4,6 +4,8 @@ SENSORIUM - De Zintuigen van het Digitale Organisme.
 Luistert naar events van alle 35+ apps en voedt het brein.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import time
@@ -84,7 +86,8 @@ class Sensorium:
         EventType.MOOD_LOGGED: ("balance", 5),      # Balans
     }
 
-    def __init__(self, max_history: int = 1000):
+    def __init__(self, max_history: int = 1000) -> None:
+        """Init  ."""
         self.events: deque = deque(maxlen=max_history)
         self.listeners: Dict[EventType, List[Callable]] = {}
         self.last_activity: datetime = datetime.now()
@@ -113,13 +116,13 @@ class Sensorium:
 
         self._last_checksums: Dict[str, str] = {}
 
-    def register_listener(self, event_type: EventType, callback: Callable):
+    def register_listener(self, event_type: EventType, callback: Callable) -> None:
         """Registreer een listener voor een event type."""
         if event_type not in self.listeners:
             self.listeners[event_type] = []
         self.listeners[event_type].append(callback)
 
-    def emit(self, event: SensoryEvent):
+    def emit(self, event: SensoryEvent) -> None:
         """Emit een event naar alle listeners."""
         self.events.append(event)
         self.last_activity = datetime.now()
@@ -135,7 +138,7 @@ class Sensorium:
                     print(f"[Sensorium] Listener error: {e}")
 
     def sense_event(self, event_type: EventType, source: str,
-                    data: Dict = None, importance: float = 0.5):
+                    data: Dict = None, importance: float = 0.5) -> None:
         """Registreer een nieuw event."""
         event = SensoryEvent(
             type=event_type,
@@ -250,14 +253,15 @@ class Sensorium:
         }
         return mapping.get(app_name)
 
-    def start_monitoring(self, interval_seconds: int = 30):
+    def start_monitoring(self, interval_seconds: int = 30) -> None:
         """Start achtergrond monitoring."""
         if self.is_monitoring:
             return
 
         self.is_monitoring = True
 
-        def monitor_loop():
+        def monitor_loop() -> None:
+            """Monitor loop."""
             while self.is_monitoring:
                 try:
                     # Check file changes
@@ -285,7 +289,7 @@ class Sensorium:
         self._monitor_thread = threading.Thread(target=monitor_loop, daemon=True)
         self._monitor_thread.start()
 
-    def stop_monitoring(self):
+    def stop_monitoring(self) -> None:
         """Stop achtergrond monitoring."""
         self.is_monitoring = False
         if self._monitor_thread:

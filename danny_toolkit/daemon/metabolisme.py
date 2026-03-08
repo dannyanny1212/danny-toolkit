@@ -5,6 +5,8 @@ Het organisme verbrandt en consumeert op basis van activiteit.
 Balans is cruciaal voor gezondheid.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import time
@@ -63,6 +65,7 @@ Returns:
 
     @property
     def total(self) -> float:
+        """Total."""
         return (self.protein + self.carbs + self.vitamins +
                 self.water + self.fiber) / 5
 
@@ -119,7 +122,8 @@ Initializes a metabolic process simulator.
     WARNING_HIGH = 85.0
     CRITICAL_HIGH = 95.0
 
-    def __init__(self, sensorium: Sensorium = None):
+    def __init__(self, sensorium: Sensorium = None) -> None:
+        """Init  ."""
         self.sensorium = sensorium or Sensorium()
         self.nutrients = NutrientLevels()
         self.state = MetabolicState.STABLE
@@ -143,7 +147,7 @@ Initializes a metabolic process simulator.
         # Register event listeners
         self._register_listeners()
 
-    def _register_listeners(self):
+    def _register_listeners(self) -> None:
         """Registreer listeners voor voeding events."""
         # Protein events (kennis)
         self.sensorium.register_listener(
@@ -191,7 +195,7 @@ Initializes a metabolic process simulator.
             lambda e: self.consume("fiber", 8)
         )
 
-    def consume(self, nutrient: str, amount: float):
+    def consume(self, nutrient: str, amount: float) -> None:
         """Consumeer een nutrient."""
         if not hasattr(self.nutrients, nutrient):
             return
@@ -204,7 +208,7 @@ Initializes a metabolic process simulator.
         self._update_state()
         self._save_state()
 
-    def burn(self, hours: float = 1.0):
+    def burn(self, hours: float = 1.0) -> None:
         """Verbrand nutrients over tijd."""
         for nutrient, rate in self.BURN_RATES.items():
             if hasattr(self.nutrients, nutrient):
@@ -217,7 +221,7 @@ Initializes a metabolic process simulator.
         self._update_state()
         self._save_state()
 
-    def _update_state(self):
+    def _update_state(self) -> None:
         """Update metabolische staat."""
         total = self.nutrients.total
         balance = self.nutrients.balance_score
@@ -305,7 +309,7 @@ falls below a warning threshold or exceeds a high threshold.
 
         return recommendations
 
-    def start_metabolism(self, burn_interval_minutes: int = 15):
+    def start_metabolism(self, burn_interval_minutes: int = 15) -> None:
         """Start het metabolisme proces."""
         if self.is_running:
             return
@@ -313,7 +317,8 @@ falls below a warning threshold or exceeds a high threshold.
         self.is_running = True
         self._last_burn_time = datetime.now()
 
-        def metabolism_loop():
+        def metabolism_loop() -> None:
+            """Metabolism loop."""
             while self.is_running:
                 try:
                     # Bereken verstreken tijd
@@ -335,13 +340,13 @@ falls below a warning threshold or exceeds a high threshold.
         )
         self._metabolism_thread.start()
 
-    def stop_metabolism(self):
+    def stop_metabolism(self) -> None:
         """Stop het metabolisme proces."""
         self.is_running = False
         if self._metabolism_thread:
             self._metabolism_thread.join(timeout=5)
 
-    def _save_state(self):
+    def _save_state(self) -> None:
         """Sla staat op."""
         Config.ensure_dirs()
         data = {
@@ -353,7 +358,7 @@ falls below a warning threshold or exceeds a high threshold.
         with open(self._state_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
-    def _load_state(self):
+    def _load_state(self) -> None:
         """Laad staat."""
         if self._state_file.exists():
             try:

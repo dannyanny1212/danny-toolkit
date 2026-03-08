@@ -1,6 +1,7 @@
 """
 Governor Firewall Mixin — Input validatie & PII bescherming.
 
+
 Bevat GovernorFirewallMixin met:
 - registreer_tokens()    — Token budget tracking
 - _check_token_budget()  — Budget limiet check
@@ -10,6 +11,8 @@ Bevat GovernorFirewallMixin met:
 Geëxtraheerd uit governor.py (Fase C.2 monoliet split).
 Mixin leest constanten via self.* (OmegaGovernor attributen).
 """
+
+from __future__ import annotations
 
 import logging
 import re
@@ -35,7 +38,7 @@ class GovernorFirewallMixin:
     - self._log(action, details)
     """
 
-    def registreer_tokens(self, tekst: str):
+    def registreer_tokens(self, tekst: str) -> None:
         """Registreer geschat tokenverbruik na een LLM response.
 
         Char-based schatting: 1 token ≈ 4 tekens.

@@ -14,6 +14,8 @@ Gebruik:
     is_valid  = signer.verify(event_type, data, bron, signature)
 """
 
+from __future__ import annotations
+
 import hashlib
 import hmac
 import json
@@ -53,6 +55,7 @@ class SigningViolation:
     signature_fragment: str = ""
 
     def to_dict(self) -> Dict[str, str]:
+        """To dict."""
         return {
             "timestamp": self.timestamp,
             "event_type": self.event_type,
@@ -73,7 +76,8 @@ class EventSigner:
     - Nonce tracking: voorkomt replay attacks
     """
 
-    def __init__(self, signing_key: Optional[str] = None):
+    def __init__(self, signing_key: Optional[str] = None) -> None:
+        """Init  ."""
         self._key = (signing_key or os.environ.get(_ENV_SIGNING_KEY, _DEFAULT_KEY)).encode("utf-8")
         self._lock = threading.Lock()
         self._violations: Deque[SigningViolation] = deque(maxlen=_MAX_VIOLATION_LOG)
@@ -93,7 +97,7 @@ class EventSigner:
                 "Stel %s in via .env voor productie.", _ENV_SIGNING_KEY
             )
 
-    def _get_stack(self):
+    def _get_stack(self) -> None:
         """Lazy CorticalStack — alleen laden bij eerste gebruik, niet in __init__."""
         if self._stack is None and not os.environ.get("DANNY_TEST_MODE"):
             try:
@@ -103,7 +107,7 @@ class EventSigner:
                 logger.debug("CorticalStack lazy-load failed: %s", e)
         return self._stack
 
-    def attach_sweeper(self, sweeper) -> None:
+    def attach_sweeper(self, sweeper: object) -> None:
         """Koppel een ViolationSweeper voor fire-and-forget logging."""
         self._sweeper = sweeper
         logger.debug("EventSigner: ViolationSweeper gekoppeld")

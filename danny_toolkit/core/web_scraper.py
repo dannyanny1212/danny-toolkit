@@ -18,6 +18,9 @@ try:
     import trafilatura
 except ImportError:
     trafilatura = None
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def scrape_url(url: str, chunk_size: int = 500, overlap: int = 50) -> list[dict]:
@@ -72,7 +75,7 @@ def scrape_with_depth(start_url: str, depth: int = 0,
     visited = set()
     all_chunks = []
 
-    def _crawl(url: str, current_depth: int):
+    def _crawl(url: str, current_depth: int) -> None:
         """Crawls a webpage and its internal links recursively.
 
  Args:

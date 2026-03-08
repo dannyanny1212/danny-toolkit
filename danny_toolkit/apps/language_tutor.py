@@ -2,6 +2,8 @@
 Language Tutor v1.0 - Woordenschat trainer, quizzes, spaced repetition.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import random
@@ -67,7 +69,8 @@ class LanguageTutorApp:
     # Spaced repetition intervallen (in dagen)
     SR_INTERVALLEN = [1, 3, 7, 14, 30, 90]
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         Config.ensure_dirs()
         self.data_dir = Config.APPS_DATA_DIR / "language_tutor"
         self.data_dir.mkdir(exist_ok=True)
@@ -91,12 +94,12 @@ class LanguageTutorApp:
             "laatste_sessie": None,
         }
 
-    def _sla_op(self):
+    def _sla_op(self) -> None:
         """Sla data op."""
         with open(self.data_file, "w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2, ensure_ascii=False)
 
-    def _kies_taal(self):
+    def _kies_taal(self) -> None:
         """Kies actieve taal."""
         clear_scherm()
         print("\n  === KIES TAAL ===\n")
@@ -114,7 +117,7 @@ class LanguageTutorApp:
                 self._sla_op()
                 print(f"\n  Actieve taal: {self.data['actieve_taal']}")
         except (ValueError, IndexError):
-            pass
+            logger.debug("Suppressed error")
 
         input("\n  Druk op Enter...")
 
@@ -139,7 +142,7 @@ class LanguageTutorApp:
 
         return self.data["woorden"][taal][woord]
 
-    def _update_woord_stats(self, taal: str, woord: str, correct: bool):
+    def _update_woord_stats(self, taal: str, woord: str, correct: bool) -> None:
         """Update statistieken na een antwoord."""
         stats = self._get_woord_stats(taal, woord)
 
@@ -171,7 +174,7 @@ class LanguageTutorApp:
 
         return due
 
-    def _oefen_sessie(self):
+    def _oefen_sessie(self) -> None:
         """Start een oefensessie."""
         taal = self.data.get("actieve_taal")
         if not taal:
@@ -257,7 +260,7 @@ class LanguageTutorApp:
 
         input("\n  Druk op Enter...")
 
-    def _snel_quiz(self):
+    def _snel_quiz(self) -> None:
         """Snelle quiz zonder spaced repetition."""
         taal = self.data.get("actieve_taal")
         if not taal:
@@ -315,7 +318,7 @@ class LanguageTutorApp:
 
         input("\n  Druk op Enter...")
 
-    def _voeg_woord_toe(self):
+    def _voeg_woord_toe(self) -> None:
         """Voeg eigen woord toe."""
         taal = self.data.get("actieve_taal")
         if not taal:
@@ -341,7 +344,7 @@ class LanguageTutorApp:
 
         input("\n  Druk op Enter...")
 
-    def _bekijk_woordenschat(self):
+    def _bekijk_woordenschat(self) -> None:
         """Bekijk alle woorden."""
         taal = self.data.get("actieve_taal")
         if not taal:
@@ -367,7 +370,7 @@ class LanguageTutorApp:
 
         input("\n  Druk op Enter...")
 
-    def _toon_statistieken(self):
+    def _toon_statistieken(self) -> None:
         """Toon leerstatistieken."""
         clear_scherm()
         print("\n  === LEERSTATISTIEKEN ===\n")
@@ -397,7 +400,7 @@ class LanguageTutorApp:
 
         input("\n  Druk op Enter...")
 
-    def run(self):
+    def run(self) -> None:
         """Start de app."""
         while True:
             clear_scherm()

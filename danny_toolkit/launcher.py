@@ -1,9 +1,11 @@
 """
 Danny Toolkit Launcher - Hoofdmenu.
-from __future__ import annotations
+
 
 Versie 6.11.0 - OMEGA_SOVEREIGN Rich Dashboard met thema's, kleuren, statistieken en meer.
 """
+
+from __future__ import annotations
 
 import sys
 import os

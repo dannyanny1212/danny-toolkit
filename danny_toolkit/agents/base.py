@@ -3,6 +3,8 @@ Base Agent class voor het agent framework.
 Versie 6.11.0 - OMEGA_SOVEREIGN. Met multi-provider, memory system, reflection en meer!
 """
 
+from __future__ import annotations
+
 import logging
 import json
 import asyncio
@@ -98,7 +100,7 @@ class Agent:
         config: AgentConfig = None,
         personality: dict = None,
         persist: bool = False
-    ):
+    ) -> None:
         """### Docstring
 
 Initializes an agent instance.
@@ -170,7 +172,7 @@ If `persist` is `True` and a state file exists, the agent's state will be loaded
         if self.persist and self.state_file.exists():
             self._laad_state()
 
-    def _init_provider(self):
+    def _init_provider(self) -> None:
         """Initialiseer de AI provider."""
         # Probeer Claude
         if Config.has_anthropic_key():
@@ -190,7 +192,7 @@ If `persist` is `True` and a state file exists, the agent's state will be loaded
         self.client = None
         self.model = "local"
 
-    def _laad_state(self):
+    def _laad_state(self) -> None:
         """Laad opgeslagen agent state."""
         try:
             with open(self.state_file, "r", encoding="utf-8") as f:
@@ -212,7 +214,7 @@ If `persist` is `True` and a state file exists, the agent's state will be loaded
         except Exception as e:
             self.log(f"Kon state niet laden: {e}", Kleur.ROOD)
 
-    def _sla_state_op(self):
+    def _sla_state_op(self) -> None:
         """Sla agent state op."""
         if not self.persist:
             return
@@ -239,14 +241,14 @@ If `persist` is `True` and a state file exists, the agent's state will be loaded
         except Exception as e:
             self.log(f"Kon state niet opslaan: {e}", Kleur.ROOD)
 
-    def log(self, bericht: str, kleur_naam: str = Kleur.CYAAN):
+    def log(self, bericht: str, kleur_naam: str = Kleur.CYAAN) -> None:
         """Log een bericht met kleur."""
         timestamp = datetime.now().strftime("%H:%M:%S")
         log_entry = f"[{timestamp}] [{self.naam}] {bericht}"
         self.logs.append(log_entry)
         print(kleur(log_entry, kleur_naam))
 
-    def _trigger_hook(self, hook_list: list, *args):
+    def _trigger_hook(self, hook_list: list, *args) -> None:
         """Trigger event hooks."""
         for hook in hook_list:
             try:
@@ -254,7 +256,7 @@ If `persist` is `True` and a state file exists, the agent's state will be loaded
             except Exception as e:
                 self.log(f"Hook error: {e}", Kleur.ROOD)
 
-    def add_hook(self, event: str, callback: Callable):
+    def add_hook(self, event: str, callback: Callable) -> None:
         """Voeg een event hook toe."""
         hooks = {
             "start": self.on_start,
@@ -265,7 +267,7 @@ If `persist` is `True` and a state file exists, the agent's state will be loaded
         if event in hooks:
             hooks[event].append(callback)
 
-    def remember(self, feit: str, categorie: str = "algemeen"):
+    def remember(self, feit: str, categorie: str = "algemeen") -> None:
         """Voeg iets toe aan lange-termijn geheugen."""
         self.memory.lange_termijn.append({
             "feit": feit,
@@ -284,7 +286,7 @@ If `persist` is `True` and a state file exists, the agent's state will be loaded
         return feiten[-limit:]
 
     def learn_skill(self, skill_naam: str, beschrijving: str,
-                    success_rate: float = 0.0):
+                    success_rate: float = 0.0) -> None:
         """Leer een nieuwe vaardigheid."""
         self.memory.vaardigheden[skill_naam] = {
             "beschrijving": beschrijving,
@@ -548,14 +550,14 @@ Geef een korte, inzichtelijke reflectie."""
         finally:
             self.memory.korte_termijn = temp_memory
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset agent geheugen."""
         self.memory.korte_termijn = []
         self.logs = []
         self.state = AgentState.IDLE
         self.log("Geheugen gereset", Kleur.GEEL)
 
-    def reset_all(self):
+    def reset_all(self) -> None:
         """Reset alles inclusief lange-termijn geheugen."""
         self.memory = AgentMemory()
         self.stats = AgentStats()
@@ -567,7 +569,7 @@ Geef een korte, inzichtelijke reflectie."""
 
         self.log("Volledig gereset", Kleur.GEEL)
 
-    def toon_status(self):
+    def toon_status(self) -> None:
         """Toon agent status."""
         print(kleur(f"\n{'='*50}", Kleur.CYAAN))
         print(kleur(f"AGENT: {self.naam}", Kleur.CYAAN))

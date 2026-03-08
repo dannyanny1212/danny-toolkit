@@ -1,12 +1,15 @@
 """
 LearningSystem - Centrale orchestrator voor self-learning.
 
+
 Combineert alle learning componenten en biedt een unified interface
 voor het virtueel huisdier systeem.
 
 Versie 2.0: Nu met FeedbackManager, PerformanceAnalyzer en
 SelfImprovementEngine voor echte self-learning.
 """
+
+from __future__ import annotations
 
 import logging
 from typing import Optional
@@ -30,7 +33,7 @@ class LearningSystem:
     Versie 2.0: Nu met self-improvement engine voor echte AI learning.
     """
 
-    def __init__(self, huisdier_app=None):
+    def __init__(self, huisdier_app: object=None) -> None:
         """Initialiseer LearningSystem.
 
         Args:
@@ -106,7 +109,7 @@ class LearningSystem:
 
         return interaction_id
 
-    def _register_adaptations(self):
+    def _register_adaptations(self) -> None:
         """Registreer parameters die automatisch kunnen worden aangepast."""
         # Cache score threshold
         self.improvement.register_adaptation(
@@ -191,7 +194,7 @@ class LearningSystem:
         interaction_id: str,
         rating: int,
         helpful: bool
-    ):
+    ) -> None:
         """Pas feedback toe op learning systemen."""
         # Get the interaction
         for interaction in self.tracker._data["interactions"]:
@@ -319,7 +322,7 @@ class LearningSystem:
         source: str,
         facts_learned: list[str],
         context: Optional[dict] = None,
-    ):
+    ) -> None:
         """Log een leer-sessie.
 
         Args:
@@ -343,7 +346,7 @@ class LearningSystem:
         files_read: list[str],
         facts_learned: list[str],
         context: Optional[dict] = None,
-    ):
+    ) -> None:
         """Log een RAG leer-sessie."""
         self.log_learning("rag", facts_learned, context)
         for fact in facts_learned:
@@ -360,7 +363,7 @@ class LearningSystem:
         topics: list[str],
         facts_learned: list[str],
         context: Optional[dict] = None,
-    ):
+    ) -> None:
         """Log een nieuws leer-sessie."""
         self.log_learning("news", facts_learned, context)
 
@@ -369,7 +372,7 @@ class LearningSystem:
         location: str,
         weather_info: str,
         context: Optional[dict] = None,
-    ):
+    ) -> None:
         """Log een weer leer-sessie."""
         self.tracker.log_interaction(
             interaction_type="learn_weather",
@@ -385,7 +388,7 @@ class LearningSystem:
         answers: list[str],
         lessons: list[str],
         context: Optional[dict] = None,
-    ):
+    ) -> None:
         """Log een AI gesprek sessie."""
         for lesson in lessons:
             self.memory.add_fact(lesson, source="ai_conversation", success_score=0.85)
@@ -399,7 +402,7 @@ class LearningSystem:
                 success_score=0.85,
             )
 
-    def _analyze_patterns(self):
+    def _analyze_patterns(self) -> None:
         """Analyseer patronen na elke X chats."""
         recent = self.tracker.get_recent(20, interaction_type="chat")
         queries = [i["input"] for i in recent]
@@ -433,7 +436,7 @@ class LearningSystem:
         unique_facts, removed = self.optimizer.remove_duplicates(facts)
         return removed
 
-    def rank_knowledge(self):
+    def rank_knowledge(self) -> None:
         """Rank alle kennis op bruikbaarheid."""
         stats = self.memory.get_stats()
         knowledge = self.memory._memory["knowledge"]
@@ -523,7 +526,7 @@ class LearningSystem:
             "meta_learning": self.improvement.get_meta_learning_summary()
         }
 
-    def sync_with_huisdier(self, huisdier_data: dict):
+    def sync_with_huisdier(self, huisdier_data: dict) -> None:
         """Synchroniseer met huisdier kennis data."""
         if "kennis" in huisdier_data:
             self.memory.sync_with_huisdier(huisdier_data["kennis"])

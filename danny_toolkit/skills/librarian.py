@@ -1,12 +1,14 @@
 """
 TheLibrarian — De Bibliothecaris van Project Omega.
 
-from __future__ import annotations
+
 
 Beheert de Knowledge Base: leest bestanden, chunked
 tekst en slaat op in ChromaDB met sentence-transformer
 embeddings (paraphrase-multilingual-mpnet-base-v2).
 """
+
+from __future__ import annotations
 
 import os
 

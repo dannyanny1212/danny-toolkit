@@ -2,6 +2,8 @@
 Code Snippets v1.0 - Persoonlijke code bibliotheek met tags en zoeken.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 from datetime import datetime
@@ -38,7 +40,8 @@ class CodeSnippetsApp:
         "powershell": {"ext": ".ps1", "comment": "#"},
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         Config.ensure_dirs()
         self.data_dir = Config.APPS_DATA_DIR / "code_snippets"
         self.data_dir.mkdir(exist_ok=True)
@@ -59,7 +62,7 @@ class CodeSnippetsApp:
             "collecties": {},
         }
 
-    def _sla_op(self):
+    def _sla_op(self) -> None:
         """Sla data op."""
         with open(self.data_file, "w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2, ensure_ascii=False)
@@ -68,7 +71,7 @@ class CodeSnippetsApp:
         """Genereer unieke snippet ID."""
         return f"snip_{datetime.now().strftime('%Y%m%d%H%M%S')}"
 
-    def _nieuwe_snippet(self):
+    def _nieuwe_snippet(self) -> None:
         """Maak nieuwe snippet."""
         clear_scherm()
         print("\n  === NIEUWE SNIPPET ===\n")
@@ -143,7 +146,7 @@ class CodeSnippetsApp:
             tags.update(s.get("tags", []))
         return sorted(tags)
 
-    def _bekijk_snippets(self):
+    def _bekijk_snippets(self) -> None:
         """Bekijk alle snippets."""
         clear_scherm()
         print("\n  === CODE BIBLIOTHEEK ===\n")
@@ -189,7 +192,7 @@ class CodeSnippetsApp:
                     self._toon_snippet(s)
                     return
 
-    def _toon_snippet(self, snippet: Dict):
+    def _toon_snippet(self, snippet: Dict) -> None:
         """Toon snippet details."""
         clear_scherm()
         print("\n  " + "=" * 60)
@@ -249,7 +252,7 @@ class CodeSnippetsApp:
 
         input("\n  Druk op Enter...")
 
-    def _bewerk_snippet(self, snippet: Dict):
+    def _bewerk_snippet(self, snippet: Dict) -> None:
         """Bewerk een snippet."""
         print("\n  === BEWERK SNIPPET ===")
         print("  (Laat leeg om ongewijzigd te laten)\n")
@@ -288,7 +291,7 @@ class CodeSnippetsApp:
         self._sla_op()
         print("\n  Snippet bijgewerkt!")
 
-    def _zoek_snippets(self):
+    def _zoek_snippets(self) -> None:
         """Zoek in snippets."""
         clear_scherm()
         print("\n  === ZOEK SNIPPETS ===\n")
@@ -320,7 +323,7 @@ class CodeSnippetsApp:
             if 0 <= idx < len(resultaten):
                 self._toon_snippet(resultaten[idx])
 
-    def _filter_op_tag(self):
+    def _filter_op_tag(self) -> None:
         """Filter snippets op tag."""
         clear_scherm()
         print("\n  === FILTER OP TAG ===\n")
@@ -358,9 +361,9 @@ class CodeSnippetsApp:
                     if 0 <= idx2 < len(resultaten):
                         self._toon_snippet(resultaten[idx2])
         except (ValueError, IndexError):
-            pass
+            logger.debug("Suppressed error")
 
-    def _toon_favorieten(self):
+    def _toon_favorieten(self) -> None:
         """Toon favoriete snippets."""
         clear_scherm()
         print("\n  === FAVORIETE SNIPPETS ===\n")
@@ -382,7 +385,7 @@ class CodeSnippetsApp:
             if 0 <= idx < len(favorieten):
                 self._toon_snippet(favorieten[idx])
 
-    def _toon_statistieken(self):
+    def _toon_statistieken(self) -> None:
         """Toon statistieken."""
         clear_scherm()
         print("\n  === SNIPPET STATISTIEKEN ===\n")
@@ -417,7 +420,7 @@ class CodeSnippetsApp:
 
         input("\n  Druk op Enter...")
 
-    def run(self):
+    def run(self) -> None:
         """Start de app."""
         while True:
             clear_scherm()

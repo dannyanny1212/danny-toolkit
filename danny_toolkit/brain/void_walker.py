@@ -1,10 +1,13 @@
 """
 VoidWalker — Autonomous Web Research (v6.0 Invention).
 
+
 Last-resort researcher: doorzoekt DuckDuckGo + web scraper wanneer
 MEMEX geen resultaten oplevert. Gebruikt door _rag_enrich (swarm pipeline)
 en Dreamer (REM cycle). SDK: ``ddgs`` 9.10 context manager.
 """
+
+from __future__ import annotations
 
 import logging
 import os
@@ -84,7 +87,7 @@ class VoidWalker:
         3. Digest  — summarize via Groq 70B
         4. Integrate — ingest into VectorStore
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """### Docstring
 
 Initializes the instance with a Groq API client and knowledge storage.

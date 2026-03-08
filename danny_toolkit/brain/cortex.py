@@ -120,7 +120,7 @@ class TheCortex:
     - NeuralBus integratie voor live updates
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes the object, setting up clients, models, and connections to various components.
 
 ### Parameters
@@ -172,7 +172,7 @@ The initialization process involves:
             self._ensure_tables()
             self._build_graph()
 
-    def _ensure_tables(self):
+    def _ensure_tables(self) -> None:
         """Maak entities + knowledge_graph tabellen op CorticalStack DB."""
         if not self._stack:
             return
@@ -218,7 +218,7 @@ The initialization process involves:
         except Exception as e:
             print(f"{Kleur.ROOD}[Cortex] Tabel-fout: {e}{Kleur.RESET}")
 
-    def _build_graph(self):
+    def _build_graph(self) -> None:
         """Laad alle triples uit SQLite in NetworkX graaf."""
         if self._graph is None or not self._stack:
             return
@@ -297,7 +297,7 @@ The initialization process involves:
         entity_b: str,
         confidence: float = 0.5,
         bron: str = "system",
-    ):
+    ) -> None:
         """Sla een triple op in SQLite + sync naar NetworkX."""
         now = datetime.now().isoformat()
 

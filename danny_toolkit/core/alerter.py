@@ -11,6 +11,8 @@ Gebruik:
     alerter.alert(AlertLevel.KRITIEK, "Circuit breaker OPEN", bron="governor")
 """
 
+from __future__ import annotations
+
 import hashlib
 import logging
 import threading
@@ -59,7 +61,7 @@ class Alerter:
         AlertLevel.KRITIEK,
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes the object, setting up its internal state.
 
   * Creates a lock for thread safety
@@ -328,7 +330,7 @@ class Alerter:
             stats["escalation_count"] = self._escalatie_count
             return stats
 
-    def clear_history(self):
+    def clear_history(self) -> None:
         """Wis alert history en reset stats."""
         with self._lock:
             self._history.clear()

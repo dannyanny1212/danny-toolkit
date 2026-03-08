@@ -1,6 +1,6 @@
 """
 Virtueel Huisdier App.
-from __future__ import annotations
+
 
 Versie 6.11.0 - VOLLEDIG AI-POWERED HUISDIER!
 
@@ -20,6 +20,8 @@ Integreert met:
 - Weer Agent (echte weer data)
 - Claude AI (echte conversaties)
 """
+
+from __future__ import annotations
 
 import json
 import logging

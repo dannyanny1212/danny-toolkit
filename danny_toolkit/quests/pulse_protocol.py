@@ -58,7 +58,7 @@ class PulseProtocol:
 
         return {"bpm": bpm, "hrv": hrv}
 
-    def iolaax_analyze(self, bio_data) -> None:
+    def iolaax_analyze(self, bio_data: object) -> None:
         """[IOLAAX] Berekent Stress Score."""
         stress_score = (
             (bio_data["bpm"] / 2) - (bio_data["hrv"] / 4)
@@ -67,7 +67,7 @@ class PulseProtocol:
         is_calm = stress_score < 35
         return is_calm, stress_score
 
-    def cipher_sign(self, bio_data) -> None:
+    def cipher_sign(self, bio_data: object) -> None:
         """[CIPHER] Tekent de transactie."""
         salt = str(bio_data["bpm"])
         tx_hash = hashlib.sha256(
@@ -122,7 +122,7 @@ class PulseProtocol:
                     row[4],
                 )
 
-    def _step(self, i) -> None:
+    def _step(self, i: object) -> None:
         """Voert een logische stap uit."""
         bio = self.vita_heartbeat()
         calm, score = self.iolaax_analyze(bio)

@@ -23,6 +23,8 @@ Usage:
     run_morning_protocol()
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import json
@@ -174,7 +176,7 @@ def dna_scan() -> GitStatus:
     )
 
 
-def show_git_diff(files: List[str] = None):
+def show_git_diff(files: List[str] = None) -> None:
     """Show git diff for specific files or all."""
     if files:
         for f in files[:3]:  # Max 3 files
@@ -249,7 +251,7 @@ def load_previous_benchmark() -> Optional[BenchmarkResult]:
     return None
 
 
-def save_benchmark(result: BenchmarkResult):
+def save_benchmark(result: BenchmarkResult) -> None:
     """Save benchmark for future comparison."""
     if not HAS_CONFIG:
         return
@@ -435,7 +437,7 @@ def generate_report(
 
 # === DISPLAY ===
 
-def print_header():
+def print_header() -> None:
     """Print morning protocol header."""
     print()
     print(c("=" * 70, "cyan"))
@@ -448,7 +450,7 @@ def print_header():
     print()
 
 
-def print_layer1(git: GitStatus):
+def print_layer1(git: GitStatus) -> None:
     """Print Layer 1: DNA Scan results."""
     print(c("  LAAG 1: DNA SCAN (Git)", "yellow"))
     print("  " + "-" * 50)
@@ -485,7 +487,7 @@ def print_layer1(git: GitStatus):
     print()
 
 
-def print_layer2(bench: BenchmarkResult, prev: Optional[BenchmarkResult] = None):
+def print_layer2(bench: BenchmarkResult, prev: Optional[BenchmarkResult] = None) -> None:
     """Print Layer 2: Speed Test results."""
     print(c("  LAAG 2: SNELHEIDSTEST (Benchmark)", "yellow"))
     print("  " + "-" * 50)
@@ -535,7 +537,7 @@ def print_layer2(bench: BenchmarkResult, prev: Optional[BenchmarkResult] = None)
     print()
 
 
-def print_layer3(heart: HeartbeatResult):
+def print_layer3(heart: HeartbeatResult) -> None:
     """Print Layer 3: Heartbeat results."""
     print(c("  LAAG 3: HEARTBEAT (Levend?)", "yellow"))
     print("  " + "-" * 50)
@@ -568,7 +570,7 @@ def print_layer3(heart: HeartbeatResult):
     print()
 
 
-def print_verdict(report: VerificationReport):
+def print_verdict(report: VerificationReport) -> None:
     """Print final verdict."""
     print(c("=" * 70, "cyan"))
     print()

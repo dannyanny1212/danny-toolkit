@@ -12,9 +12,14 @@ Geëxtraheerd uit trinity_omega.py (Fase C.2 monoliet split).
 Mixin leest alles via self.* (PrometheusBrain attributen).
 """
 
+from __future__ import annotations
+
 import time
 from datetime import datetime
 from typing import Dict
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class PrometheusProtocolsMixin:

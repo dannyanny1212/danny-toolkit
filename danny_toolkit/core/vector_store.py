@@ -1,7 +1,10 @@
 """
 Vector database met JSON backend.
+
 Versie 2.0 - Met backup/restore, statistieken en filtering.
 """
+
+from __future__ import annotations
 
 import json
 import logging
@@ -21,7 +24,7 @@ class VectorStore:
     Werkt altijd, geen externe dependencies.
     """
 
-    def __init__(self, embedding_provider: EmbeddingProvider, db_file: Path = None):
+    def __init__(self, embedding_provider: EmbeddingProvider, db_file: Path = None) -> None:
         """Initializes a new instance of the class.
 
  Args:
@@ -60,7 +63,7 @@ class VectorStore:
         else:
             print(f"   [OK] Vector DB (nieuw)")
 
-    def _opslaan(self):
+    def _opslaan(self) -> None:
         """Sla database op naar disk."""
         self.db_file.parent.mkdir(parents=True, exist_ok=True)
         data = {
@@ -71,7 +74,7 @@ class VectorStore:
         with open(self.db_file, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
 
-    def voeg_toe(self, documenten: list):
+    def voeg_toe(self, documenten: list) -> None:
         """
         Voeg documenten toe.
         Args: documenten: List van {"id": str, "tekst": str, "metadata": dict}
@@ -154,7 +157,7 @@ class VectorStore:
 
         return scores[:top_k]
 
-    def zoek_op_metadata(self, veld: str, waarde, exact: bool = True) -> list:
+    def zoek_op_metadata(self, veld: str, waarde: object, exact: bool = True) -> list:
         """
         Zoek documenten op metadata veld.
 
@@ -235,7 +238,7 @@ class VectorStore:
 
         return verwijderd
 
-    def wis(self):
+    def wis(self) -> None:
         """Wis alle documenten."""
         self.documenten = {}
         self._opslaan()
@@ -536,12 +539,13 @@ class VectorStore:
 class VectorStoreManager:
     """Manager voor meerdere vector stores."""
 
-    def __init__(self, embedder: EmbeddingProvider):
+    def __init__(self, embedder: EmbeddingProvider) -> None:
+        """Init  ."""
         self.embedder = embedder
         self.stores: Dict[str, VectorStore] = {}
         self._laad_stores()
 
-    def _laad_stores(self):
+    def _laad_stores(self) -> None:
         """Laad bestaande stores."""
         if Config.RAG_DATA_DIR.exists():
             for bestand in Config.RAG_DATA_DIR.glob("vector_db_*.json"):

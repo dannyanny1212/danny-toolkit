@@ -65,7 +65,7 @@ try:
     _sandbox_env = lambda: _get_env(test_mode=False)  # noqa: E731
 except ImportError:
     _VENV_PYTHON = sys.executable
-    def _sandbox_env():
+    def _sandbox_env() -> None:
         """Returns a copy of the current environment variables with modifications for a sandboxed environment.
  
 Modifications include:
@@ -118,7 +118,7 @@ class Artificer:
     Turns the toolkit into a self-expanding system.
     If a tool is missing, it is forged, verified, and cataloged.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes the instance with default directories and services.
 
  Configures the following instance variables:
@@ -146,7 +146,8 @@ class Artificer:
         self._bus = get_bus() if HAS_BUS else None
         self._ensure_setup()
 
-    def _ensure_setup(self):
+    def _ensure_setup(self) -> None:
+        """Ensure setup."""
         self.skills_dir.mkdir(parents=True, exist_ok=True)
         self.workspace_dir.mkdir(parents=True, exist_ok=True)
         if not self.registry_path.exists():
@@ -301,7 +302,7 @@ class Artificer:
             print(f"{Kleur.ROOD}📄 DocumentForge opslag mislukt: {e}{Kleur.RESET}")
             return f"❌ DocumentForge fout: {e}"
 
-    def _promoveer_workspace_docs(self, skill_name: str):
+    def _promoveer_workspace_docs(self, skill_name: str) -> None:
         """Scan workspace voor .md bestanden en routeer via DocumentForge.
 
         Na script-executie kunnen er .md bestanden in de workspace staan
@@ -372,6 +373,7 @@ Returns the sanitized task input string."""
         return sanitized[:500].strip()
 
     async def _write_script(self, task: str) -> Optional[str]:
+        """Write script."""
         workspace = str(self.workspace_dir).replace("\\", "/")
         safe_task = self._sanitize_task_input(task)
         prompt = (
@@ -555,7 +557,8 @@ Returns the sanitized task input string."""
                         missing.append(mod)
         return missing
 
-    def _save_script(self, filename: str, code: str, description: str):
+    def _save_script(self, filename: str, code: str, description: str) -> None:
+        """Save script."""
         path = self.skills_dir / filename
         with open(path, "w", encoding="utf-8") as f:
             f.write(code)
@@ -574,6 +577,7 @@ Returns the sanitized task input string."""
         print(f"{Kleur.GROEN}🛠️  Skill '{filename}' saved to registry.{Kleur.RESET}")
 
     def _run_script(self, filename: str) -> str:
+        """Run script."""
         path = str(self.skills_dir / filename)
         workspace = str(self.workspace_dir)
 
@@ -630,7 +634,7 @@ Returns the sanitized task input string."""
             self._mark_skill_status(filename, error=str(e))
             return f"❌ Execution error: {e}"
 
-    def _publish_event(self, event_type, data: dict):
+    def _publish_event(self, event_type: object, data: dict) -> None:
         """Publiceer event op NeuralBus als beschikbaar."""
         if self._bus and event_type:
             try:
@@ -638,7 +642,7 @@ Returns the sanitized task input string."""
             except Exception as e:
                 logger.debug("NeuralBus publish error: %s", e)
 
-    def _report_to_black_box(self, request: str, result: str, critique: str):
+    def _report_to_black_box(self, request: str, result: str, critique: str) -> None:
         """Log forge-fout naar BlackBox immuunsysteem.
 
         Creëert antibodies zodat dezelfde foutpatronen herkend en
@@ -658,7 +662,7 @@ Returns the sanitized task input string."""
         except Exception as e:
             logger.debug("BlackBox report error: %s", e)
 
-    def _mark_skill_status(self, filename: str, error: Optional[str]):
+    def _mark_skill_status(self, filename: str, error: Optional[str]) -> None:
         """Record success/failure in the registry so stale skills get re-forged."""
         reg = self._load_registry()
         if filename in reg:
@@ -677,6 +681,7 @@ Returns the sanitized task input string."""
                 )
 
     def _load_registry(self) -> Dict:
+        """Load registry."""
         try:
             with open(self.registry_path, "r", encoding="utf-8") as f:
                 return json.load(f)

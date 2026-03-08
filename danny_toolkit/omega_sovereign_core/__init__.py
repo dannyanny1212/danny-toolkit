@@ -14,6 +14,8 @@ Gebruik per module:
     from danny_toolkit.omega_sovereign_core.sovereign_engine import get_sovereign_engine
 """
 
+from __future__ import annotations
+
 __all__ = [
     # Modules (import individueel)
     "sovereign_gate",

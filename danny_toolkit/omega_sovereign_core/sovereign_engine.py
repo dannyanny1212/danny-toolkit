@@ -25,6 +25,8 @@ Gebruik:
     engine.run()  # of: await engine.run_async()
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import queue
@@ -68,7 +70,8 @@ class ViolationSweeper:
     EventSigner ↔ NeuralBus ↔ CorticalStack.
     """
 
-    def __init__(self, max_queue_size: int = 10000):
+    def __init__(self, max_queue_size: int = 10000) -> None:
+        """Init  ."""
         self._queue: queue.Queue = queue.Queue(maxsize=max_queue_size)
         self._thread: Optional[threading.Thread] = None
         self._running = False
@@ -143,6 +146,7 @@ class ViolationSweeper:
                 logger.debug("Sweeper loop fout: %s", e)
 
     def get_stats(self) -> dict:
+        """Get stats."""
         return {
             **self._stats,
             "queue_size": self._queue.qsize(),
@@ -162,6 +166,7 @@ class SwarmSnapshot:
     signature: Dict[str, str] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
+        """To dict."""
         return {
             "timestamp": self.timestamp,
             "engine_status": self.engine_status,
@@ -183,7 +188,8 @@ class SovereignEngine:
     - NeuralBus event broadcasting
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self._lock = threading.Lock()
         self._agents: Dict[str, Any] = {}  # naam -> agent instance
         self._agent_health: Dict[str, dict] = {}  # naam -> health info

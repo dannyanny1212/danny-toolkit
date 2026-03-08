@@ -63,7 +63,7 @@ class ThePhantom:
     # Minimum samples before a pattern is trusted
     MIN_SAMPLES = 3
 
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: Optional[str] = None) -> None:
         """### Docstring
 
 Initializes the database connection.
@@ -105,7 +105,7 @@ method is called to initialize the database schema."""
         self._cache_lock = threading.Lock()
         self._pre_warmed: Dict[str, List[str]] = {}
 
-    def _create_tables(self):
+    def _create_tables(self) -> None:
         """Create phantom_predictions and temporal_patterns tables."""
         self._conn.executescript("""
             CREATE TABLE IF NOT EXISTS phantom_predictions (
@@ -138,14 +138,14 @@ method is called to initialize the database schema."""
         """)
         self._conn.commit()
 
-    def close(self):
+    def close(self) -> None:
         """Sluit de SQLite connectie."""
         try:
             self._conn.close()
         except Exception as e:
             logger.debug("DB close error: %s", e)
 
-    def update_patterns(self):
+    def update_patterns(self) -> None:
         """Rebuild temporal patterns from interaction_trace.
 
         Called during Dreamer REM cycle (offline, CPU-friendly).
@@ -228,7 +228,7 @@ method is called to initialize the database schema."""
     def _upsert_pattern(
         self, pattern_type: str, time_slot: str,
         category: str, frequency: float, sample_count: int,
-    ):
+    ) -> None:
         """Insert or update a temporal pattern."""
         self._conn.execute(
             """INSERT INTO temporal_patterns
@@ -372,7 +372,7 @@ method is called to initialize the database schema."""
 
         return predictions
 
-    def registreer_patroon(self, pattern: str, bron: str = "extern"):
+    def registreer_patroon(self, pattern: str, bron: str = "extern") -> None:
         """Register an external shadow pattern for Phantom prediction.
 
         Called by ShadowCortex Channel 3 to prime Phantom with shadow-explored
@@ -438,7 +438,7 @@ method is called to initialize the database schema."""
             logger.debug("Phantom get_predictions failed: %s", e)
             return []
 
-    def pre_warm_context(self, engine=None):
+    def pre_warm_context(self, engine: object=None) -> None:
         """Pre-fetch MEMEX context for top prediction.
 
         Called after predict_next(). Fetches vector search results
@@ -521,7 +521,7 @@ method is called to initialize the database schema."""
 
         return context
 
-    def resolve_predictions(self, actual_category: str):
+    def resolve_predictions(self, actual_category: str) -> None:
         """Resolve unresolved predictions — mark as hit or miss.
 
         Called post-routing with the actual category.

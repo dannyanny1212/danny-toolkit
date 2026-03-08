@@ -8,6 +8,8 @@ Gebruik:
     verwijderd = roteer_logs(Path("data/logs"), max_leeftijd_dagen=30)
 """
 
+from __future__ import annotations
+
 import logging
 import time
 from pathlib import Path

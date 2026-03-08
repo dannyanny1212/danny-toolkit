@@ -1,6 +1,7 @@
 """
 Cortical Stack - Persistent Geheugen via SQLite.
 
+
 Episodic memory, semantic facts en system metrics in een
 thread-safe SQLite database. Complementeert de bestaande
 JSON-gebaseerde UnifiedMemory.
@@ -21,6 +22,8 @@ Gebruik:
 
 Geen nieuwe dependencies: sqlite3 is stdlib.
 """
+
+from __future__ import annotations
 
 import gzip
 import json
@@ -51,7 +54,7 @@ class CorticalStack:
     _BATCH_SIZE = 20        # flush na N writes
     _BATCH_INTERVAL = 5.0   # flush elke N seconden
 
-    def __init__(self, db_path: Optional[Path] = None):
+    def __init__(self, db_path: Optional[Path] = None) -> None:
         """Initializes a database connection.
 
  Args:
@@ -82,7 +85,7 @@ class CorticalStack:
 
     # ─── Schema ───
 
-    def _create_tables(self):
+    def _create_tables(self) -> None:
         """Maak tabellen en indexes aan."""
         with self._lock:
             cur = self._conn.cursor()
@@ -154,7 +157,7 @@ class CorticalStack:
 
             self._conn.commit()
 
-    def _maybe_flush(self):
+    def _maybe_flush(self) -> None:
         """Commit als batch vol is of interval verstreken.
 
         Moet aangeroepen worden BINNEN self._lock.
@@ -169,7 +172,7 @@ class CorticalStack:
             self._pending_writes = 0
             self._last_flush = now
 
-    def flush(self):
+    def flush(self) -> None:
         """Forceer commit van alle pending writes + WAL checkpoint."""
         with self._lock:
             if self._pending_writes > 0:
@@ -514,7 +517,7 @@ class CorticalStack:
 
         return metrics
 
-    def prune_old_stats(self, days: int = 30):
+    def prune_old_stats(self, days: int = 30) -> None:
         """Verwijder system_stats ouder dan X dagen."""
         cutoff = (
             datetime.now() - timedelta(days=days)
@@ -577,7 +580,7 @@ class CorticalStack:
 
         return backup_path
 
-    def _prune_backups(self, backup_dir: Path):
+    def _prune_backups(self, backup_dir: Path) -> None:
         """Keep only the last _MAX_BACKUPS backup files."""
         pattern = "cortical_stack_*"
         backups = sorted(backup_dir.glob(pattern), key=lambda p: p.name)
@@ -665,7 +668,7 @@ class CorticalStack:
 
         return deleted
 
-    def close(self):
+    def close(self) -> None:
         """Flush pending writes en sluit de database."""
         try:
             self.flush()

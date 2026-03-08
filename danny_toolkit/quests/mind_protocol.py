@@ -1,6 +1,5 @@
 """
 QUEST III: THE MIND
-from __future__ import annotations
 
 ====================
 "Emotions Shape the Machine"
@@ -13,6 +12,8 @@ Spelers:
 - MOOD          (9 stemmingen)  - Emotioneel spectrum
 - AVATAR FORM   (7 vormen)     - Visuele representatie
 """
+
+from __future__ import annotations
 
 from danny_toolkit.core.utils import kleur, Kleur, succes, fout, info
 from danny_toolkit.daemon.limbic_system import (

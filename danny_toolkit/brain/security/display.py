@@ -34,7 +34,7 @@ class SecurityDisplayMixin:
     - self.volledig_rapport()
     """
 
-    def toon_rapport(self, rapport=None) -> None:
+    def toon_rapport(self, rapport: object=None) -> None:
         """Toon visueel rapport (zelfde stijl als FileGuard)."""
         if rapport is None:
             rapport = self.volledig_rapport()
@@ -328,7 +328,7 @@ class SecurityDisplayMixin:
 
     # -- CLI sub-displays --
 
-    def _toon_wallet_resultaat(self, r) -> None:
+    def _toon_wallet_resultaat(self, r: object) -> None:
         """Toon wallet resultaat."""
         bev = r.get("bevindingen", [])
         bal = r.get("balances", {})
@@ -369,7 +369,7 @@ class SecurityDisplayMixin:
                     Kleur.DIM,
                 ))
 
-    def _toon_markt_resultaat(self, r) -> None:
+    def _toon_markt_resultaat(self, r: object) -> None:
         """Toon markt resultaat."""
         prijzen = r.get("prijzen", {})
         alerts = r.get("alerts", [])
@@ -399,7 +399,7 @@ class SecurityDisplayMixin:
                 ),
             ))
 
-    def _toon_audit_resultaat(self, r) -> None:
+    def _toon_audit_resultaat(self, r: object) -> None:
         """Toon audit resultaat."""
         bev = r.get("bevindingen", [])
         print(kleur(
@@ -423,7 +423,7 @@ class SecurityDisplayMixin:
                 ek,
             ))
 
-    def _toon_systeem_resultaat(self, r) -> None:
+    def _toon_systeem_resultaat(self, r: object) -> None:
         """Toon systeem resultaat."""
         print(kleur(
             "\n  SYSTEEM:", Kleur.FEL_GEEL,
@@ -473,7 +473,7 @@ class SecurityDisplayMixin:
                 ),
             ))
 
-    def _toon_rag_resultaat(self, r) -> None:
+    def _toon_rag_resultaat(self, r: object) -> None:
         """Toon rag resultaat."""
         chroma = r.get("chromadb_hits", [])
         stack = r.get("stack_hits", [])
@@ -518,7 +518,7 @@ class SecurityDisplayMixin:
                 ek,
             ))
 
-    def _toon_forensisch_resultaat(self, r) -> None:
+    def _toon_forensisch_resultaat(self, r: object) -> None:
         """Toon forensisch resultaat."""
         bev = r.get("bevindingen", [])
         det = r.get("details", {})
@@ -553,7 +553,7 @@ class SecurityDisplayMixin:
                 f"    [FOUT] {f_err}", Kleur.ROOD,
             ))
 
-    def _toon_balance(self, r) -> None:
+    def _toon_balance(self, r: object) -> None:
         """Toon balance."""
         bal = r.get("balances", {})
         print(kleur(

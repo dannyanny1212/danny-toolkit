@@ -12,6 +12,8 @@ Spelers:
 - CENTRAL BRAIN    (AI orkestrator) - Intelligentie
 """
 
+from __future__ import annotations
+
 import logging
 
 from danny_toolkit.core.utils import kleur, Kleur, succes, fout, info
@@ -26,11 +28,12 @@ from danny_toolkit.brain.nexus_bridge import (
 class BridgeProtocol:
     """Quest VIII: The Bridge - Pixel ontmoet het Brein."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self.bridge = None
         self._init_bridge()
 
-    def _init_bridge(self):
+    def _init_bridge(self) -> None:
         """Initialiseer de Nexus Bridge."""
         try:
             self.bridge = create_nexus_bridge()
@@ -56,7 +59,7 @@ class BridgeProtocol:
             "status": "operationeel",
         }
 
-    def run_simulation(self):
+    def run_simulation(self) -> None:
         """Demo: bridge connectie en oracle mode."""
         print(kleur(
             "  QUEST VIII: THE BRIDGE\n"

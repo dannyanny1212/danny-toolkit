@@ -66,6 +66,7 @@ The result is rounded to two decimal places."""
         return 0.0
 
     def to_dict(self) -> Dict[str, Any]:
+        """To dict."""
         return {
             "fase": self.fase,
             "agent": self.agent,
@@ -86,6 +87,7 @@ class RequestTrace:
 
     @property
     def duration_ms(self) -> float:
+        """Duration ms."""
         if self.spans:
             eind = max(
                 (s.eind_ms for s in self.spans if s.eind_ms > 0),
@@ -95,6 +97,7 @@ class RequestTrace:
         return 0.0
 
     def to_dict(self) -> Dict[str, Any]:
+        """To dict."""
         return {
             "trace_id": self.trace_id,
             "start": self.start,
@@ -128,7 +131,7 @@ class RequestTracer:
 
     _MAX_TRACES = 200
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes the object, setting up synchronization and data structures to manage request traces.
 
  * Acquires a lock (`self._lock`) for thread-safe operations.
@@ -199,7 +202,7 @@ class RequestTracer:
         self,
         status: str = "ok",
         details: Optional[Dict[str, Any]] = None,
-    ):
+    ) -> None:
         """Sluit de huidige span.
 
         Args:
@@ -219,7 +222,7 @@ class RequestTracer:
         except Exception as e:
             logger.debug("RequestTracer eind_span fout: %s", e)
 
-    def registreer_fout(self, fout_id: str):
+    def registreer_fout(self, fout_id: str) -> None:
         """Registreer een fout-ID in de huidige trace.
 
         Args:

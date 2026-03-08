@@ -16,6 +16,8 @@ Gebruik:
     ok, receipt = mi.secure_store_state("brain_cli", {"history": [...]})
 """
 
+from __future__ import annotations
+
 import hashlib
 import json
 import logging
@@ -74,6 +76,7 @@ class StoreReceipt:
     error: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
+        """To dict."""
         return {
             "timestamp": self.timestamp,
             "component": self.component,
@@ -96,7 +99,8 @@ class SecureMemoryInterface:
     - CorticalStack logging van alle operaties
     """
 
-    def __init__(self, data_dir: Optional[Path] = None):
+    def __init__(self, data_dir: Optional[Path] = None) -> None:
+        """Init  ."""
         self._data_dir = Path(data_dir) if data_dir else _DATA_DIR
         self._archive_dir = self._data_dir / _STATE_ARCHIVE_DIR
         self._chain_path = self._data_dir / _HASH_CHAIN_FILE
@@ -123,12 +127,10 @@ class SecureMemoryInterface:
         # Skip CorticalStack in test mode (voorkomt SQLite WAL lock deadlocks)
         if not os.environ.get("DANNY_TEST_MODE"):
             try:
-                from danny_toolkit.brain.cortical_stack import get_cortical_stack
                 self._stack = get_cortical_stack()
             except (ImportError, Exception) as e:
                 logger.debug("CorticalStack niet beschikbaar voor MemoryInterface: %s", e)
         try:
-            from danny_toolkit.omega_sovereign_core.event_signing import get_event_signer
             self._signer = get_event_signer()
         except (ImportError, Exception) as e:
             logger.debug("EventSigner niet beschikbaar voor MemoryInterface: %s", e)
@@ -433,6 +435,15 @@ class SecureMemoryInterface:
                 )
             except Exception as e:
                 logger.debug("CorticalStack memory log mislukt: %s", e)
+
+try:
+    from danny_toolkit.omega_sovereign_core.event_signing import get_event_signer
+except ImportError:
+    pass
+try:
+    from danny_toolkit.brain.cortical_stack import get_cortical_stack
+except ImportError:
+    pass
 
     # ── Stats & Diagnostics ──
 

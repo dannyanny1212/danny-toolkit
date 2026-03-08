@@ -7,6 +7,8 @@ Features:
 - Leert gebruikersvoorkeuren
 """
 
+from __future__ import annotations
+
 import json
 import logging
 
@@ -24,7 +26,7 @@ class PatternRecognizer:
     MIN_CACHE_SCORE = 0.8
     MIN_FREQUENCY_FOR_CACHE = 3
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialiseer PatternRecognizer."""
         Config.ensure_dirs()
         self.data_dir = Config.APPS_DATA_DIR / "learning"
@@ -63,7 +65,7 @@ class PatternRecognizer:
             },
         }
 
-    def save(self):
+    def save(self) -> None:
         """Sla data op naar disk."""
         with open(self.patterns_file, "w", encoding="utf-8") as f:
             json.dump(self._data, f, indent=2, ensure_ascii=False)
@@ -75,7 +77,7 @@ class PatternRecognizer:
         query = re.sub(r"\s+", " ", query)
         return query
 
-    def record_query(self, query: str):
+    def record_query(self, query: str) -> None:
         """Registreer een query voor frequentie tracking."""
         normalized = self._normalize_query(query)
 
@@ -127,7 +129,7 @@ class PatternRecognizer:
         query: str,
         response: str,
         score: float,
-    ):
+    ) -> None:
         """Cache een succesvolle response.
 
         Alleen responses met score >= MIN_CACHE_SCORE worden gecached.
@@ -199,7 +201,7 @@ class PatternRecognizer:
 
         return preferences
 
-    def update_preference(self, key: str, value):
+    def update_preference(self, key: str, value: str) -> None:
         """Update een gebruikersvoorkeur."""
         if key in self._data["user_preferences"]:
             self._data["user_preferences"][key] = value
@@ -244,9 +246,8 @@ class PatternRecognizer:
             "most_frequent": self.get_frequent_queries(5),
         }
 
-    def cleanup_old_cache(self, min_score: float = 0.5, max_age_days: int = 30):
+    def cleanup_old_cache(self, min_score: float = 0.5, max_age_days: int = 30) -> None:
         """Ruim oude of slechte cache entries op."""
-        from datetime import timedelta
 
         cutoff = datetime.now() - timedelta(days=max_age_days)
         cutoff_str = cutoff.isoformat()

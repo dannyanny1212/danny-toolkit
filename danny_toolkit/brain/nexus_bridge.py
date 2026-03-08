@@ -9,6 +9,8 @@ DATE: 7 februari 2026
 STATUS: SACRED INTEGRATION
 """
 
+from __future__ import annotations
+
 import json
 import logging
 from datetime import datetime
@@ -30,7 +32,7 @@ class NexusBridge:
     - Emotie-gestuurde adviezen
     """
 
-    def __init__(self, huisdier_data: dict = None):
+    def __init__(self, huisdier_data: dict = None) -> None:
         """
         Initialiseer de NEXUS Bridge.
 
@@ -56,7 +58,7 @@ class NexusBridge:
                     logger.debug("NexusBridge pixel data load failed: %s", e)
         return {}
 
-    def _init_brain(self):
+    def _init_brain(self) -> None:
         """Initialiseer Central Brain connectie."""
         try:
             from danny_toolkit.brain.central_brain import CentralBrain
@@ -385,7 +387,7 @@ class NexusOracleMode:
     voor diepere, cross-domain inzichten.
     """
 
-    def __init__(self, bridge: NexusBridge):
+    def __init__(self, bridge: NexusBridge) -> None:
         """Initializes a new instance with the provided NexusBridge.
 
  Args:
@@ -409,7 +411,7 @@ class NexusOracleMode:
         self.active = True
         return True
 
-    def deactivate(self):
+    def deactivate(self) -> None:
         """Deactiveer Oracle Mode."""
         self.active = False
 

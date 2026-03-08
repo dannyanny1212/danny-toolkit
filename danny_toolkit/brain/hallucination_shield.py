@@ -157,7 +157,7 @@ class HallucinatieSchild:
         r"wetenschappelijk\s+bewezen\s+feit",
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes a new instance, setting up synchronization and tracking state.
 
  Attributes:
@@ -185,7 +185,7 @@ class HallucinatieSchild:
             "tribunal_escalaties": 0,
         }
 
-    def _get_truth_anchor(self):
+    def _get_truth_anchor(self) -> None:
         """Lazy TruthAnchor — only load when needed and available."""
         if not self._truth_anchor_checked:
             self._truth_anchor_checked = True
@@ -196,7 +196,7 @@ class HallucinatieSchild:
                     logger.debug("TruthAnchor load: %s", e)
         return self._truth_anchor
 
-    def _get_adversarial_tribunal(self):
+    def _get_adversarial_tribunal(self) -> None:
         """Lazy AdversarialTribunal — multi-model verificatie bij onzekere scores."""
         if not self._adversarial_tribunal_checked:
             self._adversarial_tribunal_checked = True
@@ -207,13 +207,12 @@ class HallucinatieSchild:
                     logger.debug("AdversarialTribunal load: %s", e)
         return self._adversarial_tribunal
 
-    def _get_reality_anchor(self):
+    def _get_reality_anchor(self) -> None:
         """Lazy RealityAnchor — AST codebase scanner."""
         if not self._reality_anchor_checked:
             self._reality_anchor_checked = True
             if HAS_REALITY_ANCHOR:
                 try:
-                    from danny_toolkit.core.config import Config
                     root = str(Config.BASE_DIR / "danny_toolkit")
                     self._reality_anchor = RealityAnchor(root)
                 except Exception as e:
@@ -729,7 +728,7 @@ class HallucinatieSchild:
     def _log_naar_blackbox(
         self, rapport: HallucinatieRapport,
         payloads: list, user_input: str,
-    ):
+    ) -> None:
         """Log geblokkeerde output naar BlackBox."""
         if not HAS_BLACKBOX:
             return
@@ -751,7 +750,7 @@ class HallucinatieSchild:
 
     def _publiceer_event(
         self, rapport: HallucinatieRapport, user_input: str,
-    ):
+    ) -> None:
         """Publiceer HALLUCINATION_BLOCKED event op NeuralBus."""
         if not HAS_BUS:
             return
@@ -771,12 +770,17 @@ class HallucinatieSchild:
         except Exception as e:
             logger.debug("NeuralBus publicatie mislukt: %s", e)
 
+try:
+    from danny_toolkit.core.config import Config
+except ImportError:
+    pass
+
     def get_stats(self) -> dict:
         """Retourneer thread-safe statistieken."""
         with self._lock:
             return dict(self._stats)
 
-    def reset_stats(self):
+    def reset_stats(self) -> None:
         """Reset statistieken (voor tests)."""
         with self._lock:
             for key in self._stats:

@@ -24,6 +24,8 @@ Stop:
     wt.stop()
 """
 
+from __future__ import annotations
+
 import atexit
 import logging
 import os
@@ -100,6 +102,7 @@ class Alert:
     details: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
+        """To dict."""
         return {
             "timestamp": self.timestamp,
             "severity": self.severity,
@@ -120,7 +123,8 @@ class Watchtower:
         interval_sec: Scan interval in seconden (default 60).
     """
 
-    def __init__(self, interval_sec: int = _DEFAULT_INTERVAL_SEC):
+    def __init__(self, interval_sec: int = _DEFAULT_INTERVAL_SEC) -> None:
+        """Init  ."""
         self._interval = max(interval_sec, _MIN_INTERVAL_SEC)
         self._stop_event = threading.Event()
         self._thread: Optional[threading.Thread] = None
@@ -420,7 +424,7 @@ class Watchtower:
                 flush=True,
             )
         except UnicodeEncodeError:
-            pass
+            logger.debug("Suppressed error")
 
         # Eerste scan onmiddellijk
         try:

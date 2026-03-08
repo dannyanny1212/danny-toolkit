@@ -6,6 +6,8 @@ output onafhankelijk. Alleen bij consensus wordt het resultaat geaccepteerd.
 Voorkomt single-model hallucinaties via redundante verificatie.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 
@@ -58,7 +60,7 @@ class Tribunal:
     Worker (70B) generates content.
     Auditor (8B) aggressively critiques it.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes the instance with a Groq API client and model configurations.
 
 If the key manager is available, creates an asynchronous Groq client through the key manager; 
@@ -148,7 +150,8 @@ If initialization fails, logs the error and continues without a TruthAnchor."""
             logger.debug("TruthAnchor verify error: %s", e)
             return (True, 1.0)  # Fail-open: bij fout, doorlaten
 
-    async def _ask_groq(self, model, text):
+    async def _ask_groq(self, model: object, text: str) -> None:
+        """Ask groq."""
         if HAS_RETRY:
             result = await groq_call_async(
                 self.client, "Tribunal", model,

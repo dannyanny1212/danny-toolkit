@@ -35,6 +35,7 @@ except ImportError:
     Kleur = None
 
     def kleur(tekst: str, _kleur: object = None) -> str:
+        """Kleur."""
         return str(tekst)
 
 
@@ -60,7 +61,7 @@ def _detect_base_dir() -> Path:
         try:
             return Path(Config.BASE_DIR)
         except Exception:
-            pass
+            logger.debug("Suppressed error")
 
     for anchor in (Path(__file__).resolve(), Path.cwd()):
         current = anchor
@@ -80,7 +81,8 @@ class AdvancedKnowledgeBridge:
     asyncio event loop clashes in CentralBrain's tool dispatch.
     """
 
-    def __init__(self, db_path: str | None = None):
+    def __init__(self, db_path: str | None = None) -> None:
+        """Init  ."""
         if MarkdownHeaderTextSplitter is None:
             raise ImportError("langchain_text_splitters is vereist")
 
@@ -91,7 +93,7 @@ class AdvancedKnowledgeBridge:
         self._client = None
         self._collection = None
 
-    def _get_collection(self):
+    def _get_collection(self) -> None:
         """Lazy instantiatie in geïsoleerde thread — voorkomt asyncio clashes.
 
         ChromaDB PersistentClient gebruikt intern asyncio-componenten.
@@ -107,7 +109,8 @@ class AdvancedKnowledgeBridge:
 
             init_error = [None]
 
-            def _do_init():
+            def _do_init() -> None:
+                """Do init."""
                 try:
                     import chromadb
                     self._client = chromadb.PersistentClient(path=self.db_path)
@@ -323,7 +326,8 @@ class AdvancedKnowledgeBridge:
         result_holder: list = [None]
         error_holder: list = [None]
 
-        def _do_query():
+        def _do_query() -> None:
+            """Do query."""
             try:
                 collection = self._get_collection()
 

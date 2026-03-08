@@ -87,7 +87,7 @@ class TheSynapse:
         "tribunal_reject": -0.8,      # Strong negative
     }
 
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: Optional[str] = None) -> None:
         """Initializes the object with a SQLite database connection.
 
  Args:
@@ -122,7 +122,7 @@ class TheSynapse:
         self._embed_fn = None
         self._profiel_embeddings = None
 
-    def _create_tables(self):
+    def _create_tables(self) -> None:
         """Create synaptic_pathways and interaction_trace tables."""
         self._conn.executescript("""
             CREATE TABLE IF NOT EXISTS synaptic_pathways (
@@ -162,13 +162,11 @@ class TheSynapse:
         """)
         self._conn.commit()
 
-    def _get_embed_fn(self):
+    def _get_embed_fn(self) -> None:
         """Reuse AdaptiveRouter's embedding function (zero extra load)."""
         if self._embed_fn is not None:
             return self._embed_fn
         try:
-            import sys
-            import io as _io
             from sentence_transformers import SentenceTransformer
             _old_out, _old_err = sys.stdout, sys.stderr
             sys.stdout = _io.StringIO()
@@ -187,7 +185,7 @@ class TheSynapse:
             logger.debug("SentenceTransformer laden mislukt: %s", e)
             return None
 
-    def _get_profiel_embeddings(self):
+    def _get_profiel_embeddings(self) -> None:
         """Lazy-load agent profile embeddings."""
         if self._profiel_embeddings is not None:
             return self._profiel_embeddings
@@ -196,7 +194,6 @@ class TheSynapse:
             return None
         try:
             # Import AGENT_PROFIELEN from swarm_engine
-            from danny_toolkit.core.engine import AdaptiveRouter
             self._profiel_embeddings = {}
             for agent, subs in AdaptiveRouter.AGENT_PROFIELEN.items():
                 self._profiel_embeddings[agent] = [
@@ -208,7 +205,7 @@ class TheSynapse:
             return None
 
     @staticmethod
-    def _cosine_sim(vec_a, vec_b) -> float:
+    def _cosine_sim(vec_a: object, vec_b: object) -> float:
         """Cosine similarity between two vectors."""
         dot = sum(a * b for a, b in zip(vec_a, vec_b))
         mag_a = math.sqrt(sum(a ** 2 for a in vec_a))
@@ -258,7 +255,7 @@ class TheSynapse:
         execution_ms: float = 0,
         response_length: int = 0,
         session_id: str = None,
-    ):
+    ) -> None:
         """Record an interaction trace and resolve previous interaction's feedback.
 
         Called post-pipeline. Records the current interaction, then
@@ -347,7 +344,7 @@ class TheSynapse:
 
     def _apply_plasticity(
         self, category: str, agent: str, signal: float,
-    ):
+    ) -> None:
         """Apply Hebbian plasticity to a synaptic pathway.
 
         Positive signal -> strengthen, negative -> weaken.
@@ -414,7 +411,7 @@ class TheSynapse:
 
     def record_tribunal_reject(
         self, user_input: str, agents: List[str],
-    ):
+    ) -> None:
         """Record a tribunal rejection as strong negative feedback."""
         category = self.categorize_query(user_input)
         for agent in agents:
@@ -438,6 +435,13 @@ class TheSynapse:
                 )
             except Exception as e:
                 logger.debug("NeuralBus publish failed: %s", e)
+
+import sys
+import io
+try:
+    from danny_toolkit.core.engine import AdaptiveRouter
+except ImportError:
+    pass
 
     def get_routing_bias(self, user_input: str) -> Dict[str, float]:
         """Get bias multipliers for routing.
@@ -471,7 +475,7 @@ class TheSynapse:
 
         return bias
 
-    def decay_unused(self, days_threshold: int = 7):
+    def decay_unused(self, days_threshold: int = 7) -> None:
         """Synaptic pruning — decay pathways not fired recently.
 
         Called during Dreamer REM cycle. Pathways not updated

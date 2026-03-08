@@ -13,6 +13,8 @@ Gebruik:
     mgr.engage_lockdown("Law #6 violated: hardware mismatch")
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import threading
@@ -52,6 +54,7 @@ class LockdownEvent:
     resolved_at: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
+        """To dict."""
         return {
             "timestamp": self.timestamp,
             "level": self.level,
@@ -76,7 +79,8 @@ class LockdownManager:
 
     _MAX_EVENTS = 200
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self._lock = threading.Lock()
         self._active = False
         self._level: Optional[LockdownLevel] = None
@@ -94,12 +98,10 @@ class LockdownManager:
         self._backends_loaded = True
         if not os.environ.get("DANNY_TEST_MODE"):
             try:
-                from danny_toolkit.core.neural_bus import get_bus
                 self._bus = get_bus()
             except ImportError:
                 logger.debug("NeuralBus niet beschikbaar voor lockdown")
             try:
-                from danny_toolkit.brain.cortical_stack import get_cortical_stack
                 self._stack = get_cortical_stack()
             except ImportError:
                 logger.debug("CorticalStack niet beschikbaar voor lockdown")
@@ -124,6 +126,7 @@ class LockdownManager:
         law_violated: str = "unknown",
         level: LockdownLevel = LockdownLevel.PARTIAL,
     ) -> LockdownEvent:
+        """Engage lockdown."""
         self._ensure_backends()
         """
         Activeer het lockdown protocol.
@@ -219,7 +222,6 @@ class LockdownManager:
         """Stop alle non-essential agents."""
         actions = []
         try:
-            from danny_toolkit.brain.arbitrator import get_arbitrator
             arb = get_arbitrator()
             if hasattr(arb, "pause_all"):
                 arb.pause_all()
@@ -258,7 +260,6 @@ class LockdownManager:
         """Stuur Telegram alert (best-effort)."""
         actions = []
         try:
-            from danny_toolkit.core.alerter import get_alerter, AlertLevel
             alerter = get_alerter()
             alerter.alert(
                 AlertLevel.CRITICAL,
@@ -362,6 +363,23 @@ class LockdownManager:
                 )
             except Exception as e:
                 logger.debug("CorticalStack lockdown log mislukt: %s", e)
+
+try:
+    from danny_toolkit.core.neural_bus import get_bus
+except ImportError:
+    pass
+try:
+    from danny_toolkit.brain.cortical_stack import get_cortical_stack
+except ImportError:
+    pass
+try:
+    from danny_toolkit.brain.arbitrator import get_arbitrator
+except ImportError:
+    pass
+try:
+    from danny_toolkit.core.alerter import get_alerter, AlertLevel
+except ImportError:
+    pass
 
 
 # ── Singleton ──

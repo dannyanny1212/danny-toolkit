@@ -67,7 +67,7 @@ def genereer_data() -> None:
     }
 
 
-def plot_correlatie(data, output_pad) -> None:
+def plot_correlatie(data: dict, output_pad: object) -> None:
     """Plot 3-panel grafiek."""
     fig, axes = plt.subplots(3, 1, figsize=(12, 14))
     fig.suptitle(

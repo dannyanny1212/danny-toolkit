@@ -17,6 +17,8 @@ Gebruik:
     rapport = waakhuis.gezondheidsrapport()
 """
 
+from __future__ import annotations
+
 import logging
 import math
 import os
@@ -77,7 +79,7 @@ class WaakhuisMonitor:
     HEARTBEAT_TIMEOUT = 60  # seconden — agent is stale na 60s zonder dispatch
     _MAX_LATENCIES = 500    # max latencies per agent in-memory
 
-    def __init__(self, db_path: Optional[str] = None):
+    def __init__(self, db_path: Optional[str] = None) -> None:
         """Initializes the metrics tracking object.
 
  Args:
@@ -122,7 +124,7 @@ class WaakhuisMonitor:
         self._conn: Optional[sqlite3.Connection] = None
         self._init_db()
 
-    def _init_db(self):
+    def _init_db(self) -> None:
         """Initialiseer SQLite tabel voor metrics."""
         try:
             self._conn = sqlite3.connect(
@@ -157,7 +159,7 @@ class WaakhuisMonitor:
             logger.debug("WaakhuisMonitor DB init fout: %s", e)
             self._conn = None
 
-    def registreer_dispatch(self, agent_naam: str, latency_ms: float):
+    def registreer_dispatch(self, agent_naam: str, latency_ms: float) -> None:
         """Registreer een succesvolle agent dispatch.
 
         Args:
@@ -185,7 +187,7 @@ class WaakhuisMonitor:
             except Exception as e:
                 logger.debug("WaakhuisMonitor persist dispatch fout: %s", e)
 
-    def registreer_fout(self, agent_naam: str, fout_type: str, beschrijving: str = ""):
+    def registreer_fout(self, agent_naam: str, fout_type: str, beschrijving: str = "") -> None:
         """Registreer een agent fout met ernst classificatie.
 
         Args:
@@ -420,7 +422,7 @@ class WaakhuisMonitor:
 
         return status
 
-    def _escaleer_alert(self, alert_key: str, bericht: str):
+    def _escaleer_alert(self, alert_key: str, bericht: str) -> None:
         """Verstuur en escaleer alerts bij herhaalde problemen."""
         self._stats["alerts_verstuurd"] += 1
 
@@ -444,7 +446,7 @@ class WaakhuisMonitor:
             except Exception as e:
                 logger.debug("Waakhuis NeuralBus publish fout: %s", e)
 
-    def _publiceer_gezondheid(self, rapport: dict):
+    def _publiceer_gezondheid(self, rapport: dict) -> None:
         """Publiceer gezondheidsrapport op NeuralBus."""
         if HAS_BUS:
             try:
@@ -461,7 +463,7 @@ class WaakhuisMonitor:
             except Exception as e:
                 logger.debug("Waakhuis health publish fout: %s", e)
 
-    def opruimen(self, dagen: int = 30):
+    def opruimen(self, dagen: int = 30) -> None:
         """Verwijder metrics ouder dan N dagen uit SQLite.
 
         Args:
@@ -499,7 +501,7 @@ class WaakhuisMonitor:
         with self._lock:
             return dict(self._stats)
 
-    def reset_stats(self):
+    def reset_stats(self) -> None:
         """Reset alle in-memory tracking (voor tests)."""
         with self._lock:
             self._latencies.clear()
@@ -513,7 +515,7 @@ class WaakhuisMonitor:
                 "alerts_verstuurd": 0,
             }
 
-    def close(self):
+    def close(self) -> None:
         """Sluit SQLite connectie."""
         if self._conn:
             try:

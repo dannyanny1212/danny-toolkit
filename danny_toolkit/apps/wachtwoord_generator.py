@@ -2,6 +2,8 @@
 Wachtwoord Generator - Genereer veilige wachtwoorden.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import random
@@ -16,7 +18,8 @@ logger = logging.getLogger(__name__)
 class WachtwoordGeneratorApp:
     """Genereer veilige wachtwoorden."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         Config.ensure_dirs()
         self.bestand = Config.APPS_DATA_DIR / "wachtwoorden_history.json"
         self.history = self._laad_history()
@@ -31,12 +34,12 @@ class WachtwoordGeneratorApp:
                 logger.debug("Password history load error: %s", e)
         return []
 
-    def _sla_op(self):
+    def _sla_op(self) -> None:
         """Sla history op."""
         with open(self.bestand, "w", encoding="utf-8") as f:
             json.dump(self.history[-50:], f, indent=2)  # Max 50
 
-    def run(self):
+    def run(self) -> None:
         """Start de wachtwoord generator."""
         while True:
             clear_scherm()
@@ -68,7 +71,7 @@ class WachtwoordGeneratorApp:
 
             input("\nDruk op Enter...")
 
-    def _genereer_wachtwoord(self):
+    def _genereer_wachtwoord(self) -> None:
         """Genereer een wachtwoord met opties."""
         print("\n--- WACHTWOORD GENEREREN ---")
 
@@ -158,7 +161,7 @@ class WachtwoordGeneratorApp:
         else:
             return "ZEER STERK"
 
-    def _test_sterkte(self):
+    def _test_sterkte(self) -> None:
         """Test de sterkte van een wachtwoord."""
         print("\n--- WACHTWOORD STERKTE TEST ---")
         wachtwoord = input("Voer wachtwoord in: ").strip()
@@ -175,7 +178,7 @@ class WachtwoordGeneratorApp:
         print(f"  Heeft symbolen: {'Ja' if any(not c.isalnum() for c in wachtwoord) else 'Nee'}")
         print(f"\n  STERKTE: {sterkte}")
 
-    def _meerdere_wachtwoorden(self):
+    def _meerdere_wachtwoorden(self) -> None:
         """Genereer meerdere wachtwoorden."""
         print("\n--- MEERDERE WACHTWOORDEN ---")
 
@@ -195,7 +198,7 @@ class WachtwoordGeneratorApp:
             print(f"  {i + 1}. {wachtwoord}")
         print(f"{'=' * 50}")
 
-    def _genereer_pin(self):
+    def _genereer_pin(self) -> None:
         """Genereer een PIN code."""
         print("\n--- PIN CODE GENEREREN ---")
 
@@ -211,7 +214,7 @@ class WachtwoordGeneratorApp:
         print(f"  PIN: {pin}")
         print(f"{'=' * 30}")
 
-    def _bekijk_history(self):
+    def _bekijk_history(self) -> None:
         """Bekijk wachtwoord history."""
         print("\n--- WACHTWOORD HISTORY ---")
 

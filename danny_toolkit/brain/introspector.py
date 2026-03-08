@@ -377,7 +377,7 @@ class SystemIntrospector:
             return f"{pkg}.{name}" if pkg else name
         return f"danny_toolkit.brain.{name}"
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes the object, setting up its internal state.
 
  Configures the cortical stack, bus, and vector store for semantic self-memory.
@@ -495,7 +495,6 @@ class SystemIntrospector:
 
         # Governor check
         try:
-            from danny_toolkit.brain.governor import OmegaGovernor
             gov = OmegaGovernor.__new__(OmegaGovernor)
             status["governor_actief"] = True
             status["prompt_injection_detectie"] = hasattr(gov, "valideer_input")
@@ -505,35 +504,30 @@ class SystemIntrospector:
 
         # HallucinatieSchild
         try:
-            from danny_toolkit.brain.hallucination_shield import HallucinatieSchild
             status["hallucination_shield_actief"] = True
         except Exception as e:
             logger.debug("Introspector probe HallucinatieSchild: %s", e)
 
         # ShadowGovernance
         try:
-            from danny_toolkit.brain.shadow_governance import ShadowGovernance
             status["shadow_governance_actief"] = True
         except Exception as e:
             logger.debug("Introspector probe ShadowGovernance: %s", e)
 
         # BlackBox
         try:
-            from danny_toolkit.brain.black_box import BlackBox
             status["black_box_immuniteit"] = True
         except Exception as e:
             logger.debug("Introspector probe BlackBox: %s", e)
 
         # TruthAnchor
         try:
-            from danny_toolkit.brain.truth_anchor import TruthAnchor
             status["truth_anchor_actief"] = True
         except Exception as e:
             logger.debug("Introspector probe TruthAnchor: %s", e)
 
         # Circuit breakers
         try:
-            from danny_toolkit.brain.central_brain import CentralBrain
             src = inspect.getsource(CentralBrain)
             status["circuit_breakers_actief"] = "_provider_breakers" in src
         except Exception as e:
@@ -575,21 +569,18 @@ class SystemIntrospector:
 
         # BlackBox immune stats
         try:
-            from danny_toolkit.brain.black_box import get_black_box
             perf["black_box"] = get_black_box().get_stats()
         except Exception as e:
             logger.debug("BlackBox stats error: %s", e)
 
         # Waakhuis health
         try:
-            from danny_toolkit.brain.waakhuis import get_waakhuis
             perf["waakhuis"] = get_waakhuis().get_stats()
         except Exception as e:
             logger.debug("Waakhuis stats error: %s", e)
 
         # Cortex graph stats
         try:
-            from danny_toolkit.brain.cortex import TheCortex
             c = TheCortex()
             perf["cortex"] = c.get_stats()
         except Exception as e:
@@ -597,7 +588,6 @@ class SystemIntrospector:
 
         # Model Registry stats
         try:
-            from danny_toolkit.brain.model_sync import get_model_registry
             perf["model_registry"] = get_model_registry().get_stats()
         except Exception as e:
             logger.debug("ModelRegistry stats error: %s", e)
@@ -683,13 +673,12 @@ class SystemIntrospector:
     def _get_version(self) -> str:
         """Haal de huidige brain versie op."""
         try:
-            import danny_toolkit.brain as brain
             return getattr(brain, "__version__", "unknown")
         except Exception as e:
             logger.debug("Introspector version check: %s", e)
             return "unknown"
 
-    def _store_self_knowledge(self, snapshot: SystemSnapshot):
+    def _store_self_knowledge(self, snapshot: SystemSnapshot) -> None:
         """Sla zelfkennis op in VectorStore voor semantisch ophalen."""
         if not self._store:
             return
@@ -732,7 +721,7 @@ class SystemIntrospector:
         except Exception as e:
             logger.debug("Self-knowledge save error: %s", e)
 
-    def _log_snapshot(self, snapshot: SystemSnapshot):
+    def _log_snapshot(self, snapshot: SystemSnapshot) -> None:
         """Log introspectie naar CorticalStack."""
         if not self._stack:
             return
@@ -750,6 +739,47 @@ class SystemIntrospector:
             )
         except Exception as e:
             logger.debug("CorticalStack log error: %s", e)
+
+try:
+    from danny_toolkit.brain.governor import OmegaGovernor
+except ImportError:
+    pass
+try:
+    from danny_toolkit.brain.hallucination_shield import HallucinatieSchild
+except ImportError:
+    pass
+try:
+    from danny_toolkit.brain.shadow_governance import ShadowGovernance
+except ImportError:
+    pass
+try:
+    from danny_toolkit.brain.black_box import BlackBox
+except ImportError:
+    pass
+try:
+    from danny_toolkit.brain.truth_anchor import TruthAnchor
+except ImportError:
+    pass
+try:
+    from danny_toolkit.brain.central_brain import CentralBrain
+except ImportError:
+    pass
+try:
+    from danny_toolkit.brain.waakhuis import get_waakhuis
+except ImportError:
+    pass
+try:
+    from danny_toolkit.brain.cortex import TheCortex
+except ImportError:
+    pass
+try:
+    from danny_toolkit.brain.model_sync import get_model_registry
+except ImportError:
+    pass
+try:
+    import danny_toolkit.brain
+except ImportError:
+    pass
 
     @staticmethod
     def _snapshot_to_text(snapshot: SystemSnapshot) -> str:

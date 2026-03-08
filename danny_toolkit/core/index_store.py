@@ -23,7 +23,7 @@ SCHEMA_VERSION = 1
 class IndexStore:
     """Persistent FAISS index with document metadata."""
 
-    def __init__(self, store_dir: str = None):
+    def __init__(self, store_dir: str = None) -> None:
         """`__init__(self, store_dir: str = None)`: Initializes the IndexStore instance.
 
  * Args:
@@ -54,7 +54,7 @@ class IndexStore:
         """MD5-hash van chunk-tekst voor deduplicatie."""
         return hashlib.md5(text.encode()).hexdigest()
 
-    def build(self, vectors: np.ndarray, metadata: list[dict]):
+    def build(self, vectors: np.ndarray, metadata: list[dict]) -> None:
         """Build and save a new index from vectors + metadata."""
         # Zorg dat elke metadata entry een hash heeft
         for m in metadata:
@@ -77,7 +77,7 @@ class IndexStore:
         self._vectors = vectors
         self._save()
 
-    def append(self, vectors: np.ndarray, metadata: list[dict]):
+    def append(self, vectors: np.ndarray, metadata: list[dict]) -> None:
         """Append vectors + metadata to the existing index, or create a new one.
 
         Deduplicatie via MD5-hash: chunks die al bestaan worden geskipt.
@@ -159,7 +159,8 @@ Appends each result dictionary to the `results` list."""
             })
         return results
 
-    def _save(self):
+    def _save(self) -> None:
+        """Save."""
         faiss.write_index(self.index, str(self.index_path))
         wrapper = {
             "schema_version": SCHEMA_VERSION,
@@ -179,7 +180,8 @@ Appends each result dictionary to the `results` list."""
         self._schema_version = SCHEMA_VERSION
         print(f"  Index opgeslagen: {self.store_dir}")
 
-    def _load(self):
+    def _load(self) -> None:
+        """Load."""
         if self.index is not None:
             return
         if not self.index_path.exists():
@@ -202,6 +204,7 @@ Appends each result dictionary to the `results` list."""
         print(f"  Index geladen: {self.index.ntotal} chunks")
 
     def exists(self) -> bool:
+        """Exists."""
         return self.index_path.exists() and self.meta_path.exists()
 
     def stats(self) -> dict:

@@ -137,7 +137,7 @@ class ShadowKeyVault:
     DIVIDEND_RATE = 0.5  # 50% of shadow tokens returned to real swarm
     NAME = f"{SHADOW_PREFIX}ShadowKeyVault"
 
-    def __init__(self):
+    def __init__(self) -> None:
         """### Docstring
 
 Initializes a new instance, setting up internal state and tracking variables.
@@ -227,13 +227,13 @@ Initializes a new instance, setting up internal state and tracking variables.
 
             return True, ""
 
-    def registreer_shadow_request(self):
+    def registreer_shadow_request(self) -> None:
         """Track a shadow API call."""
         with self._lock:
             self._shadow_requests += 1
             self._shadow_rpm.append(time.time())
 
-    def registreer_shadow_tokens(self, count: int):
+    def registreer_shadow_tokens(self, count: int) -> None:
         """Track shadow token consumption + accumulate dividend."""
         with self._lock:
             self._shadow_tokens_used += count
@@ -241,7 +241,7 @@ Initializes a new instance, setting up internal state and tracking variables.
             dividend = int(count * self.DIVIDEND_RATE)
             self._dividend_pool += dividend
 
-    def registreer_shadow_429(self):
+    def registreer_shadow_429(self) -> None:
         """Shadow rate limit hit — apply independent cooldown."""
         with self._lock:
             self._shadow_429s += 1
@@ -264,7 +264,7 @@ Initializes a new instance, setting up internal state and tracking variables.
                 scrubbed = scrubbed.replace(prefix, f"[{SHADOW_PREFIX}SHADOW:REDACTED]")
         return scrubbed
 
-    def flush_dividend(self):
+    def flush_dividend(self) -> None:
         """Donate accumulated shadow tokens back to the real swarm.
 
         Flushes the dividend pool → SmartKeyManager:
@@ -338,8 +338,9 @@ class VirtualTwin:
 
     NAME = f"{SHADOW_PREFIX}VirtualTwin"
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Shadow token vault — isolated from real key pool
+        """Init  ."""
         self._vault = ShadowKeyVault()
         self.client = self._vault.client
         self.model = Config.LLM_MODEL
@@ -358,7 +359,7 @@ class VirtualTwin:
         self._truth_anchor = None
         self._black_box = None
 
-    def _get_mirror(self):
+    def _get_mirror(self) -> None:
         """Lazy TheMirror instance."""
         if self._mirror is None:
             try:
@@ -368,7 +369,7 @@ class VirtualTwin:
                 logger.debug("TheMirror init failed: %s", e)
         return self._mirror
 
-    def _get_walker(self):
+    def _get_walker(self) -> None:
         """Lazy VoidWalker instance."""
         if self._walker is None:
             try:
@@ -378,7 +379,7 @@ class VirtualTwin:
                 logger.debug("VoidWalker init failed: %s", e)
         return self._walker
 
-    def _get_truth_anchor(self):
+    def _get_truth_anchor(self) -> None:
         """Lazy TruthAnchor — CPU cross-encoder for grounding verification."""
         if self._truth_anchor is None and HAS_TRUTH_ANCHOR:
             try:
@@ -387,7 +388,7 @@ class VirtualTwin:
                 logger.debug("TruthAnchor init failed: %s", e)
         return self._truth_anchor
 
-    def _get_black_box(self):
+    def _get_black_box(self) -> None:
         """Lazy BlackBox — negative RAG for past failure avoidance."""
         if self._black_box is None and HAS_BLACK_BOX:
             try:
@@ -845,7 +846,7 @@ class VirtualTwin:
         )
         return result
 
-    def _distill_to_physical(self, query: str, result: str):
+    def _distill_to_physical(self, query: str, result: str) -> None:
         """Shadow→Physical intelligence transfer via ShadowCortex.
 
         After every successful consult, the shadow twin distills what it
@@ -892,7 +893,8 @@ class ShadowCortex:
 
     NAME = f"{SHADOW_PREFIX}ShadowCortex"
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self._lock = threading.Lock()
         self._absorptions = 0
         self._synapse_boosts = 0
@@ -903,7 +905,7 @@ class ShadowCortex:
         # Shadow summary table for Token Dividend Engine
         self._ensure_summary_table()
 
-    def absorb(self, query: str, result: str):
+    def absorb(self, query: str, result: str) -> None:
         """Absorb a shadow consult result and transfer intelligence.
 
         Called after every successful VirtualTwin.consult(). Extracts
@@ -957,7 +959,7 @@ class ShadowCortex:
         words = query.lower().split()
         return [w for w in words if len(w) > 2 and w not in stop][:8]
 
-    def _boost_synapse(self, query: str, keywords: list):
+    def _boost_synapse(self, query: str, keywords: list) -> None:
         """Channel 1: Strengthen physical Synapse pathways.
 
         The shadow twin's successful consult patterns become stronger
@@ -978,7 +980,7 @@ class ShadowCortex:
         except Exception as e:
             logger.debug("%sSynapse boost failed: %s", SHADOW_PREFIX, e)
 
-    def _inject_cortical(self, query: str, result: str):
+    def _inject_cortical(self, query: str, result: str) -> None:
         """Channel 2: Inject shadow insight as semantic fact.
 
         The physical CorticalStack gains knowledge it never directly
@@ -1004,7 +1006,7 @@ class ShadowCortex:
         except Exception as e:
             logger.debug("%sCortical injection failed: %s", SHADOW_PREFIX, e)
 
-    def _prime_phantom(self, query: str, keywords: list):
+    def _prime_phantom(self, query: str, keywords: list) -> None:
         """Channel 3: Prime ThePhantom with shadow-explored topics.
 
         The physical system pre-warms context for topics the shadow
@@ -1024,7 +1026,7 @@ class ShadowCortex:
         except Exception as e:
             logger.debug("%sPhantom priming failed: %s", SHADOW_PREFIX, e)
 
-    def _broadcast_shadow_insight(self, query: str, keywords: list):
+    def _broadcast_shadow_insight(self, query: str, keywords: list) -> None:
         """Broadcast shadow insight on NeuralBus — all agents learn."""
         if not HAS_BUS:
             return
@@ -1045,7 +1047,7 @@ class ShadowCortex:
 
     # ── Token Dividend Engine — Shadow Pre-Summarization ──
 
-    def _ensure_summary_table(self):
+    def _ensure_summary_table(self) -> None:
         """Create shadow_summaries table on CorticalStack DB."""
         try:
             db_path = str(Config.DATA_DIR / "cortical_stack.db")

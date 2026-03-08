@@ -8,6 +8,8 @@ AUTHOR: Danny Toolkit
 DATE: 7 februari 2026
 """
 
+from __future__ import annotations
+
 import json
 import logging
 
@@ -44,7 +46,8 @@ class FeedbackManager:
     andere systemen.
     """
 
-    def __init__(self, data_dir: Path = None):
+    def __init__(self, data_dir: Path = None) -> None:
+        """Init  ."""
         if data_dir is None and HAS_CONFIG:
             data_dir = Config.APPS_DATA_DIR
         elif data_dir is None:
@@ -74,7 +77,7 @@ class FeedbackManager:
             "last_update": None
         }
 
-    def save(self):
+    def save(self) -> None:
         """Sla feedback data op naar bestand."""
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self._data["last_update"] = datetime.now().isoformat()
@@ -116,7 +119,7 @@ class FeedbackManager:
         self.save()
         return True
 
-    def _update_stats(self):
+    def _update_stats(self) -> None:
         """Update statistieken na nieuwe feedback."""
         entries = self._data["entries"]
         if not entries:
@@ -231,9 +234,8 @@ class FeedbackManager:
 
 # === CLI voor testing ===
 
-def _cli():
+def _cli() -> None:
     """Test CLI voor FeedbackManager."""
-    from pathlib import Path
 
     print("FeedbackManager Test CLI")
     print("=" * 40)

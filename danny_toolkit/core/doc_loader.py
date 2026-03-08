@@ -151,6 +151,7 @@ def _load_pdf_plumber(filepath: Path) -> list[dict]:
 
 
 def _load_pdf_pypdf2(filepath: Path) -> list[dict]:
+    """Load pdf pypdf2."""
     from PyPDF2 import PdfReader
 
     reader = PdfReader(str(filepath))
@@ -198,6 +199,7 @@ Returns:
 # ═══════════════════════════════════════════
 
 def _load_docx(filepath: Path) -> list[dict]:
+    """Load docx."""
     from docx import Document
 
     doc = Document(str(filepath))
@@ -254,6 +256,7 @@ Raises:
 # ═══════════════════════════════════════════
 
 def _load_xlsx(filepath: Path) -> list[dict]:
+    """Load xlsx."""
     from openpyxl import load_workbook
 
     wb = load_workbook(str(filepath), read_only=True, data_only=True)
@@ -287,6 +290,7 @@ def _load_xlsx(filepath: Path) -> list[dict]:
 # ═══════════════════════════════════════════
 
 def _load_pptx(filepath: Path) -> list[dict]:
+    """Load pptx."""
     from pptx import Presentation
 
     prs = Presentation(str(filepath))
@@ -339,6 +343,7 @@ Iterates over all shapes in a slide and extracts text from shapes with a text fr
 # ═══════════════════════════════════════════
 
 def _load_epub(filepath: Path) -> list[dict]:
+    """Load epub."""
     import ebooklib
     from ebooklib import epub
     from bs4 import BeautifulSoup
@@ -367,6 +372,7 @@ def _load_epub(filepath: Path) -> list[dict]:
 # ═══════════════════════════════════════════
 
 def _load_text(filepath: Path) -> list[dict]:
+    """Load text."""
     text = filepath.read_text(encoding="utf-8", errors="ignore")
     if text.strip():
         return [{"text": text, "page": None}]
@@ -378,6 +384,7 @@ def _load_text(filepath: Path) -> list[dict]:
 # ═══════════════════════════════════════════
 
 def _load_html(filepath: Path) -> list[dict]:
+    """Load html."""
     from bs4 import BeautifulSoup
 
     html = filepath.read_text(encoding="utf-8", errors="ignore")

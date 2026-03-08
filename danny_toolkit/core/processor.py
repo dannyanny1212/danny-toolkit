@@ -23,7 +23,7 @@ class BatchProcessor:
     en houdt statistieken bij.
     """
 
-    def __init__(self, librarian_instance) -> None:
+    def __init__(self, librarian_instance: object) -> None:
         """
         Args:
             librarian_instance: Een instantie van
@@ -42,7 +42,7 @@ class BatchProcessor:
     # ─── Chunking Strategieën ───
 
     def _strategy_fixed_size(
-        self, text, size=500, overlap=50
+        self, text: str, size: int=500, overlap: object=50
     ) -> None:
         """Standaard: Woord-gebaseerde chunks."""
         woorden = text.split()
@@ -55,7 +55,7 @@ class BatchProcessor:
                 chunks.append(chunk)
         return chunks
 
-    def _strategy_paragraph(self, text) -> None:
+    def _strategy_paragraph(self, text: str) -> None:
         """Splitsen op witregels
         (artikelen/wetteksten).
         """
@@ -65,7 +65,7 @@ class BatchProcessor:
             if len(p.strip()) > 50
         ]
 
-    def _strategy_code(self, text) -> None:
+    def _strategy_code(self, text: str) -> None:
         """Splitsen op class/def definities."""
         lines = text.split("\n")
         chunks = []
@@ -96,7 +96,7 @@ class BatchProcessor:
     # ─── Main Process ───
 
     def process_batch(
-        self, files, method="fixed", chunk_size=500
+        self, files: list, method: object="fixed", chunk_size: object=500
     ) -> None:
         """Verwerkt een lijst met bestanden.
 

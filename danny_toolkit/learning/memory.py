@@ -1,9 +1,12 @@
 """
 UnifiedMemory - Gecombineerd geheugensysteem.
 
+
 Combineert VectorStore + permanente kennis + AI memory in een
 unified interface voor semantic search over alle interacties.
 """
+
+from __future__ import annotations
 
 import json
 import logging
@@ -17,7 +20,7 @@ from danny_toolkit.core.config import Config
 class UnifiedMemory:
     """Unified Memory System dat alle kennisbronnen combineert."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialiseer UnifiedMemory met alle bronnen."""
         Config.ensure_dirs()
         self.memory_file = Config.APPS_DATA_DIR / "unified_memory.json"
@@ -54,7 +57,7 @@ class UnifiedMemory:
             },
         }
 
-    def save(self):
+    def save(self) -> None:
         """Sla geheugen op naar disk."""
         self._memory["last_updated"] = datetime.now().isoformat()
         with open(self.memory_file, "w", encoding="utf-8") as f:
@@ -65,7 +68,7 @@ class UnifiedMemory:
         fact: str,
         source: str = "unknown",
         success_score: float = 0.5,
-    ):
+    ) -> None:
         """Voeg een feit toe aan het geheugen."""
         knowledge = self._memory["knowledge"]
 
@@ -139,7 +142,7 @@ class UnifiedMemory:
         facts_with_meta.sort(key=lambda x: x["rank"], reverse=True)
         return facts_with_meta[:n]
 
-    def update_score(self, fact: str, new_score: float):
+    def update_score(self, fact: str, new_score: float) -> None:
         """Update de success score van een feit."""
         knowledge = self._memory["knowledge"]
         if fact in knowledge["facts"]:
@@ -148,7 +151,7 @@ class UnifiedMemory:
             knowledge["success_scores"][idx] = (old_score * 0.7 + new_score * 0.3)
             self.save()
 
-    def increment_usage(self, fact: str):
+    def increment_usage(self, fact: str) -> None:
         """Verhoog usage count van een feit."""
         knowledge = self._memory["knowledge"]
         if fact in knowledge["facts"]:
@@ -190,7 +193,7 @@ class UnifiedMemory:
             return True
         return False
 
-    def sync_with_huisdier(self, huisdier_kennis: dict):
+    def sync_with_huisdier(self, huisdier_kennis: dict) -> None:
         """Synchroniseer met bestaande huisdier kennis."""
         if "feiten" in huisdier_kennis:
             for feit in huisdier_kennis["feiten"]:

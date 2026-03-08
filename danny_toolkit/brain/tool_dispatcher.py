@@ -322,6 +322,7 @@ class ToolDispatcher:
     """
 
     def __init__(self) -> None:
+        """Init  ."""
         _compile_patterns()
         self._groq_client = None
         self._groq_model: str = ""
@@ -335,7 +336,7 @@ class ToolDispatcher:
             self._groq_client = km.create_sync_client("Tribunal")
             self._groq_model = "meta-llama/llama-4-scout-17b-16e-instruct"
         except ImportError:
-            pass
+            logger.debug("Suppressed error")
 
         if not self._groq_client:
             try:
@@ -345,7 +346,7 @@ class ToolDispatcher:
                     self._groq_client = Groq(api_key=key)
                     self._groq_model = "meta-llama/llama-4-scout-17b-16e-instruct"
             except ImportError:
-                pass
+                logger.debug("Suppressed error")
 
     def select_tools(self, user_input: str) -> Set[str]:
         """Selecteer relevante apps voor de user query.

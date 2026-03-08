@@ -1,6 +1,5 @@
 """
 QUEST V: THE BODY
-from __future__ import annotations
 
 ==================
 "The Organism Feeds and Burns"
@@ -13,6 +12,8 @@ Spelers:
 - NUTRIENT LEVELS (5 voedingsstoffen) - Balans
 - METABOLIC STATE (7 staten)        - Gezondheid
 """
+
+from __future__ import annotations
 
 from danny_toolkit.core.utils import kleur, Kleur, succes, fout, info
 from danny_toolkit.daemon.metabolisme import (

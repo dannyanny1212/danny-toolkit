@@ -13,6 +13,8 @@ Gebruik:
     allowed, reason = dome.check_endpoint("api.groq.com", 443)
 """
 
+from __future__ import annotations
+
 import logging
 import socket
 import threading
@@ -85,6 +87,7 @@ class ConnectionAudit:
     resolved_ip: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
+        """To dict."""
         return {
             "timestamp": self.timestamp,
             "host": self.host,
@@ -110,7 +113,8 @@ class IronDome:
         self,
         extra_whitelist: Optional[Set[str]] = None,
         strict_mode: bool = True,
-    ):
+    ) -> None:
+        """Init  ."""
         self._lock = threading.Lock()
         self._whitelist: Set[str] = set(_DEFAULT_WHITELIST)
         if extra_whitelist:

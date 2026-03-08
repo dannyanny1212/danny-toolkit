@@ -3,6 +3,8 @@ Room Planner v1.0 - Virtuele ruimte-indeling optimizer.
 Plan je kamer met ASCII visualisatie en slimme tips.
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import datetime
 from danny_toolkit.core.utils import clear_scherm
@@ -123,7 +125,8 @@ class RoomPlannerApp(BaseApp):
         }
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         super().__init__("room_planner.json")
         self.huidig_project = None
 
@@ -137,7 +140,7 @@ class RoomPlannerApp(BaseApp):
             }
         }
 
-    def run(self):
+    def run(self) -> None:
         """Start de room planner."""
         while True:
             clear_scherm()
@@ -183,7 +186,7 @@ class RoomPlannerApp(BaseApp):
 
             input("\nDruk op Enter...")
 
-    def _toon_header(self):
+    def _toon_header(self) -> None:
         """Toon header."""
         print("+" + "=" * 50 + "+")
         print("|          ROOM PLANNER v1.0                        |")
@@ -205,7 +208,7 @@ class RoomPlannerApp(BaseApp):
     # PROJECT BEHEER
     # =========================================================================
 
-    def _nieuw_project(self):
+    def _nieuw_project(self) -> None:
         """Maak nieuw kamer project."""
         print("\n--- NIEUW KAMER PROJECT ---")
 
@@ -264,7 +267,7 @@ class RoomPlannerApp(BaseApp):
         if muren == "j":
             self._voeg_openingen_toe()
 
-    def _voeg_openingen_toe(self):
+    def _voeg_openingen_toe(self) -> None:
         """Voeg deuren en ramen toe."""
         print("\n--- DEUREN EN RAMEN ---")
 
@@ -329,7 +332,7 @@ class RoomPlannerApp(BaseApp):
         self._sla_op()
         print("\n[OK] Openingen toegevoegd!")
 
-    def _laad_project(self):
+    def _laad_project(self) -> None:
         """Laad bestaand project."""
         print("\n--- PROJECT LADEN ---")
 
@@ -358,7 +361,7 @@ class RoomPlannerApp(BaseApp):
         except ValueError:
             print("[!] Ongeldig nummer!")
 
-    def _sla_project_op(self):
+    def _sla_project_op(self) -> None:
         """Sla huidig project op."""
         if not self.huidig_project:
             print("\n[!] Geen project om op te slaan!")
@@ -371,7 +374,7 @@ class RoomPlannerApp(BaseApp):
     # VISUALISATIE
     # =========================================================================
 
-    def _bekijk_kamer(self):
+    def _bekijk_kamer(self) -> None:
         """Bekijk de kamer layout."""
         if not self.huidig_project:
             print("\n[!] Laad eerst een project!")
@@ -379,7 +382,7 @@ class RoomPlannerApp(BaseApp):
 
         self._render_kamer()
 
-    def _render_kamer(self):
+    def _render_kamer(self) -> None:
         """Render de kamer als ASCII art."""
         project = self.huidig_project
         breedte = project["breedte"]
@@ -462,7 +465,7 @@ class RoomPlannerApp(BaseApp):
     # MEUBEL BEHEER
     # =========================================================================
 
-    def _plaats_meubel(self):
+    def _plaats_meubel(self) -> None:
         """Plaats een nieuw meubel."""
         if not self.huidig_project:
             print("\n[!] Laad eerst een project!")
@@ -567,7 +570,7 @@ class RoomPlannerApp(BaseApp):
 
         return False
 
-    def _verplaats_meubel(self):
+    def _verplaats_meubel(self) -> None:
         """Verplaats een bestaand meubel."""
         if not self.huidig_project:
             print("\n[!] Laad eerst een project!")
@@ -617,7 +620,7 @@ class RoomPlannerApp(BaseApp):
         except ValueError:
             print("[!] Voer geldige nummers in!")
 
-    def _verwijder_meubel(self):
+    def _verwijder_meubel(self) -> None:
         """Verwijder een meubel."""
         if not self.huidig_project:
             print("\n[!] Laad eerst een project!")
@@ -682,7 +685,7 @@ class RoomPlannerApp(BaseApp):
 
         return context
 
-    def _ai_suggesties(self):
+    def _ai_suggesties(self) -> None:
         """AI geeft indelings suggesties."""
         print("\n--- AI INDELINGS SUGGESTIES ---")
 
@@ -718,7 +721,7 @@ Wees specifiek met posities en afmetingen. Antwoord in het Nederlands."""
         if response:
             print(f"\n[AI Suggesties]:\n{response}")
 
-    def _ai_analyse(self):
+    def _ai_analyse(self) -> None:
         """AI analyseert de ruimte."""
         print("\n--- AI RUIMTE ANALYSE ---")
 

@@ -140,7 +140,8 @@ The `__init__` method initializes the instance with the following properties:
 Note that this is a singleton class, and subsequent calls to `__init__` will not re-initialize the instance."""
             return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         if self._initialized:
             return
         self._initialized = True
@@ -232,7 +233,7 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
                 )
             return self._agents[naam]
 
-    def _reset_windows(self, agent: AgentMetrics):
+    def _reset_windows(self, agent: AgentMetrics) -> None:
         """Reset verlopen tijdvensters."""
         now = time.time()
 
@@ -368,14 +369,14 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
     # Registratie
     # ------------------------------------------------------------------
 
-    def registreer_request(self, agent_naam: str):
+    def registreer_request(self, agent_naam: str) -> None:
         """Registreer dat een agent een API request doet."""
         agent = self._get_agent(agent_naam)
         with self._metrics_lock:
             agent.request_timestamps.append(time.time())
             agent.totaal_requests += 1
 
-    def registreer_tokens(self, agent_naam: str, tekst: str):
+    def registreer_tokens(self, agent_naam: str, tekst: str) -> None:
         """Registreer tokenverbruik na response (char/4 schatting)."""
         tokens = len(tekst) // 4
         agent = self._get_agent(agent_naam)
@@ -386,7 +387,7 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
             agent.tokens_vandaag += tokens
             agent.totaal_tokens += tokens
 
-    def registreer_429(self, agent_naam: str):
+    def registreer_429(self, agent_naam: str) -> None:
         """Registreer een 429 rate limit hit."""
         agent = self._get_agent(agent_naam)
         now = time.time()
@@ -466,7 +467,7 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
     # Client Factories
     # ------------------------------------------------------------------
 
-    def create_async_client(self, agent_naam: str = ""):
+    def create_async_client(self, agent_naam: str = "") -> None:
         """
         Maak een AsyncGroq client voor een agent.
 
@@ -490,7 +491,7 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
         self._async_clients.append(client)
         return client
 
-    def create_sync_client(self, agent_naam: str = ""):
+    def create_sync_client(self, agent_naam: str = "") -> None:
         """
         Maak een synchrone Groq client voor een agent.
 
@@ -511,7 +512,7 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
 
         return Groq(api_key=key)
 
-    def create_sync_client_for_model(self, agent_naam: str, model: str):
+    def create_sync_client_for_model(self, agent_naam: str, model: str) -> None:
         """Maak een synchrone Groq client met model-aware key selectie.
 
         Gebruikt GROQ_API_KEY_FALLBACK voor het fallback model,
@@ -532,7 +533,7 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
 
         return Groq(api_key=key)
 
-    def create_async_client_for_model(self, agent_naam: str, model: str):
+    def create_async_client_for_model(self, agent_naam: str, model: str) -> None:
         """Maak een AsyncGroq client met model-aware key selectie."""
         try:
             from groq import AsyncGroq
@@ -551,7 +552,7 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
         self._async_clients.append(client)
         return client
 
-    async def close_all_clients(self):
+    async def close_all_clients(self) -> None:
         """Sluit alle async clients voordat de event loop stopt.
 
         Voorkomt 'Event loop is closed' RuntimeError bij shutdown.
@@ -562,7 +563,7 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
             try:
                 await client.close()
             except Exception:
-                pass
+                logger.debug("Suppressed error")
 
     # ------------------------------------------------------------------
     # Status & Diagnostiek
@@ -613,7 +614,7 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
                 if now < agent.cooldown_tot
             }
 
-    def reset_counters(self):
+    def reset_counters(self) -> None:
         """Reset alle tellers (voor tests of dagelijkse reset)."""
         with self._metrics_lock:
             self._agents.clear()

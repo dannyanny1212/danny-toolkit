@@ -12,6 +12,8 @@ Gebruik:
     bus.publish(EventTypes.WEATHER_UPDATE, {"stad": "Amsterdam", "temp": 12})
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import threading
@@ -85,7 +87,7 @@ class BusEvent:
         event_type: str,
         data: Dict[str, Any],
         bron: str = "unknown",
-    ):
+    ) -> None:
         """Initializes an event object.
 
  Args:
@@ -104,6 +106,7 @@ class BusEvent:
         self.timestamp = datetime.now()
 
     def to_dict(self) -> dict:
+        """To dict."""
         return {
             "event_type": self.event_type,
             "data": self.data,
@@ -122,7 +125,8 @@ class NeuralBus:
 
     _MAX_HISTORY = 100  # events per type
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Init  ."""
         self._lock = threading.RLock()
         # event_type -> [callback, ...]
         self._subscribers: Dict[str, List[Callable]] = defaultdict(list)
@@ -141,10 +145,9 @@ class NeuralBus:
             "fouten": 0,
         }
 
-    def enable_persistence(self):
+    def enable_persistence(self) -> None:
         """Koppel aan UnifiedMemory voor event persistentie."""
         try:
-            from danny_toolkit.core.memory_interface import get_unified_memory
 
             mem = get_unified_memory()
             if mem:
@@ -160,7 +163,7 @@ class NeuralBus:
         self,
         event_type: str,
         callback: Callable[[BusEvent], None],
-    ):
+    ) -> None:
         """
         Abonneer op een event type.
 
@@ -183,7 +186,7 @@ class NeuralBus:
         self,
         event_type: str,
         callback: Callable[[BusEvent], None],
-    ):
+    ) -> None:
         """Verwijder een subscriber."""
         try:
             with self._lock:
@@ -201,7 +204,7 @@ class NeuralBus:
         event_type: str,
         data: Dict[str, Any],
         bron: str = "unknown",
-    ):
+    ) -> None:
         """
         Publiceer een event naar alle subscribers.
 
@@ -365,7 +368,7 @@ class NeuralBus:
             logger.debug("NeuralBus get_context_stream fout: %s", e)
             return ""
 
-    async def _safe_async_dispatch(self, callback: Callable, event: BusEvent):
+    async def _safe_async_dispatch(self, callback: Callable, event: BusEvent) -> None:
         """Veilige uitvoering van async callbacks."""
         try:
             await callback(event)
@@ -403,7 +406,7 @@ class NeuralBus:
             logger.debug("NeuralBus get_event_type_counts fout: %s", e)
             return {}
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset de bus (voor tests)."""
         try:
             with self._lock:
@@ -417,6 +420,11 @@ class NeuralBus:
                 }
         except Exception as e:
             logger.debug("NeuralBus reset fout: %s", e)
+
+try:
+    from danny_toolkit.core.memory_interface import get_unified_memory
+except ImportError:
+    pass
 
 
 # -- Singleton --

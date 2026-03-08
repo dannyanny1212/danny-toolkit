@@ -135,7 +135,7 @@ SECTIES = {
 class ScrollFrame(tk.Frame):
     """Scrollbaar frame via canvas + scrollbar patroon."""
 
-    def __init__(self, parent, **kw) -> None:
+    def __init__(self, parent: object, **kw) -> None:
         """Init  ."""
         super().__init__(parent, bg=BG, **kw)
 
@@ -169,23 +169,23 @@ class ScrollFrame(tk.Frame):
         self.inner.bind("<Enter>", self._bind_muiswiel)
         self.inner.bind("<Leave>", self._unbind_muiswiel)
 
-    def _on_canvas_resize(self, event) -> None:
+    def _on_canvas_resize(self, event: object) -> None:
         """On canvas resize."""
         self.canvas.itemconfig(
             self.canvas_window, width=event.width,
         )
 
-    def _bind_muiswiel(self, _event) -> None:
+    def _bind_muiswiel(self, _event: object) -> None:
         """Bind muiswiel."""
         self.canvas.bind_all(
             "<MouseWheel>", self._on_muiswiel,
         )
 
-    def _unbind_muiswiel(self, _event) -> None:
+    def _unbind_muiswiel(self, _event: object) -> None:
         """Unbind muiswiel."""
         self.canvas.unbind_all("<MouseWheel>")
 
-    def _on_muiswiel(self, event) -> None:
+    def _on_muiswiel(self, event: object) -> None:
         """On muiswiel."""
         self.canvas.yview_scroll(
             int(-1 * (event.delta / 120)), "units",
@@ -272,7 +272,7 @@ class DannyToolkitGUI:
             f"{len(APP_NAMEN)} apps{actief_txt}  |  {nu}"
         )
 
-    def _bouw_secties(self, parent) -> None:
+    def _bouw_secties(self, parent: object) -> None:
         """Bouw 2x2 grid van sectie frames."""
         parent.columnconfigure(0, weight=1, uniform="col")
         parent.columnconfigure(1, weight=1, uniform="col")
@@ -288,7 +288,7 @@ class DannyToolkitGUI:
             )
 
     def _bouw_sectie_frame(
-        self, parent, naam, info, rij, kolom
+        self, parent: object, naam: str, info: object, rij: object, kolom
     ) -> None:
         """Bouw sectie frame."""
         kleur = SECTIE_KLEUREN[info["kleur"]]
@@ -316,7 +316,7 @@ class DannyToolkitGUI:
             naam_app = APP_NAMEN.get(key, f"App {key}")
             self._maak_app_knop(frame, key, naam_app, kleur)
 
-    def _maak_app_knop(self, parent, key, naam, kleur) -> None:
+    def _maak_app_knop(self, parent: object, key: str, naam: str, kleur: object) -> None:
         """Maak app knop."""
         tekst = f"[{key}] {naam}"
 
@@ -353,7 +353,7 @@ class DannyToolkitGUI:
             lambda e, k=key: self._on_hover(k, False),
         )
 
-    def _on_hover(self, key, entering) -> None:
+    def _on_hover(self, key: str, entering: object) -> None:
         """Hover effect dat actieve state respecteert."""
         knop, _kleur = self.knoppen[key]
         if key in self.processen:
@@ -362,7 +362,7 @@ class DannyToolkitGUI:
             bg = BG_KNOP_HOVER if entering else BG_KNOP
         knop.configure(bg=bg)
 
-    def _markeer_actief(self, key) -> None:
+    def _markeer_actief(self, key: str) -> None:
         """Markeer knop als actief (groen stip + achtergrond)."""
         knop, _kleur = self.knoppen[key]
         naam = APP_NAMEN.get(key, f"App {key}")
@@ -372,7 +372,7 @@ class DannyToolkitGUI:
             bg=BG_KNOP_ACTIEF,
         )
 
-    def _markeer_inactief(self, key) -> None:
+    def _markeer_inactief(self, key: str) -> None:
         """Reset knop naar normale staat."""
         knop, kleur = self.knoppen[key]
         naam = APP_NAMEN.get(key, f"App {key}")
@@ -382,7 +382,7 @@ class DannyToolkitGUI:
             bg=BG_KNOP,
         )
 
-    def _start_app(self, key, naam) -> None:
+    def _start_app(self, key: str, naam: str) -> None:
         """Start app in nieuw cmd venster via subprocess."""
         self.app_runs += 1
         self.stats_label.configure(text=self._stats_tekst())
@@ -434,7 +434,7 @@ class DannyToolkitGUI:
         )
         versie.pack(side="right", padx=12)
 
-    def _update_status(self, tekst) -> None:
+    def _update_status(self, tekst: str) -> None:
         """Update status."""
         self.status_var.set(tekst)
 

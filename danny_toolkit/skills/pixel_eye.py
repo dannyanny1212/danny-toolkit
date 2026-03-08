@@ -1,12 +1,14 @@
 """
 PixelEye — Het Oog van Project Omega.
 
-from __future__ import annotations
+
 
 Standalone vision skill via Ollama LLaVA.
 Analyseert afbeeldingen, screenshots, vergelijkt
 beelden — alles lokaal zonder API rate limits.
 """
+
+from __future__ import annotations
 
 import logging
 import os

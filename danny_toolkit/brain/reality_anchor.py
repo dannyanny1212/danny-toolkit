@@ -34,7 +34,7 @@ class RealityAnchor:
             print(result.violations)  # list of fake symbols the LLM invented
     """
 
-    def __init__(self, root_dir: str):
+    def __init__(self, root_dir: str) -> None:
         """`__init__` method documentation:
  Initializes a new instance of the class.
 
@@ -57,7 +57,7 @@ class RealityAnchor:
         self._total_symbols = 0
         self._scan_codebase()
 
-    def _scan_codebase(self):
+    def _scan_codebase(self) -> None:
         """Walk the codebase and build the Truth Map via AST parsing."""
         print(f"{Kleur.BLAUW}[ANCHOR]{Kleur.RESET} Scanning reality (codebase)...")
 
@@ -75,7 +75,7 @@ class RealityAnchor:
             f"{self._total_symbols} symbols"
         )
 
-    def _parse_file(self, filepath: str):
+    def _parse_file(self, filepath: str) -> None:
         """Parse a single Python file and extract all defined symbols."""
         try:
             with open(filepath, "r", encoding="utf-8") as f:
@@ -152,7 +152,7 @@ class RealityAnchor:
 
         return ValidationResult(is_valid=is_valid, violations=violations)
 
-    def _check_import_from(self, node: ast.ImportFrom, violations: List[str]):
+    def _check_import_from(self, node: ast.ImportFrom, violations: List[str]) -> None:
         """Check: from danny_toolkit.x.y import Z"""
         module = node.module or ""
         if not module.startswith("danny_toolkit"):
@@ -175,7 +175,7 @@ class RealityAnchor:
                     f"(valid: {', '.join(sorted(valid)[:10])}{'...' if len(valid) > 10 else ''})"
                 )
 
-    def _check_import(self, node: ast.Import, violations: List[str]):
+    def _check_import(self, node: ast.Import, violations: List[str]) -> None:
         """Check: import danny_toolkit.x.y"""
         for alias in node.names:
             name = alias.name
@@ -185,7 +185,7 @@ class RealityAnchor:
             if not any(m == name or m.startswith(name + ".") for m in self.valid_symbols):
                 violations.append(f"Module does not exist: '{name}'")
 
-    def _check_attribute_chain(self, node: ast.Attribute, violations: List[str]):
+    def _check_attribute_chain(self, node: ast.Attribute, violations: List[str]) -> None:
         """Check attribute access chains like danny_toolkit.core.engine.run_fast()."""
         chain = self._resolve_attribute_chain(node)
         if not chain or not chain.startswith("danny_toolkit."):
@@ -273,7 +273,8 @@ class ValidationResult:
 
     __slots__ = ("is_valid", "violations")
 
-    def __init__(self, is_valid: bool, violations: List[str]):
+    def __init__(self, is_valid: bool, violations: List[str]) -> None:
+        """Init  ."""
         self.is_valid = is_valid
         self.violations = violations
 

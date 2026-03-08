@@ -16,6 +16,8 @@ Stop:
     saver.stop()
 """
 
+from __future__ import annotations
+
 import atexit
 import logging
 import os
@@ -60,7 +62,8 @@ class AutoSaver:
         interval_sec: Interval in seconden (default 1800 = 30 min).
     """
 
-    def __init__(self, interval_sec: int = _DEFAULT_INTERVAL_SEC):
+    def __init__(self, interval_sec: int = _DEFAULT_INTERVAL_SEC) -> None:
+        """Init  ."""
         self._interval = max(interval_sec, _MIN_INTERVAL_SEC)
         self._stop_event = threading.Event()
         self._thread: Optional[threading.Thread] = None

@@ -24,6 +24,8 @@ Gebruik:
     StrategistCls = factory.load_brain_class("Strategist")
 """
 
+from __future__ import annotations
+
 import importlib
 import logging
 import threading
@@ -110,7 +112,7 @@ class AgentFactory:
     God Mode Error Handling — fouten naar logger, nooit bare except:pass.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """`Initializes the object, setting up caches for modules, classes, and agents, as well as a lock for thread safety and a placeholder for cosmic roles.
 
  Args:
@@ -181,7 +183,7 @@ class AgentFactory:
 
     # ── CosmicRole Lazy Resolver ─────────────────────────────
 
-    def _get_cosmic_role(self, role_name: str):
+    def _get_cosmic_role(self, role_name: str) -> None:
         """Resolve CosmicRole enum — lazy import van trinity_omega."""
         if self._cosmic_roles is None:
             try:
@@ -196,7 +198,7 @@ class AgentFactory:
 
     # ── Laag 1: Swarm Agents ────────────────────────────────
 
-    def get_swarm_agent(self, key: str):
+    def get_swarm_agent(self, key: str) -> None:
         """Haal een swarm agent op — lazy load + cache.
 
         Args:
@@ -338,7 +340,7 @@ class AgentFactory:
             "cached_modules": sum(1 for v in self._module_cache.values() if v is not False),
         }
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Verwijder alle caches — forceert hernieuwde import."""
         with self._lock:
             self._agent_cache.clear()

@@ -75,7 +75,7 @@ class AdversarialTribunal:
         print(result.rounds)  # how many rounds it took
     """
 
-    def __init__(self, brain=None, max_retries: int = 3):
+    def __init__(self, brain: object=None, max_retries: int = 3) -> None:
         """
         Initialize the Tribunal.
 
@@ -95,7 +95,7 @@ class AdversarialTribunal:
         if brain is None:
             self._init_direct_client()
 
-    def _init_direct_client(self):
+    def _init_direct_client(self) -> None:
         """Initialize a direct LLM client (Anthropic or Ollama)."""
         from danny_toolkit.core.config import Config
 
@@ -299,7 +299,7 @@ class TribunalVerdict:
     __slots__ = ("final_answer", "accepted", "rounds", "transcript")
 
     def __init__(self, final_answer: str, accepted: bool, rounds: int,
-                 transcript: List[Dict]):
+                 transcript: List[Dict]) -> None:
         """Initializes a result object.
 
  Args:
@@ -337,7 +337,7 @@ _adversarial_tribunal_instance: Optional["AdversarialTribunal"] = None
 _adversarial_tribunal_lock = threading.Lock()
 
 
-def get_adversarial_tribunal(brain=None) -> "AdversarialTribunal":
+def get_adversarial_tribunal(brain: object=None) -> "AdversarialTribunal":
     """Return the process-wide AdversarialTribunal singleton.
 
     Args:

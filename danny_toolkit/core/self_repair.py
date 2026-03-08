@@ -264,7 +264,7 @@ Sets the governor, oracle, and repair log to their initial states:
 
     # ─── Deterministische Handlers ───
 
-    def _fix_state_corrupt(self, probleem) -> None:
+    def _fix_state_corrupt(self, probleem: object) -> None:
         """Herstel corrupte state files via Governor.
 
         Bij 3+ corrupte bestanden: rescue_family().
@@ -318,7 +318,7 @@ Sets the governor, oracle, and repair log to their initial states:
             ),
         }
 
-    def _fix_circuit_breaker(self, probleem) -> None:
+    def _fix_circuit_breaker(self, probleem: object) -> None:
         """Wacht op cooldown en check API health.
 
         Respecteert cooldown, max 65s wacht.
@@ -355,7 +355,7 @@ Sets the governor, oracle, and repair log to their initial states:
             ),
         }
 
-    def _fix_learning_saturatie(self, probleem) -> None:
+    def _fix_learning_saturatie(self, probleem: object) -> None:
         """Learning saturatie: niet auto-fixbaar."""
         return {
             "probleem": probleem["detail"],
@@ -367,7 +367,7 @@ Sets the governor, oracle, and repair log to their initial states:
             ),
         }
 
-    def _fix_config_ontbreekt(self, probleem) -> None:
+    def _fix_config_ontbreekt(self, probleem: object) -> None:
         """Maak ontbrekende config dirs aan."""
         try:
             Config.ensure_dirs()
@@ -387,7 +387,7 @@ Sets the governor, oracle, and repair log to their initial states:
 
     # ─── LLM Fallback ───
 
-    def _llm_advies(self, probleem) -> None:
+    def _llm_advies(self, probleem: object) -> None:
         """LLM-fallback voor onbekende probleemtypen.
 
         Gebruikt OracleAgent._call_api() voor advies.
@@ -515,7 +515,7 @@ Sets the governor, oracle, and repair log to their initial states:
                 "tijd": 0,
             }
 
-    def _zoek_kennis(self, zoekterm, n_results=5) -> None:
+    def _zoek_kennis(self, zoekterm: object, n_results: object=5) -> None:
         """Zoek relevante kennis in ChromaDB.
 
         Args:
@@ -551,7 +551,7 @@ Sets the governor, oracle, and repair log to their initial states:
             return []
 
     def _genereer_herstelplan(
-        self, diagnose, kennis, fout
+        self, diagnose: object, kennis: object, fout
     ) -> None:
         """Genereer multi-step herstelplan via LLM.
 
@@ -631,7 +631,7 @@ Sets the governor, oracle, and repair log to their initial states:
             logger.debug("Herstelplan genereren mislukt: %s", e)
             return []
 
-    def _voer_stap_uit(self, stap) -> None:
+    def _voer_stap_uit(self, stap: object) -> None:
         """Voer een herstelstap uit.
 
         Dispatcht naar shell, gui of governor handler.
@@ -665,7 +665,7 @@ Sets the governor, oracle, and repair log to their initial states:
                 ),
             }
 
-    def _voer_shell_uit(self, commando, args) -> None:
+    def _voer_shell_uit(self, commando: object, args: object) -> None:
         """Voer een shell-commando uit.
 
         Args:
@@ -723,7 +723,7 @@ Sets the governor, oracle, and repair log to their initial states:
                 "detail": str(e),
             }
 
-    def _voer_gui_uit(self, actie, args) -> None:
+    def _voer_gui_uit(self, actie: object, args: object) -> None:
         """Voer een GUI-actie uit via KineticUnit.
 
         Args:
@@ -760,7 +760,7 @@ Sets the governor, oracle, and repair log to their initial states:
                 "detail": str(e),
             }
 
-    def _voer_governor_uit(self, actie, args) -> None:
+    def _voer_governor_uit(self, actie: object, args: object) -> None:
         """Voer een Governor-actie uit (whitelist).
 
         Args:
@@ -812,7 +812,7 @@ Sets the governor, oracle, and repair log to their initial states:
                 "detail": str(e),
             }
 
-    def _verifieer_visueel(self, verwachting) -> None:
+    def _verifieer_visueel(self, verwachting: object) -> None:
         """Visuele verificatie via PixelEye.
 
         Args:
@@ -830,7 +830,7 @@ Sets the governor, oracle, and repair log to their initial states:
             }
 
     def orchestrate_repair(
-        self, fout_beschrijving, verwachting=None
+        self, fout_beschrijving: object, verwachting: object=None
     ) -> None:
         """Multi-agent repair pipeline.
 
@@ -905,7 +905,7 @@ Sets the governor, oracle, and repair log to their initial states:
 
     # ─── Display ───
 
-    def toon_orchestratie(self, result) -> None:
+    def toon_orchestratie(self, result: object) -> None:
         """Toon orchestratie-resultaat met kleuren."""
         status = result["status"]
         duur = result["duur"]
@@ -983,7 +983,7 @@ Sets the governor, oracle, and repair log to their initial states:
                     Kleur.DIM,
                 ))
 
-    def toon_diagnose(self, diagnose) -> None:
+    def toon_diagnose(self, diagnose: object) -> None:
         """Toon diagnose-resultaat met kleuren."""
         status = diagnose["status"]
         problemen = diagnose["problemen"]
@@ -1037,7 +1037,7 @@ Sets the governor, oracle, and repair log to their initial states:
             Kleur.DIM,
         ))
 
-    def toon_rapport(self, rapport) -> None:
+    def toon_rapport(self, rapport: object) -> None:
         """Toon reparatierapport met OK/X status."""
         acties = rapport["acties"]
         duur = rapport["duur"]

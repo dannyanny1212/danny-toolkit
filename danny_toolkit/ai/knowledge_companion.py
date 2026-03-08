@@ -12,6 +12,8 @@ XP Systeem:
 - Dagelijks studeren: +100 XP streak bonus
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import random
@@ -99,7 +101,7 @@ class KnowledgeCompanion:
 
     VERSIE = "1.0.0"
 
-    def __init__(self, naam: str = None):
+    def __init__(self, naam: str = None) -> None:
         """Initializes a Knowledge Companion instance.
 
 ### Parameters
@@ -199,7 +201,7 @@ class KnowledgeCompanion:
                         data[key][sub_key] = sub_value
         return data
 
-    def _sla_op(self):
+    def _sla_op(self) -> None:
         """Sla data op."""
         self.data["laatste_interactie"] = datetime.now().isoformat()
         with open(self.data_file, "w", encoding="utf-8") as f:
@@ -242,7 +244,7 @@ class KnowledgeCompanion:
         import math
         return max(1, int(math.sqrt(xp / 100)) + 1)
 
-    def _update_persona(self):
+    def _update_persona(self) -> None:
         """Update persona gebaseerd op XP en docs."""
         xp = self.data["xp"]
         docs = self.data["stats"]["totaal_docs"]
@@ -276,7 +278,7 @@ class KnowledgeCompanion:
     # KENNIS VOEDEN (DOCUMENT INDEXEREN)
     # ========================================================================
 
-    def voed(self, bron, tags: list = None) -> dict:
+    def voed(self, bron: object, tags: list = None) -> dict:
         """
         Voed de companion met kennis (indexeer document).
 
@@ -527,7 +529,7 @@ BRONNEN OM TE SYNTHETISEREN:
     # ACHIEVEMENTS
     # ========================================================================
 
-    def _unlock_achievement(self, key: str):
+    def _unlock_achievement(self, key: str) -> None:
         """Unlock een achievement."""
         if key not in self.data["achievements"]:
             self.data["achievements"].append(key)
@@ -554,7 +556,7 @@ BRONNEN OM TE SYNTHETISEREN:
             "achievements": len(self.data["achievements"]),
         }
 
-    def toon_status(self):
+    def toon_status(self) -> None:
         """Print formatted status."""
         status = self.status()
         persona = self._get_persona()
@@ -586,7 +588,7 @@ BRONNEN OM TE SYNTHETISEREN:
     # INTERACTIEVE CLI
     # ========================================================================
 
-    def run(self):
+    def run(self) -> None:
         """Start interactieve modus."""
         clear_scherm()
 
@@ -713,18 +715,19 @@ BRONNEN OM TE SYNTHETISEREN:
 class KnowledgeCompanionApp:
     """Wrapper class voor launcher en Central Brain compatibiliteit."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Lazy load companion voor performance
+        """Init  ."""
         self._companion = None
 
     @property
-    def companion(self):
+    def companion(self) -> None:
         """Lazy load de companion."""
         if self._companion is None:
             self._companion = KnowledgeCompanion()
         return self._companion
 
-    def run(self):
+    def run(self) -> None:
         """Start de interactieve Knowledge Companion."""
         self.companion.run()
 
@@ -755,7 +758,7 @@ class KnowledgeCompanionApp:
         return self.companion.status()
 
 
-def main():
+def main() -> None:
     """Start Knowledge Companion."""
     app = KnowledgeCompanionApp()
     app.run()

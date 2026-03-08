@@ -108,7 +108,7 @@ AGENT_COLORS = {
 
 # --- GOVERNOR & BOOT ---
 
-def show_governor_status(brain) -> None:
+def show_governor_status(brain: object) -> None:
     """Toon compacte Governor health status."""
     try:
         report = brain.governor.get_health_report()
@@ -148,7 +148,7 @@ def show_governor_status(brain) -> None:
         )
 
 
-def show_boot_log(boot_log) -> None:
+def show_boot_log(boot_log: object) -> None:
     """Toon boot log in een dim panel."""
     if boot_log.strip():
         console.print(Panel(
@@ -158,7 +158,7 @@ def show_boot_log(boot_log) -> None:
         ))
 
 
-def show_status(brain) -> None:
+def show_status(brain: object) -> None:
     """Toon Governor health + agent grid per tier."""
     show_governor_status(brain)
     console.print()
@@ -223,7 +223,7 @@ def show_status(brain) -> None:
 
 # --- PAYLOAD RENDERING ---
 
-def render_payload(p, elapsed=0.0) -> None:
+def render_payload(p: object, elapsed: object=0.0) -> None:
     """Render een SwarmPayload naar de console."""
     color = AGENT_COLORS.get(p.agent, "white")
     console.print(
@@ -370,7 +370,7 @@ def render_payload(p, elapsed=0.0) -> None:
         )
 
 
-def render_chain_result(chain_result) -> None:
+def render_chain_result(chain_result: object) -> None:
     """Render chain pipeline resultaat."""
     if not isinstance(chain_result, dict):
         console.print(Panel(

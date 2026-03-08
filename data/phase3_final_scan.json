@@ -1,0 +1,5370 @@
+[
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\ai\\knowledge_companion.py",
+    "lines": 768,
+    "classes": 2,
+    "functions": 31,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 244,
+        "message": "Import 'math' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 349,
+        "message": "Import 'urllib.request' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 350,
+        "message": "Import 're' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\dream_journal.py",
+    "lines": 477,
+    "classes": 1,
+    "functions": 12,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "param-type-hint",
+        "line": 1,
+        "message": "2/3 parameters missing type hints",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\fitness_tracker.py",
+    "lines": 440,
+    "classes": 1,
+    "functions": 12,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "param-type-hint",
+        "line": 1,
+        "message": "2/3 parameters missing type hints",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\prism_dashboard.py",
+    "lines": 663,
+    "classes": 0,
+    "functions": 15,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 102,
+        "message": "Import 'danny_toolkit.core.neural_bus' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 112,
+        "message": "Import 'danny_toolkit.brain.waakhuis' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 122,
+        "message": "Import 'danny_toolkit.brain.cortical_stack' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 132,
+        "message": "Import 'danny_toolkit.omega_sovereign_core.memory_interface' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 144,
+        "message": "Import 'danny_toolkit.omega_sovereign_core.event_signing' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 156,
+        "message": "Import 'danny_toolkit.brain.hallucination_shield' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 168,
+        "message": "Import 'danny_toolkit.omega_sovereign_core.lockdown' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\virtueel_huisdier.py",
+    "lines": 9196,
+    "classes": 1,
+    "functions": 132,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 41,
+        "message": "Import 'danny_toolkit.apps.boodschappenlijst' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 46,
+        "message": "Import 'danny_toolkit.apps.rekenmachine' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 52,
+        "message": "Import 'danny_toolkit.ai.nieuws_agent' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 61,
+        "message": "Import 'danny_toolkit.ai.weer_agent' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 70,
+        "message": "Import 'danny_toolkit.ai.claude_chat' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 83,
+        "message": "Import 'danny_toolkit.apps.mood_tracker' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 93,
+        "message": "Import 'danny_toolkit.apps.habit_tracker' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 103,
+        "message": "Import 'danny_toolkit.apps.expense_tracker' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 113,
+        "message": "Import 'danny_toolkit.apps.agenda_planner' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 123,
+        "message": "Import 'danny_toolkit.apps.pomodoro_timer' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 427,
+        "message": "Import 'danny_toolkit.learning' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 530,
+        "message": "Import 'danny_toolkit.brain.unified_memory' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 2942,
+        "message": "Import 'danny_toolkit.ai.production_rag' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 4843,
+        "message": "Import 'danny_toolkit.ai.production_rag' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\watchtower.py",
+    "lines": 543,
+    "classes": 3,
+    "functions": 16,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 164,
+        "message": "Import 'danny_toolkit.core.neural_bus' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 170,
+        "message": "Import 'danny_toolkit.brain.cortical_stack' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 206,
+        "message": "Import 'danny_toolkit.core.neural_bus' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 249,
+        "message": "Import 'psutil' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 339,
+        "message": "Import 'psutil' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\__init__.py",
+    "lines": 137,
+    "classes": 0,
+    "functions": 0,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "absolute-import",
+        "line": 15,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 16,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 17,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 21,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 22,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 23,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 77,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 78,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 79,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 80,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 81,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 82,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 83,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 28,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 29,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 30,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 31,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 32,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 33,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 34,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 35,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 36,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 37,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 38,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 39,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 40,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 41,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 42,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 43,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 44,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 45,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 46,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 47,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 48,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 49,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 50,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 51,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 55,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 56,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 57,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 58,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 59,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 60,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 61,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 62,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 63,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 64,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 70,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 71,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      },
+      {
+        "rule": "absolute-import",
+        "line": 72,
+        "message": "Relative import found (level=1)",
+        "severity": "error"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\arbitrator.py",
+    "lines": 815,
+    "classes": 4,
+    "functions": 22,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 209,
+        "message": "Import 'danny_toolkit.brain.synapse' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 219,
+        "message": "Import 'danny_toolkit.brain.waakhuis' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 335,
+        "message": "Import 'danny_toolkit.core.engine' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 400,
+        "message": "Import 'danny_toolkit.core.engine' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 484,
+        "message": "Import 'danny_toolkit.brain.model_sync' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 579,
+        "message": "Import 'danny_toolkit.brain.hallucination_shield' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 605,
+        "message": "Import 'danny_toolkit.core.engine' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 692,
+        "message": "Import 'danny_toolkit.brain.cortical_stack' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 737,
+        "message": "Import 'danny_toolkit.brain.cortical_stack' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 780,
+        "message": "Import 'danny_toolkit.brain.observatory_sync' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 605,
+        "message": "Import 'danny_toolkit.core.engine' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\artificer.py",
+    "lines": 689,
+    "classes": 1,
+    "functions": 19,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 423,
+        "message": "Import 're' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 478,
+        "message": "Import 'tempfile' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 479,
+        "message": "Import 'pathlib' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 523,
+        "message": "Import 'importlib' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\brain_cli.py",
+    "lines": 898,
+    "classes": 1,
+    "functions": 21,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 208,
+        "message": "Import 'danny_toolkit.core.shard_router' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 219,
+        "message": "Import 'danny_toolkit.core.shard_router' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 282,
+        "message": "Import 'danny_toolkit.core.memory_interface' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 293,
+        "message": "Import 'danny_toolkit.brain.governor' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 660,
+        "message": "Import 'patchday' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 714,
+        "message": "Import 'danny_toolkit.core.config' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 831,
+        "message": "Import 'danny_toolkit.brain.waakhuis' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 842,
+        "message": "Import 'danny_toolkit.brain.config_auditor' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\central_brain.py",
+    "lines": 2576,
+    "classes": 1,
+    "functions": 45,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 243,
+        "message": "Import 'danny_toolkit.brain.tool_dispatcher' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 303,
+        "message": "Import 'danny_toolkit.brain.governor' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 356,
+        "message": "Import 'time' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 569,
+        "message": "Import 'danny_toolkit.brain.the_mirror' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 777,
+        "message": "Import 'openai' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 836,
+        "message": "Import 're' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 841,
+        "message": "Import 'danny_toolkit.brain.app_tools' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 1003,
+        "message": "Import 'danny_toolkit.brain.app_tools' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 1287,
+        "message": "Import 'danny_toolkit.brain.governor' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 1505,
+        "message": "Import 'concurrent.futures' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 1829,
+        "message": "Import 'requests' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 1855,
+        "message": "Import 'time' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 1868,
+        "message": "Import 'time' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 2042,
+        "message": "Import 'requests' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 2112,
+        "message": "Import 'ingest' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 2124,
+        "message": "Import 'danny_toolkit.brain.cortex' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 2125,
+        "message": "Import 'asyncio' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 2264,
+        "message": "Import 'sys' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 2265,
+        "message": "Import 'io' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 2284,
+        "message": "Import 'danny_toolkit.brain.introspector' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 2301,
+        "message": "Import 'danny_toolkit.brain.waakhuis' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 2322,
+        "message": "Import 'danny_toolkit.core.engine' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 2342,
+        "message": "Import 'danny_toolkit.brain.cortical_stack' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 2364,
+        "message": "Import 'danny_toolkit.brain.black_box' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 2377,
+        "message": "Import 'danny_toolkit.core.neural_bus' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 2413,
+        "message": "Import 'asyncio' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 2451,
+        "message": "Import 'danny_toolkit.core.neural_bus' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\config_auditor.py",
+    "lines": 546,
+    "classes": 3,
+    "functions": 14,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 413,
+        "message": "Import 'danny_toolkit.core.neural_bus' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 447,
+        "message": "Import 'danny_toolkit.brain.cortical_stack' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 467,
+        "message": "Import 'danny_toolkit.brain.black_box' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 488,
+        "message": "Import 'danny_toolkit.core.alerter' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\dreamer.py",
+    "lines": 739,
+    "classes": 1,
+    "functions": 11,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 111,
+        "message": "Import 'danny_toolkit.brain.ghost_writer' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 124,
+        "message": "Import 'danny_toolkit.brain.synapse' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 133,
+        "message": "Import 'danny_toolkit.brain.phantom' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 148,
+        "message": "Import 'danny_toolkit.core.semantic_cache' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 160,
+        "message": "Import 'danny_toolkit.brain.config_auditor' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 177,
+        "message": "Import 'danny_toolkit.core.config' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 195,
+        "message": "Import 'danny_toolkit.core.self_pruning' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 212,
+        "message": "Import 'danny_toolkit.brain.cortex' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 259,
+        "message": "Import 'danny_toolkit.brain.phantom' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 273,
+        "message": "Import 'danny_toolkit.brain.oracle_eye' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 179,
+        "message": "Import 'danny_toolkit.core.shard_router' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 324,
+        "message": "Import 'danny_toolkit.core.log_rotation' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 427,
+        "message": "Import 'danny_toolkit.brain.virtual_twin' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 434,
+        "message": "Import 'chromadb' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 610,
+        "message": "Import 'sqlite3' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 717,
+        "message": "Import 'danny_toolkit.brain.black_box' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 718,
+        "message": "Import 'danny_toolkit.brain.void_walker' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\ghost_amplifier.py",
+    "lines": 404,
+    "classes": 2,
+    "functions": 8,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "return-type-hint",
+        "line": 121,
+        "message": "Function '__init__' missing return type hint",
+        "severity": "warning"
+      },
+      {
+        "rule": "return-type-hint",
+        "line": 364,
+        "message": "Function '_log_amplification' missing return type hint",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 333,
+        "message": "Import 'asyncio' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\governor.py",
+    "lines": 977,
+    "classes": 1,
+    "functions": 29,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 111,
+        "message": "Import 'danny_toolkit.core.error_taxonomy' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 176,
+        "message": "Import 'danny_toolkit.brain.cortical_stack' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 662,
+        "message": "Import 'os' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 726,
+        "message": "Import 'danny_toolkit.brain.config_auditor' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 754,
+        "message": "Import 'danny_toolkit.brain.config_auditor' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 955,
+        "message": "Import 'danny_toolkit.core.error_taxonomy' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\introspector.py",
+    "lines": 884,
+    "classes": 4,
+    "functions": 15,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "bare-except-pass",
+        "line": 745,
+        "message": "Bare 'except: pass' or 'except Exception: pass' found",
+        "severity": "warning"
+      },
+      {
+        "rule": "bare-except-pass",
+        "line": 749,
+        "message": "Bare 'except: pass' or 'except Exception: pass' found",
+        "severity": "warning"
+      },
+      {
+        "rule": "bare-except-pass",
+        "line": 753,
+        "message": "Bare 'except: pass' or 'except Exception: pass' found",
+        "severity": "warning"
+      },
+      {
+        "rule": "bare-except-pass",
+        "line": 757,
+        "message": "Bare 'except: pass' or 'except Exception: pass' found",
+        "severity": "warning"
+      },
+      {
+        "rule": "bare-except-pass",
+        "line": 761,
+        "message": "Bare 'except: pass' or 'except Exception: pass' found",
+        "severity": "warning"
+      },
+      {
+        "rule": "bare-except-pass",
+        "line": 765,
+        "message": "Bare 'except: pass' or 'except Exception: pass' found",
+        "severity": "warning"
+      },
+      {
+        "rule": "bare-except-pass",
+        "line": 769,
+        "message": "Bare 'except: pass' or 'except Exception: pass' found",
+        "severity": "warning"
+      },
+      {
+        "rule": "bare-except-pass",
+        "line": 773,
+        "message": "Bare 'except: pass' or 'except Exception: pass' found",
+        "severity": "warning"
+      },
+      {
+        "rule": "bare-except-pass",
+        "line": 777,
+        "message": "Bare 'except: pass' or 'except Exception: pass' found",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\model_sync.py",
+    "lines": 847,
+    "classes": 12,
+    "functions": 31,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 217,
+        "message": "Import 'groq' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 231,
+        "message": "Import 'groq' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 334,
+        "message": "Import 'anthropic' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 413,
+        "message": "Import 'openai' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 491,
+        "message": "Import 'openai' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 577,
+        "message": "Import 'google' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 594,
+        "message": "Import 'asyncio' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 654,
+        "message": "Import 'ollama' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 773,
+        "message": "Import 'ollama' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\morning_protocol.py",
+    "lines": 671,
+    "classes": 4,
+    "functions": 16,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 208,
+        "message": "Import 'gc' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 218,
+        "message": "Import 'danny_toolkit.brain.central_brain' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 219,
+        "message": "Import 'danny_toolkit.brain.nexus_bridge' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 348,
+        "message": "Import 'danny_toolkit.brain.nexus_bridge' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 363,
+        "message": "Import 'danny_toolkit.brain.central_brain' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\nexus_bridge.py",
+    "lines": 526,
+    "classes": 2,
+    "functions": 21,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 64,
+        "message": "Import 'danny_toolkit.brain.central_brain' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 227,
+        "message": "Import 'danny_toolkit.brain.workflows' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 372,
+        "message": "Import 'random' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\oracle.py",
+    "lines": 1358,
+    "classes": 1,
+    "functions": 24,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 163,
+        "message": "Import 'kinesis' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 172,
+        "message": "Import 'danny_toolkit.skills.pixel_eye' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 181,
+        "message": "Import 'danny_toolkit.core.self_repair' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 199,
+        "message": "Import 'chromadb' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 200,
+        "message": "Import 'chromadb.utils.embedding_functions' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 203,
+        "message": "Import 'io' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 204,
+        "message": "Import 'sys' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\proactive.py",
+    "lines": 638,
+    "classes": 2,
+    "functions": 20,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 97,
+        "message": "Import 'danny_toolkit.brain.governor' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 108,
+        "message": "Import 'danny_toolkit.brain.cortical_stack' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 232,
+        "message": "Import 'danny_toolkit.daemon.sensorium' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 282,
+        "message": "Import 'psutil' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 351,
+        "message": "Import 'danny_toolkit.core.engine' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 476,
+        "message": "Import 'danny_toolkit.core.engine' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 487,
+        "message": "Import 'danny_toolkit.core.self_repair' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\prometheus_protocols.py",
+    "lines": 594,
+    "classes": 1,
+    "functions": 5,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 50,
+        "message": "Import 'danny_toolkit.brain.trinity_models' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 148,
+        "message": "Import 'danny_toolkit.brain.trinity_models' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 229,
+        "message": "Import 'danny_toolkit.brain.trinity_models' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 412,
+        "message": "Import 'danny_toolkit.brain.trinity_models' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\sanctuary_dashboard.py",
+    "lines": 1070,
+    "classes": 6,
+    "functions": 33,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 237,
+        "message": "Import 'danny_toolkit.brain.central_brain' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 272,
+        "message": "Import 'danny_toolkit.brain.trinity_omega' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 290,
+        "message": "Import 'danny_toolkit.brain.governor' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 503,
+        "message": "Import 'danny_toolkit.brain.cortical_stack' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 518,
+        "message": "Import 'danny_toolkit.core.key_manager' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 535,
+        "message": "Import 'danny_toolkit.brain.hallucination_shield' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 546,
+        "message": "Import 'danny_toolkit.brain.black_box' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 556,
+        "message": "Import 'swarm_engine' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 569,
+        "message": "Import 'danny_toolkit.brain.arbitrator' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 579,
+        "message": "Import 'danny_toolkit.core.neural_bus' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 640,
+        "message": "Import 'danny_toolkit.brain' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 663,
+        "message": "Import 'psutil' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 689,
+        "message": "Import 'danny_toolkit.core.vram_manager' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\security\\engine.py",
+    "lines": 840,
+    "classes": 1,
+    "functions": 17,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 79,
+        "message": "Import 'danny_toolkit.brain.governor' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 90,
+        "message": "Import 'danny_toolkit.brain.cortical_stack' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 103,
+        "message": "Import 'danny_toolkit.brain.file_guard' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 114,
+        "message": "Import 'danny_toolkit.daemon.coherentie' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 501,
+        "message": "Import 'danny_toolkit.ai.production_rag' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\security\\utils.py",
+    "lines": 53,
+    "classes": 0,
+    "functions": 2,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "param-type-hint",
+        "line": 1,
+        "message": "2/3 parameters missing type hints",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\singularity.py",
+    "lines": 1525,
+    "classes": 2,
+    "functions": 26,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 111,
+        "message": "Import 'danny_toolkit.brain.governor' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 122,
+        "message": "Import 'danny_toolkit.brain.cortical_stack' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 374,
+        "message": "Import 'danny_toolkit.brain.proactive' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 692,
+        "message": "Import 'danny_toolkit.swarm_engine' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 695,
+        "message": "Import 'sys' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 696,
+        "message": "Import 'importlib' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 813,
+        "message": "Import 'datetime' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 879,
+        "message": "Import 'danny_toolkit.brain.proactive' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 1023,
+        "message": "Import 'danny_toolkit.brain.trinity_omega' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\tool_dispatcher.py",
+    "lines": 455,
+    "classes": 1,
+    "functions": 8,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 334,
+        "message": "Import 'danny_toolkit.core.key_manager' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 343,
+        "message": "Import 'groq' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 435,
+        "message": "Import 'danny_toolkit.brain.app_tools' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\ultimate_hunt.py",
+    "lines": 709,
+    "classes": 7,
+    "functions": 25,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 368,
+        "message": "Import 'danny_toolkit.apps.legendary_companion' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 404,
+        "message": "Import 'danny_toolkit.ai.nieuws_agent' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 424,
+        "message": "Import 'danny_toolkit.brain.void_walker' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 452,
+        "message": "Import 'danny_toolkit.apps.code_analyse' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 471,
+        "message": "Import 'danny_toolkit.apps.time_capsule' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 483,
+        "message": "Import 'danny_toolkit.apps.notitie_app' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\virtual_twin.py",
+    "lines": 1334,
+    "classes": 3,
+    "functions": 39,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 366,
+        "message": "Import 'danny_toolkit.brain.the_mirror' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 376,
+        "message": "Import 'danny_toolkit.brain.void_walker' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 609,
+        "message": "Import 'danny_toolkit.brain.synapse' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 619,
+        "message": "Import 'danny_toolkit.brain.phantom' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 792,
+        "message": "Import 'danny_toolkit.core.config' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 793,
+        "message": "Import 'danny_toolkit.core.vector_store' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 969,
+        "message": "Import 'danny_toolkit.brain.synapse' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 1017,
+        "message": "Import 'danny_toolkit.brain.phantom' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 1034,
+        "message": "Import 'danny_toolkit.core.neural_bus' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 1154,
+        "message": "Import 'danny_toolkit.core.groq_retry' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\waakhuis.py",
+    "lines": 541,
+    "classes": 1,
+    "functions": 19,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 396,
+        "message": "Import 'psutil' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 412,
+        "message": "Import 'pynvml' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\workflows.py",
+    "lines": 623,
+    "classes": 4,
+    "functions": 12,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "logger",
+        "line": 1,
+        "message": "No logger defined (expected 'logger = logging.getLogger(__name__)')",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\advanced_knowledge_bridge.py",
+    "lines": 393,
+    "classes": 1,
+    "functions": 15,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 104,
+        "message": "Import 'threading' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 115,
+        "message": "Import 'chromadb' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 324,
+        "message": "Import 'threading' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 115,
+        "message": "Import 'chromadb' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\alerter.py",
+    "lines": 356,
+    "classes": 2,
+    "functions": 10,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 160,
+        "message": "Import 'danny_toolkit.core.neural_bus' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 206,
+        "message": "Import 'danny_toolkit.core.memory_interface' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 198,
+        "message": "Import 'telegram_bot' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 216,
+        "message": "Import 'danny_toolkit.core.neural_bus' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 265,
+        "message": "Import 'danny_toolkit.core.memory_interface' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 257,
+        "message": "Import 'telegram_bot' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 275,
+        "message": "Import 'danny_toolkit.core.neural_bus' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\doc_loader.py",
+    "lines": 424,
+    "classes": 0,
+    "functions": 13,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 125,
+        "message": "Import 'pdfplumber' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 155,
+        "message": "Import 'PyPDF2' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 203,
+        "message": "Import 'docx' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 260,
+        "message": "Import 'openpyxl' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 294,
+        "message": "Import 'pptx' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 347,
+        "message": "Import 'ebooklib' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 348,
+        "message": "Import 'ebooklib' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 349,
+        "message": "Import 'bs4' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 388,
+        "message": "Import 'bs4' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\document_processor.py",
+    "lines": 588,
+    "classes": 2,
+    "functions": 18,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 55,
+        "message": "Import 'pypdf' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 338,
+        "message": "Import 'pypdf' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\embeddings.py",
+    "lines": 907,
+    "classes": 9,
+    "functions": 46,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 47,
+        "message": "Import 'numpy' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 588,
+        "message": "Import 'chromadb.utils.embedding_functions' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 899,
+        "message": "Import 'gc' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 122,
+        "message": "Import 'voyageai' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 505,
+        "message": "Import 'voyageai' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 830,
+        "message": "Import 'psutil' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 836,
+        "message": "Import 'danny_toolkit.core.vram_manager' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 857,
+        "message": "Import 'danny_toolkit.core.vram_manager' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\emotional_voice.py",
+    "lines": 487,
+    "classes": 4,
+    "functions": 17,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 198,
+        "message": "Import 'requests' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 215,
+        "message": "Import 'edge_tts' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 223,
+        "message": "Import 'pyttsx3' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 307,
+        "message": "Import 'requests' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 370,
+        "message": "Import 'edge_tts' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 411,
+        "message": "Import 'pyttsx3' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\env_bootstrap.py",
+    "lines": 64,
+    "classes": 0,
+    "functions": 2,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 55,
+        "message": "Import 'dotenv' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 62,
+        "message": "Import 'danny_toolkit.core.gpu' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\index_store.py",
+    "lines": 403,
+    "classes": 1,
+    "functions": 12,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 219,
+        "message": "Import 'urllib.parse' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 294,
+        "message": "Import 'collections' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\key_manager.py",
+    "lines": 640,
+    "classes": 2,
+    "functions": 23,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 478,
+        "message": "Import 'groq' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 501,
+        "message": "Import 'groq' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 522,
+        "message": "Import 'groq' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 539,
+        "message": "Import 'groq' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\memory_interface.py",
+    "lines": 126,
+    "classes": 0,
+    "functions": 7,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 68,
+        "message": "Import 'danny_toolkit.brain.cortical_stack' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 86,
+        "message": "Import 'danny_toolkit.brain.governor' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 100,
+        "message": "Import 'danny_toolkit.brain.unified_memory' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\request_tracer.py",
+    "lines": 333,
+    "classes": 3,
+    "functions": 14,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 272,
+        "message": "Import 'danny_toolkit.core.memory_interface' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 254,
+        "message": "Import 'danny_toolkit.core.neural_bus' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\shard_router.py",
+    "lines": 455,
+    "classes": 2,
+    "functions": 9,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 104,
+        "message": "Import 'chromadb' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 105,
+        "message": "Import 'danny_toolkit.core.embeddings' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 108,
+        "message": "Import 'pathlib' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 109,
+        "message": "Import 'sys' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 110,
+        "message": "Import 'io' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 227,
+        "message": "Import 'danny_toolkit.core.neural_bus' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 305,
+        "message": "Import 'danny_toolkit.core.self_pruning' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 402,
+        "message": "Import 'danny_toolkit.core.neural_bus' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\daemon\\coherentie.py",
+    "lines": 225,
+    "classes": 1,
+    "functions": 6,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 47,
+        "message": "Import 'pynvml' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 67,
+        "message": "Import 'pynvml' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\daemon\\daemon_core.py",
+    "lines": 567,
+    "classes": 2,
+    "functions": 22,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 192,
+        "message": "Import 'danny_toolkit.brain.proactive' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 354,
+        "message": "Import 'danny_toolkit.brain.cortical_stack' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 364,
+        "message": "Import 'danny_toolkit.core.self_pruning' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 375,
+        "message": "Import 'danny_toolkit.core.log_rotation' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\daemon\\heartbeat.py",
+    "lines": 1077,
+    "classes": 1,
+    "functions": 26,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 1056,
+        "message": "Import 'io' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 1057,
+        "message": "Import 'sys' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 1058,
+        "message": "Import 'contextlib' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 1065,
+        "message": "Import 'danny_toolkit.brain.trinity_omega' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 210,
+        "message": "Import 'danny_toolkit.brain.cortical_stack' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 223,
+        "message": "Import 'danny_toolkit.core.engine' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 238,
+        "message": "Import 'danny_toolkit.brain.proactive' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 253,
+        "message": "Import 'danny_toolkit.brain.singularity' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 269,
+        "message": "Import 'danny_toolkit.brain.security_research' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 285,
+        "message": "Import 'danny_toolkit.brain.devops_daemon' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 353,
+        "message": "Import 'danny_toolkit.brain.morning_protocol' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 412,
+        "message": "Import 'danny_toolkit.brain.dream_monitor' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 713,
+        "message": "Import 'danny_toolkit.brain.oracle_eye' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 980,
+        "message": "Import 'danny_toolkit.brain.dreamer' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\launcher.py",
+    "lines": 2129,
+    "classes": 24,
+    "functions": 47,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 119,
+        "message": "Import 'danny_toolkit.core.utils' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 124,
+        "message": "Import 'time' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 172,
+        "message": "Import 'danny_toolkit.daemon.limbic_system' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 210,
+        "message": "Import 'danny_toolkit.core.utils' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 295,
+        "message": "Import 'danny_toolkit.core.utils' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 296,
+        "message": "Import 'time' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 343,
+        "message": "Import 'danny_toolkit.core.utils' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 428,
+        "message": "Import 'danny_toolkit.core.utils' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 460,
+        "message": "Import 'danny_toolkit.core.utils' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 565,
+        "message": "Import 'danny_toolkit.core.utils' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 692,
+        "message": "Import 'danny_toolkit.core.utils' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 693,
+        "message": "Import 'danny_toolkit.skills.pixel_eye' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 943,
+        "message": "Import 'danny_toolkit.brain.oracle' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 958,
+        "message": "Import 'danny_toolkit.quests.voice_protocol' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 981,
+        "message": "Import 'danny_toolkit.quests.listener_protocol' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 1004,
+        "message": "Import 'danny_toolkit.quests.dialogue_protocol' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 1026,
+        "message": "Import 'danny_toolkit.quests.will_protocol' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 1049,
+        "message": "Import 'io' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 1050,
+        "message": "Import 'contextlib' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 1051,
+        "message": "Import 'danny_toolkit.core.utils' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 1085,
+        "message": "Import 'danny_toolkit.daemon.heartbeat' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 1069,
+        "message": "Import 'danny_toolkit.brain.trinity_omega' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 1115,
+        "message": "Import 'danny_toolkit.quests.pulse_protocol' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 1138,
+        "message": "Import 'sovereign_app' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 1147,
+        "message": "Import 'danny_toolkit.core.utils' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 1172,
+        "message": "Import 'fastapi_server' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 1192,
+        "message": "Import 'danny_toolkit.core.utils' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 1216,
+        "message": "Import 'telegram_bot' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 1479,
+        "message": "Import 'danny_toolkit.core.startup_validator' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 1976,
+        "message": "Import 'traceback' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\main_omega.py",
+    "lines": 987,
+    "classes": 1,
+    "functions": 20,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 172,
+        "message": "Import 'danny_toolkit.quests.voice_protocol' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 179,
+        "message": "Import 'danny_toolkit.quests.listener_protocol' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 186,
+        "message": "Import 'danny_toolkit.quests.dialogue_protocol' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 195,
+        "message": "Import 'danny_toolkit.quests.will_protocol' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 476,
+        "message": "Import 'danny_toolkit.quests.pulse_protocol' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 817,
+        "message": "Import 'danny_toolkit.core.vector_store' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 818,
+        "message": "Import 'danny_toolkit.core.embeddings' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\omega_sovereign_core\\auto_saver.py",
+    "lines": 346,
+    "classes": 2,
+    "functions": 11,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 98,
+        "message": "Import 'danny_toolkit.brain.cortical_stack' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 104,
+        "message": "Import 'danny_toolkit.core.neural_bus' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 150,
+        "message": "Import 'danny_toolkit.omega_sovereign_core.memory_interface' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 162,
+        "message": "Import 'danny_toolkit.core.neural_bus' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\omega_sovereign_core\\iron_dome.py",
+    "lines": 353,
+    "classes": 3,
+    "functions": 13,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 136,
+        "message": "Import 'danny_toolkit.brain.cortical_stack' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 243,
+        "message": "Import 'urllib.parse' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 260,
+        "message": "Import 'psutil' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\omega_sovereign_core\\lockdown.py",
+    "lines": 398,
+    "classes": 4,
+    "functions": 17,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "bare-except-pass",
+        "line": 369,
+        "message": "Bare 'except: pass' or 'except Exception: pass' found",
+        "severity": "warning"
+      },
+      {
+        "rule": "bare-except-pass",
+        "line": 373,
+        "message": "Bare 'except: pass' or 'except Exception: pass' found",
+        "severity": "warning"
+      },
+      {
+        "rule": "bare-except-pass",
+        "line": 377,
+        "message": "Bare 'except: pass' or 'except Exception: pass' found",
+        "severity": "warning"
+      },
+      {
+        "rule": "bare-except-pass",
+        "line": 381,
+        "message": "Bare 'except: pass' or 'except Exception: pass' found",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\omega_sovereign_core\\sovereign_engine.py",
+    "lines": 441,
+    "classes": 5,
+    "functions": 22,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 122,
+        "message": "Import 'danny_toolkit.brain.cortical_stack' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 213,
+        "message": "Import 'danny_toolkit.core.neural_bus' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 218,
+        "message": "Import 'danny_toolkit.omega_sovereign_core.event_signing' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 370,
+        "message": "Import 'danny_toolkit.omega_sovereign_core.lifecycle' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\omega_sovereign_core\\sovereign_gate.py",
+    "lines": 443,
+    "classes": 4,
+    "functions": 18,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 129,
+        "message": "Import 'danny_toolkit.brain.cortical_stack' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 134,
+        "message": "Import 'danny_toolkit.omega_sovereign_core.lockdown' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 258,
+        "message": "Import 'danny_toolkit.omega_sovereign_core.hardware_fingerprint' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 273,
+        "message": "Import 'danny_toolkit.omega_sovereign_core.iron_dome' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 312,
+        "message": "Import 'time' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 376,
+        "message": "Import 'time' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\quests\\brain_protocol.py",
+    "lines": 163,
+    "classes": 1,
+    "functions": 4,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 37,
+        "message": "Import 'danny_toolkit.brain.central_brain' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 111,
+        "message": "Import 'danny_toolkit.brain.app_tools' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\quests\\listener_protocol.py",
+    "lines": 284,
+    "classes": 1,
+    "functions": 11,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 38,
+        "message": "Import 'speech_recognition' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 49,
+        "message": "Import 'vosk' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 66,
+        "message": "Import 'danny_toolkit.quests.voice_protocol' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 84,
+        "message": "Import 'speech_recognition' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 115,
+        "message": "Import 'pathlib' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 146,
+        "message": "Import 'time' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 108,
+        "message": "Import 'vosk' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 109,
+        "message": "Import 'json' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 110,
+        "message": "Import 'pyaudio' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\quests\\voice_protocol.py",
+    "lines": 163,
+    "classes": 1,
+    "functions": 5,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "param-type-hint",
+        "line": 1,
+        "message": "2/3 parameters missing type hints",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\skills\\librarian.py",
+    "lines": 715,
+    "classes": 1,
+    "functions": 13,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 95,
+        "message": "Import 'chromadb' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 117,
+        "message": "Import 'danny_toolkit.core.embeddings' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 118,
+        "message": "Import 'io' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 149,
+        "message": "Import 'danny_toolkit.core.config' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 152,
+        "message": "Import 'danny_toolkit.core.shard_router' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 166,
+        "message": "Import 'pypdf' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 228,
+        "message": "Import 'danny_toolkit.core.document_processor' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 364,
+        "message": "Import 'asyncio' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\skills\\pixel_eye.py",
+    "lines": 747,
+    "classes": 1,
+    "functions": 13,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 59,
+        "message": "Import 'ollama' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 176,
+        "message": "Import 'pyautogui' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 383,
+        "message": "Import 'pyautogui' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 419,
+        "message": "Import 'shutil' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 424,
+        "message": "Import 'pyautogui' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\test_cosmic_awareness.py",
+    "lines": 659,
+    "classes": 0,
+    "functions": 15,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 134,
+        "message": "Import 'danny_toolkit.launcher' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 206,
+        "message": "Import 'danny_toolkit.daemon.daemon_core' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 262,
+        "message": "Import 'danny_toolkit.brain.central_brain' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 278,
+        "message": "Import 'danny_toolkit.brain.unified_memory' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 301,
+        "message": "Import 'danny_toolkit.brain.governor' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 323,
+        "message": "Import 'danny_toolkit.brain.nexus_bridge' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 369,
+        "message": "Import 'danny_toolkit.brain.trinity_symbiosis' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 422,
+        "message": "Import 'danny_toolkit.brain.trinity_omega' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 505,
+        "message": "Import 'danny_toolkit.brain.sanctuary_dashboard' found inside function body",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 547,
+        "message": "Import 'danny_toolkit.brain.morning_protocol' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\test_full_chain.py",
+    "lines": 427,
+    "classes": 0,
+    "functions": 7,
+    "quality": 9.0,
+    "grade": "A+",
+    "score": "90.0/100.0",
+    "issues": [
+      {
+        "rule": "logger",
+        "line": 1,
+        "message": "No logger defined (expected 'logger = logging.getLogger(__name__)')",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\black_box.py",
+    "lines": 431,
+    "classes": 3,
+    "functions": 17,
+    "quality": 9.1,
+    "grade": "A+",
+    "score": "91.2/100.0",
+    "issues": [
+      {
+        "rule": "return-type-hint",
+        "line": 89,
+        "message": "Function 'reinforce' missing return type hint",
+        "severity": "warning"
+      },
+      {
+        "rule": "return-type-hint",
+        "line": 157,
+        "message": "Function '__init__' missing return type hint",
+        "severity": "warning"
+      },
+      {
+        "rule": "return-type-hint",
+        "line": 179,
+        "message": "Function '_load_immune_memory' missing return type hint",
+        "severity": "warning"
+      },
+      {
+        "rule": "return-type-hint",
+        "line": 193,
+        "message": "Function '_save_immune_memory' missing return type hint",
+        "severity": "warning"
+      },
+      {
+        "rule": "return-type-hint",
+        "line": 209,
+        "message": "Function 'record_crash' missing return type hint",
+        "severity": "warning"
+      },
+      {
+        "rule": "return-type-hint",
+        "line": 286,
+        "message": "Function '_vaccinate' missing return type hint",
+        "severity": "warning"
+      },
+      {
+        "rule": "docstring",
+        "line": 125,
+        "message": "Function 'from_dict' missing docstring",
+        "severity": "warning"
+      },
+      {
+        "rule": "docstring",
+        "line": 157,
+        "message": "Function '__init__' missing docstring",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\omega_sovereign_core\\lifecycle.py",
+    "lines": 284,
+    "classes": 2,
+    "functions": 10,
+    "quality": 9.1,
+    "grade": "A+",
+    "score": "91.0/100.0",
+    "issues": [
+      {
+        "rule": "bare-except-pass",
+        "line": 250,
+        "message": "Bare 'except: pass' or 'except Exception: pass' found",
+        "severity": "warning"
+      },
+      {
+        "rule": "bare-except-pass",
+        "line": 254,
+        "message": "Bare 'except: pass' or 'except Exception: pass' found",
+        "severity": "warning"
+      },
+      {
+        "rule": "bare-except-pass",
+        "line": 258,
+        "message": "Bare 'except: pass' or 'except Exception: pass' found",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\code_analyse.py",
+    "lines": 2046,
+    "classes": 1,
+    "functions": 47,
+    "quality": 9.2,
+    "grade": "A+",
+    "score": "92.5/100.0",
+    "issues": [
+      {
+        "rule": "param-type-hint",
+        "line": 1,
+        "message": "21/42 parameters missing type hints",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\goals_tracker.py",
+    "lines": 777,
+    "classes": 1,
+    "functions": 20,
+    "quality": 9.2,
+    "grade": "A+",
+    "score": "92.5/100.0",
+    "issues": [
+      {
+        "rule": "param-type-hint",
+        "line": 1,
+        "message": "2/4 parameters missing type hints",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\pomodoro_timer.py",
+    "lines": 297,
+    "classes": 1,
+    "functions": 10,
+    "quality": 9.2,
+    "grade": "A+",
+    "score": "92.5/100.0",
+    "issues": [
+      {
+        "rule": "param-type-hint",
+        "line": 1,
+        "message": "2/4 parameters missing type hints",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\quests\\will_protocol.py",
+    "lines": 984,
+    "classes": 5,
+    "functions": 27,
+    "quality": 9.2,
+    "grade": "A+",
+    "score": "91.8/100.0",
+    "issues": [
+      {
+        "rule": "param-type-hint",
+        "line": 1,
+        "message": "11/20 parameters missing type hints",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\boodschappenlijst.py",
+    "lines": 1686,
+    "classes": 1,
+    "functions": 46,
+    "quality": 9.3,
+    "grade": "A+",
+    "score": "93.3/100.0",
+    "issues": [
+      {
+        "rule": "param-type-hint",
+        "line": 1,
+        "message": "4/9 parameters missing type hints",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\oracle_eye.py",
+    "lines": 401,
+    "classes": 2,
+    "functions": 11,
+    "quality": 9.3,
+    "grade": "A+",
+    "score": "93.0/100.0",
+    "issues": [
+      {
+        "rule": "return-type-hint",
+        "line": 77,
+        "message": "Function '__init__' missing return type hint",
+        "severity": "warning"
+      },
+      {
+        "rule": "return-type-hint",
+        "line": 95,
+        "message": "Function '_get_cached' missing return type hint",
+        "severity": "warning"
+      },
+      {
+        "rule": "return-type-hint",
+        "line": 105,
+        "message": "Function '_set_cached' missing return type hint",
+        "severity": "warning"
+      },
+      {
+        "rule": "param-type-hint",
+        "line": 1,
+        "message": "1/10 parameters missing type hints",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\recipe_generator.py",
+    "lines": 466,
+    "classes": 1,
+    "functions": 12,
+    "quality": 9.4,
+    "grade": "A+",
+    "score": "94.0/100.0",
+    "issues": [
+      {
+        "rule": "param-type-hint",
+        "line": 1,
+        "message": "2/5 parameters missing type hints",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\eternal_sentinel.py",
+    "lines": 389,
+    "classes": 1,
+    "functions": 17,
+    "quality": 9.4,
+    "grade": "A+",
+    "score": "94.0/100.0",
+    "issues": [
+      {
+        "rule": "param-type-hint",
+        "line": 1,
+        "message": "2/5 parameters missing type hints",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\observatory_sync.py",
+    "lines": 574,
+    "classes": 4,
+    "functions": 17,
+    "quality": 9.4,
+    "grade": "A+",
+    "score": "93.5/100.0",
+    "issues": [
+      {
+        "rule": "return-type-hint",
+        "line": 203,
+        "message": "Function '__init__' missing return type hint",
+        "severity": "warning"
+      },
+      {
+        "rule": "return-type-hint",
+        "line": 358,
+        "message": "Function 'record_auction' missing return type hint",
+        "severity": "warning"
+      },
+      {
+        "rule": "return-type-hint",
+        "line": 519,
+        "message": "Function '_log_auction' missing return type hint",
+        "severity": "warning"
+      },
+      {
+        "rule": "return-type-hint",
+        "line": 540,
+        "message": "Function '_publiceer_auction' missing return type hint",
+        "severity": "warning"
+      },
+      {
+        "rule": "docstring",
+        "line": 163,
+        "message": "Function 'to_dict' missing docstring",
+        "severity": "warning"
+      },
+      {
+        "rule": "docstring",
+        "line": 203,
+        "message": "Function '__init__' missing docstring",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\local_bridge.py",
+    "lines": 402,
+    "classes": 1,
+    "functions": 11,
+    "quality": 9.4,
+    "grade": "A+",
+    "score": "93.6/100.0",
+    "issues": [
+      {
+        "rule": "docstring",
+        "line": 89,
+        "message": "Function '__init__' missing docstring",
+        "severity": "warning"
+      },
+      {
+        "rule": "inner-import",
+        "line": 308,
+        "message": "Import 'bs4' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\sovereign_gate.py",
+    "lines": 313,
+    "classes": 0,
+    "functions": 7,
+    "quality": 9.4,
+    "grade": "A+",
+    "score": "94.0/100.0",
+    "issues": [
+      {
+        "rule": "bare-except-pass",
+        "line": 61,
+        "message": "Bare 'except: pass' or 'except Exception: pass' found",
+        "severity": "warning"
+      },
+      {
+        "rule": "bare-except-pass",
+        "line": 299,
+        "message": "Bare 'except: pass' or 'except Exception: pass' found",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\agents\\base.py",
+    "lines": 617,
+    "classes": 7,
+    "functions": 19,
+    "quality": 9.5,
+    "grade": "A+",
+    "score": "95.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 180,
+        "message": "Import 'anthropic' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\adversarial_tribunal.py",
+    "lines": 351,
+    "classes": 2,
+    "functions": 9,
+    "quality": 9.5,
+    "grade": "A+",
+    "score": "95.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 100,
+        "message": "Import 'danny_toolkit.core.config' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\agent_factory.py",
+    "lines": 368,
+    "classes": 1,
+    "functions": 14,
+    "quality": 9.5,
+    "grade": "A+",
+    "score": "95.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 190,
+        "message": "Import 'danny_toolkit.brain.trinity_omega' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\claude_memory.py",
+    "lines": 378,
+    "classes": 1,
+    "functions": 12,
+    "quality": 9.5,
+    "grade": "A+",
+    "score": "95.0/100.0",
+    "issues": [
+      {
+        "rule": "return-type-hint",
+        "line": 65,
+        "message": "Function '__init__' missing return type hint",
+        "severity": "warning"
+      },
+      {
+        "rule": "return-type-hint",
+        "line": 98,
+        "message": "Function '_load_index' missing return type hint",
+        "severity": "warning"
+      },
+      {
+        "rule": "return-type-hint",
+        "line": 107,
+        "message": "Function '_save_index' missing return type hint",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\cortex.py",
+    "lines": 553,
+    "classes": 3,
+    "functions": 12,
+    "quality": 9.5,
+    "grade": "A+",
+    "score": "95.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 270,
+        "message": "Import 'json' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\governor_state.py",
+    "lines": 224,
+    "classes": 1,
+    "functions": 6,
+    "quality": 9.5,
+    "grade": "A+",
+    "score": "95.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 222,
+        "message": "Import 'danny_toolkit.brain.governor' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\phantom.py",
+    "lines": 584,
+    "classes": 1,
+    "functions": 13,
+    "quality": 9.5,
+    "grade": "A+",
+    "score": "95.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 457,
+        "message": "Import 'danny_toolkit.core.engine' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\shadow_governance.py",
+    "lines": 606,
+    "classes": 2,
+    "functions": 11,
+    "quality": 9.5,
+    "grade": "A+",
+    "score": "95.0/100.0",
+    "issues": [
+      {
+        "rule": "return-type-hint",
+        "line": 62,
+        "message": "Function '__init__' missing return type hint",
+        "severity": "warning"
+      },
+      {
+        "rule": "return-type-hint",
+        "line": 336,
+        "message": "Function '__init__' missing return type hint",
+        "severity": "warning"
+      },
+      {
+        "rule": "docstring",
+        "line": 336,
+        "message": "Function '__init__' missing docstring",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\synapse.py",
+    "lines": 592,
+    "classes": 1,
+    "functions": 16,
+    "quality": 9.5,
+    "grade": "A+",
+    "score": "95.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 170,
+        "message": "Import 'sentence_transformers' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\unified_memory.py",
+    "lines": 509,
+    "classes": 2,
+    "functions": 23,
+    "quality": 9.5,
+    "grade": "A+",
+    "score": "95.0/100.0",
+    "issues": [
+      {
+        "rule": "return-type-hint",
+        "line": 27,
+        "message": "Function '__init__' missing return type hint",
+        "severity": "warning"
+      },
+      {
+        "rule": "return-type-hint",
+        "line": 99,
+        "message": "Function '__init__' missing return type hint",
+        "severity": "warning"
+      },
+      {
+        "rule": "return-type-hint",
+        "line": 137,
+        "message": "Function '_sla_event_log_op' missing return type hint",
+        "severity": "warning"
+      },
+      {
+        "rule": "return-type-hint",
+        "line": 424,
+        "message": "Function 'clear_old_events' missing return type hint",
+        "severity": "warning"
+      },
+      {
+        "rule": "return-type-hint",
+        "line": 464,
+        "message": "Function 'import_app_data' missing return type hint",
+        "severity": "warning"
+      },
+      {
+        "rule": "docstring",
+        "line": 99,
+        "message": "Function '__init__' missing docstring",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\document_forge.py",
+    "lines": 383,
+    "classes": 1,
+    "functions": 7,
+    "quality": 9.5,
+    "grade": "A+",
+    "score": "95.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 238,
+        "message": "Import 'tempfile' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\omega_sovereign_core\\event_signing.py",
+    "lines": 304,
+    "classes": 3,
+    "functions": 13,
+    "quality": 9.5,
+    "grade": "A+",
+    "score": "95.0/100.0",
+    "issues": [
+      {
+        "rule": "inner-import",
+        "line": 104,
+        "message": "Import 'danny_toolkit.brain.cortical_stack' found inside function body",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\zesde_zintuig.py",
+    "lines": 757,
+    "classes": 5,
+    "functions": 28,
+    "quality": 9.7,
+    "grade": "A+",
+    "score": "97.0/100.0",
+    "issues": [
+      {
+        "rule": "bare-except-pass",
+        "line": 741,
+        "message": "Bare 'except: pass' or 'except Exception: pass' found",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\neural_bus.py",
+    "lines": 443,
+    "classes": 3,
+    "functions": 16,
+    "quality": 9.7,
+    "grade": "A+",
+    "score": "97.0/100.0",
+    "issues": [
+      {
+        "rule": "bare-except-pass",
+        "line": 426,
+        "message": "Bare 'except: pass' or 'except Exception: pass' found",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\semantic_cache.py",
+    "lines": 514,
+    "classes": 1,
+    "functions": 16,
+    "quality": 9.7,
+    "grade": "A+",
+    "score": "97.0/100.0",
+    "issues": [
+      {
+        "rule": "bare-except-pass",
+        "line": 143,
+        "message": "Bare 'except: pass' or 'except Exception: pass' found",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\omega_sovereign_core\\hardware_fingerprint.py",
+    "lines": 316,
+    "classes": 3,
+    "functions": 16,
+    "quality": 9.7,
+    "grade": "A+",
+    "score": "97.0/100.0",
+    "issues": [
+      {
+        "rule": "bare-except-pass",
+        "line": 298,
+        "message": "Bare 'except: pass' or 'except Exception: pass' found",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\omega_sovereign_core\\memory_interface.py",
+    "lines": 487,
+    "classes": 3,
+    "functions": 17,
+    "quality": 9.7,
+    "grade": "A+",
+    "score": "97.0/100.0",
+    "issues": [
+      {
+        "rule": "bare-except-pass",
+        "line": 441,
+        "message": "Bare 'except: pass' or 'except Exception: pass' found",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\ai\\weer_agent.py",
+    "lines": 1246,
+    "classes": 1,
+    "functions": 36,
+    "quality": 9.8,
+    "grade": "A+",
+    "score": "98.4/100.0",
+    "issues": [
+      {
+        "rule": "param-type-hint",
+        "line": 1,
+        "message": "4/38 parameters missing type hints",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\rekenmachine.py",
+    "lines": 1761,
+    "classes": 1,
+    "functions": 56,
+    "quality": 9.8,
+    "grade": "A+",
+    "score": "97.7/100.0",
+    "issues": [
+      {
+        "rule": "param-type-hint",
+        "line": 1,
+        "message": "2/13 parameters missing type hints",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\omega_core.py",
+    "lines": 581,
+    "classes": 1,
+    "functions": 14,
+    "quality": 9.8,
+    "grade": "A+",
+    "score": "97.5/100.0",
+    "issues": [
+      {
+        "rule": "param-type-hint",
+        "line": 1,
+        "message": "1/6 parameters missing type hints",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\groq_retry.py",
+    "lines": 225,
+    "classes": 0,
+    "functions": 3,
+    "quality": 9.8,
+    "grade": "A+",
+    "score": "98.0/100.0",
+    "issues": [
+      {
+        "rule": "param-type-hint",
+        "line": 1,
+        "message": "2/15 parameters missing type hints",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\learning\\self_improvement.py",
+    "lines": 483,
+    "classes": 3,
+    "functions": 14,
+    "quality": 9.8,
+    "grade": "A+",
+    "score": "97.9/100.0",
+    "issues": [
+      {
+        "rule": "param-type-hint",
+        "line": 1,
+        "message": "2/14 parameters missing type hints",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\ai\\mini_rag.py",
+    "lines": 913,
+    "classes": 1,
+    "functions": 26,
+    "quality": 9.9,
+    "grade": "A+",
+    "score": "99.4/100.0",
+    "issues": [
+      {
+        "rule": "param-type-hint",
+        "line": 1,
+        "message": "1/25 parameters missing type hints",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\ai\\production_rag.py",
+    "lines": 828,
+    "classes": 1,
+    "functions": 24,
+    "quality": 9.9,
+    "grade": "A+",
+    "score": "99.2/100.0",
+    "issues": [
+      {
+        "rule": "param-type-hint",
+        "line": 1,
+        "message": "1/20 parameters missing type hints",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\ai\\vector_studio.py",
+    "lines": 1683,
+    "classes": 1,
+    "functions": 50,
+    "quality": 9.9,
+    "grade": "A+",
+    "score": "99.4/100.0",
+    "issues": [
+      {
+        "rule": "param-type-hint",
+        "line": 1,
+        "message": "1/24 parameters missing type hints",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\self_repair.py",
+    "lines": 1090,
+    "classes": 1,
+    "functions": 25,
+    "quality": 9.9,
+    "grade": "A+",
+    "score": "99.3/100.0",
+    "issues": [
+      {
+        "rule": "param-type-hint",
+        "line": 1,
+        "message": "1/23 parameters missing type hints",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\gui_launcher.py",
+    "lines": 476,
+    "classes": 2,
+    "functions": 22,
+    "quality": 9.9,
+    "grade": "A+",
+    "score": "99.3/100.0",
+    "issues": [
+      {
+        "rule": "param-type-hint",
+        "line": 1,
+        "message": "1/22 parameters missing type hints",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\agents\\orchestrator.py",
+    "lines": 679,
+    "classes": 5,
+    "functions": 33,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\agents\\tool.py",
+    "lines": 991,
+    "classes": 11,
+    "functions": 52,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "99.8/100.0",
+    "issues": [
+      {
+        "rule": "param-type-hint",
+        "line": 1,
+        "message": "1/62 parameters missing type hints",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\ai\\__init__.py",
+    "lines": 57,
+    "classes": 0,
+    "functions": 0,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\ai\\advanced_questions.py",
+    "lines": 462,
+    "classes": 1,
+    "functions": 10,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\ai\\artificial_life.py",
+    "lines": 1830,
+    "classes": 10,
+    "functions": 90,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\ai\\claude_chat.py",
+    "lines": 1040,
+    "classes": 1,
+    "functions": 29,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\ai\\legendary_companion.py",
+    "lines": 1553,
+    "classes": 5,
+    "functions": 58,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\ai\\ml_studio.py",
+    "lines": 1014,
+    "classes": 6,
+    "functions": 31,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\ai\\nieuws_agent.py",
+    "lines": 1506,
+    "classes": 11,
+    "functions": 49,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\ai\\nlp_studio.py",
+    "lines": 1230,
+    "classes": 10,
+    "functions": 50,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\__init__.py",
+    "lines": 40,
+    "classes": 0,
+    "functions": 0,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\agenda_planner.py",
+    "lines": 460,
+    "classes": 1,
+    "functions": 14,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\base_app.py",
+    "lines": 151,
+    "classes": 1,
+    "functions": 10,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\citaten_generator.py",
+    "lines": 391,
+    "classes": 1,
+    "functions": 12,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\code_snippets.py",
+    "lines": 462,
+    "classes": 1,
+    "functions": 14,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\decision_maker.py",
+    "lines": 496,
+    "classes": 1,
+    "functions": 10,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\energie_vs_tech.py",
+    "lines": 257,
+    "classes": 0,
+    "functions": 3,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\expense_tracker.py",
+    "lines": 439,
+    "classes": 1,
+    "functions": 15,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\flashcards.py",
+    "lines": 450,
+    "classes": 1,
+    "functions": 13,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\habit_tracker.py",
+    "lines": 425,
+    "classes": 1,
+    "functions": 15,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\language_tutor.py",
+    "lines": 447,
+    "classes": 1,
+    "functions": 14,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\mood_tracker.py",
+    "lines": 565,
+    "classes": 1,
+    "functions": 15,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\music_composer.py",
+    "lines": 503,
+    "classes": 3,
+    "functions": 21,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\notitie_app.py",
+    "lines": 562,
+    "classes": 1,
+    "functions": 17,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\room_planner.py",
+    "lines": 762,
+    "classes": 1,
+    "functions": 18,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\schatzoek.py",
+    "lines": 1739,
+    "classes": 1,
+    "functions": 46,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\tijd_info.py",
+    "lines": 179,
+    "classes": 1,
+    "functions": 10,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\time_capsule.py",
+    "lines": 485,
+    "classes": 1,
+    "functions": 10,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\unit_converter.py",
+    "lines": 269,
+    "classes": 1,
+    "functions": 7,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\apps\\wachtwoord_generator.py",
+    "lines": 226,
+    "classes": 1,
+    "functions": 10,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\app_tools.py",
+    "lines": 1705,
+    "classes": 3,
+    "functions": 7,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\citation_marshall.py",
+    "lines": 159,
+    "classes": 1,
+    "functions": 7,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\cortical_stack.py",
+    "lines": 714,
+    "classes": 1,
+    "functions": 22,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\devops_daemon.py",
+    "lines": 618,
+    "classes": 1,
+    "functions": 11,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\dream_monitor.py",
+    "lines": 411,
+    "classes": 0,
+    "functions": 8,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\file_guard.py",
+    "lines": 350,
+    "classes": 1,
+    "functions": 9,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\ghost_writer.py",
+    "lines": 390,
+    "classes": 1,
+    "functions": 13,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\governor_firewall.py",
+    "lines": 167,
+    "classes": 1,
+    "functions": 4,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\hallucination_shield.py",
+    "lines": 803,
+    "classes": 4,
+    "functions": 18,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\project_map.py",
+    "lines": 518,
+    "classes": 1,
+    "functions": 12,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\reality_anchor.py",
+    "lines": 287,
+    "classes": 2,
+    "functions": 12,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\security\\config.py",
+    "lines": 263,
+    "classes": 2,
+    "functions": 14,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\security\\display.py",
+    "lines": 592,
+    "classes": 1,
+    "functions": 10,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\security\\scanners.py",
+    "lines": 65,
+    "classes": 0,
+    "functions": 0,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\shadow_permissions.py",
+    "lines": 320,
+    "classes": 2,
+    "functions": 10,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\strategist.py",
+    "lines": 426,
+    "classes": 1,
+    "functions": 9,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\the_mirror.py",
+    "lines": 167,
+    "classes": 1,
+    "functions": 5,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\tribunal.py",
+    "lines": 170,
+    "classes": 1,
+    "functions": 4,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\trinity_models.py",
+    "lines": 204,
+    "classes": 6,
+    "functions": 7,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\trinity_omega.py",
+    "lines": 1623,
+    "classes": 1,
+    "functions": 32,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\trinity_symbiosis.py",
+    "lines": 743,
+    "classes": 5,
+    "functions": 31,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\truth_anchor.py",
+    "lines": 70,
+    "classes": 1,
+    "functions": 2,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\visual_nexus.py",
+    "lines": 280,
+    "classes": 2,
+    "functions": 8,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\brain\\void_walker.py",
+    "lines": 261,
+    "classes": 1,
+    "functions": 5,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\commands\\test_runner.py",
+    "lines": 127,
+    "classes": 0,
+    "functions": 3,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\__init__.py",
+    "lines": 42,
+    "classes": 0,
+    "functions": 0,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\config.py",
+    "lines": 608,
+    "classes": 4,
+    "functions": 27,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\engine.py",
+    "lines": 33,
+    "classes": 0,
+    "functions": 0,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\error_taxonomy.py",
+    "lines": 289,
+    "classes": 4,
+    "functions": 5,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\faiss_index.py",
+    "lines": 117,
+    "classes": 1,
+    "functions": 6,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\generator.py",
+    "lines": 506,
+    "classes": 4,
+    "functions": 26,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "99.7/100.0",
+    "issues": [
+      {
+        "rule": "param-type-hint",
+        "line": 1,
+        "message": "1/56 parameters missing type hints",
+        "severity": "warning"
+      }
+    ]
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\import_analyzer.py",
+    "lines": 371,
+    "classes": 0,
+    "functions": 9,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\log_rotation.py",
+    "lines": 85,
+    "classes": 0,
+    "functions": 1,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\output_sanitizer.py",
+    "lines": 107,
+    "classes": 0,
+    "functions": 6,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\processor.py",
+    "lines": 231,
+    "classes": 1,
+    "functions": 6,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\response_cache.py",
+    "lines": 151,
+    "classes": 1,
+    "functions": 7,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\sandbox.py",
+    "lines": 278,
+    "classes": 4,
+    "functions": 9,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\self_pruning.py",
+    "lines": 1006,
+    "classes": 5,
+    "functions": 34,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\shadow_airlock.py",
+    "lines": 487,
+    "classes": 2,
+    "functions": 11,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\startup_validator.py",
+    "lines": 209,
+    "classes": 0,
+    "functions": 5,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\utils.py",
+    "lines": 608,
+    "classes": 5,
+    "functions": 47,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\vector_store.py",
+    "lines": 585,
+    "classes": 2,
+    "functions": 25,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\vram_manager.py",
+    "lines": 305,
+    "classes": 2,
+    "functions": 12,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\core\\web_scraper.py",
+    "lines": 240,
+    "classes": 0,
+    "functions": 9,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\daemon\\limbic_system.py",
+    "lines": 436,
+    "classes": 5,
+    "functions": 20,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\daemon\\metabolisme.py",
+    "lines": 421,
+    "classes": 3,
+    "functions": 18,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\daemon\\sensorium.py",
+    "lines": 308,
+    "classes": 3,
+    "functions": 15,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\interfaces\\cli.py",
+    "lines": 551,
+    "classes": 1,
+    "functions": 9,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\interfaces\\cosmic_console.py",
+    "lines": 632,
+    "classes": 1,
+    "functions": 10,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\learning\\__init__.py",
+    "lines": 51,
+    "classes": 0,
+    "functions": 0,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\learning\\feedback_manager.py",
+    "lines": 256,
+    "classes": 2,
+    "functions": 13,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\learning\\memory.py",
+    "lines": 205,
+    "classes": 1,
+    "functions": 14,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\learning\\optimizer.py",
+    "lines": 331,
+    "classes": 1,
+    "functions": 14,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\learning\\orchestrator.py",
+    "lines": 541,
+    "classes": 1,
+    "functions": 27,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\learning\\patterns.py",
+    "lines": 265,
+    "classes": 1,
+    "functions": 16,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\learning\\performance_analyzer.py",
+    "lines": 334,
+    "classes": 2,
+    "functions": 17,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\learning\\tracker.py",
+    "lines": 293,
+    "classes": 1,
+    "functions": 16,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\omega_sovereign_core\\__init__.py",
+    "lines": 33,
+    "classes": 0,
+    "functions": 0,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\pipelines\\rag_chain.py",
+    "lines": 186,
+    "classes": 0,
+    "functions": 4,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\pipelines\\rag_gpu.py",
+    "lines": 43,
+    "classes": 0,
+    "functions": 1,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\quests\\__init__.py",
+    "lines": 38,
+    "classes": 0,
+    "functions": 0,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\quests\\body_protocol.py",
+    "lines": 161,
+    "classes": 1,
+    "functions": 4,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\quests\\bridge_protocol.py",
+    "lines": 170,
+    "classes": 1,
+    "functions": 4,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\quests\\core_protocol.py",
+    "lines": 117,
+    "classes": 1,
+    "functions": 3,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\quests\\daemon_protocol.py",
+    "lines": 155,
+    "classes": 1,
+    "functions": 4,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\quests\\dialogue_protocol.py",
+    "lines": 202,
+    "classes": 1,
+    "functions": 7,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\quests\\memory_protocol.py",
+    "lines": 191,
+    "classes": 1,
+    "functions": 3,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\quests\\mind_protocol.py",
+    "lines": 165,
+    "classes": 1,
+    "functions": 4,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\quests\\pulse_protocol.py",
+    "lines": 154,
+    "classes": 1,
+    "functions": 6,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\quests\\senses_protocol.py",
+    "lines": 151,
+    "classes": 1,
+    "functions": 4,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\quests\\trinity_protocol.py",
+    "lines": 166,
+    "classes": 1,
+    "functions": 4,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\rag_gui.py",
+    "lines": 543,
+    "classes": 1,
+    "functions": 24,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\skills\\forge\\skill_1.py",
+    "lines": 40,
+    "classes": 0,
+    "functions": 2,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\skills\\forge\\skill_10.py",
+    "lines": 64,
+    "classes": 3,
+    "functions": 5,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\skills\\forge\\skill_11.py",
+    "lines": 115,
+    "classes": 8,
+    "functions": 15,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\skills\\forge\\skill_12.py",
+    "lines": 91,
+    "classes": 1,
+    "functions": 8,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\skills\\forge\\skill_13.py",
+    "lines": 63,
+    "classes": 1,
+    "functions": 6,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\skills\\forge\\skill_14.py",
+    "lines": 72,
+    "classes": 0,
+    "functions": 4,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\skills\\forge\\skill_15.py",
+    "lines": 78,
+    "classes": 2,
+    "functions": 7,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\skills\\forge\\skill_16.py",
+    "lines": 153,
+    "classes": 8,
+    "functions": 18,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\skills\\forge\\skill_17.py",
+    "lines": 69,
+    "classes": 0,
+    "functions": 8,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\skills\\forge\\skill_18.py",
+    "lines": 54,
+    "classes": 0,
+    "functions": 4,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\skills\\forge\\skill_19.py",
+    "lines": 66,
+    "classes": 0,
+    "functions": 2,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\skills\\forge\\skill_20.py",
+    "lines": 59,
+    "classes": 0,
+    "functions": 6,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\skills\\forge\\skill_21.py",
+    "lines": 56,
+    "classes": 0,
+    "functions": 4,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\skills\\forge\\skill_22.py",
+    "lines": 54,
+    "classes": 2,
+    "functions": 3,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\skills\\forge\\skill_23.py",
+    "lines": 45,
+    "classes": 0,
+    "functions": 4,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\skills\\forge\\skill_25.py",
+    "lines": 47,
+    "classes": 0,
+    "functions": 3,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\skills\\forge\\skill_26.py",
+    "lines": 51,
+    "classes": 0,
+    "functions": 4,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\skills\\forge\\skill_27.py",
+    "lines": 53,
+    "classes": 0,
+    "functions": 3,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\skills\\forge\\skill_28.py",
+    "lines": 51,
+    "classes": 0,
+    "functions": 2,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\skills\\forge\\skill_29.py",
+    "lines": 57,
+    "classes": 0,
+    "functions": 3,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\skills\\forge\\skill_3.py",
+    "lines": 78,
+    "classes": 0,
+    "functions": 7,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\skills\\forge\\skill_4.py",
+    "lines": 48,
+    "classes": 1,
+    "functions": 5,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\skills\\forge\\skill_5.py",
+    "lines": 54,
+    "classes": 0,
+    "functions": 2,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\skills\\forge\\skill_6.py",
+    "lines": 145,
+    "classes": 8,
+    "functions": 18,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\skills\\forge\\skill_7.py",
+    "lines": 141,
+    "classes": 8,
+    "functions": 18,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\skills\\forge\\skill_8.py",
+    "lines": 65,
+    "classes": 1,
+    "functions": 6,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  },
+  {
+    "path": "C:\\Users\\danny\\danny-toolkit\\danny_toolkit\\skills\\forge\\skill_9.py",
+    "lines": 50,
+    "classes": 1,
+    "functions": 5,
+    "quality": 10.0,
+    "grade": "A+",
+    "score": "100.0/100.0",
+    "issues": []
+  }
+]

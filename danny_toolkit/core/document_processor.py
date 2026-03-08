@@ -3,6 +3,8 @@ Document processor voor RAG systemen.
 Versie 2.0 - Met PDF/Markdown support en metadata extractie.
 """
 
+from __future__ import annotations
+
 import logging
 import re
 from pathlib import Path
@@ -28,7 +30,7 @@ class DocumentProcessor:
         ".pdf": "pdf"
     }
 
-    def __init__(self, chunk_size: int = None, overlap: int = None):
+    def __init__(self, chunk_size: int = None, overlap: int = None) -> None:
         """Initializes an object with chunking parameters.
 
  Args:
@@ -347,7 +349,7 @@ class DocumentProcessor:
                         metadata["pdf_onderwerp"] = reader.metadata.subject
 
         except ImportError:
-            pass
+            logger.debug("Suppressed error")
         except Exception as e:
             logger.debug("PDF metadata extractie mislukt: %s", e)
 
@@ -519,7 +521,8 @@ class DocumentProcessor:
 class BatchProcessor:
     """Verwerk meerdere documenten in batch."""
 
-    def __init__(self, processor: DocumentProcessor = None):
+    def __init__(self, processor: DocumentProcessor = None) -> None:
+        """Init  ."""
         self.processor = processor or DocumentProcessor()
         self.statistieken = {
             "verwerkt": 0,

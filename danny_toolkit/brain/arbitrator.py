@@ -143,7 +143,7 @@ class TaskArbitrator:
         S_agent = context_match / (current_load + 1)
     """
 
-    def __init__(self, brain=None):
+    def __init__(self, brain: object=None) -> None:
         """### Docstring
 
 Initializes an Arbitrator instance.
@@ -202,7 +202,7 @@ The Groq client is initialized lazily, attempting to create a synchronous client
         except Exception as e:
             logger.debug("Arbitrator Groq client init: %s", e)
 
-    def _get_synapse(self):
+    def _get_synapse(self) -> None:
         """Lazy TheSynapse."""
         if self._synapse is None:
             try:
@@ -212,7 +212,7 @@ The Groq client is initialized lazily, attempting to create a synchronous client
                 logger.debug("Synapse init: %s", e)
         return self._synapse
 
-    def _get_waakhuis(self):
+    def _get_waakhuis(self) -> None:
         """Lazy WaakhuisMonitor."""
         if self._waakhuis is None:
             try:
@@ -376,7 +376,7 @@ The Groq client is initialized lazily, attempting to create a synchronous client
 
     # ── EXECUTE ──
 
-    async def execute(self, manifest: GoalManifest, engine=None) -> GoalManifest:
+    async def execute(self, manifest: GoalManifest, engine: object=None) -> GoalManifest:
         """Voer alle taken in een manifest parallel uit.
 
         Args:
@@ -404,7 +404,7 @@ The Groq client is initialized lazily, attempting to create a synchronous client
                 manifest.status = "failed"
                 return manifest
 
-        async def _dispatch_task(task: SwarmTask):
+        async def _dispatch_task(task: SwarmTask) -> None:
             """Dispatch een enkele taak naar de toegewezen agent."""
             try:
                 result = await engine._timed_dispatch(
@@ -583,7 +583,7 @@ The Groq client is initialized lazily, attempting to create a synchronous client
         except Exception as e:
             logger.debug("HallucinatieSchild voor Generaal: %s", e)
 
-        async def _dispatch_model_task(task: SwarmTask):
+        async def _dispatch_model_task(task: SwarmTask) -> None:
             """Dispatch één taak naar externe modellen met retry/fire logic."""
             tried_models: List[str] = []
 
@@ -686,7 +686,7 @@ The Groq client is initialized lazily, attempting to create a synchronous client
 
         return manifest
 
-    def _log_to_cortical_model(self, manifest: GoalManifest):
+    def _log_to_cortical_model(self, manifest: GoalManifest) -> None:
         """Log Generaal Mode manifest naar CorticalStack."""
         try:
             from danny_toolkit.brain.cortical_stack import get_cortical_stack
@@ -709,7 +709,7 @@ The Groq client is initialized lazily, attempting to create a synchronous client
         except Exception as e:
             logger.debug("CorticalStack log (Generaal): %s", e)
 
-    def _publiceer_model_event(self, manifest: GoalManifest):
+    def _publiceer_model_event(self, manifest: GoalManifest) -> None:
         """Publiceer MODEL_TASK_COMPLETED event op NeuralBus."""
         if not HAS_BUS:
             return
@@ -731,7 +731,7 @@ The Groq client is initialized lazily, attempting to create a synchronous client
 
     # ── LOGGING ──
 
-    def _log_to_cortical(self, manifest: GoalManifest):
+    def _log_to_cortical(self, manifest: GoalManifest) -> None:
         """Log manifest naar CorticalStack."""
         try:
             from danny_toolkit.brain.cortical_stack import get_cortical_stack
@@ -750,7 +750,7 @@ The Groq client is initialized lazily, attempting to create a synchronous client
         except Exception as e:
             logger.debug("CorticalStack log: %s", e)
 
-    def _publiceer_event(self, manifest: GoalManifest):
+    def _publiceer_event(self, manifest: GoalManifest) -> None:
         """Publiceer GOAL_COMPLETED event op NeuralBus."""
         if not HAS_BUS:
             return
@@ -772,9 +772,9 @@ The Groq client is initialized lazily, attempting to create a synchronous client
     # ── OBSERVATORY SYNC (Phase 42) ──
 
     def _record_to_observatory(
-        self, task: SwarmTask, winner, deelnemers: int,
+        self, task: SwarmTask, winner: object, deelnemers: int,
         barrier_pass: bool = None,
-    ):
+    ) -> None:
         """Registreer veiling bij ObservatorySync (Phase 42)."""
         try:
             from danny_toolkit.brain.observatory_sync import get_observatory_sync
@@ -805,7 +805,7 @@ _arbitrator_instance: Optional["TaskArbitrator"] = None
 _arbitrator_lock = threading.Lock()
 
 
-def get_arbitrator(brain=None) -> "TaskArbitrator":
+def get_arbitrator(brain: object=None) -> "TaskArbitrator":
     """Return the process-wide TaskArbitrator singleton (double-checked locking)."""
     global _arbitrator_instance
     if _arbitrator_instance is None:

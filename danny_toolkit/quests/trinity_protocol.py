@@ -1,6 +1,5 @@
 """
 QUEST VII: THE TRINITY
-from __future__ import annotations
 
 =======================
 "Three Become One"
@@ -13,6 +12,8 @@ Spelers:
 - TRINITY ROLE      (8 rollen)        - Familie leden
 - TRINITY CHANNEL   (12 kanalen)      - Communicatie
 """
+
+from __future__ import annotations
 
 from danny_toolkit.core.utils import kleur, Kleur, succes, fout, info
 from danny_toolkit.brain.trinity_symbiosis import (

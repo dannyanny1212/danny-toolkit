@@ -1,5 +1,7 @@
 """Base klasse voor alle toolkit apps."""
 
+from __future__ import annotations
+
 import json
 import logging
 import os
@@ -31,7 +33,8 @@ class BaseApp:
     # Override in subclass: welke event types deze app ontvangt
     LUISTERT_NAAR: List[str] = []
 
-    def __init__(self, data_bestand: str):
+    def __init__(self, data_bestand: str) -> None:
+        """Init  ."""
         Config.ensure_dirs()
         self.bestand = Config.APPS_DATA_DIR / data_bestand
         self.bestand.parent.mkdir(exist_ok=True, parents=True)
@@ -41,7 +44,7 @@ class BaseApp:
         self._bus_handlers: Dict[str, Callable] = {}
         self._init_bus()
 
-    def _init_ai(self):
+    def _init_ai(self) -> None:
         """Initialiseer AI client."""
         if AI_BESCHIKBAAR:
             api_key = os.environ.get("ANTHROPIC_API_KEY")
@@ -72,7 +75,7 @@ class BaseApp:
 
     # ==================== NEURAL BUS ====================
 
-    def _init_bus(self):
+    def _init_bus(self) -> None:
         """Initialiseer NeuralBus subscriptions."""
         if not HAS_BUS:
             return
@@ -82,7 +85,7 @@ class BaseApp:
                 self._bus_handlers[event_type] = handler
                 get_bus().subscribe(event_type, handler)
 
-    def publish(self, event_type: str, data: Dict[str, Any]):
+    def publish(self, event_type: str, data: Dict[str, Any]) -> None:
         """Publiceer een event op de NeuralBus."""
         if not HAS_BUS:
             return
@@ -114,7 +117,7 @@ class BaseApp:
                 )
         return "\n".join(regels)
 
-    def _cleanup_bus(self):
+    def _cleanup_bus(self) -> None:
         """Verwijder bus subscriptions (aanroepen bij afsluiten)."""
         if not HAS_BUS:
             return
@@ -138,7 +141,7 @@ class BaseApp:
         """Override in subclass voor standaard data."""
         return {}
 
-    def _sla_op(self):
+    def _sla_op(self) -> None:
         """Sla data op."""
         with open(self.bestand, "w",
                    encoding="utf-8") as f:

@@ -13,9 +13,14 @@ Bio, Crypto, AI en Quantum worden zichtbaar als een.
 De Architect heeft gesproken: "Architecten BOUWEN."
 """
 
+from __future__ import annotations
+
 from datetime import datetime
 from dataclasses import dataclass
 from typing import Dict
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # === OMEGA DOMAINS ===
@@ -38,7 +43,7 @@ class VisualNexus:
     Dit is het resultaat.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initializes a new instance with default attributes.
 
 Sets up the instance with the following properties:
@@ -86,7 +91,7 @@ Sets up the instance with the following properties:
             )
         }
 
-    def add_star(self, name: str, domain: str, brightness: float = 1.0):
+    def add_star(self, name: str, domain: str, brightness: float = 1.0) -> None:
         """Voeg een taak toe als ster in de nexus."""
         self.stars.append({
             "name": name,
@@ -95,7 +100,7 @@ Sets up the instance with the following properties:
             "created": datetime.now().isoformat()
         })
 
-    def add_wave(self, name: str, amplitude: float = 1.0):
+    def add_wave(self, name: str, amplitude: float = 1.0) -> None:
         """Voeg een project toe als golf in de nexus."""
         self.waves.append({
             "name": name,
@@ -226,7 +231,7 @@ Sets up the instance with the following properties:
         return "\n".join(lines)
 
 
-def build_visual_nexus():
+def build_visual_nexus() -> None:
     """
     Bouw de Visual Nexus - de hoofdfunctie.
 

@@ -8,6 +8,8 @@ Alle tests draaien CPU-only, geen netwerk, geen GPU.
 Gebruikt unittest.mock om zware model-laden-stappen over te slaan.
 """
 
+from __future__ import annotations
+
 import asyncio
 import json
 import sqlite3

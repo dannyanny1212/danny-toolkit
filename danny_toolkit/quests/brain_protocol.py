@@ -1,6 +1,6 @@
 """
 QUEST VI: THE BRAIN
-from __future__ import annotations
+
 
 ====================
 "The Orchestrator Thinks"
@@ -13,6 +13,8 @@ Spelers:
 - APP TOOLS      (31+ apps)   - Callable tools
 - UNIFIED MEMORY (geheugen)   - Cross-app context
 """
+
+from __future__ import annotations
 
 import logging
 
