@@ -1977,20 +1977,36 @@ if HAS_DASHBOARD:
 
     @app.get("/ui/partials/cortex", response_class=HTMLResponse, include_in_schema=False)
     async def partial_cortex(_key: str = Depends(verify_ui_key)):
-        stats = {"nodes": 0, "edges": 0, "entities": 0, "triples": 0}
+        import math
+        nodes, edges, meta, positions = [], [], {}, {}
+        kmap_path = os.path.join(_ROOT, "data", "knowledge_map.json")
         try:
-            from danny_toolkit.brain.cortex import TheCortex
-            cortex = TheCortex()
-            if hasattr(cortex, "get_stats"):
-                stats.update(cortex.get_stats())
-            else:
-                if cortex._graph is not None:
-                    stats["nodes"] = cortex._graph.number_of_nodes()
-                    stats["edges"] = cortex._graph.number_of_edges()
+            with open(kmap_path, encoding="utf-8") as f:
+                kmap = json.load(f)
+            nodes = kmap.get("nodes", [])
+            edges = kmap.get("edges", [])
+            meta = kmap.get("meta", {})
+            # Bereken posities: Trinity driehoek layout
+            domain_nodes = {"MIND": [], "BODY": [], "SOUL": []}
+            for n in nodes:
+                domain_nodes.setdefault(n["domain"], []).append(n["id"])
+            # MIND = top center, BODY = bottom-left, SOUL = bottom-right
+            centers = {"MIND": (200, 70), "BODY": (80, 200), "SOUL": (360, 200)}
+            for domain, nids in domain_nodes.items():
+                cx, cy = centers.get(domain, (240, 130))
+                for i, nid in enumerate(nids):
+                    angle = 2 * math.pi * i / max(len(nids), 1)
+                    spread = 45 + len(nids) * 4
+                    px = cx + spread * math.cos(angle)
+                    py = cy + spread * math.sin(angle)
+                    positions[nid] = (round(px), round(py))
         except Exception as e:
-            logger.debug("Cortex stats: %s", e)
+            logger.debug("Knowledge map load: %s", e)
+            meta = {"total_nodes": 0, "total_edges": 0, "cross_domain_edges": 0,
+                    "total_docs": 0, "scan_time_s": 0, "generated": "-"}
         tmpl = _templates.get_template("partials/cortex_stats.html")
-        return _set_ui_cookie(HTMLResponse(tmpl.render(stats=stats)))
+        return _set_ui_cookie(HTMLResponse(tmpl.render(
+            nodes=nodes, edges=edges, meta=meta, positions=positions)))
 
     @app.get("/ui/partials/pipeline-metrics", response_class=HTMLResponse, include_in_schema=False)
     async def partial_pipeline_metrics(_key: str = Depends(verify_ui_key)):
@@ -2006,8 +2022,15 @@ if HAS_DASHBOARD:
             cache_stats = get_response_cache().stats()
         except ImportError:
             pass
+        sentinel_stats = None
+        try:
+            from danny_toolkit.brain.eternal_sentinel import get_sentinel
+            sentinel_stats = get_sentinel().get_status()
+        except Exception:
+            pass
         tmpl = _templates.get_template("partials/pipeline_metrics.html")
-        return _set_ui_cookie(HTMLResponse(tmpl.render(metrics=metrics, cache=cache_stats)))
+        return _set_ui_cookie(HTMLResponse(tmpl.render(
+            metrics=metrics, cache=cache_stats, sentinel=sentinel_stats)))
 
     @app.get("/ui/partials/observatory", response_class=HTMLResponse, include_in_schema=False)
     async def partial_observatory(_key: str = Depends(verify_ui_key)):

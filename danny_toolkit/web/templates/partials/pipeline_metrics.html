@@ -19,6 +19,33 @@
 {% endif %}
 </tbody>
 </table>
+{% if sentinel %}
+<div style="margin-top: 0.75rem; border-top: 1px solid var(--border); padding-top: 0.5rem;">
+    <div style="font-size: 0.8rem; font-weight: 600; color: var(--accent-purple); margin-bottom: 0.4rem;">
+        Eternal Sentinel
+    </div>
+    <div class="stat-grid" style="grid-template-columns: repeat(4, 1fr);">
+        <div class="stat-item">
+            <div class="stat-value" style="font-size: 1.1rem;">{{ sentinel.deep_scans }}</div>
+            <div class="stat-label">Deep Scans</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value {% if sentinel.throttle_active %}high{% else %}low{% endif %}" style="font-size: 1.1rem;">
+                {{ "ON" if sentinel.throttle_active else "OFF" }}
+            </div>
+            <div class="stat-label">Throttle</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" style="font-size: 1.1rem;">{{ sentinel.gpu_boosts }}</div>
+            <div class="stat-label">GPU Boosts</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" style="font-size: 1.1rem;">{{ sentinel.nightly_reindexes }}</div>
+            <div class="stat-label">Reindexes</div>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% if cache %}
 <div style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-secondary);">
     Cache: {{ cache.hits }} hits / {{ cache.misses }} misses ({{ cache.hit_rate }}% hit rate, {{ cache.entries }}/{{ cache.max_entries }} entries)

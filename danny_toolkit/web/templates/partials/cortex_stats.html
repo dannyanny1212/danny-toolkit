@@ -1,18 +1,45 @@
-<div class="stat-grid">
-    <div class="stat-item">
-        <div class="stat-value">{{ stats.nodes }}</div>
-        <div class="stat-label">Nodes</div>
+<div class="knowledge-map">
+    <div class="stat-grid" style="margin-bottom: 0.75rem;">
+        <div class="stat-item">
+            <div class="stat-value">{{ meta.total_nodes }}</div>
+            <div class="stat-label">Nodes</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{ meta.total_edges }}</div>
+            <div class="stat-label">Edges</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{ meta.cross_domain_edges }}</div>
+            <div class="stat-label">Cross-Domain</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{ meta.total_docs }}</div>
+            <div class="stat-label">RAG Docs</div>
+        </div>
     </div>
-    <div class="stat-item">
-        <div class="stat-value">{{ stats.edges }}</div>
-        <div class="stat-label">Edges</div>
-    </div>
-    <div class="stat-item">
-        <div class="stat-value">{{ stats.entities }}</div>
-        <div class="stat-label">Entities</div>
-    </div>
-    <div class="stat-item">
-        <div class="stat-value">{{ stats.triples }}</div>
-        <div class="stat-label">Triples</div>
+    <svg viewBox="0 0 480 260" style="width:100%;height:auto;background:#0d1117;border-radius:6px;">
+        <!-- Edge lines -->
+        {% for e in edges %}
+        <line x1="{{ positions[e.source][0] }}" y1="{{ positions[e.source][1] }}"
+              x2="{{ positions[e.target][0] }}" y2="{{ positions[e.target][1] }}"
+              stroke="{{ '#3b4252' if not e.cross_domain else '#58a6ff33' }}"
+              stroke-width="{{ '1.5' if e.cross_domain else '0.5' }}" />
+        {% endfor %}
+        <!-- Domain labels -->
+        <text x="140" y="18" fill="#bc8cff" font-size="11" font-weight="700" text-anchor="middle">MIND</text>
+        <text x="60" y="250" fill="#3fb950" font-size="11" font-weight="700" text-anchor="middle">BODY</text>
+        <text x="400" y="250" fill="#58a6ff" font-size="11" font-weight="700" text-anchor="middle">SOUL</text>
+        <!-- Nodes -->
+        {% for n in nodes %}
+        <circle cx="{{ positions[n.id][0] }}" cy="{{ positions[n.id][1] }}"
+                r="{{ 6 + n.docs }}"
+                fill="{{ '#bc8cff' if n.domain == 'MIND' else '#3fb950' if n.domain == 'BODY' else '#58a6ff' }}"
+                opacity="0.8" />
+        <text x="{{ positions[n.id][0] }}" y="{{ positions[n.id][1] + 16 + n.docs }}"
+              fill="#8b949e" font-size="8" text-anchor="middle">{{ n.id }}</text>
+        {% endfor %}
+    </svg>
+    <div style="margin-top:0.4rem;font-size:0.7rem;color:var(--text-secondary);">
+        Scan: {{ meta.scan_time_s }}s | {{ meta.generated[:16] }}
     </div>
 </div>

@@ -1,0 +1,784 @@
+{
+  "nodes": [
+    {
+      "id": "CentralBrain",
+      "domain": "MIND",
+      "docs": 5,
+      "bronnen": [
+        "omega_body_advanced.md",
+        "omega_learning_advanced.md",
+        "omega_mind_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "id": "PrometheusBrain",
+      "domain": "MIND",
+      "docs": 5,
+      "bronnen": [
+        "omega_body_advanced.md",
+        "omega_mind_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "id": "SwarmEngine",
+      "domain": "MIND",
+      "docs": 5,
+      "bronnen": [
+        "omega_wiring_advanced.md",
+        "omega_mind_advanced.md",
+        "omega_body_advanced.md"
+      ]
+    },
+    {
+      "id": "HallucinatieSchild",
+      "domain": "MIND",
+      "docs": 5,
+      "bronnen": [
+        "omega_security_advanced.md",
+        "omega_rag_advanced_architecture.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "id": "Strategist",
+      "domain": "MIND",
+      "docs": 5,
+      "bronnen": [
+        "omega_resources_advanced.md",
+        "omega_apps_advanced.md",
+        "omega_mind_advanced.md",
+        "omega_security_advanced.md"
+      ]
+    },
+    {
+      "id": "Artificer",
+      "domain": "MIND",
+      "docs": 5,
+      "bronnen": [
+        "omega_skills_advanced.md"
+      ]
+    },
+    {
+      "id": "VoidWalker",
+      "domain": "MIND",
+      "docs": 5,
+      "bronnen": [
+        "omega_rag_advanced_architecture.md",
+        "omega_mind_advanced.md",
+        "omega_wiring_advanced.md",
+        "omega_soul_advanced.md",
+        "MYTHICAL_NEXUS_DESIGN.md"
+      ]
+    },
+    {
+      "id": "Tribunal",
+      "domain": "MIND",
+      "docs": 5,
+      "bronnen": [
+        "omega_resources_advanced.md",
+        "omega_rag_advanced_architecture.md",
+        "omega_security_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "id": "EternalSentinel",
+      "domain": "MIND",
+      "docs": 5,
+      "bronnen": [
+        "omega_rag_advanced_architecture.md",
+        "omega_quests_advanced.md",
+        "omega_security_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "id": "Governor",
+      "domain": "MIND",
+      "docs": 5,
+      "bronnen": [
+        "omega_resources_advanced.md",
+        "omega_security_advanced.md",
+        "omega_mind_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "id": "NeuralBus",
+      "domain": "BODY",
+      "docs": 5,
+      "bronnen": [
+        "omega_soul_advanced.md",
+        "omega_body_advanced.md"
+      ]
+    },
+    {
+      "id": "KeyManager",
+      "domain": "BODY",
+      "docs": 5,
+      "bronnen": [
+        "omega_resources_advanced.md",
+        "omega_security_advanced.md",
+        "omega_skills_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "id": "VRAMGuard",
+      "domain": "BODY",
+      "docs": 5,
+      "bronnen": [
+        "omega_resources_advanced.md",
+        "omega_body_advanced.md"
+      ]
+    },
+    {
+      "id": "GPUControl",
+      "domain": "BODY",
+      "docs": 5,
+      "bronnen": [
+        "omega_resources_advanced.md",
+        "omega_mind_advanced.md"
+      ]
+    },
+    {
+      "id": "SingletonLock",
+      "domain": "BODY",
+      "docs": 5,
+      "bronnen": [
+        "omega_resources_advanced.md",
+        "omega_wiring_advanced.md",
+        "omega_body_advanced.md"
+      ]
+    },
+    {
+      "id": "HeartbeatDaemon",
+      "domain": "BODY",
+      "docs": 5,
+      "bronnen": [
+        "omega_persona_advanced.md",
+        "omega_soul_advanced.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "id": "FastAPI",
+      "domain": "BODY",
+      "docs": 5,
+      "bronnen": [
+        "omega_quests_advanced.md",
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "id": "RequestTracer",
+      "domain": "BODY",
+      "docs": 5,
+      "bronnen": [
+        "omega_apps_advanced.md",
+        "omega_security_advanced.md",
+        "omega_wiring_advanced.md",
+        "omega_body_advanced.md"
+      ]
+    },
+    {
+      "id": "CorticalStack",
+      "domain": "SOUL",
+      "docs": 5,
+      "bronnen": [
+        "omega_mind_advanced.md",
+        "omega_soul_advanced.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "id": "ChromaDB",
+      "domain": "SOUL",
+      "docs": 5,
+      "bronnen": [
+        "omega_security_advanced.md",
+        "omega_skills_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "id": "TheCortex",
+      "domain": "SOUL",
+      "docs": 5,
+      "bronnen": [
+        "omega_rag_advanced_architecture.md",
+        "omega_mind_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "id": "BlackBox",
+      "domain": "SOUL",
+      "docs": 5,
+      "bronnen": [
+        "omega_rag_advanced_architecture.md",
+        "omega_security_advanced.md",
+        "omega_soul_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "id": "UnifiedMemory",
+      "domain": "SOUL",
+      "docs": 5,
+      "bronnen": [
+        "omega_apps_advanced.md",
+        "omega_soul_advanced.md",
+        "omega_body_advanced.md",
+        "omega_skills_advanced.md",
+        "omega_learning_advanced.md"
+      ]
+    },
+    {
+      "id": "Dreamer",
+      "domain": "SOUL",
+      "docs": 5,
+      "bronnen": [
+        "omega_resources_advanced.md",
+        "omega_security_advanced.md",
+        "omega_mind_advanced.md",
+        "omega_soul_advanced.md",
+        "deep_dive_autopsie.md"
+      ]
+    },
+    {
+      "id": "KnowledgeBridge",
+      "domain": "SOUL",
+      "docs": 5,
+      "bronnen": [
+        "omega_resources_advanced.md",
+        "omega_rag_advanced_architecture.md",
+        "omega_skills_advanced.md"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "source": "CentralBrain",
+      "target": "PrometheusBrain",
+      "cross_domain": false
+    },
+    {
+      "source": "CentralBrain",
+      "target": "SwarmEngine",
+      "cross_domain": false
+    },
+    {
+      "source": "CentralBrain",
+      "target": "HallucinatieSchild",
+      "cross_domain": false
+    },
+    {
+      "source": "CentralBrain",
+      "target": "Tribunal",
+      "cross_domain": false
+    },
+    {
+      "source": "CentralBrain",
+      "target": "UnifiedMemory",
+      "cross_domain": true
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "Governor",
+      "cross_domain": false
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "SwarmEngine",
+      "cross_domain": false
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "CorticalStack",
+      "cross_domain": true
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "HallucinatieSchild",
+      "cross_domain": false
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "Tribunal",
+      "cross_domain": false
+    },
+    {
+      "source": "SwarmEngine",
+      "target": "Strategist",
+      "cross_domain": false
+    },
+    {
+      "source": "SwarmEngine",
+      "target": "Artificer",
+      "cross_domain": false
+    },
+    {
+      "source": "SwarmEngine",
+      "target": "VoidWalker",
+      "cross_domain": false
+    },
+    {
+      "source": "SwarmEngine",
+      "target": "KeyManager",
+      "cross_domain": true
+    },
+    {
+      "source": "HallucinatieSchild",
+      "target": "Artificer",
+      "cross_domain": false
+    },
+    {
+      "source": "HallucinatieSchild",
+      "target": "Strategist",
+      "cross_domain": false
+    },
+    {
+      "source": "HallucinatieSchild",
+      "target": "Tribunal",
+      "cross_domain": false
+    },
+    {
+      "source": "HallucinatieSchild",
+      "target": "CorticalStack",
+      "cross_domain": true
+    },
+    {
+      "source": "HallucinatieSchild",
+      "target": "Governor",
+      "cross_domain": false
+    },
+    {
+      "source": "HallucinatieSchild",
+      "target": "NeuralBus",
+      "cross_domain": true
+    },
+    {
+      "source": "HallucinatieSchild",
+      "target": "BlackBox",
+      "cross_domain": true
+    },
+    {
+      "source": "Strategist",
+      "target": "CentralBrain",
+      "cross_domain": false
+    },
+    {
+      "source": "Strategist",
+      "target": "VoidWalker",
+      "cross_domain": false
+    },
+    {
+      "source": "Strategist",
+      "target": "Tribunal",
+      "cross_domain": false
+    },
+    {
+      "source": "Strategist",
+      "target": "CorticalStack",
+      "cross_domain": true
+    },
+    {
+      "source": "Strategist",
+      "target": "UnifiedMemory",
+      "cross_domain": true
+    },
+    {
+      "source": "Strategist",
+      "target": "Artificer",
+      "cross_domain": false
+    },
+    {
+      "source": "Strategist",
+      "target": "TheCortex",
+      "cross_domain": true
+    },
+    {
+      "source": "Strategist",
+      "target": "PrometheusBrain",
+      "cross_domain": false
+    },
+    {
+      "source": "Strategist",
+      "target": "Governor",
+      "cross_domain": false
+    },
+    {
+      "source": "Artificer",
+      "target": "KeyManager",
+      "cross_domain": true
+    },
+    {
+      "source": "Artificer",
+      "target": "BlackBox",
+      "cross_domain": true
+    },
+    {
+      "source": "Artificer",
+      "target": "NeuralBus",
+      "cross_domain": true
+    },
+    {
+      "source": "VoidWalker",
+      "target": "Dreamer",
+      "cross_domain": true
+    },
+    {
+      "source": "VoidWalker",
+      "target": "CentralBrain",
+      "cross_domain": false
+    },
+    {
+      "source": "VoidWalker",
+      "target": "HallucinatieSchild",
+      "cross_domain": false
+    },
+    {
+      "source": "VoidWalker",
+      "target": "CorticalStack",
+      "cross_domain": true
+    },
+    {
+      "source": "VoidWalker",
+      "target": "BlackBox",
+      "cross_domain": true
+    },
+    {
+      "source": "VoidWalker",
+      "target": "Artificer",
+      "cross_domain": false
+    },
+    {
+      "source": "VoidWalker",
+      "target": "Tribunal",
+      "cross_domain": false
+    },
+    {
+      "source": "Tribunal",
+      "target": "Governor",
+      "cross_domain": false
+    },
+    {
+      "source": "Tribunal",
+      "target": "Artificer",
+      "cross_domain": false
+    },
+    {
+      "source": "Tribunal",
+      "target": "TheCortex",
+      "cross_domain": true
+    },
+    {
+      "source": "Tribunal",
+      "target": "Dreamer",
+      "cross_domain": true
+    },
+    {
+      "source": "EternalSentinel",
+      "target": "HallucinatieSchild",
+      "cross_domain": false
+    },
+    {
+      "source": "EternalSentinel",
+      "target": "Strategist",
+      "cross_domain": false
+    },
+    {
+      "source": "EternalSentinel",
+      "target": "Tribunal",
+      "cross_domain": false
+    },
+    {
+      "source": "EternalSentinel",
+      "target": "CorticalStack",
+      "cross_domain": true
+    },
+    {
+      "source": "EternalSentinel",
+      "target": "BlackBox",
+      "cross_domain": true
+    },
+    {
+      "source": "EternalSentinel",
+      "target": "ChromaDB",
+      "cross_domain": true
+    },
+    {
+      "source": "Governor",
+      "target": "NeuralBus",
+      "cross_domain": true
+    },
+    {
+      "source": "Governor",
+      "target": "BlackBox",
+      "cross_domain": true
+    },
+    {
+      "source": "Governor",
+      "target": "CentralBrain",
+      "cross_domain": false
+    },
+    {
+      "source": "Governor",
+      "target": "Dreamer",
+      "cross_domain": true
+    },
+    {
+      "source": "NeuralBus",
+      "target": "UnifiedMemory",
+      "cross_domain": true
+    },
+    {
+      "source": "NeuralBus",
+      "target": "Tribunal",
+      "cross_domain": true
+    },
+    {
+      "source": "NeuralBus",
+      "target": "CorticalStack",
+      "cross_domain": true
+    },
+    {
+      "source": "KeyManager",
+      "target": "CentralBrain",
+      "cross_domain": true
+    },
+    {
+      "source": "KeyManager",
+      "target": "Strategist",
+      "cross_domain": true
+    },
+    {
+      "source": "KeyManager",
+      "target": "Tribunal",
+      "cross_domain": true
+    },
+    {
+      "source": "KeyManager",
+      "target": "VoidWalker",
+      "cross_domain": true
+    },
+    {
+      "source": "KeyManager",
+      "target": "TheCortex",
+      "cross_domain": true
+    },
+    {
+      "source": "KeyManager",
+      "target": "Dreamer",
+      "cross_domain": true
+    },
+    {
+      "source": "VRAMGuard",
+      "target": "SwarmEngine",
+      "cross_domain": true
+    },
+    {
+      "source": "GPUControl",
+      "target": "SwarmEngine",
+      "cross_domain": true
+    },
+    {
+      "source": "SingletonLock",
+      "target": "CentralBrain",
+      "cross_domain": true
+    },
+    {
+      "source": "SingletonLock",
+      "target": "Strategist",
+      "cross_domain": true
+    },
+    {
+      "source": "SingletonLock",
+      "target": "Artificer",
+      "cross_domain": true
+    },
+    {
+      "source": "SingletonLock",
+      "target": "VoidWalker",
+      "cross_domain": true
+    },
+    {
+      "source": "SingletonLock",
+      "target": "Tribunal",
+      "cross_domain": true
+    },
+    {
+      "source": "SingletonLock",
+      "target": "TheCortex",
+      "cross_domain": true
+    },
+    {
+      "source": "SingletonLock",
+      "target": "Dreamer",
+      "cross_domain": true
+    },
+    {
+      "source": "SingletonLock",
+      "target": "Governor",
+      "cross_domain": true
+    },
+    {
+      "source": "HeartbeatDaemon",
+      "target": "Governor",
+      "cross_domain": true
+    },
+    {
+      "source": "FastAPI",
+      "target": "Governor",
+      "cross_domain": true
+    },
+    {
+      "source": "FastAPI",
+      "target": "CorticalStack",
+      "cross_domain": true
+    },
+    {
+      "source": "FastAPI",
+      "target": "CentralBrain",
+      "cross_domain": true
+    },
+    {
+      "source": "FastAPI",
+      "target": "HallucinatieSchild",
+      "cross_domain": true
+    },
+    {
+      "source": "FastAPI",
+      "target": "Strategist",
+      "cross_domain": true
+    },
+    {
+      "source": "FastAPI",
+      "target": "Tribunal",
+      "cross_domain": true
+    },
+    {
+      "source": "RequestTracer",
+      "target": "CorticalStack",
+      "cross_domain": true
+    },
+    {
+      "source": "RequestTracer",
+      "target": "HallucinatieSchild",
+      "cross_domain": true
+    },
+    {
+      "source": "RequestTracer",
+      "target": "Tribunal",
+      "cross_domain": true
+    },
+    {
+      "source": "RequestTracer",
+      "target": "NeuralBus",
+      "cross_domain": false
+    },
+    {
+      "source": "CorticalStack",
+      "target": "ChromaDB",
+      "cross_domain": false
+    },
+    {
+      "source": "CorticalStack",
+      "target": "BlackBox",
+      "cross_domain": false
+    },
+    {
+      "source": "CorticalStack",
+      "target": "UnifiedMemory",
+      "cross_domain": false
+    },
+    {
+      "source": "ChromaDB",
+      "target": "Governor",
+      "cross_domain": true
+    },
+    {
+      "source": "ChromaDB",
+      "target": "TheCortex",
+      "cross_domain": false
+    },
+    {
+      "source": "BlackBox",
+      "target": "NeuralBus",
+      "cross_domain": true
+    },
+    {
+      "source": "BlackBox",
+      "target": "Dreamer",
+      "cross_domain": false
+    },
+    {
+      "source": "UnifiedMemory",
+      "target": "ChromaDB",
+      "cross_domain": false
+    },
+    {
+      "source": "UnifiedMemory",
+      "target": "BlackBox",
+      "cross_domain": false
+    },
+    {
+      "source": "UnifiedMemory",
+      "target": "Artificer",
+      "cross_domain": true
+    },
+    {
+      "source": "Dreamer",
+      "target": "CorticalStack",
+      "cross_domain": false
+    },
+    {
+      "source": "Dreamer",
+      "target": "CentralBrain",
+      "cross_domain": true
+    },
+    {
+      "source": "Dreamer",
+      "target": "Strategist",
+      "cross_domain": true
+    },
+    {
+      "source": "Dreamer",
+      "target": "Artificer",
+      "cross_domain": true
+    },
+    {
+      "source": "Dreamer",
+      "target": "TheCortex",
+      "cross_domain": false
+    },
+    {
+      "source": "KnowledgeBridge",
+      "target": "ChromaDB",
+      "cross_domain": false
+    },
+    {
+      "source": "KnowledgeBridge",
+      "target": "Artificer",
+      "cross_domain": true
+    }
+  ],
+  "meta": {
+    "total_docs": 462,
+    "total_nodes": 25,
+    "total_edges": 101,
+    "cross_domain_edges": 59,
+    "domains": {
+      "MIND": 50,
+      "BODY": 40,
+      "SOUL": 35
+    },
+    "generated": "2026-03-08T14:54:02",
+    "scan_time_s": 4.2
+  }
+}
