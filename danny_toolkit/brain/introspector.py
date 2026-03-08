@@ -140,6 +140,131 @@ class SystemIntrospector:
             "class": "ConfigAuditor",
             "singleton": "get_config_auditor",
         },
+        # ── Brain uitbreiding ──
+        "proactive": {"class": "ProactiveEngine"},
+        "singularity": {"class": "SingularityEngine"},
+        "trinity_omega": {
+            "class": "PrometheusBrain",
+            "singleton": "get_prometheus",
+        },
+        "trinity_symbiosis": {
+            "class": "TrinitySymbiosis",
+            "singleton": "get_trinity",
+        },
+        "nexus_bridge": {"class": "NexusBridge"},
+        "citation_marshall": {"class": "CitationMarshall"},
+        "reality_anchor": {"class": "RealityAnchor"},
+        "unified_memory": {"class": "UnifiedMemory"},
+        "observatory_sync": {
+            "class": "ObservatorySync",
+            "singleton": "get_observatory_sync",
+        },
+        "file_guard": {"class": "FileGuard"},
+        "shadow_permissions": {"class": "ShadowPermissions"},
+        "claude_memory": {
+            "class": "ClaudeMemory",
+            "singleton": "get_claude_memory",
+        },
+        "ghost_amplifier": {
+            "class": "GhostAmplifier",
+            "singleton": "get_ghost_amplifier",
+        },
+        "tool_dispatcher": {
+            "class": "ToolDispatcher",
+            "singleton": "get_tool_dispatcher",
+        },
+        "agent_factory": {
+            "class": "AgentFactory",
+            "singleton": "get_agent_factory",
+        },
+        # ── Core modules (The Body) ──
+        "neural_bus": {
+            "class": "NeuralBus",
+            "singleton": "get_bus",
+            "package": "danny_toolkit.core",
+        },
+        "key_manager": {
+            "class": "SmartKeyManager",
+            "singleton": "get_key_manager",
+            "package": "danny_toolkit.core",
+        },
+        "semantic_cache": {
+            "class": "SemanticCache",
+            "singleton": "get_semantic_cache",
+            "package": "danny_toolkit.core",
+        },
+        "shard_router": {
+            "class": "ShardRouter",
+            "singleton": "get_shard_router",
+            "package": "danny_toolkit.core",
+        },
+        "error_taxonomy": {
+            "class": "FoutDefinitie",
+            "package": "danny_toolkit.core",
+        },
+        "request_tracer": {
+            "class": "RequestTracer",
+            "singleton": "get_request_tracer",
+            "package": "danny_toolkit.core",
+        },
+        "self_repair": {
+            "class": "SelfRepairProtocol",
+            "package": "danny_toolkit.core",
+        },
+        "self_pruning": {
+            "class": "SelfPruning",
+            "singleton": "get_self_pruning",
+            "package": "danny_toolkit.core",
+        },
+        "vector_store": {
+            "class": "VectorStore",
+            "package": "danny_toolkit.core",
+        },
+        "alerter": {
+            "class": "Alerter",
+            "singleton": "get_alerter",
+            "package": "danny_toolkit.core",
+        },
+        "shadow_airlock": {
+            "class": "ShadowAirlock",
+            "package": "danny_toolkit.core",
+        },
+        "oracle": {"class": "OracleAgent"},
+        "vram_manager": {
+            "class": "VRAMBudgetGuard",
+            "singleton": "get_vram_guard",
+            "package": "danny_toolkit.core",
+        },
+        # ── Daemon modules (The Soul) ──
+        "heartbeat": {
+            "class": "HeartbeatDaemon",
+            "package": "danny_toolkit.daemon",
+        },
+        "daemon_core": {
+            "class": "DigitalDaemon",
+            "package": "danny_toolkit.daemon",
+        },
+        "sensorium": {
+            "class": "Sensorium",
+            "package": "danny_toolkit.daemon",
+        },
+        "limbic_system": {
+            "class": "LimbicSystem",
+            "package": "danny_toolkit.daemon",
+        },
+        "metabolisme": {
+            "class": "Metabolisme",
+            "package": "danny_toolkit.daemon",
+        },
+        "coherentie": {
+            "class": "CoherenceMonitor",
+            "package": "danny_toolkit.daemon",
+        },
+        # ── Root module ──
+        "swarm_engine": {
+            "class": "SwarmEngine",
+            "package": "",
+        },
     }
 
     # Bekende cross-module wirings
@@ -174,7 +299,83 @@ class SystemIntrospector:
                          beschrijving="Output gate op alle payloads"),
         WiringConnection("swarm_engine", "arbitrator", "singleton",
                          beschrijving="Goal decomposition + execution"),
+        # ── Body (SwarmEngine) connections ──
+        WiringConnection("swarm_engine", "semantic_cache", "singleton",
+                         beschrijving="LLM response caching per agent"),
+        WiringConnection("swarm_engine", "shard_router", "singleton",
+                         beschrijving="ChromaDB matrix sharding"),
+        WiringConnection("swarm_engine", "error_taxonomy", "singleton",
+                         beschrijving="Error classification pipeline"),
+        WiringConnection("swarm_engine", "request_tracer", "singleton",
+                         beschrijving="Distributed tracing per request"),
+        WiringConnection("swarm_engine", "waakhuis", "singleton",
+                         beschrijving="Latency monitoring via _timed_dispatch"),
+        WiringConnection("swarm_engine", "synapse", "singleton",
+                         beschrijving="Pathway plasticity routing"),
+        WiringConnection("swarm_engine", "phantom", "singleton",
+                         beschrijving="Anticipatory MEMEX pre-warming"),
+        WiringConnection("swarm_engine", "key_manager", "singleton",
+                         beschrijving="API key isolation per agent"),
+        WiringConnection("swarm_engine", "neural_bus", "singleton",
+                         beschrijving="Event pub/sub system"),
+        WiringConnection("swarm_engine", "self_pruning", "singleton",
+                         beschrijving="Vector store maintenance"),
+        # ── Mind (Brain) connections ──
+        WiringConnection("central_brain", "governor", "method_call",
+                         beschrijving="Safety guardian enforcement"),
+        WiringConnection("central_brain", "cortical_stack", "singleton",
+                         beschrijving="Episodic memory logging"),
+        WiringConnection("central_brain", "swarm_engine", "method_call",
+                         beschrijving="Orchestration delegation"),
+        WiringConnection("dreamer", "oracle_eye", "method_call",
+                         beschrijving="Resource prediction in REM"),
+        WiringConnection("dreamer", "cortex", "method_call",
+                         beschrijving="Knowledge consolidation"),
+        WiringConnection("dreamer", "the_mirror", "method_call",
+                         beschrijving="User profiling update"),
+        WiringConnection("governor", "alerter", "method_call",
+                         beschrijving="Warning notifications"),
+        WiringConnection("trinity_omega", "cortical_stack", "singleton",
+                         beschrijving="Federated swarm memory"),
+        WiringConnection("proactive", "sensorium", "method_call",
+                         beschrijving="Event-driven autonomous actions"),
+        WiringConnection("observatory_sync", "model_sync", "method_call",
+                         beschrijving="Model statistics aggregation"),
+        WiringConnection("config_auditor", "alerter", "method_call",
+                         beschrijving="Drift detection alerts"),
+        WiringConnection("devops_daemon", "black_box", "method_call",
+                         beschrijving="Failure recording in CI loop"),
+        WiringConnection("ghost_amplifier", "ghost_writer", "method_call",
+                         beschrijving="Token elaboration pipeline"),
+        WiringConnection("proactive", "cortical_stack", "singleton",
+                         beschrijving="Event-driven memory logging"),
+        # ── Soul (Daemon) connections ──
+        WiringConnection("heartbeat", "devops_daemon", "method_call",
+                         beschrijving="CI loop execution"),
+        WiringConnection("heartbeat", "dreamer", "method_call",
+                         beschrijving="Overnight REM trigger (04:00)"),
+        WiringConnection("heartbeat", "oracle_eye", "method_call",
+                         beschrijving="Resource monitoring"),
+        WiringConnection("sensorium", "metabolisme", "method_call",
+                         beschrijving="Energy event processing"),
+        WiringConnection("limbic_system", "sensorium", "method_call",
+                         beschrijving="Emotional event processing"),
+        WiringConnection("daemon_core", "metabolisme", "method_call",
+                         beschrijving="Energy balance system"),
+        WiringConnection("daemon_core", "limbic_system", "method_call",
+                         beschrijving="Emotional brain integration"),
+        WiringConnection("daemon_core", "sensorium", "method_call",
+                         beschrijving="Sensory integration"),
     ]
+
+    def _resolve_module_path(self, name: str) -> str:
+        """Resolve module naam naar volledig import pad."""
+        if name in self._KNOWN_MODULES:
+            pkg = self._KNOWN_MODULES[name].get(
+                "package", "danny_toolkit.brain"
+            )
+            return f"{pkg}.{name}" if pkg else name
+        return f"danny_toolkit.brain.{name}"
 
     def __init__(self):
         """Initializes the object, setting up its internal state.
@@ -208,11 +409,11 @@ class SystemIntrospector:
     # ── Module Discovery ──
 
     def discover_modules(self) -> List[ModuleHealth]:
-        """Scan alle bekende brain modules en check hun status."""
+        """Scan alle bekende modules (brain/core/daemon/root) en check status."""
         results = []
         for mod_name, meta in self._KNOWN_MODULES.items():
             health = ModuleHealth(naam=mod_name)
-            full_path = f"danny_toolkit.brain.{mod_name}"
+            full_path = self._resolve_module_path(mod_name)
             try:
                 mod = importlib.import_module(full_path)
                 health.geladen = True
@@ -256,9 +457,7 @@ class SystemIntrospector:
             )
             # Check of bron-module een referentie heeft naar doel
             try:
-                bron_path = f"danny_toolkit.brain.{wiring.bron}"
-                if wiring.bron == "swarm_engine":
-                    bron_path = "swarm_engine"
+                bron_path = self._resolve_module_path(wiring.bron)
                 mod = importlib.import_module(bron_path)
                 src = inspect.getsource(mod)
 
