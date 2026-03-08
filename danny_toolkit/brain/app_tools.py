@@ -19,6 +19,7 @@ class AppCategorie(Enum):
     CREATIEF = "creatief"
     LEREN = "leren"
     LIFESTYLE = "lifestyle"
+    SYSTEEM = "systeem"
 
 
 @dataclass
@@ -1555,22 +1556,22 @@ APP_TOOLS: Dict[str, AppDefinition] = {
         ]
     ),
 
-    # === LOCAL BRIDGE — Beveiligde Localhost Scraper ===
+    # === LOCAL BRIDGE — Beveiligde Localhost Observatie ===
     "local_bridge": AppDefinition(
         naam="local_bridge",
-        beschrijving="Beveiligde localhost scraper — lees je lokale dev-server (read-only, Governor-gated)",
-        categorie=AppCategorie.AI,
+        beschrijving="Beveiligde localhost observer — scan en lees lokale poorten en dev-servers (read-only, Governor-gated)",
+        categorie=AppCategorie.SYSTEEM,
         module_path="danny_toolkit.core.local_bridge",
         class_name="LocalBridge",
-        prioriteit=6,
+        prioriteit=9,
         acties=[
             AppActie(
-                naam="fetch",
-                beschrijving="Lees een localhost pagina (alleen poort 3000-9999, stateless, read-only)",
+                naam="fetch_localhost",
+                beschrijving="Lees een localhost pagina op een specifieke poort (read-only, stateless, alleen 3000-9999)",
                 parameters={
-                    "url": {
-                        "type": "string",
-                        "description": "Localhost URL (bijv. http://localhost:3000)",
+                    "port": {
+                        "type": "integer",
+                        "description": "Poortnummer van de lokale server (bijv. 8000)",
                         "required": True
                     }
                 }

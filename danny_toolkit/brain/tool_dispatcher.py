@@ -168,9 +168,10 @@ _CATEGORY_KEYWORDS: dict[str, list[str]] = {
     ],
 
     # Localhost & Dev Server
-    "localhost|local.?host|dev.?server|lokale.?server|mijn.?site|my.?site|"
-    "localhost:\\d|127\\.0\\.0\\.1|lokale.?pagina|local.?page|"
-    "scrape.*local|lees.*local|read.*local|bekijk.*site|view.*site": [
+    r"scan.*poort|localhost|local.?host|dev.?server|lokale.?server|mijn.?site|my.?site|"
+    r"localhost:\d|127\.0\.0\.1|lokale.?pagina|local.?page|"
+    r"scrape.*local|lees.*local|read.*local|bekijk.*site|view.*site|"
+    r"observatie.*modus|sane.*bridge|observeer.*poort|lees.*poort": [
         "local_bridge",
     ],
 
