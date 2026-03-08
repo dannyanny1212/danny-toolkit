@@ -726,6 +726,39 @@ class OmegaDashboardV4(App):
         self.log_mind.clear()
         self.log_body.clear()
 
+def _acquire_singleton_lock():
+    """Singleton lock — voorkomt meerdere omega_v4.py instances.
+
+    Gebruikt msvcrt.locking() op Windows voor een exclusieve file lock.
+    Als een ander process de lock al heeft, stopt het programma direct.
+    De lock blijft open zolang het dashboard draait (file handle open).
+    """
+    import tempfile
+    import msvcrt
+
+    lockpath = os.path.join(tempfile.gettempdir(), "omega_v4.lock")
+    # Open in write mode — maak aan als het niet bestaat
+    try:
+        lock_fh = open(lockpath, "w")
+        msvcrt.locking(lock_fh.fileno(), msvcrt.LK_NBLCK, 1)
+    except (OSError, IOError):
+        # Lock al bezet door een ander process
+        try:
+            from danny_toolkit.core.utils import Kleur
+            rood = Kleur.FEL_ROOD
+            reset = Kleur.RESET
+        except ImportError:
+            rood = reset = ""
+        print(
+            f"\n{rood}[SINGLETON] Er draait al een omega_v4.py instance!{reset}\n"
+            f"{rood}Stop het andere process eerst om CorticalStack amnesie te voorkomen.{reset}\n"
+        )
+        sys.exit(1)
+    # Bewaar file handle op module-niveau zodat de lock blijft bestaan
+    return lock_fh
+
+
 if __name__ == "__main__":
+    _omega_lock = _acquire_singleton_lock()
     app = OmegaDashboardV4()
     app.run()
