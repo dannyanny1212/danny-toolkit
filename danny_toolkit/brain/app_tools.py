@@ -1290,6 +1290,19 @@ APP_TOOLS: Dict[str, AppDefinition] = {
                 beschrijving="Haal de status van de companion op (level, XP, stats)",
                 parameters={}
             ),
+            AppActie(
+                naam="raadpleeg_omega_skills",
+                beschrijving="Haal specifieke geavanceerde architectuur- en protocolkennis (Apps, Quests, Skills, Learning, UI) op uit de afgeschermde OMEGA Vector DB. Gebruik dit ALTIJD als je vragen krijgt over de interne werking of protocollen van OMEGA.",
+                parameters={
+                    "query": {
+                        "type": "string",
+                        "description": "Het specifieke protocol of de skill die je zoekt (bijv. 'Quest protocol 4', 'Hoe werkt TheLibrarian?' of 'AppCategorie enum')",
+                        "required": True
+                    }
+                },
+                returns="Een string met de meest relevante architectuur-chunks uit de markdown documentatie.",
+                vereist_data=False
+            ),
         ]
     ),
 
@@ -1432,6 +1445,19 @@ APP_TOOLS: Dict[str, AppDefinition] = {
                         "items": {"type": "string"}
                     }
                 }
+            ),
+            AppActie(
+                naam="raadpleeg_omega_skills",
+                beschrijving="Haal specifieke geavanceerde architectuur- en protocolkennis (Apps, Quests, Skills, Learning, UI) op uit de afgeschermde OMEGA Vector DB. Gebruik dit ALTIJD als je vragen krijgt over de interne werking of protocollen van OMEGA.",
+                parameters={
+                    "query": {
+                        "type": "string",
+                        "description": "Het specifieke protocol of de skill die je zoekt (bijv. 'Quest protocol 4', 'Hoe werkt TheLibrarian?' of 'AppCategorie enum')",
+                        "required": True
+                    }
+                },
+                returns="Een string met de meest relevante architectuur-chunks uit de markdown documentatie.",
+                vereist_data=False
             ),
         ]
     ),
