@@ -3626,6 +3626,37 @@ class SwarmEngine:
         # Phase 31: tick circuit breaker cooldowns
         self._tick_circuit_cooldowns()
 
+        # Eternal Sentinel: auto-throttle gate
+        try:
+            from danny_toolkit.brain.eternal_sentinel import get_sentinel
+            _sentinel = get_sentinel()
+            if _sentinel.is_throttled:
+                log("\u26a0\ufe0f Sentinel throttle actief — wacht op herstel...")
+                for _wait in range(10):
+                    if not _sentinel.is_throttled:
+                        break
+                    await asyncio.sleep(1)
+                if _sentinel.is_throttled:
+                    log("\u274c Sentinel throttle timeout — missie afgebroken")
+                    return [SwarmPayload(
+                        agent="Sentinel",
+                        content="Systeem onder hoge belasting. Probeer later opnieuw.",
+                        display_text="Systeem onder hoge belasting. Probeer later opnieuw.",
+                        confidence=0.0,
+                    )]
+        except Exception as _se:
+            logger.debug("Sentinel throttle check: %s", _se)
+
+        # Eternal Sentinel: GPU boost + mission start event
+        try:
+            from danny_toolkit.core.neural_bus import get_bus, EventTypes
+            get_bus().publish(EventTypes.MISSION_STARTED, {
+                "trace_id": trace_id,
+                "query_preview": user_input[:80],
+            }, bron="swarm_engine")
+        except Exception:
+            pass
+
         # Systemic failure detectie: 3+ agents down → waarschuwing
         self._detect_systemic_failure()
 
@@ -4212,6 +4243,16 @@ class SwarmEngine:
         # Phase 36: eind trace
         if _tracer:
             _tracer.eind_trace()
+
+        # Eternal Sentinel: GPU idle + mission end event
+        try:
+            from danny_toolkit.core.neural_bus import get_bus, EventTypes
+            get_bus().publish(EventTypes.REQUEST_TRACE_COMPLETE, {
+                "trace_id": trace_id,
+                "agents": [r.agent for r in results] if results else [],
+            }, bron="swarm_engine")
+        except Exception:
+            pass
 
         # B-95: Record response outcome to CorticalStack
         self._record_response_outcome(user_input, results)

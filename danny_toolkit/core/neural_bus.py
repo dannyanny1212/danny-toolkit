@@ -68,6 +68,11 @@ class EventTypes:
     FRAGMENT_ARCHIVED = "fragment_archived"
     FRAGMENT_DESTROYED = "fragment_destroyed"
     PRUNING_COMPLETE = "pruning_complete"
+    # Eternal Sentinel events
+    SENTINEL_DEEP_SCAN = "sentinel_deep_scan"
+    SENTINEL_THROTTLE = "sentinel_throttle"
+    SENTINEL_GPU_BOOST = "sentinel_gpu_boost"
+    SENTINEL_REINDEX = "sentinel_reindex"
 
 
 class BusEvent:

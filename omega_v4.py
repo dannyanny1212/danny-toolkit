@@ -760,5 +760,14 @@ def _acquire_singleton_lock():
 
 if __name__ == "__main__":
     _omega_lock = _acquire_singleton_lock()
+
+    # Eternal Sentinel — autonome bewaker activeren
+    try:
+        from danny_toolkit.brain.eternal_sentinel import get_sentinel
+        _sentinel = get_sentinel()
+        _sentinel.start()
+    except Exception as _se:
+        print(f"[SENTINEL] Start fout: {_se}")
+
     app = OmegaDashboardV4()
     app.run()
