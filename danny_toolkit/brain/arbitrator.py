@@ -522,6 +522,10 @@ The Groq client is initialized lazily, attempting to create a synchronous client
             latency = worker.profile.latency_class
             score = (cap_match * sr) / (cost + latency)
 
+            # ── Sovereign Priority: Groq altijd eerst + reserve keys ──
+            if worker.profile.provider == "groq":
+                score *= 2.0
+
             bids.append(ModelBid(
                 profile=worker.profile,
                 worker=worker,

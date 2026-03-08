@@ -194,6 +194,15 @@ class GroqModelWorker(ModelWorker):
                 max_tokens=4096,
             )
         super().__init__(profile)
+
+        # ── Reserve key pool voor rate-limit rotation ──
+        self._reserve_keys: List[str] = []
+        for i in range(1, 4):
+            rk = os.getenv(f"GROQ_API_KEY_RESERVE_{i}")
+            if rk:
+                self._reserve_keys.append(rk)
+        self._reserve_idx = 0
+
         self._client = None
         try:
             if HAS_KEY_MANAGER:
@@ -207,51 +216,91 @@ class GroqModelWorker(ModelWorker):
         except Exception as e:
             logger.debug("GroqModelWorker init: %s", e)
 
+    def _rotate_reserve_key(self) -> bool:
+        """Rotate naar volgende reserve Groq key. Returns True bij succes."""
+        if not self._reserve_keys:
+            return False
+        if self._reserve_idx >= len(self._reserve_keys):
+            return False
+        try:
+            from groq import AsyncGroq
+            key = self._reserve_keys[self._reserve_idx]
+            self._client = AsyncGroq(api_key=key)
+            self._reserve_idx += 1
+            logger.info(
+                "GroqModelWorker: reserve key %d/%d geactiveerd",
+                self._reserve_idx, len(self._reserve_keys),
+            )
+            return True
+        except Exception:
+            return False
+
     async def generate(self, prompt: str, system: str = "") -> ModelResponse:
-        """Genereer via Groq API."""
+        """Genereer via Groq API met reserve key rotation op rate limits."""
         self._perf["calls"] += 1
         t0 = time.time()
-        try:
-            if not self._client:
-                raise RuntimeError("Groq client niet beschikbaar")
 
-            messages = []
-            if system:
-                messages.append({"role": "system", "content": system})
-            messages.append({"role": "user", "content": prompt})
+        messages = []
+        if system:
+            messages.append({"role": "system", "content": system})
+        messages.append({"role": "user", "content": prompt})
 
-            response = await self._client.chat.completions.create(
-                model=self.profile.model_id,
-                messages=messages,
-                max_tokens=self.profile.max_tokens,
-                temperature=0.4,
-            )
-            content = response.choices[0].message.content or ""
-            tokens = getattr(response.usage, "total_tokens", 0)
-            latency = (time.time() - t0) * 1000
+        # Probeer primary + alle reserve keys voordat we opgeven
+        max_attempts = 1 + len(self._reserve_keys)
+        last_error = None
 
-            self._perf["total_latency_ms"] += latency
-            self._perf["total_tokens"] += tokens
-            self._fail_count = 0  # Reset on API success
+        for attempt in range(max_attempts):
+            try:
+                if not self._client:
+                    raise RuntimeError("Groq client niet beschikbaar")
 
-            return ModelResponse(
-                provider=self.profile.provider,
-                model_id=self.profile.model_id,
-                content=content,
-                tokens_used=tokens,
-                latency_ms=round(latency, 1),
-            )
-        except Exception as e:
-            self._record_failure()
-            latency = (time.time() - t0) * 1000
-            self._perf["total_latency_ms"] += latency
-            logger.debug("GroqModelWorker.generate: %s", e)
-            return ModelResponse(
-                provider=self.profile.provider,
-                model_id=self.profile.model_id,
-                content="",
-                latency_ms=round(latency, 1),
-            )
+                response = await self._client.chat.completions.create(
+                    model=self.profile.model_id,
+                    messages=messages,
+                    max_tokens=self.profile.max_tokens,
+                    temperature=0.4,
+                )
+                content = response.choices[0].message.content or ""
+                tokens = getattr(response.usage, "total_tokens", 0)
+                latency = (time.time() - t0) * 1000
+
+                self._perf["total_latency_ms"] += latency
+                self._perf["total_tokens"] += tokens
+                self._fail_count = 0  # Reset on API success
+
+                return ModelResponse(
+                    provider=self.profile.provider,
+                    model_id=self.profile.model_id,
+                    content=content,
+                    tokens_used=tokens,
+                    latency_ms=round(latency, 1),
+                )
+            except Exception as e:
+                last_error = e
+                err_str = str(e).lower()
+                # Rate limit (429) → rotate naar reserve key
+                is_rate_limit = "rate_limit" in err_str or "429" in err_str
+                if is_rate_limit and attempt < max_attempts - 1:
+                    if self._rotate_reserve_key():
+                        logger.info(
+                            "Groq rate limited, reserve key %d poging...",
+                            self._reserve_idx,
+                        )
+                        continue
+                # Niet rate-limited of geen keys meer → stop
+                break
+
+        # Alle keys uitgeput
+        self._record_failure()
+        latency = (time.time() - t0) * 1000
+        self._perf["total_latency_ms"] += latency
+        logger.debug("GroqModelWorker.generate: %s", last_error)
+        return ModelResponse(
+            provider=self.profile.provider,
+            model_id=self.profile.model_id,
+            content="",
+            latency_ms=round(latency, 1),
+        )
 
 
 class AnthropicModelWorker(ModelWorker):
