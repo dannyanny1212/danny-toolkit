@@ -308,11 +308,11 @@ class CentralBrain:
                 return False, reden
             return True, "OK"
         except ImportError:
-            logger.debug("OmegaGovernor niet beschikbaar — gate open")
+            logger.debug("OmegaGovernor niet beschikbaar — gate open (graceful)")
             return True, "OK"
         except Exception as e:
-            logger.debug("Governor gate error: %s — gate open", e)
-            return True, "OK"
+            logger.warning("Governor gate error: %s — FAIL CLOSED", e)
+            return False, f"Governor crash: {e}"
 
     # ── Rol-Context mapping voor SwarmEngine BrainAgent ──
     _ROLE_PROMPTS: Dict[str, str] = {

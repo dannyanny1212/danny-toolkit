@@ -23,6 +23,9 @@ _ROOT = os.path.dirname(os.path.abspath(__file__))
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
+# ═══ SOVEREIGN GATE — 9 Laws enforced at import time ═══
+import danny_toolkit.core.sovereign_gate  # noqa: F401 — sys.exit() on failure
+
 # --- V4.0 CYBER-MINIMALIST CSS ---
 OMEGA_CSS = """
 Screen {
@@ -271,14 +274,63 @@ class OmegaDashboardV4(App):
 
     @work(thread=True)
     def _boot_body_telemetry(self) -> None:
-        """Boot BODY kolom — hardware telemetrie + Governor check."""
-        # Governor startup
+        """Boot BODY kolom — hardware telemetrie + ECHTE security checks."""
+        # ── Governor startup_check (ECHT, niet nep) ──
         self.app.call_from_thread(
             self.log_body.write,
             Text.from_ansi("\033[96m[GOVERNOR] Startup check gestart...\033[0m"),
         )
+        try:
+            from danny_toolkit.brain.governor import OmegaGovernor
+            gov = OmegaGovernor()
+            gov_rapport = gov.startup_check()
+            gov_status = gov_rapport.get("status", "?")
+            color = "\033[32m" if gov_status == "OK" else "\033[33m"
+            self.app.call_from_thread(
+                self.log_body.write,
+                Text.from_ansi(f"{color}[GOVERNOR] Startup check voltooid: {gov_status}\033[0m"),
+            )
+        except Exception as e:
+            self.app.call_from_thread(
+                self.log_body.write,
+                Text.from_ansi(f"\033[31m[GOVERNOR] Startup FAILED: {e}\033[0m"),
+            )
 
-        # Hardware metrics
+        # ── FileGuard integrity check ──
+        try:
+            from danny_toolkit.brain.file_guard import FileGuard
+            fg = FileGuard()
+            fg_rapport = fg.startup_check()
+            fg_status = fg_rapport.get("status", "?") if isinstance(fg_rapport, dict) else "OK"
+            color = "\033[32m" if fg_status == "OK" else "\033[33m"
+            self.app.call_from_thread(
+                self.log_body.write,
+                Text.from_ansi(f"{color}[FILEGUARD] Integriteit: {fg_status}\033[0m"),
+            )
+        except Exception as e:
+            self.app.call_from_thread(
+                self.log_body.write,
+                Text.from_ansi(f"\033[33m[FILEGUARD] Skip: {e}\033[0m"),
+            )
+
+        # ── ConfigAuditor ──
+        try:
+            from danny_toolkit.brain.config_auditor import get_config_auditor
+            auditor = get_config_auditor()
+            audit = auditor.audit()
+            a_status = "VEILIG" if audit.veilig else f"{len(audit.schendingen)} schendingen"
+            color = "\033[32m" if audit.veilig else "\033[33m"
+            self.app.call_from_thread(
+                self.log_body.write,
+                Text.from_ansi(f"{color}[CONFIG AUDIT] {a_status}\033[0m"),
+            )
+        except Exception as e:
+            self.app.call_from_thread(
+                self.log_body.write,
+                Text.from_ansi(f"\033[33m[CONFIG AUDIT] Skip: {e}\033[0m"),
+            )
+
+        # ── Hardware metrics ──
         try:
             import psutil
             cpu = psutil.cpu_percent(interval=1)
@@ -310,11 +362,6 @@ class OmegaDashboardV4(App):
                 )
         except Exception:
             pass
-
-        self.app.call_from_thread(
-            self.log_body.write,
-            Text.from_ansi("\033[32m[GOVERNOR] Startup check voltooid: OK\033[0m"),
-        )
 
         # Hardware refresh nu via set_interval(1s) in on_mount()
 
