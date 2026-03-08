@@ -1,0 +1,1097 @@
+{
+  "total_files": 229,
+  "avg_quality": 6.6,
+  "worst_5": [
+    {
+      "path": "danny_toolkit\\rag_gui.py",
+      "lines": 437,
+      "classes": 1,
+      "functions": 24,
+      "quality": 2.0,
+      "grade": "F",
+      "score": "20.0/100.0",
+      "issues": [
+        {
+          "rule": "future-annotations",
+          "line": 1,
+          "message": "Missing 'from __future__ import annotations'",
+          "severity": "error"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 431,
+          "message": "Function 'main' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 36,
+          "message": "Function '__init__' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 51,
+          "message": "Function '_ensure_cuda_path' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 58,
+          "message": "Function '_bouw_header' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 79,
+          "message": "Function '_bouw_input_sectie' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 130,
+          "message": "Function '_bouw_knoppen' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 160,
+          "message": "Function '_bouw_output' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 189,
+          "message": "Function '_bouw_statusbalk' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 207,
+          "message": "Function '_print' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 216,
+          "message": "Function '_clear_output' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 221,
+          "message": "Function '_set_status' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 224,
+          "message": "Function '_browse_directory' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 229,
+          "message": "Function '_get_vraag' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 235,
+          "message": "Function '_run_threaded' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 261,
+          "message": "Function '_run_gpu' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 287,
+          "message": "Function '_run_chain' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 333,
+          "message": "Function '_run_index' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 374,
+          "message": "Function '_run_ask' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 427,
+          "message": "Function 'run' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 244,
+          "message": "Function 'worker' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 267,
+          "message": "Function 'work' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 293,
+          "message": "Function 'work' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 339,
+          "message": "Function 'work' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 380,
+          "message": "Function 'work' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 431,
+          "message": "Function 'main' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 36,
+          "message": "Function '__init__' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 51,
+          "message": "Function '_ensure_cuda_path' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 58,
+          "message": "Function '_bouw_header' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 79,
+          "message": "Function '_bouw_input_sectie' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 130,
+          "message": "Function '_bouw_knoppen' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 160,
+          "message": "Function '_bouw_output' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 189,
+          "message": "Function '_bouw_statusbalk' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 207,
+          "message": "Function '_print' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 216,
+          "message": "Function '_clear_output' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 221,
+          "message": "Function '_set_status' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 224,
+          "message": "Function '_browse_directory' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 229,
+          "message": "Function '_get_vraag' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 235,
+          "message": "Function '_run_threaded' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 261,
+          "message": "Function '_run_gpu' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 287,
+          "message": "Function '_run_chain' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 333,
+          "message": "Function '_run_index' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 374,
+          "message": "Function '_run_ask' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 427,
+          "message": "Function 'run' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 244,
+          "message": "Function 'worker' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 267,
+          "message": "Function 'work' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 293,
+          "message": "Function 'work' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 339,
+          "message": "Function 'work' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 380,
+          "message": "Function 'work' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "logger",
+          "line": 1,
+          "message": "No logger defined (expected 'logger = logging.getLogger(__name__)')",
+          "severity": "warning"
+        },
+        {
+          "rule": "inner-import",
+          "line": 269,
+          "message": "Import 'llama_cpp' found inside function body",
+          "severity": "warning"
+        },
+        {
+          "rule": "inner-import",
+          "line": 295,
+          "message": "Import 'danny_toolkit.core.embeddings' found inside function body",
+          "severity": "warning"
+        },
+        {
+          "rule": "inner-import",
+          "line": 296,
+          "message": "Import 'danny_toolkit.core.faiss_index' found inside function body",
+          "severity": "warning"
+        },
+        {
+          "rule": "inner-import",
+          "line": 297,
+          "message": "Import 'danny_toolkit.pipelines.rag_chain' found inside function body",
+          "severity": "warning"
+        },
+        {
+          "rule": "inner-import",
+          "line": 341,
+          "message": "Import 'danny_toolkit.core.doc_loader' found inside function body",
+          "severity": "warning"
+        },
+        {
+          "rule": "inner-import",
+          "line": 342,
+          "message": "Import 'danny_toolkit.core.embeddings' found inside function body",
+          "severity": "warning"
+        },
+        {
+          "rule": "inner-import",
+          "line": 343,
+          "message": "Import 'danny_toolkit.core.index_store' found inside function body",
+          "severity": "warning"
+        },
+        {
+          "rule": "inner-import",
+          "line": 381,
+          "message": "Import 'danny_toolkit.core.embeddings' found inside function body",
+          "severity": "warning"
+        },
+        {
+          "rule": "inner-import",
+          "line": 382,
+          "message": "Import 'danny_toolkit.core.index_store' found inside function body",
+          "severity": "warning"
+        },
+        {
+          "rule": "inner-import",
+          "line": 383,
+          "message": "Import 'llama_cpp' found inside function body",
+          "severity": "warning"
+        },
+        {
+          "rule": "inner-import",
+          "line": 269,
+          "message": "Import 'llama_cpp' found inside function body",
+          "severity": "warning"
+        },
+        {
+          "rule": "inner-import",
+          "line": 295,
+          "message": "Import 'danny_toolkit.core.embeddings' found inside function body",
+          "severity": "warning"
+        },
+        {
+          "rule": "inner-import",
+          "line": 296,
+          "message": "Import 'danny_toolkit.core.faiss_index' found inside function body",
+          "severity": "warning"
+        },
+        {
+          "rule": "inner-import",
+          "line": 297,
+          "message": "Import 'danny_toolkit.pipelines.rag_chain' found inside function body",
+          "severity": "warning"
+        },
+        {
+          "rule": "inner-import",
+          "line": 341,
+          "message": "Import 'danny_toolkit.core.doc_loader' found inside function body",
+          "severity": "warning"
+        },
+        {
+          "rule": "inner-import",
+          "line": 342,
+          "message": "Import 'danny_toolkit.core.embeddings' found inside function body",
+          "severity": "warning"
+        },
+        {
+          "rule": "inner-import",
+          "line": 343,
+          "message": "Import 'danny_toolkit.core.index_store' found inside function body",
+          "severity": "warning"
+        },
+        {
+          "rule": "inner-import",
+          "line": 381,
+          "message": "Import 'danny_toolkit.core.embeddings' found inside function body",
+          "severity": "warning"
+        },
+        {
+          "rule": "inner-import",
+          "line": 382,
+          "message": "Import 'danny_toolkit.core.index_store' found inside function body",
+          "severity": "warning"
+        },
+        {
+          "rule": "inner-import",
+          "line": 383,
+          "message": "Import 'llama_cpp' found inside function body",
+          "severity": "warning"
+        },
+        {
+          "rule": "param-type-hint",
+          "line": 1,
+          "message": "5/5 parameters missing type hints",
+          "severity": "warning"
+        }
+      ]
+    },
+    {
+      "path": "danny_toolkit\\skills\\forge\\skill_10.py",
+      "lines": 54,
+      "classes": 3,
+      "functions": 5,
+      "quality": 3.0,
+      "grade": "D",
+      "score": "30.0/100.0",
+      "issues": [
+        {
+          "rule": "future-annotations",
+          "line": 1,
+          "message": "Missing 'from __future__ import annotations'",
+          "severity": "error"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 41,
+          "message": "Function 'main' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 17,
+          "message": "Function '__init__' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 21,
+          "message": "Function 'start_process' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 25,
+          "message": "Function 'sync_with_limbic_system' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 33,
+          "message": "Function 'update_prompt_color' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 41,
+          "message": "Function 'main' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 17,
+          "message": "Function '__init__' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 21,
+          "message": "Function 'start_process' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 25,
+          "message": "Function 'sync_with_limbic_system' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 33,
+          "message": "Function 'update_prompt_color' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "logger",
+          "line": 1,
+          "message": "No logger defined (expected 'logger = logging.getLogger(__name__)')",
+          "severity": "warning"
+        },
+        {
+          "rule": "param-type-hint",
+          "line": 1,
+          "message": "1/1 parameters missing type hints",
+          "severity": "warning"
+        }
+      ]
+    },
+    {
+      "path": "danny_toolkit\\skills\\forge\\skill_11.py",
+      "lines": 95,
+      "classes": 8,
+      "functions": 15,
+      "quality": 3.0,
+      "grade": "D",
+      "score": "30.0/100.0",
+      "issues": [
+        {
+          "rule": "future-annotations",
+          "line": 1,
+          "message": "Missing 'from __future__ import annotations'",
+          "severity": "error"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 60,
+          "message": "Function 'main' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 7,
+          "message": "Function '__init__' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 11,
+          "message": "Function 'wake_up' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 14,
+          "message": "Function 'go_to_sleep' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 18,
+          "message": "Function '__init__' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 22,
+          "message": "Function '__init__' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 26,
+          "message": "Function '__init__' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 30,
+          "message": "Function '__init__' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 33,
+          "message": "Function 'compress' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 38,
+          "message": "Function '__init__' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 41,
+          "message": "Function 'warm_up' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 46,
+          "message": "Function '__init__' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 49,
+          "message": "Function 'defragment' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 54,
+          "message": "Function '__init__' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 57,
+          "message": "Function 'aggregate' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 60,
+          "message": "Function 'main' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 7,
+          "message": "Function '__init__' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 11,
+          "message": "Function 'wake_up' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 14,
+          "message": "Function 'go_to_sleep' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 18,
+          "message": "Function '__init__' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 22,
+          "message": "Function '__init__' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 26,
+          "message": "Function '__init__' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 30,
+          "message": "Function '__init__' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 33,
+          "message": "Function 'compress' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 38,
+          "message": "Function '__init__' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 41,
+          "message": "Function 'warm_up' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 46,
+          "message": "Function '__init__' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 49,
+          "message": "Function 'defragment' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 54,
+          "message": "Function '__init__' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 57,
+          "message": "Function 'aggregate' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "logger",
+          "line": 1,
+          "message": "No logger defined (expected 'logger = logging.getLogger(__name__)')",
+          "severity": "warning"
+        },
+        {
+          "rule": "param-type-hint",
+          "line": 1,
+          "message": "4/4 parameters missing type hints",
+          "severity": "warning"
+        }
+      ]
+    },
+    {
+      "path": "danny_toolkit\\skills\\forge\\skill_12.py",
+      "lines": 78,
+      "classes": 1,
+      "functions": 8,
+      "quality": 3.0,
+      "grade": "D",
+      "score": "30.0/100.0",
+      "issues": [
+        {
+          "rule": "future-annotations",
+          "line": 1,
+          "message": "Missing 'from __future__ import annotations'",
+          "severity": "error"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 6,
+          "message": "Function '__init__' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 14,
+          "message": "Function 'system_uptime' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 18,
+          "message": "Function 'heartbeat_pulse' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 22,
+          "message": "Function 'backup_scheduler' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 26,
+          "message": "Function 'circadian_rhythm' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 30,
+          "message": "Function 'evolution_cycle' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 34,
+          "message": "Function 'validate_action' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 38,
+          "message": "Function 'run_security_protocol' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 6,
+          "message": "Function '__init__' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 14,
+          "message": "Function 'system_uptime' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 18,
+          "message": "Function 'heartbeat_pulse' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 22,
+          "message": "Function 'backup_scheduler' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 26,
+          "message": "Function 'circadian_rhythm' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 30,
+          "message": "Function 'evolution_cycle' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 34,
+          "message": "Function 'validate_action' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 38,
+          "message": "Function 'run_security_protocol' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "logger",
+          "line": 1,
+          "message": "No logger defined (expected 'logger = logging.getLogger(__name__)')",
+          "severity": "warning"
+        },
+        {
+          "rule": "param-type-hint",
+          "line": 1,
+          "message": "1/1 parameters missing type hints",
+          "severity": "warning"
+        }
+      ]
+    },
+    {
+      "path": "danny_toolkit\\skills\\forge\\skill_13.py",
+      "lines": 52,
+      "classes": 1,
+      "functions": 6,
+      "quality": 3.0,
+      "grade": "D",
+      "score": "30.0/100.0",
+      "issues": [
+        {
+          "rule": "future-annotations",
+          "line": 1,
+          "message": "Missing 'from __future__ import annotations'",
+          "severity": "error"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 33,
+          "message": "Function 'main' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 6,
+          "message": "Function '__init__' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 11,
+          "message": "Function 'governance' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 14,
+          "message": "Function 'reasoning' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 17,
+          "message": "Function 'traceability' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 20,
+          "message": "Function 'verify_protocol' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 33,
+          "message": "Function 'main' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 6,
+          "message": "Function '__init__' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 11,
+          "message": "Function 'governance' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 14,
+          "message": "Function 'reasoning' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 17,
+          "message": "Function 'traceability' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 20,
+          "message": "Function 'verify_protocol' missing docstring",
+          "severity": "warning"
+        },
+        {
+          "rule": "logger",
+          "line": 1,
+          "message": "No logger defined (expected 'logger = logging.getLogger(__name__)')",
+          "severity": "warning"
+        },
+        {
+          "rule": "param-type-hint",
+          "line": 1,
+          "message": "3/3 parameters missing type hints",
+          "severity": "warning"
+        }
+      ]
+    }
+  ],
+  "best_5": [
+    {
+      "path": "danny_toolkit\\brain\\shadow_governance.py",
+      "lines": 606,
+      "classes": 2,
+      "functions": 11,
+      "quality": 9.5,
+      "grade": "A+",
+      "score": "95.0/100.0",
+      "issues": [
+        {
+          "rule": "return-type-hint",
+          "line": 62,
+          "message": "Function '__init__' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 336,
+          "message": "Function '__init__' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 336,
+          "message": "Function '__init__' missing docstring",
+          "severity": "warning"
+        }
+      ]
+    },
+    {
+      "path": "danny_toolkit\\brain\\unified_memory.py",
+      "lines": 509,
+      "classes": 2,
+      "functions": 23,
+      "quality": 9.5,
+      "grade": "A+",
+      "score": "95.0/100.0",
+      "issues": [
+        {
+          "rule": "return-type-hint",
+          "line": 27,
+          "message": "Function '__init__' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 99,
+          "message": "Function '__init__' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 137,
+          "message": "Function '_sla_event_log_op' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 424,
+          "message": "Function 'clear_old_events' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "return-type-hint",
+          "line": 464,
+          "message": "Function 'import_app_data' missing return type hint",
+          "severity": "warning"
+        },
+        {
+          "rule": "docstring",
+          "line": 99,
+          "message": "Function '__init__' missing docstring",
+          "severity": "warning"
+        }
+      ]
+    },
+    {
+      "path": "danny_toolkit\\core\\document_forge.py",
+      "lines": 383,
+      "classes": 1,
+      "functions": 7,
+      "quality": 9.5,
+      "grade": "A+",
+      "score": "95.0/100.0",
+      "issues": [
+        {
+          "rule": "inner-import",
+          "line": 238,
+          "message": "Import 'tempfile' found inside function body",
+          "severity": "warning"
+        }
+      ]
+    },
+    {
+      "path": "danny_toolkit\\core\\groq_retry.py",
+      "lines": 225,
+      "classes": 0,
+      "functions": 3,
+      "quality": 9.8,
+      "grade": "A+",
+      "score": "98.0/100.0",
+      "issues": [
+        {
+          "rule": "param-type-hint",
+          "line": 1,
+          "message": "2/15 parameters missing type hints",
+          "severity": "warning"
+        }
+      ]
+    },
+    {
+      "path": "danny_toolkit\\apps\\unit_converter.py",
+      "lines": 269,
+      "classes": 1,
+      "functions": 7,
+      "quality": 10.0,
+      "grade": "A+",
+      "score": "100.0/100.0",
+      "issues": []
+    }
+  ],
+  "grade_distribution": {
+    "F": 1,
+    "D": 47,
+    "C": 66,
+    "B": 61,
+    "A": 38,
+    "A+": 16
+  }
+}

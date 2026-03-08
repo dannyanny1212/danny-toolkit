@@ -97,6 +97,13 @@ try:
 except ImportError:
     HAS_BLACK_BOX = False
 
+HAS_GUARD = False
+try:
+    from auto_refactor_guard import audit_file as guard_audit_file, AuditResult
+    HAS_GUARD = True
+except ImportError:
+    logger.debug("AutoRefactorGuard not available for Artificer")
+
 try:
     from danny_toolkit.core.document_forge import DocumentForge
     HAS_FORGE = True
@@ -178,6 +185,9 @@ class Artificer:
         if missing:
             print(f"{Kleur.ROOD}⚠️  Missing modules: {', '.join(missing)}{Kleur.RESET}")
             return f"❌ Artificer: ontbrekende modules: {', '.join(missing)}. Installeer met: pip install {' '.join(missing)}"
+
+        # Quality gate — Diamond Polish scan (non-blocking, advisory)
+        self._quality_gate(code, request)
 
         # Save & Register (incrementing skill number)
         skill_name = f"skill_{len(registry) + 1}.py"
@@ -448,6 +458,59 @@ Returns the sanitized task input string."""
         except SyntaxError as e:
             print(f"{Kleur.ROOD}⚠️  Syntax error: {e}{Kleur.RESET}")
             return False
+
+    def _quality_gate(self, code: str, request: str) -> None:
+        """Run Diamond Polish quality scan op gegenereerde code (advisory, non-blocking).
+
+        Scant de gegenereerde code met AutoRefactorGuard en logt het resultaat
+        naar de CorticalStack. Blokkeert NIET — Artificer-gesmede scripts zijn
+        tijdelijke skills, geen productie-code. De score dient als telemetrie.
+
+        Args:
+            code: De gegenereerde Python broncode.
+            request: De oorspronkelijke taakomschrijving.
+        """
+        if not HAS_GUARD:
+            return
+
+        import tempfile
+        from pathlib import Path
+
+        try:
+            # Schrijf code naar tijdelijk bestand voor AST-analyse
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".py", delete=False, encoding="utf-8"
+            ) as tmp:
+                tmp.write(code)
+                tmp_path = Path(tmp.name)
+
+            result = guard_audit_file(tmp_path)
+
+            # Visuele feedback
+            if result.quality >= 8:
+                print(f"{Kleur.GROEN}🛡️  Quality Gate: {result.quality}/10 "
+                      f"[{result.grade}]{Kleur.RESET}")
+            elif result.quality >= 5:
+                print(f"{Kleur.GEEL}🛡️  Quality Gate: {result.quality}/10 "
+                      f"[{result.grade}] — {len(result.issues)} issues{Kleur.RESET}")
+            else:
+                print(f"{Kleur.ROOD}🛡️  Quality Gate: {result.quality}/10 "
+                      f"[{result.grade}] — {len(result.issues)} issues{Kleur.RESET}")
+
+            # Log naar NeuralBus
+            if self._bus and HAS_BUS:
+                self._bus.publish("QUALITY_SCAN", {
+                    "quality": result.quality,
+                    "grade": result.grade,
+                    "issues": len(result.issues),
+                    "request": request[:100],
+                }, bron="artificer")
+
+            # Cleanup temp file
+            tmp_path.unlink(missing_ok=True)
+
+        except Exception as e:
+            logger.debug("Quality gate error: %s", e)
 
     @staticmethod
     def _preflight_imports(code: str) -> list[str]:

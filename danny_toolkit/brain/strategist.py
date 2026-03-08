@@ -60,6 +60,13 @@ try:
 except ImportError:
     HAS_ARTIFICER = False
 
+HAS_GUARD = False
+try:
+    from auto_refactor_guard import audit_file as guard_audit_file
+    HAS_GUARD = True
+except ImportError:
+    logger.debug("AutoRefactorGuard not available for Strategist")
+
 HAS_BUS = False
 try:
     from danny_toolkit.core.neural_bus import get_bus, EventTypes
@@ -199,6 +206,9 @@ class Strategist:
                 prompt = f"{details}\n\nCONTEXT FROM RESEARCH:\n{context_buffer}"
                 result = await self.artificer.execute_task(prompt)
 
+            elif tool == "refactor_guard" and HAS_GUARD:
+                result = self._run_guard_scan(details)
+
             elif tool == "brain":
                 prompt = f"{details}\n\nDATA:\n{context_buffer}"
                 result = await self._ask_groq(prompt) or ""
@@ -277,6 +287,7 @@ class Strategist:
         Available Tools:
         - "void_walker": for researching unknown topics, libraries, or documentation.
         - "artificer": for writing and running Python scripts or file operations.
+        - "refactor_guard": for scanning Python files for code quality (type hints, docstrings, imports). Returns a quality score 0-10.
         - "brain": for summarization, analysis, or writing text.
 
         CRITICAL RULE for "details" field:
@@ -328,6 +339,67 @@ class Strategist:
         except Exception as e:
             print(f"{Kleur.ROOD}♟️  Groq error: {e}{Kleur.RESET}")
             return None
+
+    def _run_guard_scan(self, details: str) -> str:
+        """Voer een Auto Refactor Guard scan uit op het opgegeven pad.
+
+        Extraheert een Python-bestandspad uit de details string en scant
+        het met de AST-gebaseerde kwaliteitschecker.
+
+        Args:
+            details: Beschrijving met pad naar het te scannen bestand.
+
+        Returns:
+            Scan resultaat als leesbare tekst met score en issues.
+        """
+        from pathlib import Path
+
+        # Probeer een .py pad te extraheren uit de details
+        words = details.replace("\\", "/").split()
+        target = None
+        for w in words:
+            clean = w.strip("'\"`,;")
+            if clean.endswith(".py") and Path(clean).exists():
+                target = Path(clean)
+                break
+
+        if not target:
+            # Fallback: probeer als relatief pad vanaf project root
+            for w in words:
+                clean = w.strip("'\"`,;")
+                if clean.endswith(".py"):
+                    candidate = Config.BASE_DIR / clean
+                    if candidate.exists():
+                        target = candidate
+                        break
+
+        if not target:
+            return f"[refactor_guard] Geen geldig .py bestand gevonden in: {details[:200]}"
+
+        try:
+            result = guard_audit_file(target)
+            report = (
+                f"[refactor_guard] {target.name}: "
+                f"{result.quality}/10 [{result.grade}] — "
+                f"{len(result.issues)} issues\n"
+            )
+            for issue in result.issues[:10]:
+                report += f"  L{issue.line}: [{issue.rule}] {issue.message}\n"
+            if len(result.issues) > 10:
+                report += f"  ... en {len(result.issues) - 10} meer\n"
+
+            # Log naar CorticalStack
+            self._log_event("guard_scan", {
+                "file": str(target),
+                "quality": result.quality,
+                "grade": result.grade,
+                "issues": len(result.issues),
+            })
+
+            return report
+        except Exception as e:
+            logger.warning("Guard scan failed for %s: %s", target, e)
+            return f"[refactor_guard] Scan failed: {e}"
 
     def _publish_event(self, event_type, data: dict):
         """Publiceer event op NeuralBus als beschikbaar."""

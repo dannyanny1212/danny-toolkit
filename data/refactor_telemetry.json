@@ -1,0 +1,45 @@
+{
+  "file": "danny_toolkit/apps/unit_converter.py",
+  "timestamp": "2026-03-08T16:32:35",
+  "version": "6.11.0",
+  "before": {
+    "quality_score": "2/10",
+    "lines": 267,
+    "methods": 5,
+    "return_type_hints": "0/5 (0%)",
+    "docstrings": "3/5 (60%)",
+    "future_annotations": false,
+    "class_constants": 0,
+    "static_methods": 0,
+    "precompiled_regex": false,
+    "error_logging": false
+  },
+  "after": {
+    "quality_score": "9/10",
+    "lines": 269,
+    "methods": 7,
+    "return_type_hints": "7/7 (100%)",
+    "docstrings": "7/7 (100%)",
+    "future_annotations": true,
+    "class_constants": 3,
+    "static_methods": 2,
+    "precompiled_regex": true,
+    "error_logging": true
+  },
+  "changes": [
+    "Added from __future__ import annotations",
+    "Moved import re to top-level with precompiled pattern",
+    "Added return type hints to all 7 methods (was 0/5)",
+    "Added docstrings to all 7 methods (was 3/5)",
+    "Converted instance data to class constants (CONVERSIES, SNELLE_CONVERSIES, TEMP_LABELS)",
+    "Extracted _naar_celsius() and _van_celsius() as @staticmethod (SRP)",
+    "Added ConversieFunc type alias for Union[float, Callable]",
+    "Replaced bare print errors with logger.warning()"
+  ],
+  "delta": {
+    "lines_added": 2,
+    "methods_added": 2,
+    "type_coverage_gain": "+100%",
+    "docstring_coverage_gain": "+40%"
+  }
+}
