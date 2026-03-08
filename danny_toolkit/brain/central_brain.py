@@ -561,6 +561,16 @@ class CentralBrain:
         if live_section:
             rag_section = f"{rag_section}\n\n{live_section}" if rag_section else f"\n\n{live_section}"
 
+        # TheMirror: user profile injectie
+        mirror_section = ""
+        try:
+            from danny_toolkit.brain.the_mirror import TheMirror
+            mirror_ctx = TheMirror().get_context_injection()
+            if mirror_ctx:
+                mirror_section = f"\n{mirror_ctx}\n"
+        except Exception:
+            pass
+
         # System message
         system_message = f"""Je bent Danny's AI assistant — de kern van het Omega ecosysteem.
 Gebruik function calling om acties uit te voeren en data op te halen.
@@ -577,7 +587,7 @@ Omega systeem tools (voor vragen over jezelf/architectuur/status):
 Bij systeemvragen: GEBRUIK deze tools voor ECHTE data.
 Als er al LIVE SYSTEEM DATA hierboven staat, gebruik die DIRECT — niet nogmaals ophalen.
 CIRCUIT BREAKER: Roep dezelfde tool NOOIT twee keer aan.
-{rag_section}
+{rag_section}{mirror_section}
 Voer tools UIT via function calling — beschrijf ze NOOIT als JSON tekst.
 Als er KENNISBANK CONTEXT of LIVE DATA hierboven staat, gebruik die als primaire bron.
 

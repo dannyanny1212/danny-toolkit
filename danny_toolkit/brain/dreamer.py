@@ -248,6 +248,15 @@ Sets the model attribute to the LLM model specified in the configuration."""
         except Exception as e:
             logger.debug("Cortex REM maintenance error: %s", e)
 
+        # 5.14 Phantom pre-warm — pre-warm MEMEX context voor morgen
+        try:
+            from danny_toolkit.brain.phantom import ThePhantom
+            phantom = ThePhantom()
+            phantom.pre_warm_context()
+            print(f"{Kleur.GROEN}👻 Phantom pre-warm context geladen{Kleur.RESET}")
+        except Exception as e:
+            logger.debug("Phantom pre-warm REM failed: %s", e)
+
         # 6. Pre-Compute — anticipate tomorrow
         insight = await self._anticipate()
         if insight:

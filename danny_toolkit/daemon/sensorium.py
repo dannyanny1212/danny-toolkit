@@ -102,11 +102,11 @@ class Sensorium:
         # Data paths voor monitoring
         self.data_paths = {
             "legendary_companion": Config.APPS_DATA_DIR / "legendary_companion.json",
-            "goals_tracker": Config.APPS_DATA_DIR / "goals_tracker.json",
-            "mood_tracker": Config.APPS_DATA_DIR / "mood_tracker.json",
-            "fitness_tracker": Config.APPS_DATA_DIR / "fitness_tracker.json",
-            "expense_tracker": Config.APPS_DATA_DIR / "expense_tracker.json",
-            "pomodoro": Config.APPS_DATA_DIR / "pomodoro.json",
+            "goals_tracker": Config.APPS_DATA_DIR / "goals.json",
+            "mood_tracker": Config.APPS_DATA_DIR / "mood.json",
+            "fitness_tracker": Config.APPS_DATA_DIR / "fitness_tracker" / "data.json",
+            "expense_tracker": Config.APPS_DATA_DIR / "expenses.json",
+            "pomodoro": Config.APPS_DATA_DIR / "pomodoro_stats.json",
             "notities": Config.APPS_DATA_DIR / "notities.json",
             "agenda": Config.APPS_DATA_DIR / "agenda.json",
         }

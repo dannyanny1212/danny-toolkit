@@ -3759,8 +3759,8 @@ class SwarmEngine:
                         " pre-warmed fragmenten"
                     )
             except Exception as e:
-                logger.debug(
-                    "Phantom pre-warm check: %s", e,
+                logger.warning(
+                    "Phantom pre-warm check FAILED: %s", e,
                 )
 
         # 4. MEMEX Context (tunable)
@@ -3828,7 +3828,7 @@ class SwarmEngine:
                             f" graph-expanded fragmenten"
                         )
         except Exception as e:
-            logger.debug("Cortex graph expansion fout: %s", e)
+            logger.warning("Cortex graph expansion FAILED: %s", e)
         if _tracer:
             _tracer.eind_span("ok", {"cortex_fragments": _cortex_added})
 
@@ -4082,8 +4082,8 @@ class SwarmEngine:
         except ImportError:
             pass
         except Exception as e:
-            logger.debug(
-                "HallucinatieSchild fout: %s", e,
+            logger.warning(
+                "HallucinatieSchild FAILED: %s", e,
             )
 
         if _tracer:
