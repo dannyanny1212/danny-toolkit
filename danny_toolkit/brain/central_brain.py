@@ -1494,13 +1494,15 @@ Regels:
 
                 if tool_tasks:
                     try:
-                        # Probeer asyncio.run() — werkt als er geen actieve loop is
+                        # Strategie: probeer asyncio.run(), bij actieve loop
+                        # → draai gather in een geïsoleerde thread
                         try:
                             results = asyncio.run(
                                 asyncio.gather(*tool_tasks, return_exceptions=True)
                             )
                         except RuntimeError:
-                            # Event loop al actief — recreëer coroutines (cannot reuse awaited)
+                            # Event loop al actief — draai in geïsoleerde thread
+                            import concurrent.futures
                             fresh_tasks = [
                                 self._execute_app_action(
                                     *parse_tool_call(tc.function.name),
@@ -1509,14 +1511,18 @@ Regels:
                                 for tc in valid_calls
                                 if all(parse_tool_call(tc.function.name))
                             ]
-                            loop = asyncio.new_event_loop()
-                            asyncio.set_event_loop(loop)
-                            try:
-                                results = loop.run_until_complete(
-                                    asyncio.gather(*fresh_tasks, return_exceptions=True)
-                                )
-                            finally:
-                                loop.close()
+
+                            def _run_in_thread():
+                                loop = asyncio.new_event_loop()
+                                try:
+                                    return loop.run_until_complete(
+                                        asyncio.gather(*fresh_tasks, return_exceptions=True)
+                                    )
+                                finally:
+                                    loop.close()
+
+                            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                                results = pool.submit(_run_in_thread).result(timeout=60)
 
                         for tool_call, result in zip(valid_calls, results):
                             if isinstance(result, BaseException):

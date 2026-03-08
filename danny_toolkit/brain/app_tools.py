@@ -1543,14 +1543,11 @@ APP_TOOLS: Dict[str, AppDefinition] = {
                 naam="raadpleeg_omega_skills",
                 beschrijving="Zoek specifieke kennis in de 15 advanced markdown bestanden (422 chunks) in de Vector DB. Gebruik dit ALTIJD voor vragen over de interne werking van OMEGA.",
                 parameters={
-                    "type": "object",
-                    "properties": {
-                        "query": {
-                            "type": "string",
-                            "description": "Zoekterm (bijv. '110:6:5 verhouding', 'Nexus evolutie' of 'Quest protocol')"
-                        }
-                    },
-                    "required": ["query"]
+                    "query": {
+                        "type": "string",
+                        "description": "Zoekterm (bijv. '110:6:5 verhouding', 'Nexus evolutie' of 'Quest protocol')",
+                        "required": True
+                    }
                 },
                 returns="Een string met de geformatteerde markdown content van de meest relevante bronnen.",
                 vereist_data=False

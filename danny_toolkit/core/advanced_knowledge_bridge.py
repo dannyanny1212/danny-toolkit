@@ -4,17 +4,16 @@ Koppelt de 13 Advanced MD-bestanden aan een dedicated ChromaDB collectie
 ('omega_advanced_skills') gescheiden van TheLibrarian's 'danny_knowledge'.
 Gebruikt Markdown-aware chunking met header-hiërarchie behoud.
 Autonome pad-detectie: vindt danny-toolkit root waar je het ook draait.
+
+LAZY INSTANTIATIE: ChromaDB PersistentClient wordt pas geladen bij eerste
+gebruik, NIET in __init__. Dit voorkomt asyncio event loop clashes wanneer
+CentralBrain de class lazy-instantieert via importlib.
 """
 from __future__ import annotations
 
 import os
 import logging
 from pathlib import Path
-
-try:
-    import chromadb
-except ImportError:
-    chromadb = None
 
 try:
     from langchain_text_splitters import (
@@ -47,8 +46,6 @@ CHUNK_SIZE = 350
 CHUNK_OVERLAP = 50
 DOCS_SUBDIR = "rag/documenten"
 
-# Geen hardcoded lijst meer — find_md_files() scant dynamisch
-
 
 def _detect_base_dir() -> Path:
     """Detecteer danny-toolkit root automatisch.
@@ -59,14 +56,12 @@ def _detect_base_dir() -> Path:
     3. Loop omhoog vanaf cwd tot 'danny-toolkit' gevonden
     4. Fallback: cwd
     """
-    # 1. Config
     if Config is not None:
         try:
             return Path(Config.BASE_DIR)
         except Exception:
             pass
 
-    # 2. Vanuit dit bestand omhoog klimmen
     for anchor in (Path(__file__).resolve(), Path.cwd()):
         current = anchor
         while current != current.parent:
@@ -74,38 +69,63 @@ def _detect_base_dir() -> Path:
                 return current
             current = current.parent
 
-    # 3. Fallback
     return Path.cwd()
 
 
 class AdvancedKnowledgeBridge:
     """Koppelt Advanced MD-bestanden aan afgeschermde RAG-collectie.
 
-    Autonome pad-detectie: vindt danny-toolkit root automatisch.
-    Gebruikt MarkdownHeaderTextSplitter voor structuur-bewuste chunking
-    met header-hiërarchie behoud (H1/H2/H3 metadata per chunk).
-    Gescheiden van TheLibrarian's 'danny_knowledge' collectie.
+    LAZY DESIGN: __init__ doet GEEN I/O. ChromaDB PersistentClient wordt
+    pas geladen bij eerste _get_collection() aanroep. Dit voorkomt
+    asyncio event loop clashes in CentralBrain's tool dispatch.
     """
 
     def __init__(self, db_path: str | None = None):
-        if chromadb is None:
-            raise ImportError("chromadb is vereist voor AdvancedKnowledgeBridge")
         if MarkdownHeaderTextSplitter is None:
             raise ImportError("langchain_text_splitters is vereist")
 
         self.base_dir = _detect_base_dir()
+        self.db_path = db_path or str(self.base_dir / "data" / "rag" / "chromadb")
 
-        if db_path is None:
-            db_path = str(self.base_dir / "data" / "rag" / "chromadb")
+        # Lazy — wordt pas geladen bij eerste gebruik
+        self._client = None
+        self._collection = None
 
-        _cyaan = Kleur.FEL_CYAAN if Kleur else None
-        print(kleur(f"  [BRIDGE] Soul (ChromaDB): {db_path}", _cyaan))
+    def _get_collection(self):
+        """Lazy instantiatie in geïsoleerde thread — voorkomt asyncio clashes.
 
-        self.client = chromadb.PersistentClient(path=db_path)
-        self.collection = self.client.get_or_create_collection(
-            name=COLLECTION_NAME,
-            metadata={"description": "Omega Advanced Knowledge — 13 domeinen"},
-        )
+        ChromaDB PersistentClient gebruikt intern asyncio-componenten.
+        Als CentralBrain al in een event loop draait, clasht dit.
+        Oplossing: init in een schone thread zonder event loop context.
+        """
+        if self._collection is None:
+            import threading
+
+            _cyaan = Kleur.FEL_CYAAN if Kleur else None
+            logger.debug("AdvancedKnowledgeBridge: lazy ChromaDB init op %s", self.db_path)
+            print(kleur(f"  [BRIDGE] Soul (ChromaDB): {self.db_path}", _cyaan))
+
+            init_error = [None]
+
+            def _do_init():
+                try:
+                    import chromadb
+                    self._client = chromadb.PersistentClient(path=self.db_path)
+                    self._collection = self._client.get_or_create_collection(
+                        name=COLLECTION_NAME,
+                        metadata={"description": "Omega Advanced Knowledge — 13 domeinen"},
+                    )
+                except Exception as exc:
+                    init_error[0] = exc
+
+            thread = threading.Thread(target=_do_init, daemon=True)
+            thread.start()
+            thread.join(timeout=30)
+
+            if init_error[0] is not None:
+                raise init_error[0]
+
+        return self._collection
 
     @property
     def doc_dir(self) -> Path:
@@ -154,7 +174,6 @@ class AdvancedKnowledgeBridge:
             print(kleur("  [SKIP] Geen advanced MD bestanden gevonden", _geel))
             return 0
 
-        # Markdown-aware splitters
         headers_to_split_on = [
             ("#", "H1"),
             ("##", "H2"),
@@ -168,6 +187,7 @@ class AdvancedKnowledgeBridge:
             chunk_overlap=CHUNK_OVERLAP,
         )
 
+        collection = self._get_collection()
         _groen = Kleur.FEL_GROEN if Kleur else None
         totaal = 0
 
@@ -192,7 +212,7 @@ class AdvancedKnowledgeBridge:
             ]
             ids = [f"{name}_chunk_{i}" for i in range(len(final_splits))]
 
-            self.collection.upsert(
+            collection.upsert(
                 documents=documents,
                 metadatas=metadatas,
                 ids=ids,
@@ -204,7 +224,7 @@ class AdvancedKnowledgeBridge:
             ))
 
         print(kleur(
-            f"  [DONE] +{totaal} chunks | Collectie: {self.collection.count()} docs",
+            f"  [DONE] +{totaal} chunks | Collectie: {collection.count()} docs",
             _groen,
         ))
         return totaal
@@ -216,7 +236,6 @@ class AdvancedKnowledgeBridge:
     ) -> int:
         """Ingest specifieke modules vanuit een directory."""
         if modules is None:
-            # Dynamisch: scan de docs directory
             target = Path(doc_dir) if doc_dir else self.doc_dir
             modules = [p.name for p in sorted(target.glob("*.md"))]
 
@@ -235,6 +254,7 @@ class AdvancedKnowledgeBridge:
             chunk_overlap=CHUNK_OVERLAP,
         )
 
+        collection = self._get_collection()
         totaal = 0
         _groen = Kleur.FEL_GROEN if Kleur else None
         _geel = Kleur.FEL_GEEL if Kleur else None
@@ -266,7 +286,7 @@ class AdvancedKnowledgeBridge:
             ]
             ids = [f"{filename}_chunk_{i}" for i in range(len(final_splits))]
 
-            self.collection.upsert(
+            collection.upsert(
                 documents=documents,
                 metadatas=metadatas,
                 ids=ids,
@@ -278,57 +298,85 @@ class AdvancedKnowledgeBridge:
             ))
 
         print(kleur(
-            f"  [TOTAAL] +{totaal} chunks | Collectie: {self.collection.count()} docs",
+            f"  [TOTAAL] +{totaal} chunks | Collectie: {collection.count()} docs",
             _groen,
         ))
         return totaal
 
     def query(self, vraag: str, n_results: int = 5) -> dict:
         """Doorzoek de advanced knowledge collectie."""
-        return self.collection.query(
+        collection = self._get_collection()
+        return collection.query(
             query_texts=[vraag],
-            n_results=min(n_results, self.collection.count() or 1),
+            n_results=min(n_results, collection.count() or 1),
         )
 
     def raadpleeg_omega_skills(self, query: str, n_results: int = 5) -> dict:
         """Anthropic tool interface — doorzoek advanced knowledge.
 
-        Retourneert geformatteerde resultaten met score, bron en sectie
-        zodat CentralBrain deze direct kan opnemen in de LLM context.
+        Draait VOLLEDIG in een geïsoleerde thread om asyncio event loop
+        clashes te voorkomen wanneer CentralBrain deze methode aanroept
+        vanuit zijn async tool dispatch pipeline.
         """
-        if self.collection.count() == 0:
-            return {"error": "Collectie leeg — run eerst ingest() of ingest_all()"}
+        import threading
 
-        raw = self.query(query, n_results=n_results)
-        results = []
-        docs = raw.get("documents", [[]])[0]
-        metas = raw.get("metadatas", [[]])[0]
-        dists = raw.get("distances", [[]])[0]
+        result_holder: list = [None]
+        error_holder: list = [None]
 
-        for doc, meta, dist in zip(docs, metas, dists):
-            score = max(0.0, 1.0 - dist)
-            results.append({
-                "score": round(score, 3),
-                "bron": meta.get("source", "?"),
-                "sectie": meta.get("H2", meta.get("Header 2",
-                         meta.get("H1", meta.get("Header 1", "?")))),
-                "tekst": doc[:500],
-            })
+        def _do_query():
+            try:
+                collection = self._get_collection()
 
-        return {
-            "query": query,
-            "resultaten": results,
-            "totaal_in_collectie": self.collection.count(),
-        }
+                if collection.count() == 0:
+                    result_holder[0] = {
+                        "error": "Collectie leeg — run eerst ingest() of ingest_all()"
+                    }
+                    return
+
+                raw = collection.query(
+                    query_texts=[query],
+                    n_results=min(n_results, collection.count() or 1),
+                )
+                results = []
+                docs = raw.get("documents", [[]])[0]
+                metas = raw.get("metadatas", [[]])[0]
+                dists = raw.get("distances", [[]])[0]
+
+                for doc, meta, dist in zip(docs, metas, dists):
+                    score = max(0.0, 1.0 - dist)
+                    results.append({
+                        "score": round(score, 3),
+                        "bron": meta.get("source", "?"),
+                        "sectie": meta.get("H2", meta.get("Header 2",
+                                 meta.get("H1", meta.get("Header 1", "?")))),
+                        "tekst": doc[:500],
+                    })
+
+                result_holder[0] = {
+                    "query": query,
+                    "resultaten": results,
+                    "totaal_in_collectie": collection.count(),
+                }
+            except Exception as exc:
+                error_holder[0] = exc
+
+        thread = threading.Thread(target=_do_query, daemon=True)
+        thread.start()
+        thread.join(timeout=30)
+
+        if error_holder[0] is not None:
+            return {"error": f"Query gefaald: {error_holder[0]}"}
+        return result_holder[0] or {"error": "Timeout na 30s"}
 
     def count(self) -> int:
         """Aantal documenten in de collectie."""
-        return self.collection.count()
+        return self._get_collection().count()
 
     def reset(self) -> None:
         """Verwijder en hermaak de collectie (clean slate)."""
-        self.client.delete_collection(COLLECTION_NAME)
-        self.collection = self.client.get_or_create_collection(
+        collection = self._get_collection()
+        self._client.delete_collection(COLLECTION_NAME)
+        self._collection = self._client.get_or_create_collection(
             name=COLLECTION_NAME,
             metadata={"description": "Omega Advanced Knowledge — 13 domeinen"},
         )
