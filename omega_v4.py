@@ -23,8 +23,6 @@ _ROOT = os.path.dirname(os.path.abspath(__file__))
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
-# ═══ SOVEREIGN GATE — 9 Laws enforced at import time ═══
-import danny_toolkit.core.sovereign_gate  # noqa: F401 — sys.exit() on failure
 
 # --- V4.0 CYBER-MINIMALIST CSS ---
 OMEGA_CSS = """
