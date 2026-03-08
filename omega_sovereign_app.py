@@ -750,11 +750,23 @@ def _run_self_diagnostic():
     except Exception as e:
         results["Ollama"] = {"status": "FOUT", "error": str(e)[:100]}
 
-    # ── GROQ API ──
+    # ── GROQ API + KeyManager Sovereign Routing ──
     try:
         from danny_toolkit.core.config import Config
         key = Config.GROQ_API_KEY
-        results["Groq API"] = {"status": "OK" if key else "FOUT", "key_set": bool(key)}
+        groq_info = {"status": "OK" if key else "FOUT", "key_set": bool(key)}
+        try:
+            from danny_toolkit.core.key_manager import get_key_manager
+            km = get_key_manager()
+            groq_info["pool_size"] = len(km._keys)
+            groq_info["fallback_key"] = bool(km._fallback_key)
+            groq_info["sovereign_routing"] = True
+            reserve_count = sum(1 for i in range(1, 4)
+                                if os.getenv(f"GROQ_API_KEY_RESERVE_{i}"))
+            groq_info["reserve_keys"] = reserve_count
+        except Exception:
+            groq_info["sovereign_routing"] = False
+        results["Groq API"] = groq_info
     except Exception as e:
         results["Groq API"] = {"status": "FOUT", "error": str(e)[:100]}
 
@@ -1592,8 +1604,15 @@ class DashboardTab(ctk.CTkFrame):
             sid = getattr(self, '_claude_session_id', None)
             self._ct_write(f"  Session: {sid[:12] + '...' if sid else 'geen'}", "system")
             self._ct_write(f"  Continuity: {'actief' if getattr(self, '_claude_has_session', False) else 'nieuw'}", "output")
-            chain = "Groq \u2192 NIM \u2192 HuggingFace \u2192 Ollama"
+            chain = "Groq (x2 SOVEREIGN) \u2192 Reserve 1\u21922\u21923 \u2192 NIM \u2192 Gemini \u2192 Ollama"
             self._ct_write(f"  Fallback Chain: {chain}", "output")
+            # KeyManager status
+            try:
+                from danny_toolkit.core.key_manager import get_key_manager
+                km = get_key_manager()
+                self._ct_write(f"  KeyManager: {len(km._keys)} keys | Sovereign Routing ACTIEF", "verify")
+            except Exception:
+                self._ct_write("  KeyManager: niet beschikbaar", "warn")
         elif low == "help":
             self._ct_write("  Sovereign Mind Commands:", "system")
             for c, d in [
@@ -2371,10 +2390,13 @@ class DashboardTab(ctk.CTkFrame):
         elif cmd == "keys":
             km = _safe(SmartKeyManager) if HAS_KEY_MANAGER else None
             if km:
-                self._ot_write(f"Keys: {len(km._keys)}", "system")
+                reserve_count = sum(1 for i in range(1, 4)
+                                    if os.getenv(f"GROQ_API_KEY_RESERVE_{i}"))
+                self._ot_write(f"  Keys: {len(km._keys)} pool | {reserve_count} reserve | Sovereign x2 ACTIEF", "system")
+                self._ot_write(f"  Chain: Groq (SOVEREIGN) \u2192 Reserve 1\u21922\u21923 \u2192 NIM \u2192 Gemini \u2192 Ollama", "verify")
                 with km._metrics_lock:
                     for n, a in km._agents.items():
-                        self._ot_write(f"  {n}: {a.totaal_requests}req {a.totaal_tokens}tok", "output")
+                        self._ot_write(f"    {n}: {a.totaal_requests}req {a.totaal_tokens}tok", "output")
         elif cmd == "cortical":
             if HAS_CORTICAL:
                 for k, v in get_cortical_stack().get_db_metrics().items():

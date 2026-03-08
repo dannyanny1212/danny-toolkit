@@ -71,7 +71,9 @@ Sets the model attribute to the LLM model specified in the configuration."""
             self.client = None
         elif HAS_KEY_MANAGER:
             km = get_key_manager()
-            self.client = km.create_async_client("Dreamer") or AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
+            self.client = km.create_async_client("Dreamer")
+            if not self.client:
+                self.client = AsyncGroq(api_key=km.get_key("Dreamer"))
         else:
             self.client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
         self.model = Config.LLM_MODEL

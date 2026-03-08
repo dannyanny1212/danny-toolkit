@@ -143,7 +143,9 @@ class CentralBrain:
         if GROQ_BESCHIKBAAR and Config.has_groq_key():
             if HAS_KEY_MANAGER:
                 km = get_key_manager()
-                self.client = km.create_sync_client("CentralBrain") or Groq()
+                self.client = km.create_sync_client("CentralBrain")
+                if not self.client:
+                    self.client = Groq(api_key=km.get_key("CentralBrain"))
                 # Dedicated fallback client — aparte API key = aparte rate-limit pool
                 fb_client = km.create_sync_client_for_model(
                     "CentralBrain", self.GROQ_MODEL_FALLBACK,
