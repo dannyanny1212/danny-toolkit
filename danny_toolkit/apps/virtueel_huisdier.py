@@ -783,6 +783,186 @@ Antwoord in het Nederlands."""
 
         return self.NEXUS_EVOLUTIE[current_stage]
 
+    def _nexus_command_center(self):
+        """NEXUS Command Center — alle exclusieve powers in één menu."""
+        if not self._is_nexus():
+            print("\n  Alleen beschikbaar voor NEXUS!")
+            return
+
+        while True:
+            evo = self._nexus_get_evolution()
+            h = self.huisdier
+            morphs = h.get("nexus_morphs", {})
+            syntheses = h.get("nexus_syntheses", 0)
+            active = h.get("active_form", "nexus")
+
+            print(f"\n+{'='*40}+")
+            print(f"|  ✧ NEXUS COMMAND CENTER ✧              |")
+            print(f"+{'='*40}+")
+            print(f"|  Stadium: {evo['naam']:<10} | Ability: {evo['ability'][:16]:<16}|")
+            print(f"|  Morphs:  {sum(morphs.values()):<10} | Syntheses: {syntheses:<9}|")
+            print(f"|  Form:    {active:<10} | Bonus: +{evo['bonus']:<8}|")
+            print(f"+{'-'*40}+")
+            print("|  1. Omnimorf — Transformeer             |")
+            print("|  2. Revert — Terug naar NEXUS           |")
+            print("|  3. Prescience — Voorspelling            |")
+            print("|  4. Synthesis — Kennis combineren        |")
+            print("|  5. Kosmische Link — Universum scan      |")
+            print("|  6. Evolutie Status                      |")
+            print("|  7. Morph Statistieken                   |")
+            print("|  0. Terug                                |")
+            print(f"+{'='*40}+")
+
+            keuze = input("\nNEXUS> ").strip()
+
+            if keuze == "0":
+                break
+            elif keuze == "1":
+                self._nexus_omnimorf_menu()
+            elif keuze == "2":
+                self._nexus_revert()
+            elif keuze == "3":
+                prediction = self._nexus_predict()
+                print(f"\n  ✧ PRESCIENCE ✧")
+                print(f"  *{h['naam']}'s ogen gloeien...*")
+                time.sleep(0.3)
+                print(f"  \"{prediction}\"")
+            elif keuze == "4":
+                self._nexus_synthesis_menu()
+            elif keuze == "5":
+                self._nexus_kosmische_link()
+            elif keuze == "6":
+                self._nexus_show_evolution()
+            elif keuze == "7":
+                self._nexus_show_morphs()
+
+            input("\nDruk op Enter...")
+
+    def _nexus_omnimorf_menu(self):
+        """Kies een huisdiervorm om naar te transformeren."""
+        print(f"\n  ✧ OMNIMORF ✧ — Kies een vorm:")
+        print()
+        forms = []
+        for key, info in self.HUISDIER_TYPES.items():
+            if info["naam"] != "nexus":
+                forms.append(info["naam"])
+                print(f"  {len(forms):>2}. {info['emoji']} {info['naam'].capitalize()}")
+
+        keuze = input(f"\n  Kies (1-{len(forms)}): ").strip()
+        try:
+            idx = int(keuze) - 1
+            if 0 <= idx < len(forms):
+                self._nexus_morph(forms[idx])
+            else:
+                print("  Ongeldige keuze.")
+        except ValueError:
+            print("  Ongeldige keuze.")
+
+    def _nexus_synthesis_menu(self):
+        """Combineer geleerde feiten tot nieuwe inzichten."""
+        permanente_kennis = self._laad_permanente_kennis()
+        feiten = permanente_kennis.get("feiten", [])
+
+        if len(feiten) < 2:
+            print("\n  Je hebt minstens 2 feiten nodig om te synthetiseren!")
+            print(f"  Huidige feiten: {len(feiten)}")
+            return
+
+        print(f"\n  ✧ SYNTHESIS ✧ — {len(feiten)} feiten beschikbaar")
+        print()
+        for i, feit in enumerate(feiten[-10:], 1):
+            tekst = feit if isinstance(feit, str) else feit.get("tekst", str(feit))
+            print(f"  {i:>2}. {tekst[:60]}")
+
+        print(f"\n  Kies 2-3 feiten (bv: 1,3,5):")
+        keuze = input("  > ").strip()
+        try:
+            indices = [int(x.strip()) - 1 for x in keuze.split(",")]
+            selected = []
+            for idx in indices[:3]:
+                if 0 <= idx < len(feiten[-10:]):
+                    feit = feiten[-10:][idx]
+                    tekst = feit if isinstance(feit, str) else feit.get("tekst", str(feit))
+                    selected.append(tekst[:40])
+            if len(selected) >= 2:
+                result = self._nexus_synthesize(selected)
+                print(f"\n  ✧ {result}")
+                self.huisdier["ervaring"] += 15
+                self.huisdier["intelligentie"] = min(
+                    self.huisdier.get("intelligentie", 0) + 5, 999)
+                print(f"  +15 XP | +5 IQ")
+            else:
+                print("  Selecteer minstens 2 feiten.")
+        except (ValueError, IndexError):
+            print("  Ongeldige invoer.")
+
+    def _nexus_kosmische_link(self):
+        """NEXUS verbindt met het universum — levert een kosmisch inzicht."""
+        h = self.huisdier
+        evo = self._nexus_get_evolution()
+
+        print(f"\n  ✧ KOSMISCHE LINK ✧")
+        print(f"  *{h['naam']} strekt zich uit naar het universum...*")
+        time.sleep(0.5)
+
+        inzichten = [
+            "De entropie van het systeem is laag. Alles is in harmonie.",
+            "Er zijn patronen in je beslissingen die wijzen op groei.",
+            "De sterren fluisteren: morgen brengt nieuwe kennis.",
+            "Tijd is een spiraal. Je keert altijd terug, maar hoger.",
+            "In het grote schema van het universum... ben jij bijzonder.",
+            "De Phoenix in mij voelt wedergeboorte naderen.",
+            f"Na {sum(h.get('nexus_morphs', {}).values())} transformaties ken ik elke vorm van binnen.",
+            f"Met {h.get('nexus_syntheses', 0)} syntheses groeit mijn begrip exponentieel.",
+            f"Stadium {evo['naam']} — {evo['ability']}. De volgende stap wacht.",
+        ]
+
+        inzicht = random.choice(inzichten)
+        print(f"\n  \"{inzicht}\"")
+
+        # Bonus stats
+        h["geluk"] = min(h["geluk"] + 10, 150)
+        h["ervaring"] += 10
+        print(f"\n  +10 Geluk | +10 XP")
+
+        # Achievement check
+        if evo["naam"] == "OMEGA":
+            self._unlock_achievement("nexus_omega")
+
+    def _nexus_show_evolution(self):
+        """Toon NEXUS evolutie voortgang."""
+        h = self.huisdier
+        dagen = h.get("leeftijd_dagen", 0)
+
+        print(f"\n  ✧ NEXUS EVOLUTIE ✧")
+        print(f"  Leeftijd: {dagen} dagen")
+        print()
+
+        for stage, info in self.NEXUS_EVOLUTIE.items():
+            bereikt = dagen >= info["dagen"]
+            marker = " ★" if bereikt else "  "
+            current = " ◄" if bereikt and (stage == max(
+                s for s, i in self.NEXUS_EVOLUTIE.items()
+                if dagen >= i["dagen"])) else ""
+            print(f"  {marker} {info['naam']:<10} (dag {info['dagen']:>3}) "
+                  f"| +{info['bonus']:>3} bonus | {info['ability']}{current}")
+
+    def _nexus_show_morphs(self):
+        """Toon NEXUS morph statistieken."""
+        morphs = self.huisdier.get("nexus_morphs", {})
+
+        print(f"\n  ✧ MORPH STATISTIEKEN ✧")
+        print(f"  Totaal transformaties: {sum(morphs.values())}")
+        print(f"  Unieke vormen: {len(morphs)} / 16")
+        print()
+
+        if morphs:
+            for form, count in sorted(morphs.items(), key=lambda x: -x[1]):
+                bar = "#" * min(count, 20)
+                print(f"  {form:<12} {count:>3}x  {bar}")
+        else:
+            print("  Nog geen transformaties uitgevoerd.")
+
     def _ai_activity_advisor(self) -> str:
         """AI adviseert de beste volgende activiteit."""
         h = self.huisdier
@@ -1224,6 +1404,13 @@ Maak het dromerig en fantasierijk."""
         print("| 41. AI Memory Lane             |")
         print("|     Bekijk herinneringen       |")
         print("+--------------------------------+")
+        if self._is_nexus():
+            print("|  [✧ NEXUS POWERS ✧]           |")
+            print("+--------------------------------+")
+            evo = self._nexus_get_evolution()
+            print(f"| 42. NEXUS Command Center       |")
+            print(f"|     Stadium: {evo['naam']:<17}|")
+            print("+--------------------------------+")
         print("| 13. Reset Huisdier             |")
         print("|  0. Opslaan & Afsluiten        |")
         print("+================================+")
@@ -8985,6 +9172,8 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                 self._ai_pet_chat()
             elif keuze == "41":
                 self._ai_memory_lane()
+            elif keuze == "42" and self._is_nexus():
+                self._nexus_command_center()
             elif keuze == "0":
                 self._sla_op()
                 print(f"\n{self.huisdier['naam']} is opgeslagen!")

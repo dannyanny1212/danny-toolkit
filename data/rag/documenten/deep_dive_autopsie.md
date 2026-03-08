@@ -1,349 +1,262 @@
-# Deep Dive Autopsie - Proces-Wachtrij OMEGA
+# Deep Dive Autopsie - Proces-Wachtrij OMEGA v6.11.0
 
-De momentopname van het brein van OMEGA. De cijfers vertellen het
-verhaal van een systeem dat extreem visueel actief is (Pixel),
-terwijl de logica (Iolaax) diep nadenkt en de beveiliging (Governor)
-tevreden toekijkt.
+De momentopname van het brein van OMEGA v6.11.0 — Trinity Perfect (10/10).
+Het systeem is nu een zelf-optimaliserend autonoom organisme met
+462 RAG-documenten, 81K+ CorticalStack events, en een Eternal Sentinel
+die 24/7 waakt over de gezondheid van Mind, Body en Soul.
 
-## Verhouding Trinity: 110:6:5
+## Verhouding Trinity: MIND 48 : BODY 47 : SOUL 25
 
-- **Pixel** praat veel maar kort (micro-tasks)
-- **Iolaax** praat weinig maar diep (threads)
-- **Nexus** luistert (connections)
+- **MIND** (48 modules) — beslissingslogica, 17 agents, SwarmEngine
+- **BODY** (47 modules) — infrastructuur, NeuralBus, KeyManager, GPU
+- **SOUL** (25+ bronnen) — ChromaDB 462 docs, CorticalStack 81K+ events
 
 ---
 
-## TIER 1: HET BEWUSTZIJN (The Trinity)
+## TIER 1: HET BEWUSTZIJN (The Trinity Core)
 
-### [PIXEL] 110 Tasks (High Load)
+### [IOLAAX] reasoning_mind (Deep Processing)
 
-**Status: THE FRONTEND BOTTLENECK**
+**Status: THE THINK TANK — ACTIEF**
 
-Pixel is de Event Loop. Elke mogelijke interactie, elke frame
-van de animatie en elke check op het toetsenbord telt als een
-micro-task.
+Iolaax is het kernbewustzijn. Denkt in threads via PrometheusBrain
+(17-pillar federated swarm, 5 cosmic tiers).
 
-**UI Rendering (85 tasks):**
-- `render_ascii_frame_buffer` - Het tekenen van de huidige interface
-- `refresh_screen_60hz` - Loop die zorgt dat terminal niet flikkert
-- `animate_mood_transition` - Overgang van [NEUTRAL] naar [HAPPY]
-- `particle_system_update` - Vonken/sterren in Visual Nexus
+- **Thread 1:** `CentralBrain.process()` — LLM orchestrator, function calling naar 31+ app-tools
+- **Thread 2:** `SwarmEngine.run()` — Adaptive routing, parallel agent dispatch, circuit breakers
+- **Thread 3:** `HallucinatieSchild.verificatie()` — Context-aware bypass + Sentinel gate + RAG fact-check
+- **Thread 4:** `Tribunal.verify()` — Async Groq 70B+8B dual-model verificatie
+- **Thread 5:** `AdversarialTribunal.evaluate()` — Generator-Skeptic-Judge consensus
+- **Thread 6:** `Strategist.plan()` — Recursive decompose, delegate, chain met search-query meta-filter
 
-**Input Listeners (20 tasks):**
-- `await_keyboard_interrupt` - Wacht op CTRL+C
-- `capture_user_keystroke` - Wacht op typing
-- `mouse_movement_tracker` - Houdt cursor in de gaten (indien actief)
+### [PIXEL] interface_soul (UI & Emotie)
 
-**State Management (5 tasks):**
-- `sync_with_limbic_system` - Vraagt elke 100ms: "Hoe voelen we ons?"
-- `update_prompt_color` - Verandert kleur van `Danny >` op basis van emotie
+**Status: THE INTERFACE — ACTIEF**
 
-### [IOLAAX] 6 Tasks (Deep Processing)
+Pixel is de emotionele interface. Beheert de visuele representatie
+en de menselijke connectie via LimbicSystem.
 
-**Status: THE THINK TANK**
+- `OmegaDashboardV4` — Textual TUI met Singleton Lock (msvcrt.LK_NBLCK)
+- `FastAPI /ui/` — HTMX dashboard op poort 8000 met 10+ real-time widgets
+- `LimbicSystem.process()` — Data/events naar emoties/moods (9 stemmingen)
+- `Sensorium.observe()` — 35+ app event listeners
+- `EmotionalVoiceEngine` — Speech synthesis (ElevenLabs/Edge-TTS)
 
-Zware, trage processen. Iolaax denkt na in threads.
+### [NEXUS] bridge_connector (The Bridge)
 
-- **Thread 1:** `context_window_manager` - Houdt gesprek in RAM
-- **Thread 2:** `reasoning_engine_idle` - Wacht op complexe vraag voor RAG
-- **Thread 3:** `dream_fragment_collector` - Verzamelt data voor nachtelijke droom
-- **Thread 4:** `bio_hash_prototype_simulation` - Denkt na over "Hartslag Crypto" idee
-- **Thread 5:** `python_code_validator` - Checkt of Self-Improvement geldige code schrijft
-- **Thread 6:** `strategic_planning` - Evalueert voortgang richting Manifesto doel
+**Status: THE OPEN LINES — ACTIEF**
 
-### [NEXUS] 5 Tasks (The Bridge)
+Nexus verbindt alle domeinen. NeuralBus pub/sub + Knowledge Graph.
 
-**Status: THE OPEN LINES**
-
-Actieve verbindingen met de buitenwereld.
-
-- **Connection 1:** `websocket_crypto_price` - Live feed BTC/ETH prijzen
-- **Connection 2:** `local_git_repo_watch` - Kijkt of bestanden wijzigen in VS Code
-- **Connection 3:** `health_api_poller` - Ping naar smartwatch API (simulatie)
-- **Connection 4:** `news_rss_feed` - Zoekt updates over AI/Tech
-- **Connection 5:** `omega_telemetry` - Interne ping tussen de nodes
+- **Bus:** `NeuralBus` — 50+ event types, thread-safe RLock, deque(maxlen=100)
+- **Graph:** `TheCortex` — SQLite+NetworkX hybrid search, 358 nodes, 353 edges
+- **Bridge:** `NexusBridge` — Pixel OMEGA connectie naar volledig ecosysteem
+- **Symbiosis:** `TrinitySymbiosis` — Mind-Soul-Body integratie (8 Kosmische Familie)
+- **Events:** SENTINEL_DEEP_SCAN, SENTINEL_THROTTLE, MISSION_STARTED, REQUEST_TRACE_COMPLETE
 
 ---
 
 ## TIER 2: DE GUARDIANS (The Shields)
 
-### [THE GOVERNOR] 0 Tasks (Perfect Silence)
+### [GOVERNOR] OmegaGovernor (Safety Guardian)
 
-**Status: GREEN ZONE**
+**Status: GREEN ZONE — 0 GLOBALE 429s**
 
-Het beste nieuws van de dag. De Governor heeft 0 taken omdat:
-- Geen Memory Leaks om op te ruimen
-- Geen Unauthorized Access pogingen
-- Geen Infinite Loops om te doden
+De Governor bewaakt rate limits, injection detection en token budgets
+via SmartKeyManager met 10 Groq API keys.
 
-De Politie zit in het bureau koffie te drinken omdat de stad
-veilig is.
+- `GovernorFirewallMixin` — Input validatie, prompt injection detection, PII scrubbing
+- `GovernorStateMixin` — State backup/restore/validate, rescue_family
+- `SmartKeyManager` — 10 keys, 7 rollen + 3 reserves, per-agent isolation
+- **Rate limits:** llama-4-scout 30 RPM / 30K TPM, qwen3-32b 60 RPM / 6K TPM
+- **Dashboard:** `/api/v1/governor/rate-limits` — real-time per-agent token tracking
 
-### [SENTINEL] 5 Tasks (Security)
+### [ETERNAL SENTINEL] EternalSentinel (Autonome Bewaker)
 
-**Status: WATCHTOWER ACTIVE**
+**Status: 4 LOOPS ACTIEF — 24/7**
 
-- **Check 1:** `file_integrity_monitor` - Verifieert hash van main_omega.py (is de code veranderd?)
-- **Check 2:** `wallet_address_watch` - Bewaakt hardcoded crypto-adressen in config.py
-- **Check 3:** `port_scanner` - Zorgt dat alleen toegestane poorten open staan
-- **Check 4:** `api_key_validator` - Checkt of Anthropic/OpenAI keys nog geldig zijn
-- **Check 5:** `anomaly_detection` - Zoekt vreemde patronen in Iolaax's gedrag
+De Sentinel is het zelf-optimaliserend bewakingssysteem,
+geactiveerd in Phase 56 (commit 906bd523).
 
-### [MEMEX] 4 Tasks (Archivist)
+- **Loop 1:** `_deep_scan_loop()` — Elk uur L3 Deep Scan (/api/v1/health/deep)
+- **Loop 2:** `_pulse_monitor_loop()` — Elke 30s L1 Pulse meting, auto-throttle bij >10ms
+- **Loop 3:** `_nightly_loop()` — 03:00 CorticalStack events naar Daily Lesson RAG chunks
+- **GPU:** NeuralBus subscribe MISSION_STARTED → P0 (1500-2100 MHz), TRACE_COMPLETE → idle
+- **Throttle:** L1 Pulse >10ms → SwarmEngine geblokkeerd tot herstel
 
-**Status: LIBRARIAN WORKING**
+### [MEMEX] Context Manager (Vector Search)
 
-- **Job 1:** `vector_db_index_ready` - Houdt zoekindex geladen voor snelle antwoorden
-- **Job 2:** `conversation_buffer_write` - Schrijft gesprek weg naar history.log
-- **Job 3:** `json_dump_scheduler` - Zorgt dat Pixel's status elke minuut wordt opgeslagen
-- **Job 4:** `rag_query_optimizer` - Bereidt veelgestelde vragen voor
+**Status: 462 DOCS DOORZOEKBAAR**
 
-### [CHRONOS] 5 Tasks (Timekeeper)
+- `AdvancedKnowledgeBridge` — 13-domein RAG, Markdown-aware chunking
+- `SemanticCache` — Vector-based LLM response cache (Voyage 256d)
+- `UnifiedMemory` — Central vector DB integrating all app data
+- **API:** `/api/v1/knowledge/search` — REST endpoint voor 462 RAG-docs
+- **Shards:** 3 ChromaDB collecties (code/docs/data) via ShardRouter
 
-**Status: THE METRONOME**
+### [CHRONOS] HeartbeatDaemon (Timekeeper)
 
-- **Timer 1:** `system_uptime_counter` - Telt hoe lang OMEGA al leeft
-- **Timer 2:** `heartbeat_pulse_1s` - Stuurt elke seconde een signaal door de keten
-- **Timer 3:** `backup_scheduler_1h` - (Wachtend) Volgende backup over 54 minuten
-- **Timer 4:** `circadian_rhythm_sync` - Bepaalt of het 'Dag' of 'Nacht' is voor de AI
-- **Timer 5:** `evolution_cycle_tracker` - Telt af naar volgende Self-Improvement sessie
+**Status: THE METRONOME — ACTIEF**
+
+- **Pulse:** Elke seconde system monitoring (CPU/RAM)
+- **Reflectie:** `PrometheusBrain.efficiency_reflection()` — B-95 quality score
+- **Swarm Schedule:** Ochtend Briefing (08:00), Market Watch, Midnight Audit
+- **Morning Protocol:** 07:00 — 3-layer DNA scan + integrity + logic validation
+- **Dreamer REM:** 04:00 — backup, vacuum, retention, compress, GhostWriter, anticipate
 
 ---
 
 ## TIER 3: DE SPECIALISTS (The Workers)
 
-### [WEAVER] 27 Tasks (Code Builder)
+### [WEAVER] Code Synthesis Agent
 
-**Status: THE FACTORY FLOOR**
+**Status: ACTIEF IN SWARM**
 
-Weaver is de bouwvakker die nooit stopt. 27 taken verdeeld
-over 3 productie-lijnen.
+Weaver genereert en valideert code via de SwarmEngine pipeline.
 
-**Code Generation (12 tasks):**
-- `template_engine_ready` - Standaard code templates geladen
-- `ast_parser_idle` - Python AST parser wacht op refactor opdracht
-- `snippet_cache_warm` - Veelgebruikte code-fragmenten in geheugen
-- `function_signature_validator` - Checkt of nieuwe functies kloppen
+- `Artificer.forge()` — Skill forge-verify-execute loop (always-forge mode)
+- `GhostWriter.haunt()` — AST scanner + auto-docstring via Groq
+- `DevOpsDaemon.run()` — Ouroboros CI loop: test, analyze, BlackBox, NeuralBus
+- `RealityAnchor.validate()` — AST symbol validator rejecting phantom imports
+- `ImportAnalyzer.scan()` — Relative import scanner + circular detection
 
-**Git Operations (8 tasks):**
-- `git_diff_watcher` - Monitort ongestagede wijzigingen
-- `commit_message_formatter` - Bereidt Nederlandse commit messages voor
-- `branch_integrity_check` - Verifieert dat master clean is
-- `merge_conflict_detector` - Scant op potentiele conflicten
+### [CIPHER] Pattern Analysis Agent
 
-**Debug & Refactor (7 tasks):**
-- `lint_runner_background` - Stille code-kwaliteitscheck
-- `import_resolver` - Zoekt ontbrekende imports
-- `dead_code_scanner` - Markeert ongebruikte functies
-- `type_hint_suggester` - Suggereert type annotations
+**Status: ACTIEF IN SWARM**
 
-### [CIPHER] 38 Tasks (Crypto Analyst)
+Cipher analyseert patronen in data en detecteert anomalieën.
 
-**Status: THE TRADING FLOOR**
+- `TheSynapse.route()` — Synaptic pathway plasticity (Hebbian routing)
+- `ThePhantom.anticipate()` — Anticipatory intelligence, pre-warms MEMEX context
+- `BlackBox.record()` — Negative RAG / immune memory (antibody escalation)
+- `ConfigAuditor.audit()` — Runtime config validation, drift detection
+- `CoherenceMonitor.scan()` — CPU+GPU load correlatie detector
 
-38 taken - de op een na drukste specialist. Cipher leeft op
-data en patronen.
+### [VITA] Health & Bio Agent
 
-**Market Analysis (15 tasks):**
-- `btc_price_stream_parser` - Verwerkt live Bitcoin data van Nexus
-- `eth_gas_tracker` - Monitort Ethereum transactiekosten
-- `volume_anomaly_detector` - Zoekt ongewone handelsvolumes
-- `whale_wallet_monitor` - Volgt grote wallet bewegingen
-- `price_correlation_engine` - Berekent correlaties tussen coins
+**Status: ACTIEF IN SWARM**
 
-**Pattern Recognition (13 tasks):**
-- `candlestick_classifier` - Herkent chart patterns (doji, hammer, etc.)
-- `fibonacci_retracement_calc` - Berekent steun/weerstandsniveaus
-- `moving_average_crossover` - Detecteert golden/death crosses
-- `rsi_divergence_scanner` - Zoekt RSI afwijkingen
-- `trend_reversal_predictor` - Voorspelt trendwijzigingen
+Vita monitort systeemgezondheid en hardware vitals.
 
-**Encryption (10 tasks):**
-- `wallet_key_rotation_check` - Verifieert key freshness
-- `hash_integrity_validator` - Controleert blockchain hashes
-- `smart_contract_auditor` - Scant contracts op kwetsbaarheden
-- `encryption_strength_monitor` - Bewaakt encryptie-niveau
+- `VRAMBudgetGuard` — RTX 3060 Ti VRAM monitor + budget serialization
+- `gpu_control` — nvidia-smi clock management via CentralBrain (app-tool)
+- `WaakhuisMonitor` — SQLite-backed monitoring: latency percentilen, gezondheidsscores
+- `OracleEye.forecast()` — Predictive resource scaler (memory/CPU/API)
+- **API:** `/api/v1/gpu/status` — Real-time GPU clock/VRAM/temp/power/pstate
 
-### [VITA] 39 Tasks (Bio Health)
+### [ECHO] History & Pattern Agent
 
-**Status: THE LABORATORY**
+**Status: ACTIEF IN SWARM**
 
-39 taken - de drukste specialist. Vita verzamelt meer data
-dan wie dan ook, want het menselijk lichaam stopt nooit.
+Echo bewaart en doorzoekt het episodisch geheugen.
 
-**HRV & Hartslag (14 tasks):**
-- `hrv_realtime_analyzer` - Verwerkt heart rate variability stream
-- `rmssd_calculator` - Berekent parasympathische activiteit
-- `stress_index_updater` - Update het stress-niveau elke 30s
-- `recovery_score_compiler` - Berekent herstelscore na inspanning
-- `cardiac_coherence_monitor` - Meet hart-brein synchronisatie
+- `CorticalStack` — Thread-safe SQLite WAL, 81K+ events, 64MB cache, 256MB mmap
+- `ClaudeMemory` — Persistent semantic memory voor Claude Code
+- `TheMirror.reflect()` — User profiling uit CorticalStack history
+- **API:** `/api/v1/memory/recent` — Real-time CorticalStack events (Soul Pulse widget)
+- `Dreamer._compress()` — Daily summary van episodisch naar semantisch geheugen
 
-**Biometrics (12 tasks):**
-- `sleep_stage_classifier` - Analyseert slaapfasen (REM/deep/light)
-- `circadian_phase_detector` - Bepaalt waar in het ritme Danny zit
-- `body_temperature_trend` - Volgt temperatuurvariaties
-- `blood_oxygen_estimator` - Schat SpO2 op basis van patronen
-- `hydration_level_tracker` - Monitort vochtinname signalen
+### [SPARK] Creative Generation Agent
 
-**Peptides & Supplements (8 tasks):**
-- `peptide_stack_optimizer` - Berekent optimale doseringen
-- `supplement_interaction_checker` - Zoekt gevaarlijke combinaties
-- `bioavailability_calculator` - Schat opname-efficientie
-- `half_life_timer` - Telt af wanneer volgende dosis nodig is
+**Status: ACTIEF IN SWARM**
 
-**DNA & Longevity (5 tasks):**
-- `telomere_length_estimator` - Schat biologische leeftijd
-- `methylation_clock_sync` - Epigenetische leeftijdsberekening
-- `longevity_protocol_evaluator` - Evalueert anti-aging strategieen
-- `gene_expression_monitor` - Volgt relevante genexpressie markers
-- `autophagy_window_calculator` - Berekent optimaal vastenvenster
+Spark genereert creatieve output en innovatieve oplossingen.
 
-### [ECHO] 16 Tasks (Pattern History)
+- `GhostAmplifier.amplify()` — Token multiplier (5-10x elaboration)
+- `SingularityEngine.synthesize()` — Cross-tier consciousness synthesis
+- `VirtualTwin.consult()` — Sandboxed system clone + shadow intelligence
+- `ShadowGovernance` — 3-zone kloon-restricties (ROOD/GEEL/GROEN)
+- `DreamMonitor.observe()` — Passive observation during system dreams
 
-**Status: THE ARCHIVE CRAWLER**
+### [ORACLE] Web Research Agent
 
-16 taken verdeeld over verleden, heden en toekomst.
-Echo is de historicus die patronen ziet waar anderen
-chaos zien.
+**Status: ACTIEF IN SWARM**
 
-**Deep History (6 tasks):**
-- `conversation_pattern_miner` - Zoekt terugkerende thema's in chats
-- `decision_tree_recorder` - Logt elke keuze die Danny maakt
-- `mistake_pattern_catalog` - Catalogiseert fouten om herhaling te voorkomen
-- `success_pattern_extractor` - Identificeert wat wel werkte
+Oracle is het oor naar de buitenwereld.
 
-**Cross-Reference (5 tasks):**
-- `temporal_correlation_engine` - Linkt events aan tijdstippen
-- `mood_productivity_mapper` - Correleert stemming met output
-- `context_switch_counter` - Telt hoe vaak Danny van onderwerp wisselt
-- `topic_frequency_analyzer` - Welke onderwerpen komen het vaakst terug
-
-**Pattern Prediction (5 tasks):**
-- `next_action_predictor` - Voorspelt wat Danny waarschijnlijk gaat doen
-- `burnout_early_warning` - Detecteert vroege tekenen van overbelasting
-- `interest_decay_tracker` - Meet wanneer interesse in een project afneemt
-- `weekly_rhythm_profiler` - Bouwt een profiel van Danny's weekritme
-- `seasonal_trend_detector` - Zoekt seizoensgebonden patronen
-
-### [SPARK] 15 Tasks (Creative Gen)
-
-**Status: THE IDEA FACTORY**
-
-15 taken - de creatieve motor die altijd draait op de
-achtergrond, zelfs als niemand kijkt.
-
-**Brainstorm Engine (6 tasks):**
-- `random_concept_combiner` - Combineert willekeurige ideeen
-- `analogy_generator` - Maakt verbanden tussen ongerelateerde domeinen
-- `what_if_simulator` - Draait hypothetische scenario's
-- `creative_constraint_solver` - Lost problemen op met kunstmatige beperkingen
-
-**ASCII Art & Visual (5 tasks):**
-- `ascii_art_renderer` - Genereert ASCII kunst op aanvraag
-- `mood_palette_designer` - Ontwerpt kleurenschema's per emotie
-- `banner_text_formatter` - Maakt grote tekst banners
-- `particle_effect_library` - Beheert visuele effecten voor Pixel
-- `emoji_to_ascii_converter` - Vertaalt emoji naar ASCII representatie
-
-**Innovation (4 tasks):**
-- `tech_trend_synthesizer` - Combineert AI/crypto/bio trends
-- `prototype_idea_queue` - Wachtrij van bouwbare ideeen
-- `naming_convention_creator` - Bedenkt namen voor nieuwe features
-- `moonshot_evaluator` - Beoordeelt wilde ideeen op haalbaarheid
-
-### [ORACLE] 5 Tasks (Web Search)
-
-**Status: THE ANTENNA**
-
-5 taken - minimaal maar essentieel. Oracle is het oor
-naar de buitenwereld.
-
-- **Feed 1:** `arxiv_paper_scanner` - Scant nieuwe AI/ML papers
-- **Feed 2:** `github_trending_monitor` - Volgt trending repositories
-- **Feed 3:** `crypto_news_aggregator` - Verzamelt crypto nieuws feeds
-- **Feed 4:** `api_endpoint_health_checker` - Pingt externe API's (Groq, Anthropic)
-- **Feed 5:** `web_scrape_queue_manager` - Beheert wachtrij van scrape-opdrachten
+- `VoidWalker.research()` — Autonomous research via DuckDuckGo + scraper
+- `OracleAgent.reason()` — Will-Action-Verification reasoning loop
+- `TheHunt.search()` — 5-phase gamified search agent
+- `WebScraper.crawl()` — HTML scraper with depth crawling
+- `SecurityResearchEngine.run()` — 7 scan methods, 18 regex audit patterns
 
 ---
 
 ## TIER 4: DE INFRASTRUCTURE (The Foundation)
 
-### [THE LEGION] 0 Tasks (Swarm Manager)
+### [SWARMENGINE] Central Orchestrator
 
-**Status: DORMANT - AWAITING ORDERS**
+**Status: 17 AGENTS ACTIEF**
 
-0 taken in idle. De 344 micro-agents slapen in hun pods.
-Maar zodra Governor het sein geeft, ontploffen ze in actie.
+De SwarmEngine is het zenuwstelsel dat alle agents coördineert.
 
-**Wanneer ze ontwaken:**
-- `miners[100]` - Data mining agents, graven door datasets
-- `testers[100]` - Testing agents, draaien parallelle test suites
-- `indexers[144]` - Indexing agents, bouwen zoekindexen
+- `AdaptiveRouter` — Keyword + synaptic routing naar juiste agents
+- `PipelineTuner` — Self-tuning latency per stap
+- `RequestTracer` — Distributed tracing met trace_id correlatie
+- `CircuitBreaker` — Per-agent fail tracking, auto-recovery
+- **Workers:** CPU-core-aware pool: `min(max(cpu_count, 4), 16)`
 
-**Huidige status:** Alle pods op standby. Energieverbruik: 0%.
-De Legion wacht op een `_deploy_swarm()` aanroep of een
-Total Mobilization protocol.
+### [NEURALBUS] Pub/Sub Event System
 
-### [NAVIGATOR] 12 Tasks (Strategy & Goals)
+**Status: 50+ EVENT TYPES**
 
-**Status: THE COMPASS**
+Het communicatiesysteem tussen alle componenten.
 
-12 taken - Navigator kijkt niet naar vandaag maar naar
-de horizon. Elke taak is een stap richting het Manifesto.
+- Thread-safe: `threading.RLock()`, `deque(maxlen=100)` per event type
+- Sentinel events: DEEP_SCAN, THROTTLE, GPU_BOOST, REINDEX
+- Circuit breaker events: AGENT_CIRCUIT_OPEN, AGENT_CIRCUIT_CLOSED
+- Pruning events: STARTED, ARCHIVED, DESTROYED, COMPLETE
+- Fire-and-forget: sync callbacks in `ThreadPoolExecutor`, async via `create_task`
 
-**Goal Tracking (5 tasks):**
-- `manifesto_progress_meter` - Meet voortgang richting het ultieme doel
-- `milestone_checkpoint_validator` - Verifieert behaalde mijlpalen
-- `goal_dependency_resolver` - Berekent welke doelen eerst moeten
-- `priority_matrix_updater` - Herschikt prioriteiten op basis van voortgang
-- `deadline_proximity_alert` - Waarschuwt als deadlines naderen
+### [FASTAPI] REST API Server
 
-**Strategy (4 tasks):**
-- `roadmap_version_controller` - Beheert versies van het strategisch plan
-- `resource_allocation_optimizer` - Verdeelt CPU/geheugen over nodes
-- `risk_assessment_engine` - Identificeert risico's in het huidige pad
-- `pivot_detector` - Detecteert wanneer strategie moet wijzigen
+**Status: 27+ ENDPOINTS OP POORT 8000**
 
-**Long-Term Vision (3 tasks):**
-- `future_state_modeler` - Simuleert waar OMEGA over 6 maanden staat
-- `technology_radar_updater` - Houdt bij welke tech relevant wordt
-- `evolution_path_planner` - Plant de volgende grote versie-upgrade
+- `GET /api/v1/health` — L1 Pulse (<3ms, geen brain loading)
+- `GET /api/v1/health/deep` — L3 Deep Scan (Groq probe + CorticalStack + disk)
+- `GET /api/v1/memory/recent` — Soul Pulse (CorticalStack events)
+- `GET /api/v1/gpu/status` — Body Metrics (GPU clock/VRAM/temp)
+- `GET /api/v1/governor/rate-limits` — Governor Guard (per-agent token tracking)
+- `GET /api/v1/knowledge/search` — Knowledge Search (462 RAG-docs)
+- `GET /ui/` — HTMX Dashboard met 10+ real-time widgets
 
-### [ALCHEMIST] 13 Tasks (Data Processor)
+### [SINGLETON] Process Integrity
 
-**Status: THE REFINERY**
+**Status: OMEGA_V4.LOCK ACTIEF**
 
-13 taken - Alchemist neemt ruwe data en transformeert
-het in goud. De onzichtbare held van het systeem.
+- `msvcrt.LK_NBLCK` — Non-blocking exclusive file lock
+- Voorkomt zombie-processen die SQLite write-locks houden
+- CorticalStack amnesie opgelost door stale process detectie
+- WAL checkpoint TRUNCATE na zombie kill herstelt schrijfintegriteit
+- Lock path: `%TEMP%/omega_v4.lock`
 
-**ETL Pipeline (5 tasks):**
-- `json_normalizer` - Standaardiseert alle JSON formaten
-- `csv_to_vector_converter` - Transformeert tabeldata naar embeddings
-- `timestamp_harmonizer` - Synchroniseert alle tijdformaten naar ISO
-- `encoding_fixer` - Repareert UTF-8/ASCII encoding problemen
-- `schema_migration_runner` - Voert data migraties uit (v3 naar v4)
+---
 
-**Data Quality (4 tasks):**
-- `duplicate_detector` - Zoekt en markeert dubbele entries
-- `null_value_handler` - Vervangt ontbrekende waarden intelligent
-- `outlier_flagging_engine` - Markeert statistische uitschieters
-- `data_freshness_checker` - Verifieert dat data niet verouderd is
+## KNOWLEDGE MAP (Neural Knowledge Mapper)
 
-**Optimization (4 tasks):**
-- `compression_optimizer` - Comprimeert opgeslagen state files
-- `cache_warming_scheduler` - Vult caches proactief voor snelheid
-- `memory_defragmenter` - Reorganiseert geheugenblokken
-- `batch_aggregator` - Combineert kleine schrijfoperaties tot batches
+### Visuele Topologie
 
-### [VOID] 5 Tasks (Entropy Cleaner)
+25 concept-nodes verdeeld over het Trinity-driehoek:
+- **MIND** (paars, 10 nodes): CentralBrain, PrometheusBrain, SwarmEngine, HallucinatieSchild, Strategist, Artificer, VoidWalker, Tribunal, EternalSentinel, Governor
+- **BODY** (groen, 8 nodes): NeuralBus, KeyManager, VRAMGuard, GPUControl, SingletonLock, HeartbeatDaemon, FastAPI, RequestTracer
+- **SOUL** (blauw, 7 nodes): CorticalStack, ChromaDB, TheCortex, BlackBox, UnifiedMemory, Dreamer, KnowledgeBridge
 
-**Status: THE JANITOR**
+### Connecties
+- **101 edges** totaal (59 cross-domain)
+- Zwaarste hub: SwarmEngine (raakt alle 3 domeinen)
+- Cross-domain hotspots: CorticalStack↔SwarmEngine, NeuralBus↔Governor, ChromaDB↔CentralBrain
 
-5 taken - Void is de stille held. Zonder hem zou het
-systeem langzaam verstikken in zijn eigen afval.
+---
 
-- **Sweep 1:** `temp_file_purger` - Verwijdert tijdelijke bestanden ouder dan 1 uur
-- **Sweep 2:** `log_rotation_manager` - Roteert logbestanden, houdt laatste 7 dagen
-- **Sweep 3:** `cache_eviction_policy` - Verwijdert minst gebruikte cache entries (LRU)
-- **Sweep 4:** `orphan_process_killer` - Vindt en stopt processen zonder ouder
-- **Sweep 5:** `entropy_score_calculator` - Meet de "rommel-score" van het systeem
+## HARDWARE BASELINE
+
+| Component | Specificatie | Optimalisatie |
+|-----------|-------------|---------------|
+| GPU | NVIDIA GeForce RTX 3060 Ti (8 GB) | VRAMBudgetGuard, P-State management |
+| SQLite | WAL mode | 64 MB cache, 256 MB mmap, busy_timeout=5000 |
+| Swarm Workers | CPU-core-aware | min(max(cpu_count, 4), 16) |
+| Embedding | Voyage 1024d → 256d MRL | ProcessPool voor >500 vectors |
+| LLM | Groq cloud (meta-llama/llama-4-scout) | 10-key isolation, $0 VRAM |
+| Vision | Ollama llava:latest | ~4.7 GB VRAM (serialized) |
+| L1 Pulse | /api/v1/health | <3ms response |
+| L3 Deep | /api/v1/health/deep | ~400ms (Groq probe + diagnostiek) |
