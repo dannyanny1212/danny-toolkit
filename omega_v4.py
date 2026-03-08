@@ -473,8 +473,19 @@ class OmegaDashboardV4(App):
         woorden = prompt.lower().split()
         return bool(self._ACTIE_KEYWORDS & set(woorden))
 
+    # Queries die ALTIJD naar MIND/CentralBrain moeten (tool executie via LLM)
+    _MIND_OVERRIDE_PATTERNS = (
+        "poort", "localhost", "sane bridge", "observatie",
+        "local_bridge", "gap analysis",
+    )
+
     async def _bepaal_intentie(self, prompt: str) -> str:
         """Bepaalt PRAAT of ACTIE — keyword check eerst, LLM als tiebreaker."""
+        # PRIORITEIT 1: MIND override — deze queries hebben CentralBrain tools nodig
+        prompt_lower = prompt.lower()
+        if any(term in prompt_lower for term in self._MIND_OVERRIDE_PATTERNS):
+            return "PRAAT"
+
         # Snelle keyword pre-check (0ms, geen API call)
         if self._snelle_actie_check(prompt):
             return "ACTIE"
