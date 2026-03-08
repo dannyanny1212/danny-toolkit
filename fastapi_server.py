@@ -1986,20 +1986,22 @@ if HAS_DASHBOARD:
             nodes = kmap.get("nodes", [])
             edges = kmap.get("edges", [])
             meta = kmap.get("meta", {})
-            # Bereken posities: Trinity driehoek layout
+            # Bereken posities: Trinity driehoek layout (geschaald voor 30+ nodes)
             domain_nodes = {"MIND": [], "BODY": [], "SOUL": []}
             for n in nodes:
                 domain_nodes.setdefault(n["domain"], []).append(n["id"])
             # MIND = top center, BODY = bottom-left, SOUL = bottom-right
-            centers = {"MIND": (200, 70), "BODY": (80, 200), "SOUL": (360, 200)}
+            centers = {"MIND": (280, 80), "BODY": (90, 240), "SOUL": (470, 240)}
             for domain, nids in domain_nodes.items():
-                cx, cy = centers.get(domain, (240, 130))
+                cx, cy = centers.get(domain, (280, 160))
+                count = max(len(nids), 1)
+                spread = min(55 + count * 5, 100)
                 for i, nid in enumerate(nids):
-                    angle = 2 * math.pi * i / max(len(nids), 1)
-                    spread = 45 + len(nids) * 4
+                    angle = 2 * math.pi * i / count - math.pi / 2
                     px = cx + spread * math.cos(angle)
                     py = cy + spread * math.sin(angle)
-                    positions[nid] = (round(px), round(py))
+                    positions[nid] = (round(max(15, min(px, 545))),
+                                      round(max(15, min(py, 305))))
         except Exception as e:
             logger.debug("Knowledge map load: %s", e)
             meta = {"total_nodes": 0, "total_edges": 0, "cross_domain_edges": 0,

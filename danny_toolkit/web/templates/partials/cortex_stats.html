@@ -17,29 +17,40 @@
             <div class="stat-label">RAG Docs</div>
         </div>
     </div>
-    <svg viewBox="0 0 480 260" style="width:100%;height:auto;background:#0d1117;border-radius:6px;">
-        <!-- Edge lines -->
+    <svg viewBox="0 0 560 320" style="width:100%;height:auto;background:#0d1117;border-radius:6px;">
+        <!-- Edge lines (cross-domain only to reduce clutter with 430 edges) -->
         {% for e in edges %}
+        {% if e.cross_domain %}
         <line x1="{{ positions[e.source][0] }}" y1="{{ positions[e.source][1] }}"
               x2="{{ positions[e.target][0] }}" y2="{{ positions[e.target][1] }}"
-              stroke="{{ '#3b4252' if not e.cross_domain else '#58a6ff33' }}"
-              stroke-width="{{ '1.5' if e.cross_domain else '0.5' }}" />
+              stroke="#58a6ff15" stroke-width="0.5" />
+        {% endif %}
+        {% endfor %}
+        <!-- Intra-domain edges (solid) -->
+        {% for e in edges %}
+        {% if not e.cross_domain %}
+        <line x1="{{ positions[e.source][0] }}" y1="{{ positions[e.source][1] }}"
+              x2="{{ positions[e.target][0] }}" y2="{{ positions[e.target][1] }}"
+              stroke="#3b4252" stroke-width="1" />
+        {% endif %}
         {% endfor %}
         <!-- Domain labels -->
-        <text x="140" y="18" fill="#bc8cff" font-size="11" font-weight="700" text-anchor="middle">MIND</text>
-        <text x="60" y="250" fill="#3fb950" font-size="11" font-weight="700" text-anchor="middle">BODY</text>
-        <text x="400" y="250" fill="#58a6ff" font-size="11" font-weight="700" text-anchor="middle">SOUL</text>
+        <text x="280" y="18" fill="#bc8cff" font-size="12" font-weight="700" text-anchor="middle">MIND ({{ nodes|selectattr('domain','equalto','MIND')|list|length }})</text>
+        <text x="60" y="310" fill="#3fb950" font-size="12" font-weight="700" text-anchor="middle">BODY ({{ nodes|selectattr('domain','equalto','BODY')|list|length }})</text>
+        <text x="500" y="310" fill="#58a6ff" font-size="12" font-weight="700" text-anchor="middle">SOUL ({{ nodes|selectattr('domain','equalto','SOUL')|list|length }})</text>
         <!-- Nodes -->
         {% for n in nodes %}
         <circle cx="{{ positions[n.id][0] }}" cy="{{ positions[n.id][1] }}"
-                r="{{ 6 + n.docs }}"
+                r="{{ [4 + n.docs // 2, 12]|min }}"
                 fill="{{ '#bc8cff' if n.domain == 'MIND' else '#3fb950' if n.domain == 'BODY' else '#58a6ff' }}"
-                opacity="0.8" />
-        <text x="{{ positions[n.id][0] }}" y="{{ positions[n.id][1] + 16 + n.docs }}"
-              fill="#8b949e" font-size="8" text-anchor="middle">{{ n.id }}</text>
+                opacity="0.85">
+            <title>{{ n.id }} ({{ n.domain }}) — {{ n.docs }} docs</title>
+        </circle>
+        <text x="{{ positions[n.id][0] }}" y="{{ positions[n.id][1] + 14 + [n.docs // 2, 8]|min }}"
+              fill="#8b949e" font-size="7" text-anchor="middle">{{ n.id }}</text>
         {% endfor %}
     </svg>
     <div style="margin-top:0.4rem;font-size:0.7rem;color:var(--text-secondary);">
-        Scan: {{ meta.scan_time_s }}s | {{ meta.generated[:16] }}
+        v{{ meta.get('version', '?') if meta.get is defined else '?' }} | {{ meta.total_docs }} docs | {{ meta.generated[:16] if meta.generated is defined else '-' }}
     </div>
 </div>

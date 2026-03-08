@@ -1,205 +1,289 @@
 {
+  "version": "2.0",
+  "generated": "2026-03-08T15:50:00",
   "nodes": [
     {
       "id": "CentralBrain",
       "domain": "MIND",
-      "docs": 5,
+      "docs": 10,
       "bronnen": [
-        "omega_body_advanced.md",
-        "omega_learning_advanced.md",
-        "omega_mind_advanced.md",
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_quests_advanced.md",
+        "omega_v611_updates.md",
         "omega_wiring_advanced.md"
       ]
     },
     {
       "id": "PrometheusBrain",
       "domain": "MIND",
-      "docs": 5,
+      "docs": 10,
       "bronnen": [
-        "omega_body_advanced.md",
+        "deep_dive_autopsie.md",
         "omega_mind_advanced.md",
+        "omega_security_advanced.md",
+        "omega_ui_advanced.md",
         "omega_wiring_advanced.md"
       ]
     },
     {
       "id": "SwarmEngine",
       "domain": "MIND",
-      "docs": 5,
+      "docs": 10,
       "bronnen": [
-        "omega_wiring_advanced.md",
-        "omega_mind_advanced.md",
-        "omega_body_advanced.md"
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_v611_manifest.md",
+        "omega_wiring_advanced.md"
       ]
     },
     {
       "id": "HallucinatieSchild",
       "domain": "MIND",
-      "docs": 5,
+      "docs": 10,
       "bronnen": [
-        "omega_security_advanced.md",
-        "omega_rag_advanced_architecture.md",
-        "omega_wiring_advanced.md"
+        "MYTHICAL_NEXUS_DESIGN.md",
+        "deep_dive_autopsie.md",
+        "omega_apps_advanced.md",
+        "omega_persona_advanced.md",
+        "omega_quests_advanced.md"
       ]
     },
     {
       "id": "Strategist",
       "domain": "MIND",
-      "docs": 5,
+      "docs": 10,
       "bronnen": [
-        "omega_resources_advanced.md",
+        "deep_dive_autopsie.md",
         "omega_apps_advanced.md",
-        "omega_mind_advanced.md",
-        "omega_security_advanced.md"
+        "omega_body_advanced.md",
+        "omega_learning_advanced.md",
+        "omega_mind_advanced.md"
       ]
     },
     {
       "id": "Artificer",
       "domain": "MIND",
-      "docs": 5,
+      "docs": 10,
       "bronnen": [
+        "omega_body_advanced.md",
+        "omega_mind_advanced.md",
+        "omega_rag_advanced_architecture.md",
+        "omega_security_advanced.md",
         "omega_skills_advanced.md"
       ]
     },
     {
       "id": "VoidWalker",
       "domain": "MIND",
-      "docs": 5,
+      "docs": 10,
       "bronnen": [
-        "omega_rag_advanced_architecture.md",
+        "MYTHICAL_NEXUS_DESIGN.md",
         "omega_mind_advanced.md",
-        "omega_wiring_advanced.md",
-        "omega_soul_advanced.md",
-        "MYTHICAL_NEXUS_DESIGN.md"
+        "omega_persona_advanced.md",
+        "omega_quests_advanced.md",
+        "omega_security_advanced.md"
       ]
     },
     {
       "id": "Tribunal",
       "domain": "MIND",
-      "docs": 5,
+      "docs": 10,
       "bronnen": [
-        "omega_resources_advanced.md",
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md",
         "omega_rag_advanced_architecture.md",
         "omega_security_advanced.md",
-        "omega_wiring_advanced.md"
+        "omega_skills_advanced.md"
       ]
     },
     {
       "id": "EternalSentinel",
       "domain": "MIND",
-      "docs": 5,
+      "docs": 10,
       "bronnen": [
-        "omega_rag_advanced_architecture.md",
-        "omega_quests_advanced.md",
-        "omega_security_advanced.md",
-        "omega_wiring_advanced.md"
+        "MYTHICAL_NEXUS_DESIGN.md",
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_persona_advanced.md"
       ]
     },
     {
-      "id": "Governor",
+      "id": "OmegaGovernor",
       "domain": "MIND",
-      "docs": 5,
+      "docs": 10,
       "bronnen": [
-        "omega_resources_advanced.md",
-        "omega_security_advanced.md",
+        "MYTHICAL_NEXUS_DESIGN.md",
+        "omega_apps_advanced.md",
+        "omega_body_advanced.md",
         "omega_mind_advanced.md",
-        "omega_wiring_advanced.md"
+        "omega_persona_advanced.md"
+      ]
+    },
+    {
+      "id": "VirtualTwin",
+      "domain": "MIND",
+      "docs": 10,
+      "bronnen": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_quests_advanced.md",
+        "omega_soul_advanced.md",
+        "omega_ui_advanced.md"
+      ]
+    },
+    {
+      "id": "Dreamer",
+      "domain": "MIND",
+      "docs": 10,
+      "bronnen": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_apps_advanced.md",
+        "omega_mind_advanced.md",
+        "omega_persona_advanced.md"
       ]
     },
     {
       "id": "NeuralBus",
       "domain": "BODY",
-      "docs": 5,
+      "docs": 10,
       "bronnen": [
-        "omega_soul_advanced.md",
-        "omega_body_advanced.md"
+        "deep_dive_autopsie.md",
+        "omega_apps_advanced.md",
+        "omega_body_advanced.md",
+        "omega_quests_advanced.md",
+        "omega_security_advanced.md"
       ]
     },
     {
       "id": "KeyManager",
       "domain": "BODY",
-      "docs": 5,
+      "docs": 10,
       "bronnen": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
         "omega_resources_advanced.md",
-        "omega_security_advanced.md",
         "omega_skills_advanced.md",
         "omega_soul_advanced.md"
       ]
     },
     {
-      "id": "VRAMGuard",
+      "id": "VRAMBudgetGuard",
       "domain": "BODY",
-      "docs": 5,
+      "docs": 10,
       "bronnen": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_mind_advanced.md",
         "omega_resources_advanced.md",
-        "omega_body_advanced.md"
+        "omega_security_advanced.md"
       ]
     },
     {
       "id": "GPUControl",
       "domain": "BODY",
-      "docs": 5,
+      "docs": 10,
       "bronnen": [
-        "omega_resources_advanced.md",
-        "omega_mind_advanced.md"
+        "daily_lesson_2026-03-08.md",
+        "omega_apps_advanced.md",
+        "omega_body_advanced.md",
+        "omega_persona_advanced.md",
+        "omega_quests_advanced.md"
       ]
     },
     {
       "id": "SingletonLock",
       "domain": "BODY",
-      "docs": 5,
+      "docs": 10,
       "bronnen": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
         "omega_resources_advanced.md",
-        "omega_wiring_advanced.md",
-        "omega_body_advanced.md"
+        "omega_v611_updates.md"
       ]
     },
     {
       "id": "HeartbeatDaemon",
       "domain": "BODY",
-      "docs": 5,
+      "docs": 10,
       "bronnen": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
         "omega_persona_advanced.md",
-        "omega_soul_advanced.md",
-        "omega_quests_advanced.md"
+        "omega_quests_advanced.md",
+        "omega_v611_updates.md"
       ]
     },
     {
       "id": "FastAPI",
       "domain": "BODY",
-      "docs": 5,
+      "docs": 10,
       "bronnen": [
-        "omega_quests_advanced.md",
         "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
         "omega_mind_advanced.md",
-        "omega_wiring_advanced.md"
+        "omega_soul_advanced.md",
+        "omega_ui_advanced.md"
       ]
     },
     {
       "id": "RequestTracer",
       "domain": "BODY",
-      "docs": 5,
+      "docs": 10,
       "bronnen": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
         "omega_apps_advanced.md",
-        "omega_security_advanced.md",
-        "omega_wiring_advanced.md",
-        "omega_body_advanced.md"
+        "omega_persona_advanced.md",
+        "omega_resources_advanced.md"
+      ]
+    },
+    {
+      "id": "SemanticCache",
+      "domain": "BODY",
+      "docs": 10,
+      "bronnen": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_learning_advanced.md",
+        "omega_mind_advanced.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "id": "ConfigAuditor",
+      "domain": "BODY",
+      "docs": 10,
+      "bronnen": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_quests_advanced.md",
+        "omega_resources_advanced.md",
+        "omega_security_advanced.md"
       ]
     },
     {
       "id": "CorticalStack",
       "domain": "SOUL",
-      "docs": 5,
+      "docs": 10,
       "bronnen": [
-        "omega_mind_advanced.md",
-        "omega_soul_advanced.md",
-        "omega_quests_advanced.md"
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_ui_advanced.md",
+        "omega_wiring_advanced.md"
       ]
     },
     {
       "id": "ChromaDB",
       "domain": "SOUL",
-      "docs": 5,
+      "docs": 10,
       "bronnen": [
+        "deep_dive_autopsie.md",
+        "omega_resources_advanced.md",
         "omega_security_advanced.md",
         "omega_skills_advanced.md",
         "omega_soul_advanced.md"
@@ -208,56 +292,73 @@
     {
       "id": "TheCortex",
       "domain": "SOUL",
-      "docs": 5,
+      "docs": 10,
       "bronnen": [
-        "omega_rag_advanced_architecture.md",
-        "omega_mind_advanced.md",
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_persona_advanced.md",
         "omega_soul_advanced.md"
       ]
     },
     {
       "id": "BlackBox",
       "domain": "SOUL",
-      "docs": 5,
+      "docs": 10,
       "bronnen": [
-        "omega_rag_advanced_architecture.md",
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
         "omega_security_advanced.md",
-        "omega_soul_advanced.md",
-        "omega_wiring_advanced.md"
+        "omega_skills_advanced.md",
+        "omega_ui_advanced.md"
       ]
     },
     {
       "id": "UnifiedMemory",
       "domain": "SOUL",
-      "docs": 5,
+      "docs": 10,
       "bronnen": [
-        "omega_apps_advanced.md",
-        "omega_soul_advanced.md",
+        "deep_dive_autopsie.md",
         "omega_body_advanced.md",
-        "omega_skills_advanced.md",
-        "omega_learning_advanced.md"
-      ]
-    },
-    {
-      "id": "Dreamer",
-      "domain": "SOUL",
-      "docs": 5,
-      "bronnen": [
-        "omega_resources_advanced.md",
-        "omega_security_advanced.md",
+        "omega_learning_advanced.md",
         "omega_mind_advanced.md",
-        "omega_soul_advanced.md",
-        "deep_dive_autopsie.md"
+        "omega_quests_advanced.md"
       ]
     },
     {
       "id": "KnowledgeBridge",
       "domain": "SOUL",
-      "docs": 5,
+      "docs": 10,
       "bronnen": [
-        "omega_resources_advanced.md",
+        "MYTHICAL_NEXUS_DESIGN.md",
+        "deep_dive_autopsie.md",
+        "omega_apps_advanced.md",
+        "omega_learning_advanced.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "id": "VectorStore",
+      "domain": "SOUL",
+      "docs": 10,
+      "bronnen": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md",
         "omega_rag_advanced_architecture.md",
+        "omega_security_advanced.md",
         "omega_skills_advanced.md"
+      ]
+    },
+    {
+      "id": "Benchmark",
+      "domain": "SOUL",
+      "docs": 10,
+      "bronnen": [
+        "deep_dive_autopsie.md",
+        "omega_learning_advanced.md",
+        "omega_mind_advanced.md",
+        "omega_rag_advanced_architecture.md",
+        "omega_v611_manifest.md"
       ]
     }
   ],
@@ -265,520 +366,4524 @@
     {
       "source": "CentralBrain",
       "target": "PrometheusBrain",
-      "cross_domain": false
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
     },
     {
       "source": "CentralBrain",
       "target": "SwarmEngine",
-      "cross_domain": false
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
     },
     {
       "source": "CentralBrain",
       "target": "HallucinatieSchild",
-      "cross_domain": false
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_quests_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "CentralBrain",
+      "target": "Strategist",
+      "weight": 1,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md"
+      ]
+    },
+    {
+      "source": "CentralBrain",
+      "target": "Artificer",
+      "weight": 1,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "CentralBrain",
+      "target": "VoidWalker",
+      "weight": 1,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_quests_advanced.md"
+      ]
     },
     {
       "source": "CentralBrain",
       "target": "Tribunal",
-      "cross_domain": false
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "CentralBrain",
+      "target": "EternalSentinel",
+      "weight": 4,
+      "cross_domain": false,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "CentralBrain",
+      "target": "VirtualTwin",
+      "weight": 4,
+      "cross_domain": false,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "CentralBrain",
+      "target": "Dreamer",
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md"
+      ]
+    },
+    {
+      "source": "CentralBrain",
+      "target": "NeuralBus",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_quests_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "CentralBrain",
+      "target": "KeyManager",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_v611_updates.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "CentralBrain",
+      "target": "VRAMBudgetGuard",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_v611_updates.md"
+      ]
+    },
+    {
+      "source": "CentralBrain",
+      "target": "GPUControl",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "omega_quests_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "CentralBrain",
+      "target": "SingletonLock",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_v611_updates.md"
+      ]
+    },
+    {
+      "source": "CentralBrain",
+      "target": "HeartbeatDaemon",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_quests_advanced.md",
+        "omega_v611_updates.md"
+      ]
+    },
+    {
+      "source": "CentralBrain",
+      "target": "FastAPI",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "CentralBrain",
+      "target": "RequestTracer",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "CentralBrain",
+      "target": "SemanticCache",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_quests_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "CentralBrain",
+      "target": "ConfigAuditor",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "CentralBrain",
+      "target": "CorticalStack",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "CentralBrain",
+      "target": "ChromaDB",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "CentralBrain",
+      "target": "TheCortex",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_v611_updates.md"
+      ]
+    },
+    {
+      "source": "CentralBrain",
+      "target": "BlackBox",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
     },
     {
       "source": "CentralBrain",
       "target": "UnifiedMemory",
-      "cross_domain": true
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_quests_advanced.md"
+      ]
     },
     {
-      "source": "PrometheusBrain",
-      "target": "Governor",
-      "cross_domain": false
+      "source": "CentralBrain",
+      "target": "KnowledgeBridge",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "CentralBrain",
+      "target": "VectorStore",
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md"
+      ]
+    },
+    {
+      "source": "CentralBrain",
+      "target": "Benchmark",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
     },
     {
       "source": "PrometheusBrain",
       "target": "SwarmEngine",
-      "cross_domain": false
-    },
-    {
-      "source": "PrometheusBrain",
-      "target": "CorticalStack",
-      "cross_domain": true
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
     },
     {
       "source": "PrometheusBrain",
       "target": "HallucinatieSchild",
-      "cross_domain": false
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "Strategist",
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md"
+      ]
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "Artificer",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_mind_advanced.md",
+        "omega_security_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "VoidWalker",
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_mind_advanced.md",
+        "omega_security_advanced.md"
+      ]
     },
     {
       "source": "PrometheusBrain",
       "target": "Tribunal",
-      "cross_domain": false
+      "weight": 4,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md",
+        "omega_security_advanced.md"
+      ]
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "EternalSentinel",
+      "weight": 1,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md"
+      ]
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "OmegaGovernor",
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_mind_advanced.md",
+        "omega_ui_advanced.md"
+      ]
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "VirtualTwin",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_ui_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "Dreamer",
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md"
+      ]
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "NeuralBus",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_security_advanced.md",
+        "omega_ui_advanced.md"
+      ]
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "KeyManager",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "VRAMBudgetGuard",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md",
+        "omega_security_advanced.md"
+      ]
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "GPUControl",
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "SingletonLock",
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md"
+      ]
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "HeartbeatDaemon",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "FastAPI",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md",
+        "omega_ui_advanced.md"
+      ]
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "RequestTracer",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_ui_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "SemanticCache",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "ConfigAuditor",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_security_advanced.md"
+      ]
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "CorticalStack",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_ui_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "ChromaDB",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_security_advanced.md",
+        "omega_ui_advanced.md"
+      ]
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "TheCortex",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "BlackBox",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_security_advanced.md",
+        "omega_ui_advanced.md"
+      ]
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "UnifiedMemory",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md"
+      ]
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "KnowledgeBridge",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_ui_advanced.md"
+      ]
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "VectorStore",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md",
+        "omega_security_advanced.md"
+      ]
+    },
+    {
+      "source": "PrometheusBrain",
+      "target": "Benchmark",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "SwarmEngine",
+      "target": "HallucinatieSchild",
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
     },
     {
       "source": "SwarmEngine",
       "target": "Strategist",
-      "cross_domain": false
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md"
+      ]
     },
     {
       "source": "SwarmEngine",
       "target": "Artificer",
-      "cross_domain": false
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
     },
     {
       "source": "SwarmEngine",
-      "target": "VoidWalker",
-      "cross_domain": false
+      "target": "Tribunal",
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "SwarmEngine",
+      "target": "EternalSentinel",
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md"
+      ]
+    },
+    {
+      "source": "SwarmEngine",
+      "target": "OmegaGovernor",
+      "weight": 1,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_body_advanced.md"
+      ]
+    },
+    {
+      "source": "SwarmEngine",
+      "target": "VirtualTwin",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_v611_manifest.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "SwarmEngine",
+      "target": "Dreamer",
+      "weight": 1,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md"
+      ]
+    },
+    {
+      "source": "SwarmEngine",
+      "target": "NeuralBus",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
     },
     {
       "source": "SwarmEngine",
       "target": "KeyManager",
-      "cross_domain": true
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
     },
     {
-      "source": "HallucinatieSchild",
-      "target": "Artificer",
-      "cross_domain": false
+      "source": "SwarmEngine",
+      "target": "VRAMBudgetGuard",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md"
+      ]
+    },
+    {
+      "source": "SwarmEngine",
+      "target": "GPUControl",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_v611_manifest.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "SwarmEngine",
+      "target": "SingletonLock",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md"
+      ]
+    },
+    {
+      "source": "SwarmEngine",
+      "target": "HeartbeatDaemon",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "SwarmEngine",
+      "target": "FastAPI",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "SwarmEngine",
+      "target": "RequestTracer",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_v611_manifest.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "SwarmEngine",
+      "target": "SemanticCache",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "SwarmEngine",
+      "target": "ConfigAuditor",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md"
+      ]
+    },
+    {
+      "source": "SwarmEngine",
+      "target": "CorticalStack",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "SwarmEngine",
+      "target": "ChromaDB",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "SwarmEngine",
+      "target": "TheCortex",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "SwarmEngine",
+      "target": "BlackBox",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "SwarmEngine",
+      "target": "UnifiedMemory",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md"
+      ]
+    },
+    {
+      "source": "SwarmEngine",
+      "target": "KnowledgeBridge",
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md"
+      ]
+    },
+    {
+      "source": "SwarmEngine",
+      "target": "VectorStore",
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md"
+      ]
+    },
+    {
+      "source": "SwarmEngine",
+      "target": "Benchmark",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_v611_manifest.md",
+        "omega_wiring_advanced.md"
+      ]
     },
     {
       "source": "HallucinatieSchild",
       "target": "Strategist",
-      "cross_domain": false
+      "weight": 4,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_apps_advanced.md",
+        "omega_persona_advanced.md"
+      ]
+    },
+    {
+      "source": "HallucinatieSchild",
+      "target": "Artificer",
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_rag_advanced_architecture.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "HallucinatieSchild",
+      "target": "VoidWalker",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "MYTHICAL_NEXUS_DESIGN.md",
+        "omega_persona_advanced.md",
+        "omega_quests_advanced.md"
+      ]
     },
     {
       "source": "HallucinatieSchild",
       "target": "Tribunal",
-      "cross_domain": false
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_rag_advanced_architecture.md",
+        "omega_wiring_advanced.md"
+      ]
     },
     {
       "source": "HallucinatieSchild",
-      "target": "CorticalStack",
-      "cross_domain": true
+      "target": "EternalSentinel",
+      "weight": 4,
+      "cross_domain": false,
+      "shared_sources": [
+        "MYTHICAL_NEXUS_DESIGN.md",
+        "deep_dive_autopsie.md",
+        "omega_persona_advanced.md"
+      ]
     },
     {
       "source": "HallucinatieSchild",
-      "target": "Governor",
-      "cross_domain": false
+      "target": "OmegaGovernor",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "MYTHICAL_NEXUS_DESIGN.md",
+        "omega_apps_advanced.md",
+        "omega_persona_advanced.md"
+      ]
+    },
+    {
+      "source": "HallucinatieSchild",
+      "target": "VirtualTwin",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_quests_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "HallucinatieSchild",
+      "target": "Dreamer",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_apps_advanced.md",
+        "omega_persona_advanced.md"
+      ]
     },
     {
       "source": "HallucinatieSchild",
       "target": "NeuralBus",
-      "cross_domain": true
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_apps_advanced.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "HallucinatieSchild",
+      "target": "KeyManager",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "HallucinatieSchild",
+      "target": "VRAMBudgetGuard",
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md"
+      ]
+    },
+    {
+      "source": "HallucinatieSchild",
+      "target": "GPUControl",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_apps_advanced.md",
+        "omega_persona_advanced.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "HallucinatieSchild",
+      "target": "SingletonLock",
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md"
+      ]
+    },
+    {
+      "source": "HallucinatieSchild",
+      "target": "HeartbeatDaemon",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_persona_advanced.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "HallucinatieSchild",
+      "target": "FastAPI",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "HallucinatieSchild",
+      "target": "RequestTracer",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_apps_advanced.md",
+        "omega_persona_advanced.md"
+      ]
+    },
+    {
+      "source": "HallucinatieSchild",
+      "target": "SemanticCache",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_quests_advanced.md",
+        "omega_rag_advanced_architecture.md"
+      ]
+    },
+    {
+      "source": "HallucinatieSchild",
+      "target": "ConfigAuditor",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "HallucinatieSchild",
+      "target": "CorticalStack",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "HallucinatieSchild",
+      "target": "ChromaDB",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "HallucinatieSchild",
+      "target": "TheCortex",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_persona_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
     },
     {
       "source": "HallucinatieSchild",
       "target": "BlackBox",
-      "cross_domain": true
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "HallucinatieSchild",
+      "target": "UnifiedMemory",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_quests_advanced.md",
+        "omega_rag_advanced_architecture.md"
+      ]
+    },
+    {
+      "source": "HallucinatieSchild",
+      "target": "KnowledgeBridge",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "MYTHICAL_NEXUS_DESIGN.md",
+        "deep_dive_autopsie.md",
+        "omega_apps_advanced.md"
+      ]
+    },
+    {
+      "source": "HallucinatieSchild",
+      "target": "VectorStore",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_rag_advanced_architecture.md"
+      ]
+    },
+    {
+      "source": "HallucinatieSchild",
+      "target": "Benchmark",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_rag_advanced_architecture.md",
+        "omega_wiring_advanced.md"
+      ]
     },
     {
       "source": "Strategist",
-      "target": "CentralBrain",
-      "cross_domain": false
+      "target": "Artificer",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_mind_advanced.md",
+        "omega_rag_advanced_architecture.md"
+      ]
     },
     {
       "source": "Strategist",
       "target": "VoidWalker",
-      "cross_domain": false
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_mind_advanced.md",
+        "omega_persona_advanced.md"
+      ]
     },
     {
       "source": "Strategist",
       "target": "Tribunal",
-      "cross_domain": false
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md",
+        "omega_rag_advanced_architecture.md"
+      ]
+    },
+    {
+      "source": "Strategist",
+      "target": "EternalSentinel",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_persona_advanced.md"
+      ]
+    },
+    {
+      "source": "Strategist",
+      "target": "OmegaGovernor",
+      "weight": 4,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_apps_advanced.md",
+        "omega_body_advanced.md",
+        "omega_mind_advanced.md"
+      ]
+    },
+    {
+      "source": "Strategist",
+      "target": "VirtualTwin",
+      "weight": 1,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md"
+      ]
+    },
+    {
+      "source": "Strategist",
+      "target": "Dreamer",
+      "weight": 4,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_apps_advanced.md",
+        "omega_mind_advanced.md"
+      ]
+    },
+    {
+      "source": "Strategist",
+      "target": "NeuralBus",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_apps_advanced.md",
+        "omega_body_advanced.md"
+      ]
+    },
+    {
+      "source": "Strategist",
+      "target": "KeyManager",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md"
+      ]
+    },
+    {
+      "source": "Strategist",
+      "target": "VRAMBudgetGuard",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_mind_advanced.md"
+      ]
+    },
+    {
+      "source": "Strategist",
+      "target": "GPUControl",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_apps_advanced.md",
+        "omega_body_advanced.md",
+        "omega_persona_advanced.md"
+      ]
+    },
+    {
+      "source": "Strategist",
+      "target": "SingletonLock",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md"
+      ]
+    },
+    {
+      "source": "Strategist",
+      "target": "HeartbeatDaemon",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_persona_advanced.md"
+      ]
+    },
+    {
+      "source": "Strategist",
+      "target": "FastAPI",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_mind_advanced.md"
+      ]
+    },
+    {
+      "source": "Strategist",
+      "target": "RequestTracer",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_apps_advanced.md",
+        "omega_persona_advanced.md"
+      ]
+    },
+    {
+      "source": "Strategist",
+      "target": "SemanticCache",
+      "weight": 5,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_learning_advanced.md"
+      ]
+    },
+    {
+      "source": "Strategist",
+      "target": "ConfigAuditor",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md"
+      ]
     },
     {
       "source": "Strategist",
       "target": "CorticalStack",
-      "cross_domain": true
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md"
+      ]
+    },
+    {
+      "source": "Strategist",
+      "target": "ChromaDB",
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md"
+      ]
+    },
+    {
+      "source": "Strategist",
+      "target": "TheCortex",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_persona_advanced.md"
+      ]
+    },
+    {
+      "source": "Strategist",
+      "target": "BlackBox",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md"
+      ]
     },
     {
       "source": "Strategist",
       "target": "UnifiedMemory",
-      "cross_domain": true
+      "weight": 5,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_learning_advanced.md"
+      ]
     },
     {
       "source": "Strategist",
-      "target": "Artificer",
-      "cross_domain": false
+      "target": "KnowledgeBridge",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_apps_advanced.md",
+        "omega_learning_advanced.md"
+      ]
     },
     {
       "source": "Strategist",
-      "target": "TheCortex",
-      "cross_domain": true
+      "target": "VectorStore",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md",
+        "omega_rag_advanced_architecture.md"
+      ]
     },
     {
       "source": "Strategist",
-      "target": "PrometheusBrain",
-      "cross_domain": false
-    },
-    {
-      "source": "Strategist",
-      "target": "Governor",
-      "cross_domain": false
+      "target": "Benchmark",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_learning_advanced.md",
+        "omega_mind_advanced.md"
+      ]
     },
     {
       "source": "Artificer",
-      "target": "KeyManager",
-      "cross_domain": true
+      "target": "VoidWalker",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_mind_advanced.md",
+        "omega_security_advanced.md",
+        "omega_skills_advanced.md"
+      ]
     },
     {
       "source": "Artificer",
-      "target": "BlackBox",
-      "cross_domain": true
+      "target": "Tribunal",
+      "weight": 5,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_mind_advanced.md",
+        "omega_rag_advanced_architecture.md",
+        "omega_security_advanced.md"
+      ]
+    },
+    {
+      "source": "Artificer",
+      "target": "EternalSentinel",
+      "weight": 1,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_body_advanced.md"
+      ]
+    },
+    {
+      "source": "Artificer",
+      "target": "OmegaGovernor",
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_mind_advanced.md"
+      ]
+    },
+    {
+      "source": "Artificer",
+      "target": "VirtualTwin",
+      "weight": 1,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "Artificer",
+      "target": "Dreamer",
+      "weight": 1,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_mind_advanced.md"
+      ]
     },
     {
       "source": "Artificer",
       "target": "NeuralBus",
-      "cross_domain": true
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_security_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
     },
     {
-      "source": "VoidWalker",
-      "target": "Dreamer",
-      "cross_domain": true
+      "source": "Artificer",
+      "target": "KeyManager",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_skills_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
     },
     {
-      "source": "VoidWalker",
-      "target": "CentralBrain",
-      "cross_domain": false
+      "source": "Artificer",
+      "target": "VRAMBudgetGuard",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_mind_advanced.md",
+        "omega_security_advanced.md"
+      ]
     },
     {
-      "source": "VoidWalker",
-      "target": "HallucinatieSchild",
-      "cross_domain": false
+      "source": "Artificer",
+      "target": "GPUControl",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
     },
     {
-      "source": "VoidWalker",
+      "source": "Artificer",
+      "target": "SingletonLock",
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_body_advanced.md"
+      ]
+    },
+    {
+      "source": "Artificer",
+      "target": "HeartbeatDaemon",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "Artificer",
+      "target": "FastAPI",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_mind_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "Artificer",
+      "target": "RequestTracer",
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "Artificer",
+      "target": "SemanticCache",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_mind_advanced.md",
+        "omega_rag_advanced_architecture.md"
+      ]
+    },
+    {
+      "source": "Artificer",
+      "target": "ConfigAuditor",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_security_advanced.md",
+        "omega_skills_advanced.md"
+      ]
+    },
+    {
+      "source": "Artificer",
       "target": "CorticalStack",
-      "cross_domain": true
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
     },
     {
-      "source": "VoidWalker",
+      "source": "Artificer",
+      "target": "ChromaDB",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_security_advanced.md",
+        "omega_skills_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "Artificer",
+      "target": "TheCortex",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "Artificer",
       "target": "BlackBox",
-      "cross_domain": true
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_security_advanced.md",
+        "omega_skills_advanced.md"
+      ]
     },
     {
-      "source": "VoidWalker",
-      "target": "Artificer",
-      "cross_domain": false
+      "source": "Artificer",
+      "target": "UnifiedMemory",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_mind_advanced.md",
+        "omega_rag_advanced_architecture.md"
+      ]
+    },
+    {
+      "source": "Artificer",
+      "target": "KnowledgeBridge",
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_skills_advanced.md"
+      ]
+    },
+    {
+      "source": "Artificer",
+      "target": "VectorStore",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_mind_advanced.md",
+        "omega_rag_advanced_architecture.md",
+        "omega_security_advanced.md"
+      ]
+    },
+    {
+      "source": "Artificer",
+      "target": "Benchmark",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_mind_advanced.md",
+        "omega_rag_advanced_architecture.md",
+        "omega_wiring_advanced.md"
+      ]
     },
     {
       "source": "VoidWalker",
       "target": "Tribunal",
-      "cross_domain": false
+      "weight": 4,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_mind_advanced.md",
+        "omega_security_advanced.md",
+        "omega_skills_advanced.md"
+      ]
+    },
+    {
+      "source": "VoidWalker",
+      "target": "EternalSentinel",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "MYTHICAL_NEXUS_DESIGN.md",
+        "omega_persona_advanced.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "VoidWalker",
+      "target": "OmegaGovernor",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "MYTHICAL_NEXUS_DESIGN.md",
+        "omega_mind_advanced.md",
+        "omega_persona_advanced.md"
+      ]
+    },
+    {
+      "source": "VoidWalker",
+      "target": "VirtualTwin",
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_quests_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "VoidWalker",
+      "target": "Dreamer",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_mind_advanced.md",
+        "omega_persona_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "VoidWalker",
+      "target": "NeuralBus",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_quests_advanced.md",
+        "omega_security_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "VoidWalker",
+      "target": "KeyManager",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_skills_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "VoidWalker",
+      "target": "VRAMBudgetGuard",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_mind_advanced.md",
+        "omega_security_advanced.md"
+      ]
+    },
+    {
+      "source": "VoidWalker",
+      "target": "GPUControl",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_persona_advanced.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "VoidWalker",
+      "target": "HeartbeatDaemon",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_persona_advanced.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "VoidWalker",
+      "target": "FastAPI",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_mind_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "VoidWalker",
+      "target": "RequestTracer",
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_persona_advanced.md"
+      ]
+    },
+    {
+      "source": "VoidWalker",
+      "target": "SemanticCache",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_mind_advanced.md",
+        "omega_quests_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "VoidWalker",
+      "target": "ConfigAuditor",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_quests_advanced.md",
+        "omega_security_advanced.md",
+        "omega_skills_advanced.md"
+      ]
+    },
+    {
+      "source": "VoidWalker",
+      "target": "ChromaDB",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_security_advanced.md",
+        "omega_skills_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "VoidWalker",
+      "target": "TheCortex",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_persona_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "VoidWalker",
+      "target": "BlackBox",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_security_advanced.md",
+        "omega_skills_advanced.md"
+      ]
+    },
+    {
+      "source": "VoidWalker",
+      "target": "UnifiedMemory",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_mind_advanced.md",
+        "omega_quests_advanced.md",
+        "omega_skills_advanced.md"
+      ]
+    },
+    {
+      "source": "VoidWalker",
+      "target": "KnowledgeBridge",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "MYTHICAL_NEXUS_DESIGN.md",
+        "omega_quests_advanced.md",
+        "omega_skills_advanced.md"
+      ]
+    },
+    {
+      "source": "VoidWalker",
+      "target": "VectorStore",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_mind_advanced.md",
+        "omega_security_advanced.md",
+        "omega_skills_advanced.md"
+      ]
+    },
+    {
+      "source": "VoidWalker",
+      "target": "Benchmark",
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_mind_advanced.md"
+      ]
     },
     {
       "source": "Tribunal",
-      "target": "Governor",
-      "cross_domain": false
+      "target": "EternalSentinel",
+      "weight": 1,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md"
+      ]
     },
     {
       "source": "Tribunal",
-      "target": "Artificer",
-      "cross_domain": false
+      "target": "OmegaGovernor",
+      "weight": 1,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_mind_advanced.md"
+      ]
+    },
+    {
+      "source": "Tribunal",
+      "target": "VirtualTwin",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_soul_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "Tribunal",
+      "target": "Dreamer",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "Tribunal",
+      "target": "NeuralBus",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_security_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "Tribunal",
+      "target": "KeyManager",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_skills_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "Tribunal",
+      "target": "VRAMBudgetGuard",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md",
+        "omega_security_advanced.md"
+      ]
+    },
+    {
+      "source": "Tribunal",
+      "target": "GPUControl",
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "Tribunal",
+      "target": "SingletonLock",
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md"
+      ]
+    },
+    {
+      "source": "Tribunal",
+      "target": "HeartbeatDaemon",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "Tribunal",
+      "target": "FastAPI",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "Tribunal",
+      "target": "RequestTracer",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "Tribunal",
+      "target": "SemanticCache",
+      "weight": 5,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md",
+        "omega_rag_advanced_architecture.md"
+      ]
+    },
+    {
+      "source": "Tribunal",
+      "target": "ConfigAuditor",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_security_advanced.md",
+        "omega_skills_advanced.md"
+      ]
+    },
+    {
+      "source": "Tribunal",
+      "target": "CorticalStack",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "Tribunal",
+      "target": "ChromaDB",
+      "weight": 5,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_security_advanced.md",
+        "omega_skills_advanced.md"
+      ]
     },
     {
       "source": "Tribunal",
       "target": "TheCortex",
-      "cross_domain": true
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_soul_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
     },
     {
       "source": "Tribunal",
+      "target": "BlackBox",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_security_advanced.md",
+        "omega_skills_advanced.md"
+      ]
+    },
+    {
+      "source": "Tribunal",
+      "target": "UnifiedMemory",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md",
+        "omega_rag_advanced_architecture.md"
+      ]
+    },
+    {
+      "source": "Tribunal",
+      "target": "KnowledgeBridge",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_skills_advanced.md"
+      ]
+    },
+    {
+      "source": "Tribunal",
+      "target": "VectorStore",
+      "weight": 6,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md",
+        "omega_rag_advanced_architecture.md"
+      ]
+    },
+    {
+      "source": "Tribunal",
+      "target": "Benchmark",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md",
+        "omega_rag_advanced_architecture.md"
+      ]
+    },
+    {
+      "source": "EternalSentinel",
+      "target": "OmegaGovernor",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "MYTHICAL_NEXUS_DESIGN.md",
+        "omega_body_advanced.md",
+        "omega_persona_advanced.md"
+      ]
+    },
+    {
+      "source": "EternalSentinel",
+      "target": "VirtualTwin",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "EternalSentinel",
       "target": "Dreamer",
-      "cross_domain": true
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_persona_advanced.md"
+      ]
     },
     {
       "source": "EternalSentinel",
-      "target": "HallucinatieSchild",
-      "cross_domain": false
+      "target": "NeuralBus",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_quests_advanced.md"
+      ]
     },
     {
       "source": "EternalSentinel",
-      "target": "Strategist",
-      "cross_domain": false
+      "target": "KeyManager",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_v611_updates.md"
+      ]
     },
     {
       "source": "EternalSentinel",
-      "target": "Tribunal",
-      "cross_domain": false
+      "target": "VRAMBudgetGuard",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_v611_updates.md"
+      ]
+    },
+    {
+      "source": "EternalSentinel",
+      "target": "GPUControl",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "omega_body_advanced.md",
+        "omega_persona_advanced.md"
+      ]
+    },
+    {
+      "source": "EternalSentinel",
+      "target": "SingletonLock",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md"
+      ]
+    },
+    {
+      "source": "EternalSentinel",
+      "target": "HeartbeatDaemon",
+      "weight": 5,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_persona_advanced.md"
+      ]
+    },
+    {
+      "source": "EternalSentinel",
+      "target": "FastAPI",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md"
+      ]
+    },
+    {
+      "source": "EternalSentinel",
+      "target": "RequestTracer",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_persona_advanced.md"
+      ]
+    },
+    {
+      "source": "EternalSentinel",
+      "target": "SemanticCache",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "EternalSentinel",
+      "target": "ConfigAuditor",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_quests_advanced.md"
+      ]
     },
     {
       "source": "EternalSentinel",
       "target": "CorticalStack",
-      "cross_domain": true
-    },
-    {
-      "source": "EternalSentinel",
-      "target": "BlackBox",
-      "cross_domain": true
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md"
+      ]
     },
     {
       "source": "EternalSentinel",
       "target": "ChromaDB",
-      "cross_domain": true
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md"
+      ]
     },
     {
-      "source": "Governor",
-      "target": "NeuralBus",
-      "cross_domain": true
+      "source": "EternalSentinel",
+      "target": "TheCortex",
+      "weight": 5,
+      "cross_domain": true,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md"
+      ]
     },
     {
-      "source": "Governor",
+      "source": "EternalSentinel",
       "target": "BlackBox",
-      "cross_domain": true
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md"
+      ]
     },
     {
-      "source": "Governor",
-      "target": "CentralBrain",
-      "cross_domain": false
-    },
-    {
-      "source": "Governor",
-      "target": "Dreamer",
-      "cross_domain": true
-    },
-    {
-      "source": "NeuralBus",
+      "source": "EternalSentinel",
       "target": "UnifiedMemory",
-      "cross_domain": true
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "EternalSentinel",
+      "target": "KnowledgeBridge",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "MYTHICAL_NEXUS_DESIGN.md",
+        "deep_dive_autopsie.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "EternalSentinel",
+      "target": "VectorStore",
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md"
+      ]
+    },
+    {
+      "source": "EternalSentinel",
+      "target": "Benchmark",
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md"
+      ]
+    },
+    {
+      "source": "OmegaGovernor",
+      "target": "VirtualTwin",
+      "weight": 1,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_ui_advanced.md"
+      ]
+    },
+    {
+      "source": "OmegaGovernor",
+      "target": "Dreamer",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_apps_advanced.md",
+        "omega_mind_advanced.md",
+        "omega_persona_advanced.md"
+      ]
+    },
+    {
+      "source": "OmegaGovernor",
+      "target": "NeuralBus",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_apps_advanced.md",
+        "omega_body_advanced.md",
+        "omega_ui_advanced.md"
+      ]
+    },
+    {
+      "source": "OmegaGovernor",
+      "target": "KeyManager",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_resources_advanced.md"
+      ]
+    },
+    {
+      "source": "OmegaGovernor",
+      "target": "VRAMBudgetGuard",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_mind_advanced.md",
+        "omega_resources_advanced.md"
+      ]
+    },
+    {
+      "source": "OmegaGovernor",
+      "target": "GPUControl",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_apps_advanced.md",
+        "omega_body_advanced.md",
+        "omega_persona_advanced.md"
+      ]
+    },
+    {
+      "source": "OmegaGovernor",
+      "target": "SingletonLock",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_resources_advanced.md"
+      ]
+    },
+    {
+      "source": "OmegaGovernor",
+      "target": "HeartbeatDaemon",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_persona_advanced.md"
+      ]
+    },
+    {
+      "source": "OmegaGovernor",
+      "target": "FastAPI",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_mind_advanced.md",
+        "omega_ui_advanced.md"
+      ]
+    },
+    {
+      "source": "OmegaGovernor",
+      "target": "RequestTracer",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_apps_advanced.md",
+        "omega_persona_advanced.md",
+        "omega_resources_advanced.md"
+      ]
+    },
+    {
+      "source": "OmegaGovernor",
+      "target": "SemanticCache",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_mind_advanced.md"
+      ]
+    },
+    {
+      "source": "OmegaGovernor",
+      "target": "ConfigAuditor",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_resources_advanced.md"
+      ]
+    },
+    {
+      "source": "OmegaGovernor",
+      "target": "CorticalStack",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_ui_advanced.md"
+      ]
+    },
+    {
+      "source": "OmegaGovernor",
+      "target": "ChromaDB",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_resources_advanced.md",
+        "omega_ui_advanced.md"
+      ]
+    },
+    {
+      "source": "OmegaGovernor",
+      "target": "TheCortex",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_persona_advanced.md"
+      ]
+    },
+    {
+      "source": "OmegaGovernor",
+      "target": "BlackBox",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_ui_advanced.md"
+      ]
+    },
+    {
+      "source": "OmegaGovernor",
+      "target": "UnifiedMemory",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_mind_advanced.md"
+      ]
+    },
+    {
+      "source": "OmegaGovernor",
+      "target": "KnowledgeBridge",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "MYTHICAL_NEXUS_DESIGN.md",
+        "omega_apps_advanced.md",
+        "omega_ui_advanced.md"
+      ]
+    },
+    {
+      "source": "OmegaGovernor",
+      "target": "VectorStore",
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_mind_advanced.md"
+      ]
+    },
+    {
+      "source": "OmegaGovernor",
+      "target": "Benchmark",
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_mind_advanced.md"
+      ]
+    },
+    {
+      "source": "VirtualTwin",
+      "target": "Dreamer",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "VirtualTwin",
+      "target": "NeuralBus",
+      "weight": 5,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_quests_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "VirtualTwin",
+      "target": "KeyManager",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_soul_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "VirtualTwin",
+      "target": "VRAMBudgetGuard",
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md"
+      ]
+    },
+    {
+      "source": "VirtualTwin",
+      "target": "GPUControl",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "omega_quests_advanced.md",
+        "omega_v611_manifest.md"
+      ]
+    },
+    {
+      "source": "VirtualTwin",
+      "target": "SingletonLock",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md"
+      ]
+    },
+    {
+      "source": "VirtualTwin",
+      "target": "HeartbeatDaemon",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_quests_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "VirtualTwin",
+      "target": "FastAPI",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_soul_advanced.md",
+        "omega_ui_advanced.md"
+      ]
+    },
+    {
+      "source": "VirtualTwin",
+      "target": "RequestTracer",
+      "weight": 5,
+      "cross_domain": true,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_ui_advanced.md"
+      ]
+    },
+    {
+      "source": "VirtualTwin",
+      "target": "SemanticCache",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_quests_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "VirtualTwin",
+      "target": "ConfigAuditor",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_quests_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "VirtualTwin",
+      "target": "CorticalStack",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_ui_advanced.md"
+      ]
+    },
+    {
+      "source": "VirtualTwin",
+      "target": "ChromaDB",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_soul_advanced.md",
+        "omega_ui_advanced.md"
+      ]
+    },
+    {
+      "source": "VirtualTwin",
+      "target": "TheCortex",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "VirtualTwin",
+      "target": "BlackBox",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_ui_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "VirtualTwin",
+      "target": "UnifiedMemory",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "VirtualTwin",
+      "target": "KnowledgeBridge",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_quests_advanced.md",
+        "omega_ui_advanced.md"
+      ]
+    },
+    {
+      "source": "VirtualTwin",
+      "target": "VectorStore",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "VirtualTwin",
+      "target": "Benchmark",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_v611_manifest.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "Dreamer",
+      "target": "NeuralBus",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_apps_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "Dreamer",
+      "target": "KeyManager",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "Dreamer",
+      "target": "VRAMBudgetGuard",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md"
+      ]
+    },
+    {
+      "source": "Dreamer",
+      "target": "GPUControl",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "omega_apps_advanced.md",
+        "omega_persona_advanced.md"
+      ]
+    },
+    {
+      "source": "Dreamer",
+      "target": "SingletonLock",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md"
+      ]
+    },
+    {
+      "source": "Dreamer",
+      "target": "HeartbeatDaemon",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_persona_advanced.md"
+      ]
+    },
+    {
+      "source": "Dreamer",
+      "target": "FastAPI",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "Dreamer",
+      "target": "RequestTracer",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_apps_advanced.md"
+      ]
+    },
+    {
+      "source": "Dreamer",
+      "target": "SemanticCache",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "Dreamer",
+      "target": "ConfigAuditor",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "Dreamer",
+      "target": "CorticalStack",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md"
+      ]
+    },
+    {
+      "source": "Dreamer",
+      "target": "ChromaDB",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "Dreamer",
+      "target": "TheCortex",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_persona_advanced.md"
+      ]
+    },
+    {
+      "source": "Dreamer",
+      "target": "BlackBox",
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md"
+      ]
+    },
+    {
+      "source": "Dreamer",
+      "target": "UnifiedMemory",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md"
+      ]
+    },
+    {
+      "source": "Dreamer",
+      "target": "KnowledgeBridge",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_apps_advanced.md"
+      ]
+    },
+    {
+      "source": "Dreamer",
+      "target": "VectorStore",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "Dreamer",
+      "target": "Benchmark",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md"
+      ]
     },
     {
       "source": "NeuralBus",
-      "target": "Tribunal",
-      "cross_domain": true
+      "target": "KeyManager",
+      "weight": 4,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "NeuralBus",
+      "target": "VRAMBudgetGuard",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_security_advanced.md"
+      ]
+    },
+    {
+      "source": "NeuralBus",
+      "target": "GPUControl",
+      "weight": 4,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_apps_advanced.md",
+        "omega_body_advanced.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "NeuralBus",
+      "target": "SingletonLock",
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md"
+      ]
+    },
+    {
+      "source": "NeuralBus",
+      "target": "HeartbeatDaemon",
+      "weight": 4,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "NeuralBus",
+      "target": "FastAPI",
+      "weight": 5,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "NeuralBus",
+      "target": "RequestTracer",
+      "weight": 4,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_apps_advanced.md",
+        "omega_ui_advanced.md"
+      ]
+    },
+    {
+      "source": "NeuralBus",
+      "target": "SemanticCache",
+      "weight": 5,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "NeuralBus",
+      "target": "ConfigAuditor",
+      "weight": 5,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_quests_advanced.md"
+      ]
     },
     {
       "source": "NeuralBus",
       "target": "CorticalStack",
-      "cross_domain": true
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_ui_advanced.md"
+      ]
+    },
+    {
+      "source": "NeuralBus",
+      "target": "ChromaDB",
+      "weight": 5,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_security_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "NeuralBus",
+      "target": "TheCortex",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "NeuralBus",
+      "target": "BlackBox",
+      "weight": 5,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_security_advanced.md"
+      ]
+    },
+    {
+      "source": "NeuralBus",
+      "target": "UnifiedMemory",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "NeuralBus",
+      "target": "KnowledgeBridge",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_apps_advanced.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "NeuralBus",
+      "target": "VectorStore",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_security_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "NeuralBus",
+      "target": "Benchmark",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
     },
     {
       "source": "KeyManager",
-      "target": "CentralBrain",
-      "cross_domain": true
+      "target": "VRAMBudgetGuard",
+      "weight": 4,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_resources_advanced.md"
+      ]
     },
     {
       "source": "KeyManager",
-      "target": "Strategist",
-      "cross_domain": true
+      "target": "GPUControl",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_resources_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
     },
     {
       "source": "KeyManager",
-      "target": "Tribunal",
-      "cross_domain": true
+      "target": "SingletonLock",
+      "weight": 4,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_resources_advanced.md"
+      ]
     },
     {
       "source": "KeyManager",
-      "target": "VoidWalker",
-      "cross_domain": true
+      "target": "HeartbeatDaemon",
+      "weight": 4,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_v611_updates.md"
+      ]
+    },
+    {
+      "source": "KeyManager",
+      "target": "FastAPI",
+      "weight": 4,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "KeyManager",
+      "target": "RequestTracer",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_resources_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "KeyManager",
+      "target": "SemanticCache",
+      "weight": 4,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "KeyManager",
+      "target": "ConfigAuditor",
+      "weight": 5,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_resources_advanced.md"
+      ]
+    },
+    {
+      "source": "KeyManager",
+      "target": "CorticalStack",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "KeyManager",
+      "target": "ChromaDB",
+      "weight": 5,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_resources_advanced.md",
+        "omega_skills_advanced.md"
+      ]
     },
     {
       "source": "KeyManager",
       "target": "TheCortex",
-      "cross_domain": true
+      "weight": 5,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_soul_advanced.md"
+      ]
     },
     {
       "source": "KeyManager",
-      "target": "Dreamer",
-      "cross_domain": true
+      "target": "BlackBox",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_skills_advanced.md"
+      ]
     },
     {
-      "source": "VRAMGuard",
-      "target": "SwarmEngine",
-      "cross_domain": true
+      "source": "KeyManager",
+      "target": "UnifiedMemory",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_skills_advanced.md"
+      ]
+    },
+    {
+      "source": "KeyManager",
+      "target": "KnowledgeBridge",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_skills_advanced.md"
+      ]
+    },
+    {
+      "source": "KeyManager",
+      "target": "VectorStore",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_skills_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "KeyManager",
+      "target": "Benchmark",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "VRAMBudgetGuard",
+      "target": "GPUControl",
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_resources_advanced.md"
+      ]
+    },
+    {
+      "source": "VRAMBudgetGuard",
+      "target": "SingletonLock",
+      "weight": 4,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_resources_advanced.md"
+      ]
+    },
+    {
+      "source": "VRAMBudgetGuard",
+      "target": "HeartbeatDaemon",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_v611_updates.md"
+      ]
+    },
+    {
+      "source": "VRAMBudgetGuard",
+      "target": "FastAPI",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_mind_advanced.md"
+      ]
+    },
+    {
+      "source": "VRAMBudgetGuard",
+      "target": "RequestTracer",
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_resources_advanced.md"
+      ]
+    },
+    {
+      "source": "VRAMBudgetGuard",
+      "target": "SemanticCache",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_mind_advanced.md"
+      ]
+    },
+    {
+      "source": "VRAMBudgetGuard",
+      "target": "ConfigAuditor",
+      "weight": 4,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_resources_advanced.md"
+      ]
+    },
+    {
+      "source": "VRAMBudgetGuard",
+      "target": "CorticalStack",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md"
+      ]
+    },
+    {
+      "source": "VRAMBudgetGuard",
+      "target": "ChromaDB",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_resources_advanced.md",
+        "omega_security_advanced.md"
+      ]
+    },
+    {
+      "source": "VRAMBudgetGuard",
+      "target": "TheCortex",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_v611_updates.md"
+      ]
+    },
+    {
+      "source": "VRAMBudgetGuard",
+      "target": "BlackBox",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_security_advanced.md"
+      ]
+    },
+    {
+      "source": "VRAMBudgetGuard",
+      "target": "UnifiedMemory",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_mind_advanced.md"
+      ]
+    },
+    {
+      "source": "VRAMBudgetGuard",
+      "target": "KnowledgeBridge",
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md"
+      ]
+    },
+    {
+      "source": "VRAMBudgetGuard",
+      "target": "VectorStore",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md",
+        "omega_security_advanced.md"
+      ]
+    },
+    {
+      "source": "VRAMBudgetGuard",
+      "target": "Benchmark",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md"
+      ]
     },
     {
       "source": "GPUControl",
-      "target": "SwarmEngine",
-      "cross_domain": true
+      "target": "SingletonLock",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "omega_body_advanced.md",
+        "omega_resources_advanced.md"
+      ]
+    },
+    {
+      "source": "GPUControl",
+      "target": "HeartbeatDaemon",
+      "weight": 4,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_persona_advanced.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "GPUControl",
+      "target": "FastAPI",
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "GPUControl",
+      "target": "RequestTracer",
+      "weight": 6,
+      "cross_domain": false,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "omega_apps_advanced.md",
+        "omega_persona_advanced.md"
+      ]
+    },
+    {
+      "source": "GPUControl",
+      "target": "SemanticCache",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_quests_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "GPUControl",
+      "target": "ConfigAuditor",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_quests_advanced.md",
+        "omega_resources_advanced.md"
+      ]
+    },
+    {
+      "source": "GPUControl",
+      "target": "CorticalStack",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "omega_body_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "GPUControl",
+      "target": "ChromaDB",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_resources_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "GPUControl",
+      "target": "TheCortex",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "omega_body_advanced.md",
+        "omega_persona_advanced.md"
+      ]
+    },
+    {
+      "source": "GPUControl",
+      "target": "BlackBox",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "GPUControl",
+      "target": "UnifiedMemory",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_body_advanced.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "GPUControl",
+      "target": "KnowledgeBridge",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_apps_advanced.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "GPUControl",
+      "target": "Benchmark",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "omega_v611_manifest.md",
+        "omega_wiring_advanced.md"
+      ]
     },
     {
       "source": "SingletonLock",
-      "target": "CentralBrain",
-      "cross_domain": true
+      "target": "HeartbeatDaemon",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_v611_updates.md"
+      ]
     },
     {
       "source": "SingletonLock",
-      "target": "Strategist",
-      "cross_domain": true
+      "target": "FastAPI",
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md"
+      ]
     },
     {
       "source": "SingletonLock",
-      "target": "Artificer",
-      "cross_domain": true
+      "target": "RequestTracer",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_resources_advanced.md"
+      ]
     },
     {
       "source": "SingletonLock",
-      "target": "VoidWalker",
-      "cross_domain": true
+      "target": "SemanticCache",
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md"
+      ]
     },
     {
       "source": "SingletonLock",
-      "target": "Tribunal",
-      "cross_domain": true
+      "target": "ConfigAuditor",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_resources_advanced.md"
+      ]
+    },
+    {
+      "source": "SingletonLock",
+      "target": "CorticalStack",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md"
+      ]
+    },
+    {
+      "source": "SingletonLock",
+      "target": "ChromaDB",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_resources_advanced.md"
+      ]
     },
     {
       "source": "SingletonLock",
       "target": "TheCortex",
-      "cross_domain": true
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md"
+      ]
     },
     {
       "source": "SingletonLock",
-      "target": "Dreamer",
-      "cross_domain": true
+      "target": "BlackBox",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md"
+      ]
     },
     {
       "source": "SingletonLock",
-      "target": "Governor",
-      "cross_domain": true
+      "target": "UnifiedMemory",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md"
+      ]
+    },
+    {
+      "source": "SingletonLock",
+      "target": "KnowledgeBridge",
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md"
+      ]
+    },
+    {
+      "source": "SingletonLock",
+      "target": "VectorStore",
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md"
+      ]
+    },
+    {
+      "source": "SingletonLock",
+      "target": "Benchmark",
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md"
+      ]
     },
     {
       "source": "HeartbeatDaemon",
-      "target": "Governor",
-      "cross_domain": true
+      "target": "FastAPI",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "HeartbeatDaemon",
+      "target": "RequestTracer",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_persona_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "HeartbeatDaemon",
+      "target": "SemanticCache",
+      "weight": 4,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "HeartbeatDaemon",
+      "target": "ConfigAuditor",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "HeartbeatDaemon",
+      "target": "CorticalStack",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "HeartbeatDaemon",
+      "target": "ChromaDB",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "HeartbeatDaemon",
+      "target": "TheCortex",
+      "weight": 5,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_persona_advanced.md"
+      ]
+    },
+    {
+      "source": "HeartbeatDaemon",
+      "target": "BlackBox",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "HeartbeatDaemon",
+      "target": "UnifiedMemory",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "HeartbeatDaemon",
+      "target": "KnowledgeBridge",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "HeartbeatDaemon",
+      "target": "VectorStore",
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md"
+      ]
+    },
+    {
+      "source": "HeartbeatDaemon",
+      "target": "Benchmark",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
     },
     {
       "source": "FastAPI",
-      "target": "Governor",
-      "cross_domain": true
+      "target": "RequestTracer",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_ui_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "FastAPI",
+      "target": "SemanticCache",
+      "weight": 5,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_mind_advanced.md"
+      ]
+    },
+    {
+      "source": "FastAPI",
+      "target": "ConfigAuditor",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_soul_advanced.md"
+      ]
     },
     {
       "source": "FastAPI",
       "target": "CorticalStack",
-      "cross_domain": true
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_ui_advanced.md"
+      ]
     },
     {
       "source": "FastAPI",
-      "target": "CentralBrain",
-      "cross_domain": true
+      "target": "ChromaDB",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_soul_advanced.md",
+        "omega_ui_advanced.md"
+      ]
     },
     {
       "source": "FastAPI",
-      "target": "HallucinatieSchild",
-      "cross_domain": true
+      "target": "TheCortex",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_soul_advanced.md"
+      ]
     },
     {
       "source": "FastAPI",
-      "target": "Strategist",
-      "cross_domain": true
+      "target": "BlackBox",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_ui_advanced.md"
+      ]
     },
     {
       "source": "FastAPI",
-      "target": "Tribunal",
-      "cross_domain": true
+      "target": "UnifiedMemory",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_mind_advanced.md"
+      ]
+    },
+    {
+      "source": "FastAPI",
+      "target": "KnowledgeBridge",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_ui_advanced.md"
+      ]
+    },
+    {
+      "source": "FastAPI",
+      "target": "VectorStore",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "FastAPI",
+      "target": "Benchmark",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "RequestTracer",
+      "target": "SemanticCache",
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "RequestTracer",
+      "target": "ConfigAuditor",
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_resources_advanced.md"
+      ]
     },
     {
       "source": "RequestTracer",
       "target": "CorticalStack",
-      "cross_domain": true
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_ui_advanced.md"
+      ]
     },
     {
       "source": "RequestTracer",
-      "target": "HallucinatieSchild",
-      "cross_domain": true
+      "target": "ChromaDB",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_resources_advanced.md",
+        "omega_ui_advanced.md"
+      ]
     },
     {
       "source": "RequestTracer",
-      "target": "Tribunal",
-      "cross_domain": true
+      "target": "TheCortex",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_persona_advanced.md"
+      ]
     },
     {
       "source": "RequestTracer",
-      "target": "NeuralBus",
-      "cross_domain": false
+      "target": "BlackBox",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_ui_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "RequestTracer",
+      "target": "UnifiedMemory",
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md"
+      ]
+    },
+    {
+      "source": "RequestTracer",
+      "target": "KnowledgeBridge",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_apps_advanced.md",
+        "omega_ui_advanced.md"
+      ]
+    },
+    {
+      "source": "RequestTracer",
+      "target": "VectorStore",
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md"
+      ]
+    },
+    {
+      "source": "RequestTracer",
+      "target": "Benchmark",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_v611_manifest.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "SemanticCache",
+      "target": "ConfigAuditor",
+      "weight": 4,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "SemanticCache",
+      "target": "CorticalStack",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "SemanticCache",
+      "target": "ChromaDB",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_soul_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "SemanticCache",
+      "target": "TheCortex",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "SemanticCache",
+      "target": "BlackBox",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "SemanticCache",
+      "target": "UnifiedMemory",
+      "weight": 6,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_learning_advanced.md"
+      ]
+    },
+    {
+      "source": "SemanticCache",
+      "target": "KnowledgeBridge",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_learning_advanced.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "SemanticCache",
+      "target": "VectorStore",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md",
+        "omega_rag_advanced_architecture.md"
+      ]
+    },
+    {
+      "source": "SemanticCache",
+      "target": "Benchmark",
+      "weight": 5,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_learning_advanced.md",
+        "omega_mind_advanced.md"
+      ]
+    },
+    {
+      "source": "ConfigAuditor",
+      "target": "CorticalStack",
+      "weight": 2,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md"
+      ]
+    },
+    {
+      "source": "ConfigAuditor",
+      "target": "ChromaDB",
+      "weight": 5,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_resources_advanced.md",
+        "omega_security_advanced.md"
+      ]
+    },
+    {
+      "source": "ConfigAuditor",
+      "target": "TheCortex",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "ConfigAuditor",
+      "target": "BlackBox",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_security_advanced.md"
+      ]
+    },
+    {
+      "source": "ConfigAuditor",
+      "target": "UnifiedMemory",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_quests_advanced.md"
+      ]
+    },
+    {
+      "source": "ConfigAuditor",
+      "target": "KnowledgeBridge",
+      "weight": 3,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_quests_advanced.md",
+        "omega_skills_advanced.md"
+      ]
+    },
+    {
+      "source": "ConfigAuditor",
+      "target": "VectorStore",
+      "weight": 4,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_security_advanced.md",
+        "omega_skills_advanced.md"
+      ]
+    },
+    {
+      "source": "ConfigAuditor",
+      "target": "Benchmark",
+      "weight": 1,
+      "cross_domain": true,
+      "shared_sources": [
+        "deep_dive_autopsie.md"
+      ]
     },
     {
       "source": "CorticalStack",
       "target": "ChromaDB",
-      "cross_domain": false
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_ui_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "CorticalStack",
+      "target": "TheCortex",
+      "weight": 4,
+      "cross_domain": false,
+      "shared_sources": [
+        "daily_lesson_2026-03-08.md",
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md"
+      ]
     },
     {
       "source": "CorticalStack",
       "target": "BlackBox",
-      "cross_domain": false
+      "weight": 4,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_ui_advanced.md"
+      ]
     },
     {
       "source": "CorticalStack",
       "target": "UnifiedMemory",
-      "cross_domain": false
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md"
+      ]
     },
     {
-      "source": "ChromaDB",
-      "target": "Governor",
-      "cross_domain": true
+      "source": "CorticalStack",
+      "target": "KnowledgeBridge",
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_ui_advanced.md"
+      ]
+    },
+    {
+      "source": "CorticalStack",
+      "target": "VectorStore",
+      "weight": 1,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md"
+      ]
+    },
+    {
+      "source": "CorticalStack",
+      "target": "Benchmark",
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
     },
     {
       "source": "ChromaDB",
       "target": "TheCortex",
-      "cross_domain": false
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_soul_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
     },
     {
-      "source": "BlackBox",
-      "target": "NeuralBus",
-      "cross_domain": true
-    },
-    {
-      "source": "BlackBox",
-      "target": "Dreamer",
-      "cross_domain": false
-    },
-    {
-      "source": "UnifiedMemory",
-      "target": "ChromaDB",
-      "cross_domain": false
-    },
-    {
-      "source": "UnifiedMemory",
+      "source": "ChromaDB",
       "target": "BlackBox",
-      "cross_domain": false
+      "weight": 5,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_security_advanced.md",
+        "omega_skills_advanced.md"
+      ]
+    },
+    {
+      "source": "ChromaDB",
+      "target": "UnifiedMemory",
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_skills_advanced.md"
+      ]
+    },
+    {
+      "source": "ChromaDB",
+      "target": "KnowledgeBridge",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_skills_advanced.md",
+        "omega_ui_advanced.md"
+      ]
+    },
+    {
+      "source": "ChromaDB",
+      "target": "VectorStore",
+      "weight": 4,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_security_advanced.md",
+        "omega_skills_advanced.md"
+      ]
+    },
+    {
+      "source": "ChromaDB",
+      "target": "Benchmark",
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "TheCortex",
+      "target": "BlackBox",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "TheCortex",
+      "target": "UnifiedMemory",
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md"
+      ]
+    },
+    {
+      "source": "TheCortex",
+      "target": "KnowledgeBridge",
+      "weight": 1,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md"
+      ]
+    },
+    {
+      "source": "TheCortex",
+      "target": "VectorStore",
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_soul_advanced.md"
+      ]
+    },
+    {
+      "source": "TheCortex",
+      "target": "Benchmark",
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
+    },
+    {
+      "source": "BlackBox",
+      "target": "UnifiedMemory",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_body_advanced.md",
+        "omega_skills_advanced.md"
+      ]
+    },
+    {
+      "source": "BlackBox",
+      "target": "KnowledgeBridge",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_skills_advanced.md",
+        "omega_ui_advanced.md"
+      ]
+    },
+    {
+      "source": "BlackBox",
+      "target": "VectorStore",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_security_advanced.md",
+        "omega_skills_advanced.md"
+      ]
+    },
+    {
+      "source": "BlackBox",
+      "target": "Benchmark",
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_wiring_advanced.md"
+      ]
     },
     {
       "source": "UnifiedMemory",
-      "target": "Artificer",
-      "cross_domain": true
+      "target": "KnowledgeBridge",
+      "weight": 4,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_learning_advanced.md",
+        "omega_quests_advanced.md"
+      ]
     },
     {
-      "source": "Dreamer",
-      "target": "CorticalStack",
-      "cross_domain": false
+      "source": "UnifiedMemory",
+      "target": "VectorStore",
+      "weight": 4,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md",
+        "omega_rag_advanced_architecture.md"
+      ]
     },
     {
-      "source": "Dreamer",
-      "target": "CentralBrain",
-      "cross_domain": true
-    },
-    {
-      "source": "Dreamer",
-      "target": "Strategist",
-      "cross_domain": true
-    },
-    {
-      "source": "Dreamer",
-      "target": "Artificer",
-      "cross_domain": true
-    },
-    {
-      "source": "Dreamer",
-      "target": "TheCortex",
-      "cross_domain": false
+      "source": "UnifiedMemory",
+      "target": "Benchmark",
+      "weight": 4,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_learning_advanced.md",
+        "omega_mind_advanced.md"
+      ]
     },
     {
       "source": "KnowledgeBridge",
-      "target": "ChromaDB",
-      "cross_domain": false
+      "target": "VectorStore",
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_skills_advanced.md"
+      ]
     },
     {
       "source": "KnowledgeBridge",
-      "target": "Artificer",
-      "cross_domain": true
+      "target": "Benchmark",
+      "weight": 2,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_learning_advanced.md"
+      ]
+    },
+    {
+      "source": "VectorStore",
+      "target": "Benchmark",
+      "weight": 3,
+      "cross_domain": false,
+      "shared_sources": [
+        "deep_dive_autopsie.md",
+        "omega_mind_advanced.md",
+        "omega_rag_advanced_architecture.md"
+      ]
     }
   ],
   "meta": {
+    "total_nodes": 30,
+    "total_edges": 430,
+    "cross_domain_edges": 293,
     "total_docs": 462,
-    "total_nodes": 25,
-    "total_edges": 101,
-    "cross_domain_edges": 59,
-    "domains": {
-      "MIND": 50,
-      "BODY": 40,
-      "SOUL": 35
-    },
-    "generated": "2026-03-08T14:54:02",
-    "scan_time_s": 4.2
+    "collections_scanned": [
+      "omega_advanced_skills"
+    ]
   }
 }
