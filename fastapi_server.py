@@ -1758,7 +1758,16 @@ if HAS_DASHBOARD:
     @app.get("/ui/", response_class=HTMLResponse, include_in_schema=False)
     async def dashboard(_key: str = Depends(verify_ui_key)):
         tmpl = _templates.get_template("dashboard.html")
-        return HTMLResponse(tmpl.render())
+        response = HTMLResponse(tmpl.render())
+        # Zet cookie zodat HTMX partials automatisch geauthenticeerd zijn
+        response.set_cookie(
+            key="ui_token",
+            value=FASTAPI_SECRET_KEY,
+            httponly=True,
+            samesite="strict",
+            max_age=86400,  # 24 uur
+        )
+        return response
 
     @app.get("/ui/partials/agents", response_class=HTMLResponse, include_in_schema=False)
     async def partial_agents(_key: str = Depends(verify_ui_key)):
