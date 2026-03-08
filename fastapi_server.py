@@ -2107,6 +2107,36 @@ if HAS_DASHBOARD:
         tmpl = _templates.get_template("partials/governor_guard.html")
         return _set_ui_cookie(HTMLResponse(tmpl.render(status=status)))
 
+    # ─── Benchmark Results ──────────────────────────
+
+    @app.get("/ui/partials/benchmark", response_class=HTMLResponse, include_in_schema=False)
+    async def partial_benchmark(_key: str = Depends(verify_ui_key)):
+        benchmark = None
+        try:
+            import json as _json
+            bench_path = Path(__file__).parent / "data" / "benchmark_results.json"
+            if bench_path.exists():
+                with open(bench_path, "r", encoding="utf-8") as f:
+                    benchmark = _json.load(f)
+        except Exception as e:
+            logger.debug("Benchmark partial: %s", e)
+        tmpl = _templates.get_template("partials/benchmark.html")
+        return _set_ui_cookie(HTMLResponse(tmpl.render(benchmark=benchmark)))
+
+    @app.get(
+        "/api/v1/benchmark",
+        summary="Hardware benchmark resultaten",
+        tags=["Systeem"],
+    )
+    async def api_benchmark(_key: str = Depends(verify_api_key)):
+        """Retourneer de laatste benchmark resultaten uit data/benchmark_results.json."""
+        import json as _json
+        bench_path = Path(__file__).parent / "data" / "benchmark_results.json"
+        if not bench_path.exists():
+            return {"status": "no_data", "message": "Run omega_benchmark.py eerst"}
+        with open(bench_path, "r", encoding="utf-8") as f:
+            return _json.load(f)
+
     @app.get("/ui/events", include_in_schema=False)
     async def sse_events(_key: str = Depends(verify_ui_key)):
         """SSE stream — polls NeuralBus elke 2s voor nieuwe events."""

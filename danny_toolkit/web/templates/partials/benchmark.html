@@ -1,0 +1,94 @@
+<div class="benchmark-results">
+    {% if not benchmark %}
+    <p style="color: var(--text-secondary);">Geen benchmark data. Run <code>omega_benchmark.py</code></p>
+    {% else %}
+    <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+        {{ benchmark.timestamp[:16] }} | {{ benchmark.total_benchmark_seconds }}s
+    </div>
+    <table class="rate-table">
+    <thead>
+        <tr><th>Component</th><th>Metric</th><th>Value</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+        <!-- CPU/RAM -->
+        <tr>
+            <td>CPU</td>
+            <td>{{ benchmark.cpu_ram.cpu_cores }} cores @ {{ benchmark.cpu_ram.cpu_freq_mhz }} MHz</td>
+            <td>{{ benchmark.cpu_ram.cpu_percent }}%</td>
+            <td><span class="{{ 'low' if benchmark.cpu_ram.cpu_percent < 80 else 'high' }}">
+                {{ "OK" if benchmark.cpu_ram.cpu_percent < 80 else "HIGH" }}</span></td>
+        </tr>
+        <tr>
+            <td>RAM</td>
+            <td>{{ benchmark.cpu_ram.ram_total_gb }} GB</td>
+            <td>{{ benchmark.cpu_ram.ram_percent }}%</td>
+            <td><span class="{{ 'low' if benchmark.cpu_ram.ram_percent < 85 else 'high' }}">
+                {{ "OK" if benchmark.cpu_ram.ram_percent < 85 else "HIGH" }}</span></td>
+        </tr>
+        <!-- GPU -->
+        {% if benchmark.gpu.available %}
+        <tr>
+            <td>GPU</td>
+            <td>{{ benchmark.gpu.gpu_name }}</td>
+            <td>{{ benchmark.gpu.temp_c }}°C | {{ benchmark.gpu.pstate }}</td>
+            <td><span class="{{ 'low' if benchmark.gpu.temp_c < 75 else 'high' }}">
+                {{ "OK" if benchmark.gpu.temp_c < 75 else "HOT" }}</span></td>
+        </tr>
+        <tr>
+            <td>VRAM</td>
+            <td>{{ benchmark.gpu.vram_free_mb }} / {{ benchmark.gpu.vram_total_mb }} MiB free</td>
+            <td>{{ benchmark.gpu.power_w }}W</td>
+            <td><span class="{{ 'low' if benchmark.gpu.vram_free_mb > 1500 else 'high' }}">
+                {{ "OK" if benchmark.gpu.vram_free_mb > 1500 else "LOW" }}</span></td>
+        </tr>
+        {% endif %}
+        <!-- SQLite -->
+        <tr>
+            <td>SQLite</td>
+            <td>{{ benchmark.sqlite.event_count|default(0) }} events ({{ benchmark.sqlite.db_size_mb|default("?") }} MB)</td>
+            <td>Read: {{ benchmark.sqlite.read_1000_ms|default("?") }}ms</td>
+            <td><span class="low">OK</span></td>
+        </tr>
+        <!-- Embedding -->
+        {% if benchmark.embedding.available %}
+        <tr>
+            <td>Embedding</td>
+            <td>{{ benchmark.embedding.provider }} {{ benchmark.embedding.vector_dim }}d</td>
+            <td>{{ benchmark.embedding.per_text_ms|default("?") }}ms/text</td>
+            <td><span class="low">OK</span></td>
+        </tr>
+        {% endif %}
+        <!-- RAG Store -->
+        {% if benchmark.vector_store.available %}
+        <tr>
+            <td>RAG Store</td>
+            <td>{{ benchmark.vector_store.total_docs }} docs (ChromaDB + JSON)</td>
+            <td>{{ benchmark.vector_store.chromadb_avg_search_ms|default("?") }}ms search</td>
+            <td><span class="{{ 'low' if benchmark.vector_store.chromadb_avg_search_ms|default(999) < 200 else 'high' }}">
+                {{ "OK" if benchmark.vector_store.chromadb_avg_search_ms|default(999) < 200 else "SLOW" }}</span></td>
+        </tr>
+        {% endif %}
+        <!-- LLM -->
+        {% if benchmark.llm.available %}
+        <tr>
+            <td>LLM (Groq)</td>
+            <td>{{ benchmark.llm.model }}</td>
+            <td>{{ benchmark.llm.avg_ms }}ms avg</td>
+            <td><span class="{{ 'low' if benchmark.llm.avg_ms < 500 else 'high' }}">
+                {{ "OK" if benchmark.llm.avg_ms < 500 else "SLOW" }}</span></td>
+        </tr>
+        {% endif %}
+        <!-- L1 Pulse -->
+        {% if benchmark.l1_pulse.available %}
+        <tr>
+            <td>L1 Pulse</td>
+            <td>/api/v1/health</td>
+            <td>{{ benchmark.l1_pulse.avg_ms }}ms avg (P95: {{ benchmark.l1_pulse.p95_ms }}ms)</td>
+            <td><span class="{{ 'low' if benchmark.l1_pulse.avg_ms < 10 else 'high' }}">
+                {{ "OK" if benchmark.l1_pulse.avg_ms < 10 else "SLOW" }}</span></td>
+        </tr>
+        {% endif %}
+    </tbody>
+    </table>
+    {% endif %}
+</div>

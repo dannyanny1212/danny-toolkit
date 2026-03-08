@@ -248,15 +248,18 @@ Het communicatiesysteem tussen alle componenten.
 
 ---
 
-## HARDWARE BASELINE
+## HARDWARE BASELINE (Benchmark 2026-03-08)
 
-| Component | Specificatie | Optimalisatie |
-|-----------|-------------|---------------|
-| GPU | NVIDIA GeForce RTX 3060 Ti (8 GB) | VRAMBudgetGuard, P-State management |
-| SQLite | WAL mode | 64 MB cache, 256 MB mmap, busy_timeout=5000 |
-| Swarm Workers | CPU-core-aware | min(max(cpu_count, 4), 16) |
-| Embedding | Voyage 1024d → 256d MRL | ProcessPool voor >500 vectors |
-| LLM | Groq cloud (meta-llama/llama-4-scout) | 10-key isolation, $0 VRAM |
-| Vision | Ollama llava:latest | ~4.7 GB VRAM (serialized) |
-| L1 Pulse | /api/v1/health | <3ms response |
-| L3 Deep | /api/v1/health/deep | ~400ms (Groq probe + diagnostiek) |
+| Component | Specificatie | Gemeten | Optimalisatie |
+|-----------|-------------|---------|---------------|
+| CPU | 16 cores @ 3401 MHz | 7.4% idle | Swarm workers: min(max(cpu_count, 4), 16) |
+| RAM | 31.9 GB DDR4 | 14.2 GB (44.5%) | CPU-core-aware pools |
+| GPU | NVIDIA GeForce RTX 3060 Ti (8 GB) | 32°C, P8 idle, 12.3W | VRAMBudgetGuard, P-State management |
+| VRAM | 8192 MiB totaal | 1902 MiB in gebruik, 6123 MiB vrij | Serialized workloads (Ollama vs Torch) |
+| SQLite | WAL mode, 81K+ events, 20.8 MB | Read 1000: 1.64ms, Count: 0.05ms | 64 MB cache, 256 MB mmap, busy_timeout=5000 |
+| Embedding | Voyage voyage-4-large 256d MRL | 333ms/text (API), 0.1ms cached | ProcessPool voor >500 vectors |
+| RAG Store | ChromaDB 644 docs + JSON 225 docs = 869 totaal | Search: 141ms avg (127-182ms) | 3 shards (code/docs/data) |
+| LLM | Groq cloud (llama-4-scout-17b-16e) | 168ms avg (64-345ms) | 10-key isolation, $0 VRAM |
+| Vision | Ollama llava:latest | ~4.7 GB VRAM (serialized) | VRAMBudgetGuard slot |
+| L1 Pulse | /api/v1/health | **0.99ms** avg (0.85-1.24ms), P95: 1.24ms | Geen brain loading |
+| L3 Deep | /api/v1/health/deep | ~400ms (Groq probe + diagnostiek) | Full system diagnose |

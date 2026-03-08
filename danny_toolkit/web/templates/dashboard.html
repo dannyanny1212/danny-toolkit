@@ -142,6 +142,20 @@
         </div>
     </div>
 
+    <!-- Hardware Benchmark -->
+    <div class="card" style="grid-column: span 2;">
+        <div class="card-header">
+            Hardware Benchmark
+            <span class="htmx-indicator">laden...</span>
+        </div>
+        <div class="card-body"
+             hx-get="/ui/partials/benchmark"
+             hx-trigger="load, every 60s"
+             hx-indicator="closest .card">
+            <p style="color: var(--text-secondary);">Benchmark laden...</p>
+        </div>
+    </div>
+
     <!-- Event Feed (SSE) -->
     <div class="card">
         <div class="card-header">

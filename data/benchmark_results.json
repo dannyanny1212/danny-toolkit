@@ -1,0 +1,84 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-03-08T15:46:21.781230",
+  "system": "OMEGA v6.11.0",
+  "cpu_ram": {
+    "cpu_cores": 16,
+    "cpu_freq_mhz": 3401,
+    "cpu_freq_max_mhz": 3401,
+    "cpu_percent": 7.4,
+    "ram_total_gb": 31.9,
+    "ram_used_gb": 14.2,
+    "ram_percent": 44.5
+  },
+  "gpu": {
+    "available": true,
+    "gpu_name": "NVIDIA GeForce RTX 3060 Ti",
+    "clock_mhz": 210,
+    "clock_max_mhz": 2100,
+    "mem_clock_mhz": 405,
+    "mem_clock_max_mhz": 7001,
+    "power_w": 12.29,
+    "power_limit_w": 200.0,
+    "pstate": "P8",
+    "temp_c": 32,
+    "vram_total_mb": 8192,
+    "vram_used_mb": 1902,
+    "vram_free_mb": 6123
+  },
+  "sqlite": {
+    "db_exists": true,
+    "event_count": 81072,
+    "tables": 11,
+    "read_1000_ms": 1.64,
+    "count_all_ms": 0.05,
+    "write_100_ms": 5533.89,
+    "db_size_mb": 20.8
+  },
+  "embedding": {
+    "available": true,
+    "provider": "<danny_toolkit.core.embeddings.VoyageEmbeddings object at 0x0000024AC36E9850>",
+    "dim": 256,
+    "single_embed_ms": 0.1,
+    "vector_dim": 52,
+    "batch_3_ms": 998.1,
+    "per_text_ms": 332.7
+  },
+  "vector_store": {
+    "available": true,
+    "chromadb_collections": 5,
+    "chromadb_docs": 644,
+    "chromadb_avg_search_ms": 141.0,
+    "chromadb_min_search_ms": 127.3,
+    "chromadb_max_search_ms": 181.8,
+    "json_store_docs": 225,
+    "json_store_path": "unified_vectors.json",
+    "total_docs": 869
+  },
+  "llm": {
+    "available": true,
+    "model": "meta-llama/llama-4-scout-17b-16e-instruct",
+    "warmup_ms": 218.0,
+    "avg_ms": 205.5,
+    "min_ms": 101.6,
+    "max_ms": 277.0,
+    "calls": 3
+  },
+  "l1_pulse": {
+    "available": true,
+    "avg_ms": 0.99,
+    "min_ms": 0.85,
+    "max_ms": 1.24,
+    "p95_ms": 1.24,
+    "calls": 10
+  },
+  "l3_deep": {
+    "available": false,
+    "latency_ms": 2.2,
+    "status_code": 401,
+    "groq_reachable": false,
+    "active_agents": 0,
+    "memory_mb": 0
+  },
+  "total_benchmark_seconds": 19.2
+}
