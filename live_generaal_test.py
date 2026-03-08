@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-MAIDEN FLIGHT — Generaal Mode v6.8.0 Live Test
+MAIDEN FLIGHT — Generaal Mode v6.11.0 Live Test
 ================================================
 Eén gecontroleerde missie: Analyseer de BlackBox statistieken.
 
@@ -38,7 +38,7 @@ def separator(title: str):
 async def maiden_flight():
     """De eerste live inzet van de Generaal."""
 
-    separator("MAIDEN FLIGHT — Generaal Mode v6.8.0")
+    separator("MAIDEN FLIGHT — Generaal Mode v6.11.0")
     t_start = time.time()
 
     # ── Stap 1: ModelRegistry auto-discover ──

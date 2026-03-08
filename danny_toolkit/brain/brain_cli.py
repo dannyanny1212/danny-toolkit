@@ -147,7 +147,7 @@ PROJECT_DOCS = {
     "VISION_PIPELINE.md": "Vision pipeline — image analysis, UI herkenning",
     "CHANGELOG.md": "Release changelog — alle versies",
     "README.md": "Project README — overzicht en Agent Roster",
-    "docs/index.md": "MkDocs Golden Master — v6.6.0 systeem status",
+    "docs/index.md": "MkDocs Golden Master — v6.11.0 systeem status",
 }
 
 # RAG productie documenten

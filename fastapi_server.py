@@ -451,7 +451,7 @@ def _set_ui_cookie(response: Response) -> Response:
 # ─── APP ────────────────────────────────────────────
 
 app = FastAPI(
-    title="Danny Toolkit API — Golden Master v6.7.0",
+    title="Danny Toolkit API — Golden Master v6.11.0",
     description=(
         "## Omega Sovereign Core REST API\n\n"
         "176 modules | 28/28 test suites | Phase 100+\n\n"
@@ -465,7 +465,7 @@ app = FastAPI(
         "### Authenticatie\n"
         "Alle endpoints vereisen `X-API-Key` header.\n"
     ),
-    version="6.7.0",
+    version="6.11.0",
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_tags=[
@@ -809,7 +809,7 @@ async def health(
         governor_status=gov_status,
         circuit_breaker=cb_status,
         timestamp=datetime.now().isoformat(),
-        version="6.7.0",
+        version="6.11.0",
         uptime_seconds=round(uptime, 1),
         memory_mb=round(mem_mb, 1),
         active_agents=actief,

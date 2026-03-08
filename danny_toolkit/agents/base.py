@@ -1,6 +1,6 @@
 """
 Base Agent class voor het agent framework.
-Versie 6.0.0 - OMEGA_SOVEREIGN. Met multi-provider, memory system, reflection en meer!
+Versie 6.11.0 - OMEGA_SOVEREIGN. Met multi-provider, memory system, reflection en meer!
 """
 
 import logging

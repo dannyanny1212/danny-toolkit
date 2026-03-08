@@ -1,5 +1,5 @@
 """
-THE SOVEREIGN GATE v6.7.0 — Golden Master Security Enforcer.
+THE SOVEREIGN GATE v6.11.0 — Golden Master Security Enforcer.
 
 9 security checks. Code weigert te draaien tenzij ALLE checks slagen.
 Geen bypass. Geen test modus. Geen uitzonderingen.
@@ -300,7 +300,7 @@ def lock_environment():
     _audit_log("GRANTED", "ALL 9 LAWS", "Environment Verified. Welcome, Commander Danny.")
     _record_boot()
 
-    print("\u2705 [SOVEREIGN GATE v6.7.0] 9/9 Laws Verified. Welcome, Commander Danny.")
+    print("\u2705 [SOVEREIGN GATE v6.11.0] 9/9 Laws Verified. Welcome, Commander Danny.")
     return True
 
 

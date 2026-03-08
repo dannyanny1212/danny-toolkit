@@ -1,6 +1,6 @@
 """
 Multi-Agent Orchestrator.
-Versie 6.0.0 - OMEGA_SOVEREIGN. Met task queue, workflows, monitoring, retry logic en meer!
+Versie 6.11.0 - OMEGA_SOVEREIGN. Met task queue, workflows, monitoring, retry logic en meer!
 """
 
 import asyncio

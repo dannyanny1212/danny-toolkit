@@ -1,5 +1,5 @@
 """
-PROMETHEUS PROTOCOL - TRINITY OMEGA v6.0.0
+PROMETHEUS PROTOCOL - TRINITY OMEGA v6.11.0
 =========================================
 De 17 Pilaren van de Realiteit.
 
@@ -56,7 +56,7 @@ class PrometheusBrain(PrometheusProtocolsMixin):
     """
 
     SYSTEM_NAME = "OMEGA_SOVEREIGN"
-    VERSION = "6.0.0"
+    VERSION = "6.11.0"
 
     # Domein-keywords voor chain_of_command() multi-domein
     # detectie. route_task() blijft ongewijzigd.

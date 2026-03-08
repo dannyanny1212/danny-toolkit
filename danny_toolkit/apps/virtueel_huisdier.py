@@ -1,6 +1,6 @@
 """
 Virtueel Huisdier App.
-Versie 6.0.0 - VOLLEDIG AI-POWERED HUISDIER!
+Versie 6.11.0 - VOLLEDIG AI-POWERED HUISDIER!
 
 Nu met:
 - AI Personality System - Dynamische persoonlijkheid
@@ -8849,7 +8849,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
         """Start de app."""
         clear_scherm()
         print("+=======================================+")
-        print("|   VIRTUEEL HUISDIER SIMULATOR v6.0.0  |")
+        print("|   VIRTUEEL HUISDIER SIMULATOR v6.11.0  |")
         print("|   VOLLEDIG AI-POWERED HUISDIER!      |")
         print("+=======================================+")
         print("|   Features:                          |")

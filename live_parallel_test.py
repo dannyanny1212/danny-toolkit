@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-PARALLEL INTELLIGENCE — Generaal Mode v6.8.0
+PARALLEL INTELLIGENCE — Generaal Mode v6.11.0
 =============================================
 De Generaal verdeelt een complexe missie over meerdere externe AI-modellen.
 
@@ -40,7 +40,7 @@ def sep(title: str):
 async def parallel_intelligence():
     """De Generaal verdeelt taken over meerdere modellen."""
 
-    sep("PARALLEL INTELLIGENCE — Generaal Mode v6.8.0")
+    sep("PARALLEL INTELLIGENCE — Generaal Mode v6.11.0")
     t_start = time.time()
 
     # ── Stap 1: Verse registry met pre-seeded performance ──
