@@ -1768,6 +1768,15 @@ class DashboardTab(ctk.CTkFrame):
         if api_result and not str(api_result).startswith("Already"):
             w(f"  API: {api_result}/docs", "verify")
 
+        # ── Auto-open UI in browser ──
+        try:
+            import webbrowser
+            port = _omega_mode["api_port"]
+            webbrowser.open(f"http://127.0.0.1:{port}/ui/")
+            w(f"  Browser: http://127.0.0.1:{port}/ui/ geopend", "verify")
+        except Exception as e:
+            w(f"  Browser: kon niet openen — {e}", "warn")
+
         # Summary
         elapsed = time.time() - t0
         ok = len(_omega_mode["systems_ok"])
