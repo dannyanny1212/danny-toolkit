@@ -409,29 +409,36 @@ class Config:
     def get_groq_keys(cls) -> list:
         """Alle beschikbare Groq API keys (via SmartKeyManager).
 
-        Accepteert ook komma-gescheiden GROQ_API_KEY waarde:
-            GROQ_API_KEY=key1,key2,key3
+        Discovery volgorde:
+        1. GROQ_API_KEYS env var (komma-gescheiden)
+        2. GROQ_API_KEY env var (komma-gescheiden)
+        3. SmartKeyManager._active_keys() (scant alle GROQ_API_KEY_* vars,
+           filtert geblackliste 401-keys uit de pool)
         """
         if cls.GROQ_API_KEYS:
             return cls.GROQ_API_KEYS
 
-        # 1. Probeer komma-gescheiden primary key
-        raw = cls.GROQ_API_KEY
-        if raw and "," in raw:
+        # 1. Probeer dedicated GROQ_API_KEYS (meervoud) env var
+        raw_keys = os.environ.get("GROQ_API_KEYS", "")
+        if not raw_keys:
+            # 2. Fallback: komma-gescheiden GROQ_API_KEY (enkelvoud)
+            raw_keys = os.environ.get("GROQ_API_KEY", "")
+
+        if raw_keys and "," in raw_keys:
             cls.GROQ_API_KEYS = [
-                k.strip() for k in raw.split(",")
+                k.strip() for k in raw_keys.split(",")
                 if k.strip().startswith("gsk_")
             ]
             if cls.GROQ_API_KEYS:
                 return cls.GROQ_API_KEYS
 
-        # 2. Delegeer naar SmartKeyManager (ontdekt alle env vars)
+        # 3. Delegeer naar SmartKeyManager (ontdekt alle GROQ_API_KEY_* env vars)
         try:
             from danny_toolkit.core.key_manager import get_key_manager
             km = get_key_manager()
             cls.GROQ_API_KEYS = km._active_keys()
         except Exception:
-            cls.GROQ_API_KEYS = [raw] if raw else []
+            cls.GROQ_API_KEYS = [raw_keys] if raw_keys else []
 
         return cls.GROQ_API_KEYS
 
