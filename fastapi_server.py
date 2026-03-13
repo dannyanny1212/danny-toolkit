@@ -64,6 +64,9 @@ if os.name == "nt":
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 
+# Project root (voor pad-resolutie)
+_ROOT = str(Path(__file__).parent)
+
 # .env laden
 load_dotenv(Path(__file__).parent / ".env")
 
