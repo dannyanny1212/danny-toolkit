@@ -270,6 +270,7 @@ class Config:
     ALLOW_ANTHROPIC = os.environ.get("ALLOW_ANTHROPIC", "0").lower() in ("1", "true", "yes")
 
     # THE BRAIN (Cloud — High IQ, Zero VRAM)
+    # Groq Velocity: exclusief Groq als primaire EN fallback engine
     LLM_PROVIDER = "groq"
     LLM_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
     LLM_FALLBACK_MODEL = "qwen/qwen3-32b"
