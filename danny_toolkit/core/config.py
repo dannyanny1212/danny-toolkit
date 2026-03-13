@@ -252,6 +252,8 @@ class Config:
     ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
     VOYAGE_API_KEY = os.environ.get("VOYAGE_API_KEY", "")
     GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+    # Multi-key support: komma-gescheiden lijst OF SmartKeyManager discovery
+    GROQ_API_KEYS: list = []  # populated by _parse_groq_keys()
     ELEVENLABS_API_KEY = os.environ.get("ELEVENLABS_API_KEY", "")
     OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 
@@ -397,6 +399,59 @@ class Config:
         """Check of Groq API key beschikbaar is."""
         return bool(cls.GROQ_API_KEY)
 
+    # ------------------------------------------------------------------
+    # Multi-Core Groq: key pool + round-robin
+    # ------------------------------------------------------------------
+
+    _groq_rr_idx: int = 0
+
+    @classmethod
+    def get_groq_keys(cls) -> list:
+        """Alle beschikbare Groq API keys (via SmartKeyManager).
+
+        Accepteert ook komma-gescheiden GROQ_API_KEY waarde:
+            GROQ_API_KEY=key1,key2,key3
+        """
+        if cls.GROQ_API_KEYS:
+            return cls.GROQ_API_KEYS
+
+        # 1. Probeer komma-gescheiden primary key
+        raw = cls.GROQ_API_KEY
+        if raw and "," in raw:
+            cls.GROQ_API_KEYS = [
+                k.strip() for k in raw.split(",")
+                if k.strip().startswith("gsk_")
+            ]
+            if cls.GROQ_API_KEYS:
+                return cls.GROQ_API_KEYS
+
+        # 2. Delegeer naar SmartKeyManager (ontdekt alle env vars)
+        try:
+            from danny_toolkit.core.key_manager import get_key_manager
+            km = get_key_manager()
+            cls.GROQ_API_KEYS = km._active_keys()
+        except Exception:
+            cls.GROQ_API_KEYS = [raw] if raw else []
+
+        return cls.GROQ_API_KEYS
+
+    @classmethod
+    def get_groq_key(cls, agent_naam: str = "") -> str:
+        """Kies de minst belaste Groq key via SmartKeyManager.
+
+        Fallback: round-robin over get_groq_keys() als
+        SmartKeyManager niet beschikbaar is.
+        """
+        try:
+            from danny_toolkit.core.key_manager import get_key_manager
+            return get_key_manager().get_key(agent_naam)
+        except Exception:
+            keys = cls.get_groq_keys()
+            if not keys:
+                return cls.GROQ_API_KEY
+            cls._groq_rr_idx = (cls._groq_rr_idx + 1) % len(keys)
+            return keys[cls._groq_rr_idx]
+
     @classmethod
     def has_elevenlabs_key(cls) -> bool:
         """Check of ElevenLabs API key beschikbaar is."""
@@ -438,6 +493,7 @@ class Config:
         cls.ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
         cls.VOYAGE_API_KEY = os.environ.get("VOYAGE_API_KEY", "")
         cls.GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+        cls.GROQ_API_KEYS = []  # force re-discovery
         cls.ELEVENLABS_API_KEY = os.environ.get("ELEVENLABS_API_KEY", "")
         cls.OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
         cls.NVIDIA_NIM_API_KEY = os.environ.get("NVIDIA_NIM_API_KEY", "")

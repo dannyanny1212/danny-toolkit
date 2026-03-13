@@ -674,6 +674,62 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
         tasks = [_single_call(i, p) for i, p in enumerate(prompts)]
         return await asyncio.gather(*tasks)
 
+    async def broadcast_prompt(
+        self,
+        prompt: str,
+        n_workers: int = 3,
+        model: str = "",
+        system_message: str = "",
+        max_tokens: int = 1024,
+        temperature: float = 0.7,
+        strategy: str = "fastest",
+    ) -> dict:
+        """Stuur dezelfde prompt naar N keys parallel.
+
+        Strategies:
+            "fastest" — retourneer het eerste succesvolle antwoord
+            "consensus" — retourneer het langste antwoord (meeste detail)
+            "all" — retourneer alle antwoorden
+
+        Returns: dict met "response", "latency_ms", "strategy",
+                 "workers_used", "all_results"
+        """
+        prompts = [prompt] * min(n_workers, len(self._active_keys()))
+        results = await self.parallel_complete(
+            prompts=prompts,
+            model=model,
+            system_message=system_message,
+            max_tokens=max_tokens,
+            temperature=temperature,
+        )
+
+        successes = [r for r in results if not r["error"]]
+        if not successes:
+            return {
+                "response": "",
+                "latency_ms": 0,
+                "strategy": strategy,
+                "workers_used": len(results),
+                "error": "Alle workers gefaald",
+                "all_results": results,
+            }
+
+        if strategy == "fastest":
+            best = min(successes, key=lambda r: r["latency_ms"])
+        elif strategy == "consensus":
+            best = max(successes, key=lambda r: len(r["response"]))
+        else:  # "all"
+            best = successes[0]
+
+        return {
+            "response": best["response"],
+            "latency_ms": best["latency_ms"],
+            "strategy": strategy,
+            "workers_used": len(results),
+            "error": None,
+            "all_results": results,
+        }
+
     async def close_all_clients(self) -> None:
         """Sluit alle async clients voordat de event loop stopt.
 
