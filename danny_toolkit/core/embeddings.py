@@ -126,6 +126,14 @@ The `dimensions` attribute is compared to the native dimension of the Voyage AI 
         mrl_tag = f" MRL {self.dimensies}d" if self.dimensies < Config.VOYAGE_NATIVE_DIM else ""
         print(f"   [OK] Voyage AI ({self.model}, {self.dimensies}d{mrl_tag})")
 
+    def __repr__(self) -> str:
+        """Toon model + dimensie (voor dashboard/logging)."""
+        return (
+            f"<VoyageEmbeddings "
+            f"model={self.model} "
+            f"dim={self.dimensies}d>"
+        )
+
     def embed(self, teksten: list) -> list:
         """Embed teksten met Voyage AI."""
         result = self.client.embed(
@@ -508,6 +516,14 @@ class VoyageChromaEmbedding:
         )
         self.model = Config.VOYAGE_MODEL
         self._target_dim = Config.EMBEDDING_DIM
+
+    def __repr__(self) -> str:
+        """Toon model + dimensie (voor dashboard/logging)."""
+        return (
+            f"<VoyageChromaEmbedding "
+            f"model={self.model} "
+            f"dim={self._target_dim}d>"
+        )
 
     def name(self) -> None:
         """ChromaDB protocol: unieke naam."""
