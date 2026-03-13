@@ -85,6 +85,16 @@ FASTAPI_PORT = int(os.getenv("FASTAPI_PORT", "8000"))
 
 _SERVER_START_TIME = time.time()
 
+
+def _sanitize_error(msg: str) -> str:
+    """Strip API keys uit error messages (anti-leak)."""
+    for env_var in ("VOYAGE_API_KEY", "GROQ_API_KEY", "FASTAPI_SECRET_KEY"):
+        key = os.getenv(env_var, "")
+        if key and key in msg:
+            msg = msg.replace(key, "***REDACTED***")
+    return msg
+
+
 # Startup validatie (Phase 26)
 try:
     from danny_toolkit.core.startup_validator import valideer_opstart
@@ -222,10 +232,10 @@ def _run_librarian_scan(job_id: str, file_path: str, bestandsnaam: str) -> None:
     """Background worker: TheLibrarian scant een bestand met atomic staging.
 
     Flow:
-    1. Data → staging-collectie (_staging_{job_id})
+    1. Data → staging-collectie (staging-{job_id})
     2. Staging → hoofdcollectie (commit/swap)
     3. Staging gedropt
-    Bij crash: staging wordt onmiddellijk gedropt — geen partial data.
+    Bij crash/timeout: finally-block garandeert dat staging ALTIJD wordt gedropt.
 
     Draait buiten de request-thread (via FastAPI BackgroundTasks).
     Resultaat wordt opgeslagen in _ingest_jobs voor polling.
@@ -235,28 +245,34 @@ def _run_librarian_scan(job_id: str, file_path: str, bestandsnaam: str) -> None:
         _ingest_jobs[job_id]["started_at"] = time.time()
 
     librarian = None
+    committed = False
     try:
         from danny_toolkit.skills.librarian import TheLibrarian
         librarian = TheLibrarian()
         # Atomic: staging → commit → cleanup (alles in ingest_file)
         chunks = librarian.ingest_file(file_path, job_id=job_id)
+        committed = True
         with _ingest_jobs_lock:
             _ingest_jobs[job_id]["status"] = "completed"
             _ingest_jobs[job_id]["chunks"] = chunks
             _ingest_jobs[job_id]["completed_at"] = time.time()
         logger.info("Background ingest voltooid: %s (%d chunks, atomic)", bestandsnaam, chunks)
     except Exception as e:
-        # Crash guard: drop staging collectie zodat geen half-bakken data achterblijft
-        if librarian is not None:
-            try:
-                librarian._cleanup_staging(job_id)
-            except Exception as cleanup_err:
-                logger.debug("Staging cleanup na crash: %s", cleanup_err)
         with _ingest_jobs_lock:
             _ingest_jobs[job_id]["status"] = "failed"
-            _ingest_jobs[job_id]["error"] = str(e)
+            _ingest_jobs[job_id]["error"] = _sanitize_error(str(e))
             _ingest_jobs[job_id]["completed_at"] = time.time()
-        logger.error("Background ingest mislukt (staging gedropt): %s — %s", bestandsnaam, e)
+        logger.error("Background ingest mislukt: %s — %s", bestandsnaam, e)
+    finally:
+        # WATERDICHT: drop staging collectie ongeacht uitkomst.
+        # Bij succes is staging al gedropt door _commit_staging,
+        # maar dubbel cleanup is veilig (idempotent).
+        if librarian is not None and not committed:
+            try:
+                librarian._cleanup_staging(job_id)
+                logger.info("Finally-guard: staging-%s gedropt", job_id)
+            except Exception as cleanup_err:
+                logger.debug("Staging cleanup in finally: %s", cleanup_err)
 
 
 class TraceSpanResponse(BaseModel):
@@ -637,7 +653,8 @@ def _get_swarm_engine(brain=None):
 
 @app.on_event("startup")
 async def _startup_event():
-    """Auto-discover beschikbare modellen bij server start."""
+    """Auto-discover modellen + sweep orphan staging collecties."""
+    # 1. Model registry
     try:
         from danny_toolkit.brain.model_sync import get_model_registry
         registry = get_model_registry()
@@ -645,6 +662,20 @@ async def _startup_event():
         logger.info("Model Registry: auto_discover() voltooid")
     except Exception as e:
         logger.debug("Model Registry auto_discover failed: %s", e)
+
+    # 2. Orphan staging sweep — drop staging-* collecties van vorige crashes
+    try:
+        import chromadb
+        from config import CHROMA_DIR
+        client = chromadb.PersistentClient(path=str(CHROMA_DIR))
+        orphans = [c.name for c in client.list_collections() if c.name.startswith("staging-")]
+        for name in orphans:
+            client.delete_collection(name)
+            logger.warning("Orphan staging collectie gedropt: %s", name)
+        if orphans:
+            logger.info("Startup sweep: %d orphan staging collecties opgeruimd", len(orphans))
+    except Exception as e:
+        logger.debug("Staging orphan sweep mislukt: %s", e)
 
 
 @app.on_event("shutdown")
@@ -2516,7 +2547,27 @@ if HAS_DASHBOARD:
             result["cpu_percent"] = proc.cpu_percent()
         except Exception as e:
             logger.debug("CPU metrics: %s", e)
+        try:
+            import chromadb
+            from config import CHROMA_DIR
+            _client = chromadb.PersistentClient(path=str(CHROMA_DIR))
+            _col = _client.get_collection("danny_knowledge")
+            result["db_chunks"] = _col.count()
+        except Exception:
+            result["db_chunks"] = 0
         return result
+
+
+# ─── SOVEREIGN COMMAND CENTER ─────────────────────
+
+_CMD_DIR = Path(__file__).parent / "danny_toolkit" / "ui"
+if _CMD_DIR.exists():
+    app.mount(
+        "/cmd",
+        StaticFiles(directory=str(_CMD_DIR), html=True),
+        name="sovereign-ui",
+    )
+    logger.info("Sovereign Command Center gemount op /cmd/")
 
 
 # ─── ENTRY POINT ───────────────────────────────────
@@ -2526,6 +2577,8 @@ def main():
     print(
         f"\n  Danny Toolkit API — "
         f"http://localhost:{FASTAPI_PORT}/docs\n"
+        f"  Command Center — "
+        f"http://localhost:{FASTAPI_PORT}/cmd/\n"
     )
     uvicorn.run(
         "fastapi_server:app",
