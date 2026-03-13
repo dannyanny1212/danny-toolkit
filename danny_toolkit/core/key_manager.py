@@ -161,6 +161,9 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
         # Track async clients voor cleanup bij shutdown
         self._async_clients: list = []
 
+        # Blacklisted keys (auto-removed na 401 Invalid API Key)
+        self._blacklisted: set[str] = set()
+
         # Globale rate limit state
         self._global_429_count = 0
         self._global_cooldown_tot = 0.0
@@ -431,7 +434,7 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
         Geef de beste API key voor een agent.
 
         Bij 1 key: altijd die ene key.
-        Bij meerdere keys: round-robin of role-based.
+        Bij meerdere keys: least-used round-robin.
         """
         if not self._keys:
             return os.getenv("GROQ_API_KEY", "")
@@ -440,11 +443,52 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
         if len(self._keys) == 1:
             return self._keys[0]
 
-        # Meerdere keys — verdeel op basis van prioriteit
-        # Lage prioriteit agents krijgen latere keys
-        agent = self._get_agent(agent_naam)
-        idx = agent.prioriteit % len(self._keys)
-        return self._keys[idx]
+        # Meerdere keys — least-used round-robin
+        return self._pick_least_used()
+
+    def blacklist_key(self, key: str) -> None:
+        """Verwijder een ongeldige key uit de pool (401 Invalid API Key)."""
+        with self._metrics_lock:
+            self._blacklisted.add(key)
+            logger.warning("Key geblacklist (invalid): ...%s", key[-8:])
+
+    def _active_keys(self) -> list[str]:
+        """Actieve keys (exclusief blacklisted)."""
+        return [k for k in self._keys if k not in self._blacklisted]
+
+    def _pick_least_used(self) -> str:
+        """Selecteer de key met het laagste recente verbruik.
+
+        Telt request_timestamps (RPM window) per key en kiest
+        de minst belaste. Bij gelijkspel: round-robin via _rr_idx.
+        Skipt geblackliste keys.
+        """
+        with self._metrics_lock:
+            active = self._active_keys()
+            if not active:
+                # Alles geblacklist — probeer primary als noodgreep
+                return self._keys[0] if self._keys else ""
+
+            # Tel requests per key (laatste 60s)
+            usage: dict[int, int] = {}
+            key_to_idx = {k: i for i, k in enumerate(self._keys)}
+            for k in active:
+                usage[key_to_idx[k]] = 0
+
+            for agent in self._agents.values():
+                idx = AGENT_PRIORITY.get(agent.naam, 5) % len(self._keys)
+                if idx in usage:
+                    usage[idx] += len(agent.request_timestamps)
+
+            # Kies de key met minste load
+            min_load = min(usage.values())
+            candidates = [i for i, load in usage.items() if load == min_load]
+
+            # Round-robin tiebreaker
+            self._rr_idx = getattr(self, "_rr_idx", 0)
+            pick = candidates[self._rr_idx % len(candidates)]
+            self._rr_idx = (self._rr_idx + 1) % 1000
+            return self._keys[pick]
 
     # ------------------------------------------------------------------
     # Model-Aware Key Selectie
@@ -552,6 +596,84 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
         self._async_clients.append(client)
         return client
 
+    # ------------------------------------------------------------------
+    # Parallel Async Batching (Multi-Core Groq)
+    # ------------------------------------------------------------------
+
+    async def parallel_complete(
+        self,
+        prompts: list[str],
+        model: str = "",
+        system_message: str = "",
+        max_tokens: int = 1024,
+        temperature: float = 0.7,
+    ) -> list[dict]:
+        """Stuur meerdere prompts parallel via verschillende keys.
+
+        Elke prompt krijgt een eigen AsyncGroq client met de
+        least-used key. Alle calls draaien via asyncio.gather().
+
+        Returns: list[dict] met per prompt:
+            {"prompt": str, "response": str, "key_idx": int,
+             "latency_ms": float, "error": str|None}
+        """
+        if not model:
+            model = _PRIMARY
+
+        async def _single_call(idx: int, prompt: str) -> dict:
+            """Eén async Groq call met eigen key."""
+            t0 = time.time()
+            key = self._pick_least_used()
+            key_idx = self._keys.index(key) if key in self._keys else -1
+
+            try:
+                from groq import AsyncGroq
+                client = AsyncGroq(api_key=key)
+
+                messages = []
+                if system_message:
+                    messages.append({"role": "system", "content": system_message})
+                messages.append({"role": "user", "content": prompt})
+
+                resp = await client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                )
+                tekst = resp.choices[0].message.content or ""
+                latency = (time.time() - t0) * 1000
+
+                # Registreer verbruik
+                agent_tag = f"parallel_{idx}"
+                self.registreer_request(agent_tag)
+                self.registreer_tokens(agent_tag, tekst)
+
+                await client.close()
+                return {
+                    "prompt": prompt,
+                    "response": tekst,
+                    "key_idx": key_idx,
+                    "latency_ms": round(latency, 1),
+                    "error": None,
+                }
+            except Exception as e:
+                latency = (time.time() - t0) * 1000
+                # Auto-blacklist invalid keys
+                if "401" in str(e) or "invalid_api_key" in str(e).lower():
+                    self.blacklist_key(key)
+                return {
+                    "prompt": prompt,
+                    "response": "",
+                    "key_idx": key_idx,
+                    "latency_ms": round(latency, 1),
+                    "error": str(e),
+                }
+
+        # Fire all prompts in parallel
+        tasks = [_single_call(i, p) for i, p in enumerate(prompts)]
+        return await asyncio.gather(*tasks)
+
     async def close_all_clients(self) -> None:
         """Sluit alle async clients voordat de event loop stopt.
 
@@ -588,6 +710,8 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
 
             return {
                 "keys_beschikbaar": len(self._keys),
+                "keys_actief": len(self._active_keys()),
+                "keys_blacklisted": len(self._blacklisted),
                 "fallback_key_actief": bool(self._fallback_key),
                 "globale_429s": self._global_429_count,
                 "in_globale_cooldown": time.time() < self._global_cooldown_tot,
