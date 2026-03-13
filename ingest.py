@@ -51,15 +51,18 @@ except ImportError:
         from librarian import TheLibrarian
         from processor import BatchProcessor
     except ImportError:
-        print(
-            "\u274c CRITICAL: Kan 'librarian.py'"
-            " of 'processor.py' niet vinden."
-        )
-        print(
-            "   Zorg dat deze bestanden bestaan"
-            " in 'danny_toolkit/' of de root."
-        )
-        sys.exit(1)
+        TheLibrarian = None
+        BatchProcessor = None
+        if __name__ == "__main__":
+            print(
+                "\u274c CRITICAL: Kan 'librarian.py'"
+                " of 'processor.py' niet vinden."
+            )
+            print(
+                "   Zorg dat deze bestanden bestaan"
+                " in 'danny_toolkit/' of de root."
+            )
+            sys.exit(1)
 
 console = Console()
 

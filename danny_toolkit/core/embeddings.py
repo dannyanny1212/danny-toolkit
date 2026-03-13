@@ -548,9 +548,9 @@ class VoyageChromaEmbedding:
     def __call__(self, input):
         """ChromaDB embedding interface.
 
-        Retry bij rate limits met korte backoff.
+        Retry bij rate limits met conservatieve backoff (free tier: 3 RPM).
         """
-        for poging in range(5):
+        for poging in range(8):
             try:
                 result = self.client.embed(
                     texts=input,
@@ -560,16 +560,17 @@ class VoyageChromaEmbedding:
                 return mrl_truncate(result.embeddings, self._target_dim)
             except (ConnectionError, TimeoutError, OSError) as e:
                 logger.warning("Voyage API netwerk fout (poging %d): %s", poging + 1, e)
-                time.sleep(5 * (poging + 1))
+                time.sleep(10 * (poging + 1))
             except Exception as e:
                 naam = type(e).__name__
                 if "RateLimit" in naam or "429" in str(e):
-                    logger.warning("Voyage API rate limit (poging %d)", poging + 1)
-                    time.sleep(5 * (poging + 1))
+                    wacht = 25 * (poging + 1)
+                    logger.warning("Voyage API rate limit (poging %d), wacht %ds", poging + 1, wacht)
+                    time.sleep(wacht)
                 else:
                     raise
         raise RuntimeError(
-            "Voyage API rate limit na 5 pogingen"
+            "Voyage API rate limit na 8 pogingen"
         )
 
 
