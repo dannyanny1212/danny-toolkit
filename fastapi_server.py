@@ -732,6 +732,24 @@ async def query(
     if trace_id:
         response.headers["X-Trace-Id"] = trace_id
 
+    def _safe_metadata(meta) -> dict:
+        """Sanitize metadata — drop non-JSON-serializable values."""
+        if not isinstance(meta, dict):
+            return {}
+        import json as _json
+        try:
+            _json.dumps(meta)
+            return meta
+        except (TypeError, ValueError):
+            clean = {}
+            for k, v in meta.items():
+                try:
+                    _json.dumps({k: v})
+                    clean[k] = v
+                except (TypeError, ValueError):
+                    clean[k] = str(v)
+            return clean
+
     return QueryResponse(
         payloads=[
             PayloadResponse(
@@ -739,9 +757,7 @@ async def query(
                 type=p.type,
                 display_text=str(p.display_text),
                 timestamp=p.timestamp,
-                metadata=p.metadata
-                if isinstance(p.metadata, dict)
-                else {},
+                metadata=_safe_metadata(p.metadata),
             )
             for p in payloads
         ],

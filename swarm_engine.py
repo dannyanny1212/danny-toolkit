@@ -1043,7 +1043,9 @@ class CoherentieAgent(Agent):
                     "type": "metrics",
                     "category": "HARDWARE",
                     "metrics": metrics,
-                    "data": chart_data,
+                    "data": chart_data.to_dict(
+                        orient="records"
+                    ),
                 },
             },
         )
