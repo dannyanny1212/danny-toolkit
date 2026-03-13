@@ -20,6 +20,12 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+try:
+    from danny_toolkit.core.config import Config, ConfigValidator
+    HAS_CONFIG = True
+except ImportError:
+    HAS_CONFIG = False
+
 
 def valideer_opstart(strict: bool = False) -> dict:
     """Voer 6 opstartchecks uit en retourneer rapport.
@@ -111,8 +117,7 @@ def _check_api_key(rapport: object, env_var: object, provider: object, fataal: o
         return
 
     # Gebruik ConfigValidator als beschikbaar
-    try:
-        pass  # import moved to top-level
+    if HAS_CONFIG:
         is_valid, message = ConfigValidator.valideer_api_key(
             value, provider,
         )
@@ -123,7 +128,7 @@ def _check_api_key(rapport: object, env_var: object, provider: object, fataal: o
                 rapport["fouten"].append(msg)
             else:
                 rapport["waarschuwingen"].append(msg)
-    except ImportError:
+    else:
         # Fallback: alleen lengte check
         if len(value) < 20:
             check["status"] = "VERDACHT"
@@ -140,10 +145,9 @@ def _check_data_dir(rapport: object) -> None:
     """Controleer of DATA_DIR schrijfbaar is."""
     check = {"naam": "DATA_DIR_schrijfbaar", "status": "OK", "fataal": True}
 
-    try:
-        pass  # import moved to top-level
+    if HAS_CONFIG:
         data_dir = Config.DATA_DIR
-    except ImportError:
+    else:
         data_dir = Path("data")
 
     try:
@@ -184,18 +188,10 @@ def _check_optional_deps(rapport: object) -> None:
 
 def _check_env_file(rapport: object) -> None:
     """Controleer of .env bestand bestaat."""
-    try:
-        pass  # import moved to top-level
+    if HAS_CONFIG:
         env_path = Config.BASE_DIR / ".env"
-    except ImportError:
+    else:
         env_path = Path(".env")
-
-try:
-    import danny_toolkit.core.config
-    HAS_CONFIG = True
-except ImportError:
-    HAS_CONFIG = False
-
 
     check = {
         "naam": "env_bestand",
