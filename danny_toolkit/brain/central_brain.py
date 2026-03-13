@@ -79,17 +79,6 @@ try:
 except ImportError:
     AnthropicRateLimitError = None
 
-try:
-    from openai import OpenAI as NvidiaClient
-    NVIDIA_NIM_BESCHIKBAAR = True
-except ImportError:
-    NVIDIA_NIM_BESCHIKBAAR = False
-
-try:
-    from huggingface_hub import InferenceClient as HfInferenceClient
-    HF_BESCHIKBAAR = True
-except ImportError:
-    HF_BESCHIKBAAR = False
 
 try:
     from danny_toolkit.core.key_manager import get_key_manager
@@ -173,42 +162,11 @@ class CentralBrain:
                 Kleur.GEEL,
             ))
 
-        # Ollama als lokale fallback (geen rate limit!)
-        self._ollama_available = self._check_ollama()
-        if self._ollama_available:
-            print(kleur(
-                "   [OK] Fallback: Ollama lokaal beschikbaar",
-                Kleur.GROEN,
-            ))
-
-        # NVIDIA NIM als cloud fallback
-        self._nvidia_nim_available = (
-            NVIDIA_NIM_BESCHIKBAAR and Config.has_nvidia_nim_key()
-        )
-        if self._nvidia_nim_available:
-            print(kleur(
-                "   [OK] Fallback: NVIDIA NIM beschikbaar",
-                Kleur.GROEN,
-            ))
-
-        # HuggingFace Inference als cloud fallback
-        self._hf_available = (
-            HF_BESCHIKBAAR and bool(os.getenv("HF_TOKEN"))
-        )
-        if self._hf_available:
-            print(kleur(
-                "   [OK] Fallback: HuggingFace Inference beschikbaar",
-                Kleur.GROEN,
-            ))
-
         # Per-provider circuit breakers (geïsoleerd)
         self._provider_breakers = {
             "groq_70b": {"fails": 0, "last_fail": 0},
             "groq_8b": {"fails": 0, "last_fail": 0},
             "anthropic": {"fails": 0, "last_fail": 0},
-            "nvidia_nim": {"fails": 0, "last_fail": 0},
-            "huggingface": {"fails": 0, "last_fail": 0},
-            "ollama": {"fails": 0, "last_fail": 0},
         }
         self._breaker_max = 3
         self._breaker_cooldown = 60  # seconden
@@ -771,37 +729,12 @@ Regels:
                     {},  # Groq: defaults zijn goed
                 ))
 
-        # 3. NVIDIA NIM (OpenAI-compatible, async)
-        if self._nvidia_nim_available:
-            try:
-                from openai import AsyncOpenAI
-                if not hasattr(self, "_async_nim_client") or self._async_nim_client is None:
-                    self._async_nim_client = AsyncOpenAI(
-                        base_url=self.NVIDIA_NIM_BASE_URL,
-                        api_key=Config.NVIDIA_NIM_API_KEY,
-                    )
-                chain.append((
-                    self._async_nim_client,
-                    self.NVIDIA_NIM_MODEL,
-                    f"NVIDIA NIM ({self.NVIDIA_NIM_MODEL})",
-                    {"temperature": 0.2, "max_tokens": 4096},  # NIM-specifiek
-                ))
-            except ImportError:
-                logger.debug("Suppressed error")
-
         return chain
 
     # Groq modellen: primair (groot) en fallback (klein)
     from danny_toolkit.core.config import Config as _Cfg
     GROQ_MODEL_PRIMARY = _Cfg.LLM_MODEL
     GROQ_MODEL_FALLBACK = _Cfg.LLM_FALLBACK_MODEL
-    # HuggingFace Inference model
-    HF_MODEL = "Qwen/Qwen3-32B"
-    # Ollama lokaal model
-    OLLAMA_MODEL = "gemma3:4b"
-    # NVIDIA NIM cloud model
-    NVIDIA_NIM_MODEL = Config.NVIDIA_NIM_MODEL
-    NVIDIA_NIM_BASE_URL = Config.NVIDIA_NIM_BASE_URL
 
     # ----------------------------------------------------------
     # Phase B.2: Linear Fallback Chain Architecture
@@ -1203,33 +1136,6 @@ Regels:
                     "Anthropic",
                 ))
 
-        # 4. NVIDIA NIM
-        if self._nvidia_nim_available and self._provider_ok("nvidia_nim"):
-            chain.append((
-                "nvidia_nim",
-                lambda rt, _sm=system_message:
-                    self._attempt_nvidia_nim(_sm),
-                f"NVIDIA NIM ({self.NVIDIA_NIM_MODEL})",
-            ))
-
-        # 5. HuggingFace
-        if self._hf_available and self._provider_ok("huggingface"):
-            chain.append((
-                "huggingface",
-                lambda rt, _sm=system_message:
-                    self._attempt_huggingface(_sm),
-                f"HuggingFace ({self.HF_MODEL})",
-            ))
-
-        # 6. Ollama (lokaal, geen rate limit)
-        if self._ollama_available and self._provider_ok("ollama"):
-            chain.append((
-                "ollama",
-                lambda rt, _sm=system_message:
-                    self._attempt_ollama(_sm),
-                f"Ollama ({self.OLLAMA_MODEL})",
-            ))
-
         return chain
 
     def _process_with_fallback(
@@ -1276,12 +1182,6 @@ Regels:
                 if content is not None:
                     # SUCCES — circuit breaker reset
                     self._provider_success(breaker_key)
-
-                    # Non-Groq providers (NIM/HF/Ollama) kunnen geen function calling.
-                    # Als ze tool namen als tekst retourneren, voer ze alsnog uit.
-                    _NO_TOOL_PROVIDERS = ("nvidia_nim", "huggingface", "ollama")
-                    if breaker_key in _NO_TOOL_PROVIDERS and use_tools:
-                        content = self._intercept_text_tools(content)
 
                     try:
                         from danny_toolkit.brain.governor import OmegaGovernor
@@ -1773,80 +1673,6 @@ Regels:
         # Turns uitgeput
         return (None, turns_used)
 
-    def _attempt_nvidia_nim(self, system_message: object) -> None:
-        """NVIDIA NIM single-attempt (geen tool calling).
-
-        Returns:
-            (content, 1) bij succes.
-        Raises:
-            Exception bij fout.
-        """
-        client = NvidiaClient(
-            base_url=self.NVIDIA_NIM_BASE_URL,
-            api_key=Config.NVIDIA_NIM_API_KEY,
-        )
-        messages = [{"role": "system", "content": system_message}]
-        messages.extend(self.conversation_history)
-
-        resp = client.chat.completions.create(
-            model=self.NVIDIA_NIM_MODEL,
-            messages=messages,
-            temperature=0.2,
-            max_tokens=4096,
-        )
-        content = resp.choices[0].message.content or ""
-        return (content, 1)
-
-    def _attempt_huggingface(self, system_message: object) -> None:
-        """HuggingFace Inference single-attempt (geen tool calling).
-
-        Returns:
-            (content, 1) bij succes.
-        Raises:
-            Exception bij fout.
-        """
-        client = HfInferenceClient(token=os.getenv("HF_TOKEN"))
-        messages = [{"role": "system", "content": system_message}]
-        messages.extend(self.conversation_history)
-
-        resp = client.chat_completion(
-            model=self.HF_MODEL,
-            messages=messages,
-            temperature=0.2,
-            max_tokens=4096,
-        )
-        content = resp.choices[0].message.content or ""
-        return (content, 1)
-
-    def _attempt_ollama(self, system_message: object) -> None:
-        """Ollama lokale single-attempt (geen tool calling).
-
-        Returns:
-            (content, 1) bij succes.
-        Raises:
-            Exception bij fout.
-        """
-        import requests
-        messages = [{"role": "system", "content": system_message}]
-        messages.extend(self.conversation_history)
-
-        resp = requests.post(
-            f"{self.config.OLLAMA_BASE_URL}/api/chat",
-            json={
-                "model": self.OLLAMA_MODEL,
-                "messages": messages,
-                "stream": False,
-                "keep_alive": "30m",
-            },
-            timeout=120,
-        )
-        if resp.status_code != 200:
-            raise ConnectionError(f"Ollama HTTP {resp.status_code}")
-
-        data = resp.json()
-        content = data.get("message", {}).get("content", "")
-        return (content, 1)
-
     # ----------------------------------------------------------
     # Per-provider circuit breaker helpers
     # ----------------------------------------------------------
@@ -2035,29 +1861,6 @@ Regels:
         return ("Ik ben tijdelijk offline — alle AI providers "
                 "zijn op dit moment onbereikbaar. Probeer het "
                 "over een minuut opnieuw.")
-
-    def _check_ollama(self) -> bool:
-        """Check of Ollama lokaal draait EN het text model beschikbaar is."""
-        try:
-            import requests
-            resp = requests.get(
-                f"{self.config.OLLAMA_BASE_URL}/api/tags",
-                timeout=2,
-            )
-            if resp.status_code != 200:
-                return False
-            # Check of het text model daadwerkelijk geïnstalleerd is
-            models = [
-                m.get("name", "")
-                for m in resp.json().get("models", [])
-            ]
-            target = self.OLLAMA_MODEL
-            return any(
-                target in m for m in models
-            )
-        except Exception as e:
-            logger.debug("Ollama check failed: %s", e)
-            return False
 
     def _process_offline(self, user_input: str) -> str:
         """Verwerk request zonder AI (offline modus)."""
