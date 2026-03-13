@@ -64,6 +64,9 @@ except ImportError:
 
 REPAIR_LOG_PAD = _root / "data" / "repair_logs.json"
 
+# Maximale bestandsgrootte (10 MB) — voorkomt memory exhaustion
+_MAX_FILE_BYTES = 10 * 1024 * 1024
+
 SUPPORTED_EXT = {
     ".txt", ".md", ".py", ".json", ".csv",
     ".log", ".yaml", ".yml", ".toml", ".cfg",
@@ -76,6 +79,19 @@ SKIP_FILES = {
 }
 
 console = Console()
+
+
+def _sanitize_error(msg: str) -> str:
+    """Strip API keys uit error messages (anti-leak)."""
+    try:
+        from danny_toolkit.core.config import Config as _Cfg
+        for attr in ("VOYAGE_API_KEY", "GROQ_API_KEY"):
+            key = getattr(_Cfg, attr, "")
+            if key and key in msg:
+                msg = msg.replace(key, "***REDACTED***")
+    except ImportError:
+        pass
+    return msg
 
 
 class TheLibrarian:
@@ -174,7 +190,7 @@ class TheLibrarian:
         except Exception as e:
             console.print(
                 f"  [red]Fout bij PDF {pad.name}:"
-                f" {e}[/red]"
+                f" {_sanitize_error(str(e))}[/red]"
             )
             return ""
 
@@ -191,8 +207,43 @@ class TheLibrarian:
         )
         return ""
 
+    def _validate_pad(self, pad: Path) -> bool:
+        """Security: valideer dat pad binnen DOCS_DIR blijft (anti-traversal)."""
+        try:
+            resolved = pad.resolve()
+            docs_resolved = Path(DOCS_DIR).resolve()
+            return str(resolved).startswith(str(docs_resolved))
+        except (OSError, ValueError):
+            return False
+
     def _lees_bestand(self, pad: object) -> None:
-        """Lees een bestand op basis van extensie."""
+        """Lees een bestand op basis van extensie.
+
+        Security guards:
+        - Path traversal check (moet binnen DOCS_DIR blijven)
+        - File size limit (_MAX_FILE_BYTES)
+        - Extension whitelist (SUPPORTED_EXT)
+        """
+        pad = Path(pad)
+
+        # Guard 1: path traversal
+        if not self._validate_pad(pad):
+            logger.warning("Path traversal geblokkeerd: %s", pad.name)
+            return ""
+
+        # Guard 2: extensie whitelist
+        if pad.suffix.lower() not in SUPPORTED_EXT:
+            logger.warning("Extensie niet toegestaan: %s", pad.suffix)
+            return ""
+
+        # Guard 3: file size limit
+        try:
+            if pad.stat().st_size > _MAX_FILE_BYTES:
+                logger.warning("Bestand te groot (%d bytes): %s", pad.stat().st_size, pad.name)
+                return ""
+        except OSError:
+            return ""
+
         if pad.suffix.lower() == ".pdf":
             return self._lees_pdf(pad)
         return self._lees_tekst(pad)
@@ -323,8 +374,13 @@ class TheLibrarian:
                 metadatas = []
 
                 for i, chunk in enumerate(chunks):
+                    # Sanitize ID: alleen alfanumeriek + veilige tekens
+                    safe_pad = "".join(
+                        c if c.isalnum() or c in "._-/" else "_"
+                        for c in rel_pad
+                    )
                     ids.append(
-                        f"{rel_pad}::chunk_{i}"
+                        f"{safe_pad}::chunk_{i}"
                     )
                     documents.append(chunk)
                     metadatas.append({

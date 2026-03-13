@@ -526,6 +526,47 @@ app.add_middleware(
 )
 
 
+# ─── Optimalisatie 1: Process-time header (latentie monitoring) ───
+@app.middleware("http")
+async def add_process_time_header(request, call_next):
+    """Meet en rapporteer request-latentie via X-Process-Time header."""
+    start = time.perf_counter()
+    response = await call_next(request)
+    response.headers["X-Process-Time"] = f"{(time.perf_counter() - start) * 1000:.1f}ms"
+    return response
+
+
+# ─── Optimalisatie 2: Lightweight response cache (health/status) ───
+_response_ttl_cache: Dict[str, tuple] = {}  # key -> (timestamp, data)
+_CACHE_TTL = 2.0  # 2 seconden TTL voor status endpoints
+
+
+def _cached_response(cache_key: str, ttl: float = _CACHE_TTL):
+    """Check TTL cache, retourneer (hit, data)."""
+    entry = _response_ttl_cache.get(cache_key)
+    if entry and (time.time() - entry[0]) < ttl:
+        return True, entry[1]
+    return False, None
+
+
+def _set_cache(cache_key: str, data):
+    """Sla response op in TTL cache."""
+    _response_ttl_cache[cache_key] = (time.time(), data)
+
+
+# ─── Optimalisatie 3: SwarmEngine singleton (vermijd herhaalde init) ───
+_swarm_engine_instance = None
+
+
+def _get_swarm_engine(brain=None):
+    """Lazy singleton SwarmEngine — vermijdt 50-100ms init per request."""
+    global _swarm_engine_instance
+    if _swarm_engine_instance is None:
+        from swarm_engine import SwarmEngine
+        _swarm_engine_instance = SwarmEngine(brain=brain or _get_brain())
+    return _swarm_engine_instance
+
+
 @app.on_event("startup")
 async def _startup_event():
     """Auto-discover beschikbare modellen bij server start."""
@@ -566,15 +607,13 @@ async def query(
     """Verwerk een prompt via de SwarmEngine en
     retourneer de resultaten als SwarmPayload lijst.
     """
-    from swarm_engine import SwarmEngine
-
     brain = _get_brain()
 
     if req.stream:
         return await _stream_response(req.message, brain)
 
     start = time.time()
-    engine = SwarmEngine(brain=brain)
+    engine = _get_swarm_engine(brain)
 
     try:
         payloads = await engine.run(req.message)
