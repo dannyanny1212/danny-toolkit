@@ -337,13 +337,19 @@ class TheLibrarian:
                             bestand.stat().st_size,
                     })
 
-                # Upsert (voeg toe of update)
+                # Upsert (voeg toe of update) — slow drip micro-batches
+                # Voyage free tier: 3 RPM → max 10 chunks per call + 5s cooldown
+                _MICRO_BATCH = 10
                 if ids:
-                    self.collection.upsert(
-                        ids=ids,
-                        documents=documents,
-                        metadatas=metadatas,
-                    )
+                    for b_start in range(0, len(ids), _MICRO_BATCH):
+                        b_end = min(b_start + _MICRO_BATCH, len(ids))
+                        self.collection.upsert(
+                            ids=ids[b_start:b_end],
+                            documents=documents[b_start:b_end],
+                            metadatas=metadatas[b_start:b_end],
+                        )
+                        if b_end < len(ids):
+                            time.sleep(5)
                     totaal_chunks += len(ids)
 
                     # Phase 34: ShardRouter parallel ingest
