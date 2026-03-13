@@ -75,6 +75,37 @@
 }
 .agent-row:hover { background: #1a1a2e; }
 
+/* Thinking indicator */
+.thinking-dots span {
+    display: inline-block;
+    animation: thinking-bounce 1.4s ease-in-out infinite;
+}
+.thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+.thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes thinking-bounce {
+    0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+    30% { opacity: 1; transform: translateY(-4px); }
+}
+
+/* Agent payload card */
+.agent-payload {
+    background: #12121a;
+    border: 1px solid #1e1e2e;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-top: 6px;
+    font-size: 0.85rem;
+}
+.agent-badge {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
 /* Glow effect on header */
 header {
     background: linear-gradient(180deg, #12121a 0%, #0a0a0f 100%);

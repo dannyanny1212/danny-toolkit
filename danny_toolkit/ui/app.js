@@ -305,46 +305,146 @@ function updateJobCounter() {
 
 // ─── RAG CHAT ───────────────────────────────────────
 
+let _queryInFlight = false;
+
 async function sendQuery() {
     const input = document.getElementById("chat-input");
     const message = input.value.trim();
-    if (!message) return;
+    if (!message || _queryInFlight) return;
     input.value = "";
 
     addChatMessage(message, "user");
 
+    // Show thinking indicator
+    const thinkingEl = addThinkingIndicator();
+    _queryInFlight = true;
+    const t0 = performance.now();
+
+    // Elapsed timer — update every second
+    const timerHandle = setInterval(() => {
+        const elapsed = ((performance.now() - t0) / 1000).toFixed(0);
+        const label = thinkingEl.querySelector(".thinking-time");
+        if (label) label.textContent = `${elapsed}s`;
+    }, 1000);
+
     try {
+        // No timeout on the fetch — SwarmEngine queries can take 60s+
         const resp = await apiFetch("/api/v1/query", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ message, stream: false }),
         });
 
+        clearInterval(timerHandle);
+        thinkingEl.remove();
+
         if (!resp.ok) {
-            const err = await resp.json().catch(() => ({}));
-            addChatMessage(err.detail || "Query mislukt", "error");
+            let detail = `HTTP ${resp.status}`;
+            try {
+                const err = await resp.json();
+                detail = err.detail || `HTTP ${resp.status}: ${resp.statusText}`;
+            } catch { /* no json body */ }
+            addChatMessage(detail, "error");
             return;
         }
 
-        const data = await resp.json();
-        if (data.payloads && data.payloads.length > 0) {
-            const combined = data.payloads
-                .map(p => p.display_text)
-                .join("\n\n");
-            addChatMessage(combined, "omega");
-            const meta = `${data.payloads.length} agents | ${data.execution_time.toFixed(1)}s`;
-            addChatMeta(meta);
-        } else {
-            addChatMessage("Geen resultaat van het netwerk.", "omega");
+        let data;
+        try {
+            data = await resp.json();
+        } catch (parseErr) {
+            addChatMessage(`Response parse error: ${parseErr.message}`, "error");
+            return;
         }
+
+        const payloads = data.payloads || [];
+        if (payloads.length === 0) {
+            addChatMessage("Geen resultaat van het netwerk.", "omega");
+            return;
+        }
+
+        // Render each agent payload as a separate structured block
+        for (const payload of payloads) {
+            const text = (payload.display_text || payload.content || "").trim();
+            if (!text) continue;
+            addAgentPayload(payload.agent || "Omega", text, payload.metadata);
+        }
+
+        // Summary meta line
+        const elapsed = data.execution_time
+            ? data.execution_time.toFixed(1) + "s"
+            : ((performance.now() - t0) / 1000).toFixed(1) + "s";
+        const errCount = data.error_count || 0;
+        let meta = `${payloads.length} agent${payloads.length !== 1 ? "s" : ""} | ${elapsed}`;
+        if (data.trace_id) meta += ` | trace:${data.trace_id.slice(0, 8)}`;
+        if (errCount > 0) meta += ` | ${errCount} errors`;
+        addChatMeta(meta);
+
     } catch (err) {
-        addChatMessage(`Verbinding mislukt: ${err.message}`, "error");
+        clearInterval(timerHandle);
+        thinkingEl.remove();
+        // Differentiate network errors from other failures
+        const isTimeout = err.name === "AbortError" || err.message.includes("timeout");
+        const isNetwork = err.name === "TypeError" || err.message.includes("Failed to fetch");
+        let detail = err.message;
+        if (isTimeout) detail = "Request timeout — de server reageert niet";
+        else if (isNetwork) detail = "Netwerk onbereikbaar — is de server nog online?";
+        addChatMessage(`${detail}`, "error");
+    } finally {
+        _queryInFlight = false;
     }
+}
+
+function addThinkingIndicator() {
+    const container = document.getElementById("chat-messages");
+    const placeholder = container.querySelector(".text-center");
+    if (placeholder) placeholder.remove();
+
+    const el = document.createElement("div");
+    el.className = "chat-omega p-3 mr-8 thinking-indicator";
+    el.innerHTML = `
+        <div class="text-xs text-sovereign-glow mb-1">&Omega; Omega</div>
+        <div class="flex items-center gap-2 text-sm text-gray-400">
+            <span class="thinking-dots">Analyzing<span>.</span><span>.</span><span>.</span></span>
+            <span class="thinking-time text-xs text-gray-600">0s</span>
+        </div>
+    `;
+    container.appendChild(el);
+    container.scrollTop = container.scrollHeight;
+    return el;
+}
+
+function addAgentPayload(agent, text, metadata) {
+    const container = document.getElementById("chat-messages");
+    const el = document.createElement("div");
+    el.className = "chat-omega p-3 mr-8";
+
+    // Agent badge color based on name
+    const agentColors = {
+        "Echo": "text-sovereign-green",
+        "Strategist": "text-sovereign-cyan",
+        "#@*VirtualTwin": "text-sovereign-amber",
+        "Spark": "text-yellow-400",
+        "Memex": "text-blue-400",
+        "Iolaax": "text-purple-400",
+        "Cipher": "text-pink-400",
+    };
+    const color = agentColors[agent] || "text-sovereign-glow";
+    const execTime = metadata?.execution_time
+        ? ` (${metadata.execution_time.toFixed(1)}s)` : "";
+
+    el.innerHTML = `
+        <div class="flex items-center gap-2 mb-1">
+            <span class="text-xs ${color} font-bold">${escapeHtml(agent)}</span>
+            <span class="text-xs text-gray-600">${execTime}</span>
+        </div>
+        <div class="text-sm text-gray-200 whitespace-pre-wrap">${escapeHtml(text)}</div>
+    `;
+    container.appendChild(el);
+    container.scrollTop = container.scrollHeight;
 }
 
 function addChatMessage(text, type) {
     const container = document.getElementById("chat-messages");
-    // Remove placeholder
     const placeholder = container.querySelector(".text-center");
     if (placeholder) placeholder.remove();
 
@@ -358,7 +458,7 @@ function addChatMessage(text, type) {
         el.innerHTML = `<div class="text-xs text-sovereign-glow mb-1">&Omega; Omega</div>
                         <div class="text-sm text-gray-200 whitespace-pre-wrap">${escapeHtml(text)}</div>`;
     } else {
-        el.className = "text-xs text-sovereign-red text-center py-1";
+        el.className = "bg-red-900/20 border border-red-800/30 rounded p-2 mx-4 text-xs text-sovereign-red";
         el.textContent = text;
     }
     container.appendChild(el);
