@@ -437,8 +437,19 @@ class ShadowGovernance:
 
     # ── Output Validators ──
 
-    def validate_output(self, output: str) -> tuple:
+    def validate_output(
+        self, output: str, commander_override: bool = False,
+    ) -> tuple:
         """Controleer shadow output tegen alle regels.
+
+        Args:
+            output: De te valideren tekst.
+            commander_override: Als True, wordt LOCKDOWN #3
+                (NO_AGENT_IMPERSONATION) gedowngraded naar GOVERNANCE.
+                Dit staat de Commandant toe om via geautoriseerde
+                sessies RAG-kennis over eigen codebase agents te
+                ontvangen. LOCKDOWN #2 (key exposure) blijft ALTIJD
+                actief — geen override voor echte API keys.
 
         Returns:
             (passed: bool, violations: list[str])
@@ -450,7 +461,7 @@ class ShadowGovernance:
         violations = []
         has_lockdown = False
 
-        # LOCKDOWN #2: NO_REAL_KEY_EXPOSURE
+        # LOCKDOWN #2: NO_REAL_KEY_EXPOSURE — ALTIJD actief, geen override
         for pattern in _KEY_PATTERNS:
             if pattern.search(output):
                 violations.append(
@@ -461,6 +472,7 @@ class ShadowGovernance:
                 break
 
         # LOCKDOWN #3: NO_AGENT_IMPERSONATION
+        # Bij commander_override: downgrade naar GOVERNANCE (log, niet blokkeren)
         agent_names = [
             "CentralBrain", "Tribunal", "Strategist", "Artificer",
             "VoidWalker", "Dreamer", "GhostWriter", "TheMirror",
@@ -476,11 +488,18 @@ class ShadowGovernance:
             if pattern.search(output):
                 prefixed = f"{SHADOW_PREFIX}{name}"
                 if prefixed not in output:
-                    violations.append(
-                        f"[{LOCKDOWN}] NO_AGENT_IMPERSONATION: "
-                        f"'{name}' zonder #@* prefix in shadow output"
-                    )
-                    has_lockdown = True
+                    if commander_override:
+                        # Commandant Override: log als GOVERNANCE, niet blokkeren
+                        violations.append(
+                            f"[{GOVERNANCE}] NO_AGENT_IMPERSONATION (override): "
+                            f"'{name}' in RAG-context toegestaan"
+                        )
+                    else:
+                        violations.append(
+                            f"[{LOCKDOWN}] NO_AGENT_IMPERSONATION: "
+                            f"'{name}' zonder #@* prefix in shadow output"
+                        )
+                        has_lockdown = True
 
         if violations:
             self._violation_count += len(violations)

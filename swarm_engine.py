@@ -1151,7 +1151,7 @@ class VirtualTwinAgent(Agent):
                 content="VirtualTwin niet beschikbaar",
                 display_text="VirtualTwin niet beschikbaar",
             )
-        result = await twin.consult(task)
+        result = await twin.consult(task, commander_override=True)
         elapsed = time.time() - start_t
         return SwarmPayload(
             agent=self.name,

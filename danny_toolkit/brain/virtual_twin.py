@@ -397,7 +397,10 @@ class VirtualTwin:
                 logger.debug("BlackBox init failed: %s", e)
         return self._black_box
 
-    async def consult(self, query: str, context: str = "") -> Optional[str]:
+    async def consult(
+        self, query: str, context: str = "",
+        commander_override: bool = False,
+    ) -> Optional[str]:
         """Main entry: snapshot → profile → blackbox → research → synthesize → verify.
 
         Anti-hallucination containment:
@@ -409,6 +412,8 @@ class VirtualTwin:
         Args:
             query: De gebruikersvraag.
             context: Optionele extra context (bijv. van MEMEX).
+            commander_override: Als True, downgrade agent-name LOCKDOWN
+                naar GOVERNANCE (staat RAG-queries over eigen code toe).
 
         Returns:
             Gesynthetiseerde inzicht-tekst, of None bij falen.
@@ -480,7 +485,9 @@ class VirtualTwin:
 
         # 7. Shadow Governance LOCKDOWN gate — validate before anything escapes
         if self._governance:
-            passed, violations = self._governance.validate_output(result)
+            passed, violations = self._governance.validate_output(
+                result, commander_override=commander_override,
+            )
             if not passed:
                 logger.warning(
                     "%sGOVERNANCE LOCKDOWN: output geblokkeerd — %s",
@@ -491,6 +498,13 @@ class VirtualTwin:
                 if self._permissions:
                     self._permissions.exit_shadow_zone()
                 return f"[TWIN:GOVERNANCE_BLOCKED] Output geblokkeerd wegens LOCKDOWN overtreding."
+            # Commander override actief: scrub keys maar laat output door
+            if commander_override and violations:
+                result = self._governance.scrub_keys(result)
+                logger.info(
+                    "%sCommander Override: %d governance warnings, output doorgelaten",
+                    SHADOW_PREFIX, len(violations),
+                )
 
         # 8. Shadow Cortex — distill intelligence to physical swarm
         self._distill_to_physical(query, result)
