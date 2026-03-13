@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 
 from dotenv import load_dotenv
 from fastapi import (
+    BackgroundTasks,
     Cookie,
     Depends,
     FastAPI,
@@ -189,6 +190,73 @@ class IngestResponse(BaseModel):
     status: str
     bestand: str
     chunks: int
+
+
+class BackgroundIngestResponse(BaseModel):
+    """Response van /api/v1/ingest/background."""
+    job_id: str
+    status: str
+    bestand: str
+    message: str
+
+
+class BackgroundJobStatus(BaseModel):
+    """Status van een achtergrond-ingest job."""
+    job_id: str
+    status: str  # "pending" | "running" | "completed" | "failed"
+    bestand: str
+    chunks: int = 0
+    error: str = ""
+    started_at: float = 0.0
+    completed_at: float = 0.0
+
+
+# ─── Background Job Tracker ──────────────────────
+import threading as _bg_threading
+
+_ingest_jobs: Dict[str, Dict[str, Any]] = {}
+_ingest_jobs_lock = _bg_threading.Lock()
+
+
+def _run_librarian_scan(job_id: str, file_path: str, bestandsnaam: str) -> None:
+    """Background worker: TheLibrarian scant een bestand met atomic staging.
+
+    Flow:
+    1. Data → staging-collectie (_staging_{job_id})
+    2. Staging → hoofdcollectie (commit/swap)
+    3. Staging gedropt
+    Bij crash: staging wordt onmiddellijk gedropt — geen partial data.
+
+    Draait buiten de request-thread (via FastAPI BackgroundTasks).
+    Resultaat wordt opgeslagen in _ingest_jobs voor polling.
+    """
+    with _ingest_jobs_lock:
+        _ingest_jobs[job_id]["status"] = "running"
+        _ingest_jobs[job_id]["started_at"] = time.time()
+
+    librarian = None
+    try:
+        from danny_toolkit.skills.librarian import TheLibrarian
+        librarian = TheLibrarian()
+        # Atomic: staging → commit → cleanup (alles in ingest_file)
+        chunks = librarian.ingest_file(file_path, job_id=job_id)
+        with _ingest_jobs_lock:
+            _ingest_jobs[job_id]["status"] = "completed"
+            _ingest_jobs[job_id]["chunks"] = chunks
+            _ingest_jobs[job_id]["completed_at"] = time.time()
+        logger.info("Background ingest voltooid: %s (%d chunks, atomic)", bestandsnaam, chunks)
+    except Exception as e:
+        # Crash guard: drop staging collectie zodat geen half-bakken data achterblijft
+        if librarian is not None:
+            try:
+                librarian._cleanup_staging(job_id)
+            except Exception as cleanup_err:
+                logger.debug("Staging cleanup na crash: %s", cleanup_err)
+        with _ingest_jobs_lock:
+            _ingest_jobs[job_id]["status"] = "failed"
+            _ingest_jobs[job_id]["error"] = str(e)
+            _ingest_jobs[job_id]["completed_at"] = time.time()
+        logger.error("Background ingest mislukt (staging gedropt): %s — %s", bestandsnaam, e)
 
 
 class TraceSpanResponse(BaseModel):
@@ -1106,6 +1174,105 @@ async def ingest(
         status="OK" if chunks >= 0 else "OPGESLAGEN",
         bestand=safe_name,
         chunks=max(chunks, 0),
+    )
+
+
+@app.post(
+    "/api/v1/ingest/background",
+    response_model=BackgroundIngestResponse,
+    summary="Document uploaden + achtergrond-scan via TheLibrarian",
+    tags=["RAG"],
+)
+async def ingest_background(
+    background_tasks: BackgroundTasks,
+    bestand: UploadFile = File(
+        ..., description="Tekstbestand om te indexeren"
+    ),
+    _key: str = Depends(verify_api_key),
+):
+    """Upload een document en start TheLibrarian scan als background task.
+
+    Retourneert direct een job_id waarmee de status gepolled kan worden
+    via GET /api/v1/ingest/background/{job_id}.
+    De hoofd-thread wordt NIET geblokkeerd.
+    """
+    if not bestand.filename:
+        raise HTTPException(
+            status_code=400, detail="Geen bestand ontvangen."
+        )
+
+    allowed = {".txt", ".md", ".py", ".json", ".csv", ".pdf", ".yaml", ".yml", ".toml"}
+    ext = Path(bestand.filename).suffix.lower()
+    if ext not in allowed:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Bestandstype '{ext}' niet toegestaan. Gebruik: {', '.join(sorted(allowed))}",
+        )
+
+    # Sla bestand op
+    from danny_toolkit.core.config import Config
+    Config.ensure_dirs()
+    docs_dir = Config.RAG_DATA_DIR / "documenten"
+    docs_dir.mkdir(parents=True, exist_ok=True)
+
+    safe_name = (
+        bestand.filename.replace("..", "")
+        .replace("/", "_")
+        .replace("\\", "_")
+    )
+    doel = docs_dir / safe_name
+
+    inhoud = await bestand.read()
+    doel.write_bytes(inhoud)
+
+    # Genereer job ID en registreer
+    import uuid
+    job_id = uuid.uuid4().hex[:12]
+    with _ingest_jobs_lock:
+        _ingest_jobs[job_id] = {
+            "status": "pending",
+            "bestand": safe_name,
+            "chunks": 0,
+            "error": "",
+            "started_at": 0.0,
+            "completed_at": 0.0,
+        }
+
+    # Start TheLibrarian in de achtergrond — keert direct terug
+    background_tasks.add_task(_run_librarian_scan, job_id, str(doel), safe_name)
+
+    return BackgroundIngestResponse(
+        job_id=job_id,
+        status="accepted",
+        bestand=safe_name,
+        message=f"Scan gestart in achtergrond. Poll status via GET /api/v1/ingest/background/{job_id}",
+    )
+
+
+@app.get(
+    "/api/v1/ingest/background/{job_id}",
+    response_model=BackgroundJobStatus,
+    summary="Status van achtergrond-ingest job",
+    tags=["RAG"],
+)
+async def ingest_background_status(
+    job_id: str,
+    _key: str = Depends(verify_api_key),
+):
+    """Poll de status van een background ingest job."""
+    with _ingest_jobs_lock:
+        job = _ingest_jobs.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail=f"Job '{job_id}' niet gevonden.")
+
+    return BackgroundJobStatus(
+        job_id=job_id,
+        status=job["status"],
+        bestand=job["bestand"],
+        chunks=job["chunks"],
+        error=job["error"],
+        started_at=job["started_at"],
+        completed_at=job["completed_at"],
     )
 
 

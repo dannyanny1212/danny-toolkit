@@ -283,7 +283,10 @@ class Config:
     OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
 
     # THE MEMORY (Hybrid)
-    EMBEDDING_PROVIDER = "voyage"
+    EMBEDDING_PROVIDER = os.environ.get("EMBEDDING_PROVIDER", "voyage")
+    LOCAL_EMBEDDING_MODEL = os.environ.get(
+        "LOCAL_EMBEDDING_MODEL", "BAAI/bge-small-en-v1.5"
+    )
     VERIFICATION_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
     # Fallback / overige modellen

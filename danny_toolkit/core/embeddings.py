@@ -500,6 +500,102 @@ class CachedEmbeddingProvider(EmbeddingProvider):
 # =============================================================================
 
 
+class LocalEmbeddings(EmbeddingProvider):
+    """Lokale sentence-transformer embeddings — geen API calls, geen rate limits.
+
+    Model: BAAI/bge-small-en-v1.5 (384d, ~33 MB, top-tier voor RAG).
+    Draait op GPU als beschikbaar, anders CPU.
+    """
+
+    naam = "local"
+
+    def __init__(self, model_name: str = None) -> None:
+        """Init met optioneel model override."""
+        from sentence_transformers import SentenceTransformer
+        self._model_name = model_name or Config.LOCAL_EMBEDDING_MODEL
+        device = "cpu"
+        try:
+            import torch as _torch
+            if _torch.cuda.is_available():
+                device = "cuda"
+        except ImportError:
+            pass
+        self._model = SentenceTransformer(self._model_name, device=device)
+        self.dimensies = self._model.get_sentence_embedding_dimension()
+        self._device = device
+        logger.info("LocalEmbeddings geladen: %s (%dd, %s)", self._model_name, self.dimensies, device)
+
+    def __repr__(self) -> str:
+        return f"<LocalEmbeddings model={self._model_name} dim={self.dimensies}d device={self._device}>"
+
+    def embed(self, teksten: list) -> list:
+        """Embed teksten lokaal (batch, geen API)."""
+        embeddings = self._model.encode(teksten, normalize_embeddings=True, show_progress_bar=False)
+        return embeddings.tolist()
+
+    def embed_query(self, query: str) -> list:
+        """Embed enkele query."""
+        embedding = self._model.encode([query], normalize_embeddings=True, show_progress_bar=False)
+        return embedding[0].tolist()
+
+
+class LocalChromaEmbedding:
+    """ChromaDB-compatibele wrapper voor lokale sentence-transformer.
+
+    Implementeert chromadb EmbeddingFunction protocol:
+    __call__(input: Documents) -> Embeddings
+    """
+
+    def __init__(self, model_name: str = None) -> None:
+        """Init met lazy model loading."""
+        self._model_name = model_name or Config.LOCAL_EMBEDDING_MODEL
+        self._model = None
+        self._lock = threading.Lock()
+        self._target_dim = None  # set after first load
+
+    def _ensure_model(self) -> None:
+        """Lazy-load model op eerste gebruik."""
+        if self._model is None:
+            with self._lock:
+                if self._model is None:
+                    from sentence_transformers import SentenceTransformer
+                    device = "cpu"
+                    try:
+                        import torch as _torch
+                        if _torch.cuda.is_available():
+                            device = "cuda"
+                    except ImportError:
+                        pass
+                    self._model = SentenceTransformer(self._model_name, device=device)
+                    self._target_dim = self._model.get_sentence_embedding_dimension()
+                    logger.info("LocalChromaEmbedding geladen: %s (%dd, %s)", self._model_name, self._target_dim, device)
+
+    def __repr__(self) -> str:
+        dim = self._target_dim or "?"
+        return f"<LocalChromaEmbedding model={self._model_name} dim={dim}d>"
+
+    def name(self) -> str:
+        """ChromaDB protocol: unieke naam."""
+        return "LocalChromaEmbedding"
+
+    def embed_query(self, query: str = None, *, input=None) -> list:
+        """Embed query — ChromaDB compatible."""
+        self._ensure_model()
+        raw = query if query is not None else input
+        if isinstance(raw, list):
+            texts = [str(t) for t in raw]
+        else:
+            texts = [str(raw)] if raw else [""]
+        embeddings = self._model.encode(texts, normalize_embeddings=True, show_progress_bar=False)
+        return embeddings.tolist()
+
+    def __call__(self, input):
+        """ChromaDB embedding interface — batch embed documenten."""
+        self._ensure_model()
+        embeddings = self._model.encode(input, normalize_embeddings=True, show_progress_bar=False)
+        return embeddings.tolist()
+
+
 class VoyageChromaEmbedding:
     """ChromaDB-compatibele wrapper voor Voyage AI.
 
@@ -591,17 +687,30 @@ class VoyageChromaEmbedding:
 
 
 def get_chroma_embed_fn() -> None:
-    """Geeft ChromaDB embedding functie.
+    """Geeft ChromaDB embedding functie op basis van Config.EMBEDDING_PROVIDER.
 
-    Voyage AI als key beschikbaar, anders
-    SentenceTransformer fallback.
+    Provider keuze:
+    - "local" → LocalChromaEmbedding (BAAI/bge-small-en-v1.5, geen API calls)
+    - "voyage" → VoyageChromaEmbedding (Voyage AI, rate-limited)
+    - fallback → SentenceTransformer (paraphrase-multilingual)
     """
-    if Config.has_voyage_key():
+    provider = Config.EMBEDDING_PROVIDER.lower()
+
+    # Local provider: geen API, geen rate limits
+    if provider == "local":
+        try:
+            return LocalChromaEmbedding()
+        except Exception as e:
+            logger.warning("LocalChromaEmbedding mislukt: %s, fallback naar Voyage/ST", e)
+
+    # Voyage provider (default)
+    if provider == "voyage" and Config.has_voyage_key():
         try:
             return VoyageChromaEmbedding()
         except Exception as e:
             logger.warning("VoyageChromaEmbedding mislukt, fallback naar SentenceTransformer: %s", e)
-    # Fallback
+
+    # Ultimate fallback
     from chromadb.utils.embedding_functions import (
         SentenceTransformerEmbeddingFunction,
     )
@@ -725,6 +834,11 @@ def get_embedder(gebruik_voyage: bool = True,
     """
     Geeft de beste beschikbare embedding provider.
 
+    Respecteert Config.EMBEDDING_PROVIDER:
+    - "local" → LocalEmbeddings (geen API)
+    - "voyage" → VoyageEmbeddings (rate-limited)
+    - fallback → Hash of TF-IDF
+
     Args:
         gebruik_voyage: Probeer Voyage AI te gebruiken
         gebruik_cache: Voeg caching toe
@@ -735,7 +849,14 @@ def get_embedder(gebruik_voyage: bool = True,
     """
     provider = None
 
-    if gebruik_voyage and Config.has_voyage_key():
+    # Local provider heeft prioriteit als geconfigureerd
+    if Config.EMBEDDING_PROVIDER.lower() == "local":
+        try:
+            provider = LocalEmbeddings()
+        except Exception as e:
+            logger.warning("LocalEmbeddings mislukt: %s, fallback naar Voyage/Hash", e)
+
+    if provider is None and gebruik_voyage and Config.has_voyage_key():
         try:
             provider = VoyageEmbeddings()
         except Exception as e:
@@ -755,7 +876,7 @@ def get_embedder(gebruik_voyage: bool = True,
 
 def lijst_providers() -> List[str]:
     """Lijst van beschikbare provider namen."""
-    providers = ["hash", "tfidf"]
+    providers = ["local", "hash", "tfidf"]
     if Config.has_voyage_key():
         providers.insert(0, "voyage")
     return providers

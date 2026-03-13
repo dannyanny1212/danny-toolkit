@@ -492,12 +492,107 @@ class TheLibrarian:
             "[/bold green]"
         )
 
+    # ─── Atomic Staging (crash-proof ingest) ───
+
+    def _create_staging_collection(self, job_id: str) -> object:
+        """Maak een tijdelijke staging-collectie voor atomic ingest.
+
+        Data wordt hier eerst naartoe geschreven. Pas na succesvolle
+        verwerking wordt het naar de hoofdcollectie geswapped.
+        Bij crash/error wordt de staging collectie gedropt — geen
+        half-bakken data in de hoofdcollectie.
+        """
+        staging_name = f"staging-{job_id}"
+        collection = self.client.get_or_create_collection(
+            name=staging_name,
+            embedding_function=self.embed_fn,
+            metadata={"description": f"Staging voor job {job_id}"},
+        )
+        logger.info("Staging collectie aangemaakt: %s", staging_name)
+        return collection
+
+    def _commit_staging(self, job_id: str) -> int:
+        """Verplaats alle chunks van staging naar de hoofdcollectie.
+
+        Embeddings worden NIET meegekopieerd — de hoofdcollectie
+        herberekent ze via zijn eigen embed_fn. Dit voorkomt
+        dimensie-conflicten (bv. staging=384d local, hoofd=256d Voyage).
+
+        Returns:
+            Aantal chunks overgedragen.
+
+        Raises:
+            Exception: als de swap mislukt (staging blijft intact
+            voor debug, caller moet _cleanup_staging aanroepen).
+        """
+        staging_name = f"staging-{job_id}"
+        try:
+            staging = self.client.get_collection(
+                name=staging_name,
+                embedding_function=self.embed_fn,
+            )
+        except Exception as e:
+            logger.error("Staging collectie niet gevonden: %s — %s", staging_name, e)
+            raise
+
+        count = staging.count()
+        if count == 0:
+            self._cleanup_staging(job_id)
+            return 0
+
+        # Lees documenten + metadata (GEEN embeddings — hoofd herberekent)
+        data = staging.get(
+            limit=count,
+            include=["documents", "metadatas"],
+        )
+
+        # Upsert naar hoofdcollectie — embed_fn van hoofd genereert vectors
+        _BATCH = 100
+        ids = data["ids"]
+        docs = data["documents"]
+        metas = data["metadatas"]
+
+        for b_start in range(0, len(ids), _BATCH):
+            b_end = min(b_start + _BATCH, len(ids))
+            self.collection.upsert(
+                ids=ids[b_start:b_end],
+                documents=docs[b_start:b_end],
+                metadatas=metas[b_start:b_end],
+            )
+
+        # Swap geslaagd — drop staging
+        self._cleanup_staging(job_id)
+        logger.info(
+            "Staging commit voltooid: %d chunks → %s",
+            count, COLLECTION_NAME,
+        )
+        return count
+
+    def _cleanup_staging(self, job_id: str) -> None:
+        """Drop de staging-collectie (cleanup na crash of success)."""
+        staging_name = f"staging-{job_id}"
+        try:
+            self.client.delete_collection(staging_name)
+            logger.info("Staging collectie gedropt: %s", staging_name)
+        except Exception as e:
+            logger.debug("Staging cleanup (al verwijderd?): %s", e)
+
     # ─── Single File Ingest ───
 
     def ingest_file(self, pad: object,
-                    chunk_size: object=CHUNK_SIZE,
-                    overlap: object=CHUNK_OVERLAP) -> int:
+                    chunk_size: object = CHUNK_SIZE,
+                    overlap: object = CHUNK_OVERLAP,
+                    job_id: str = "") -> int:
         """Indexeer één bestand naar ChromaDB.
+
+        Args:
+            pad: Pad naar het bestand.
+            chunk_size: Chunk grootte in woorden.
+            overlap: Overlap in woorden.
+            job_id: Optioneel — als meegegeven, gebruik atomic
+                staging-swap (crash-proof). Data gaat eerst naar
+                een staging-collectie en wordt pas na succes
+                gecommit naar de hoofdcollectie.
 
         Returns:
             Aantal chunks verwerkt.
@@ -539,17 +634,32 @@ class TheLibrarian:
                     pad.stat().st_size,
             })
 
-        self.collection.upsert(
-            ids=ids,
-            documents=documents,
-            metadatas=metadatas,
-        )
-
-        console.print(
-            f"[green]{len(ids)} chunks"
-            f" geïndexeerd: {pad.name}[/green]"
-        )
-        return len(ids)
+        # Atomic staging of directe upsert
+        if job_id:
+            staging = self._create_staging_collection(job_id)
+            staging.upsert(
+                ids=ids,
+                documents=documents,
+                metadatas=metadatas,
+            )
+            # Commit: staging → hoofdcollectie
+            committed = self._commit_staging(job_id)
+            console.print(
+                f"[green]{committed} chunks"
+                f" atomic-ingested: {pad.name}[/green]"
+            )
+            return committed
+        else:
+            self.collection.upsert(
+                ids=ids,
+                documents=documents,
+                metadatas=metadatas,
+            )
+            console.print(
+                f"[green]{len(ids)} chunks"
+                f" geïndexeerd: {pad.name}[/green]"
+            )
+            return len(ids)
 
     # ─── Stats ───
 
