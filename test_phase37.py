@@ -18,9 +18,12 @@ import tempfile
 import threading
 import time
 
-sys.stdout = __import__("io").TextIOWrapper(
-    sys.stdout.buffer, encoding="utf-8", errors="replace",
-)
+try:
+    sys.stdout = __import__("io").TextIOWrapper(
+        sys.stdout.buffer, encoding="utf-8", errors="replace",
+    )
+except (ValueError, OSError):
+    pass
 
 # Test-mode env
 os.environ.setdefault("DANNY_TEST_MODE", "1")

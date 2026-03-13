@@ -10,7 +10,10 @@ import threading
 import time
 
 # Windows UTF-8
-sys.stdout.reconfigure(encoding="utf-8")
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except (ValueError, OSError):
+    pass
 
 # Test-mode env
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")

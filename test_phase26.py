@@ -23,7 +23,10 @@ import threading
 import time
 from pathlib import Path
 
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+try:
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+except (ValueError, OSError):
+    pass
 
 # Test-mode env
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
@@ -234,4 +237,5 @@ print(f"\n{'=' * 50}")
 print(f"  Phase 26: {geslaagd} geslaagd, {mislukt} mislukt")
 print(f"{'=' * 50}")
 
-sys.exit(0 if mislukt == 0 else 1)
+if __name__ == "__main__":
+    sys.exit(0 if mislukt == 0 else 1)

@@ -69,7 +69,7 @@ include = ["danny_toolkit*"]
 danny_toolkit = ["*.json", "*.txt"]
 
 [tool.pytest.ini_options]
-addopts = "--cov=danny_toolkit --cov-report=term-missing"
+addopts = "-s"
 markers = [
     "stress: Stress & concurrency tests (excluded by default, use --stress)",
 ]

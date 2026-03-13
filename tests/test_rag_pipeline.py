@@ -20,7 +20,10 @@ import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 # Windows UTF-8
-sys.stdout.reconfigure(encoding="utf-8")
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except (ValueError, OSError):
+    pass
 
 
 # ── Helpers ──────────────────────────────────────────────────────

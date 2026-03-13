@@ -21,7 +21,10 @@ import tempfile
 from collections import deque
 from pathlib import Path
 
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+try:
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+except (ValueError, OSError):
+    pass
 
 PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -259,4 +262,5 @@ print(f"\n{'=' * 50}")
 print(f"Phase 25 Tests: {geslaagd} geslaagd, {mislukt} mislukt")
 print(f"{'=' * 50}")
 
-sys.exit(0 if mislukt == 0 else 1)
+if __name__ == "__main__":
+    sys.exit(0 if mislukt == 0 else 1)

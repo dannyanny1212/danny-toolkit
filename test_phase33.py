@@ -16,9 +16,12 @@ Phase 33 Tests — CONFIGAUDITOR: Runtime configuratie-validatie.
 import os
 import sys
 
-sys.stdout = __import__("io").TextIOWrapper(
-    sys.stdout.buffer, encoding="utf-8", errors="replace",
-)
+try:
+    sys.stdout = __import__("io").TextIOWrapper(
+        sys.stdout.buffer, encoding="utf-8", errors="replace",
+    )
+except (ValueError, OSError):
+    pass
 
 # Test-mode env
 os.environ.setdefault("DANNY_TEST_MODE", "1")
@@ -325,9 +328,12 @@ def test_14_toon_rapport():
     finally:
         sys.stdout = old_stdout
         # Restore UTF-8 wrapper
-        sys.stdout = __import__("io").TextIOWrapper(
-            sys.stdout.buffer, encoding="utf-8", errors="replace",
-        )
+        try:
+            sys.stdout = __import__("io").TextIOWrapper(
+                sys.stdout.buffer, encoding="utf-8", errors="replace",
+            )
+        except (ValueError, OSError):
+            pass
 
     check("toon_rapport() produceert output", len(output) > 0)
     check("Bevat CONFIG AUDIT", "CONFIG AUDIT" in output)

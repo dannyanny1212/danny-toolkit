@@ -17,7 +17,10 @@ from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 # Windows UTF-8
-sys.stdout.reconfigure(encoding="utf-8")
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except (ValueError, OSError):
+    pass
 
 # Test-mode env
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")

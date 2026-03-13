@@ -21,9 +21,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import os
 
-sys.stdout = io.TextIOWrapper(
-    sys.stdout.buffer, encoding="utf-8", errors="replace"
-)
+try:
+    sys.stdout = io.TextIOWrapper(
+        sys.stdout.buffer, encoding="utf-8", errors="replace"
+    )
+except (ValueError, OSError):
+    pass
 
 # Test-mode env
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
