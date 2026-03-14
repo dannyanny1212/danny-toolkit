@@ -582,7 +582,8 @@ class TheLibrarian:
     def ingest_file(self, pad: object,
                     chunk_size: object = CHUNK_SIZE,
                     overlap: object = CHUNK_OVERLAP,
-                    job_id: str = "") -> int:
+                    job_id: str = "",
+                    extra_metadata: object = None) -> int:
         """Indexeer één bestand naar ChromaDB.
 
         Args:
@@ -593,6 +594,9 @@ class TheLibrarian:
                 staging-swap (crash-proof). Data gaat eerst naar
                 een staging-collectie en wordt pas na succes
                 gecommit naar de hoofdcollectie.
+            extra_metadata: Optionele dict met extra metadata
+                velden (bijv. tags) die aan elke chunk worden
+                toegevoegd.
 
         Returns:
             Aantal chunks verwerkt.
@@ -624,7 +628,7 @@ class TheLibrarian:
                 f"{pad.name}::chunk_{i}"
             )
             documents.append(chunk)
-            metadatas.append({
+            meta = {
                 "bron": pad.name,
                 "pad": str(pad),
                 "chunk_nr": i,
@@ -632,7 +636,12 @@ class TheLibrarian:
                 "extensie": pad.suffix,
                 "grootte_bytes":
                     pad.stat().st_size,
-            })
+            }
+            if extra_metadata and isinstance(
+                extra_metadata, dict
+            ):
+                meta.update(extra_metadata)
+            metadatas.append(meta)
 
         # Atomic staging of directe upsert
         if job_id:

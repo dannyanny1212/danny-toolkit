@@ -35,6 +35,7 @@ from fastapi import (
     Depends,
     FastAPI,
     File,
+    Form,
     Header,
     HTTPException,
     Query,
@@ -228,7 +229,8 @@ _ingest_jobs: Dict[str, Dict[str, Any]] = {}
 _ingest_jobs_lock = _bg_threading.Lock()
 
 
-def _run_librarian_scan(job_id: str, file_path: str, bestandsnaam: str) -> None:
+def _run_librarian_scan(job_id: str, file_path: str, bestandsnaam: str,
+                        extra_metadata: dict = None) -> None:
     """Background worker: TheLibrarian scant een bestand met atomic staging.
 
     Flow:
@@ -250,7 +252,10 @@ def _run_librarian_scan(job_id: str, file_path: str, bestandsnaam: str) -> None:
         from danny_toolkit.skills.librarian import TheLibrarian
         librarian = TheLibrarian()
         # Atomic: staging → commit → cleanup (alles in ingest_file)
-        chunks = librarian.ingest_file(file_path, job_id=job_id)
+        chunks = librarian.ingest_file(
+            file_path, job_id=job_id,
+            extra_metadata=extra_metadata,
+        )
         committed = True
         with _ingest_jobs_lock:
             _ingest_jobs[job_id]["status"] = "completed"
@@ -1033,7 +1038,42 @@ async def agents(
                 tasks_completed=node.tasks_completed,
             ))
 
+    # Annotate with pause status
+    from swarm_engine import get_paused_agents
+    paused = set(get_paused_agents())
+    for a in result:
+        if a.name.upper() in paused:
+            a.status = "paused"
+
     return result
+
+
+class AgentToggleRequest(BaseModel):
+    """Request voor agent toggle."""
+    agent: str = Field(..., description="Agent naam (bijv. 'Artificer')")
+    paused: bool = Field(..., description="true = pauzeren, false = hervatten")
+
+
+@app.post(
+    "/api/v1/agents/toggle",
+    summary="Pauzeer of hervat een agent",
+    tags=["Swarm"],
+)
+async def toggle_agent(
+    req: AgentToggleRequest,
+    _key: str = Depends(verify_api_key),
+):
+    """Handmatig een agent pauzeren of hervatten."""
+    from swarm_engine import pause_agent, resume_agent
+
+    if req.paused:
+        pause_agent(req.agent)
+        action = "gepauzeerd"
+    else:
+        resume_agent(req.agent)
+        action = "hervat"
+
+    return {"agent": req.agent, "status": action}
 
 
 # ─── G2: CorticalStack Memory ────────────────────────
@@ -1235,6 +1275,9 @@ async def ingest_background(
     bestand: UploadFile = File(
         ..., description="Tekstbestand om te indexeren"
     ),
+    tags: str = Form(
+        "", description="Comma-separated tags (bijv. 'project:frontend, status:oud')"
+    ),
     _key: str = Depends(verify_api_key),
 ):
     """Upload een document en start TheLibrarian scan als background task.
@@ -1285,8 +1328,26 @@ async def ingest_background(
             "completed_at": 0.0,
         }
 
+    # Parse tags naar metadata dict
+    tag_meta = {}
+    if tags.strip():
+        for part in tags.split(","):
+            part = part.strip()
+            if ":" in part:
+                k, v = part.split(":", 1)
+                tag_meta[k.strip()] = v.strip()
+            elif part:
+                tag_meta.setdefault("tags", [])
+                if isinstance(tag_meta.get("tags"), list):
+                    tag_meta["tags"].append(part)
+        # ChromaDB metadata values must be str/int/float
+        if "tags" in tag_meta and isinstance(tag_meta["tags"], list):
+            tag_meta["tags"] = ", ".join(tag_meta["tags"])
+
     # Start TheLibrarian in de achtergrond — keert direct terug
-    background_tasks.add_task(_run_librarian_scan, job_id, str(doel), safe_name)
+    background_tasks.add_task(
+        _run_librarian_scan, job_id, str(doel), safe_name, tag_meta or None,
+    )
 
     return BackgroundIngestResponse(
         job_id=job_id,

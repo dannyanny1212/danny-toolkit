@@ -160,14 +160,40 @@ function updateAgents(agents) {
         return;
     }
     container.innerHTML = agents.map(a => {
-        const statusColor = a.status === "active" ? "text-sovereign-green" :
+        const isPaused = a.status === "paused";
+        const statusColor = isPaused ? "text-sovereign-red" :
+                           a.status === "active" ? "text-sovereign-green" :
                            a.status === "cooldown" ? "text-sovereign-amber" : "text-gray-500";
+        const toggleLabel = isPaused ? "&#9654;" : "&#10074;&#10074;";
+        const toggleTitle = isPaused ? "Hervat agent" : "Pauzeer agent";
         return `<div class="agent-row">
-            <span class="text-gray-300">${a.name}</span>
-            <span class="${statusColor}">${a.status}</span>
-            <span class="text-gray-500">${a.tasks_completed} tasks</span>
+            <span class="text-gray-300 flex-1">${a.name}</span>
+            <span class="${statusColor} w-16 text-center">${a.status}</span>
+            <span class="text-gray-500 w-14 text-right">${a.tasks_completed}</span>
+            <button onclick="toggleAgent('${a.name}', ${!isPaused})"
+                    class="ml-2 px-1.5 py-0.5 rounded text-xs border transition-colors
+                           ${isPaused
+                               ? 'border-sovereign-green text-sovereign-green hover:bg-green-900/20'
+                               : 'border-sovereign-border text-gray-500 hover:border-sovereign-amber hover:text-sovereign-amber'}"
+                    title="${toggleTitle}">
+                ${toggleLabel}
+            </button>
         </div>`;
     }).join("");
+}
+
+async function toggleAgent(name, paused) {
+    try {
+        const resp = await apiFetch("/api/v1/agents/toggle", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ agent: name, paused }),
+        });
+        if (resp.ok) {
+            // Onmiddellijk herpollen voor visuele feedback
+            pollHealth();
+        }
+    } catch { /* non-critical */ }
 }
 
 function setOffline() {
@@ -198,6 +224,13 @@ function handleFiles(files) {
 async function uploadFile(file) {
     const formData = new FormData();
     formData.append("bestand", file);
+
+    // Tags meesturen als die zijn ingevuld
+    const tagsInput = document.getElementById("ingest-tags");
+    const tags = tagsInput ? tagsInput.value.trim() : "";
+    if (tags) {
+        formData.append("tags", tags);
+    }
 
     try {
         const resp = await fetch(`${BASE}/api/v1/ingest/background`, {

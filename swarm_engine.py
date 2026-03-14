@@ -88,6 +88,32 @@ def get_circuit_state() -> Dict[str, Any]:
         }
 
 
+# ── MANUAL AGENT PAUSE ──
+
+_PAUSED_AGENTS: set = set()
+_PAUSE_LOCK = _threading.Lock()
+
+
+def pause_agent(name: str) -> bool:
+    """Zet een agent op PAUZE — wordt overgeslagen bij routing."""
+    with _PAUSE_LOCK:
+        _PAUSED_AGENTS.add(name.upper())
+    return True
+
+
+def resume_agent(name: str) -> bool:
+    """Hervat een gepauzeerde agent."""
+    with _PAUSE_LOCK:
+        _PAUSED_AGENTS.discard(name.upper())
+    return True
+
+
+def get_paused_agents() -> list:
+    """Lijst van handmatig gepauzeerde agents."""
+    with _PAUSE_LOCK:
+        return sorted(_PAUSED_AGENTS)
+
+
 def get_pipeline_metrics() -> Dict[str, Any]:
     """Per-agent pipeline metrics (module-level singleton)."""
     with _METRICS_LOCK:
@@ -149,6 +175,18 @@ class TaskVerificationError(Exception):
 
 # ── CONFIG ──
 from danny_toolkit.core.config import Config
+
+# ── SANDBOXED TOOLS ──
+try:
+    from danny_toolkit.core.swarm_tools import (
+        file_scribe_write,
+        file_scribe_read,
+        file_scribe_list,
+        terminal_exec,
+    )
+    HAS_SWARM_TOOLS = True
+except ImportError:
+    HAS_SWARM_TOOLS = False
 
 # ── CORTICAL STACK LOGGING ──
 
@@ -2473,6 +2511,18 @@ class SwarmEngine:
         """Wrap agent.process() met timing, timeout + error handling."""
         agent_naam = agent.name
         t0 = time.time()
+
+        # Manual pause check — skip als gepauzeerd door gebruiker
+        with _PAUSE_LOCK:
+            is_paused = agent_naam.upper() in _PAUSED_AGENTS
+        if is_paused:
+            return SwarmPayload(
+                agent=agent_naam, type="error",
+                content=f"[{agent_naam}] Handmatig gepauzeerd",
+                display_text=f"Agent {agent_naam} is gepauzeerd",
+                metadata={"error_type": "ManualPause"},
+                trace_id=trace_id,
+            )
 
         # Phase 31: per-agent circuit breaker — skip als open
         if self._is_circuit_open(agent_naam):

@@ -59,7 +59,7 @@
             <div class="flex items-center gap-3">
                 <span class="text-2xl">&#937;</span>
                 <h1 class="text-lg font-bold text-sovereign-glow">OMEGA Command Center</h1>
-                <span class="text-xs text-gray-500">v6.11.0</span>
+                <span class="text-xs text-gray-500">v6.12.0</span>
             </div>
             <div class="flex items-center gap-4">
                 <span id="header-status" class="flex items-center gap-2 text-sm">
@@ -152,6 +152,15 @@
                         <input id="file-input" type="file" multiple class="hidden"
                                accept=".txt,.md,.py,.json,.csv,.pdf,.yaml,.yml,.toml,.cfg,.ini,.xml,.html,.log"
                                onchange="handleFiles(this.files)">
+                    </div>
+
+                    <!-- Tags Input -->
+                    <div class="space-y-1">
+                        <label class="text-xs text-gray-500 uppercase tracking-wider">Tags (optioneel)</label>
+                        <input id="ingest-tags" type="text"
+                               placeholder="project:frontend, status:oud"
+                               class="w-full bg-sovereign-bg border border-sovereign-border rounded px-3 py-1.5 text-xs text-gray-300 focus:border-sovereign-accent focus:outline-none"
+                               title="Comma-separated key:value paren of losse tags">
                     </div>
 
                     <!-- Job Queue -->

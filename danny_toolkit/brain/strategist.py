@@ -62,6 +62,15 @@ try:
 except ImportError:
     HAS_ARTIFICER = False
 
+try:
+    from danny_toolkit.core.swarm_tools import (
+        file_scribe_write,
+        terminal_exec,
+    )
+    HAS_SWARM_TOOLS = True
+except ImportError:
+    HAS_SWARM_TOOLS = False
+
 HAS_GUARD = False
 try:
     from auto_refactor_guard import audit_file as guard_audit_file
@@ -208,6 +217,21 @@ class Strategist:
                 prompt = f"{details}\n\nCONTEXT FROM RESEARCH:\n{context_buffer}"
                 result = await self.artificer.execute_task(prompt)
 
+            elif tool == "file_scribe" and HAS_SWARM_TOOLS:
+                # Details format: "filename.ext: content to write"
+                if ":" in details:
+                    fname, content = details.split(":", 1)
+                    result = file_scribe_write(
+                        fname.strip(), content.strip(),
+                    )
+                else:
+                    result = file_scribe_write(
+                        "output.txt", details,
+                    )
+
+            elif tool == "terminal_exec" and HAS_SWARM_TOOLS:
+                result = terminal_exec(details.strip())
+
             elif tool == "refactor_guard" and HAS_GUARD:
                 result = self._run_guard_scan(details)
 
@@ -290,6 +314,8 @@ class Strategist:
         - "brain": for summarization, analysis, explanation, or writing text. PREFERRED for most tasks — use this by default for answering questions, analyzing concepts, and synthesizing knowledge.
         - "void_walker": for researching unknown topics, libraries, or external documentation via web search.
         - "artificer": ONLY for tasks that explicitly require writing and executing a NEW Python script (e.g. "build a calculator", "create a data pipeline"). NEVER use artificer for research, analysis, code review, or answering questions about existing code.
+        - "file_scribe": for writing output files (results, data, reports) to the sandbox. Details should describe filename and content.
+        - "terminal_exec": for running read-only terminal commands (pytest, ls, cat) inside the sandbox. Details should be the exact command.
         - "refactor_guard": for scanning Python files for code quality (type hints, docstrings, imports). Returns a quality score 0-10.
 
         CRITICAL RULE for "details" field:
