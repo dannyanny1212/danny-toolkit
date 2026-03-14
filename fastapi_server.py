@@ -1,4 +1,5 @@
-# LINE 1: The Gate MUST be first.
+# LINE 1: The Gate MUST be first (na __future__ — compiler directive, geen runtime).
+from __future__ import annotations
 import danny_toolkit.core.sovereign_gate  # noqa: F401, E402
 """
 Danny Toolkit — FastAPI REST API Server.
@@ -60,6 +61,7 @@ try:
     )
     HAS_DASHBOARD = True
 except ImportError:
+    logger.debug("StaticFiles/Jinja2 niet beschikbaar — dashboard uitgeschakeld")
     HAS_DASHBOARD = False
 from pydantic import BaseModel, Field
 
@@ -109,10 +111,18 @@ def _acquire_singleton_lock() -> bool:
         _LOCK_FD.write(str(os.getpid()))
         _LOCK_FD.flush()
         if os.name == "nt":
-            import msvcrt
+            try:
+                import msvcrt
+            except ImportError:
+                logger.debug("msvcrt niet beschikbaar")
+                raise OSError("msvcrt niet beschikbaar op dit platform")
             msvcrt.locking(_LOCK_FD.fileno(), msvcrt.LK_NBLCK, 1)
         else:
-            import fcntl
+            try:
+                import fcntl
+            except ImportError:
+                logger.debug("fcntl niet beschikbaar")
+                raise OSError("fcntl niet beschikbaar op dit platform")
             fcntl.flock(_LOCK_FD.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
         _LOCK_FILE = lock_path
         logger.info("Singleton lock verkregen: PID %d", os.getpid())
@@ -139,7 +149,7 @@ def _release_singleton_lock() -> None:
                 try:
                     msvcrt.locking(_LOCK_FD.fileno(), msvcrt.LK_UNLCK, 1)
                 except OSError:
-                    pass
+                    logger.debug("msvcrt unlock failed (already released)")
             _LOCK_FD.close()
         except Exception as e:
             logger.debug("Lock release: %s", e)
@@ -148,7 +158,7 @@ def _release_singleton_lock() -> None:
         try:
             _LOCK_FILE.unlink()
         except Exception:
-            pass
+            logger.debug("Lock file unlink failed (may already be removed)")
         _LOCK_FILE = None
 
 
@@ -184,7 +194,7 @@ try:
     from danny_toolkit.core.startup_validator import valideer_opstart
     valideer_opstart()
 except ImportError:
-    pass
+    logger.debug("startup_validator niet beschikbaar — overgeslagen")
 
 # ─── SINGLETON BRAIN ───────────────────────────────
 
@@ -197,9 +207,13 @@ def _get_brain() -> "PrometheusBrain":
     if _brain is None:
         buf = io.StringIO()
         with redirect_stdout(buf):
-            from danny_toolkit.brain.trinity_omega import (
-                PrometheusBrain,
-            )
+            try:
+                from danny_toolkit.brain.trinity_omega import (
+                    PrometheusBrain,
+                )
+            except ImportError:
+                logger.debug("PrometheusBrain niet beschikbaar")
+                raise
             _brain = PrometheusBrain()
     return _brain
 
@@ -589,7 +603,7 @@ async def verify_api_key(
     x_api_key: str = Header(
         ..., description="API sleutel voor authenticatie"
     ),
-):
+) -> str:
     """Controleer de API key via X-API-Key header."""
     if x_api_key != FASTAPI_SECRET_KEY:
         raise HTTPException(
@@ -603,7 +617,7 @@ async def verify_ui_key(
     key: str = Query(None, description="API key via query param"),
     x_api_key: str = Header(None, description="API key via header"),
     ui_token: str = Cookie(None, description="API key via cookie"),
-):
+) -> str:
     """Auth voor UI routes — accepteert query param, header, of cookie."""
     token = key or x_api_key or ui_token
     if not token or token != FASTAPI_SECRET_KEY:
@@ -703,7 +717,7 @@ app.add_middleware(
 
 # ─── Optimalisatie 1: Process-time header (latentie monitoring) ───
 @app.middleware("http")
-async def add_process_time_header(request, call_next):
+async def add_process_time_header(request: Request, call_next: Any) -> Response:
     """Meet en rapporteer request-latentie via X-Process-Time header."""
     start = time.perf_counter()
     response = await call_next(request)
@@ -716,7 +730,7 @@ _response_ttl_cache: Dict[str, tuple] = {}  # key -> (timestamp, data)
 _CACHE_TTL = 2.0  # 2 seconden TTL voor status endpoints
 
 
-def _cached_response(cache_key: str, ttl: float = _CACHE_TTL):
+def _cached_response(cache_key: str, ttl: float = _CACHE_TTL) -> tuple:
     """Check TTL cache, retourneer (hit, data)."""
     entry = _response_ttl_cache.get(cache_key)
     if entry and (time.time() - entry[0]) < ttl:
@@ -724,7 +738,7 @@ def _cached_response(cache_key: str, ttl: float = _CACHE_TTL):
     return False, None
 
 
-def _set_cache(cache_key: str, data):
+def _set_cache(cache_key: str, data: Any) -> None:
     """Sla response op in TTL cache."""
     _response_ttl_cache[cache_key] = (time.time(), data)
 
@@ -733,17 +747,21 @@ def _set_cache(cache_key: str, data):
 _swarm_engine_instance = None
 
 
-def _get_swarm_engine(brain=None):
+def _get_swarm_engine(brain: Any = None) -> Any:
     """Lazy singleton SwarmEngine — vermijdt 50-100ms init per request."""
     global _swarm_engine_instance
     if _swarm_engine_instance is None:
-        from swarm_engine import SwarmEngine
+        try:
+            from swarm_engine import SwarmEngine
+        except ImportError:
+            logger.debug("SwarmEngine niet beschikbaar")
+            raise
         _swarm_engine_instance = SwarmEngine(brain=brain or _get_brain())
     return _swarm_engine_instance
 
 
 @app.on_event("startup")
-async def _startup_event():
+async def _startup_event() -> None:
     """Auto-discover modellen + sweep orphan staging collecties."""
     # 1. Model registry
     try:
@@ -770,7 +788,7 @@ async def _startup_event():
 
 
 @app.on_event("shutdown")
-async def _shutdown_event():
+async def _shutdown_event() -> None:
     """Flush CorticalStack + release singleton lock bij shutdown."""
     try:
         from danny_toolkit.brain.cortical_stack import (
@@ -795,7 +813,7 @@ async def query(
     req: QueryRequest,
     response: Response,
     _key: str = Depends(verify_api_key),
-):
+) -> QueryResponse:
     """Verwerk een prompt via de SwarmEngine en
     retourneer de resultaten als SwarmPayload lijst.
     """
@@ -856,7 +874,11 @@ async def query(
         """Sanitize metadata — drop non-JSON-serializable values."""
         if not isinstance(meta, dict):
             return {}
-        import json as _json
+        try:
+            import json as _json
+        except ImportError:
+            logger.debug("json niet beschikbaar")
+            return {}
         try:
             _json.dumps(meta)
             return meta
@@ -887,15 +909,21 @@ async def query(
     )
 
 
-async def _stream_response(message: str, brain):
+async def _stream_response(message: str, brain: Any) -> StreamingResponse:
     """SSE streaming via async generator (fix: was sync wrapper)."""
-    from swarm_engine import SwarmEngine
+    try:
+        from swarm_engine import SwarmEngine
+    except ImportError:
+        logger.debug("SwarmEngine niet beschikbaar")
+        raise
 
-    async def _generate():
+    async def _generate() -> Any:
+        """Async generator die SSE events yield."""
         engine = SwarmEngine(brain=brain)
         updates = []
 
         def callback(msg: str) -> None:
+            """Buffer streaming updates."""
             updates.append(msg)
 
         try:
@@ -945,7 +973,7 @@ async def _stream_response(message: str, brain):
 )
 async def health_pulse(
     _key: str = Depends(verify_api_key),
-):
+) -> dict:
     """L1 Pulse: <2ms health check voor monitoring/k8s probes.
 
     Zero allocatie, zero DB, zero brain loading.
@@ -967,7 +995,7 @@ async def health_pulse(
 )
 async def health_deep(
     _key: str = Depends(verify_api_key),
-):
+) -> HealthResponse:
     """L3 Deep Scan: ~400ms volledige systeemdiagnose.
 
     Probes: brain, Governor, Groq, CorticalStack, disk, agents,
@@ -1079,14 +1107,14 @@ async def health_deep(
         from danny_toolkit.core.response_cache import get_response_cache
         cache_stats = get_response_cache().stats()
     except ImportError:
-        pass
+        logger.debug("response_cache niet beschikbaar")
 
     agent_m = {}
     try:
         from swarm_engine import get_pipeline_metrics
         agent_m = get_pipeline_metrics()
     except ImportError:
-        pass
+        logger.debug("pipeline_metrics niet beschikbaar")
 
     # Phase 31: WaakhuisMonitor health + circuit breakers
     waakhuis_data = {}
@@ -1101,7 +1129,7 @@ async def health_deep(
         from swarm_engine import get_circuit_state
         circuit_data = get_circuit_state()
     except ImportError:
-        pass
+        logger.debug("circuit_state niet beschikbaar")
 
     # Phase 57: Ouroboros self-healing status
     ouroboros_data = {}
@@ -1141,9 +1169,13 @@ async def health_deep(
 )
 async def agents(
     _key: str = Depends(verify_api_key),
-):
+) -> list:
     """Retourneer alle SwarmEngine agents met pause status."""
-    from swarm_engine import get_paused_agents
+    try:
+        from swarm_engine import get_paused_agents
+    except ImportError:
+        logger.debug("get_paused_agents niet beschikbaar")
+        raise
     paused = set(get_paused_agents())
 
     # SwarmEngine agents — de echte executie-agents
@@ -1198,7 +1230,7 @@ async def agents(
             if biases:
                 a.synaptic_weight = round(sum(biases) / len(biases), 3)
     except Exception:
-        pass  # synapse niet beschikbaar — geen weight data
+        logger.debug("Synapse niet beschikbaar — geen weight data")
 
     return result
 
@@ -1217,9 +1249,13 @@ class AgentToggleRequest(BaseModel):
 async def toggle_agent(
     req: AgentToggleRequest,
     _key: str = Depends(verify_api_key),
-):
+) -> dict:
     """Handmatig een agent pauzeren of hervatten."""
-    from swarm_engine import pause_agent, resume_agent
+    try:
+        from swarm_engine import pause_agent, resume_agent
+    except ImportError:
+        logger.debug("pause_agent/resume_agent niet beschikbaar")
+        raise
 
     if req.paused:
         pause_agent(req.agent)
@@ -1242,7 +1278,7 @@ async def toggle_agent(
 async def memory_recent(
     count: int = Query(default=20, ge=1, le=200),
     _key: str = Depends(verify_api_key),
-):
+) -> dict:
     """Haal de laatste N events uit episodic_memory op.
 
     Lichte read-only query — geen brain loading nodig.
@@ -1270,7 +1306,7 @@ async def memory_recent(
 )
 async def gpu_status(
     _key: str = Depends(verify_api_key),
-):
+) -> dict:
     """Volledige GPU metrics via vram_manager.
 
     Combineert torch VRAM info met nvidia-smi clock/power/temp data.
@@ -1293,7 +1329,7 @@ async def gpu_status(
 )
 async def ouroboros_status(
     _key: str = Depends(verify_api_key),
-):
+) -> dict:
     """Retourneer heal-pogingen, succespercentage en configuratie."""
     try:
         from danny_toolkit.core.ouroboros import get_ouroboros
@@ -1313,7 +1349,7 @@ async def ouroboros_status(
 )
 async def governor_rate_limits(
     _key: str = Depends(verify_api_key),
-):
+) -> dict:
     """Rate-limit overzicht: per-agent tokens, 429 counts, cooldowns.
 
     Gebruikt SmartKeyManager.get_status() voor volledige diagnostiek.
@@ -1342,7 +1378,7 @@ async def knowledge_search(
     query: str = Query(..., min_length=2, max_length=500, description="Zoekopdracht"),
     n_results: int = Query(default=5, ge=1, le=20),
     _key: str = Depends(verify_api_key),
-):
+) -> dict:
     """Doorzoek de omega_advanced_skills ChromaDB collectie.
 
     Bevat alle 15+ kennisdocumenten over architectuur, protocollen,
@@ -1374,7 +1410,7 @@ async def ingest(
         ..., description="Tekstbestand om te indexeren"
     ),
     _key: str = Depends(verify_api_key),
-):
+) -> IngestResponse:
     """Upload een document en indexeer het via
     TheLibrarian naar ChromaDB.
     """
@@ -1397,7 +1433,11 @@ async def ingest(
         )
 
     # Sla op in RAG documenten map
-    from danny_toolkit.core.config import Config
+    try:
+        from danny_toolkit.core.config import Config
+    except ImportError:
+        logger.debug("Config niet beschikbaar")
+        raise
     Config.ensure_dirs()
     docs_dir = Config.RAG_DATA_DIR / "documenten"
     docs_dir.mkdir(parents=True, exist_ok=True)
@@ -1454,7 +1494,7 @@ async def ingest_background(
         "", description="Comma-separated tags (bijv. 'project:frontend, status:oud')"
     ),
     _key: str = Depends(verify_api_key),
-):
+) -> BackgroundIngestResponse:
     """Upload een document en start TheLibrarian scan als background task.
 
     Retourneert direct een job_id waarmee de status gepolled kan worden
@@ -1475,7 +1515,11 @@ async def ingest_background(
         )
 
     # Sla bestand op
-    from danny_toolkit.core.config import Config
+    try:
+        from danny_toolkit.core.config import Config
+    except ImportError:
+        logger.debug("Config niet beschikbaar")
+        raise
     Config.ensure_dirs()
     docs_dir = Config.RAG_DATA_DIR / "documenten"
     docs_dir.mkdir(parents=True, exist_ok=True)
@@ -1491,7 +1535,11 @@ async def ingest_background(
     doel.write_bytes(inhoud)
 
     # Genereer job ID en registreer
-    import uuid
+    try:
+        import uuid
+    except ImportError:
+        logger.debug("uuid niet beschikbaar")
+        raise
     job_id = uuid.uuid4().hex[:12]
     with _ingest_jobs_lock:
         _ingest_jobs[job_id] = {
@@ -1541,7 +1589,7 @@ async def ingest_background(
 async def ingest_background_status(
     job_id: str,
     _key: str = Depends(verify_api_key),
-):
+) -> BackgroundJobStatus:
     """Poll de status van een background ingest job."""
     with _ingest_jobs_lock:
         job = _ingest_jobs.get(job_id)
@@ -1567,7 +1615,7 @@ async def ingest_background_status(
 )
 async def heartbeat(
     _key: str = Depends(verify_api_key),
-):
+) -> HeartbeatResponse:
     """Retourneer de status van de HeartbeatDaemon
     (indien actief).
     """
@@ -1617,7 +1665,7 @@ async def heartbeat(
 async def get_trace(
     trace_id: str,
     _key: str = Depends(verify_api_key),
-):
+) -> TraceResponse:
     """Haal een volledige request trace op via trace_id."""
     try:
         from danny_toolkit.core.request_tracer import (
@@ -1659,7 +1707,7 @@ async def get_trace(
 async def list_traces(
     count: int = 20,
     _key: str = Depends(verify_api_key),
-):
+) -> list:
     """Haal recente request traces op als samenvatting."""
     try:
         from danny_toolkit.core.request_tracer import (
@@ -1688,7 +1736,7 @@ async def list_traces(
 )
 async def config_audit(
     _key: str = Depends(verify_api_key),
-):
+) -> AuditRapportResponse:
     """Trigger ConfigAuditor.audit() en retourneer rapport."""
     try:
         from danny_toolkit.brain.config_auditor import get_config_auditor
@@ -1723,7 +1771,7 @@ async def config_audit(
 )
 async def shard_stats(
     _key: str = Depends(verify_api_key),
-):
+) -> list:
     """Haal ShardRouter statistieken op."""
     try:
         from danny_toolkit.core.shard_router import get_shard_router
@@ -1749,7 +1797,7 @@ async def shard_stats(
 )
 async def error_taxonomy(
     _key: str = Depends(verify_api_key),
-):
+) -> list:
     """Retourneer het volledige FOUT_REGISTER."""
     try:
         from danny_toolkit.core.error_taxonomy import FOUT_REGISTER
@@ -1778,7 +1826,7 @@ async def error_taxonomy(
 async def recent_errors(
     count: int = 50,
     _key: str = Depends(verify_api_key),
-):
+) -> list:
     """Retourneer recente FoutContext objecten uit de ring buffer."""
     try:
         from swarm_engine import get_recent_errors
@@ -1802,7 +1850,7 @@ async def recent_errors(
 )
 async def pruning_stats(
     _key: str = Depends(verify_api_key),
-):
+) -> PruningStatsResponse:
     """Haal SelfPruning statistieken op."""
     try:
         from danny_toolkit.core.self_pruning import get_self_pruning
@@ -1822,7 +1870,7 @@ async def pruning_stats(
 )
 async def pruning_run(
     _key: str = Depends(verify_api_key),
-):
+) -> dict:
     """Start een SelfPruning.prune() on-demand."""
     try:
         from danny_toolkit.core.self_pruning import get_self_pruning
@@ -1843,7 +1891,7 @@ async def pruning_run(
 )
 async def bus_stats(
     _key: str = Depends(verify_api_key),
-):
+) -> BusStatsResponse:
     """Haal NeuralBus statistieken op."""
     try:
         from danny_toolkit.core.neural_bus import get_bus
@@ -1866,7 +1914,7 @@ async def bus_stats(
 )
 async def schild_stats(
     _key: str = Depends(verify_api_key),
-):
+) -> SchildStatsResponse:
     """Haal HallucinatieSchild statistieken op."""
     try:
         from danny_toolkit.brain.hallucination_shield import (
@@ -1889,7 +1937,7 @@ async def schild_stats(
 )
 async def tribunal_stats(
     _key: str = Depends(verify_api_key),
-):
+) -> TribunalStatsResponse:
     """Haal AdversarialTribunal statistieken op."""
     try:
         from danny_toolkit.brain.adversarial_tribunal import (
@@ -1913,7 +1961,7 @@ async def tribunal_stats(
 async def alerts_history(
     count: int = 50,
     _key: str = Depends(verify_api_key),
-):
+) -> AlertHistoryResponse:
     """Haal alert historie en stats op via Alerter singleton."""
     try:
         from danny_toolkit.core.alerter import get_alerter
@@ -1941,7 +1989,7 @@ async def alerts_history(
 )
 async def blackbox_stats(
     _key: str = Depends(verify_api_key),
-):
+) -> BlackBoxStatsResponse:
     """Haal BlackBox immune system statistieken op."""
     try:
         from danny_toolkit.brain.black_box import get_black_box
@@ -1962,7 +2010,7 @@ async def blackbox_stats(
 )
 async def synapse_stats(
     _key: str = Depends(verify_api_key),
-):
+) -> SynapseStatsResponse:
     """Haal TheSynapse statistieken en top pathways op."""
     try:
         from danny_toolkit.brain.synapse import get_synapse
@@ -1989,7 +2037,7 @@ async def synapse_stats(
 )
 async def synapse_weights(
     _key: str = Depends(verify_api_key),
-):
+) -> dict:
     """Volledige Hebbian weight matrix per category/agent."""
     try:
         from danny_toolkit.brain.synapse import get_synapse
@@ -2009,7 +2057,7 @@ async def synapse_weights(
 )
 async def synapse_export(
     _key: str = Depends(verify_api_key),
-):
+) -> dict:
     """Exporteer weight matrix naar data/synapse_weights.json."""
     try:
         from danny_toolkit.brain.synapse import get_synapse
@@ -2039,7 +2087,7 @@ class PhoenixBoostRequest(BaseModel):
 async def phoenix_boost(
     req: PhoenixBoostRequest,
     _key: str = Depends(verify_api_key),
-):
+) -> dict:
     """Geef een agent 3 triviale succes-taken om Hebbian WEAKEN-straf
     ongedaan te maken en de Synaptic Power te herstellen."""
     try:
@@ -2091,7 +2139,11 @@ def _run_bulk_assimilation(
     tag_meta: Optional[Dict], batch_size: int,
 ) -> None:
     """Background worker voor bulk assimilatie."""
-    import glob as _glob
+    try:
+        import glob as _glob
+    except ImportError:
+        logger.debug("glob niet beschikbaar")
+        raise
     with _assimilation_lock:
         _assimilation_jobs[job_id]["status"] = "running"
         _assimilation_jobs[job_id]["started_at"] = time.time()
@@ -2156,11 +2208,15 @@ async def bulk_assimilate(
     req: BulkAssimilateRequest,
     background_tasks: BackgroundTasks,
     _key: str = Depends(verify_api_key),
-):
+) -> dict:
     """Start een automatische Knowledge Ingestion loop die een opgegeven map
     met .md of .py bestanden batchgewijs door de embedding pijplijn haalt
     en in de vector-DB plaatst."""
-    import uuid as _uuid
+    try:
+        import uuid as _uuid
+    except ImportError:
+        logger.debug("uuid niet beschikbaar")
+        raise
     job_id = _uuid.uuid4().hex[:12]
 
     tag_meta = {}
@@ -2213,7 +2269,7 @@ async def bulk_assimilate(
 async def bulk_assimilate_status(
     job_id: str,
     _key: str = Depends(verify_api_key),
-):
+) -> dict:
     """Poll de status van een bulk assimilatie job."""
     with _assimilation_lock:
         job = _assimilation_jobs.get(job_id)
@@ -2230,7 +2286,7 @@ async def bulk_assimilate_status(
 )
 async def phantom_accuracy(
     _key: str = Depends(verify_api_key),
-):
+) -> PhantomAccuracyResponse:
     """Haal ThePhantom nauwkeurigheid en actieve voorspellingen op."""
     try:
         from danny_toolkit.brain.phantom import ThePhantom
@@ -2261,10 +2317,14 @@ async def phantom_accuracy(
 async def swarm_goal(
     req: GoalRequest,
     _key: str = Depends(verify_api_key),
-):
+) -> GoalResponse:
     """Decomponeer een goal in sub-taken, wijs agents toe via auction,
     voer parallel uit, en synthetiseer het resultaat."""
-    import time as _time
+    try:
+        import time as _time
+    except ImportError:
+        logger.debug("time niet beschikbaar")
+        raise
     t0 = _time.time()
     try:
         from swarm_engine import SwarmEngine
@@ -2311,7 +2371,7 @@ async def swarm_goal(
 )
 async def models_registry(
     _key: str = Depends(verify_api_key),
-):
+) -> ModelRegistryResponse:
     """Geeft een overzicht van alle geregistreerde modellen en hun status."""
     try:
         from danny_toolkit.brain.model_sync import get_model_registry
@@ -2354,7 +2414,7 @@ class IntrospectionResponse(BaseModel):
 )
 async def system_introspection(
     _key: str = Depends(verify_api_key),
-):
+) -> IntrospectionResponse:
     """Het systeem onderzoekt zichzelf: modules, wirings, beveiliging."""
     try:
         from danny_toolkit.brain.introspector import get_introspector
@@ -2377,7 +2437,7 @@ async def system_introspection(
 )
 async def system_wirings(
     _key: str = Depends(verify_api_key),
-):
+) -> dict:
     """Toont alle cross-module verbindingen en hun status."""
     try:
         from danny_toolkit.brain.introspector import get_introspector
@@ -2480,7 +2540,7 @@ class ObservatoryStatsResponse(BaseModel):
 )
 async def observatory_dashboard(
     _key: str = Depends(verify_api_key),
-):
+) -> ObservatoryDashboardResponse:
     """Compleet observatory dashboard met model stats, arbitrator stats,
     en recente veilingen."""
     try:
@@ -2506,7 +2566,7 @@ async def observatory_dashboard(
 async def observatory_leaderboard(
     sort_by: str = "success_rate",
     _key: str = Depends(verify_api_key),
-):
+) -> list:
     """Geeft een gerankt overzicht van alle modellen.
     Sorteer op: success_rate, calls, avg_latency_ms, total_tokens, failures."""
     try:
@@ -2532,7 +2592,7 @@ async def observatory_leaderboard(
 async def observatory_auctions(
     count: int = 50,
     _key: str = Depends(verify_api_key),
-):
+) -> list:
     """Haal recente model-veiling logs op, nieuwste eerst."""
     try:
         from danny_toolkit.brain.observatory_sync import get_observatory_sync
@@ -2556,7 +2616,7 @@ async def observatory_auctions(
 )
 async def observatory_costs(
     _key: str = Depends(verify_api_key),
-):
+) -> CostAnalysisResponse:
     """Analyseer token-verbruik met aanbevelingen voor optimalisatie."""
     try:
         from danny_toolkit.brain.observatory_sync import get_observatory_sync
@@ -2580,7 +2640,7 @@ async def observatory_costs(
 )
 async def observatory_failures(
     _key: str = Depends(verify_api_key),
-):
+) -> FailureAnalysisResponse:
     """Analyseer faalpatronen: barrier rejections, circuit opens, errors."""
     try:
         from danny_toolkit.brain.observatory_sync import get_observatory_sync
@@ -2604,7 +2664,7 @@ async def observatory_failures(
 )
 async def observatory_stats(
     _key: str = Depends(verify_api_key),
-):
+) -> ObservatoryStatsResponse:
     """ObservatorySync eigen statistieken: snapshots, leaderboard queries, etc."""
     try:
         from danny_toolkit.brain.observatory_sync import get_observatory_sync
@@ -2630,16 +2690,19 @@ if HAS_DASHBOARD:
     )
 
     @app.get("/", include_in_schema=False)
-    async def root_redirect():
+    async def root_redirect() -> RedirectResponse:
+        """Redirect root naar dashboard UI."""
         return RedirectResponse(url="/ui/")
 
     @app.get("/ui/", response_class=HTMLResponse, include_in_schema=False)
-    async def dashboard(_key: str = Depends(verify_ui_key)):
+    async def dashboard(_key: str = Depends(verify_ui_key)) -> Response:
+        """Render het hoofddashboard."""
         tmpl = _templates.get_template("dashboard.html")
         return _set_ui_cookie(HTMLResponse(tmpl.render()))
 
     @app.get("/ui/partials/agents", response_class=HTMLResponse, include_in_schema=False)
-    async def partial_agents(_key: str = Depends(verify_ui_key)):
+    async def partial_agents(_key: str = Depends(verify_ui_key)) -> Response:
+        """Render agent grid partial."""
         brain = _get_brain()
         agents = []
         if hasattr(brain, "nodes"):
@@ -2655,7 +2718,8 @@ if HAS_DASHBOARD:
         return _set_ui_cookie(HTMLResponse(tmpl.render(agents=agents)))
 
     @app.get("/ui/partials/governor", response_class=HTMLResponse, include_in_schema=False)
-    async def partial_governor(_key: str = Depends(verify_ui_key)):
+    async def partial_governor(_key: str = Depends(verify_ui_key)) -> Response:
+        """Render governor status partial."""
         brain = _get_brain()
         stats = {}
         try:
@@ -2681,7 +2745,8 @@ if HAS_DASHBOARD:
         return _set_ui_cookie(HTMLResponse(tmpl.render(stats=stats)))
 
     @app.get("/ui/partials/rate-limits", response_class=HTMLResponse, include_in_schema=False)
-    async def partial_rate_limits(_key: str = Depends(verify_ui_key)):
+    async def partial_rate_limits(_key: str = Depends(verify_ui_key)) -> Response:
+        """Render rate limits partial."""
         limits = []
         try:
             from danny_toolkit.core.key_manager import get_key_manager
@@ -2708,8 +2773,13 @@ if HAS_DASHBOARD:
         return _set_ui_cookie(HTMLResponse(tmpl.render(limits=limits)))
 
     @app.get("/ui/partials/cortex", response_class=HTMLResponse, include_in_schema=False)
-    async def partial_cortex(_key: str = Depends(verify_ui_key)):
-        import math
+    async def partial_cortex(_key: str = Depends(verify_ui_key)) -> Response:
+        """Render cortex knowledge graph partial."""
+        try:
+            import math
+        except ImportError:
+            logger.debug("math niet beschikbaar")
+            raise
         nodes, edges, meta, positions = [], [], {}, {}
         kmap_path = os.path.join(_ROOT, "data", "knowledge_map.json")
         try:
@@ -2743,31 +2813,33 @@ if HAS_DASHBOARD:
             nodes=nodes, edges=edges, meta=meta, positions=positions)))
 
     @app.get("/ui/partials/pipeline-metrics", response_class=HTMLResponse, include_in_schema=False)
-    async def partial_pipeline_metrics(_key: str = Depends(verify_ui_key)):
+    async def partial_pipeline_metrics(_key: str = Depends(verify_ui_key)) -> Response:
+        """Render pipeline metrics partial."""
         metrics = {}
         cache_stats = {}
         try:
             from swarm_engine import get_pipeline_metrics
             metrics = get_pipeline_metrics()
         except ImportError:
-            pass
+            logger.debug("pipeline_metrics niet beschikbaar voor UI partial")
         try:
             from danny_toolkit.core.response_cache import get_response_cache
             cache_stats = get_response_cache().stats()
         except ImportError:
-            pass
+            logger.debug("response_cache niet beschikbaar voor UI partial")
         sentinel_stats = None
         try:
             from danny_toolkit.brain.eternal_sentinel import get_sentinel
             sentinel_stats = get_sentinel().get_status()
         except Exception:
-            pass
+            logger.debug("Sentinel niet beschikbaar voor UI partial")
         tmpl = _templates.get_template("partials/pipeline_metrics.html")
         return _set_ui_cookie(HTMLResponse(tmpl.render(
             metrics=metrics, cache=cache_stats, sentinel=sentinel_stats)))
 
     @app.get("/ui/partials/observatory", response_class=HTMLResponse, include_in_schema=False)
-    async def partial_observatory(_key: str = Depends(verify_ui_key)):
+    async def partial_observatory(_key: str = Depends(verify_ui_key)) -> Response:
+        """Render observatory partial."""
         dashboard_data = {
             "totaal_modellen": 0,
             "beschikbare_modellen": 0,
@@ -2798,7 +2870,8 @@ if HAS_DASHBOARD:
     # ─── Soul Pulse (G2) ────────────────────────────
 
     @app.get("/ui/partials/soul-pulse", response_class=HTMLResponse, include_in_schema=False)
-    async def partial_soul_pulse(_key: str = Depends(verify_ui_key)):
+    async def partial_soul_pulse(_key: str = Depends(verify_ui_key)) -> Response:
+        """Render soul pulse partial met recente CorticalStack events."""
         events = []
         total = 0
         try:
@@ -2816,7 +2889,8 @@ if HAS_DASHBOARD:
     # ─── Body Metrics (G3) ────────────────────────────
 
     @app.get("/ui/partials/body-metrics", response_class=HTMLResponse, include_in_schema=False)
-    async def partial_body_metrics(_key: str = Depends(verify_ui_key)):
+    async def partial_body_metrics(_key: str = Depends(verify_ui_key)) -> Response:
+        """Render body metrics partial met GPU status."""
         gpu = {"beschikbaar": False}
         try:
             from danny_toolkit.core.vram_manager import gpu_status as _gpu_status
@@ -2829,7 +2903,8 @@ if HAS_DASHBOARD:
     # ─── Governor Guard (G6) ──────────────────────────
 
     @app.get("/ui/partials/governor-guard", response_class=HTMLResponse, include_in_schema=False)
-    async def partial_governor_guard(_key: str = Depends(verify_ui_key)):
+    async def partial_governor_guard(_key: str = Depends(verify_ui_key)) -> Response:
+        """Render governor guard partial met rate-limit status."""
         status = {}
         try:
             from danny_toolkit.core.key_manager import get_key_manager
@@ -2844,10 +2919,15 @@ if HAS_DASHBOARD:
     # ─── Benchmark Results ──────────────────────────
 
     @app.get("/ui/partials/benchmark", response_class=HTMLResponse, include_in_schema=False)
-    async def partial_benchmark(_key: str = Depends(verify_ui_key)):
+    async def partial_benchmark(_key: str = Depends(verify_ui_key)) -> Response:
+        """Render benchmark resultaten partial."""
         benchmark = None
         try:
             import json as _json
+        except ImportError:
+            logger.debug("json niet beschikbaar")
+            _json = None
+        try:
             bench_path = Path(__file__).parent / "data" / "benchmark_results.json"
             if bench_path.exists():
                 with open(bench_path, "r", encoding="utf-8") as f:
@@ -2862,9 +2942,13 @@ if HAS_DASHBOARD:
         summary="Hardware benchmark resultaten",
         tags=["Systeem"],
     )
-    async def api_benchmark(_key: str = Depends(verify_api_key)):
+    async def api_benchmark(_key: str = Depends(verify_api_key)) -> dict:
         """Retourneer de laatste benchmark resultaten uit data/benchmark_results.json."""
-        import json as _json
+        try:
+            import json as _json
+        except ImportError:
+            logger.debug("json niet beschikbaar")
+            raise
         bench_path = Path(__file__).parent / "data" / "benchmark_results.json"
         if not bench_path.exists():
             return {"status": "no_data", "message": "Run omega_benchmark.py eerst"}
@@ -2872,9 +2956,10 @@ if HAS_DASHBOARD:
             return _json.load(f)
 
     @app.get("/ui/events", include_in_schema=False)
-    async def sse_events(_key: str = Depends(verify_ui_key)):
+    async def sse_events(_key: str = Depends(verify_ui_key)) -> StreamingResponse:
         """SSE stream — polls NeuralBus elke 2s voor nieuwe events."""
-        async def _event_generator():
+        async def _event_generator() -> Any:
+            """Yield SSE events vanuit NeuralBus history."""
             last_seen = 0
             while True:
                 try:
@@ -2919,10 +3004,14 @@ if HAS_DASHBOARD:
 
     # ─── RAG Search (ChromaDB) ─────────────────────────
 
-    def _get_chroma_client():
+    def _get_chroma_client() -> Any:
         """Lazy ChromaDB PersistentClient singleton."""
         if not hasattr(_get_chroma_client, "_client"):
-            import chromadb
+            try:
+                import chromadb
+            except ImportError:
+                logger.debug("chromadb niet beschikbaar")
+                raise
             chroma_dir = str(
                 Path(__file__).parent / "data" / "rag" / "chromadb"
             )
@@ -2936,7 +3025,7 @@ if HAS_DASHBOARD:
         response_class=HTMLResponse,
         include_in_schema=False,
     )
-    async def partial_rag_search(_key: str = Depends(verify_ui_key)):
+    async def partial_rag_search(_key: str = Depends(verify_ui_key)) -> Response:
         """RAG Search card — toont zoekformulier + collectie stats."""
         collections = []
         total_docs = 0
@@ -2974,7 +3063,7 @@ if HAS_DASHBOARD:
     async def partial_rag_search_post(
         request: Request,
         _key: str = Depends(verify_ui_key),
-    ):
+    ) -> Response:
         """RAG Search — voer zoekopdracht uit op ChromaDB collectie."""
         form = await request.form()
         query = str(form.get("query", "")).strip()
@@ -3023,7 +3112,7 @@ if HAS_DASHBOARD:
     )
     async def metrics(
         _key: str = Depends(verify_api_key),
-    ):
+    ) -> dict:
         """JSON metrics endpoint — auth-protected."""
         brain = _get_brain()
         result = {"agents": 0, "uptime": 0.0}
@@ -3046,6 +3135,7 @@ if HAS_DASHBOARD:
             _col = _client.get_collection("danny_knowledge")
             result["db_chunks"] = _col.count()
         except Exception:
+            logger.debug("ChromaDB chunks count niet beschikbaar")
             result["db_chunks"] = 0
         return result
 

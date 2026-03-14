@@ -238,17 +238,55 @@ def _find_bare_except_pass(tree: ast.AST) -> list[int]:
     return lines
 
 
+def _is_lazy_load_import(func_node: ast.AST, import_node: ast.AST) -> bool:
+    """Check of een import in een try/except ImportError|ModuleNotFoundError zit.
+
+    Legitieme lazy-load imports zitten in een try-blok waarvan de
+    except-handler specifiek ImportError of ModuleNotFoundError afvangt.
+    Deze tellen niet mee voor de inner-import penalty.
+    """
+    for node in ast.walk(func_node):
+        if not isinstance(node, ast.Try):
+            continue
+        # Check of de import in de try-body zit
+        for body_node in ast.walk(node):
+            if body_node is import_node:
+                # Controleer of een handler ImportError/ModuleNotFoundError afvangt
+                for handler in node.handlers:
+                    if handler.type is None:
+                        # Bare except: — telt als lazy load (vangt alles)
+                        return True
+                    if isinstance(handler.type, ast.Name):
+                        if handler.type.id in ("ImportError", "ModuleNotFoundError", "Exception"):
+                            return True
+                    elif isinstance(handler.type, ast.Tuple):
+                        for elt in handler.type.elts:
+                            if isinstance(elt, ast.Name) and elt.id in (
+                                "ImportError", "ModuleNotFoundError", "Exception",
+                            ):
+                                return True
+    return False
+
+
 def _find_inner_imports(tree: ast.AST) -> list[tuple[int, str]]:
-    """Vind imports die binnen functiebodies leven."""
+    """Vind imports die binnen functiebodies leven, exclusief lazy-loads.
+
+    Imports in try/except ImportError|ModuleNotFoundError blokken worden
+    uitgesloten — dit zijn legitieme lazy-load patronen voor zware deps.
+    """
     results: list[tuple[int, str]] = []
     for node in ast.walk(tree):
         if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             continue
         for child in ast.walk(node):
             if isinstance(child, ast.Import):
+                if _is_lazy_load_import(node, child):
+                    continue
                 for alias in child.names:
                     results.append((child.lineno, alias.name))
             elif isinstance(child, ast.ImportFrom) and child.module != "__future__":
+                if _is_lazy_load_import(node, child):
+                    continue
                 results.append((child.lineno, child.module or ""))
     return results
 

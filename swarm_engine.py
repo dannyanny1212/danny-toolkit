@@ -182,9 +182,10 @@ class TaskVerificationError(Exception):
     """Fout bij verificatie van een swarm taak."""
 
     def __init__(
-        self, bericht, taak=None,
-        agent=None, payload=None,
-    ):
+        self, bericht: str, taak: dict | None = None,
+        agent: str | None = None, payload: Any = None,
+    ) -> None:
+        """Initialiseer verificatie fout met taak context."""
         super().__init__(bericht)
         self.taak = taak
         self.agent = agent
@@ -218,9 +219,9 @@ except ImportError:
 
 
 def _log_to_cortical(
-    actor, action, details=None, source="swarm_engine",
-    trace_id=None,
-):
+    actor: str, action: str, details: dict | None = None, source: str = "swarm_engine",
+    trace_id: str | None = None,
+) -> None:
     """Log naar CorticalStack als beschikbaar."""
     if not HAS_CORTICAL:
         return
@@ -282,7 +283,7 @@ def _learn_from_input(prompt: str) -> None:
         logger.debug("Fact extraction failed: %s", e)
 
 
-def _shutdown():
+def _shutdown() -> None:
     """Flush CorticalStack op shutdown."""
     if HAS_CORTICAL:
         try:
@@ -315,7 +316,7 @@ class SwarmPayload:
 
 # ── MEDIA GENERATORS ──
 
-def _crypto_metrics():
+def _crypto_metrics() -> dict:
     """Genereer crypto market ticker + 30d chart data."""
     np.random.seed(42)
     dagen = pd.date_range(
@@ -367,7 +368,7 @@ def _crypto_metrics():
     }
 
 
-def _health_chart():
+def _health_chart() -> dict:
     """Genereer 24-uur HRV + hartslag data."""
     np.random.seed(7)
     uren = pd.date_range(
@@ -385,7 +386,7 @@ def _health_chart():
     }
 
 
-def _data_chart():
+def _data_chart() -> dict:
     """Genereer 6 systeem-metrics bar chart."""
     np.random.seed(13)
     labels = [
@@ -402,7 +403,7 @@ def _data_chart():
     }
 
 
-def _code_media(output):
+def _code_media(output: Any) -> dict | None:
     """Extraheer code blocks uit specialist output."""
     pattern = r"```(?:\w+)?\n(.*?)```"
     matches = re.findall(
@@ -425,14 +426,16 @@ class Agent:
     def __init__(
         self, name: str, role: str,
         model: str = None,
-    ):
+    ) -> None:
+        """Initialiseer agent met naam, rol en optioneel model."""
         self.name = name
         self.role = role
         self.model = model
 
     async def process(
-        self, task: str, brain=None,
+        self, task: str, brain: Any = None,
     ) -> SwarmPayload:
+        """Verwerk een taak en retourneer SwarmPayload (abstract)."""
         raise NotImplementedError
 
 
@@ -445,12 +448,14 @@ class BrainAgent(Agent):
     """
 
     def __init__(
-        self, name, role, cosmic_role, model=None,
-    ):
+        self, name: str, role: str, cosmic_role: Any, model: str | None = None,
+    ) -> None:
+        """Initialiseer BrainAgent met cosmic role binding."""
         super().__init__(name, role, model)
         self.cosmic_role = cosmic_role
 
-    async def process(self, task, brain=None):
+    async def process(self, task: str, brain: Any = None) -> SwarmPayload:
+        """Verwerk taak via PrometheusBrain cosmic role."""
         if not brain:
             return SwarmPayload(
                 agent=self.name, type="text",
@@ -490,7 +495,8 @@ class EchoAgent(Agent):
         "Hey! Klaar voor actie.",
     ]
 
-    async def process(self, task, brain=None):
+    async def process(self, task: str, brain: Any = None) -> SwarmPayload:
+        """Retourneer willekeurige begroeting zonder AI."""
         resp = random.choice(self.RESPONSES)
         return SwarmPayload(
             agent=self.name, type="text",
@@ -502,7 +508,8 @@ class EchoAgent(Agent):
 class CipherAgent(BrainAgent):
     """Crypto specialist — levert metrics payload."""
 
-    async def process(self, task, brain=None):
+    async def process(self, task: str, brain: Any = None) -> SwarmPayload:
+        """Verwerk crypto-gerelateerde taak met metrics payload."""
         try:
             payload = await super().process(task, brain)
         except Exception as e:
@@ -520,7 +527,8 @@ class CipherAgent(BrainAgent):
 class VitaAgent(BrainAgent):
     """Health specialist — levert area_chart payload."""
 
-    async def process(self, task, brain=None):
+    async def process(self, task: str, brain: Any = None) -> SwarmPayload:
+        """Verwerk gezondheidstaak met area chart payload."""
         try:
             payload = await super().process(task, brain)
         except Exception as e:
@@ -538,7 +546,8 @@ class VitaAgent(BrainAgent):
 class AlchemistAgent(BrainAgent):
     """Data specialist — levert bar_chart payload."""
 
-    async def process(self, task, brain=None):
+    async def process(self, task: str, brain: Any = None) -> SwarmPayload:
+        """Verwerk datataak met bar chart payload."""
         try:
             payload = await super().process(task, brain)
         except Exception as e:
@@ -556,7 +565,8 @@ class AlchemistAgent(BrainAgent):
 class IolaaxAgent(BrainAgent):
     """Code specialist — detecteert code blocks."""
 
-    async def process(self, task, brain=None):
+    async def process(self, task: str, brain: Any = None) -> SwarmPayload:
+        """Verwerk codetaak en detecteer code blocks."""
         payload = await super().process(task, brain)
         code_media = _code_media(payload.content)
         if code_media:
@@ -578,7 +588,7 @@ class MemexAgent(BrainAgent):
 
     _collection = None  # Lazy ChromaDB connectie
 
-    def _get_collection(self):
+    def _get_collection(self) -> Any:
         """Verbind met ChromaDB (zelfde DB als ingest.py)."""
         if self._collection is not None:
             return self._collection
@@ -634,7 +644,7 @@ class MemexAgent(BrainAgent):
     }
 
     @staticmethod
-    def _bepaal_query_shards(query: str):
+    def _bepaal_query_shards(query: str) -> list[str] | None:
         """Bepaal welke shards relevant zijn op basis van query.
 
         Heuristiek:
@@ -671,7 +681,7 @@ class MemexAgent(BrainAgent):
         # Geen match of mix → alle shards
         return shards if shards else None
 
-    def _search_chromadb(self, query, n_results=10):
+    def _search_chromadb(self, query: str, n_results: int = 10) -> tuple:
         """Doorzoek ChromaDB met bronweging.
 
         Haalt meer resultaten op (n_results=10),
@@ -761,7 +771,7 @@ class MemexAgent(BrainAgent):
             logger.debug("Memex search failed: %s", e)
             return [], []
 
-    def _get_cortical_stack(self):
+    def _get_cortical_stack(self) -> Any:
         """Haal CorticalStack op (lazy)."""
         try:
             from danny_toolkit.brain.cortical_stack import (
@@ -772,7 +782,7 @@ class MemexAgent(BrainAgent):
             logger.debug("CorticalStack laden mislukt: %s", e)
             return None
 
-    def _search_cortical(self, query):
+    def _search_cortical(self, query: str) -> list:
         """Doorzoek CorticalStack events + feiten."""
         stack = self._get_cortical_stack()
         if not stack:
@@ -820,7 +830,8 @@ class MemexAgent(BrainAgent):
 
         return results
 
-    async def process(self, task, brain=None):
+    async def process(self, task: str, brain: Any = None) -> SwarmPayload:
+        """Agentic RAG: plan zoektermen, doorzoek ChromaDB, synthetiseer rapport."""
         if not brain:
             return SwarmPayload(
                 agent=self.name, type="text",
@@ -1029,10 +1040,21 @@ class CoherentieAgent(Agent):
     zoals ongeautoriseerd GPU-gebruik (crypto-mining).
     """
 
-    async def process(self, task, brain=None):
-        from danny_toolkit.daemon.coherentie import (
-            CoherentieMonitor,
-        )
+    async def process(self, task: str, brain: Any = None) -> SwarmPayload:
+        """Meet CPU/GPU coherentie en retourneer metrics payload."""
+        try:
+            from danny_toolkit.daemon.coherentie import (
+                CoherentieMonitor,
+            )
+        except ImportError:
+            logger.debug("daemon.coherentie niet beschikbaar")
+            CoherentieMonitor = None
+        if CoherentieMonitor is None:
+            return SwarmPayload(
+                agent=self.name, type="text",
+                content="CoherentieMonitor niet beschikbaar",
+                display_text="CoherentieMonitor niet beschikbaar",
+            )
         monitor = CoherentieMonitor()
         rapport = await asyncio.to_thread(monitor.scan)
 
@@ -1110,7 +1132,8 @@ class CoherentieAgent(Agent):
 class StrategistAgent(Agent):
     """Recursive planner: decompose, delegate, chain."""
 
-    def _get_strategist(self):
+    def _get_strategist(self) -> Any:
+        """Lazy-load Strategist instantie."""
         if not hasattr(self, "_strategist"):
             try:
                 from danny_toolkit.brain.strategist import (
@@ -1122,7 +1145,8 @@ class StrategistAgent(Agent):
                 self._strategist = None
         return self._strategist
 
-    async def process(self, task, brain=None):
+    async def process(self, task: str, brain: Any = None) -> SwarmPayload:
+        """Decomponeer en delegeer taak via Strategist."""
         start_t = time.time()
         strat = self._get_strategist()
         if strat is None:
@@ -1145,7 +1169,8 @@ class StrategistAgent(Agent):
 class ArtificerAgent(Agent):
     """Autonomous skill forge-verify-execute loop."""
 
-    def _get_artificer(self):
+    def _get_artificer(self) -> Any:
+        """Lazy-load Artificer instantie."""
         if not hasattr(self, "_artificer"):
             try:
                 from danny_toolkit.brain.artificer import (
@@ -1157,7 +1182,8 @@ class ArtificerAgent(Agent):
                 self._artificer = None
         return self._artificer
 
-    async def process(self, task, brain=None):
+    async def process(self, task: str, brain: Any = None) -> SwarmPayload:
+        """Forge en executeer skill via Artificer."""
         start_t = time.time()
         art = self._get_artificer()
         if art is None:
@@ -1188,7 +1214,8 @@ class ArtificerAgent(Agent):
 class VirtualTwinAgent(Agent):
     """Virtuele Tweeling: sandboxed system duplicate with Mirror + VoidWalker."""
 
-    def _get_twin(self):
+    def _get_twin(self) -> Any:
+        """Lazy-load VirtualTwin instantie."""
         if not hasattr(self, "_twin"):
             try:
                 from danny_toolkit.brain.virtual_twin import (
@@ -1200,7 +1227,8 @@ class VirtualTwinAgent(Agent):
                 self._twin = None
         return self._twin
 
-    async def process(self, task, brain=None):
+    async def process(self, task: str, brain: Any = None) -> SwarmPayload:
+        """Consulteer VirtualTwin voor diepte-analyse."""
         start_t = time.time()
         twin = self._get_twin()
         if twin is None:
@@ -1233,14 +1261,20 @@ class PixelAgent(Agent):
         "bekijk", "toon scherm", "wat zie",
     ]
 
-    def __init__(self, name, role, model=None):
+    def __init__(self, name: str, role: str, model: str | None = None) -> None:
+        """Initialiseer PixelAgent met PixelEye skill."""
         super().__init__(name, role, model)
-        from danny_toolkit.skills.pixel_eye import (
-            PixelEye,
-        )
-        self.eye = PixelEye()
+        try:
+            from danny_toolkit.skills.pixel_eye import (
+                PixelEye,
+            )
+        except ImportError:
+            logger.debug("skills.pixel_eye niet beschikbaar")
+            PixelEye = None
+        self.eye = PixelEye() if PixelEye is not None else None
 
-    async def process(self, task, brain=None):
+    async def process(self, task: str, brain: Any = None) -> SwarmPayload:
+        """Verwerk visuele taak via PixelEye of tekst-fallback."""
         start_t = time.time()
 
         # Detecteer of dit een visuele taak is
@@ -1257,9 +1291,17 @@ class PixelAgent(Agent):
                     content="Brain offline",
                     display_text="Brain offline",
                 )
-            from danny_toolkit.brain.trinity_omega import (
-                CosmicRole,
-            )
+            try:
+                from danny_toolkit.brain.trinity_omega import (
+                    CosmicRole,
+                )
+            except ImportError:
+                logger.debug("brain.trinity_omega niet beschikbaar")
+                return SwarmPayload(
+                    agent=self.name, type="text",
+                    content="CosmicRole niet beschikbaar",
+                    display_text="CosmicRole niet beschikbaar",
+                )
             result, exec_time, status = (
                 await asyncio.to_thread(
                     brain._execute_with_role,
@@ -1358,10 +1400,15 @@ class LegionAgent(Agent):
                        "screenshot"}
     _GEVAARLIJKE_ACTIES = {"open", "combo"}
 
-    def __init__(self, name, role, model=None):
+    def __init__(self, name: str, role: str, model: str | None = None) -> None:
+        """Initialiseer LegionAgent met KineticUnit body."""
         super().__init__(name, role, model)
-        from kinesis import KineticUnit
-        self.body = KineticUnit()
+        try:
+            from kinesis import KineticUnit
+        except ImportError:
+            logger.debug("kinesis niet beschikbaar")
+            KineticUnit = None
+        self.body = KineticUnit() if KineticUnit is not None else None
         self.bevestig_callback = None
 
     @staticmethod
@@ -1377,7 +1424,8 @@ class LegionAgent(Agent):
         act = step.get("action", "")
         return act in LegionAgent._VEILIGE_ACTIES
 
-    async def process(self, task, brain=None):
+    async def process(self, task: str, brain: Any = None) -> SwarmPayload:
+        """Vertaal intentie naar OS-acties en voer ze uit."""
         start_t = time.time()
 
         if not brain:
@@ -1388,9 +1436,17 @@ class LegionAgent(Agent):
             )
 
         # 1. PLAN: Vertaal intentie naar acties
-        from danny_toolkit.brain.trinity_omega import (
-            CosmicRole,
-        )
+        try:
+            from danny_toolkit.brain.trinity_omega import (
+                CosmicRole,
+            )
+        except ImportError:
+            logger.debug("brain.trinity_omega niet beschikbaar")
+            return SwarmPayload(
+                agent=self.name, type="text",
+                content="CosmicRole niet beschikbaar",
+                display_text="CosmicRole niet beschikbaar",
+            )
         plan_prompt = (
             "Jij bent LEGION, de systeem-operator."
             f' De gebruiker wil: "{task}"\n\n'
@@ -1540,7 +1596,8 @@ class SentinelValidator:
         r"\bshutil\.rmtree\s*\(",
     ]
 
-    def __init__(self, governor=None):
+    def __init__(self, governor: Any = None) -> None:
+        """Initialiseer SentinelValidator met optionele Governor."""
         self._governor = governor
         self._compiled = [
             re.compile(p, re.IGNORECASE)
@@ -1794,7 +1851,7 @@ class AdaptiveRouter:
     }
 
     @classmethod
-    def _get_embed_fn(cls):
+    def _get_embed_fn(cls) -> Any:
         """Lazy laden van SentenceTransformer op CPU.
 
         CPU-only: router embed korte strings, geen GPU nodig.
@@ -1826,7 +1883,7 @@ class AdaptiveRouter:
             return None
 
     @classmethod
-    def _bereken_profielen(cls):
+    def _bereken_profielen(cls) -> dict | None:
         """Embed alle agent sub-profielen (eenmalig).
 
         Slaat per agent een lijst van vectoren op.
@@ -1845,7 +1902,7 @@ class AdaptiveRouter:
         return cls._profiel_embeddings
 
     @staticmethod
-    def _cosine_sim(vec_a, vec_b):
+    def _cosine_sim(vec_a: Any, vec_b: Any) -> float:
         """Cosine similarity tussen twee vectoren."""
         dot = sum(
             a * b for a, b in zip(vec_a, vec_b)
@@ -1964,11 +2021,12 @@ class PipelineTuner:
     SENTINEL_SAMPLE_NA = 20
     SENTINEL_SAMPLE_RATE = 5
 
-    def __init__(self):
-        self._stats = {}
-        self._call_count = {}
+    def __init__(self) -> None:
+        """Initialiseer PipelineTuner met lege stats."""
+        self._stats: dict = {}
+        self._call_count: dict = {}
 
-    def _ensure_stap(self, stap):
+    def _ensure_stap(self, stap: str) -> None:
         """Maak stats aan voor een stap."""
         if stap not in self._stats:
             self._stats[stap] = deque(
@@ -1976,7 +2034,7 @@ class PipelineTuner:
             )
             self._call_count[stap] = 0
 
-    def registreer(self, stap, latency_ms, **metrics):
+    def registreer(self, stap: str, latency_ms: float, **metrics: Any) -> None:
         """Voeg meting toe aan rolling buffer.
 
         Args:
@@ -1991,7 +2049,7 @@ class PipelineTuner:
         self._stats[stap].append(entry)
         self._call_count[stap] += 1
 
-    def mag_skippen(self, stap) -> bool:
+    def mag_skippen(self, stap: str) -> bool:
         """Check of stap overgeslagen mag worden.
 
         Args:
@@ -2088,7 +2146,7 @@ _GREETING_PATTERNS = [
 ]
 
 
-def _fast_track_check(prompt):
+def _fast_track_check(prompt: str) -> SwarmPayload | None:
     """Regex check voor simpele begroetingen."""
     lower = prompt.lower().strip()
     if len(lower.split()) < 6:
@@ -2209,7 +2267,8 @@ class SwarmEngine:
         ],
     }
 
-    def __init__(self, brain=None, oracle=None):
+    def __init__(self, brain: Any = None, oracle: Any = None) -> None:
+        """Initialiseer SwarmEngine met brain en optionele oracle."""
         self.brain = brain
         self._oracle = oracle
         self.repair_mode = True
@@ -2312,7 +2371,7 @@ class SwarmEngine:
 
         return stats
 
-    def _record_response_outcome(self, query, results):
+    def _record_response_outcome(self, query: str, results: list) -> None:
         """B-95: Log response quality metrics to CorticalStack (non-blocking).
 
         Extracts payload data on the hot path (~0.01ms), then fires the
@@ -2340,7 +2399,8 @@ class SwarmEngine:
         }
 
         # Fire-and-forget to background thread (daemon=True via executor)
-        def _write_outcome():
+        def _write_outcome() -> None:
+            """Schrijf B-95 outcome naar CorticalStack in achtergrond."""
             try:
                 stack = get_cortical_stack()
                 stack.log_event(
@@ -2356,9 +2416,9 @@ class SwarmEngine:
             _B95_EXECUTOR.submit(_write_outcome)
         except RuntimeError:
             # Executor shut down (interpreter exit)
-            pass
+            logger.debug("B-95 executor shut down, skipping outcome write")
 
-    def _record_agent_metric(self, agent_naam, elapsed_ms, error=None):
+    def _record_agent_metric(self, agent_naam: str, elapsed_ms: float, error: Any = None) -> None:
         """Registreer per-agent timing en foutstatistiek."""
         with _METRICS_LOCK:
             if agent_naam not in _AGENT_PIPELINE_METRICS:
@@ -2477,8 +2537,8 @@ class SwarmEngine:
                     },
                     bron="swarm_engine",
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Turbo-Boost NeuralBus publish: %s", e)
 
             return winner
         except Exception as e:
@@ -2507,7 +2567,7 @@ class SwarmEngine:
                 return False  # Laat 1 request door
             return False
 
-    def _record_circuit_failure(self, agent_naam: str):
+    def _record_circuit_failure(self, agent_naam: str) -> None:
         """Registreer opeenvolgende fout voor circuit breaker."""
         with _CIRCUIT_LOCK:
             if agent_naam not in _AGENT_CIRCUIT_STATE:
@@ -2533,7 +2593,7 @@ class SwarmEngine:
                 except Exception as e:
                     logger.debug("NeuralBus circuit open publish: %s", e)
 
-    def _record_circuit_success(self, agent_naam: str):
+    def _record_circuit_success(self, agent_naam: str) -> None:
         """Reset opeenvolgende fouten na succesvolle dispatch."""
         with _CIRCUIT_LOCK:
             state = _AGENT_CIRCUIT_STATE.get(agent_naam)
@@ -2556,7 +2616,7 @@ class SwarmEngine:
                     except Exception as e:
                         logger.debug("NeuralBus circuit closed publish: %s", e)
 
-    def _tick_circuit_cooldowns(self):
+    def _tick_circuit_cooldowns(self) -> None:
         """Verlaag circuit breaker cooldowns met 1 (per query cycle)."""
         with _CIRCUIT_LOCK:
             for state in _AGENT_CIRCUIT_STATE.values():
@@ -2629,7 +2689,7 @@ class SwarmEngine:
             return True
         return False
 
-    def _publish_error_classified(self, fc):
+    def _publish_error_classified(self, fc: Any) -> None:
         """Publiceer ERROR_CLASSIFIED event + sla op in ring buffer."""
         try:
             _record_error_context(fc)
@@ -2642,8 +2702,8 @@ class SwarmEngine:
         except Exception as e:
             logger.debug("ERROR_CLASSIFIED publish fout: %s", e)
 
-    async def _timed_dispatch(self, agent, agent_input,
-                              trace_id="", recovery_depth=0):
+    async def _timed_dispatch(self, agent: Agent, agent_input: str,
+                              trace_id: str = "", recovery_depth: int = 0) -> SwarmPayload:
         """Wrap agent.process() met timing, timeout + error handling + Ouroboros self-heal."""
         agent_naam = agent.name
         t0 = time.time()
@@ -2948,19 +3008,28 @@ class SwarmEngine:
             )
 
     @property
-    def _governor(self):
+    def _governor(self) -> Any:
         """Lazy OmegaGovernor voor rate limit tracking."""
         if not hasattr(self, "_gov_instance"):
-            from danny_toolkit.brain.governor import (
-                OmegaGovernor,
-            )
-            self._gov_instance = OmegaGovernor()
+            try:
+                from danny_toolkit.brain.governor import (
+                    OmegaGovernor,
+                )
+            except ImportError:
+                logger.debug("brain.governor niet beschikbaar")
+                OmegaGovernor = None
+            self._gov_instance = OmegaGovernor() if OmegaGovernor is not None else None
         return self._gov_instance
 
-    def _register_agents(self):
-        from danny_toolkit.brain.trinity_omega import (
-            CosmicRole,
-        )
+    def _register_agents(self) -> Dict[str, Agent]:
+        """Registreer alle beschikbare agents."""
+        try:
+            from danny_toolkit.brain.trinity_omega import (
+                CosmicRole,
+            )
+        except ImportError:
+            logger.debug("brain.trinity_omega niet beschikbaar")
+            return {}
         return {
             "IOLAAX": IolaaxAgent(
                 "Iolaax", "Engineer",
@@ -3038,14 +3107,19 @@ class SwarmEngine:
     def oracle(self) -> OracleAgent:
         """Lazy OracleAgent — geen import overhead."""
         if self._oracle is None:
-            from danny_toolkit.brain.oracle import (
-                OracleAgent,
-            )
-            self._oracle = OracleAgent(persist=False)
+            try:
+                from danny_toolkit.brain.oracle import (
+                    OracleAgent,
+                )
+            except ImportError:
+                logger.debug("brain.oracle niet beschikbaar")
+                OracleAgent = None
+            if OracleAgent is not None:
+                self._oracle = OracleAgent(persist=False)
         return self._oracle
 
     @property
-    def _tribunal(self):
+    def _tribunal(self) -> Any:
         """Lazy AdversarialTribunal."""
         if not hasattr(self, "_tribunal_instance"):
             try:
@@ -3093,7 +3167,7 @@ class SwarmEngine:
         return self._phantom_instance
 
     @property
-    def virtual_twin(self):
+    def virtual_twin(self) -> Any:
         """Lazy VirtualTwin — sandboxed system duplicate."""
         if not hasattr(self, "_virtual_twin_instance"):
             try:
@@ -3109,8 +3183,8 @@ class SwarmEngine:
         return self._virtual_twin_instance
 
     async def _tribunal_verify(
-        self, results, user_input, callback=None,
-    ):
+        self, results: list, user_input: str, callback: Any = None,
+    ) -> list:
         """Tribunal verificatie voor Strategist output."""
         tribunal = self._tribunal
         if tribunal is None:
@@ -3182,7 +3256,7 @@ class SwarmEngine:
 
     # ── Hook Systeem ──
 
-    def add_hook(self, event, callback):
+    def add_hook(self, event: str, callback: Any) -> None:
         """Registreer een hook callback.
 
         Args:
@@ -3199,7 +3273,7 @@ class SwarmEngine:
         if hook_list is not None:
             hook_list.append(callback)
 
-    def _trigger_hooks(self, hooks, *args):
+    def _trigger_hooks(self, hooks: list, *args: Any) -> None:
         """Trigger alle hooks in een lijst.
 
         Args:
@@ -3215,8 +3289,8 @@ class SwarmEngine:
     # ── MEMEX Context Layer ──
 
     def _ophalen_memex_context(
-        self, user_input: str, max_fragmenten=3,
-        max_chars=300,
+        self, user_input: str, max_fragmenten: int = 3,
+        max_chars: int = 300,
     ) -> List[str]:
         """Haal relevante context op via ChromaDB.
 
@@ -3272,7 +3346,7 @@ class SwarmEngine:
                                 from danny_toolkit.brain.virtual_twin import ShadowCortex
                                 self._shadow_cortex = ShadowCortex()
                             except ImportError:
-                                pass
+                                logger.debug("ShadowCortex import niet beschikbaar")
                         if self._shadow_cortex:
                             summary_map = self._shadow_cortex.lookup_summaries(doc_ids) or {}
                             if summary_map:
@@ -3329,7 +3403,7 @@ class SwarmEngine:
 
     def _sentinel_valideer(
         self, results: List,
-        user_input: str, callback=None,
+        user_input: str, callback: Any = None,
     ) -> List:
         """Valideer output via SentinelValidator.
 
@@ -3380,8 +3454,8 @@ class SwarmEngine:
     # ── Pipeline Verificatie ──
 
     async def _verify_task(
-        self, taak, payloads,
-    ):
+        self, taak: dict, payloads: list,
+    ) -> dict:
         """Verifieer of swarm output correct is.
 
         Combineert agent output en vraagt Oracle LLM
@@ -3436,7 +3510,7 @@ class SwarmEngine:
         return {"match": False, "analyse": "onbekend"}
 
     @staticmethod
-    def _is_rate_limit_error(error):
+    def _is_rate_limit_error(error: Any) -> bool:
         """Detecteer rate limit fout (429/quota)."""
         fout_tekst = str(error).lower()
         patronen = [
@@ -3447,8 +3521,8 @@ class SwarmEngine:
         return any(p in fout_tekst for p in patronen)
 
     async def _handle_swarm_failure(
-        self, error, taak, callback=None,
-    ):
+        self, error: Any, taak: dict, callback: Any = None,
+    ) -> dict:
         """Handel een gefaalde swarm taak af.
 
         1. Vraag Oracle om repair plan
@@ -3464,7 +3538,8 @@ class SwarmEngine:
             dict met geslaagd, plan, payloads,
             analyse.
         """
-        def log(msg):
+        def log(msg: str) -> None:
+            """Stuur status update naar callback."""
             if callback:
                 callback(msg)
 
@@ -3595,8 +3670,8 @@ class SwarmEngine:
     # ── Pipeline Executie ──
 
     async def execute_pipeline(
-        self, taken, callback=None,
-    ):
+        self, taken: list, callback: Any = None,
+    ) -> list:
         """Voer een pipeline van taken uit.
 
         Per taak: pre_hook -> run -> verify ->
@@ -3613,7 +3688,8 @@ class SwarmEngine:
         Returns:
             lijst van resultaat-dicts per taak.
         """
-        def log(msg):
+        def log(msg: str) -> None:
+            """Stuur status update naar callback."""
             if callback:
                 callback(msg)
 
@@ -3765,7 +3841,7 @@ class SwarmEngine:
             )
             throttled = get_key_manager().get_agents_in_cooldown()
         except ImportError:
-            pass
+            logger.debug("KeyManager niet beschikbaar voor throttle check")
 
         # Probeer embedding-based routing
         try:
@@ -3811,7 +3887,7 @@ class SwarmEngine:
         return targets or ["ECHO"]
 
     async def run(
-        self, user_input: str, callback=None,
+        self, user_input: str, callback: Any = None,
     ) -> List[SwarmPayload]:
         """Neural Hub pipeline met self-tuning.
 
@@ -3831,7 +3907,8 @@ class SwarmEngine:
         Returns:
             Lijst van SwarmPayloads (1 per agent).
         """
-        def log(msg):
+        def log(msg: str) -> None:
+            """Stuur status update naar callback."""
             if callback:
                 callback(msg)
 
@@ -3894,8 +3971,8 @@ class SwarmEngine:
                 "trace_id": trace_id,
                 "query_preview": user_input[:80],
             }, bron="swarm_engine")
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Mission start NeuralBus publish: %s", e)
 
         # Systemic failure detectie: 3+ agents down → waarschuwing
         self._detect_systemic_failure()
@@ -4363,7 +4440,7 @@ class SwarmEngine:
                     ]
                     results = [blocked_payload] + error_only
         except ImportError:
-            pass
+            logger.debug("HallucinatieSchild import niet beschikbaar")
         except Exception as e:
             logger.warning(
                 "HallucinatieSchild FAILED: %s", e,
@@ -4483,8 +4560,8 @@ class SwarmEngine:
                 _schild_sc = None
                 try:
                     _schild_sc = schild_rapport.totaal_score
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("Schild score ophalen: %s", e)
                 bp = self.synapse.backpropagate_success(
                     user_input,
                     results,
@@ -4531,8 +4608,8 @@ class SwarmEngine:
                 "trace_id": trace_id,
                 "agents": [r.agent for r in results] if results else [],
             }, bron="swarm_engine")
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Request trace complete NeuralBus publish: %s", e)
 
         # B-95: Record response outcome to CorticalStack
         self._record_response_outcome(user_input, results)
@@ -4569,7 +4646,11 @@ class SwarmEngine:
         Returns:
             Lijst van SwarmPayloads (één per voltooide sub-taak).
         """
-        from danny_toolkit.brain.arbitrator import get_arbitrator
+        try:
+            from danny_toolkit.brain.arbitrator import get_arbitrator
+        except ImportError:
+            logger.debug("brain.arbitrator niet beschikbaar")
+            return []
 
         arbitrator = get_arbitrator(brain=self.brain)
 
@@ -4643,7 +4724,7 @@ class SwarmEngine:
 
 # ── SYNC WRAPPER ──
 
-async def _run_with_cleanup(coro):
+async def _run_with_cleanup(coro: Any) -> Any:
     """Run coroutine en sluit async clients voordat de loop stopt."""
     try:
         return await coro
@@ -4652,13 +4733,13 @@ async def _run_with_cleanup(coro):
             from danny_toolkit.core.key_manager import get_key_manager
             km = get_key_manager()
             await km.close_all_clients()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Key manager cleanup on shutdown: %s", e)
 
 
 def run_swarm_sync(
-    user_input, brain=None, callback=None,
-):
+    user_input: str, brain: Any = None, callback: Any = None,
+) -> List[SwarmPayload]:
     """Sync wrapper voor Streamlit/CLI.
 
     Args:
@@ -4676,9 +4757,9 @@ def run_swarm_sync(
 
 
 def run_pipeline_sync(
-    taken, brain=None, oracle=None,
-    callback=None,
-):
+    taken: list, brain: Any = None, oracle: Any = None,
+    callback: Any = None,
+) -> list:
     """Sync wrapper voor execute_pipeline.
 
     Args:
