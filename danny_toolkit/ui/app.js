@@ -63,12 +63,66 @@ async function authenticate_stored() {
     } catch { /* show login */ }
 }
 
+// ─── WEBSOCKET TELEMETRIE (v6.19.0) ─────────────────
+let ws = null;
+let wsReconnectTimer = null;
+
+function startWebSocket() {
+    const wsUrl = `${BASE.replace("http", "ws")}/ws/events`;
+    ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+        console.log("[WS] Connected");
+        const evtLog = document.getElementById("event-log");
+        if (evtLog) {
+            const el = document.createElement("div");
+            el.className = "text-sovereign-green text-xs mb-1";
+            el.textContent = `[${new Date().toLocaleTimeString()}] WebSocket LIVE`;
+            evtLog.prepend(el);
+        }
+    };
+
+    ws.onmessage = (evt) => {
+        try {
+            const data = JSON.parse(evt.data);
+            if (data.type === "event") {
+                appendEvent(data);
+            }
+        } catch { /* ignore parse errors */ }
+    };
+
+    ws.onclose = () => {
+        console.log("[WS] Disconnected — reconnect in 5s");
+        ws = null;
+        wsReconnectTimer = setTimeout(startWebSocket, 5000);
+    };
+
+    ws.onerror = () => {
+        console.log("[WS] Error — closing");
+        ws?.close();
+    };
+}
+
+function appendEvent(data) {
+    const evtLog = document.getElementById("event-log");
+    if (!evtLog) return;
+    const el = document.createElement("div");
+    el.className = "text-xs mb-1 border-l-2 border-sovereign-cyan pl-2";
+    el.innerHTML = `<span class="text-sovereign-yellow">${data.timestamp}</span> `
+        + `<span class="text-sovereign-cyan">${data.event_type}</span> `
+        + `<span class="text-neutral-400">${data.bron}: ${data.summary.substring(0, 80)}</span>`;
+    evtLog.prepend(el);
+    // Hou log beheersbaar
+    while (evtLog.children.length > 50) evtLog.removeChild(evtLog.lastChild);
+}
+
 // ─── TELEMETRY ──────────────────────────────────────
 
 function startTelemetry() {
     pollHealth();
     healthTimer = setInterval(pollHealth, POLL_INTERVAL);
     startSynapseMonitor();
+    startWebSocket();
 }
 
 async function pollHealth() {

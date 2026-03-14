@@ -78,6 +78,18 @@ SKIP_FILES = {
     "vector_db.json",
 }
 
+# ─── Toegestane RAG ingestie roots (anti-traversal whitelist) ───
+_PROJECT_ROOT = Path(__file__).parent.parent.parent
+ALLOWED_RAG_ROOTS = [
+    Path(DOCS_DIR).resolve(),
+    (_PROJECT_ROOT / "danny_toolkit" / "brain").resolve(),
+    (_PROJECT_ROOT / "danny_toolkit" / "core").resolve(),
+    (_PROJECT_ROOT / "danny_toolkit" / "daemon").resolve(),
+    (_PROJECT_ROOT / "danny_toolkit" / "agents").resolve(),
+    (_PROJECT_ROOT / "danny_toolkit" / "skills").resolve(),
+    _PROJECT_ROOT.resolve(),
+]
+
 console = Console()
 
 
@@ -208,13 +220,16 @@ class TheLibrarian:
         return ""
 
     def _validate_pad(self, pad: Path) -> bool:
-        """Security: valideer dat pad binnen DOCS_DIR blijft (anti-traversal)."""
+        """Security: valideer dat pad binnen ALLOWED_RAG_ROOTS valt (anti-traversal)."""
         try:
-            resolved = pad.resolve()
-            docs_resolved = Path(DOCS_DIR).resolve()
-            return str(resolved).startswith(str(docs_resolved))
-        except (OSError, ValueError):
+            resolved = pad.resolve(strict=True)
+        except (OSError, FileNotFoundError):
             return False
+        for allowed_root in ALLOWED_RAG_ROOTS:
+            if str(resolved).startswith(str(allowed_root)):
+                return True
+        logger.warning("[SECURITY GUARD] Toegang geweigerd voor: %s", resolved)
+        return False
 
     def _lees_bestand(self, pad: object) -> None:
         """Lees een bestand op basis van extensie.

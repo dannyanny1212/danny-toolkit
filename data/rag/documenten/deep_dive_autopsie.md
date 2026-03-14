@@ -1,3 +1,11 @@
+---
+title: "Deep Dive Autopsie - Proces-Wachtrij OMEGA v6.11.0"
+category: "analysis"
+tags: ["agents", "deep_dive", "embeddings", "fastapi", "memory", "ouroboros", "rag", "routing"]
+weight_class: "light"
+word_count: 1495
+---
+
 # Deep Dive Autopsie - Proces-Wachtrij OMEGA v6.11.0
 
 De momentopname van het brein van OMEGA v6.11.0 — Trinity Perfect (10/10).

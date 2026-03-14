@@ -47,6 +47,8 @@ from fastapi import (
     Request,
     Response,
     UploadFile,
+    WebSocket,
+    WebSocketDisconnect,
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
@@ -762,7 +764,7 @@ def _get_swarm_engine(brain: Any = None) -> Any:
 
 @app.on_event("startup")
 async def _startup_event() -> None:
-    """Auto-discover modellen + sweep orphan staging collecties."""
+    """Auto-discover modellen + sweep orphan staging + synaptic decay task."""
     # 1. Model registry
     try:
         from danny_toolkit.brain.model_sync import get_model_registry
@@ -785,6 +787,22 @@ async def _startup_event() -> None:
             logger.info("Startup sweep: %d orphan staging collecties opgeruimd", len(orphans))
     except Exception as e:
         logger.debug("Staging orphan sweep mislukt: %s", e)
+
+    # 3. Synaptic Decay background task (v6.19.0)
+    # Draait elke 24 uur: verzwakt ongebruikte pathways met 1%, floor 0.50
+    asyncio.create_task(_synaptic_decay_loop())
+
+
+async def _synaptic_decay_loop() -> None:
+    """Background task: voer synaptic decay uit elke 24 uur."""
+    while True:
+        await asyncio.sleep(24 * 3600)  # 24 uur wachten
+        try:
+            from danny_toolkit.brain.synapse import synaptic_decay
+            decayed = synaptic_decay()
+            logger.info("Synaptic decay cyclus: %d pathways verzwakt", decayed)
+        except Exception as e:
+            logger.debug("Synaptic decay loop error: %s", e)
 
 
 @app.on_event("shutdown")
@@ -3138,6 +3156,89 @@ if HAS_DASHBOARD:
             logger.debug("ChromaDB chunks count niet beschikbaar")
             result["db_chunks"] = 0
         return result
+
+
+# ─── WEBSOCKET TELEMETRIE (v6.19.0) ─────────────────
+# Real-time event push — vervangt polling voor /cmd UI.
+# NeuralBus events worden direct naar connected clients gepusht.
+
+_ws_clients: set = set()
+
+
+@app.websocket("/ws/events")
+async def websocket_events(websocket: WebSocket) -> None:
+    """WebSocket endpoint — pusht NeuralBus events naar connected clients.
+
+    Protocol:
+    - Client connect → ontvang welkomstbericht
+    - Server pusht JSON events bij elke NeuralBus publicatie
+    - Client kan "ping" sturen → server antwoordt "pong"
+    - Disconnect → automatische cleanup
+    """
+    await websocket.accept()
+    _ws_clients.add(websocket)
+    logger.info("WebSocket client verbonden (%d actief)", len(_ws_clients))
+
+    try:
+        await websocket.send_json({
+            "type": "connected",
+            "clients": len(_ws_clients),
+            "timestamp": datetime.now().strftime("%H:%M:%S"),
+        })
+
+        # Event push loop
+        last_seen_ids: set = set()
+        while True:
+            try:
+                # Check voor client messages (ping/pong, met korte timeout)
+                try:
+                    data = await asyncio.wait_for(
+                        websocket.receive_text(), timeout=1.0,
+                    )
+                    if data == "ping":
+                        await websocket.send_json({"type": "pong"})
+                except asyncio.TimeoutError:
+                    pass
+
+                # Haal NeuralBus events op en push nieuwe
+                try:
+                    from danny_toolkit.core.neural_bus import get_bus
+                    bus = get_bus()
+                    all_events = []
+                    for _event_type, history in bus._history.items():
+                        for evt in history:
+                            all_events.append(evt)
+                    all_events.sort(
+                        key=lambda e: e.timestamp if hasattr(e, "timestamp") else "",
+                        reverse=True,
+                    )
+                    for evt in all_events[:10]:
+                        evt_id = hash((evt.event_type, str(evt.timestamp)))
+                        if evt_id not in last_seen_ids:
+                            last_seen_ids.add(evt_id)
+                            # Hou set beheersbaar
+                            if len(last_seen_ids) > 200:
+                                last_seen_ids = set(list(last_seen_ids)[-100:])
+                            await websocket.send_json({
+                                "type": "event",
+                                "event_type": evt.event_type,
+                                "bron": evt.bron,
+                                "timestamp": evt.timestamp.strftime("%H:%M:%S")
+                                if hasattr(evt.timestamp, "strftime")
+                                else str(evt.timestamp),
+                                "summary": str(evt.data)[:200],
+                            })
+                except Exception as e:
+                    logger.debug("WebSocket event push: %s", e)
+
+            except WebSocketDisconnect:
+                break
+
+    except Exception as e:
+        logger.debug("WebSocket error: %s", e)
+    finally:
+        _ws_clients.discard(websocket)
+        logger.info("WebSocket client los (%d actief)", len(_ws_clients))
 
 
 # ─── SOVEREIGN COMMAND CENTER ─────────────────────

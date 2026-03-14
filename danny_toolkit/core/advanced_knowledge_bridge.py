@@ -30,6 +30,12 @@ except ImportError:
     Config = None
 
 try:
+    from danny_toolkit.core.embeddings import get_chroma_embed_fn
+    _HAS_VOYAGE = True
+except ImportError:
+    _HAS_VOYAGE = False
+
+try:
     from danny_toolkit.core.utils import Kleur, kleur
 except ImportError:
     Kleur = None
@@ -92,6 +98,7 @@ class AdvancedKnowledgeBridge:
         # Lazy — wordt pas geladen bij eerste gebruik
         self._client = None
         self._collection = None
+        self._embed_fn = None
 
     def _get_collection(self) -> None:
         """Lazy instantiatie in geïsoleerde thread — voorkomt asyncio clashes.
@@ -99,6 +106,10 @@ class AdvancedKnowledgeBridge:
         ChromaDB PersistentClient gebruikt intern asyncio-componenten.
         Als CentralBrain al in een event loop draait, clasht dit.
         Oplossing: init in een schone thread zonder event loop context.
+
+        Gebruikt Voyage AI embeddings (256d MRL) indien beschikbaar,
+        anders ChromaDB default. Dit zorgt voor consistente embeddings
+        over alle collecties heen.
         """
         if self._collection is None:
             import threading
@@ -107,17 +118,37 @@ class AdvancedKnowledgeBridge:
             logger.debug("AdvancedKnowledgeBridge: lazy ChromaDB init op %s", self.db_path)
             print(kleur(f"  [BRIDGE] Soul (ChromaDB): {self.db_path}", _cyaan))
 
+            # Voyage embed_fn laden buiten thread (vermijdt import issues)
+            if _HAS_VOYAGE and self._embed_fn is None:
+                try:
+                    import io as _io, sys as _sys
+                    _old_out, _old_err = _sys.stdout, _sys.stderr
+                    _sys.stdout = _io.StringIO()
+                    _sys.stderr = _io.StringIO()
+                    try:
+                        self._embed_fn = get_chroma_embed_fn()
+                    finally:
+                        _sys.stdout = _old_out
+                        _sys.stderr = _old_err
+                    print(kleur("  [BRIDGE] Voyage AI embeddings geladen (256d MRL)", _cyaan))
+                except Exception as e:
+                    logger.debug("Voyage embed_fn niet beschikbaar, fallback naar default: %s", e)
+
             init_error = [None]
+            embed_fn = self._embed_fn
 
             def _do_init() -> None:
                 """Do init."""
                 try:
                     import chromadb
                     self._client = chromadb.PersistentClient(path=self.db_path)
-                    self._collection = self._client.get_or_create_collection(
-                        name=COLLECTION_NAME,
-                        metadata={"description": "Omega Advanced Knowledge — 13 domeinen"},
-                    )
+                    kwargs = {
+                        "name": COLLECTION_NAME,
+                        "metadata": {"description": "Omega Advanced Knowledge — 13 domeinen"},
+                    }
+                    if embed_fn is not None:
+                        kwargs["embedding_function"] = embed_fn
+                    self._collection = self._client.get_or_create_collection(**kwargs)
                 except Exception as exc:
                     init_error[0] = exc
 
@@ -215,11 +246,18 @@ class AdvancedKnowledgeBridge:
             ]
             ids = [f"{name}_chunk_{i}" for i in range(len(final_splits))]
 
-            collection.upsert(
-                documents=documents,
-                metadatas=metadatas,
-                ids=ids,
-            )
+            # Rate-limited batching (100 chunks, 22s cooldown voor Voyage 3 RPM)
+            _MICRO_BATCH = 100
+            for b_start in range(0, len(ids), _MICRO_BATCH):
+                b_end = min(b_start + _MICRO_BATCH, len(ids))
+                collection.upsert(
+                    documents=documents[b_start:b_end],
+                    metadatas=metadatas[b_start:b_end],
+                    ids=ids[b_start:b_end],
+                )
+                if b_end < len(ids):
+                    import time
+                    time.sleep(22)
             totaal += len(final_splits)
             print(kleur(
                 f"  [OK] {name:<40} {len(final_splits):>3} chunks",
@@ -289,11 +327,18 @@ class AdvancedKnowledgeBridge:
             ]
             ids = [f"{filename}_chunk_{i}" for i in range(len(final_splits))]
 
-            collection.upsert(
-                documents=documents,
-                metadatas=metadatas,
-                ids=ids,
-            )
+            # Rate-limited batching (100 chunks, 22s cooldown voor Voyage 3 RPM)
+            _MICRO_BATCH = 100
+            for b_start in range(0, len(ids), _MICRO_BATCH):
+                b_end = min(b_start + _MICRO_BATCH, len(ids))
+                collection.upsert(
+                    documents=documents[b_start:b_end],
+                    metadatas=metadatas[b_start:b_end],
+                    ids=ids[b_start:b_end],
+                )
+                if b_end < len(ids):
+                    import time
+                    time.sleep(22)
             totaal += len(final_splits)
             print(kleur(
                 f"  [OK] {filename}: {len(final_splits)} chunks",
@@ -377,13 +422,39 @@ class AdvancedKnowledgeBridge:
         return self._get_collection().count()
 
     def reset(self) -> None:
-        """Verwijder en hermaak de collectie (clean slate)."""
-        collection = self._get_collection()
-        self._client.delete_collection(COLLECTION_NAME)
-        self._collection = self._client.get_or_create_collection(
-            name=COLLECTION_NAME,
-            metadata={"description": "Omega Advanced Knowledge — 13 domeinen"},
-        )
+        """Verwijder en hermaak de collectie (clean slate).
+
+        Maakt rechtstreeks een client aan en dropt de collectie
+        VOORDAT _get_collection() wordt aangeroepen — voorkomt
+        embedding function conflict bij provider-switch.
+        """
+        import threading
+        import chromadb
+
+        # Stap 1: client init + drop (in thread voor asyncio veiligheid)
+        if self._client is None:
+            init_error = [None]
+
+            def _do_init() -> None:
+                try:
+                    self._client = chromadb.PersistentClient(path=self.db_path)
+                except Exception as exc:
+                    init_error[0] = exc
+
+            thread = threading.Thread(target=_do_init, daemon=True)
+            thread.start()
+            thread.join(timeout=30)
+            if init_error[0] is not None:
+                raise init_error[0]
+
+        # Stap 2: drop collectie (negeert als niet bestaat)
+        try:
+            self._client.delete_collection(COLLECTION_NAME)
+        except Exception:
+            pass
+
+        # Stap 3: reset interne state zodat _get_collection() vers begint
+        self._collection = None
         logger.info("AdvancedKnowledgeBridge collectie gereset")
 
 

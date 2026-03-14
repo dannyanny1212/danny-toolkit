@@ -1258,6 +1258,77 @@ class TheSynapse:
         return scores
 
 
+# ── Synaptic Decay (v6.19.0) ────────────────────────────────────
+# Automatisch verval: ongebruikte pathways verzwakken met 1%/dag,
+# minimum 0.50. Voorkomt verouderde routes en houdt het brein schoon.
+
+DECAY_RATE = 0.99       # 1% verval per cyclus
+DECAY_FLOOR = 0.50      # Minimum strength na verval
+DECAY_INTERVAL_H = 24   # Uur tussen decay cycli
+
+
+def synaptic_decay(synapse: "TheSynapse" | None = None) -> int:
+    """Voer synaptic decay uit op alle pathways.
+
+    Verlaagt strength van pathways die niet recent zijn bijgewerkt
+    met DECAY_RATE (0.99), tot een minimum van DECAY_FLOOR (0.50).
+
+    Args:
+        synapse: TheSynapse instantie (default: singleton).
+
+    Returns:
+        Aantal pathways dat verval ondervond.
+    """
+    if synapse is None:
+        synapse = get_synapse()
+
+    cutoff = datetime.now() - timedelta(hours=DECAY_INTERVAL_H)
+    cutoff_str = cutoff.strftime("%Y-%m-%d %H:%M:%S")
+
+    try:
+        cursor = synapse._conn.execute(
+            """SELECT query_category, agent_key, strength, updated_at
+               FROM synaptic_pathways
+               WHERE updated_at < ? AND strength > ?""",
+            (cutoff_str, DECAY_FLOOR),
+        )
+        rows = cursor.fetchall()
+
+        decayed = 0
+        for category, agent, strength, _updated in rows:
+            new_strength = max(DECAY_FLOOR, strength * DECAY_RATE)
+            if new_strength < strength:
+                synapse._conn.execute(
+                    """UPDATE synaptic_pathways
+                       SET strength = ?
+                       WHERE query_category = ? AND agent_key = ?""",
+                    (new_strength, category, agent),
+                )
+                decayed += 1
+
+        if decayed > 0:
+            synapse._safe_commit()
+            synapse._auto_export()
+            logger.info(
+                "Synaptic decay: %d pathways verzwakt (rate=%.2f, floor=%.2f)",
+                decayed, DECAY_RATE, DECAY_FLOOR,
+            )
+            if HAS_BUS:
+                try:
+                    get_bus().publish(
+                        EventTypes.SYSTEM_ALERT,
+                        {"type": "synaptic_decay", "decayed": decayed},
+                        bron="TheSynapse",
+                    )
+                except Exception:
+                    pass
+        return decayed
+
+    except Exception as e:
+        logger.warning("Synaptic decay failed: %s", e)
+        return 0
+
+
 # ── Singleton ────────────────────────────────────────────────────
 _synapse_instance: Optional["TheSynapse"] = None
 _synapse_lock = threading.Lock()

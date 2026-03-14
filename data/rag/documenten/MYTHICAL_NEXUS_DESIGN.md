@@ -1,3 +1,11 @@
+---
+title: "🌟 NEXUS - The Mythical Legendary AI Pet"
+category: "design"
+tags: ["MYTHICAL"]
+weight_class: "light"
+word_count: 997
+---
+
 # 🌟 NEXUS - The Mythical Legendary AI Pet
 
 ## Analyse Bestaande Huisdieren

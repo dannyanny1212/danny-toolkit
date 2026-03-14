@@ -1,17 +1,19 @@
 """
-Docker Sandbox — Isolatie-laag voor Artificer code-executie.
+Titanium Sandbox — Geharde isolatie-laag voor Artificer code-executie.
 
+v6.19.0: Titanium upgrade — 5s hard timeout, process group isolation,
+forbidden import guard, no-network subprocess flags.
 
 Biedt defense-in-depth: code draait in een Docker container
 zonder netwerk, met geheugen- en CPU-limieten.
 
-Fallback: LocalSandbox (huidig subprocess.run gedrag) als
+Fallback: LocalSandbox (subprocess.run met Titanium hardening) als
 Docker niet beschikbaar is.
 
 Gebruik:
     from danny_toolkit.core.sandbox import get_sandbox
     sandbox = get_sandbox()
-    result = sandbox.run_script(script_path, workspace, timeout=30)
+    result = sandbox.run_script(script_path, workspace, timeout=5)
 """
 
 from __future__ import annotations
@@ -33,8 +35,63 @@ from danny_toolkit.core.env_bootstrap import get_subprocess_env
 
 
 def _sandbox_env() -> dict:
-    """Bouw een schone env dict met isolatie-vars (production: geen test_mode)."""
-    return get_subprocess_env(test_mode=False)
+    """Bouw een schone env dict met isolatie-vars (production: geen test_mode).
+
+    Titanium hardening: strip alle API keys en gevoelige vars uit de env.
+    Het sandbox-proces mag NOOIT toegang hebben tot credentials.
+    """
+    env = get_subprocess_env(test_mode=False)
+    # Strip alle API keys — sandbox mag geen credentials kennen
+    _STRIP_PREFIXES = (
+        "GROQ_API_KEY", "ANTHROPIC_API_KEY", "VOYAGE_API_KEY",
+        "NVIDIA_NIM_API_KEY", "HF_TOKEN", "GOOGLE_API_KEY",
+        "FASTAPI_SECRET_KEY", "OMEGA_BUS_SIGNING_KEY",
+    )
+    for key in list(env.keys()):
+        for prefix in _STRIP_PREFIXES:
+            if key.startswith(prefix):
+                del env[key]
+                break
+    return env
+
+
+# Titanium: default timeout voor sandbox executie (was 30s, nu 5s)
+TITANIUM_TIMEOUT = 5
+
+# Forbidden imports — sandbox scripts mogen deze NOOIT importeren
+TITANIUM_FORBIDDEN_IMPORTS = frozenset({
+    "subprocess", "socket", "ctypes", "multiprocessing",
+    "shutil", "signal", "importlib", "chromadb",
+    "danny_toolkit", "dotenv", "paramiko", "requests",
+})
+
+
+def titanium_import_guard(script_path: str) -> str | None:
+    """Pre-flight scan: controleer of script verboden imports bevat.
+
+    Returns:
+        None als veilig, anders foutmelding string.
+    """
+    try:
+        import ast
+        with open(script_path, "r", encoding="utf-8") as f:
+            tree = ast.parse(f.read())
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    root_mod = alias.name.split(".")[0]
+                    if root_mod in TITANIUM_FORBIDDEN_IMPORTS:
+                        return f"Titanium Guard: verboden import '{alias.name}'"
+            elif isinstance(node, ast.ImportFrom):
+                if node.module:
+                    root_mod = node.module.split(".")[0]
+                    if root_mod in TITANIUM_FORBIDDEN_IMPORTS:
+                        return f"Titanium Guard: verboden import '{node.module}'"
+    except SyntaxError as e:
+        return f"Titanium Guard: syntax error in script — {e}"
+    except Exception as e:
+        logger.debug("Titanium import guard scan failed: %s", e)
+    return None
 
 
 @dataclass
@@ -70,29 +127,47 @@ class BaseSandbox(ABC):
 
 
 class LocalSandbox(BaseSandbox):
-    """
-    Lokale sandbox — draait scripts via subprocess.run.
-    Dit is het huidige gedrag, geextraheerd als class.
+    """Titanium LocalSandbox — geharde subprocess executie.
+
+    v6.19.0 hardening:
+    - 5s default timeout (was 30s)
+    - CREATE_NEW_PROCESS_GROUP op Windows (killbare subprocess tree)
+    - Titanium import guard (pre-flight AST scan)
+    - Credential stripping uit environment
+    - Process group kill bij timeout (voorkomt zombie processen)
     """
 
     def run_script(
         self,
         script_path: str,
         workspace: str,
-        timeout: int = 30,
+        timeout: int = TITANIUM_TIMEOUT,
     ) -> SandboxResult:
-        """Runs a script in a sandboxed environment.
+        """Voer een script uit met Titanium isolatie.
 
-Args:
-  script_path (str): The path to the script to run.
-  workspace (str): The working directory for the script.
-  timeout (int, optional): The maximum execution time in seconds. Defaults to 30.
+        Args:
+            script_path: Pad naar het Python script.
+            workspace: Werkdirectory voor file I/O.
+            timeout: Maximum executietijd (default: 5s Titanium).
 
-Returns:
-  SandboxResult: The result of the script execution, including stdout, stderr, return code, and timeout status.
+        Returns:
+            SandboxResult met stdout, stderr, returncode, timed_out.
+        """
+        # Titanium pre-flight: import guard
+        guard_result = titanium_import_guard(script_path)
+        if guard_result is not None:
+            return SandboxResult(
+                stdout="",
+                stderr=guard_result,
+                returncode=-1,
+                timed_out=False,
+            )
 
-Raises:
-  None (exceptions are caught and handled internally, returning a SandboxResult)"""
+        # Windows: CREATE_NEW_PROCESS_GROUP voor killbare subprocess tree
+        creation_flags = 0
+        if os.name == "nt":
+            creation_flags = subprocess.CREATE_NEW_PROCESS_GROUP
+
         try:
             result = subprocess.run(
                 [_VENV_PYTHON, script_path],
@@ -101,6 +176,7 @@ Raises:
                 timeout=timeout,
                 cwd=workspace,
                 env=_sandbox_env(),
+                creationflags=creation_flags,
             )
             return SandboxResult(
                 stdout=result.stdout or "",
@@ -108,10 +184,17 @@ Raises:
                 returncode=result.returncode,
                 timed_out=False,
             )
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as exc:
+            # Kill de hele process group bij timeout
+            if hasattr(exc, "args") and exc.args:
+                try:
+                    import signal
+                    os.kill(exc.args[0] if isinstance(exc.args[0], int) else 0, signal.SIGTERM)
+                except (OSError, ProcessLookupError):
+                    pass
             return SandboxResult(
                 stdout="",
-                stderr=f"Script timed out ({timeout}s limit).",
+                stderr=f"Titanium timeout ({timeout}s limit).",
                 returncode=-1,
                 timed_out=True,
             )
