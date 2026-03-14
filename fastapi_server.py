@@ -1017,33 +1017,44 @@ async def health_deep(
 async def agents(
     _key: str = Depends(verify_api_key),
 ):
-    """Retourneer alle beschikbare agents met hun
-    status, energie en aantal voltooide taken.
-    """
-    brain = _get_brain()
-    result = []
-
-    if hasattr(brain, "nodes"):
-        for role, node in brain.nodes.items():
-            result.append(AgentInfo(
-                name=node.name,
-                role=role.value
-                if hasattr(role, "value")
-                else str(role),
-                tier=node.tier.value
-                if hasattr(node.tier, "value")
-                else str(node.tier),
-                status=node.status,
-                energy=node.energy,
-                tasks_completed=node.tasks_completed,
-            ))
-
-    # Annotate with pause status
+    """Retourneer alle SwarmEngine agents met pause status."""
     from swarm_engine import get_paused_agents
     paused = set(get_paused_agents())
-    for a in result:
-        if a.name.upper() in paused:
-            a.status = "paused"
+
+    # SwarmEngine agents — de echte executie-agents
+    engine = _get_swarm_engine()
+    result = []
+    seen = set()
+
+    for key, agent in engine.agents.items():
+        name = agent.name
+        if name in seen:
+            continue
+        seen.add(name)
+        role = getattr(agent, "role", key)
+        is_paused = name.upper() in paused
+        result.append(AgentInfo(
+            name=name,
+            role=role,
+            tier="swarm",
+            status="paused" if is_paused else "active",
+            energy=100,
+            tasks_completed=0,
+        ))
+
+    # Enriche met brain.nodes stats als beschikbaar
+    brain = _get_brain()
+    if hasattr(brain, "nodes"):
+        node_map = {}
+        for _role, node in brain.nodes.items():
+            node_map[node.name.upper()] = node
+        for a in result:
+            node = node_map.get(a.name.upper())
+            if node:
+                a.tasks_completed = node.tasks_completed
+                a.energy = node.energy
+                if a.status != "paused":
+                    a.status = node.status
 
     return result
 

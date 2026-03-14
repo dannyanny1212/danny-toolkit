@@ -189,11 +189,20 @@ async function toggleAgent(name, paused) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ agent: name, paused }),
         });
-        if (resp.ok) {
-            // Onmiddellijk herpollen voor visuele feedback
-            pollHealth();
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            console.error("Toggle failed:", resp.status, err);
+            return;
         }
-    } catch { /* non-critical */ }
+        // Direct agents herpollen voor onmiddellijke visuele feedback
+        const agentsResp = await apiFetch("/api/v1/agents");
+        if (agentsResp.ok) {
+            const agents = await agentsResp.json();
+            updateAgents(agents);
+        }
+    } catch (err) {
+        console.error("Toggle error:", err);
+    }
 }
 
 function setOffline() {
