@@ -263,6 +263,7 @@ class HallucinatieSchild:
         # Speciale agents
         "#@*VirtualTwin", "VirtualTwin", "VIRTUAL_TWIN",
         "Cipher", "CIPHER", "cipher",
+        "Navigator", "NAVIGATOR", "navigator",
         "Vita", "VITA", "vita",
         "Pixel", "PIXEL", "pixel",
         "Legion", "LEGION", "legion",

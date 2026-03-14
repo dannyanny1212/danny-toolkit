@@ -314,6 +314,13 @@ class PrometheusBrain(PrometheusProtocolsMixin):
         self.task_history: deque = deque(maxlen=1000)
         self.is_online = False
 
+        # Sovereign Seal — cryptografische sessie-handdruk
+        try:
+            from danny_toolkit.core.sovereign_seal import get_sovereign_seal
+            self._sovereign_seal = get_sovereign_seal()
+        except ImportError:
+            self._sovereign_seal = None
+
         # Data persistence
         self._data_dir = Path(__file__).parent.parent.parent / "data" / "apps"
         self._state_file = self._data_dir / "prometheus_brain.json"
@@ -347,6 +354,19 @@ class PrometheusBrain(PrometheusProtocolsMixin):
 
         if auto_init:
             self._boot_sequence()
+
+    @property
+    def sovereign_seal(self) -> str:
+        """Het actieve Sovereign Seal voor deze Brain sessie."""
+        if self._sovereign_seal is None:
+            return ""
+        return self._sovereign_seal.key
+
+    def verify_seal(self, provided_seal: str) -> bool:
+        """Verifieer een zegel — timing-attack safe."""
+        if self._sovereign_seal is None:
+            return False
+        return self._sovereign_seal.verify(provided_seal)
 
     def _boot_sequence(self) -> None:
         """Boot de Prometheus Brain."""

@@ -339,6 +339,74 @@ class ShadowGovernance:
         self._violation_count = 0
         self._lockdown_blocks = 0
         self._zone_blocks = {"ROOD": 0, "GEEL_WRITE": 0}
+        self._seal_rejections = 0
+
+    # ── Sovereign Seal Gate ──
+
+    def authorize_sandbox_exit(
+        self, data: str, brain: object,
+    ) -> tuple[bool, str]:
+        """Gate voor data die de sandbox wil verlaten.
+
+        Alles mag IN de sandbox. Maar data UIT de sandbox
+        vereist een geldige Sovereign Seal van de echte
+        PrometheusBrain.
+
+        Args:
+            data: De data die naar buiten wil.
+            brain: Het brain-object dat het commando geeft.
+
+        Returns:
+            (toegestaan, reden) tuple.
+        """
+        # Geen brain = geen exit
+        if brain is None:
+            self._seal_rejections += 1
+            logger.warning(
+                "%sSOVEREIGN SEAL REJECT: geen brain — "
+                "sandbox exit geblokkeerd (rejects: %d)",
+                SHADOW_PREFIX, self._seal_rejections,
+            )
+            return False, "Geen brain aanwezig"
+
+        # Haal de onafhankelijke controleur erbij
+        try:
+            from danny_toolkit.core.sovereign_seal import (
+                get_sovereign_seal,
+            )
+            seal_verifier = get_sovereign_seal()
+        except ImportError:
+            self._seal_rejections += 1
+            logger.warning(
+                "%sSOVEREIGN SEAL REJECT: SovereignSeal "
+                "module niet beschikbaar (rejects: %d)",
+                SHADOW_PREFIX, self._seal_rejections,
+            )
+            return False, "SovereignSeal niet beschikbaar"
+
+        # Haal het zegel uit het aangeleverde brain
+        seal = getattr(brain, "sovereign_seal", None)
+
+        # Laat de onafhankelijke kluis het zegel verifiëren
+        # (constante tijd — immuun voor timing attacks)
+        if not seal_verifier.verify(seal):
+            self._seal_rejections += 1
+            logger.warning(
+                "%sSOVEREIGN SEAL REJECT: Zegel ongeldig "
+                "of vervalst. Sandbox exit geblokkeerd! "
+                "(rejects: %d)",
+                SHADOW_PREFIX, self._seal_rejections,
+            )
+            return False, "Sovereign Seal verificatie mislukt"
+
+        # Als we hier komen, is het zegel 100% wiskundig
+        # bewezen echt
+        logger.info(
+            "%sSOVEREIGN SEAL OK: sandbox exit "
+            "geautoriseerd door de Master Core",
+            SHADOW_PREFIX,
+        )
+        return True, "Sovereign Seal geldig"
 
     # ── Zone Validators ──
 

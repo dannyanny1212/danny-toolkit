@@ -2324,6 +2324,52 @@ class SwarmEngine:
         # Echo Guard — dedup gate (hash, timestamp)
         self._recent_queries: deque = deque(maxlen=50)
 
+    def validate_execution(self, active_brain: object) -> None:
+        """Valideer dat het commando van de echte Sovereign Core komt.
+
+        Raises:
+            PermissionError: Als het brain-object geen geldig
+                Sovereign Seal heeft.
+        """
+        import os
+
+        # Test mode bypass voor geïsoleerde unit tests
+        if os.getenv("DANNY_TEST_MODE") == "1":
+            return
+
+        # Geen brain = standalone modus (toegestaan)
+        if active_brain is None:
+            return
+
+        # Fail-Closed: als de kluis onvindbaar is,
+        # blokkeren we alles. Geen uitzonderingen.
+        try:
+            from danny_toolkit.core.sovereign_seal import (
+                get_sovereign_seal,
+            )
+            seal_verifier = get_sovereign_seal()
+        except ImportError as e:
+            raise PermissionError(
+                "[FATAL LOCKDOWN] SovereignSeal module "
+                "gesaboteerd of onvindbaar: "
+                f"{e}. Systeem gaat in absolute lockdown."
+            )
+
+        # Heeft het brein überhaupt een seal?
+        seal = getattr(active_brain, "sovereign_seal", None)
+        if not seal:
+            raise PermissionError(
+                "[FATAL LOCKDOWN] Ongeautoriseerd object "
+                "probeert de Swarm te commanderen."
+            )
+
+        # Is het seal authentiek?
+        if not seal_verifier.verify(seal):
+            raise PermissionError(
+                "[FATAL LOCKDOWN] Sovereign Seal verificatie "
+                "gefaald. Rogue proces gedetecteerd."
+            )
+
     def get_stats(self) -> Dict[str, Any]:
         """Statistieken: verwerkte queries, agents, gem. responstijd."""
         avg_ms = (
@@ -3924,6 +3970,15 @@ class SwarmEngine:
             if callback:
                 callback(msg)
 
+        # 0. SOVEREIGN SEAL — valideer herkomst
+        # Als een ongeautoriseerd proces, een malafide
+        # test-script of een losgeslagen agent toegang
+        # probeert te forceren, wordt de executie direct
+        # in de kiem gesmoord met een PermissionError.
+        # Nul rekenkracht, nul extra threads, nul geheugen.
+        # De deur blokkeert voordat het licht aangaat.
+        self.validate_execution(self.brain)
+
         # Beperk thread pool voor deze event loop (hergebruik executor)
         loop = asyncio.get_running_loop()
         if not hasattr(self, "_executor"):
@@ -4172,7 +4227,7 @@ class SwarmEngine:
                     except ImportError:
                         self._cortex = False
                 if self._cortex and self._cortex is not False:
-                    _cx_results = self._cortex.hybrid_search(
+                    _cx_results = await self._cortex.hybrid_search(
                         user_input, top_k=3,
                     )
                     if _cx_results:
@@ -4377,9 +4432,12 @@ class SwarmEngine:
             )
             schild = get_hallucination_shield()
             _MEDIA_TYPES = {"metrics", "area_chart", "bar_chart", "code"}
+            _BYPASS_CONTENT = {"Brain offline"}
             schild_non_error = [
                 r for r in results
-                if r.type != "error" and r.type not in _MEDIA_TYPES
+                if r.type != "error"
+                and r.type not in _MEDIA_TYPES
+                and r.content not in _BYPASS_CONTENT
             ]
             if schild_non_error:
                 # Extract tribunal verdict from metadata

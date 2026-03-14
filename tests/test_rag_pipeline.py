@@ -251,11 +251,12 @@ class TestTruthAnchor(unittest.TestCase):
         mock_model.predict.return_value = [0.85]
         anchor = self._make_anchor(mock_model)
 
-        result = anchor.verify(
+        grounded, score = anchor.verify(
             "Python 3.13 introduceert een JIT compiler",
             ["Python 3.13 introduces a new JIT compiler based on micro-ops."],
         )
-        self.assertTrue(result, "Gegrond antwoord moet True retourneren")
+        self.assertTrue(grounded, "Gegrond antwoord moet True retourneren")
+        self.assertAlmostEqual(score, 0.85)
 
     def test_hallucination_rejected(self):
         """Lage cross-encoder score → False (hallucinatie gedetecteerd)."""
@@ -263,19 +264,21 @@ class TestTruthAnchor(unittest.TestCase):
         mock_model.predict.return_value = [0.05]
         anchor = self._make_anchor(mock_model)
 
-        result = anchor.verify(
+        grounded, score = anchor.verify(
             "Python 3.13 is een type auto",
             ["Python 3.13 introduces a new JIT compiler based on micro-ops."],
         )
-        self.assertFalse(result, "Hallucinatie moet False retourneren")
+        self.assertFalse(grounded, "Hallucinatie moet False retourneren")
+        self.assertAlmostEqual(score, 0.05)
 
     def test_empty_context_rejected(self):
         """Lege context → False (geen bron om te verifiëren)."""
         mock_model = MagicMock()
         anchor = self._make_anchor(mock_model)
 
-        result = anchor.verify("Python is a language", [])
-        self.assertFalse(result, "Lege context moet False retourneren")
+        grounded, score = anchor.verify("Python is a language", [])
+        self.assertFalse(grounded, "Lege context moet False retourneren")
+        self.assertAlmostEqual(score, 0.0)
         mock_model.predict.assert_not_called()
 
     def test_multiple_docs_best_score_wins(self):
@@ -285,20 +288,22 @@ class TestTruthAnchor(unittest.TestCase):
         mock_model.predict.return_value = [0.1, 0.75]
         anchor = self._make_anchor(mock_model)
 
-        result = anchor.verify(
+        grounded, score = anchor.verify(
             "Python has a GIL",
             ["Cats are fluffy animals.", "Python uses a Global Interpreter Lock (GIL)."],
         )
-        self.assertTrue(result, "Beste score (0.75) moet True geven")
+        self.assertTrue(grounded, "Beste score (0.75) moet True geven")
+        self.assertAlmostEqual(score, 0.75)
 
     def test_borderline_score_threshold(self):
-        """Score precies op drempel (0.2) → False (strict check)."""
+        """Score precies op drempel (0.45) → False (strict > check)."""
         mock_model = MagicMock()
-        mock_model.predict.return_value = [0.2]
+        mock_model.predict.return_value = [0.45]
         anchor = self._make_anchor(mock_model)
 
-        result = anchor.verify("test claim", ["test context"])
-        self.assertFalse(result, "Score == 0.2 moet False zijn (> 0.2 vereist)")
+        grounded, score = anchor.verify("test claim", ["test context"])
+        self.assertFalse(grounded, "Score == 0.45 moet False zijn (> 0.45 vereist)")
+        self.assertAlmostEqual(score, 0.45)
 
 
 if __name__ == "__main__":
