@@ -367,19 +367,19 @@ class LockdownManager:
 try:
     from danny_toolkit.core.neural_bus import get_bus
 except ImportError:
-    pass
+    logger.debug("Optional import not available: danny_toolkit.core.neural_bus")
 try:
     from danny_toolkit.brain.cortical_stack import get_cortical_stack
 except ImportError:
-    pass
+    logger.debug("Optional import not available: danny_toolkit.brain.cortical_stack")
 try:
     from danny_toolkit.brain.arbitrator import get_arbitrator
 except ImportError:
-    pass
+    logger.debug("Optional import not available: danny_toolkit.brain.arbitrator")
 try:
     from danny_toolkit.core.alerter import get_alerter, AlertLevel
 except ImportError:
-    pass
+    logger.debug("Optional import not available: danny_toolkit.core.alerter")
 
 
 # ── Singleton ──

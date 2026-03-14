@@ -1,3 +1,7 @@
+"""Omega Ignition v6.0 — Pre-flight diagnostics and boot sequence."""
+
+from __future__ import annotations
+
 import asyncio
 import io
 import json
@@ -14,20 +18,24 @@ logger = logging.getLogger(__name__)
 
 # Windows UTF-8 fix (project conventie)
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 # Forceer het pad
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from danny_toolkit.core.utils import Kleur
 
 class OmegaIgnition:
-    def __init__(self):
+    """Pre-flight diagnostics and boot sequence for Omega Core."""
+
+    def __init__(self) -> None:
+        """Initialize ignition paths and error counter."""
         self.root_dir = os.path.dirname(os.path.abspath(__file__))
         self.db_path = os.path.join(self.root_dir, "danny_toolkit", "data", "brain", "cortical_stack.db")
         self.errors = 0
 
-    async def boot_sequence(self):
+    async def boot_sequence(self) -> None:
+        """Run full boot sequence with diagnostics."""
         self.clear_screen()
         print(f"{Kleur.CYAAN}")
         print("   ____  __  __ _____ ____    _      ___ ____ _   _ ___ _____ ___ ___  _   _ ")
@@ -55,7 +63,8 @@ class OmegaIgnition:
 
         self.launch_omega()
 
-    async def fase_1_hardware_api(self):
+    async def fase_1_hardware_api(self) -> None:
+        """Check hardware and API availability."""
         print(f"{Kleur.GEEL}[1/3] HARDWARE & API CHECK{Kleur.RESET}")
 
         # Groq
@@ -80,7 +89,8 @@ class OmegaIgnition:
             print(f"  {Kleur.ROOD}❌ Visual Cortex (Ollama): Offline.{Kleur.RESET}")
             self.errors += 1
 
-    async def fase_2_neural_link(self):
+    async def fase_2_neural_link(self) -> None:
+        """Check neural link module imports."""
         print(f"\n{Kleur.GEEL}[2/3] NEURAL LINK CHECK (v6.0 Modules){Kleur.RESET}")
         try:
             # Onderdruk stdout tijdens import — voorkomt dat Daemon/Governor
@@ -140,7 +150,8 @@ class OmegaIgnition:
         except Exception as e:
             print(f"  {Kleur.GEEL}⚠ TheOracleEye: {e}{Kleur.RESET}")
 
-    def fase_3_optimalisatie(self):
+    def fase_3_optimalisatie(self) -> None:
+        """Optimize SQLite and clear caches."""
         print(f"\n{Kleur.GEEL}[3/3] MEMORY & CACHE OPTIMALISATIE{Kleur.RESET}")
 
         # SQLite Vacuum
@@ -161,7 +172,8 @@ class OmegaIgnition:
             shutil.rmtree(pycache)
             print(f"  {Kleur.GROEN}✔ Synaptic Cache: Geklaard (frisse start){Kleur.RESET}")
 
-    def launch_omega(self):
+    def launch_omega(self) -> None:
+        """Hand over control to Omega Core."""
         self.clear_screen()
         # Hand over process control to main_omega.py
         print(f"{Kleur.CYAAN}Handing over control to OMEGA CORE...{Kleur.RESET}")
@@ -170,7 +182,8 @@ class OmegaIgnition:
         # Uitvoeren als subprocess in dezelfde terminal
         subprocess.run([sys.executable, "-m", "danny_toolkit.main_omega"], cwd=self.root_dir)
 
-    def clear_screen(self):
+    def clear_screen(self) -> None:
+        """Clear the terminal screen."""
         os.system('cls' if os.name == 'nt' else 'clear')
 
 if __name__ == "__main__":

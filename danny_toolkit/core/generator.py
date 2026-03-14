@@ -111,8 +111,8 @@ class RetryConfig:
     """Configuratie voor retry logic."""
 
     def __init__(self, max_pogingen: int = 3,
-                 basis_wachttijd: float = 1.0,
-                 max_wachttijd: float = 30.0,
+                 basis_wachttijd: float = 0.5,
+                 max_wachttijd: float = 10.0,
                  exponentieel: bool = True) -> None:
         """
         Initialiseer retry configuratie.

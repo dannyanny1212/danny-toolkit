@@ -5,10 +5,15 @@ Uses a temporary VBScript to create the .lnk file — no pywin32 needed.
 Run once: python create_desktop_icon.py
 """
 
+from __future__ import annotations
+
+import logging
 import os
 import subprocess
 import sys
 import tempfile
+
+logger = logging.getLogger(__name__)
 
 # Paths
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -19,7 +24,7 @@ ICON = os.path.join(PROJECT_DIR, "sovereign.ico")
 WORKING_DIR = PROJECT_DIR
 
 
-def create_shortcut():
+def create_shortcut() -> None:
     """Create .lnk via a tiny VBScript (standard Windows, no dependencies)."""
 
     # Escape backslashes for VBScript string literals

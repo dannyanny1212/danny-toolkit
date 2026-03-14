@@ -11,16 +11,20 @@ Phase 34 Tests — SHARD ROUTER: Matrix Sharding voor ChromaDB.
   Tests 15-16: MemexAgent heuristiek
   Tests 17-18: Backward compat + ingest.py import
 """
+from __future__ import annotations
 
+import logging
 import os
 import sys
+
+logger = logging.getLogger(__name__)
 
 try:
     sys.stdout = __import__("io").TextIOWrapper(
         sys.stdout.buffer, encoding="utf-8", errors="replace",
     )
 except (ValueError, OSError):
-    pass
+    logger.debug("Invalid value encountered")
 
 # Test-mode env
 os.environ.setdefault("DANNY_TEST_MODE", "1")
@@ -34,7 +38,8 @@ passed = 0
 failed = 0
 
 
-def check(beschrijving: str, conditie: bool):
+def check(beschrijving: str, conditie: bool) -> None:
+    """Registreer een check resultaat."""
     global passed, failed
     if conditie:
         passed += 1
@@ -48,7 +53,7 @@ def check(beschrijving: str, conditie: bool):
 # Tests 1-3: Module imports, constanten, dataclass
 # ═══════════════════════════════════════════════════
 
-def test_1_module_import():
+def test_1_module_import() -> None:
     """shard_router module importeert correct."""
     print("\n[Test 1] Module import")
     import danny_toolkit.core.shard_router as mod
@@ -59,7 +64,7 @@ def test_1_module_import():
     check("ShardStatistiek dataclass bestaat", hasattr(mod, "ShardStatistiek"))
 
 
-def test_2_constanten():
+def test_2_constanten() -> None:
     """Shard constanten zijn gedefinieerd."""
     print("\n[Test 2] Shard constanten")
     from danny_toolkit.core.shard_router import (
@@ -76,7 +81,7 @@ def test_2_constanten():
     check("EXTENSIE_ROUTING niet leeg", len(EXTENSIE_ROUTING) > 0)
 
 
-def test_3_dataclass():
+def test_3_dataclass() -> None:
     """ShardStatistiek heeft correcte velden."""
     print("\n[Test 3] ShardStatistiek dataclass")
     from danny_toolkit.core.shard_router import ShardStatistiek
@@ -97,7 +102,7 @@ def test_3_dataclass():
 # Tests 4-6: Routing per extensie, fallback, disabled
 # ═══════════════════════════════════════════════════
 
-def test_4_routing_code():
+def test_4_routing_code() -> None:
     """Code extensies → danny_code."""
     print("\n[Test 4] Code extensie routing")
     from danny_toolkit.core.shard_router import ShardRouter, SHARD_CODE
@@ -109,7 +114,7 @@ def test_4_routing_code():
         check(f"{ext} -> danny_code", shard == SHARD_CODE)
 
 
-def test_5_routing_docs_data():
+def test_5_routing_docs_data() -> None:
     """Docs en data extensies correct gerouteerd."""
     print("\n[Test 5] Docs en data routing")
     from danny_toolkit.core.shard_router import (
@@ -129,7 +134,7 @@ def test_5_routing_docs_data():
         check(f"{ext} -> danny_data", shard == SHARD_DATA)
 
 
-def test_6_routing_fallback():
+def test_6_routing_fallback() -> None:
     """Onbekende extensie → danny_docs (fallback)."""
     print("\n[Test 6] Fallback routing")
     from danny_toolkit.core.shard_router import ShardRouter, SHARD_DOCS
@@ -149,7 +154,7 @@ def test_6_routing_fallback():
 # Tests 7-8: ShardRouter methoden & singleton
 # ═══════════════════════════════════════════════════
 
-def test_7_methods_exist():
+def test_7_methods_exist() -> None:
     """ShardRouter heeft alle vereiste methoden."""
     print("\n[Test 7] ShardRouter methoden")
     from danny_toolkit.core.shard_router import ShardRouter
@@ -162,7 +167,7 @@ def test_7_methods_exist():
     check("statistieken() bestaat", hasattr(router, "statistieken"))
 
 
-def test_8_singleton():
+def test_8_singleton() -> None:
     """get_shard_router() geeft singleton terug."""
     print("\n[Test 8] Singleton patroon")
     from danny_toolkit.core.shard_router import get_shard_router
@@ -177,7 +182,7 @@ def test_8_singleton():
 # Tests 9-10: NeuralBus shard events
 # ═══════════════════════════════════════════════════
 
-def test_9_neuralbus_events_defined():
+def test_9_neuralbus_events_defined() -> None:
     """NeuralBus heeft SHARD_MIGRATION_COMPLETE en SHARD_QUERY_ROUTED."""
     print("\n[Test 9] NeuralBus shard events")
     from danny_toolkit.core.neural_bus import EventTypes
@@ -192,7 +197,7 @@ def test_9_neuralbus_events_defined():
           EventTypes.SHARD_QUERY_ROUTED == "shard_query_routed")
 
 
-def test_10_neuralbus_subscribe():
+def test_10_neuralbus_subscribe() -> None:
     """NeuralBus kan shard events ontvangen."""
     print("\n[Test 10] NeuralBus shard event subscribe")
     from danny_toolkit.core.neural_bus import get_bus, EventTypes
@@ -200,7 +205,8 @@ def test_10_neuralbus_subscribe():
     bus = get_bus()
     received = []
 
-    def handler(event):
+    def handler(event: object) -> None:
+        """Handle bus event."""
         received.append(event)
 
     bus.subscribe(EventTypes.SHARD_MIGRATION_COMPLETE, handler)
@@ -222,7 +228,7 @@ def test_10_neuralbus_subscribe():
 # Tests 11-12: Config.SHARD_ENABLED + disabled mode
 # ═══════════════════════════════════════════════════
 
-def test_11_config_shard_enabled():
+def test_11_config_shard_enabled() -> None:
     """Config.SHARD_ENABLED attribuut bestaat."""
     print("\n[Test 11] Config.SHARD_ENABLED")
     from danny_toolkit.core.config import Config
@@ -234,7 +240,7 @@ def test_11_config_shard_enabled():
         check("Default is False", Config.SHARD_ENABLED is False)
 
 
-def test_12_disabled_mode():
+def test_12_disabled_mode() -> None:
     """Met SHARD_ENABLED=False: ingest en zoek retourneren leeg."""
     print("\n[Test 12] Disabled mode")
     from danny_toolkit.core.shard_router import ShardRouter
@@ -260,7 +266,7 @@ def test_12_disabled_mode():
 # Tests 13-14: Librarian integratie
 # ═══════════════════════════════════════════════════
 
-def test_13_librarian_shard_router():
+def test_13_librarian_shard_router() -> None:
     """TheLibrarian heeft _shard_router en _get_shard_router()."""
     print("\n[Test 13] Librarian shard integratie")
     from danny_toolkit.skills.librarian import TheLibrarian
@@ -276,7 +282,7 @@ def test_13_librarian_shard_router():
           "_shard_router" in source)
 
 
-def test_14_librarian_shard_disabled():
+def test_14_librarian_shard_disabled() -> None:
     """Met SHARD_ENABLED=False: _get_shard_router retourneert None."""
     print("\n[Test 14] Librarian shard disabled")
     from danny_toolkit.core.config import Config
@@ -298,7 +304,7 @@ def test_14_librarian_shard_disabled():
 # Tests 15-16: MemexAgent heuristiek
 # ═══════════════════════════════════════════════════
 
-def test_15_bepaal_query_shards():
+def test_15_bepaal_query_shards() -> None:
     """MemexAgent._bepaal_query_shards() heuristiek werkt."""
     print("\n[Test 15] _bepaal_query_shards() heuristiek")
     from swarm_engine import MemexAgent
@@ -326,7 +332,7 @@ def test_15_bepaal_query_shards():
     check("Generieke query -> None", result is None)
 
 
-def test_16_search_chromadb_shard_branch():
+def test_16_search_chromadb_shard_branch() -> None:
     """_search_chromadb heeft ShardRouter code pad."""
     print("\n[Test 16] _search_chromadb shard code pad")
     import inspect
@@ -345,7 +351,7 @@ def test_16_search_chromadb_shard_branch():
 # Tests 17-18: Backward compat + ingest.py
 # ═══════════════════════════════════════════════════
 
-def test_17_backward_compat():
+def test_17_backward_compat() -> None:
     """Legacy danny_knowledge collectie wordt niet aangeraakt als disabled."""
     print("\n[Test 17] Backward compatibiliteit")
     from danny_toolkit.core.config import Config
@@ -369,7 +375,7 @@ def test_17_backward_compat():
         Config.SHARD_ENABLED = orig
 
 
-def test_18_ingest_import():
+def test_18_ingest_import() -> None:
     """ingest.py bevat ShardRouter statistieken code."""
     print("\n[Test 18] ingest.py shard statistieken")
     import inspect

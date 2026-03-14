@@ -19,10 +19,15 @@ Gebruik:
         python test_phase47.py
 """
 
+from __future__ import annotations
+
 import ast
+import logging
 import os
 import sys
 import unittest
+
+logger = logging.getLogger(__name__)
 
 os.environ.setdefault("DANNY_TEST_MODE", "1")
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
@@ -35,7 +40,8 @@ if os.name == "nt":
 CHECK = 0
 
 
-def c(ok: bool, label: str = ""):
+def c(ok: bool, label: str = "") -> None:
+    """Assert a check and print its result."""
     global CHECK
     CHECK += 1
     tag = f" ({label})" if label else ""
@@ -74,7 +80,7 @@ class TestPhase47(unittest.TestCase):
 
     # --- A. Comprehensive brain/ sweep ---
 
-    def test_01_no_bare_pass_in_brain(self):
+    def test_01_no_bare_pass_in_brain(self) -> None:
         """No brain/ module has bare except:pass."""
         brain_dir = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
@@ -95,13 +101,13 @@ class TestPhase47(unittest.TestCase):
 
     # --- B. core/ sweep ---
 
-    def test_02_no_bare_pass_in_config(self):
+    def test_02_no_bare_pass_in_config(self) -> None:
         """core/config.py: no bare except:pass."""
         src = _read("core/config.py")
         violations = _find_bare_pass(src)
         c(len(violations) == 0, f"config.py clean (violations: {violations})")
 
-    def test_03_no_bare_pass_in_env_bootstrap(self):
+    def test_03_no_bare_pass_in_env_bootstrap(self) -> None:
         """core/env_bootstrap.py: no bare except:pass."""
         src = _read("core/env_bootstrap.py")
         violations = _find_bare_pass(src)
@@ -109,7 +115,7 @@ class TestPhase47(unittest.TestCase):
 
     # --- C. dotenv blocks log ---
 
-    def test_04_dotenv_blocks_log(self):
+    def test_04_dotenv_blocks_log(self) -> None:
         """All dotenv except blocks use logger.debug()."""
         dotenv_files = [
             "brain/central_brain.py",
@@ -136,19 +142,19 @@ class TestPhase47(unittest.TestCase):
 
     # --- D. Logger presence in fixed modules ---
 
-    def test_05_central_brain_has_logger(self):
+    def test_05_central_brain_has_logger(self) -> None:
         """central_brain.py defines logger at module level."""
         src = _read("brain/central_brain.py")
         c("logger = logging.getLogger(__name__)" in src,
           "central_brain has logger")
 
-    def test_06_unified_memory_has_logger(self):
+    def test_06_unified_memory_has_logger(self) -> None:
         """unified_memory.py defines logger at module level."""
         src = _read("brain/unified_memory.py")
         c("logger = logging.getLogger(__name__)" in src,
           "unified_memory has logger")
 
-    def test_07_tribunal_logger_before_dotenv(self):
+    def test_07_tribunal_logger_before_dotenv(self) -> None:
         """tribunal.py: logger defined before dotenv block."""
         src = _read("brain/tribunal.py")
         logger_pos = src.find("logger = logging.getLogger(__name__)")
@@ -157,7 +163,7 @@ class TestPhase47(unittest.TestCase):
         c(dotenv_pos == -1 or logger_pos < dotenv_pos,
           "tribunal logger before dotenv")
 
-    def test_08_env_bootstrap_has_logger(self):
+    def test_08_env_bootstrap_has_logger(self) -> None:
         """env_bootstrap.py defines logger at module level."""
         src = _read("core/env_bootstrap.py")
         c("logger = logging.getLogger(__name__)" in src,
@@ -165,7 +171,7 @@ class TestPhase47(unittest.TestCase):
 
     # --- E. Regression: groq guards intact ---
 
-    def test_09_groq_guards_intact(self):
+    def test_09_groq_guards_intact(self) -> None:
         """All 10 groq modules still have HAS_GROQ guard."""
         modules = [
             "brain/artificer.py", "brain/dreamer.py",
@@ -180,7 +186,7 @@ class TestPhase47(unittest.TestCase):
 
     # --- F. Specific fixes validated ---
 
-    def test_10_specific_fixes(self):
+    def test_10_specific_fixes(self) -> None:
         """Key fixes validated: JSON parse, KeyError, OSError, ValueError."""
         # oracle.py — JSON parse logs
         oracle = _read("brain/oracle.py")

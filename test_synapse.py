@@ -1,18 +1,16 @@
-"""
-Danny Toolkit — Synapse & Phantom Tests (Phase 16)
-TheSynapse (Invention #19), ThePhantom (Invention #20)
-
-8 tests, ~60 checks. Alle CPU-only, geen Groq API calls.
-Gebruik: python test_synapse.py
-"""
+"""Danny Toolkit — Synapse and Phantom Tests (Phase 16)."""
+from __future__ import annotations
 
 import gc
+import logging
 import os
 import sqlite3
 import sys
 import tempfile
 import time
 from datetime import datetime, timedelta
+
+logger = logging.getLogger(__name__)
 
 # Windows UTF-8
 if os.name == "nt":
@@ -36,7 +34,8 @@ PASS_COUNT = 0
 FAIL_COUNT = 0
 
 
-def check(label, condition):
+def check(label: str, condition: bool) -> None:
+    """Verify a single test condition."""
     global PASS_COUNT, FAIL_COUNT
     if condition:
         PASS_COUNT += 1
@@ -46,30 +45,35 @@ def check(label, condition):
         print(f"  \u274c {label}")
 
 
-def _cleanup(db_path, *objects):
+def _cleanup(db_path: str, *objects: object) -> None:
     """Close SQLite connections and delete temp DB (Windows safe)."""
     for obj in objects:
         if hasattr(obj, "_conn"):
             try:
                 obj._conn.close()
             except Exception:
-                pass
+                logger.debug("Failed to close connection for %s", obj)
     gc.collect()
     try:
         os.unlink(db_path)
     except OSError:
-        pass  # Windows lock — file will be cleaned up on reboot
+        logger.debug("Could not unlink %s, Windows lock", db_path)
 
 
 # ── TEST 1: Table Creation ──
 
-def test_table_creation():
+def test_table_creation() -> None:
+    """Verify synapse and phantom tables are created correctly."""
     print("\n=== Test 1: Table Creation ===")
     with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
         db_path = f.name
 
-    from danny_toolkit.brain.synapse import TheSynapse
-    from danny_toolkit.brain.phantom import ThePhantom
+    try:
+        from danny_toolkit.brain.synapse import TheSynapse
+        from danny_toolkit.brain.phantom import ThePhantom
+    except ImportError:
+        logger.debug("Failed to import synapse/phantom")
+        raise
 
     synapse = TheSynapse(db_path=db_path)
     phantom = ThePhantom(db_path=db_path)
@@ -105,12 +109,17 @@ def test_table_creation():
 
 # ── TEST 2: Categorize Query ──
 
-def test_categorize_query():
+def test_categorize_query() -> None:
+    """Test query categorization consistency."""
     print("\n=== Test 2: Categorize Query ===")
     with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
         db_path = f.name
 
-    from danny_toolkit.brain.synapse import TheSynapse
+    try:
+        from danny_toolkit.brain.synapse import TheSynapse
+    except ImportError:
+        logger.debug("Failed to import synapse")
+        raise
     synapse = TheSynapse(db_path=db_path)
 
     # Same input should give same category
@@ -151,12 +160,17 @@ def test_categorize_query():
 
 # ── TEST 3: Feedback Computation ──
 
-def test_feedback_computation():
+def test_feedback_computation() -> None:
+    """Test feedback signal computation for various scenarios."""
     print("\n=== Test 3: Feedback Computation ===")
     with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
         db_path = f.name
 
-    from danny_toolkit.brain.synapse import TheSynapse
+    try:
+        from danny_toolkit.brain.synapse import TheSynapse
+    except ImportError:
+        logger.debug("Failed to import synapse")
+        raise
     synapse = TheSynapse(db_path=db_path)
 
     ts_now = datetime.now().isoformat()
@@ -207,12 +221,17 @@ def test_feedback_computation():
 
 # ── TEST 4: Pathway Strengthening ──
 
-def test_pathway_strengthening():
+def test_pathway_strengthening() -> None:
+    """Test positive signal pathway strengthening."""
     print("\n=== Test 4: Pathway Strengthening ===")
     with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
         db_path = f.name
 
-    from danny_toolkit.brain.synapse import TheSynapse
+    try:
+        from danny_toolkit.brain.synapse import TheSynapse
+    except ImportError:
+        logger.debug("Failed to import synapse")
+        raise
     synapse = TheSynapse(db_path=db_path)
 
     # Apply positive signal
@@ -248,12 +267,17 @@ def test_pathway_strengthening():
 
 # ── TEST 5: Pathway Weakening ──
 
-def test_pathway_weakening():
+def test_pathway_weakening() -> None:
+    """Test negative signal pathway weakening."""
     print("\n=== Test 5: Pathway Weakening ===")
     with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
         db_path = f.name
 
-    from danny_toolkit.brain.synapse import TheSynapse
+    try:
+        from danny_toolkit.brain.synapse import TheSynapse
+    except ImportError:
+        logger.debug("Failed to import synapse")
+        raise
     synapse = TheSynapse(db_path=db_path)
 
     # Create pathway at default
@@ -297,12 +321,17 @@ def test_pathway_weakening():
 
 # ── TEST 6: Routing Bias Range ──
 
-def test_routing_bias_range():
+def test_routing_bias_range() -> None:
+    """Test routing bias values are within expected bounds."""
     print("\n=== Test 6: Routing Bias Range ===")
     with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
         db_path = f.name
 
-    from danny_toolkit.brain.synapse import TheSynapse
+    try:
+        from danny_toolkit.brain.synapse import TheSynapse
+    except ImportError:
+        logger.debug("Failed to import synapse")
+        raise
     synapse = TheSynapse(db_path=db_path)
 
     # Insert test pathways with varied strengths
@@ -343,13 +372,18 @@ def test_routing_bias_range():
 
 # ── TEST 7: Phantom Patterns ──
 
-def test_phantom_patterns():
+def test_phantom_patterns() -> None:
+    """Test phantom temporal pattern detection."""
     print("\n=== Test 7: Phantom Patterns ===")
     with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
         db_path = f.name
 
-    from danny_toolkit.brain.phantom import ThePhantom
-    from danny_toolkit.brain.synapse import TheSynapse
+    try:
+        from danny_toolkit.brain.phantom import ThePhantom
+        from danny_toolkit.brain.synapse import TheSynapse
+    except ImportError:
+        logger.debug("Failed to import phantom/synapse")
+        raise
 
     phantom = ThePhantom(db_path=db_path)
     synapse = TheSynapse(db_path=db_path)
@@ -423,12 +457,17 @@ def test_phantom_patterns():
 
 # ── TEST 8: Prediction Accuracy ──
 
-def test_prediction_accuracy():
+def test_prediction_accuracy() -> None:
+    """Test phantom prediction accuracy tracking."""
     print("\n=== Test 8: Prediction Accuracy ===")
     with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
         db_path = f.name
 
-    from danny_toolkit.brain.phantom import ThePhantom
+    try:
+        from danny_toolkit.brain.phantom import ThePhantom
+    except ImportError:
+        logger.debug("Failed to import phantom")
+        raise
     phantom = ThePhantom(db_path=db_path)
 
     # Insert mock predictions
@@ -491,7 +530,8 @@ def test_prediction_accuracy():
 
 # ── MAIN ──
 
-def main():
+def main() -> None:
+    """Run all synapse and phantom tests."""
     print("=" * 50)
     print("  SYNAPSE & PHANTOM TESTS (Phase 16)")
     print("=" * 50)

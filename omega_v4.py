@@ -1,14 +1,21 @@
+"""Omega Sovereign Dashboard v4.0 — Textual TUI met Trinity Interface."""
+
+from __future__ import annotations
+
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical, Container
 from textual.widgets import Header, Footer, RichLog, Static, Label, Input
 from textual import work
 from rich.text import Text
 import asyncio
+import logging
 import re
 import time as _time
 import sys
 import os
 import psutil
+
+logger = logging.getLogger(__name__)
 
 try:
     import pynvml
@@ -241,7 +248,8 @@ class OmegaDashboardV4(App):
                 "fragment_archived", "fragment_destroyed",
             ]
 
-            def _soul_handler(event):
+            def _soul_handler(event: object) -> None:
+                """Handle Soul-relevant NeuralBus events."""
                 etype = getattr(event, "event_type", "?")
                 data = getattr(event, "data", {})
                 bron = getattr(event, "bron", "")
@@ -341,7 +349,7 @@ class OmegaDashboardV4(App):
                 ),
             )
         except ImportError:
-            pass
+            logger.debug("psutil not available for hardware metrics")
 
         # GPU/VRAM
         try:
@@ -359,7 +367,7 @@ class OmegaDashboardV4(App):
                     ),
                 )
         except Exception:
-            pass
+            logger.debug("GPU/VRAM info not available")
 
         # Hardware refresh nu via set_interval(1s) in on_mount()
 
@@ -389,9 +397,9 @@ class OmegaDashboardV4(App):
 
             self.status_bar.update(status)
         except Exception:
-            pass
+            logger.debug("Status bar update failed")
 
-    def _get_engine(self):
+    def _get_engine(self) -> SwarmEngine | None:
         """Lazy-init SwarmEngine + CentralBrain."""
         if self._engine is not None:
             return self._engine
@@ -551,7 +559,7 @@ class OmegaDashboardV4(App):
                             f"[bold magenta]🔧 TOOL-ROUTER:[/] {', '.join(sorted(matched))}"
                         )
                 except Exception:
-                    pass
+                    logger.debug("Tool keyword matching failed")
 
             if needs_tools:
                 self.verwerk_met_tools(commando)
@@ -653,7 +661,7 @@ class OmegaDashboardV4(App):
                 self._worker_loop = asyncio.new_event_loop()
             loop = self._worker_loop
 
-            def _callback(msg):
+            def _callback(msg: object) -> None:
                 """Live pipeline updates naar BODY kolom."""
                 self.app.call_from_thread(
                     self.log_body.write,
@@ -726,15 +734,19 @@ class OmegaDashboardV4(App):
         self.log_mind.clear()
         self.log_body.clear()
 
-def _acquire_singleton_lock():
+def _acquire_singleton_lock() -> object:
     """Singleton lock — voorkomt meerdere omega_v4.py instances.
 
     Gebruikt msvcrt.locking() op Windows voor een exclusieve file lock.
     Als een ander process de lock al heeft, stopt het programma direct.
     De lock blijft open zolang het dashboard draait (file handle open).
     """
-    import tempfile
-    import msvcrt
+    try:
+        import tempfile
+        import msvcrt
+    except ImportError:
+        logger.debug("tempfile/msvcrt not available")
+        return None
 
     lockpath = os.path.join(tempfile.gettempdir(), "omega_v4.lock")
     # Open in write mode — maak aan als het niet bestaat

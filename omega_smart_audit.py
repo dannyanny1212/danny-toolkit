@@ -1,7 +1,13 @@
+"""Omega Smart Audit v2.0 — Scant de projectstructuur op de 9 pilaren."""
+from __future__ import annotations
+
+import logging
 import os
 import sys
 import time
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 # Windows encoding fix
 if os.name == "nt":
@@ -21,7 +27,7 @@ except ImportError:
     RICH_AVAILABLE = False
 
 # --- DE SLIMME ZOEKER ---
-def find_file_in_project(filename):
+def find_file_in_project(filename: str) -> str | None:
     """Zoekt recursief door je hele projectmap naar een bestand."""
     start_dir = "."
     for root, dirs, files in os.walk(start_dir):
@@ -113,7 +119,8 @@ PILLARS = [
     },
 ]
 
-def run_smart_audit():
+def run_smart_audit() -> None:
+    """Voer de Omega Smart Audit uit en toon resultaten."""
     if RICH_AVAILABLE:
         console.clear()
         console.print(Panel.fit(

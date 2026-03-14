@@ -767,7 +767,16 @@ class TheSynapse:
             ptype = payload.type if hasattr(payload, "type") else payload.get("type", "text")
 
             # 1. Base signal: success or error
-            if ptype == "error":
+            # Ouroboros 429 Shield: rate limits = API fault, not agent fault
+            _content = (payload.content if hasattr(payload, "content")
+                        else payload.get("content", ""))
+            _is_429 = ptype == "error" and any(
+                m in str(_content).lower()
+                for m in ["429", "rate_limit", "rate limit", "too many requests"]
+            )
+            if _is_429:
+                base = 0.0  # Neutral — geen penalty voor API rate limits
+            elif ptype == "error":
                 base = -1.0
             else:
                 base = 1.0

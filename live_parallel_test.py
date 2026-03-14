@@ -14,13 +14,17 @@ Op basis van deze ervaring verdeelt de auction de taken:
   - "verificatie"  → Anthropic wint   (cap=1.0, sr=0.88, cost+lat=5)
   - "research"    → Groq wint        (cap=1.0, sr=0.50, cost+lat=2)
 
-Formule: S = (cap_match × success_rate) / (cost_tier + latency_class)
+Formule: S = (cap_match x success_rate) / (cost_tier + latency_class)
 """
+from __future__ import annotations
 
 import asyncio
+import logging
 import os
 import sys
 import time
+
+logger = logging.getLogger(__name__)
 
 # Windows UTF-8
 if os.name == "nt":
@@ -31,13 +35,14 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from danny_toolkit.core.utils import Kleur
 
 
-def sep(title: str):
+def sep(title: str) -> None:
+    """Print een sectie-separator."""
     print(f"\n{'='*60}")
     print(f"  {title}")
     print(f"{'='*60}")
 
 
-async def parallel_intelligence():
+async def parallel_intelligence() -> None:
     """De Generaal verdeelt taken over meerdere modellen."""
 
     sep("PARALLEL INTELLIGENCE — Generaal Mode v6.11.0")

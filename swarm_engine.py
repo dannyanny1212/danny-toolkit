@@ -60,12 +60,12 @@ _B95_EXECUTOR = ThreadPoolExecutor(max_workers=2, thread_name_prefix="b95")
 
 _DEFAULT_AGENT_TIMEOUT = 20  # seconden
 _AGENT_TIMEOUTS: Dict[str, float] = {
-    "MEMEX": 15,
-    "Strategist": 30,
-    "Artificer": 30,
-    "VirtualTwin": 25,
-    "CentralBrain": 25,
-    "VoidWalker": 30,
+    "MEMEX": 10,
+    "Strategist": 18,
+    "Artificer": 18,
+    "VirtualTwin": 15,
+    "CentralBrain": 18,
+    "VoidWalker": 20,
 }
 
 # ── Phase 31: PER-AGENT CIRCUIT BREAKER ──
@@ -2637,7 +2637,7 @@ class SwarmEngine:
             return _AGENT_TIMEOUTS.get(agent_naam, _DEFAULT_AGENT_TIMEOUT)
         avg_ms = metric["total_ms"] / max(metric["calls"], 1)
         # P95 schatting: avg × 1.5 (conservatief)
-        p95_s = (avg_ms * 1.5) / 1000
+        p95_s = (avg_ms * 1.25) / 1000
         return max(5.0, min(p95_s, 60.0))
 
     # ── Upgrade: Circuit Half-Opening ──
@@ -2889,7 +2889,19 @@ class SwarmEngine:
         except Exception as e:
             elapsed_ms = (time.time() - t0) * 1000
             self._record_agent_metric(agent_naam, elapsed_ms, error=e)
-            self._record_circuit_failure(agent_naam)
+            # Ouroboros 429 Shield: rate limits zijn API-schuld, niet agent-schuld
+            _err_str = str(e).lower()
+            _is_rate_limit = any(m in _err_str for m in [
+                "429", "rate_limit", "rate limit", "too many requests",
+                "resource_exhausted", "quota",
+            ])
+            if _is_rate_limit:
+                logger.info(
+                    "Agent %s 429 rate limit — GEEN circuit penalty (trace=%s)",
+                    agent_naam, trace_id,
+                )
+            else:
+                self._record_circuit_failure(agent_naam)
             logger.warning("Agent %s fout: %s (trace=%s)", agent_naam, e, trace_id)
             # Waakhuis: registreer fout
             try:

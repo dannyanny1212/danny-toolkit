@@ -10,6 +10,7 @@ Gebruik:
     python daemon_heartbeat.py
     Ctrl+C om te stoppen.
 """
+from __future__ import annotations
 
 import asyncio
 import atexit
@@ -45,7 +46,7 @@ except ImportError:
 
 # ── CLEAN SHUTDOWN ──
 
-def _flush_cortical():
+def _flush_cortical() -> None:
     """Flush CorticalStack bij shutdown (atexit/signal)."""
     try:
         from danny_toolkit.brain.cortical_stack import (
@@ -62,7 +63,7 @@ atexit.register(_flush_cortical)
 
 # ── BRAIN LADEN ──
 
-def _laad_brain():
+def _laad_brain() -> object:
     """Laad PrometheusBrain (output onderdrukt)."""
     console.print(
         "[dim]Federation wordt gewekt...[/dim]"
@@ -88,7 +89,8 @@ class HeartbeatDaemon:
     - Gebruikt dezelfde SwarmEngine als UI/CLI
     """
 
-    def __init__(self, brain=None):
+    def __init__(self, brain: object = None) -> None:
+        """Initialiseer HeartbeatDaemon."""
         self.brain = brain
         self.engine = SwarmEngine(brain=brain)
         self.is_awake = True
@@ -128,7 +130,7 @@ class HeartbeatDaemon:
             },
         ]
 
-    async def run_task(self, task_config):
+    async def run_task(self, task_config: dict) -> None:
         """Voer een geplande taak uit via SwarmEngine."""
         name = task_config["name"]
         prompt = task_config["prompt"]
@@ -189,7 +191,7 @@ class HeartbeatDaemon:
                 f" {e}[/red]"
             )
 
-    def _schrijf_heartbeat(self):
+    def _schrijf_heartbeat(self) -> None:
         """Schrijf heartbeat status naar bestand voor externe monitors."""
         try:
             from danny_toolkit.core.config import Config
@@ -206,7 +208,7 @@ class HeartbeatDaemon:
         except Exception as e:
             logger.debug("Heartbeat schrijven mislukt: %s", e)
 
-    async def pulse(self):
+    async def pulse(self) -> None:
         """Hoofdloop: periodiek taken uitvoeren."""
         console.print(Panel(
             "[bold cyan]PROJECT OMEGA:"
@@ -314,7 +316,7 @@ class HeartbeatDaemon:
                                     f" na {count} crashes",
                                 )
                             except ImportError:
-                                pass
+                                logger.debug("Optional import not available: danny_toolkit.core.alerter")
 
             # Shadow Airlock — periodieke staging scan
             if self._airlock:
@@ -361,7 +363,8 @@ class HeartbeatDaemon:
 def main():
     """Start de Heartbeat Daemon."""
     # Signal handlers voor clean shutdown
-    def _signal_handler(signum, frame):
+    def _signal_handler(signum: int, frame: object) -> None:
+        """Handle shutdown signal."""
         _flush_cortical()
         sys.exit(0)
 
@@ -374,7 +377,7 @@ def main():
         from danny_toolkit.core.startup_validator import valideer_opstart
         valideer_opstart()
     except ImportError:
-        pass
+        logger.debug("Optional import not available: danny_toolkit.core.startup_validator")
 
     brain = _laad_brain()
     daemon = HeartbeatDaemon(brain=brain)

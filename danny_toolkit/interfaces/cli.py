@@ -33,12 +33,8 @@ from contextlib import redirect_stdout
 from pathlib import Path
 
 # --- 1. WINDOWS & SILENT FIXES ---
-sys.stdout = io.TextIOWrapper(
-    sys.stdout.buffer, encoding="utf-8"
-)
-sys.stderr = io.TextIOWrapper(
-    sys.stderr.buffer, encoding="utf-8"
-)
+sys.stdout.reconfigure(encoding="utf-8")
+sys.stderr.reconfigure(encoding="utf-8")
 
 import warnings
 import logging

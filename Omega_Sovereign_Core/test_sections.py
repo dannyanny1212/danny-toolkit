@@ -1,6 +1,6 @@
 """Minimal test — render elke sectie apart om crash te vinden."""
 import sys, io
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 import streamlit as st
 import plotly.graph_objects as go
 import numpy as np

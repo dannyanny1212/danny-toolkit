@@ -8,10 +8,12 @@ Phase 17: Production Stability — Test Suite
 
 Gebruik: python test_phase17.py
 """
+from __future__ import annotations
 
 import asyncio
 import hashlib
 import io
+import logging
 import sys
 import time
 import unittest
@@ -21,12 +23,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import os
 
+logger = logging.getLogger(__name__)
+
 try:
-    sys.stdout = io.TextIOWrapper(
-        sys.stdout.buffer, encoding="utf-8", errors="replace"
-    )
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 except (ValueError, OSError):
-    pass
+    logger.debug("UTF-8 reconfigure niet mogelijk")
 
 # Test-mode env
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
@@ -39,14 +41,14 @@ os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
 class TestEchoGuard(unittest.TestCase):
     """Test de Echo Guard deduplicatie in SwarmEngine."""
 
-    def _make_engine(self):
+    def _make_engine(self) -> MagicMock:
         """Maak een minimale SwarmEngine-achtige structuur."""
         engine = MagicMock()
         engine._recent_queries = deque(maxlen=50)
         engine._swarm_metrics = {"echo_guard_blocks": 0}
         return engine
 
-    def _check_dedup(self, engine, user_input):
+    def _check_dedup(self, engine: MagicMock, user_input: str) -> bool:
         """Simuleer de echo guard logica uit SwarmEngine.run()."""
         q_hash = hashlib.md5(
             user_input.strip().lower().encode()
@@ -59,7 +61,7 @@ class TestEchoGuard(unittest.TestCase):
         engine._recent_queries.append((q_hash, now))
         return False  # allowed
 
-    def test_01_dedup_blocks_duplicate(self):
+    def test_01_dedup_blocks_duplicate(self) -> None:
         """Dezelfde query twee keer → tweede geblokkeerd."""
         engine = self._make_engine()
 
@@ -71,7 +73,7 @@ class TestEchoGuard(unittest.TestCase):
         self.assertEqual(engine._swarm_metrics["echo_guard_blocks"], 1)
         print("  [OK] test_01: duplicate query geblokkeerd")
 
-    def test_02_dedup_allows_after_timeout(self):
+    def test_02_dedup_allows_after_timeout(self) -> None:
         """Dezelfde query na 60s → weer toegestaan."""
         engine = self._make_engine()
 
@@ -85,7 +87,7 @@ class TestEchoGuard(unittest.TestCase):
         self.assertFalse(blocked, "Query na timeout moet doorkomen")
         print("  [OK] test_02: query na timeout toegestaan")
 
-    def test_03_dedup_allows_different_queries(self):
+    def test_03_dedup_allows_different_queries(self) -> None:
         """Verschillende queries → beide toegestaan."""
         engine = self._make_engine()
 
@@ -104,14 +106,18 @@ class TestEchoGuard(unittest.TestCase):
 class TestTokenBudget(unittest.TestCase):
     """Test de token budget tracking in OmegaGovernor."""
 
-    def _make_governor(self):
+    def _make_governor(self) -> object:
         """Maak een Governor zonder side effects."""
-        from danny_toolkit.brain.governor import OmegaGovernor
+        try:
+            from danny_toolkit.brain.governor import OmegaGovernor
+        except ImportError:
+            logger.debug("governor import niet beschikbaar")
+            raise
         gov = OmegaGovernor()
         gov._token_counts = defaultdict(int)
         return gov
 
-    def test_04_token_tracking(self):
+    def test_04_token_tracking(self) -> None:
         """registreer_tokens telt correct op."""
         gov = self._make_governor()
         hour_key = datetime.now().strftime("%Y%m%d%H")
@@ -123,7 +129,7 @@ class TestTokenBudget(unittest.TestCase):
         self.assertEqual(gov._token_counts[hour_key], 1500)
         print("  [OK] test_04: token tracking klopt")
 
-    def test_05_token_budget_exceeded(self):
+    def test_05_token_budget_exceeded(self) -> None:
         """Over budget → valideer_input weigert."""
         gov = self._make_governor()
         hour_key = datetime.now().strftime("%Y%m%d%H")
@@ -136,7 +142,7 @@ class TestTokenBudget(unittest.TestCase):
         self.assertIn("Token budget", reason)
         print("  [OK] test_05: token budget overschrijding gedetecteerd")
 
-    def test_06_token_budget_hourly_reset(self):
+    def test_06_token_budget_hourly_reset(self) -> None:
         """Ander uur → vers budget."""
         gov = self._make_governor()
 
@@ -160,9 +166,13 @@ class TestTokenBudget(unittest.TestCase):
 class TestStrategistCaps(unittest.TestCase):
     """Test de MAX_STEPS en MAX_CONTEXT_CHARS limieten."""
 
-    def test_07_max_steps(self):
+    def test_07_max_steps(self) -> None:
         """Plan met >5 stappen wordt afgekapt tot 5."""
-        from danny_toolkit.brain.strategist import Strategist
+        try:
+            from danny_toolkit.brain.strategist import Strategist
+        except ImportError:
+            logger.debug("strategist import niet beschikbaar")
+            raise
 
         self.assertEqual(Strategist.MAX_STEPS, 5)
 
@@ -175,9 +185,13 @@ class TestStrategistCaps(unittest.TestCase):
         self.assertEqual(len(capped), 5)
         print("  [OK] test_07: MAX_STEPS = 5 correct")
 
-    def test_08_context_truncation(self):
+    def test_08_context_truncation(self) -> None:
         """context_buffer wordt afgekapt bij MAX_CONTEXT_CHARS."""
-        from danny_toolkit.brain.strategist import Strategist
+        try:
+            from danny_toolkit.brain.strategist import Strategist
+        except ImportError:
+            logger.debug("strategist import niet beschikbaar")
+            raise
 
         self.assertEqual(Strategist.MAX_CONTEXT_CHARS, 8000)
 
@@ -191,7 +205,8 @@ class TestStrategistCaps(unittest.TestCase):
 
 # ── Main ──
 
-def main():
+def main() -> None:
+    """Start de Phase 17 test suite."""
     print("=" * 60)
     print("  Phase 17: Production Stability — Tests")
     print("=" * 60)

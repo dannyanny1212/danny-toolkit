@@ -1,14 +1,13 @@
-"""
-Phase 22 Tests — Memory Leaks + Thread Safety
-8 tests, verifying bounded caches and thread-safety fixes.
+"""Phase 22 Tests — Memory Leaks and Thread Safety."""
+from __future__ import annotations
 
-Gebruik: python test_phase22.py
-"""
-
+import logging
 import os
 import sys
 import threading
 import time
+
+logger = logging.getLogger(__name__)
 
 # UTF-8 voor Windows
 if hasattr(sys.stdout, "reconfigure"):
@@ -26,7 +25,8 @@ PASS = 0
 FAIL = 0
 
 
-def check(label, condition):
+def check(label: str, condition: bool) -> None:
+    """Verify a single test condition."""
     global PASS, FAIL
     if condition:
         PASS += 1
@@ -36,10 +36,14 @@ def check(label, condition):
         print(f"  [FAIL] {label}")
 
 
-def test_1_conversation_history_deque():
+def test_1_conversation_history_deque() -> None:
     """conversation_history is deque with maxlen."""
     print("\n[TEST 1] conversation_history is bounded deque")
-    from danny_toolkit.brain.central_brain import CentralBrain
+    try:
+        from danny_toolkit.brain.central_brain import CentralBrain
+    except ImportError:
+        logger.debug("central_brain not available")
+        raise
     cb = CentralBrain.__new__(CentralBrain)
     # Simulate minimal init
     cb.MAX_HISTORY = 50
@@ -55,10 +59,14 @@ def test_1_conversation_history_deque():
     check("oldest evicted (FIFO)", cb.conversation_history[0]["content"] == "msg 10")
 
 
-def test_2_task_history_deque():
+def test_2_task_history_deque() -> None:
     """task_history is deque with maxlen."""
     print("\n[TEST 2] task_history is bounded deque")
-    from danny_toolkit.brain.trinity_omega import PrometheusBrain
+    try:
+        from danny_toolkit.brain.trinity_omega import PrometheusBrain
+    except ImportError:
+        logger.debug("trinity_omega not available")
+        raise
     pb = PrometheusBrain.__new__(PrometheusBrain)
     pb.task_history = deque(maxlen=1000)
 
@@ -70,10 +78,14 @@ def test_2_task_history_deque():
     check("bounded at 1000", len(pb.task_history) == 1000)
 
 
-def test_3_workflow_history_deque():
+def test_3_workflow_history_deque() -> None:
     """workflow_history is deque with maxlen."""
     print("\n[TEST 3] workflow_history is bounded deque")
-    from danny_toolkit.brain.workflows import WorkflowEngine
+    try:
+        from danny_toolkit.brain.workflows import WorkflowEngine
+    except ImportError:
+        logger.debug("workflows not available")
+        raise
     we = WorkflowEngine()
 
     check("workflow_history is deque", isinstance(we.workflow_history, deque))
@@ -84,10 +96,14 @@ def test_3_workflow_history_deque():
     check("bounded at 500", len(we.workflow_history) == 500)
 
 
-def test_4_app_data_cache_eviction():
+def test_4_app_data_cache_eviction() -> None:
     """app_data_cache evicts when full (50+ entries)."""
     print("\n[TEST 4] app_data_cache bounded OrderedDict")
-    from danny_toolkit.brain.unified_memory import UnifiedMemory
+    try:
+        from danny_toolkit.brain.unified_memory import UnifiedMemory
+    except ImportError:
+        logger.debug("unified_memory not available")
+        raise
     um = UnifiedMemory.__new__(UnifiedMemory)
     um._cache_max_size = 50
     um.app_data_cache = OrderedDict()
@@ -104,10 +120,14 @@ def test_4_app_data_cache_eviction():
     check("newest present", "app_59" in um.app_data_cache)
 
 
-def test_5_oracle_eye_cache_eviction():
+def test_5_oracle_eye_cache_eviction() -> None:
     """oracle_eye._cache evicts expired entries."""
     print("\n[TEST 5] OracleEye cache eviction")
-    from danny_toolkit.brain.oracle_eye import TheOracleEye
+    try:
+        from danny_toolkit.brain.oracle_eye import TheOracleEye
+    except ImportError:
+        logger.debug("oracle_eye not available")
+        raise
     oe = TheOracleEye.__new__(TheOracleEye)
     oe._stack = None
     oe._bus = None
@@ -125,10 +145,14 @@ def test_5_oracle_eye_cache_eviction():
     check("cache bounded at 100", len(oe._cache) <= 100)
 
 
-def test_6_neural_bus_rlock():
+def test_6_neural_bus_rlock() -> None:
     """NeuralBus uses RLock (re-entrant publish-inside-callback works)."""
     print("\n[TEST 6] NeuralBus RLock")
-    from danny_toolkit.core.neural_bus import NeuralBus
+    try:
+        from danny_toolkit.core.neural_bus import NeuralBus
+    except ImportError:
+        logger.debug("neural_bus not available")
+        raise
     bus = NeuralBus()
 
     check("lock is RLock", isinstance(bus._lock, type(threading.RLock())))
@@ -136,7 +160,8 @@ def test_6_neural_bus_rlock():
     # Test re-entrant publish (callback that publishes)
     results = []
 
-    def callback(event):
+    def callback(event: object) -> None:
+        """Handle bus event and trigger nested publish."""
         results.append(event.event_type)
         if event.event_type == "trigger":
             bus.publish("nested", {"from": "callback"}, bron="test")
@@ -151,21 +176,29 @@ def test_6_neural_bus_rlock():
     check("nested event delivered", "nested_received" in results)
 
 
-def test_7_app_instances_lock():
+def test_7_app_instances_lock() -> None:
     """_app_instances_lock exists on CentralBrain."""
     print("\n[TEST 7] _app_instances_lock exists")
-    from danny_toolkit.brain.central_brain import CentralBrain
+    try:
+        from danny_toolkit.brain.central_brain import CentralBrain
+    except ImportError:
+        logger.debug("central_brain not available")
+        raise
     # Check class would have the lock after init
     cb = CentralBrain.__new__(CentralBrain)
     cb._app_instances_lock = threading.Lock()
     check("_app_instances_lock is Lock", isinstance(cb._app_instances_lock, type(threading.Lock())))
 
 
-def test_8_no_remaining_unbounded_caches():
+def test_8_no_remaining_unbounded_caches() -> None:
     """Scan for remaining Dict = {} cache patterns in brain/."""
     print("\n[TEST 8] No unbounded Dict caches in brain/")
-    import re
-    from pathlib import Path
+    try:
+        import re
+        from pathlib import Path
+    except ImportError:
+        logger.debug("re/pathlib not available")
+        raise
 
     brain_dir = Path(__file__).parent / "danny_toolkit" / "brain"
     # Patterns that indicate unbounded caches
@@ -192,7 +225,7 @@ def test_8_no_remaining_unbounded_caches():
                     if "cache" in m.lower():
                         unbounded.append(f"{py_file.name}: {m.strip()}")
         except Exception:
-            pass
+            logger.debug("Could not read %s", py_file)
 
     if unbounded:
         for u in unbounded:
@@ -200,7 +233,8 @@ def test_8_no_remaining_unbounded_caches():
     check("no unbounded cache Dict patterns", len(unbounded) == 0)
 
 
-def main():
+def main() -> None:
+    """Run all Phase 22 tests."""
     print("=" * 60)
     print("  PHASE 22 TESTS — Memory Leaks + Thread Safety")
     print("=" * 60)

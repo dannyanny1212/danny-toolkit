@@ -24,6 +24,8 @@ import sys
 import tempfile
 import time
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
 # Forceer LocalEmbeddings (384d) — MOET voor import van project modules
 os.environ["EMBEDDING_PROVIDER"] = "local"
@@ -1473,7 +1475,7 @@ def get_system_metrics() -> dict:
         if result.returncode == 0:
             metrics["gpu_mb"] = int(result.stdout.strip().split("\n")[0])
     except Exception:
-        pass
+        logger.debug("Suppressed exception in stress_test_deep_ingestion")
 
     return metrics
 
@@ -1518,7 +1520,7 @@ def check_staging_orphans(job_ids: list[str]) -> dict:
                 main = client.get_collection("danny_rag")
                 result["main_count"] = main.count()
             except Exception:
-                pass
+                logger.debug("Suppressed exception in stress_test_deep_ingestion")
 
     except Exception as e:
         result["error"] = str(e)

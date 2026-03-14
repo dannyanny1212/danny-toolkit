@@ -11,16 +11,20 @@ Phase 35 Tests — ERROR TAXONOMY: Uniforme fout-classificatie.
   Tests 15-16: NeuralBus ERROR_CLASSIFIED event
   Tests 17-18: Version bump + module integrity
 """
+from __future__ import annotations
 
+import logging
 import os
 import sys
+
+logger = logging.getLogger(__name__)
 
 try:
     sys.stdout = __import__("io").TextIOWrapper(
         sys.stdout.buffer, encoding="utf-8", errors="replace",
     )
 except (ValueError, OSError):
-    pass
+    logger.debug("Invalid value encountered")
 
 # Test-mode env
 os.environ.setdefault("DANNY_TEST_MODE", "1")
@@ -34,7 +38,8 @@ passed = 0
 failed = 0
 
 
-def check(beschrijving: str, conditie: bool):
+def check(beschrijving: str, conditie: bool) -> None:
+    """Registreer een check resultaat."""
     global passed, failed
     if conditie:
         passed += 1
@@ -48,7 +53,7 @@ def check(beschrijving: str, conditie: bool):
 # Tests 1-3: Module imports, enums, dataclass
 # ═══════════════════════════════════════════════════
 
-def test_1_module_import():
+def test_1_module_import() -> None:
     """error_taxonomy module importeert correct."""
     print("\n[Test 1] Module import")
     import danny_toolkit.core.error_taxonomy as mod
@@ -65,7 +70,7 @@ def test_1_module_import():
     check("maak_fout_context functie bestaat", hasattr(mod, "maak_fout_context"))
 
 
-def test_2_enums():
+def test_2_enums() -> None:
     """FoutErnst en HerstelStrategie enums hebben correcte waarden."""
     print("\n[Test 2] Enum waarden")
     from danny_toolkit.core.error_taxonomy import (
@@ -97,7 +102,7 @@ def test_2_enums():
           HerstelStrategie.ESCALEER == "escaleer")
 
 
-def test_3_fout_definitie():
+def test_3_fout_definitie() -> None:
     """FoutDefinitie dataclass heeft correcte velden."""
     print("\n[Test 3] FoutDefinitie dataclass")
     from danny_toolkit.core.error_taxonomy import (
@@ -122,7 +127,7 @@ def test_3_fout_definitie():
 # Tests 4-6: FOUT_REGISTER, classificeer, fallback
 # ═══════════════════════════════════════════════════
 
-def test_4_fout_register():
+def test_4_fout_register() -> None:
     """FOUT_REGISTER bevat bekende fouttypes."""
     print("\n[Test 4] FOUT_REGISTER entries")
     from danny_toolkit.core.error_taxonomy import FOUT_REGISTER
@@ -139,7 +144,7 @@ def test_4_fout_register():
     check("MemoryError in register", "MemoryError" in FOUT_REGISTER)
 
 
-def test_5_classificeer():
+def test_5_classificeer() -> None:
     """classificeer() lookup werkt correct."""
     print("\n[Test 5] classificeer() functie")
     from danny_toolkit.core.error_taxonomy import (
@@ -159,7 +164,7 @@ def test_5_classificeer():
     check("MemoryError is FATAAL", d3.ernst == FoutErnst.FATAAL)
 
 
-def test_6_classificeer_fallback():
+def test_6_classificeer_fallback() -> None:
     """classificeer() fallback voor onbekende fouten."""
     print("\n[Test 6] classificeer() fallback")
     from danny_toolkit.core.error_taxonomy import (
@@ -183,7 +188,7 @@ def test_6_classificeer_fallback():
 # Tests 7-8: is_retry_safe, get_ernst
 # ═══════════════════════════════════════════════════
 
-def test_7_is_retry_safe():
+def test_7_is_retry_safe() -> None:
     """is_retry_safe() werkt correct."""
     print("\n[Test 7] is_retry_safe()")
     from danny_toolkit.core.error_taxonomy import is_retry_safe
@@ -195,7 +200,7 @@ def test_7_is_retry_safe():
     check("RateLimitError is NIET retry-safe (FALLBACK)", not is_retry_safe("RateLimitError"))
 
 
-def test_8_get_ernst():
+def test_8_get_ernst() -> None:
     """get_ernst() retourneert correct ernst-niveau."""
     print("\n[Test 8] get_ernst()")
     from danny_toolkit.core.error_taxonomy import get_ernst, FoutErnst
@@ -216,7 +221,7 @@ def test_8_get_ernst():
 # Tests 9-10: FoutContext dataclass
 # ═══════════════════════════════════════════════════
 
-def test_9_fout_context():
+def test_9_fout_context() -> None:
     """FoutContext heeft correcte velden en to_dict()."""
     print("\n[Test 9] FoutContext dataclass")
     from danny_toolkit.core.error_taxonomy import (
@@ -251,7 +256,7 @@ def test_9_fout_context():
     check("to_dict ernst is string", d["ernst"] == "herstelbaar")
 
 
-def test_10_maak_fout_context():
+def test_10_maak_fout_context() -> None:
     """maak_fout_context() maakt correcte FoutContext."""
     print("\n[Test 10] maak_fout_context()")
     from danny_toolkit.core.error_taxonomy import (
@@ -276,7 +281,7 @@ def test_10_maak_fout_context():
 # Tests 11-12: Governor delegatie
 # ═══════════════════════════════════════════════════
 
-def test_11_governor_classificatie():
+def test_11_governor_classificatie() -> None:
     """Governor._FOUT_CLASSIFICATIE delegeert naar error_taxonomy."""
     print("\n[Test 11] Governor _FOUT_CLASSIFICATIE delegatie")
     from danny_toolkit.brain.governor import OmegaGovernor
@@ -289,7 +294,7 @@ def test_11_governor_classificatie():
     check("MemoryError aanwezig", "MemoryError" in mapping)
 
 
-def test_12_governor_classificeer_fout():
+def test_12_governor_classificeer_fout() -> None:
     """Governor.classificeer_fout() delegeert naar error_taxonomy."""
     print("\n[Test 12] Governor.classificeer_fout()")
     from danny_toolkit.brain.governor import OmegaGovernor
@@ -310,7 +315,7 @@ def test_12_governor_classificeer_fout():
 # Tests 13-14: _timed_dispatch FoutContext
 # ═══════════════════════════════════════════════════
 
-def test_13_timed_dispatch_fout_context():
+def test_13_timed_dispatch_fout_context() -> None:
     """_timed_dispatch error payloads bevatten fout_context code."""
     print("\n[Test 13] _timed_dispatch FoutContext integratie")
     import inspect
@@ -325,7 +330,7 @@ def test_13_timed_dispatch_fout_context():
           "FoutContext" in source)
 
 
-def test_14_circuit_breaker_fout_context():
+def test_14_circuit_breaker_fout_context() -> None:
     """Circuit breaker error payload bevat FoutContext."""
     print("\n[Test 14] Circuit breaker FoutContext")
     import inspect
@@ -344,7 +349,7 @@ def test_14_circuit_breaker_fout_context():
 # Tests 15-16: NeuralBus event
 # ═══════════════════════════════════════════════════
 
-def test_15_neuralbus_error_event():
+def test_15_neuralbus_error_event() -> None:
     """NeuralBus heeft ERROR_CLASSIFIED event type."""
     print("\n[Test 15] NeuralBus ERROR_CLASSIFIED event")
     from danny_toolkit.core.neural_bus import EventTypes
@@ -355,7 +360,7 @@ def test_15_neuralbus_error_event():
           EventTypes.ERROR_CLASSIFIED == "error_classified")
 
 
-def test_16_neuralbus_subscribe():
+def test_16_neuralbus_subscribe() -> None:
     """NeuralBus kan error events ontvangen."""
     print("\n[Test 16] NeuralBus error event subscribe")
     from danny_toolkit.core.neural_bus import get_bus, EventTypes
@@ -363,7 +368,8 @@ def test_16_neuralbus_subscribe():
     bus = get_bus()
     received = []
 
-    def handler(event):
+    def handler(event: object) -> None:
+        """Handle bus event."""
         received.append(event)
 
     bus.subscribe(EventTypes.ERROR_CLASSIFIED, handler)
@@ -385,7 +391,7 @@ def test_16_neuralbus_subscribe():
 # Tests 17-18: Version + module integrity
 # ═══════════════════════════════════════════════════
 
-def test_17_version_bump():
+def test_17_version_bump() -> None:
     """Brain versie is >= 6.5.0."""
     print("\n[Test 17] Brain versie >= 6.5.0")
     import danny_toolkit.brain as brain_pkg
@@ -395,7 +401,7 @@ def test_17_version_bump():
           _v >= (6, 5, 0))
 
 
-def test_18_module_integrity():
+def test_18_module_integrity() -> None:
     """Alle gewijzigde modules importeren zonder fouten."""
     print("\n[Test 18] Module integrity check")
     modules = [

@@ -18,10 +18,13 @@ from __future__ import annotations
 
 import ast
 import json
+import logging
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TextIO
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -412,7 +415,7 @@ def scan_directory(path: Path, min_lines: int = 30) -> list[AuditResult]:
             if result.lines >= min_lines:
                 results.append(result)
         except SyntaxError:
-            pass  # Skip unparseable files
+            logger.debug("Kan %s niet parsen, overgeslagen", py_file)
 
     results.sort(key=lambda r: r.quality)
     return results

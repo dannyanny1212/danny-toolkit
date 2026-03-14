@@ -1,14 +1,10 @@
-"""
-Danny Toolkit — Brain Module Tests (Phase 11C)
-GhostWriter, TheMirror, TheOracleEye
-
-8 tests, ~45+ checks. Alle CPU-only, geen Groq API calls.
-Gebruik: python test_brain_modules.py
-"""
+"""Danny Toolkit — Brain Module Tests (Phase 11C): GhostWriter, TheMirror, TheOracleEye."""
+from __future__ import annotations
 
 import asyncio
 import inspect
 import json
+import logging
 import os
 import sqlite3
 import sys
@@ -16,6 +12,8 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch, MagicMock
+
+logger = logging.getLogger(__name__)
 
 # Test-mode env
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
@@ -39,7 +37,8 @@ PASS_COUNT = 0
 FAIL_COUNT = 0
 
 
-def check(label, condition):
+def check(label: str, condition: bool) -> None:
+    """Verify a single test condition."""
     global PASS_COUNT, FAIL_COUNT
     if condition:
         PASS_COUNT += 1
@@ -53,7 +52,8 @@ def check(label, condition):
 
 class FakeStack:
     """Minimale CorticalStack stub met in-memory SQLite."""
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialize in-memory SQLite CorticalStack stub."""
         self._conn = sqlite3.connect(":memory:")
         self._conn.execute("""
             CREATE TABLE IF NOT EXISTS episodic_memory (
@@ -75,26 +75,30 @@ class FakeStack:
         """)
         self._conn.commit()
 
-    def get_recent_events(self, count=10):
+    def get_recent_events(self, count: int = 10) -> list:
+        """Return empty recent events."""
         return []
 
-    def log_event(self, **kwargs):
-        pass
+    def log_event(self, **kwargs: object) -> None:
+        """No-op event logging."""
 
-    def flush(self):
-        pass
+    def flush(self) -> None:
+        """No-op flush."""
 
-    def remember_fact(self, key, value, conf):
-        pass
+    def remember_fact(self, key: str, value: str, conf: float) -> None:
+        """No-op fact remembering."""
 
-    def recall_all(self, min_confidence=0.0):
+    def recall_all(self, min_confidence: float = 0.0) -> list:
+        """Return empty recall."""
         return []
 
-    def search_events(self, query, limit=5):
+    def search_events(self, query: str, limit: int = 5) -> list:
+        """Return empty search results."""
         return []
 
 
-def _make_fake_stack():
+def _make_fake_stack() -> FakeStack:
+    """Create a FakeStack instance."""
     return FakeStack()
 
 
@@ -103,10 +107,14 @@ def _make_fake_stack():
 class TestGhostWriter(unittest.TestCase):
     """Tests voor GhostWriter (Invention #9)."""
 
-    def test_ghost_writer_init(self):
+    def test_ghost_writer_init(self) -> None:
         """GhostWriter importeerbaar, haunt() en _inspect_file() zijn async."""
         print("\n🧪 test_ghost_writer_init")
-        from danny_toolkit.brain.ghost_writer import GhostWriter
+        try:
+            from danny_toolkit.brain.ghost_writer import GhostWriter
+        except ImportError:
+            logger.debug("ghost_writer not available")
+            raise
 
         check("GhostWriter importeerbaar", True)
 
@@ -122,10 +130,14 @@ class TestGhostWriter(unittest.TestCase):
         check("model is llama-4-scout or qwen3",
               "llama-4-scout" in gw.model or "qwen" in gw.model)
 
-    def test_ghost_writer_ast_scan(self):
+    def test_ghost_writer_ast_scan(self) -> None:
         """_inspect_file() vindt functies zonder docstring."""
         print("\n🧪 test_ghost_writer_ast_scan")
-        from danny_toolkit.brain.ghost_writer import GhostWriter
+        try:
+            from danny_toolkit.brain.ghost_writer import GhostWriter
+        except ImportError:
+            logger.debug("ghost_writer not available")
+            raise
 
         # Maak een temp .py bestand met functies
         code = (
@@ -152,7 +164,8 @@ class TestGhostWriter(unittest.TestCase):
             found_undoc = []
             original_generate = gw._generate_docstring
 
-            async def fake_generate(node, source):
+            async def fake_generate(node: object, source: str) -> str:
+                """Mock docstring generator."""
                 found_undoc.append(node.name)
                 return "Fake docstring"
 
@@ -174,10 +187,14 @@ class TestGhostWriter(unittest.TestCase):
 class TestTheMirror(unittest.TestCase):
     """Tests voor TheMirror (Invention #8)."""
 
-    def test_the_mirror_init(self):
+    def test_the_mirror_init(self) -> None:
         """TheMirror importeerbaar, reflect() is async."""
         print("\n🧪 test_the_mirror_init")
-        from danny_toolkit.brain.the_mirror import TheMirror
+        try:
+            from danny_toolkit.brain.the_mirror import TheMirror
+        except ImportError:
+            logger.debug("the_mirror not available")
+            raise
 
         check("TheMirror importeerbaar", True)
 
@@ -191,10 +208,14 @@ class TestTheMirror(unittest.TestCase):
         check("client is AsyncGroq",
               type(m.client).__name__ == "AsyncGroq")
 
-    def test_the_mirror_load_save(self):
+    def test_the_mirror_load_save(self) -> None:
         """save_profile() + load_profile() round-trip."""
         print("\n🧪 test_the_mirror_load_save")
-        from danny_toolkit.brain.the_mirror import TheMirror
+        try:
+            from danny_toolkit.brain.the_mirror import TheMirror
+        except ImportError:
+            logger.debug("the_mirror not available")
+            raise
 
         m = TheMirror()
 
@@ -234,12 +255,16 @@ class TestTheMirror(unittest.TestCase):
 class TestOracleEye(unittest.TestCase):
     """Tests voor TheOracleEye (Invention #18)."""
 
-    def test_oracle_eye_init(self):
+    def test_oracle_eye_init(self) -> None:
         """TheOracleEye importeerbaar, HourForecast velden."""
         print("\n🧪 test_oracle_eye_init")
-        from danny_toolkit.brain.oracle_eye import (
-            TheOracleEye, HourForecast,
-        )
+        try:
+            from danny_toolkit.brain.oracle_eye import (
+                TheOracleEye, HourForecast,
+            )
+        except ImportError:
+            logger.debug("oracle_eye not available")
+            raise
 
         check("TheOracleEye importeerbaar", True)
         check("HourForecast importeerbaar", True)
@@ -271,11 +296,15 @@ class TestOracleEye(unittest.TestCase):
         True,
     )
     def test_oracle_eye_patterns_empty(
-        self, mock_stack, *args
-    ):
+        self, mock_stack: object, *args: object
+    ) -> None:
         """analyze_patterns() met lege stack geeft lege/24-uur dict."""
         print("\n🧪 test_oracle_eye_patterns_empty")
-        from danny_toolkit.brain.oracle_eye import TheOracleEye
+        try:
+            from danny_toolkit.brain.oracle_eye import TheOracleEye
+        except ImportError:
+            logger.debug("oracle_eye not available")
+            raise
 
         eye = TheOracleEye()
         eye._stack = _make_fake_stack()
@@ -289,10 +318,14 @@ class TestOracleEye(unittest.TestCase):
         check("Uur 0 avg_queries is 0",
               patterns.get(0, {}).get("avg_queries", -1) == 0.0)
 
-    def test_oracle_eye_model_advice(self):
+    def test_oracle_eye_model_advice(self) -> None:
         """_kies_model() returns correct model at different loads."""
         print("\n🧪 test_oracle_eye_model_advice")
-        from danny_toolkit.brain.oracle_eye import TheOracleEye
+        try:
+            from danny_toolkit.brain.oracle_eye import TheOracleEye
+        except ImportError:
+            logger.debug("oracle_eye not available")
+            raise
 
         eye = TheOracleEye.__new__(TheOracleEye)
         eye._HIGH_CPU_THRESHOLD = 70.0
@@ -331,10 +364,14 @@ class TestOracleEye(unittest.TestCase):
         "danny_toolkit.brain.oracle_eye.HAS_STACK",
         True,
     )
-    def test_cortex_get_stats(self, mock_stack, *args):
+    def test_cortex_get_stats(self, mock_stack: object, *args: object) -> None:
         """TheCortex.get_stats() returns 6 keys."""
         print("\n🧪 test_cortex_get_stats")
-        from danny_toolkit.brain.cortex import TheCortex
+        try:
+            from danny_toolkit.brain.cortex import TheCortex
+        except ImportError:
+            logger.debug("cortex not available")
+            raise
 
         with patch(
             "danny_toolkit.brain.cortex.get_cortical_stack",

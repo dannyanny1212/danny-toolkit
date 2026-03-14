@@ -14,17 +14,24 @@ Test de SwarmEngine architectuur:
 
 Gebruik: python test_swarm_engine.py
 """
+from __future__ import annotations
 
-import sys
-import os
-import io
-import time
 import asyncio
+import io
+import logging
+import os
+import sys
+import time
+
+logger = logging.getLogger(__name__)
 
 # Windows UTF-8 fix
 if os.name == "nt":
-    sys.stdout.reconfigure(encoding="utf-8")
-    sys.stderr.reconfigure(encoding="utf-8")
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except (ValueError, OSError):
+        logger.debug("UTF-8 reconfigure niet mogelijk")
 
 # Test-mode env
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
@@ -63,7 +70,7 @@ from danny_toolkit.brain.governor import (
 )
 
 
-def test_payload_dataclass():
+def test_payload_dataclass() -> bool:
     """Test 1: SwarmPayload structuur."""
     print("\n" + "=" * 60)
     print("  TEST 1: SwarmPayload Dataclass")
@@ -112,7 +119,7 @@ def test_payload_dataclass():
     return _print_checks(checks)
 
 
-def test_fast_track():
+def test_fast_track() -> bool:
     """Test 2: Fast-Track regex routing."""
     print("\n" + "=" * 60)
     print("  TEST 2: Fast-Track Regex Routing")
@@ -125,7 +132,7 @@ def test_fast_track():
                      "goedemorgen", "yo", "bedankt"]:
         result = _fast_track_check(greeting)
         checks.append((
-            f"'{greeting}' → Echo payload",
+            f"'{greeting}' -> Echo payload",
             result is not None
             and result.agent == "Echo",
         ))
@@ -135,7 +142,7 @@ def test_fast_track():
         "Analyseer de bitcoin markt en geef advies"
     )
     checks.append((
-        "complexe input → None",
+        "complexe input -> None",
         result is None,
     ))
 
@@ -144,14 +151,14 @@ def test_fast_track():
         "hallo hoe gaat het vandaag met jou vriend"
     )
     checks.append((
-        "lange begroeting (>5 woorden) → None",
+        "lange begroeting (>5 woorden) -> None",
         result is None,
     ))
 
     return _print_checks(checks)
 
 
-def test_keyword_routing():
+def test_keyword_routing() -> bool:
     """Test 3: Multi-intent keyword routing."""
     print("\n" + "=" * 60)
     print("  TEST 3: Multi-Intent Keyword Routing")
@@ -165,7 +172,7 @@ def test_keyword_routing():
         engine.route("bitcoin prijs analyse")
     )
     checks.append((
-        "bitcoin → CIPHER",
+        "bitcoin -> CIPHER",
         "CIPHER" in targets,
     ))
 
@@ -173,7 +180,7 @@ def test_keyword_routing():
         engine.route("debug mijn python code")
     )
     checks.append((
-        "code → IOLAAX",
+        "code -> IOLAAX",
         "IOLAAX" in targets,
     ))
 
@@ -181,7 +188,7 @@ def test_keyword_routing():
         engine.route("gezondheid en slaap analyse")
     )
     checks.append((
-        "gezondheid → VITA",
+        "gezondheid -> VITA",
         "VITA" in targets,
     ))
 
@@ -189,7 +196,7 @@ def test_keyword_routing():
         engine.route("web search online informatie")
     )
     checks.append((
-        "web search → NAVIGATOR",
+        "web search -> NAVIGATOR",
         "NAVIGATOR" in targets,
     ))
 
@@ -225,14 +232,14 @@ def test_keyword_routing():
         engine.route("willekeurige onzin blabla")
     )
     checks.append((
-        "onbekend → fallback ECHO",
+        "onbekend -> fallback ECHO",
         targets == ["ECHO"],
     ))
 
     return _print_checks(checks)
 
 
-def test_echo_agent():
+def test_echo_agent() -> bool:
     """Test 4: EchoAgent zonder AI."""
     print("\n" + "=" * 60)
     print("  TEST 4: EchoAgent (geen AI)")
@@ -277,7 +284,7 @@ def test_echo_agent():
     return _print_checks(checks)
 
 
-def test_agent_classes():
+def test_agent_classes() -> bool:
     """Test 5: Agent class hierarchie."""
     print("\n" + "=" * 60)
     print("  TEST 5: Agent Class Hierarchie")
@@ -285,9 +292,13 @@ def test_agent_classes():
 
     checks = []
 
-    from danny_toolkit.brain.trinity_omega import (
-        CosmicRole,
-    )
+    try:
+        from danny_toolkit.brain.trinity_omega import (
+            CosmicRole,
+        )
+    except ImportError:
+        logger.debug("trinity_omega import niet beschikbaar")
+        raise
 
     # BrainAgent zonder brain → "Brain offline"
     agent = BrainAgent(
@@ -297,7 +308,7 @@ def test_agent_classes():
         agent.process("test", brain=None)
     )
     checks.append((
-        "BrainAgent zonder brain → offline",
+        "BrainAgent zonder brain -> offline",
         "Brain offline" in payload.content,
     ))
 
@@ -353,14 +364,14 @@ def test_agent_classes():
         iolaax.process("debug", brain=None)
     )
     checks.append((
-        "Iolaax zonder code → type 'text'",
+        "Iolaax zonder code -> type 'text'",
         payload.type == "text",
     ))
 
     return _print_checks(checks)
 
 
-def test_engine_no_brain():
+def test_engine_no_brain() -> bool:
     """Test 6: SwarmEngine zonder brain."""
     print("\n" + "=" * 60)
     print("  TEST 6: SwarmEngine (zonder brain)")
@@ -369,7 +380,8 @@ def test_engine_no_brain():
     checks = []
     logs = []
 
-    def callback(msg):
+    def callback(msg: str) -> None:
+        """Callback voor test logging."""
         logs.append(msg)
 
     # Fast-track
@@ -377,11 +389,11 @@ def test_engine_no_brain():
         "hallo", brain=None, callback=callback,
     )
     checks.append((
-        "fast-track → 1 payload",
+        "fast-track -> 1 payload",
         len(payloads) == 1,
     ))
     checks.append((
-        "fast-track → Echo",
+        "fast-track -> Echo",
         payloads[0].agent == "Echo",
     ))
     checks.append((
@@ -400,11 +412,11 @@ def test_engine_no_brain():
         callback=callback,
     )
     checks.append((
-        "zonder brain → payload aanwezig",
+        "zonder brain -> payload aanwezig",
         len(payloads) >= 1,
     ))
     checks.append((
-        "zonder brain → Brain offline",
+        "zonder brain -> Brain offline",
         "Brain offline" in payloads[0].content,
     ))
 
@@ -415,12 +427,12 @@ def test_engine_no_brain():
         brain=None, callback=callback,
     )
     checks.append((
-        "multi-intent → minstens 2 payloads",
+        "multi-intent -> minstens 2 payloads",
         len(payloads) >= 2,
     ))
     agents = {p.agent for p in payloads}
     checks.append((
-        "multi-intent → Cipher + Navigator",
+        "multi-intent -> Cipher + Navigator",
         "Cipher" in agents
         and "Navigator" in agents,
     ))
@@ -428,7 +440,7 @@ def test_engine_no_brain():
     return _print_checks(checks)
 
 
-def test_media_generators():
+def test_media_generators() -> bool:
     """Test 7: Media generators in swarm_engine."""
     print("\n" + "=" * 60)
     print("  TEST 7: Media Generators")
@@ -473,23 +485,27 @@ def test_media_generators():
 
     media = _code_media("geen code hier")
     checks.append((
-        "code: geen block → None",
+        "code: geen block -> None",
         media is None,
     ))
 
     return _print_checks(checks)
 
 
-def test_engine_with_brain():
+def test_engine_with_brain() -> bool:
     """Test 8: SwarmEngine met echte PrometheusBrain."""
     print("\n" + "=" * 60)
     print("  TEST 8: SwarmEngine (met brain, echte AI)")
     print("=" * 60)
 
     from contextlib import redirect_stdout
-    from danny_toolkit.brain.trinity_omega import (
-        PrometheusBrain,
-    )
+    try:
+        from danny_toolkit.brain.trinity_omega import (
+            PrometheusBrain,
+        )
+    except ImportError:
+        logger.debug("trinity_omega import niet beschikbaar")
+        raise
 
     buf = io.StringIO()
     with redirect_stdout(buf):
@@ -498,7 +514,8 @@ def test_engine_with_brain():
     checks = []
     logs = []
 
-    def callback(msg):
+    def callback(msg: str) -> None:
+        """Callback voor test logging."""
         logs.append(msg)
 
     # Fast-track met brain (governor + echo)
@@ -506,7 +523,7 @@ def test_engine_with_brain():
         "hoi", brain, callback=callback,
     )
     checks.append((
-        "fast-track met brain → Echo",
+        "fast-track met brain -> Echo",
         len(payloads) == 1
         and payloads[0].agent == "Echo",
     ))
@@ -524,16 +541,16 @@ def test_engine_with_brain():
             brain, callback=callback,
         )
     checks.append((
-        "cipher → content niet leeg",
+        "cipher -> content niet leeg",
         len(payloads) >= 1
         and len(payloads[0].content) > 10,
     ))
     checks.append((
-        "cipher → type metrics",
+        "cipher -> type metrics",
         payloads[0].type == "metrics",
     ))
     checks.append((
-        "cipher → media in metadata",
+        "cipher -> media in metadata",
         "media" in payloads[0].metadata,
     ))
     checks.append((
@@ -553,12 +570,12 @@ def test_engine_with_brain():
     elapsed = time.time() - start
 
     checks.append((
-        "multi-intent → minstens 2 payloads",
+        "multi-intent -> minstens 2 payloads",
         len(payloads) >= 2,
     ))
     agents = [p.agent for p in payloads]
     checks.append((
-        "multi-intent → Cipher + Navigator",
+        "multi-intent -> Cipher + Navigator",
         "Cipher" in agents
         and "Navigator" in agents,
     ))
@@ -574,7 +591,7 @@ def test_engine_with_brain():
     return _print_checks(checks)
 
 
-def test_command_injection():
+def test_command_injection() -> bool:
     """Test 9: Command Injection Blocking."""
     print("\n" + "=" * 60)
     print("  TEST 9: Command Injection Blocking")
@@ -654,7 +671,7 @@ def test_command_injection():
     return _print_checks(checks)
 
 
-def test_input_validatie():
+def test_input_validatie() -> bool:
     """Test 10: Input Validatie (Governor)."""
     print("\n" + "=" * 60)
     print("  TEST 10: Input Validatie (Governor)")
@@ -714,7 +731,7 @@ def test_input_validatie():
     return _print_checks(checks)
 
 
-def test_pii_scrubbing():
+def test_pii_scrubbing() -> bool:
     """Test 11: PII Scrubbing."""
     print("\n" + "=" * 60)
     print("  TEST 11: PII Scrubbing")
@@ -761,7 +778,7 @@ def test_pii_scrubbing():
     return _print_checks(checks)
 
 
-def test_sentinel_validator():
+def test_sentinel_validator() -> bool:
     """Test 12: SENTINEL Output Validatie."""
     print("\n" + "=" * 60)
     print("  TEST 12: SENTINEL Output Validatie")
@@ -855,7 +872,7 @@ def test_sentinel_validator():
     return _print_checks(checks)
 
 
-def test_memex_context():
+def test_memex_context() -> bool:
     """Test 13: MEMEX Context Injectie."""
     print("\n" + "=" * 60)
     print("  TEST 13: MEMEX Context Injectie")
@@ -902,7 +919,7 @@ def test_memex_context():
     return _print_checks(checks)
 
 
-def test_legion_action_tiers():
+def test_legion_action_tiers() -> bool:
     """Test 14: Legion Action Tiers."""
     print("\n" + "=" * 60)
     print("  TEST 14: Legion Action Tiers")
@@ -947,7 +964,7 @@ def test_legion_action_tiers():
     return _print_checks(checks)
 
 
-def test_backward_compat():
+def test_backward_compat() -> bool:
     """Test 15: Backward Compatibiliteit."""
     print("\n" + "=" * 60)
     print("  TEST 15: Backward Compatibiliteit")
@@ -1014,7 +1031,7 @@ def test_backward_compat():
     return _print_checks(checks)
 
 
-def test_adaptive_router():
+def test_adaptive_router() -> bool:
     """Test 16: Adaptive Router (embedding-based)."""
     print("\n" + "=" * 60)
     print("  TEST 16: Adaptive Router")
@@ -1091,14 +1108,14 @@ def test_adaptive_router():
     router = AdaptiveRouter()
     targets = router.route("bitcoin prijs")
     checks.append((
-        "bitcoin → CIPHER",
+        "bitcoin -> CIPHER",
         "CIPHER" in targets,
     ))
 
     # Route: code → IOLAAX
     targets = router.route("debug mijn python code")
     checks.append((
-        "debug code → IOLAAX",
+        "debug code -> IOLAAX",
         "IOLAAX" in targets,
     ))
 
@@ -1107,14 +1124,14 @@ def test_adaptive_router():
         "gezondheid en slaap analyse"
     )
     checks.append((
-        "gezondheid → VITA",
+        "gezondheid -> VITA",
         "VITA" in targets,
     ))
 
     # Route: onzin → ECHO fallback
     targets = router.route("xyzzy blorp qux")
     checks.append((
-        "onzin → ECHO fallback",
+        "onzin -> ECHO fallback",
         targets == ["ECHO"],
     ))
 
@@ -1146,7 +1163,7 @@ def test_adaptive_router():
     return _print_checks(checks)
 
 
-def test_pipeline_tuner():
+def test_pipeline_tuner() -> bool:
     """Test 17: Pipeline Tuner (self-tuning)."""
     print("\n" + "=" * 60)
     print("  TEST 17: Pipeline Tuner")
@@ -1277,7 +1294,7 @@ def test_pipeline_tuner():
     return _print_checks(checks)
 
 
-def test_adaptive_integration():
+def test_adaptive_integration() -> bool:
     """Test 18: Adaptive Routing Integratie."""
     print("\n" + "=" * 60)
     print("  TEST 18: Adaptive Routing Integratie")
@@ -1317,14 +1334,17 @@ def test_adaptive_integration():
     # embedding faalt (forceer door tijdelijk
     # router te breken)
     class BrokenRouter:
-        def route(self, _):
+        """Mock router die altijd faalt."""
+
+        def route(self, _: str) -> list:
+            """Gooi altijd een RuntimeError."""
             raise RuntimeError("Gebroken")
     engine._router = BrokenRouter()
     targets = asyncio.run(
         engine.route("bitcoin prijs analyse")
     )
     checks.append((
-        "fallback → keyword CIPHER",
+        "fallback -> keyword CIPHER",
         "CIPHER" in targets,
     ))
     # Herstel router
@@ -1359,7 +1379,7 @@ def test_adaptive_integration():
 
 # --- HELPER ---
 
-def _print_checks(checks):
+def _print_checks(checks: list) -> bool:
     """Print check resultaten en return True als OK."""
     passed = 0
     failed = 0
@@ -1378,7 +1398,7 @@ def _print_checks(checks):
     return failed == 0
 
 
-def main():
+def main() -> None:
     """Draai alle Swarm Engine tests."""
     print()
     print("=" * 60)

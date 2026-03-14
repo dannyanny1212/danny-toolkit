@@ -1,7 +1,7 @@
 """
-PatchDay — Danny Toolkit Release Lifecycle Tool.
+PatchDay -- Danny Toolkit Release Lifecycle Tool.
 
-Eén callable tool voor het volledige patch/release lifecycle:
+Een callable tool voor het volledige patch/release lifecycle:
 versie bumpen, tests draaien, RAG valideren, changelog genereren,
 committen en taggen.
 
@@ -16,6 +16,7 @@ Gebruik:
     python patchday.py rollback <versie>
     python patchday.py verify
 """
+from __future__ import annotations
 
 import argparse
 import hashlib
@@ -34,9 +35,7 @@ if os.name == "nt":
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
     elif isinstance(sys.stdout, io.TextIOWrapper):
-        sys.stdout = io.TextIOWrapper(
-            sys.stdout.buffer, encoding="utf-8", errors="replace"
-        )
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -56,28 +55,33 @@ class K:
     R = "\033[0m"
 
 
-def _print(kleur: str, prefix: str, msg: str):
+def _print(kleur: str, prefix: str, msg: str) -> None:
     """Geformatteerde output met kleur en prefix."""
     print(f"{kleur}{prefix}{K.R} {msg}")
 
 
-def _ok(msg: str):
+def _ok(msg: str) -> None:
+    """Print succes bericht."""
     _print(K.GREEN, "  ✓", msg)
 
 
-def _warn(msg: str):
+def _warn(msg: str) -> None:
+    """Print waarschuwing bericht."""
     _print(K.YELLOW, "  ⚠", msg)
 
 
-def _fail(msg: str):
+def _fail(msg: str) -> None:
+    """Print fout bericht."""
     _print(K.RED, "  ✗", msg)
 
 
-def _info(msg: str):
+def _info(msg: str) -> None:
+    """Print info bericht."""
     _print(K.CYAN, "  ℹ", msg)
 
 
-def _header(titel: str):
+def _header(titel: str) -> None:
+    """Print sectie header met titel."""
     breedte = 50
     print(f"\n{K.BOLD}{K.CYAN}{titel}{K.R}")
     print(f"{K.DIM}{'═' * breedte}{K.R}")
@@ -96,6 +100,10 @@ if not os.path.isfile(PYTHON):
     PYTHON = sys.executable
 
 # Versiepatroon: X.Y.Z
+import logging
+
+logger = logging.getLogger(__name__)
+
 VERSION_RE = re.compile(r"(\d+\.\d+\.\d+)")
 
 # Golden tag — wordt nooit overschreven
@@ -296,8 +304,8 @@ class VersionManager:
             for pad_str, data in bestanden.items():
                 try:
                     data["pad"].write_text(data["origineel"], encoding="utf-8")
-                except Exception:
-                    pass
+                except Exception as rollback_err:
+                    logger.debug("Rollback schrijffout: %s", rollback_err)
             raise RuntimeError(f"Atomische bump gefaald, rollback uitgevoerd: {e}")
 
         # Fase 3: Herbereken sovereign gate hash
@@ -306,7 +314,7 @@ class VersionManager:
         return oude, nieuwe, gewijzigd
 
 
-def _update_gate_hash():
+def _update_gate_hash() -> None:
     """Herbereken SHA256 hash van sovereign_gate.py en schrijf naar data/.gate_hash."""
     gate_path = PROJECT_ROOT / "danny_toolkit" / "core" / "sovereign_gate.py"
     if not gate_path.exists():
@@ -335,36 +343,43 @@ class GitOps:
 
     @staticmethod
     def huidige_branch() -> str:
+        """Haal de huidige git branch op."""
         r = GitOps._run(["git", "rev-parse", "--abbrev-ref", "HEAD"])
         return r.stdout.strip()
 
     @staticmethod
     def is_clean() -> bool:
+        """Check of de working tree schoon is."""
         r = GitOps._run(["git", "status", "--porcelain"])
         return len(r.stdout.strip()) == 0
 
     @staticmethod
     def staged_files() -> list:
+        """Lijst van staged bestanden."""
         r = GitOps._run(["git", "diff", "--cached", "--name-only"])
         return [f for f in r.stdout.strip().split("\n") if f]
 
     @staticmethod
     def unstaged_changes() -> list:
+        """Lijst van unstaged wijzigingen."""
         r = GitOps._run(["git", "diff", "--name-only"])
         return [f for f in r.stdout.strip().split("\n") if f]
 
     @staticmethod
     def untracked_files() -> list:
+        """Lijst van untracked bestanden."""
         r = GitOps._run(["git", "ls-files", "--others", "--exclude-standard"])
         return [f for f in r.stdout.strip().split("\n") if f]
 
     @staticmethod
     def tags() -> list:
+        """Lijst van versie tags."""
         r = GitOps._run(["git", "tag", "--list", "v*", "--sort=-version:refname"])
         return [t for t in r.stdout.strip().split("\n") if t]
 
     @staticmethod
     def laatste_tag() -> str:
+        """Meest recente versie tag."""
         tags = GitOps.tags()
         return tags[0] if tags else "geen"
 
@@ -507,10 +522,11 @@ class TestRunner:
 class RAGValidator:
     """Valideert de RAG pipeline via 7 subsysteem-checks."""
 
-    def __init__(self):
-        self.resultaten = []
+    def __init__(self) -> None:
+        """Initialiseer RAGValidator."""
+        self.resultaten: list[dict] = []
 
-    def _check(self, naam: str, fn):
+    def _check(self, naam: str, fn: object) -> None:
         """Voer een check uit met try/except fallback."""
         try:
             ok, detail = fn()
@@ -537,7 +553,11 @@ class RAGValidator:
 
     def _check_startup(self) -> tuple:
         """Check 1: Startup Bootstrap."""
-        from danny_toolkit.core.startup_validator import valideer_opstart
+        try:
+            from danny_toolkit.core.startup_validator import valideer_opstart
+        except ImportError:
+            logger.debug("startup_validator niet beschikbaar")
+            return False, "Module niet laadbaar"
         rapport = valideer_opstart()
         ok = rapport["status"] == "OK"
         fouten = len(rapport.get("fouten", []))
@@ -549,7 +569,11 @@ class RAGValidator:
 
     def _check_config_audit(self) -> tuple:
         """Check 2: Config Audit."""
-        from danny_toolkit.brain.config_auditor import get_config_auditor
+        try:
+            from danny_toolkit.brain.config_auditor import get_config_auditor
+        except ImportError:
+            logger.debug("config_auditor niet beschikbaar")
+            return False, "Module niet laadbaar"
         auditor = get_config_auditor()
         rapport = auditor.audit()
         # AuditRapport is een dataclass met attributen
@@ -563,7 +587,11 @@ class RAGValidator:
 
     def _check_vectorstore(self) -> tuple:
         """Check 3: VectorStore Health."""
-        from danny_toolkit.core.config import Config
+        try:
+            from danny_toolkit.core.config import Config
+        except ImportError:
+            logger.debug("Config niet beschikbaar")
+            return True, "Config niet laadbaar"
         # Check of de vector DB file bestaat en leesbaar is
         db_file = getattr(Config, "VECTOR_DB_FILE", None)
         if db_file and Path(db_file).exists():
@@ -577,7 +605,11 @@ class RAGValidator:
 
     def _check_shards(self) -> tuple:
         """Check 4: Shard Distribution."""
-        from danny_toolkit.core.shard_router import ShardRouter
+        try:
+            from danny_toolkit.core.shard_router import ShardRouter
+        except ImportError:
+            logger.debug("ShardRouter niet beschikbaar")
+            return False, "Module niet laadbaar"
         router = ShardRouter()
         stats = router.statistieken()  # Returns List[ShardStatistiek]
         if stats:
@@ -591,7 +623,11 @@ class RAGValidator:
 
     def _check_airlock(self) -> tuple:
         """Check 5: ShadowAirlock Staging."""
-        from danny_toolkit.core.shadow_airlock import ShadowAirlock
+        try:
+            from danny_toolkit.core.shadow_airlock import ShadowAirlock
+        except ImportError:
+            logger.debug("ShadowAirlock niet beschikbaar")
+            return False, "Module niet laadbaar"
         airlock = ShadowAirlock()
         result = airlock.scan_en_verwerk()
         staging = result.get("bestanden", 0)
@@ -602,7 +638,11 @@ class RAGValidator:
 
     def _check_pruning(self) -> tuple:
         """Check 6: SelfPruning Health."""
-        from danny_toolkit.core.self_pruning import SelfPruning
+        try:
+            from danny_toolkit.core.self_pruning import SelfPruning
+        except ImportError:
+            logger.debug("SelfPruning niet beschikbaar")
+            return False, "Module niet laadbaar"
         pruner = SelfPruning()
         stats = pruner.statistieken()
         totaal = stats.get("totaal_gevolgd", 0)
@@ -615,7 +655,11 @@ class RAGValidator:
 
     def _check_document_forge(self) -> tuple:
         """Check 7: Document Forge."""
-        from danny_toolkit.core.document_forge import DocumentForge
+        try:
+            from danny_toolkit.core.document_forge import DocumentForge
+        except ImportError:
+            logger.debug("DocumentForge niet beschikbaar")
+            return True, "Module niet laadbaar"
         # valideer_bestand is een classmethod — geen instantie nodig
         doc_dir = PROJECT_ROOT / "data" / "rag" / "documenten"
         if not doc_dir.exists():
@@ -630,8 +674,8 @@ class RAGValidator:
                 is_geldig, fouten = DocumentForge.valideer_bestand(bestand)
                 if is_geldig:
                     geldig += 1
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("Document validatie fout: %s", e)
 
         ok = geldig == totaal if totaal > 0 else True
         detail = f"{geldig}/{totaal} documenten geldig" if totaal > 0 else "Geen documenten"
@@ -935,7 +979,7 @@ class RAGGate:
         rapport["goedgekeurd"] = len(rapport["blokkades"]) == 0
         return rapport
 
-    def _tier1_static(self, rapport: dict, actie: str, bestanden: list = None):
+    def _tier1_static(self, rapport: dict, actie: str, bestanden: list | None = None) -> None:
         """Tier 1: Static rules — PII, secrets, destructief, path validatie."""
         # --- PII scan op bestanden ---
         pii_hits = 0
@@ -954,8 +998,8 @@ class RAGGate:
                             rapport["waarschuwingen"].append(
                                 f"PII ({naam}) gedetecteerd in {p.name}"
                             )
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("PII scan fout: %s", e)
 
         rapport["tier_resultaten"].append({
             "tier": 1, "naam": "PII scan",
@@ -1011,8 +1055,8 @@ class RAGGate:
                         rapport["blokkades"].append(
                             f"Pad buiten project root: {resolved}"
                         )
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("Pad validatie fout: %s", e)
 
         rapport["tier_resultaten"].append({
             "tier": 1, "naam": "Path validatie",
@@ -1021,7 +1065,7 @@ class RAGGate:
                       else "Paden buiten project root gedetecteerd",
         })
 
-    def _tier2_rag(self, rapport: dict, actie: str):
+    def _tier2_rag(self, rapport: dict, actie: str) -> None:
         """Tier 2: RAG Query — zoek security context in ChromaDB."""
         try:
             from danny_toolkit.core.shard_router import get_shard_router
@@ -1059,7 +1103,7 @@ class RAGGate:
                 "detail": f"Fout: {type(e).__name__}: {e}",
             })
 
-    def _tier3_governor(self, rapport: dict, actie: str):
+    def _tier3_governor(self, rapport: dict, actie: str) -> None:
         """Tier 3: Governor validation — OmegaGovernor input check."""
         try:
             from danny_toolkit.brain.governor import OmegaGovernor
@@ -1085,7 +1129,7 @@ class RAGGate:
                 "detail": f"Fout: {type(e).__name__}: {e}",
             })
 
-    def print_rapport(self, rapport: dict):
+    def print_rapport(self, rapport: dict) -> None:
         """Print een geformatteerd RAG Gate rapport naar terminal."""
         print()
         _header("RAG GATE PROTOCOL \u2014 Pre-Execution Validatie")
@@ -1137,7 +1181,7 @@ class PatchDay:
     """Hoofdorchestrator voor het release lifecycle."""
 
     @staticmethod
-    def status():
+    def status() -> None:
         """Toon huidige versie, branch, pending changes, version sync."""
         _header("PATCHDAY STATUS")
 
@@ -1183,7 +1227,7 @@ class PatchDay:
                 print(f"    {K.DIM}{entry}{K.R}")
 
     @staticmethod
-    def bump(bump_type: str):
+    def bump(bump_type: str) -> None:
         """Bump versie in alle 15 bestanden."""
         _header(f"VERSIE BUMP ({bump_type.upper()})")
 
@@ -1209,7 +1253,7 @@ class PatchDay:
             sys.exit(1)
 
     @staticmethod
-    def branch(naam: str):
+    def branch(naam: str) -> None:
         """Maak een release/feature/fix branch."""
         _header(f"BRANCH: {naam}")
 
@@ -1222,7 +1266,7 @@ class PatchDay:
         GitOps.maak_branch(naam)
 
     @staticmethod
-    def test():
+    def test() -> None:
         """Draai de volledige test suite."""
         _header("TEST SUITE")
         geslaagd, output = TestRunner.run()
@@ -1230,14 +1274,14 @@ class PatchDay:
             sys.exit(1)
 
     @staticmethod
-    def validate():
+    def validate() -> int:
         """RAG pipeline validatie."""
         validator = RAGValidator()
         exit_code = validator.validate()
         return exit_code
 
     @staticmethod
-    def changelog():
+    def changelog() -> None:
         """Genereer changelog entry."""
         _header("CHANGELOG")
 
@@ -1257,8 +1301,8 @@ class PatchDay:
         ChangelogGenerator.schrijf(versie)
 
     @staticmethod
-    def release(bump_type: str = "patch"):
-        """Volledig release workflow: gate → verify → test → validate → bump → changelog → commit → tag."""
+    def release(bump_type: str = "patch") -> None:
+        """Volledig release workflow: gate, verify, test, validate, bump, changelog, commit, tag."""
         _header(f"RELEASE WORKFLOW ({bump_type.upper()})")
         print()
 
@@ -1350,7 +1394,7 @@ class PatchDay:
         print(f"    {K.DIM}git push origin {GitOps.huidige_branch()} --tags{K.R}")
 
     @staticmethod
-    def rollback(versie: str):
+    def rollback(versie: str) -> None:
         """Rollback naar een getagde versie."""
         _header(f"ROLLBACK → {versie}")
 
@@ -1377,7 +1421,7 @@ class PatchDay:
         _ok("Gate hash herberekend na rollback")
 
     @staticmethod
-    def gate(beschrijving: str):
+    def gate(beschrijving: str) -> int:
         """Standalone RAG Gate check op een actie-beschrijving."""
         gate = RAGGate()
         verdict = gate.valideer(actie=beschrijving)
@@ -1385,7 +1429,7 @@ class PatchDay:
         return 0 if verdict["goedgekeurd"] else 1
 
     @staticmethod
-    def verify():
+    def verify() -> None:
         """Pre-flight verificatie."""
         _header("PRE-FLIGHT VERIFICATIE")
 
@@ -1411,7 +1455,8 @@ class PatchDay:
 #  CLI — argparse met 9 subcommands
 # ═══════════════════════════════════════════════════════════════
 
-def main():
+def main() -> None:
+    """CLI entry point voor PatchDay."""
     parser = argparse.ArgumentParser(
         prog="patchday",
         description="PatchDay — Danny Toolkit Release Lifecycle Tool",

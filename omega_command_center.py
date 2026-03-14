@@ -7,8 +7,10 @@ Uses Rich Live display with 1Hz auto-refresh.
 Usage:
     python omega_command_center.py
 """
+from __future__ import annotations
 
 import io
+import logging
 import os
 import sys
 import time
@@ -16,12 +18,14 @@ import threading
 from datetime import datetime
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
+
 # --- Windows UTF-8 fix ---
 try:
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 except Exception:
-    pass
+    logger.debug("UTF-8 stdout/stderr reconfigure overgeslagen")
 
 # --- Ensure project root on sys.path ---
 _ROOT = Path(__file__).resolve().parent
@@ -176,11 +180,14 @@ STATUS_MAP = {
 # ------------------------------------------------------------------ #
 
 class DataCache:
-    def __init__(self):
-        self._cache = {}
-        self._timestamps = {}
+    """Thread-safe cache met TTL voor dashboard data."""
 
-    def get(self, key: str, func, ttl: float = 10.0):
+    def __init__(self) -> None:
+        """Initialiseer lege cache."""
+        self._cache: dict = {}
+        self._timestamps: dict = {}
+
+    def get(self, key: str, func: object, ttl: float = 10.0) -> object:
         now = time.time()
         if key in self._cache and (now - self._timestamps.get(key, 0)) < ttl:
             return self._cache[key]
@@ -369,7 +376,7 @@ def _get_bus_events(count: int = 6) -> list:
         if stream:
             return stream.strip().split("\n")[:count]
     except Exception:
-        pass
+        logger.debug("Bus events ophalen mislukt")
     return []
 
 
@@ -917,12 +924,15 @@ def build_dashboard() -> Layout:
 # ------------------------------------------------------------------ #
 
 class KeyListener:
-    def __init__(self):
+    """Luistert naar keyboard input voor dashboard controle."""
+
+    def __init__(self) -> None:
+        """Start keyboard listener thread."""
         self.quit_requested = False
         self._thread = threading.Thread(target=self._listen, daemon=True)
         self._thread.start()
 
-    def _listen(self):
+    def _listen(self) -> None:
         try:
             import msvcrt
             while not self.quit_requested:
@@ -943,7 +953,8 @@ class KeyListener:
 # Entry point                                                          #
 # ------------------------------------------------------------------ #
 
-def main():
+def main() -> None:
+    """Start het Omega Command Center dashboard."""
     console = Console()
     console.clear()
 
@@ -959,7 +970,7 @@ def main():
                 time.sleep(1)
                 live.update(build_dashboard())
     except KeyboardInterrupt:
-        pass
+        logger.debug("Dashboard gestopt via KeyboardInterrupt")
     finally:
         console.clear()
         console.print("\n  [bold bright_cyan]\u03a9 OMEGA COMMAND CENTER[/] [dim]-- session ended.[/]\n")
@@ -967,7 +978,7 @@ def main():
             try:
                 pynvml.nvmlShutdown()
             except Exception:
-                pass
+                logger.debug("pynvml shutdown overgeslagen")
 
 
 if __name__ == "__main__":

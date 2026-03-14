@@ -22,10 +22,12 @@ Gebruik:
     CUDA_VISIBLE_DEVICES=-1 DANNY_TEST_MODE=1 ANONYMIZED_TELEMETRY=False \
         python test_phase40.py
 """
+from __future__ import annotations
 
 import importlib
 import inspect
 import json
+import logging
 import os
 import sys
 import threading
@@ -33,18 +35,24 @@ import time
 import unittest
 import uuid
 
+logger = logging.getLogger(__name__)
+
 os.environ.setdefault("DANNY_TEST_MODE", "1")
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
 os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
 
 # Windows UTF-8
 if os.name == "nt":
-    sys.stdout.reconfigure(encoding="utf-8")
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except (ValueError, OSError):
+        logger.debug("UTF-8 reconfigure niet mogelijk")
 
 CHECK = 0
 
 
-def c(ok: bool, label: str = ""):
+def c(ok: bool, label: str = "") -> None:
+    """Verificatie helper voor test checks."""
     global CHECK
     CHECK += 1
     tag = f" ({label})" if label else ""
@@ -58,12 +66,16 @@ class TestPhase40(unittest.TestCase):
 
     # ── Test 1: Datamodellen instantieerbaar ──
 
-    def test_01_datamodels(self):
+    def test_01_datamodels(self) -> None:
         """SwarmTask + GoalManifest + AuctionBid velden + defaults + to_dict."""
         print("\n[Test 1] Datamodellen")
-        from danny_toolkit.brain.arbitrator import (
-            AuctionBid, GoalManifest, SwarmTask,
-        )
+        try:
+            from danny_toolkit.brain.arbitrator import (
+                AuctionBid, GoalManifest, SwarmTask,
+            )
+        except ImportError:
+            logger.debug("arbitrator import niet beschikbaar")
+            raise
 
         t = SwarmTask(
             task_id="abc123",
@@ -97,10 +109,14 @@ class TestPhase40(unittest.TestCase):
 
     # ── Test 2: Singleton identity ──
 
-    def test_02_singleton_identity(self):
-        """get_arbitrator() retourneert dezelfde instantie."""
+    def test_02_singleton_identity(self) -> None:
+        """Get_arbitrator() retourneert dezelfde instantie."""
         print("\n[Test 2] Singleton identity")
-        from danny_toolkit.brain.arbitrator import get_arbitrator
+        try:
+            from danny_toolkit.brain.arbitrator import get_arbitrator
+        except ImportError:
+            logger.debug("arbitrator import niet beschikbaar")
+            raise
 
         a = get_arbitrator()
         b = get_arbitrator()
@@ -109,17 +125,22 @@ class TestPhase40(unittest.TestCase):
 
     # ── Test 3: Singleton thread safety (50 threads) ──
 
-    def test_03_singleton_concurrency(self):
-        """50 threads → exact 1 uniek id."""
+    def test_03_singleton_concurrency(self) -> None:
+        """50 threads naar exact 1 uniek id."""
         print("\n[Test 3] Singleton concurrency (50 threads)")
 
-        import danny_toolkit.brain.arbitrator as arb_mod
+        try:
+            import danny_toolkit.brain.arbitrator as arb_mod
+        except ImportError:
+            logger.debug("arbitrator import niet beschikbaar")
+            raise
         arb_mod._arbitrator_instance = None
 
         ids = []
         barrier = threading.Barrier(50)
 
-        def grab():
+        def grab() -> None:
+            """Grab arbitrator instance na barrier."""
             barrier.wait()
             from danny_toolkit.brain.arbitrator import get_arbitrator
             ids.append(id(get_arbitrator()))
@@ -136,10 +157,14 @@ class TestPhase40(unittest.TestCase):
 
     # ── Test 4: Exports in brain __init__ + __all__ ──
 
-    def test_04_exports(self):
+    def test_04_exports(self) -> None:
         """TaskArbitrator, get_arbitrator, GoalManifest, SwarmTask in exports."""
         print("\n[Test 4] Exports")
-        import danny_toolkit.brain as brain
+        try:
+            import danny_toolkit.brain as brain
+        except ImportError:
+            logger.debug("brain import niet beschikbaar")
+            raise
 
         c(hasattr(brain, "TaskArbitrator"), "TaskArbitrator in brain")
         c(hasattr(brain, "get_arbitrator"), "get_arbitrator in brain")
@@ -153,11 +178,15 @@ class TestPhase40(unittest.TestCase):
 
     # ── Test 5: Decompose met mock LLM ──
 
-    def test_05_decompose_mock(self):
-        """Decompose met valide JSON → SwarmTask lijst + trace_id."""
+    def test_05_decompose_mock(self) -> None:
+        """Decompose met valide JSON naar SwarmTask lijst + trace_id."""
         print("\n[Test 5] Decompose (mock LLM)")
         import asyncio
-        from danny_toolkit.brain.arbitrator import TaskArbitrator, GoalManifest
+        try:
+            from danny_toolkit.brain.arbitrator import TaskArbitrator, GoalManifest
+        except ImportError:
+            logger.debug("arbitrator import niet beschikbaar")
+            raise
 
         arb = TaskArbitrator()
 
@@ -167,7 +196,8 @@ class TestPhase40(unittest.TestCase):
             {"beschrijving": "Pruning van oude entries", "categorie": "pruning", "prioriteit": 3},
         ])
 
-        async def fake_llm(goal):
+        async def fake_llm(goal: str) -> str:
+            """Mock LLM die JSON teruggeeft."""
             return mock_json
         arb._call_decompose_llm = fake_llm
 
@@ -182,15 +212,20 @@ class TestPhase40(unittest.TestCase):
 
     # ── Test 6: Decompose fallback (bad JSON) ──
 
-    def test_06_decompose_fallback(self):
-        """Decompose met ongeldige JSON → single fallback task."""
+    def test_06_decompose_fallback(self) -> None:
+        """Decompose met ongeldige JSON naar single fallback task."""
         print("\n[Test 6] Decompose fallback")
         import asyncio
-        from danny_toolkit.brain.arbitrator import TaskArbitrator
+        try:
+            from danny_toolkit.brain.arbitrator import TaskArbitrator
+        except ImportError:
+            logger.debug("arbitrator import niet beschikbaar")
+            raise
 
         arb = TaskArbitrator()
 
-        async def bad_llm(goal):
+        async def bad_llm(goal: str) -> str:
+            """Mock LLM die ongeldige JSON teruggeeft."""
             return "Dit is geen JSON helemaal niet"
         arb._call_decompose_llm = bad_llm
 
@@ -201,19 +236,29 @@ class TestPhase40(unittest.TestCase):
 
     # ── Test 7: Auction formule correctheid ──
 
-    def test_07_auction_formula(self):
+    def test_07_auction_formula(self) -> None:
         """S_agent = context_match / (current_load + 1) voor alle agents."""
         print("\n[Test 7] Auction formule")
-        from danny_toolkit.brain.arbitrator import TaskArbitrator, SwarmTask, AuctionBid
+        try:
+            from danny_toolkit.brain.arbitrator import TaskArbitrator, SwarmTask, AuctionBid
+        except ImportError:
+            logger.debug("arbitrator import niet beschikbaar")
+            raise
 
         arb = TaskArbitrator()
 
         class FakeSynapse:
-            def get_routing_bias(self, text):
+            """Mock synapse voor routing bias."""
+
+            def get_routing_bias(self, text: str) -> dict:
+                """Retourneer mock routing bias."""
                 return {"ECHO": 0.9, "MEMEX": 0.7, "STRATEGIST": 0.5}
 
         class FakeWaakhuis:
-            def latency_rapport(self, agent):
+            """Mock waakhuis voor latency rapport."""
+
+            def latency_rapport(self, agent: str) -> dict:
+                """Retourneer mock latency rapport."""
                 loads = {"ECHO": 10, "MEMEX": 50, "STRATEGIST": 0}
                 return {"count": loads.get(agent, 0)}
 
@@ -226,15 +271,15 @@ class TestPhase40(unittest.TestCase):
         c(isinstance(bid, AuctionBid), "bid is AuctionBid")
 
         # Verwachte scores:
-        # ECHO:       0.9 / (10/100 + 1) = 0.9 / 1.1  ≈ 0.8182
-        # MEMEX:      0.7 / (50/100 + 1) = 0.7 / 1.5  ≈ 0.4667
+        # ECHO:       0.9 / (10/100 + 1) = 0.9 / 1.1  ~ 0.8182
+        # MEMEX:      0.7 / (50/100 + 1) = 0.7 / 1.5  ~ 0.4667
         # STRATEGIST: 0.5 / (0/100 + 1)  = 0.5 / 1.0  = 0.5
         echo_exp = round(0.9 / 1.1, 4)
         memex_exp = round(0.7 / 1.5, 4)
         strat_exp = round(0.5 / 1.0, 4)
 
         c(bid.agent == "ECHO", f"winnaar: {bid.agent} == ECHO")
-        c(abs(bid.score - echo_exp) < 0.01, f"ECHO score: {bid.score} ≈ {echo_exp}")
+        c(abs(bid.score - echo_exp) < 0.01, f"ECHO score: {bid.score} ~ {echo_exp}")
 
         # ECHO > STRATEGIST > MEMEX
         c(echo_exp > strat_exp, f"ECHO ({echo_exp}) > STRATEGIST ({strat_exp})")
@@ -242,19 +287,29 @@ class TestPhase40(unittest.TestCase):
 
     # ── Test 8: Auction hoogste score wint ──
 
-    def test_08_auction_highest_wins(self):
+    def test_08_auction_highest_wins(self) -> None:
         """Agent met hoogste S wint altijd, context_match bewaard."""
         print("\n[Test 8] Auction: hoogste wint")
-        from danny_toolkit.brain.arbitrator import TaskArbitrator, SwarmTask
+        try:
+            from danny_toolkit.brain.arbitrator import TaskArbitrator, SwarmTask
+        except ImportError:
+            logger.debug("arbitrator import niet beschikbaar")
+            raise
 
         arb = TaskArbitrator()
 
         class HighBiasSynapse:
-            def get_routing_bias(self, text):
+            """Mock synapse met hoge bias voor AGENT_B."""
+
+            def get_routing_bias(self, text: str) -> dict:
+                """Retourneer mock routing bias."""
                 return {"AGENT_A": 0.3, "AGENT_B": 0.99, "AGENT_C": 0.5}
 
         class NoLoadWaakhuis:
-            def latency_rapport(self, agent):
+            """Mock waakhuis zonder load."""
+
+            def latency_rapport(self, agent: str) -> dict:
+                """Retourneer mock latency rapport zonder load."""
                 return {"count": 0}
 
         arb._synapse = HighBiasSynapse()
@@ -266,19 +321,26 @@ class TestPhase40(unittest.TestCase):
         c(bid.agent == "AGENT_B", f"AGENT_B wint: {bid.agent}")
         c(bid.score >= 0.99, f"score >= 0.99: {bid.score}")
         c(bid.context_match >= 0.99, f"context_match bewaard: {bid.context_match}")
-        c(abs(bid.current_load) < 0.01, f"load ≈ 0: {bid.current_load}")
+        c(abs(bid.current_load) < 0.01, f"load ~ 0: {bid.current_load}")
 
     # ── Test 9: Auction fallback → ECHO ──
 
-    def test_09_auction_fallback_echo(self):
-        """Geen synapse/router data → fallback naar ECHO agent."""
+    def test_09_auction_fallback_echo(self) -> None:
+        """Geen synapse/router data naar fallback naar ECHO agent."""
         print("\n[Test 9] Auction fallback ECHO")
-        from danny_toolkit.brain.arbitrator import TaskArbitrator, SwarmTask, AuctionBid
+        try:
+            from danny_toolkit.brain.arbitrator import TaskArbitrator, SwarmTask, AuctionBid
+        except ImportError:
+            logger.debug("arbitrator import niet beschikbaar")
+            raise
 
         arb = TaskArbitrator()
 
         class EmptySynapse:
-            def get_routing_bias(self, text):
+            """Mock synapse zonder data."""
+
+            def get_routing_bias(self, text: str) -> dict:
+                """Retourneer lege routing bias."""
                 return {}
 
         arb._synapse = EmptySynapse()
@@ -294,16 +356,21 @@ class TestPhase40(unittest.TestCase):
 
     # ── Test 10: Synthesize resultaten ──
 
-    def test_10_synthesize(self):
+    def test_10_synthesize(self) -> None:
         """Synthesize combineert resultaten van voltooide taken."""
         print("\n[Test 10] Synthesize")
-        from danny_toolkit.brain.arbitrator import (
-            TaskArbitrator, GoalManifest, SwarmTask,
-        )
+        try:
+            from danny_toolkit.brain.arbitrator import (
+                TaskArbitrator, GoalManifest, SwarmTask,
+            )
+        except ImportError:
+            logger.debug("arbitrator import niet beschikbaar")
+            raise
         from dataclasses import dataclass
 
         @dataclass
         class FakePayload:
+            """Mock payload voor test resultaten."""
             display_text: str = ""
             content: str = ""
 
@@ -337,11 +404,15 @@ class TestPhase40(unittest.TestCase):
 
     # ── Test 11: Stats accumulatie ──
 
-    def test_11_stats_accumulation(self):
+    def test_11_stats_accumulation(self) -> None:
         """Stats incrementen na decompose + auction operaties."""
         print("\n[Test 11] Stats accumulatie")
         import asyncio
-        from danny_toolkit.brain.arbitrator import TaskArbitrator, SwarmTask
+        try:
+            from danny_toolkit.brain.arbitrator import TaskArbitrator, SwarmTask
+        except ImportError:
+            logger.debug("arbitrator import niet beschikbaar")
+            raise
 
         arb = TaskArbitrator()
 
@@ -352,7 +423,8 @@ class TestPhase40(unittest.TestCase):
         auctions_before = stats_before["auctions_held"]
 
         # Decompose
-        async def fake_llm(goal):
+        async def fake_llm(goal: str) -> str:
+            """Mock LLM voor stats test."""
             return json.dumps([
                 {"beschrijving": "taak1", "categorie": "code", "prioriteit": 1},
                 {"beschrijving": "taak2", "categorie": "analyse", "prioriteit": 2},
@@ -368,7 +440,10 @@ class TestPhase40(unittest.TestCase):
 
         # Auction
         class SimpleSynapse:
-            def get_routing_bias(self, text):
+            """Mock synapse voor auction test."""
+
+            def get_routing_bias(self, text: str) -> dict:
+                """Retourneer simpele routing bias."""
                 return {"ECHO": 0.8}
         arb._synapse = SimpleSynapse()
 
@@ -380,10 +455,14 @@ class TestPhase40(unittest.TestCase):
 
     # ── Test 12: _parse_tasks edge cases ──
 
-    def test_12_parse_tasks_edge(self):
+    def test_12_parse_tasks_edge(self) -> None:
         """Max 5 taken cap, embedded JSON, empty array."""
         print("\n[Test 12] _parse_tasks edge cases")
-        from danny_toolkit.brain.arbitrator import TaskArbitrator
+        try:
+            from danny_toolkit.brain.arbitrator import TaskArbitrator
+        except ImportError:
+            logger.debug("arbitrator import niet beschikbaar")
+            raise
 
         arb = TaskArbitrator()
 
@@ -404,19 +483,23 @@ class TestPhase40(unittest.TestCase):
 
         # Lege array → fallback
         tasks3 = arb._parse_tasks("[]", "leeg goal")
-        c(len(tasks3) == 1, "lege array → 1 fallback taak")
+        c(len(tasks3) == 1, "lege array -> 1 fallback taak")
         c(tasks3[0].beschrijving == "leeg goal", "fallback = oorspronkelijk goal")
 
         # Helemaal geen JSON → fallback
         tasks4 = arb._parse_tasks("gewoon tekst", "tekst goal")
-        c(len(tasks4) == 1, "geen JSON → 1 fallback taak")
+        c(len(tasks4) == 1, "geen JSON -> 1 fallback taak")
 
     # ── Test 13: SwarmEngine.execute_goal() methode ──
 
-    def test_13_execute_goal_exists(self):
+    def test_13_execute_goal_exists(self) -> None:
         """SwarmEngine heeft execute_goal() async methode met goal param."""
         print("\n[Test 13] SwarmEngine.execute_goal()")
-        from swarm_engine import SwarmEngine
+        try:
+            from swarm_engine import SwarmEngine
+        except ImportError:
+            logger.debug("swarm_engine import niet beschikbaar")
+            raise
 
         c(hasattr(SwarmEngine, "execute_goal"), "execute_goal exists")
         c(callable(getattr(SwarmEngine, "execute_goal", None)), "execute_goal callable")
@@ -428,10 +511,14 @@ class TestPhase40(unittest.TestCase):
 
     # ── Test 14: FastAPI models ──
 
-    def test_14_fastapi_models(self):
+    def test_14_fastapi_models(self) -> None:
         """GoalRequest, GoalResponse, SwarmTaskResponse Pydantic models."""
         print("\n[Test 14] FastAPI models")
-        from fastapi_server import GoalRequest, GoalResponse, SwarmTaskResponse
+        try:
+            from fastapi_server import GoalRequest, GoalResponse, SwarmTaskResponse
+        except ImportError:
+            logger.debug("fastapi_server import niet beschikbaar")
+            raise
 
         gr = GoalRequest(goal="Test doel")
         c(gr.goal == "Test doel", "GoalRequest.goal")
@@ -457,10 +544,14 @@ class TestPhase40(unittest.TestCase):
 
     # ── Test 15: FastAPI /api/v1/swarm/goal route ──
 
-    def test_15_fastapi_route(self):
+    def test_15_fastapi_route(self) -> None:
         """POST /api/v1/swarm/goal route geregistreerd met Swarm tag."""
         print("\n[Test 15] FastAPI route")
-        from fastapi_server import app
+        try:
+            from fastapi_server import app
+        except ImportError:
+            logger.debug("fastapi_server import niet beschikbaar")
+            raise
 
         routes = {}
         for r in app.routes:
@@ -478,10 +569,14 @@ class TestPhase40(unittest.TestCase):
 
     # ── Test 16: Bestaande routes intact (Phase 38+39) ──
 
-    def test_16_existing_routes_intact(self):
+    def test_16_existing_routes_intact(self) -> None:
         """Alle Phase 38+39 Observatory + core routes nog aanwezig."""
         print("\n[Test 16] Existing routes intact")
-        from fastapi_server import app
+        try:
+            from fastapi_server import app
+        except ImportError:
+            logger.debug("fastapi_server import niet beschikbaar")
+            raise
 
         routes = {r.path for r in app.routes if hasattr(r, "methods")}
 
@@ -500,12 +595,15 @@ class TestPhase40(unittest.TestCase):
 
     # ── Test 17: inspect.getsource() wiring ──
 
-    def test_17_source_wiring(self):
-        """execute_goal bevat Arbitrator+Schild; TaskArbitrator broadcast via NeuralBus;
-        CorticalStack logging; Auction formule in source."""
+    def test_17_source_wiring(self) -> None:
+        """Execute_goal bevat Arbitrator+Schild; TaskArbitrator broadcast via NeuralBus."""
         print("\n[Test 17] Source wiring (inspect)")
-        from swarm_engine import SwarmEngine
-        from danny_toolkit.brain.arbitrator import TaskArbitrator
+        try:
+            from swarm_engine import SwarmEngine
+            from danny_toolkit.brain.arbitrator import TaskArbitrator
+        except ImportError:
+            logger.debug("swarm_engine of arbitrator import niet beschikbaar")
+            raise
 
         # SwarmEngine.execute_goal wiring
         src = inspect.getsource(SwarmEngine.execute_goal)
@@ -531,15 +629,23 @@ class TestPhase40(unittest.TestCase):
 
     # ── Test 18: Version 6.7.0 + module integrity ──
 
-    def test_18_version_and_integrity(self):
+    def test_18_version_and_integrity(self) -> None:
         """Version 6.7.0, module importeerbaar, stats compleet."""
         print("\n[Test 18] Version + integrity")
-        import danny_toolkit.brain as brain
+        try:
+            import danny_toolkit.brain as brain
+        except ImportError:
+            logger.debug("brain import niet beschikbaar")
+            raise
 
         v_parts = tuple(int(x) for x in brain.__version__.split("."))
         c(v_parts >= (6, 7, 0), f"version: {brain.__version__} >= 6.7.0")
 
-        from danny_toolkit.brain.arbitrator import get_arbitrator
+        try:
+            from danny_toolkit.brain.arbitrator import get_arbitrator
+        except ImportError:
+            logger.debug("arbitrator import niet beschikbaar")
+            raise
         arb = get_arbitrator()
         stats = arb.get_stats()
         c(isinstance(stats, dict), "get_stats() returns dict")

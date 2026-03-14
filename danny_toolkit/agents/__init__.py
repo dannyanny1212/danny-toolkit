@@ -1,8 +1,10 @@
 """Agents module - Agent framework."""
 
-from .base import Agent, AgentMessage, AgentConfig
-from .tool import Tool, ToolRegistry
-from .orchestrator import Orchestrator
+from __future__ import annotations
+
+from danny_toolkit.agents.base import Agent, AgentMessage, AgentConfig
+from danny_toolkit.agents.tool import Tool, ToolRegistry
+from danny_toolkit.agents.orchestrator import Orchestrator
 
 __all__ = [
     "Agent",

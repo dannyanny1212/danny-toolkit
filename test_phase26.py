@@ -1,32 +1,20 @@
-"""
-Phase 26: Pipeline Metrics + Startup Validation — Tests
-========================================================
-10 tests, ~30 checks.
-
-Valideert:
-- A1: _AGENT_PIPELINE_METRICS module-level dict
-- A2: get_pipeline_metrics() callable
-- A3: _record_agent_metric() stores data
-- A4: Error tracking in metrics
-- A5: get_stats() includes new keys
-- A6: ResponseCache.stats() returns expected keys
-- B1: valideer_opstart() rapport structuur
-- B2: Missing GROQ_API_KEY -> fataal
-- B3: DATA_DIR schrijfbaar check
-- B4: Governor.enforce_api_keys includes GROQ
-"""
+"""Phase 26: Pipeline Metrics and Startup Validation — Tests."""
+from __future__ import annotations
 
 import io
+import logging
 import os
 import sys
 import threading
 import time
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
+
 try:
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 except (ValueError, OSError):
-    pass
+    logger.debug("stdout reconfigure failed")
 
 # Test-mode env
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
@@ -42,7 +30,8 @@ geslaagd = 0
 mislukt = 0
 
 
-def check(naam, conditie, detail=""):
+def check(naam: str, conditie: bool, detail: str = "") -> None:
+    """Verify a single test condition."""
     global geslaagd, mislukt
     if conditie:
         geslaagd += 1

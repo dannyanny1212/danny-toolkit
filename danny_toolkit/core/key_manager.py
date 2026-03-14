@@ -66,6 +66,18 @@ AGENT_PRIORITY = {
     "TheMirror": 5,           # Profiling — geen haast
 }
 
+# Weight-class routing: light = low-token queries, heavy = high-token generation
+WEIGHT_CLASS: dict[str, str] = {
+    # Light pool — RAG, verificatie, user-facing (lage token output)
+    "CentralBrain": "light", "Tribunal": "light", "AdversarialTribunal": "light",
+    "RAGSearch": "light", "Memex": "light", "Navigator": "light",
+    "Sentinel": "light", "Echo": "light",
+    # Heavy pool — code forge, research, overnight (hoge token output)
+    "Artificer": "heavy", "VoidWalker": "heavy", "Strategist": "heavy",
+    "GhostWriter": "heavy", "Dreamer": "heavy", "DevOpsDaemon": "heavy",
+    "TheCortex": "heavy", "TheMirror": "heavy",
+}
+
 # Cooldown per prioriteit (seconden wachten na rate limit hit)
 PRIORITY_COOLDOWN = {
     0: 2.0,     # CentralBrain: minimale vertraging
@@ -404,21 +416,21 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
 
             # Escalerend: bij herhaalde 429s, langere globale cooldown
             if self._global_429_count >= 5:
-                self._global_cooldown_tot = now + 60.0
+                self._global_cooldown_tot = now + 20.0
                 logger.warning(
-                    f"SmartKeyManager: 5+ rate limits — globale cooldown 60s"
+                    f"SmartKeyManager: 5+ rate limits — globale cooldown 20s"
                 )
                 if HAS_ALERTER:
                     try:
                         get_alerter().alert(
                             AlertLevel.KRITIEK,
-                            f"Globale rate limit: {self._global_429_count}x 429 — 60s cooldown",
+                            f"Globale rate limit: {self._global_429_count}x 429 — 20s cooldown",
                             bron="key_manager",
                         )
                     except Exception as e:
                         logger.debug("Alerter error: %s", e)
             elif self._global_429_count >= 3:
-                self._global_cooldown_tot = now + 15.0
+                self._global_cooldown_tot = now + 8.0
 
         logger.info(
             f"SmartKeyManager: 429 voor {agent_naam} — "
@@ -491,6 +503,70 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
             return self._keys[pick]
 
     # ------------------------------------------------------------------
+    # Dual-Core: Weight-Class + Instant Failover
+    # ------------------------------------------------------------------
+
+    def get_key_for_weight(self, agent_naam: str) -> str:
+        """Route naar key pool op basis van workload weight class.
+
+        Bij 2+ keys: light agents → eerste helft, heavy → tweede helft.
+        Bij 1 key: gewone key (geen splitsing mogelijk).
+        """
+        active = self._active_keys()
+        if len(active) < 2:
+            return active[0] if active else self._primary_key
+
+        weight = WEIGHT_CLASS.get(agent_naam, "light")
+        mid = max(1, len(active) // 2)
+        pool = active[:mid] if weight == "light" else active[mid:]
+
+        # Least-used within pool
+        with self._metrics_lock:
+            best_key = pool[0]
+            best_load = float("inf")
+            for key in pool:
+                idx = self._keys.index(key) if key in self._keys else 0
+                load = sum(
+                    len(a.request_timestamps) for a in self._agents.values()
+                    if AGENT_PRIORITY.get(a.naam, 5) % len(self._keys) == idx
+                )
+                if load < best_load:
+                    best_load = load
+                    best_key = key
+            return best_key
+
+    def get_alternate_key(self, exclude_key: str) -> str:
+        """Get a different key for instant 429 failover.
+
+        Returns exclude_key if no alternative available.
+        Used by groq_retry for zero-delay key rotation on rate limit.
+        """
+        active = [k for k in self._active_keys() if k != exclude_key]
+        if not active:
+            return exclude_key
+        # Pick least-used from remaining
+        with self._metrics_lock:
+            best = active[0]
+            best_load = float("inf")
+            for key in active:
+                idx = self._keys.index(key) if key in self._keys else 0
+                load = sum(
+                    len(a.request_timestamps) for a in self._agents.values()
+                    if AGENT_PRIORITY.get(a.naam, 5) % len(self._keys) == idx
+                )
+                if load < best_load:
+                    best_load = load
+                    best = key
+            return best
+
+    def get_key_of_client(self, client) -> str:
+        """Extract API key from a Groq client (voor failover tracking)."""
+        try:
+            return client.api_key or ""
+        except AttributeError:
+            return ""
+
+    # ------------------------------------------------------------------
     # Model-Aware Key Selectie
     # ------------------------------------------------------------------
 
@@ -515,7 +591,7 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
         """
         Maak een AsyncGroq client voor een agent.
 
-        Gebruikt de optimale key op basis van agent prioriteit.
+        Dual-Core: routeert via weight-class (light/heavy key pool).
         Fallback: os.getenv("GROQ_API_KEY") als geen keys gevonden.
         """
         try:
@@ -524,13 +600,15 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
             logger.warning("groq package niet beschikbaar")
             return None
 
-        key = self.get_key(agent_naam)
+        key = self.get_key_for_weight(agent_naam)
         if not key:
             logger.warning(
                 f"Geen Groq key voor {agent_naam or 'onbekend'}"
             )
             return None
 
+        weight = WEIGHT_CLASS.get(agent_naam, "light")
+        logger.debug(f"Dual-Core: {agent_naam} → {weight} pool (key ...{key[-6:]})")
         client = AsyncGroq(api_key=key)
         self._async_clients.append(client)
         return client
@@ -539,7 +617,7 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
         """
         Maak een synchrone Groq client voor een agent.
 
-        Gebruikt door CentralBrain (user-facing, sync pipeline).
+        Dual-Core: routeert via weight-class (light/heavy key pool).
         """
         try:
             from groq import Groq
@@ -547,13 +625,15 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
             logger.warning("groq package niet beschikbaar")
             return None
 
-        key = self.get_key(agent_naam)
+        key = self.get_key_for_weight(agent_naam)
         if not key:
             logger.warning(
                 f"Geen Groq key voor {agent_naam or 'onbekend'}"
             )
             return None
 
+        weight = WEIGHT_CLASS.get(agent_naam, "light")
+        logger.debug(f"Dual-Core: {agent_naam} → {weight} pool (key ...{key[-6:]})")
         return Groq(api_key=key)
 
     def create_sync_client_for_model(self, agent_naam: str, model: str) -> None:

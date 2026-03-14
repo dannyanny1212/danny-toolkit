@@ -6,16 +6,20 @@ timeout handling, Docker detectie, en Artificer integratie.
 
 8 tests, standalone uitvoerbaar: python test_phase21.py
 """
+from __future__ import annotations
 
 import io
+import logging
 import os
 import sys
 import tempfile
 
+logger = logging.getLogger(__name__)
+
 try:
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 except (ValueError, OSError):
-    pass
+    logger.debug("Invalid value encountered")
 
 # Test-mode env
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")

@@ -424,7 +424,7 @@ class NeuralBus:
 try:
     from danny_toolkit.core.memory_interface import get_unified_memory
 except ImportError:
-    pass
+    logger.debug("Optional import not available: danny_toolkit.core.memory_interface")
 
 
 # -- Singleton --

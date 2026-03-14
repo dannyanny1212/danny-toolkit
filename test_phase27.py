@@ -1,31 +1,19 @@
-"""
-Phase 27: Daemon Resilience + Error Visibility + CLI Observability — Tests
-==========================================================================
-10 tests, ~30 checks.
-
-Valideert:
-- T1:  Daemon _task_failures + circuit breaker state
-- T2:  Daemon _schrijf_heartbeat() creates file
-- T3:  Error payload has display_text + metadata
-- T4:  Error payloads excluded from Tribunal
-- T5:  _swarm_metrics includes agent_errors
-- T6:  CLI show_metrics is callable
-- T7:  get_agents_in_cooldown() returns set
-- T8:  AdaptiveRouter.route() accepts exclude_agents
-- T9:  QueryResponse has error_count field
-- T10: Daemon _flush_cortical registered with atexit
-"""
+"""Phase 27: Daemon Resilience, Error Visibility, CLI Observability — Tests."""
+from __future__ import annotations
 
 import io
+import logging
 import os
 import sys
 import time
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
+
 try:
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 except (ValueError, OSError):
-    pass
+    logger.debug("stdout reconfigure failed")
 
 PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -38,7 +26,8 @@ geslaagd = 0
 mislukt = 0
 
 
-def check(naam, conditie, detail=""):
+def check(naam: str, conditie: bool, detail: str = "") -> None:
+    """Verify a single test condition."""
     global geslaagd, mislukt
     if conditie:
         geslaagd += 1

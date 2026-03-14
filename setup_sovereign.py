@@ -17,8 +17,11 @@ Gebruik:
     python setup_sovereign.py --gate         # Alleen de 7 Wetten draaien
 """
 
+from __future__ import annotations
+
 import hashlib
 import json
+import logging
 import os
 import secrets
 import sys
@@ -26,11 +29,13 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
+
 # ── UTF-8 output op Windows ──
 try:
     sys.stdout.reconfigure(encoding="utf-8")
 except Exception:
-    pass
+    logger.debug("UTF-8 reconfiguration not possible")
 
 # ── GPU isolation (voorkom Windows segfaults) ──
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
@@ -56,24 +61,29 @@ except ImportError:
 # ══════════════════════════════════════════════════════════════
 
 def banner(title: str) -> None:
+    """Print a section banner."""
     print(f"\n{Kleur.CYAAN}{'═' * 60}", flush=True)
     print(f"  Ω {title}", flush=True)
     print(f"{'═' * 60}{Kleur.RESET}", flush=True)
 
 
 def ok(msg: str) -> None:
+    """Print a success message."""
     print(f"  {Kleur.GROEN}✓{Kleur.RESET} {msg}", flush=True)
 
 
 def fail(msg: str) -> None:
+    """Print a failure message."""
     print(f"  {Kleur.ROOD}✗{Kleur.RESET} {msg}", flush=True)
 
 
 def warn(msg: str) -> None:
+    """Print a warning message."""
     print(f"  {Kleur.GEEL}⚠{Kleur.RESET} {msg}", flush=True)
 
 
 def info(msg: str) -> None:
+    """Print an info message."""
     print(f"  {Kleur.CYAAN}→{Kleur.RESET} {msg}", flush=True)
 
 
@@ -371,8 +381,10 @@ def verify_pipeline() -> bool:
         engine = SovereignEngine()
 
         class SetupTestAgent:
+            """Test agent for setup verification."""
             name = "setup_test_agent"
-            def get_state(self):
+            def get_state(self) -> dict:
+                """Return test agent state."""
                 return {"status": "verified", "phase": "setup"}
 
         engine.register_agent("setup_test", SetupTestAgent())
@@ -459,8 +471,13 @@ def final_report(results: dict) -> None:
 #  MAIN
 # ══════════════════════════════════════════════════════════════
 
-def main():
-    import argparse
+def main() -> None:
+    """Run the full Sovereign Core setup."""
+    try:
+        import argparse
+    except ImportError:
+        logger.debug("argparse not available")
+        return
     parser = argparse.ArgumentParser(
         description="Omega Sovereign Core — Automated Setup & Verification",
     )

@@ -1,18 +1,19 @@
-"""
-Tests voor MRL truncatie in de embedding pipeline.
-11 tests — standalone script (project conventie).
-"""
+"""Tests voor MRL truncatie in de embedding pipeline."""
+from __future__ import annotations
 
 import io
+import logging
 import math
 import os
 import sys
 import hashlib
 
+logger = logging.getLogger(__name__)
+
 try:
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 except (ValueError, OSError):
-    pass
+    logger.debug("stdout reconfigure failed")
 
 # Test-mode env
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
@@ -26,7 +27,8 @@ passed = 0
 failed = 0
 
 
-def check(naam, voorwaarde, detail=""):
+def check(naam: str, voorwaarde: bool, detail: str = "") -> None:
+    """Verify a single test condition."""
     global passed, failed
     if voorwaarde:
         passed += 1

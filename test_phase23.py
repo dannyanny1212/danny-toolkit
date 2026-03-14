@@ -1,14 +1,13 @@
-"""
-Phase 23 Tests — LLM Response Cache + Rate Limit Queuing
-8 tests verifying cache and queue behavior.
-
-Gebruik: python test_phase23.py
-"""
+"""Phase 23 Tests — LLM Response Cache and Rate Limit Queuing."""
+from __future__ import annotations
 
 import asyncio
+import logging
 import os
 import sys
 import time
+
+logger = logging.getLogger(__name__)
 
 # UTF-8 voor Windows
 if hasattr(sys.stdout, "reconfigure"):
@@ -24,7 +23,8 @@ PASS = 0
 FAIL = 0
 
 
-def check(label, condition):
+def check(label: str, condition: bool) -> None:
+    """Verify a single test condition."""
     global PASS, FAIL
     if condition:
         PASS += 1
@@ -34,7 +34,7 @@ def check(label, condition):
         print(f"  [FAIL] {label}")
 
 
-def test_1_cache_store_retrieve():
+def test_1_cache_store_retrieve() -> None:
     """ResponseCache stores and retrieves by hash."""
     print("\n[TEST 1] ResponseCache store and retrieve")
     from danny_toolkit.core.response_cache import ResponseCache
@@ -56,7 +56,7 @@ def test_1_cache_store_retrieve():
     check("different messages = miss", result2 is None)
 
 
-def test_2_cache_ttl_expiration():
+def test_2_cache_ttl_expiration() -> None:
     """ResponseCache TTL expiration works."""
     print("\n[TEST 2] ResponseCache TTL expiration")
     from danny_toolkit.core.response_cache import ResponseCache
@@ -78,7 +78,7 @@ def test_2_cache_ttl_expiration():
     check("expired after TTL", result is None)
 
 
-def test_3_cache_eviction():
+def test_3_cache_eviction() -> None:
     """ResponseCache evicts oldest when full (>200)."""
     print("\n[TEST 3] ResponseCache eviction at capacity")
     from danny_toolkit.core.response_cache import ResponseCache
@@ -102,7 +102,7 @@ def test_3_cache_eviction():
     check("newest present", newest == "resp14")
 
 
-def test_4_cache_skip_high_temperature():
+def test_4_cache_skip_high_temperature() -> None:
     """ResponseCache skips caching for high temperature (>0.4)."""
     print("\n[TEST 4] ResponseCache skips high temperature")
     from danny_toolkit.core.response_cache import ResponseCache
@@ -120,7 +120,7 @@ def test_4_cache_skip_high_temperature():
     check("low temp cached", result == "stable output")
 
 
-def test_5_async_enqueue_pass():
+def test_5_async_enqueue_pass() -> None:
     """async_enqueue() returns True when not throttled."""
     print("\n[TEST 5] async_enqueue passes when not throttled")
     from danny_toolkit.core.key_manager import SmartKeyManager
@@ -139,7 +139,7 @@ def test_5_async_enqueue_pass():
     check("reason is OK", reden == "OK")
 
 
-def test_6_async_enqueue_waits():
+def test_6_async_enqueue_waits() -> None:
     """async_enqueue() waits and retries when throttled."""
     print("\n[TEST 6] async_enqueue waits on throttle")
     from danny_toolkit.core.key_manager import SmartKeyManager
@@ -164,7 +164,7 @@ def test_6_async_enqueue_waits():
     check("waited ~2 seconds", 1.5 <= elapsed <= 4.0)
 
 
-def test_7_async_enqueue_timeout():
+def test_7_async_enqueue_timeout() -> None:
     """async_enqueue() times out after MAX_QUEUE_WAIT."""
     print("\n[TEST 7] async_enqueue timeout")
     from danny_toolkit.core.key_manager import SmartKeyManager

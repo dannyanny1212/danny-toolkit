@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # LINE 1: The Gate MUST be first.
 import danny_toolkit.core.sovereign_gate  # noqa: F401, E402
 """
@@ -7,11 +9,14 @@ Interactieve interface om met het AI ecosysteem te communiceren.
 """
 
 import json
+import logging
 
-from ..core.utils import clear_scherm, kleur, Kleur, fix_encoding
+logger = logging.getLogger(__name__)
 
-from .central_brain import CentralBrain
-from .workflows import SUPER_WORKFLOWS
+from danny_toolkit.core.utils import clear_scherm, kleur, Kleur, fix_encoding
+
+from danny_toolkit.brain.central_brain import CentralBrain
+from danny_toolkit.brain.workflows import SUPER_WORKFLOWS
 
 
 class BrainCLI:
@@ -19,12 +24,13 @@ class BrainCLI:
 
     VERSIE = "1.0.0"
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialiseer BrainCLI met Central Brain."""
         fix_encoding()
         print(kleur("\n   Laden van Central Brain...\n", Kleur.CYAAN))
         self.brain = CentralBrain()
 
-    def _print_header(self, titel: str):
+    def _print_header(self, titel: str) -> None:
         """Print een header."""
         clear_scherm()
         print(kleur("""
@@ -44,11 +50,11 @@ class BrainCLI:
         print(kleur(f"  {titel}", Kleur.GEEL))
         print()
 
-    def _print_divider(self):
+    def _print_divider(self) -> None:
         """Print scheidingslijn."""
         print(kleur("  " + "─" * 55, Kleur.CYAAN))
 
-    def run(self):
+    def run(self) -> None:
         """Start de Brain CLI."""
         while True:
             self._print_header("Jouw AI Ecosysteem Orkestrator")
@@ -123,7 +129,7 @@ class BrainCLI:
             elif keuze == "e":
                 self._run_workflow("evening_review")
 
-    def _chat_mode(self):
+    def _chat_mode(self) -> None:
         """Interactieve chat met Central Brain."""
         self._print_header("Chat met Central Brain")
 
@@ -170,7 +176,7 @@ class BrainCLI:
 
         input("\n  Druk op Enter...")
 
-    def _workflow_menu(self):
+    def _workflow_menu(self) -> None:
         """Workflow selectie menu."""
         self._print_header("Workflow Selectie")
 
@@ -204,7 +210,7 @@ class BrainCLI:
                     self._run_workflow(wf["key"])
                     break
 
-    def _run_workflow(self, workflow_naam: str):
+    def _run_workflow(self, workflow_naam: str) -> None:
         """Voer een workflow uit."""
         self._print_header(f"Workflow: {workflow_naam}")
 
@@ -273,7 +279,7 @@ class BrainCLI:
 
         input("\n  Druk op Enter...")
 
-    def _quick_actions(self):
+    def _quick_actions(self) -> None:
         """Snelle acties menu."""
         self._print_header("Quick Actions")
 
@@ -325,11 +331,11 @@ class BrainCLI:
                         print(f"    {line}")
 
         except ValueError:
-            pass
+            logger.debug("Ongeldige keuze in quick actions")
 
         input("\n  Druk op Enter...")
 
-    def _bekijk_apps(self):
+    def _bekijk_apps(self) -> None:
         """Bekijk alle beschikbare apps."""
         self._print_header("Beschikbare Apps")
 
@@ -354,7 +360,7 @@ class BrainCLI:
 
         input("\n  Druk op Enter...")
 
-    def _memory_status(self):
+    def _memory_status(self) -> None:
         """Toon memory status."""
         self._print_header("Unified Memory Status")
 
@@ -394,7 +400,7 @@ class BrainCLI:
 
         input("\n  Druk op Enter...")
 
-    def _brain_stats(self):
+    def _brain_stats(self) -> None:
         """Toon brain statistieken."""
         self._print_header("Brain Statistieken")
 
@@ -420,7 +426,7 @@ class BrainCLI:
         input("\n  Druk op Enter...")
 
 
-def main():
+def main() -> None:
     """Start Brain CLI."""
     cli = BrainCLI()
     cli.run()

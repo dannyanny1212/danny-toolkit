@@ -739,7 +739,7 @@ import logging
 try:
     from danny_toolkit.brain.omega_core import OmegaCore
 except ImportError:
-    pass
+    logger.debug("Optional import not available: danny_toolkit.brain.omega_core")
 
 logger = logging.getLogger(__name__)
 

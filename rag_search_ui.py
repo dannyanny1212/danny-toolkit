@@ -3,9 +3,14 @@ Omega RAG Search Terminal — Streamlit UI voor ChromaDB zoeken.
 Poort 8501 | Start: venv311/Scripts/python.exe -m streamlit run rag_search_ui.py --server.port 8501
 """
 
+from __future__ import annotations
+
+import logging
 import sys
 import os
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 # Project root op sys.path
 ROOT = Path(__file__).resolve().parent
@@ -25,21 +30,25 @@ CHROMA_DIR = str(ROOT / "data" / "rag" / "chromadb")
 
 
 @st.cache_resource
-def load_chroma_client():
+def load_chroma_client() -> object:
     """Laad ChromaDB PersistentClient (eenmalig, cached)."""
-    import chromadb
+    try:
+        import chromadb
+    except ImportError:
+        logger.debug("chromadb not available")
+        return None
     return chromadb.PersistentClient(path=CHROMA_DIR)
 
 
 @st.cache_resource
-def get_collection_names():
+def get_collection_names() -> dict[str, int]:
     """Haal alle collectie-namen op."""
     client = load_chroma_client()
     collections = client.list_collections()
     return {col.name: col.count() for col in collections}
 
 
-def get_collection(name: str):
+def get_collection(name: str) -> object:
     """Haal een specifieke collectie op."""
     client = load_chroma_client()
     return client.get_collection(name=name)

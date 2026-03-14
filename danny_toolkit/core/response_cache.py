@@ -34,8 +34,8 @@ logger = logging.getLogger(__name__)
 class ResponseCache:
     """Hash-based LLM response cache with TTL."""
 
-    _MAX_ENTRIES = 200
-    _DEFAULT_TTL = 300  # 5 minutes
+    _MAX_ENTRIES = 500
+    _DEFAULT_TTL = 900  # 15 minutes (was 5 min)
     _MAX_TEMPERATURE = 0.4  # Only cache deterministic-ish responses
 
     def __init__(self) -> None:

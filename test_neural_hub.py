@@ -10,12 +10,16 @@ Toont per query:
 
 Gebruik: python test_neural_hub.py
 """
+from __future__ import annotations
 
 import asyncio
+import logging
 import math
 import os
 import sys
 import time
+
+logger = logging.getLogger(__name__)
 
 if os.name == "nt":
     sys.stdout.reconfigure(encoding="utf-8")
@@ -35,7 +39,7 @@ from swarm_engine import (
 )
 
 
-def show_routing_detail(query, router):
+def show_routing_detail(query: str, router: object) -> None:
     """Toon routing scores voor een query."""
     embed = router._get_embed_fn()
     profielen = router._bereken_profielen()
@@ -85,7 +89,7 @@ def show_routing_detail(query, router):
     )
 
 
-def show_pipeline_timing():
+def show_pipeline_timing() -> None:
     """Toon pipeline timing voor een echte run."""
     print("\n" + "=" * 80)
     print("  PIPELINE TIMING (echte run, brain=None)")
@@ -109,7 +113,7 @@ def show_pipeline_timing():
         )
 
 
-def show_tuner_demo():
+def show_tuner_demo() -> None:
     """Demonstreer self-tuning skip-regels."""
     print("\n" + "=" * 80)
     print("  SELF-TUNING DEMO")
@@ -153,7 +157,8 @@ def show_tuner_demo():
     )
 
 
-def main():
+def main() -> None:
+    """Start Neural Hub live test."""
     print()
     print("=" * 80)
     print("  NEURAL HUB LIVE TEST — Adaptive Routing")

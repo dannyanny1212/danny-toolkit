@@ -12,8 +12,10 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+import logging
+logger = logging.getLogger(__name__)
 
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 PROJECT_ROOT = sys.path[0] or "."
 
@@ -22,7 +24,7 @@ try:
     from dotenv import load_dotenv
     load_dotenv(Path(PROJECT_ROOT) / ".env", override=True)
 except ImportError:
-    pass
+    logger.debug("Optional import not available: dotenv")
 
 # Locked interpreter — voorkomt CUDA 0xC0000005 door DLL mismatch
 PYTHON = os.path.join(PROJECT_ROOT, "venv311", "Scripts", "python.exe")
@@ -148,7 +150,7 @@ def main():
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
         except ImportError:
-            pass
+            logger.debug("Optional import not available: torch")
 
     totaal_duur = time.time() - totaal_start
     geslaagd = sum(1 for r in resultaten if r["geslaagd"])

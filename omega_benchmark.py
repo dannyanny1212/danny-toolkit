@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 import sqlite3
 import subprocess
@@ -24,6 +25,8 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 # --- Project bootstrap ---
 sys.path.insert(0, str(Path(__file__).parent))
@@ -42,13 +45,15 @@ W = "\033[97m"  # wit
 RESET = "\033[0m"
 
 
-def _header(title: str):
+def _header(title: str) -> None:
+    """Toon een benchmark sectie header."""
     print(f"\n{C}{'='*60}")
     print(f"  {title}")
     print(f"{'='*60}{RESET}")
 
 
-def _result(label: str, value: str, unit: str = "", ok: bool = True):
+def _result(label: str, value: str, unit: str = "", ok: bool = True) -> None:
+    """Toon een benchmark resultaatregel."""
     color = G if ok else Y
     print(f"  {color}[{'OK' if ok else '!!'}]{RESET} {label:<30} {W}{value}{RESET} {unit}")
 
@@ -57,7 +62,11 @@ def _result(label: str, value: str, unit: str = "", ok: bool = True):
 
 def bench_cpu_ram() -> dict:
     """1. CPU/RAM baseline via psutil."""
-    import psutil
+    try:
+        import psutil
+    except ImportError:
+        logger.debug("psutil niet beschikbaar")
+        return {"error": "psutil niet beschikbaar"}
     cpu_count = os.cpu_count() or 4
     cpu_freq = psutil.cpu_freq()
     cpu_percent = psutil.cpu_percent(interval=1)
@@ -507,7 +516,7 @@ def bench_vector_store() -> dict:
 
 # ==================== MAIN ====================
 
-async def run_all_benchmarks():
+async def run_all_benchmarks() -> dict:
     """Run alle benchmarks en sla resultaten op."""
     start = time.perf_counter()
 

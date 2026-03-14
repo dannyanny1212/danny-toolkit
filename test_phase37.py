@@ -1,29 +1,21 @@
-"""
-Phase 37 Tests — SELF PRUNING: Aggressive Vector Store Maintenance.
+"""Phase 37 Tests — SELF PRUNING: Aggressive Vector Store Maintenance."""
+from __future__ import annotations
 
-18 tests, ~70 checks:
-  Tests 1-3:   Module imports, singletons, Config constanten
-  Tests 4-6:   AccessTracker: UPSERT, stale query, actieve query, thread-safety
-  Tests 7-8:   EntropieScanner: centroid berekening, cosine distance, flagging
-  Tests 9-10:  RedundantieDetector: pairwise similarity, oudste vernietigen
-  Tests 11-12: ColdStorageMigrator: migratie flow, metadata enrichment
-  Tests 13-14: NeuralBus: 4 nieuwe events, payload correctheid
-  Tests 15-16: CorticalStack audit logging, prune() resultaat
-  Tests 17-18: Feature flag (PRUNING_ENABLED), versie check, module integrity
-"""
-
+import logging
 import os
 import sys
 import tempfile
 import threading
 import time
 
+logger = logging.getLogger(__name__)
+
 try:
     sys.stdout = __import__("io").TextIOWrapper(
         sys.stdout.buffer, encoding="utf-8", errors="replace",
     )
 except (ValueError, OSError):
-    pass
+    logger.debug("stdout reconfigure failed")
 
 # Test-mode env
 os.environ.setdefault("DANNY_TEST_MODE", "1")
@@ -37,7 +29,8 @@ passed = 0
 failed = 0
 
 
-def check(beschrijving: str, conditie: bool):
+def check(beschrijving: str, conditie: bool) -> None:
+    """Verify a single test condition."""
     global passed, failed
     if conditie:
         passed += 1
@@ -51,10 +44,14 @@ def check(beschrijving: str, conditie: bool):
 # Tests 1-3: Module imports, singletons, Config
 # ═══════════════════════════════════════════════════
 
-def test_1_module_import():
+def test_1_module_import() -> None:
     """self_pruning module importeert correct."""
     print("\n[Test 1] Module import")
-    import danny_toolkit.core.self_pruning as mod
+    try:
+        import danny_toolkit.core.self_pruning as mod
+    except ImportError:
+        logger.debug("self_pruning not available")
+        raise
 
     check("Module importeert", mod is not None)
     check("AccessTracker class bestaat", hasattr(mod, "AccessTracker"))
@@ -65,10 +62,14 @@ def test_1_module_import():
     check("get_self_pruning functie bestaat", hasattr(mod, "get_self_pruning"))
 
 
-def test_2_singleton():
+def test_2_singleton() -> None:
     """get_self_pruning() retourneert dezelfde instantie."""
     print("\n[Test 2] Singleton")
-    from danny_toolkit.core.self_pruning import get_self_pruning, SelfPruning
+    try:
+        from danny_toolkit.core.self_pruning import get_self_pruning, SelfPruning
+    except ImportError:
+        logger.debug("self_pruning not available")
+        raise
 
     sp1 = get_self_pruning()
     sp2 = get_self_pruning()
@@ -79,10 +80,14 @@ def test_2_singleton():
     check("Heeft redundantie", hasattr(sp1, "redundantie"))
 
 
-def test_3_config_constanten():
+def test_3_config_constanten() -> None:
     """Config bevat alle pruning constanten."""
     print("\n[Test 3] Config constanten")
-    from danny_toolkit.core.config import Config
+    try:
+        from danny_toolkit.core.config import Config
+    except ImportError:
+        logger.debug("config not available")
+        raise
 
     check("PRUNING_ENABLED bestaat", hasattr(Config, "PRUNING_ENABLED"))
     check("PRUNING_ENABLED is bool", isinstance(Config.PRUNING_ENABLED, bool))
@@ -102,15 +107,19 @@ def test_3_config_constanten():
 # Tests 4-6: AccessTracker
 # ═══════════════════════════════════════════════════
 
-def _maak_temp_tracker():
+def _maak_temp_tracker() -> tuple:
     """Maak een AccessTracker met temp DB."""
-    from danny_toolkit.core.self_pruning import AccessTracker
+    try:
+        from danny_toolkit.core.self_pruning import AccessTracker
+    except ImportError:
+        logger.debug("self_pruning not available")
+        raise
     fd, path = tempfile.mkstemp(suffix=".db")
     os.close(fd)
     return AccessTracker(db_path=path), path
 
 
-def test_4_tracker_upsert():
+def test_4_tracker_upsert() -> None:
     """AccessTracker UPSERT patroon werkt correct."""
     print("\n[Test 4] AccessTracker UPSERT")
     tracker, path = _maak_temp_tracker()
@@ -124,7 +133,11 @@ def test_4_tracker_upsert():
     check("Totaal na UPSERT nog steeds 2", tracker.totaal_gevolgd() == 2)
 
     # Controleer access_count via directe DB query
-    import sqlite3
+    try:
+        import sqlite3
+    except ImportError:
+        logger.debug("sqlite3 not available")
+        raise
     conn = sqlite3.connect(path)
     conn.row_factory = sqlite3.Row
     row = conn.execute(
@@ -137,7 +150,7 @@ def test_4_tracker_upsert():
     os.unlink(path)
 
 
-def test_5_tracker_stale_actief():
+def test_5_tracker_stale_actief() -> None:
     """AccessTracker haal_stale_fragmenten en haal_actieve_fragmenten."""
     print("\n[Test 5] AccessTracker stale/actief queries")
     tracker, path = _maak_temp_tracker()
@@ -147,8 +160,12 @@ def test_5_tracker_stale_actief():
     tracker.registreer_creatie(["old_1"], "danny_code")
 
     # Manipuleer last_accessed voor old_1 naar 30 dagen geleden
-    import sqlite3
-    from datetime import datetime, timedelta
+    try:
+        import sqlite3
+        from datetime import datetime, timedelta
+    except ImportError:
+        logger.debug("sqlite3/datetime not available")
+        raise
     oud = (datetime.now() - timedelta(days=30)).isoformat()
     conn = sqlite3.connect(path)
     conn.execute(
@@ -170,14 +187,15 @@ def test_5_tracker_stale_actief():
     os.unlink(path)
 
 
-def test_6_tracker_thread_safety():
+def test_6_tracker_thread_safety() -> None:
     """AccessTracker is thread-safe."""
     print("\n[Test 6] AccessTracker thread-safety")
     tracker, path = _maak_temp_tracker()
 
     fouten = []
 
-    def schrijf(prefix, n):
+    def schrijf(prefix: str, n: int) -> None:
+        """Write n fragments with given prefix."""
         try:
             for i in range(n):
                 tracker.registreer_toegang([f"{prefix}_{i}"], "danny_docs")
@@ -209,10 +227,14 @@ def test_6_tracker_thread_safety():
 # Tests 7-8: EntropieScanner
 # ═══════════════════════════════════════════════════
 
-def test_7_cosine_distance_centroid():
+def test_7_cosine_distance_centroid() -> None:
     """EntropieScanner cosine distance en centroid berekening."""
     print("\n[Test 7] Cosine distance en centroid")
-    from danny_toolkit.core.self_pruning import EntropieScanner
+    try:
+        from danny_toolkit.core.self_pruning import EntropieScanner
+    except ImportError:
+        logger.debug("self_pruning not available")
+        raise
 
     scanner = EntropieScanner(drempel=0.85)
 
@@ -239,7 +261,11 @@ def test_7_cosine_distance_centroid():
     centroid = scanner._bereken_centroid(embeddings)
     check("Centroid heeft 2 dimensies", len(centroid) == 2)
     # Gemiddelde = [0.5, 0.5], genormaliseerd = [0.707, 0.707]
-    import math
+    try:
+        import math
+    except ImportError:
+        logger.debug("math not available")
+        raise
     expected = 1.0 / math.sqrt(2.0)
     check(f"Centroid[0] ~0.707 (was {centroid[0]:.4f})",
           abs(centroid[0] - expected) < 0.01)
@@ -247,16 +273,23 @@ def test_7_cosine_distance_centroid():
           abs(centroid[1] - expected) < 0.01)
 
 
-def test_8_entropie_flagging():
+def test_8_entropie_flagging() -> None:
     """EntropieScanner flagged fragmenten ver van centroid."""
     print("\n[Test 8] Entropie flagging")
-    from danny_toolkit.core.self_pruning import EntropieScanner
+    try:
+        from danny_toolkit.core.self_pruning import EntropieScanner
+    except ImportError:
+        logger.debug("self_pruning not available")
+        raise
 
     scanner = EntropieScanner(drempel=0.5)  # Lage drempel voor test
 
     # Mock collection — 12 fragmenten (>10 minimum voor scan)
     class MockCollection:
-        def __init__(self):
+        """Mock ChromaDB collection for entropy testing."""
+
+        def __init__(self) -> None:
+            """Initialize mock data."""
             self._data = {
                 "active_1": [1.0, 0.0, 0.0],
                 "active_2": [0.9, 0.1, 0.0],
@@ -272,7 +305,8 @@ def test_8_entropie_flagging():
                 "normal_3": [0.78, 0.22, 0.0],
             }
 
-        def get(self, ids=None, include=None):
+        def get(self, ids: list = None, include: list = None) -> dict:
+            """Retrieve mock embeddings."""
             if ids:
                 return {
                     "ids": [i for i in ids if i in self._data],
@@ -294,15 +328,23 @@ def test_8_entropie_flagging():
 # Tests 9-10: RedundantieDetector
 # ═══════════════════════════════════════════════════
 
-def test_9_pairwise_similarity():
+def test_9_pairwise_similarity() -> None:
     """RedundantieDetector vindt duplicaat-paren."""
     print("\n[Test 9] Pairwise similarity detectie")
-    from danny_toolkit.core.self_pruning import RedundantieDetector
+    try:
+        from danny_toolkit.core.self_pruning import RedundantieDetector
+    except ImportError:
+        logger.debug("self_pruning not available")
+        raise
 
     detector = RedundantieDetector(drempel=0.95)
 
     # Bijna identieke vectoren
-    import math
+    try:
+        import math
+    except ImportError:
+        logger.debug("math not available")
+        raise
     ids = ["chunk_1", "chunk_2", "chunk_3"]
     embeddings = [
         [1.0, 0.0, 0.0],        # chunk_1
@@ -319,10 +361,14 @@ def test_9_pairwise_similarity():
         check("Similarity > 0.95", paren[0][2] > 0.95)
 
 
-def test_10_oudste_vernietigen():
+def test_10_oudste_vernietigen() -> None:
     """RedundantieDetector vernietigt het oudste fragment."""
     print("\n[Test 10] Oudste fragment detectie")
-    from danny_toolkit.core.self_pruning import RedundantieDetector
+    try:
+        from danny_toolkit.core.self_pruning import RedundantieDetector
+    except ImportError:
+        logger.debug("self_pruning not available")
+        raise
 
     detector = RedundantieDetector(drempel=0.90)
     tracker, path = _maak_temp_tracker()
@@ -331,8 +377,12 @@ def test_10_oudste_vernietigen():
     tracker.registreer_creatie(["oud_chunk"], "danny_code")
 
     # Manipuleer created_at
-    import sqlite3
-    from datetime import datetime, timedelta
+    try:
+        import sqlite3
+        from datetime import datetime, timedelta
+    except ImportError:
+        logger.debug("sqlite3/datetime not available")
+        raise
     oud = (datetime.now() - timedelta(days=60)).isoformat()
     conn = sqlite3.connect(path)
     conn.execute(
@@ -354,21 +404,29 @@ def test_10_oudste_vernietigen():
 # Tests 11-12: ColdStorageMigrator
 # ═══════════════════════════════════════════════════
 
-def test_11_migratie_flow():
+def test_11_migratie_flow() -> None:
     """ColdStorageMigrator migreert fragmenten correct."""
     print("\n[Test 11] Cold storage migratie flow")
-    from danny_toolkit.core.self_pruning import ColdStorageMigrator
+    try:
+        from danny_toolkit.core.self_pruning import ColdStorageMigrator
+    except ImportError:
+        logger.debug("self_pruning not available")
+        raise
 
     # Mock collections
     class MockBronCollection:
-        def __init__(self):
+        """Mock source collection for migration testing."""
+
+        def __init__(self) -> None:
+            """Initialize mock source data."""
             self.data = {
                 "stale_1": {"doc": "tekst 1", "meta": {"extensie": ".py"}, "emb": [0.1, 0.2]},
                 "stale_2": {"doc": "tekst 2", "meta": {"extensie": ".md"}, "emb": [0.3, 0.4]},
             }
             self.deleted_ids = []
 
-        def get(self, ids=None, include=None):
+        def get(self, ids: list = None, include: list = None) -> dict:
+            """Retrieve mock source data."""
             filtered = {k: v for k, v in self.data.items() if k in (ids or [])}
             return {
                 "ids": list(filtered.keys()),
@@ -377,16 +435,21 @@ def test_11_migratie_flow():
                 "embeddings": [v["emb"] for v in filtered.values()],
             }
 
-        def delete(self, ids=None):
+        def delete(self, ids: list = None) -> None:
+            """Delete mock source IDs."""
             self.deleted_ids.extend(ids or [])
             for i in ids or []:
                 self.data.pop(i, None)
 
     class MockColdCollection:
-        def __init__(self):
+        """Mock cold storage collection."""
+
+        def __init__(self) -> None:
+            """Initialize mock cold storage."""
             self.upserted = []
 
-        def upsert(self, **kwargs):
+        def upsert(self, **kwargs: object) -> None:
+            """Record upsert call."""
             self.upserted.append(kwargs)
 
     bron = MockBronCollection()
@@ -409,26 +472,38 @@ def test_11_migratie_flow():
     os.unlink(path)
 
 
-def test_12_metadata_enrichment():
+def test_12_metadata_enrichment() -> None:
     """ColdStorageMigrator voegt cold_archived_at en original_shard toe."""
     print("\n[Test 12] Metadata enrichment")
-    from danny_toolkit.core.self_pruning import ColdStorageMigrator
+    try:
+        from danny_toolkit.core.self_pruning import ColdStorageMigrator
+    except ImportError:
+        logger.debug("self_pruning not available")
+        raise
 
     class MockBron:
-        def get(self, ids=None, include=None):
+        """Mock source collection for metadata test."""
+
+        def get(self, ids: list = None, include: list = None) -> dict:
+            """Return mock source data."""
             return {
                 "ids": ["frag_x"],
                 "documents": ["test doc"],
                 "metadatas": [{"extensie": ".py", "bron": "test.py"}],
                 "embeddings": [[0.1, 0.2]],
             }
-        def delete(self, ids=None):
-            pass
+        def delete(self, ids: list = None) -> None:
+            """No-op delete."""
 
     class MockCold:
-        def __init__(self):
+        """Mock cold storage for metadata test."""
+
+        def __init__(self) -> None:
+            """Initialize mock cold storage."""
             self.last_upsert = None
-        def upsert(self, **kwargs):
+
+        def upsert(self, **kwargs: object) -> None:
+            """Record last upsert."""
             self.last_upsert = kwargs
 
     cold = MockCold()
@@ -450,10 +525,14 @@ def test_12_metadata_enrichment():
 # Tests 13-14: NeuralBus events
 # ═══════════════════════════════════════════════════
 
-def test_13_neuralbus_events():
+def test_13_neuralbus_events() -> None:
     """NeuralBus heeft alle 4 Phase 37 event types."""
     print("\n[Test 13] NeuralBus event types")
-    from danny_toolkit.core.neural_bus import EventTypes
+    try:
+        from danny_toolkit.core.neural_bus import EventTypes
+    except ImportError:
+        logger.debug("neural_bus not available")
+        raise
 
     check("PRUNING_STARTED bestaat", hasattr(EventTypes, "PRUNING_STARTED"))
     check("FRAGMENT_ARCHIVED bestaat", hasattr(EventTypes, "FRAGMENT_ARCHIVED"))
@@ -467,15 +546,20 @@ def test_13_neuralbus_events():
           isinstance(EventTypes.PRUNING_COMPLETE, str))
 
 
-def test_14_neuralbus_payload():
+def test_14_neuralbus_payload() -> None:
     """NeuralBus events worden correct gepubliceerd."""
     print("\n[Test 14] NeuralBus payload correctheid")
-    from danny_toolkit.core.neural_bus import get_bus, EventTypes
+    try:
+        from danny_toolkit.core.neural_bus import get_bus, EventTypes
+    except ImportError:
+        logger.debug("neural_bus not available")
+        raise
 
     bus = get_bus()
     ontvangen = []
 
-    def handler(event):
+    def handler(event: object) -> None:
+        """Collect received events."""
         ontvangen.append(event)
 
     bus.subscribe(EventTypes.PRUNING_COMPLETE, handler)
@@ -501,11 +585,15 @@ def test_14_neuralbus_payload():
 # Tests 15-16: CorticalStack logging, prune()
 # ═══════════════════════════════════════════════════
 
-def test_15_cortical_logging():
+def test_15_cortical_logging() -> None:
     """SelfPruning logt naar CorticalStack."""
     print("\n[Test 15] CorticalStack audit logging")
-    from danny_toolkit.core.self_pruning import SelfPruning
-    import inspect
+    try:
+        from danny_toolkit.core.self_pruning import SelfPruning
+        import inspect
+    except ImportError:
+        logger.debug("self_pruning/inspect not available")
+        raise
 
     source = inspect.getsource(SelfPruning._log_cortical)
     check("log_event aanroep aanwezig", "log_event" in source)
@@ -514,11 +602,15 @@ def test_15_cortical_logging():
     check("gearchiveerd in detail", "gearchiveerd" in source)
 
 
-def test_16_prune_disabled():
+def test_16_prune_disabled() -> None:
     """prune() retourneert early als PRUNING_ENABLED=False."""
     print("\n[Test 16] prune() met PRUNING_ENABLED=False")
-    from danny_toolkit.core.self_pruning import SelfPruning
-    from danny_toolkit.core.config import Config
+    try:
+        from danny_toolkit.core.self_pruning import SelfPruning
+        from danny_toolkit.core.config import Config
+    except ImportError:
+        logger.debug("self_pruning/config not available")
+        raise
 
     # Bewaar origineel
     orig = Config.PRUNING_ENABLED
@@ -540,16 +632,24 @@ def test_16_prune_disabled():
 # Tests 17-18: Feature flag, versie, integrity
 # ═══════════════════════════════════════════════════
 
-def test_17_feature_flag():
+def test_17_feature_flag() -> None:
     """PRUNING_ENABLED feature flag wordt gelezen uit env."""
     print("\n[Test 17] Feature flag")
-    from danny_toolkit.core.config import Config
+    try:
+        from danny_toolkit.core.config import Config
+    except ImportError:
+        logger.debug("config not available")
+        raise
 
     # Default (test mode) = False
     check("PRUNING_ENABLED default=False in test", Config.PRUNING_ENABLED is False)
 
     # Statistieken API
-    from danny_toolkit.core.self_pruning import SelfPruning
+    try:
+        from danny_toolkit.core.self_pruning import SelfPruning
+    except ImportError:
+        logger.debug("self_pruning not available")
+        raise
     sp = SelfPruning()
     stats = sp.statistieken()
     check("statistieken retourneert dict", isinstance(stats, dict))
@@ -558,7 +658,7 @@ def test_17_feature_flag():
     check("pruning_enabled in stats", "pruning_enabled" in stats)
 
 
-def test_18_module_integrity():
+def test_18_module_integrity() -> None:
     """Alle gewijzigde modules importeren zonder fouten."""
     print("\n[Test 18] Module integrity & versie check")
     modules = [
@@ -575,23 +675,39 @@ def test_18_module_integrity():
             check(f"{mod} importeert OK ({e})", False)
 
     # Versie check
-    from danny_toolkit.brain import __version__
+    try:
+        from danny_toolkit.brain import __version__
+    except ImportError:
+        logger.debug("brain not available")
+        raise
     _v = tuple(int(x) for x in __version__.split("."))
     check(f"brain versie = {__version__} (>= 6.5.0)", _v >= (6, 5, 0))
 
     # Integratie check: swarm_engine referentie
-    import inspect
-    from swarm_engine import MemexAgent
+    try:
+        import inspect
+        from swarm_engine import MemexAgent
+    except ImportError:
+        logger.debug("inspect/swarm_engine not available")
+        raise
     source = inspect.getsource(MemexAgent._search_chromadb)
     check("self_pruning in _search_chromadb", "self_pruning" in source)
 
     # Integratie check: shard_router referentie
-    from danny_toolkit.core.shard_router import ShardRouter
+    try:
+        from danny_toolkit.core.shard_router import ShardRouter
+    except ImportError:
+        logger.debug("shard_router not available")
+        raise
     zoek_src = inspect.getsource(ShardRouter.zoek)
     check("self_pruning in ShardRouter.zoek", "self_pruning" in zoek_src)
 
     # Integratie check: dreamer referentie
-    from danny_toolkit.brain.dreamer import Dreamer
+    try:
+        from danny_toolkit.brain.dreamer import Dreamer
+    except ImportError:
+        logger.debug("dreamer not available")
+        raise
     rem_src = inspect.getsource(Dreamer.rem_cycle)
     check("self_pruning in rem_cycle", "self_pruning" in rem_src)
     check("5.12 stap in rem_cycle", "5.12" in rem_src)

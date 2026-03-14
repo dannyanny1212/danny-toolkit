@@ -6,21 +6,26 @@ Voer uit: python test_rag_pipeline.py
 Alle tests draaien CPU-only, geen netwerk, geen GPU.
 Gebruikt unittest.mock om externe dependencies te mocken.
 """
+from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 import sqlite3
 import sys
 import time
+import threading
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
+
+logger = logging.getLogger(__name__)
 
 # Windows UTF-8
 try:
     sys.stdout.reconfigure(encoding="utf-8")
 except (ValueError, OSError):
-    pass
+    logger.debug("UTF-8 reconfigure niet mogelijk")
 
 # Test-mode env
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
@@ -37,7 +42,7 @@ mislukt = 0
 checks = 0
 
 
-def check(naam, conditie):
+def check(naam: str, conditie: bool) -> None:
     """Verificatie helper."""
     global geslaagd, mislukt, checks
     checks += 1
@@ -51,9 +56,8 @@ def check(naam, conditie):
 
 # ── Helpers ──
 
-def _make_in_memory_stack():
+def _make_in_memory_stack() -> object:
     """Maak een lichtgewicht object met :memory: SQLite als CorticalStack stand-in."""
-    import threading
 
     class FakeStack:
         pass
@@ -99,7 +103,8 @@ def _make_in_memory_stack():
     """)
     stack._conn.commit()
 
-    def flush(self=stack):
+    def flush(self: object = stack) -> None:
+        """Flush pending writes naar SQLite."""
         with self._lock:
             self._conn.commit()
             self._pending_writes = 0
@@ -109,7 +114,7 @@ def _make_in_memory_stack():
     return stack
 
 
-def _run(coro):
+def _run(coro: object) -> object:
     """Helper om coroutines synchroon uit te voeren."""
     loop = asyncio.new_event_loop()
     try:
@@ -118,9 +123,13 @@ def _run(coro):
         loop.close()
 
 
-def _make_cortex(stack):
+def _make_cortex(stack: object) -> object:
     """Maak een TheCortex met in-memory stack (omzeilt singleton)."""
-    from danny_toolkit.brain.cortex import TheCortex
+    try:
+        from danny_toolkit.brain.cortex import TheCortex
+    except ImportError:
+        logger.debug("danny_toolkit.brain.cortex niet beschikbaar")
+        raise
 
     with patch("danny_toolkit.brain.cortex.get_cortical_stack", return_value=stack), \
          patch("danny_toolkit.brain.cortex.HAS_STACK", True), \
@@ -133,7 +142,7 @@ def _make_cortex(stack):
 # Test 1: TheCortex — add_triple
 # ═══════════════════════════════════════════════════
 
-def test_cortex_add_triple():
+def test_cortex_add_triple() -> None:
     """TheCortex triple storage + NetworkX sync."""
     print("\n=== Test 1: TheCortex — add_triple ===")
 
@@ -168,7 +177,7 @@ def test_cortex_add_triple():
 # Test 2: TheCortex — find_related (BFS)
 # ═══════════════════════════════════════════════════
 
-def test_cortex_find_related():
+def test_cortex_find_related() -> None:
     """Graph traversal via BFS."""
     print("\n=== Test 2: TheCortex — find_related ===")
 
@@ -200,7 +209,7 @@ def test_cortex_find_related():
 # Test 3: TheCortex — hybrid_search
 # ═══════════════════════════════════════════════════
 
-def test_cortex_hybrid_search():
+def test_cortex_hybrid_search() -> None:
     """Combined vector + graph search."""
     print("\n=== Test 3: TheCortex — hybrid_search ===")
 
@@ -227,7 +236,7 @@ def test_cortex_hybrid_search():
 # Test 4: TheCortex — extract_triples (mocked LLM)
 # ═══════════════════════════════════════════════════
 
-def test_cortex_extract_triples():
+def test_cortex_extract_triples() -> None:
     """LLM extraction met mocked Groq."""
     print("\n=== Test 4: TheCortex — extract_triples ===")
 
@@ -268,14 +277,18 @@ def test_cortex_extract_triples():
 # Test 5: TruthAnchor — verify
 # ═══════════════════════════════════════════════════
 
-def test_truth_anchor_verify():
+def test_truth_anchor_verify() -> None:
     """Cross-encoder verification met mocked model."""
     print("\n=== Test 5: TruthAnchor — verify ===")
 
     mock_model = MagicMock()
 
     with patch("danny_toolkit.brain.truth_anchor.CrossEncoder", return_value=mock_model):
-        from danny_toolkit.brain.truth_anchor import TruthAnchor
+        try:
+            from danny_toolkit.brain.truth_anchor import TruthAnchor
+        except ImportError:
+            logger.debug("danny_toolkit.brain.truth_anchor niet beschikbaar")
+            raise
         anchor = TruthAnchor()
 
         # Hoge score -> True (verify retourneert (bool, float) tuple)
@@ -300,7 +313,7 @@ def test_truth_anchor_verify():
 # Test 6: BlackBox — record and retrieve
 # ═══════════════════════════════════════════════════
 
-def test_black_box_record_and_retrieve():
+def test_black_box_record_and_retrieve() -> None:
     """Failure memory record + retrieval."""
     print("\n=== Test 6: BlackBox — record and retrieve ===")
 
@@ -322,7 +335,11 @@ def test_black_box_record_and_retrieve():
     with patch("danny_toolkit.brain.black_box.HAS_VECTOR", True), \
          patch("danny_toolkit.brain.black_box.get_torch_embedder", return_value=mock_embedder), \
          patch("danny_toolkit.brain.black_box.VectorStore", return_value=mock_store):
-        from danny_toolkit.brain.black_box import BlackBox
+        try:
+            from danny_toolkit.brain.black_box import BlackBox
+        except ImportError:
+            logger.debug("danny_toolkit.brain.black_box niet beschikbaar")
+            raise
         bb = BlackBox()
 
         # Record a crash
@@ -345,7 +362,7 @@ def test_black_box_record_and_retrieve():
 # Test 7: BlackBox — empty (geen failures)
 # ═══════════════════════════════════════════════════
 
-def test_black_box_empty():
+def test_black_box_empty() -> None:
     """Geen failures recorded."""
     print("\n=== Test 7: BlackBox — empty ===")
 
@@ -358,7 +375,11 @@ def test_black_box_empty():
     with patch("danny_toolkit.brain.black_box.HAS_VECTOR", True), \
          patch("danny_toolkit.brain.black_box.get_torch_embedder", return_value=mock_embedder), \
          patch("danny_toolkit.brain.black_box.VectorStore", return_value=mock_store):
-        from danny_toolkit.brain.black_box import BlackBox
+        try:
+            from danny_toolkit.brain.black_box import BlackBox
+        except ImportError:
+            logger.debug("danny_toolkit.brain.black_box niet beschikbaar")
+            raise
         bb = BlackBox()
 
         # Empty retrieve
@@ -374,7 +395,7 @@ def test_black_box_empty():
 # Test 8: VoidWalker — fill_knowledge_gap (fully mocked)
 # ═══════════════════════════════════════════════════
 
-def test_void_walker_fill_gap():
+def test_void_walker_fill_gap() -> None:
     """Research pipeline met gemockte dependencies."""
     print("\n=== Test 8: VoidWalker — fill_knowledge_gap ===")
 
@@ -416,7 +437,11 @@ def test_void_walker_fill_gap():
          patch("danny_toolkit.brain.void_walker.get_torch_embedder", return_value=mock_embedder, create=True), \
          patch("danny_toolkit.brain.void_walker.VectorStore", return_value=mock_store, create=True), \
          patch("danny_toolkit.brain.void_walker.AsyncGroq", return_value=mock_groq_client, create=True):
-        from danny_toolkit.brain.void_walker import VoidWalker
+        try:
+            from danny_toolkit.brain.void_walker import VoidWalker
+        except ImportError:
+            logger.debug("danny_toolkit.brain.void_walker niet beschikbaar")
+            raise
         walker = VoidWalker()
         walker.client = mock_groq_client
 
@@ -434,7 +459,8 @@ def test_void_walker_fill_gap():
 # Main
 # ═══════════════════════════════════════════════════
 
-def main():
+def main() -> None:
+    """Draai alle RAG pipeline tests."""
     print("=" * 60)
     print("  DANNY TOOLKIT — RAG PIPELINE TESTS")
     print("=" * 60)

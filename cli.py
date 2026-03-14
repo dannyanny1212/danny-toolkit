@@ -272,7 +272,7 @@ def show_metrics():
             f" ({hits} hits, {misses} misses)"
         )
     except ImportError:
-        pass
+        logger.debug("Optional import not available")
 
     # Key manager status
     try:
@@ -295,7 +295,7 @@ def show_metrics():
             f" | agents in cooldown: {in_cd}"
         )
     except ImportError:
-        pass
+        logger.debug("Optional import not available")
 
     # CorticalStack status
     try:
@@ -722,7 +722,7 @@ def main():
         from danny_toolkit.core.startup_validator import valideer_opstart
         valideer_opstart()
     except ImportError:
-        pass
+        logger.debug("Optional import not available: danny_toolkit.core.startup_validator")
 
     # 1.2: Exception handling brain loading
     try:

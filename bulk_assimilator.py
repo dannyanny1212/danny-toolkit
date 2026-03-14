@@ -103,7 +103,8 @@ def _parse_tags(tags_str: str) -> dict:
     return meta
 
 
-def main():
+def main() -> None:
+    """Start de bulk assimilatie van externe projecten."""
     parser = argparse.ArgumentParser(
         description="Bulk Assimilator — massa-ingestie van externe projecten",
     )
@@ -204,7 +205,12 @@ def main():
     print(f"\n{K.GE}[3/4] Ingesting via Librarian pipeline "
           f"(384d LocalEmbeddings + Atomic Staging)...{K.RS}")
 
-    from danny_toolkit.skills.librarian import TheLibrarian
+    try:
+        from danny_toolkit.skills.librarian import TheLibrarian
+    except ImportError:
+        logger.debug("TheLibrarian niet beschikbaar")
+        print(f"{K.RO}TheLibrarian niet beschikbaar — installeer dependencies.{K.RS}")
+        return
     librarian = TheLibrarian()
 
     extra_meta = _parse_tags(args.tags)

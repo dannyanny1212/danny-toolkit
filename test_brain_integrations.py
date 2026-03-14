@@ -1,6 +1,6 @@
 """
-Test Brain Integrations — Phase 9+10 Verificatie
-=================================================
+Test Brain Integrations -- Phase 9+10 Verificatie.
+==================================================
 
 Valideert de 6 brain inventions die in Phases 7-9 gewired zijn:
 1. Strategist agent routing (AGENT_PROFIELEN + ROUTE_MAP)
@@ -15,10 +15,15 @@ Valideert de 6 brain inventions die in Phases 7-9 gewired zijn:
 Gebruik: python test_brain_integrations.py
 """
 
+from __future__ import annotations
+
 import inspect
+import logging
 import os
 import sys
 import time
+
+logger = logging.getLogger(__name__)
 
 # Windows UTF-8 fix
 if os.name == "nt":
@@ -39,7 +44,7 @@ from swarm_engine import (
 )
 
 
-def _print_checks(checks):
+def _print_checks(checks: list[tuple[str, bool]]) -> bool:
     """Print check resultaten en return True als OK."""
     passed = 0
     failed = 0
@@ -58,7 +63,7 @@ def _print_checks(checks):
     return failed == 0
 
 
-def test_strategist_agent_routing():
+def test_strategist_agent_routing() -> bool:
     """Test 1: STRATEGIST profiel en ROUTE_MAP keywords."""
     print("\n" + "=" * 60)
     print("  TEST 1: Strategist Agent Routing")
@@ -101,7 +106,7 @@ def test_strategist_agent_routing():
     return _print_checks(checks)
 
 
-def test_artificer_agent_routing():
+def test_artificer_agent_routing() -> bool:
     """Test 2: ARTIFICER profiel en ROUTE_MAP keywords."""
     print("\n" + "=" * 60)
     print("  TEST 2: Artificer Agent Routing")
@@ -140,7 +145,7 @@ def test_artificer_agent_routing():
     return _print_checks(checks)
 
 
-def test_devops_health_check():
+def test_devops_health_check() -> bool:
     """Test 3: DevOpsDaemon.check_api_health() bestaat en is async."""
     print("\n" + "=" * 60)
     print("  TEST 3: DevOpsDaemon Health Check")
@@ -174,7 +179,7 @@ def test_devops_health_check():
     return _print_checks(checks)
 
 
-def test_adversarial_adeliberate():
+def test_adversarial_adeliberate() -> bool:
     """Test 4: AdversarialTribunal.adeliberate() bestaat en is async."""
     print("\n" + "=" * 60)
     print("  TEST 4: AdversarialTribunal.adeliberate()")
@@ -213,7 +218,7 @@ def test_adversarial_adeliberate():
     return _print_checks(checks)
 
 
-def test_tribunal_verify_method():
+def test_tribunal_verify_method() -> bool:
     """Test 5: SwarmEngine._tribunal_verify is callable."""
     print("\n" + "=" * 60)
     print("  TEST 5: Tribunal Verify Method")
@@ -249,7 +254,7 @@ def test_tribunal_verify_method():
     return _print_checks(checks)
 
 
-def test_dreamer_research_step():
+def test_dreamer_research_step() -> bool:
     """Test 6: Dreamer._research_failures methode bestaat."""
     print("\n" + "=" * 60)
     print("  TEST 6: Dreamer Research Failures Step")
@@ -292,7 +297,7 @@ def test_dreamer_research_step():
     return _print_checks(checks)
 
 
-def test_get_stats_extended():
+def test_get_stats_extended() -> bool:
     """Test 7: get_stats() bevat alle 6 _swarm_metrics keys."""
     print("\n" + "=" * 60)
     print("  TEST 7: Extended get_stats() Metrics")
@@ -348,7 +353,7 @@ def test_get_stats_extended():
     return _print_checks(checks)
 
 
-def test_neural_bus_brain_events():
+def test_neural_bus_brain_events() -> bool:
     """Test 8: EventTypes bevat MISSION_STARTED, STEP_COMPLETED, FORGE_SUCCESS."""
     print("\n" + "=" * 60)
     print("  TEST 8: NeuralBus Brain Event Types")
@@ -392,7 +397,7 @@ def test_neural_bus_brain_events():
     return _print_checks(checks)
 
 
-def main():
+def main() -> None:
     """Draai alle Brain Integration tests."""
     print()
     print("=" * 60)

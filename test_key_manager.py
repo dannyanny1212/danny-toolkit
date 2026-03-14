@@ -15,18 +15,20 @@ Tests:
 
 Gebruik: python test_key_manager.py
 """
+from __future__ import annotations
 
 import io
+import logging
 import os
 import sys
 import time
 
+logger = logging.getLogger(__name__)
+
 try:
-    sys.stdout = io.TextIOWrapper(
-        sys.stdout.buffer, encoding="utf-8", errors="replace"
-    )
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 except (ValueError, OSError):
-    pass
+    logger.debug("UTF-8 stdout wrapper failed")
 
 # Test-mode env
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
@@ -43,7 +45,8 @@ CHECKS = 0
 PASSED = 0
 
 
-def check(label: str, condition: bool):
+def check(label: str, condition: bool) -> None:
+    """Registreer een check resultaat."""
     global CHECKS, PASSED
     CHECKS += 1
     if condition:
@@ -53,7 +56,7 @@ def check(label: str, condition: bool):
         print(f"  [FAIL] {label}")
 
 
-def test_singleton():
+def test_singleton() -> None:
     """Test 1: Singleton pattern — altijd dezelfde instantie."""
     print("\n--- Test 1: Singleton Pattern ---")
 
@@ -74,7 +77,7 @@ def test_singleton():
     check("Type is SmartKeyManager", isinstance(mgr1, SmartKeyManager))
 
 
-def test_key_discovery():
+def test_key_discovery() -> None:
     """Test 2: Key discovery — vindt keys uit environment."""
     print("\n--- Test 2: Key Discovery ---")
 
@@ -98,7 +101,7 @@ def test_key_discovery():
     os.environ["GROQ_API_KEY"] = "gsk_test_key_1234567890abcdefghij"
 
 
-def test_invalid_keys_ignored():
+def test_invalid_keys_ignored() -> None:
     """Test 3: Ongeldige keys worden genegeerd."""
     print("\n--- Test 3: Ongeldige Keys ---")
 
@@ -123,7 +126,7 @@ def test_invalid_keys_ignored():
     os.environ["GROQ_API_KEY"] = "gsk_test_key_1234567890abcdefghij"
 
 
-def test_agent_metrics():
+def test_agent_metrics() -> None:
     """Test 4: Per-agent metrieken worden aangemaakt."""
     print("\n--- Test 4: Agent Metrieken ---")
 
@@ -148,7 +151,7 @@ def test_agent_metrics():
     check("Onbekend agent krijgt default prioriteit 5", agent4.prioriteit == 5)
 
 
-def test_rate_tracking():
+def test_rate_tracking() -> None:
     """Test 5: RPM en token tracking."""
     print("\n--- Test 5: Rate Tracking ---")
 
@@ -178,7 +181,7 @@ def test_rate_tracking():
     check("Cumulatief: 300 tokens", agent.totaal_tokens == 300)
 
 
-def test_cooldown_429():
+def test_cooldown_429() -> None:
     """Test 6: Cooldown na rate limit hit."""
     print("\n--- Test 6: Cooldown na 429 ---")
 
@@ -209,7 +212,7 @@ def test_cooldown_429():
     )
 
 
-def test_priority_cooldowns():
+def test_priority_cooldowns() -> None:
     """Test 7: Prioriteit-gebaseerde cooldown duur."""
     print("\n--- Test 7: Prioriteit Cooldowns ---")
 
@@ -222,7 +225,7 @@ def test_priority_cooldowns():
     check("Lagere prio = langere cooldown", PRIORITY_COOLDOWN[0] < PRIORITY_COOLDOWN[5])
 
 
-def test_throttle_rpm():
+def test_throttle_rpm() -> None:
     """Test 8: Throttle bij RPM limiet."""
     print("\n--- Test 8: RPM Throttle ---")
 
@@ -244,7 +247,7 @@ def test_throttle_rpm():
     check("Reden bevat 'RPM'", "RPM" in reden)
 
 
-def test_throttle_tpm():
+def test_throttle_tpm() -> None:
     """Test 9: Throttle bij TPM limiet."""
     print("\n--- Test 9: TPM Throttle ---")
 
@@ -265,7 +268,7 @@ def test_throttle_tpm():
     check("Reden bevat 'TPM'", "TPM" in reden)
 
 
-def test_client_factory():
+def test_client_factory() -> None:
     """Test 10: Client factory methodes."""
     print("\n--- Test 10: Client Factory ---")
 
@@ -295,7 +298,7 @@ def test_client_factory():
         check("Groq niet beschikbaar — skip sync test", True)
 
 
-def test_status_report():
+def test_status_report() -> None:
     """Test 11: Status rapport bevat alle verwachte velden."""
     print("\n--- Test 11: Status Rapport ---")
 
@@ -322,7 +325,7 @@ def test_status_report():
     check("Agent heeft 'in_cooldown'", "in_cooldown" in agent_status)
 
 
-def test_reset():
+def test_reset() -> None:
     """Test 12: Reset functionaliteit."""
     print("\n--- Test 12: Reset ---")
 
@@ -342,7 +345,7 @@ def test_reset():
     check("Globale 429 teller gereset", mgr._global_429_count == 0)
 
 
-def test_global_escalation():
+def test_global_escalation() -> None:
     """Test 13: Globale cooldown bij herhaalde 429s."""
     print("\n--- Test 13: Globale Escalatie ---")
 
@@ -366,7 +369,7 @@ def test_global_escalation():
     check("Reden bevat 'Globale'", "Globale" in reden)
 
 
-def test_agent_summary():
+def test_agent_summary() -> None:
     """Test 14: Agent summary string."""
     print("\n--- Test 14: Agent Summary ---")
 
@@ -386,7 +389,8 @@ def test_agent_summary():
     check("Summary bevat tokens", "100 tokens" in summary)
 
 
-def main():
+def main() -> None:
+    """Draai alle SmartKeyManager tests."""
     global CHECKS, PASSED
 
     print("=" * 60)

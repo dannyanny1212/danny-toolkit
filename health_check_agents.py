@@ -1,14 +1,13 @@
-"""
-🏥 HEALTH CHECK: 4 Swarm Agents
-================================
-Verifieert: Import, Instantiatie, Lazy Loading, Backing Modules, Registration.
-Geen API calls — alleen structurele integriteit.
-"""
+"""Health check for 4 Swarm Agents: import, instantiation, lazy loading, registration."""
+from __future__ import annotations
+
 import sys
 import os
 import time
 import asyncio
 import logging
+
+logger = logging.getLogger(__name__)
 
 # Test isolation
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
@@ -19,7 +18,7 @@ os.environ["ANONYMIZED_TELEMETRY"] = "False"
 try:
     sys.stdout.reconfigure(encoding="utf-8")
 except Exception:
-    pass
+    logger.debug("stdout reconfigure failed")
 
 logging.basicConfig(level=logging.WARNING)
 
@@ -28,18 +27,24 @@ PASS = 0
 FAIL = 0
 WARN = 0
 
-def ok(msg):
+
+def ok(msg: str) -> None:
+    """Log a passed check."""
     global PASS
     PASS += 1
     print(f"  🟢 PASS: {msg}")
 
-def fail(msg, err=None):
+
+def fail(msg: str, err: object = None) -> None:
+    """Log a failed check."""
     global FAIL
     FAIL += 1
     detail = f" — {err}" if err else ""
     print(f"  🟥 FAIL: {msg}{detail}")
 
-def warn(msg):
+
+def warn(msg: str) -> None:
+    """Log a warning check."""
     global WARN
     WARN += 1
     print(f"  🟧 WARN: {msg}")

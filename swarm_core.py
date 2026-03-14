@@ -1,6 +1,5 @@
 """
-SWARM CORE — Backend Wrapper met Callback Mechanisme
-=====================================================
+SWARM CORE — Backend Wrapper met Callback Mechanisme.
 
 Clean scheiding tussen frontend (sanctuary_ui.py) en
 backend (trinity_omega.py). Elke pipeline-stap vuurt
@@ -19,12 +18,14 @@ Gebruik:
         "Bitcoin analyse", brain, callback=update_ui
     )
 """
+from __future__ import annotations
 
 import io
 import logging
 import re
 import random
 from contextlib import redirect_stdout
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -48,8 +49,8 @@ except ImportError:
 
 
 def _log_to_cortical(
-    actor, action, details=None, source="swarm_core"
-):
+    actor: str, action: str, details: dict | None = None, source: str = "swarm_core"
+) -> None:
     """Log naar CorticalStack als beschikbaar. Silent fail."""
     if not HAS_CORTICAL:
         return
@@ -65,7 +66,7 @@ def _log_to_cortical(
         logger.debug("Cortical log failed: %s", e)
 
 
-def _learn_from_input(prompt):
+def _learn_from_input(prompt: str) -> None:
     """Extraheer feiten uit user input.
 
     Herkent patronen als 'mijn naam is X',
@@ -117,7 +118,7 @@ _GREETING_PATTERNS = [
 ]
 
 
-def _fast_track_router(prompt):
+def _fast_track_router(prompt: str) -> tuple[str | None, str | None]:
     """Bliksemsnel intent-herkenning zonder AI.
 
     Returns:
@@ -138,20 +139,22 @@ def _fast_track_router(prompt):
 class CallbackWriter:
     """Intercepteert print() en vuurt callback per regel."""
 
-    def __init__(self, callback):
+    def __init__(self, callback: Any) -> None:
+        """Initialiseer met callback functie."""
         self.callback = callback
 
-    def write(self, text):
+    def write(self, text: str) -> None:
+        """Schrijf tekst naar callback."""
         if text.strip() and self.callback:
             self.callback(text.strip())
 
-    def flush(self):
-        pass
+    def flush(self) -> None:
+        """Flush buffer (no-op)."""
 
 
 # ── MEDIA GENERATORS ──
 
-def _crypto_metrics():
+def _crypto_metrics() -> dict:
     """Genereer crypto market ticker + 30d chart data.
 
     Combineert st.metric tickers (Bloomberg-stijl) met
@@ -208,7 +211,7 @@ def _crypto_metrics():
     }
 
 
-def _health_chart():
+def _health_chart() -> dict:
     """Genereer 24-uur HRV + hartslag data."""
     np.random.seed(7)
     uren = pd.date_range(
@@ -226,7 +229,7 @@ def _health_chart():
     }
 
 
-def _data_chart():
+def _data_chart() -> dict:
     """Genereer 6 systeem-metrics bar chart."""
     np.random.seed(13)
     labels = [
@@ -243,7 +246,7 @@ def _data_chart():
     }
 
 
-def _code_media(output):
+def _code_media(output: Any) -> dict | None:
     """Extraheer code blocks uit specialist output."""
     pattern = r"```(?:\w+)?\n(.*?)```"
     matches = re.findall(pattern, str(output), re.DOTALL)
@@ -256,7 +259,7 @@ def _code_media(output):
     return None
 
 
-def _generate_media(category, output):
+def _generate_media(category: str, output: Any) -> dict | None:
     """Dispatcher: categorie → visuele media.
 
     Returns:
@@ -274,7 +277,7 @@ def _generate_media(category, output):
     return None
 
 
-def run_hub_spoke_pipeline(prompt, brain, callback=None):
+def run_hub_spoke_pipeline(prompt: str, brain: Any, callback: Any = None) -> tuple:
     """Hub & Spoke pipeline met live callback.
 
     Args:
@@ -291,7 +294,8 @@ def run_hub_spoke_pipeline(prompt, brain, callback=None):
         - media: dict met visuele data (chart/code),
                  of None als er geen visual hoort.
     """
-    def log(msg):
+    def log(msg: str) -> None:
+        """Stuur bericht naar callback."""
         if callback:
             callback(msg)
 
@@ -324,9 +328,13 @@ def run_hub_spoke_pipeline(prompt, brain, callback=None):
             "swarm", "fast_track",
             {"agent": fast_agent, "prompt": prompt[:200]},
         )
-        from danny_toolkit.brain.trinity_omega import (
-            TaskResult,
-        )
+        try:
+            from danny_toolkit.brain.trinity_omega import (
+                TaskResult,
+            )
+        except ImportError:
+            logger.debug("TaskResult import failed")
+            return None, fast_agent, fast_response, None
         fast_result = TaskResult(
             task=prompt,
             assigned_to=fast_agent,
@@ -420,7 +428,7 @@ def run_hub_spoke_pipeline(prompt, brain, callback=None):
     return result, assigned, output, media
 
 
-def run_chain_pipeline(prompt, brain, callback=None):
+def run_chain_pipeline(prompt: str, brain: Any, callback: Any = None) -> dict:
     """Chain of Command pipeline met live callback.
 
     Onderschept alle print() statements van
@@ -435,7 +443,8 @@ def run_chain_pipeline(prompt, brain, callback=None):
     Returns:
         dict met chain_of_command resultaten.
     """
-    def log(msg):
+    def log(msg: str) -> None:
+        """Stuur bericht naar callback."""
         if callback:
             callback(msg)
 
@@ -485,7 +494,7 @@ def run_chain_pipeline(prompt, brain, callback=None):
 from swarm_engine import run_swarm_sync
 
 
-def run_hub_spoke_v5(prompt, brain, callback=None):
+def run_hub_spoke_v5(prompt: str, brain: Any, callback: Any = None) -> dict:
     """Bridge: Swarm Engine v5.0 → oud UI-formaat.
 
     Delegeert naar de nieuwe async SwarmEngine en

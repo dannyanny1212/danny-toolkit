@@ -27,8 +27,8 @@ logger = logging.getLogger(__name__)
 
 # Defaults
 MAX_RETRIES = 3
-BASE_DELAY = 2.0  # seconden
-API_TIMEOUT = 30  # seconden — voorkomt hang bij Groq outage
+BASE_DELAY = 1.0  # seconden (was 2.0 — halve backoff)
+API_TIMEOUT = 18  # seconden (was 30 — Groq antwoordt typisch in 1-5s)
 
 try:
     from danny_toolkit.core.key_manager import get_key_manager
@@ -134,6 +134,22 @@ async def groq_call_async(
                     km.registreer_429(agent_naam)
 
                 if poging < max_retries - 1:
+                    # Dual-Core: try alternate key instantly (no sleep)
+                    current_key = km.get_key_of_client(client) if km else ""
+                    alt_key = km.get_alternate_key(current_key) if km else ""
+                    if alt_key and alt_key != current_key:
+                        try:
+                            from groq import AsyncGroq
+                            client = AsyncGroq(api_key=alt_key)
+                            logger.info(
+                                f"{agent_naam}: 429 → instant key rotation "
+                                f"(poging {poging + 1}/{max_retries})"
+                            )
+                            continue  # Retry immediately, no backoff
+                        except Exception:
+                            pass  # Fall through to normal backoff
+
+                    # No alternate key — normal backoff
                     wacht = BASE_DELAY * (2 ** poging) * random.uniform(0.5, 1.5)
                     logger.warning(
                         f"{agent_naam}: 429 rate limit — "
@@ -206,6 +222,22 @@ def groq_call_sync(
                     km.registreer_429(agent_naam)
 
                 if poging < max_retries - 1:
+                    # Dual-Core: try alternate key instantly (no sleep)
+                    current_key = km.get_key_of_client(client) if km else ""
+                    alt_key = km.get_alternate_key(current_key) if km else ""
+                    if alt_key and alt_key != current_key:
+                        try:
+                            from groq import Groq
+                            client = Groq(api_key=alt_key)
+                            logger.info(
+                                f"{agent_naam}: 429 → instant key rotation "
+                                f"(poging {poging + 1}/{max_retries})"
+                            )
+                            continue  # Retry immediately, no backoff
+                        except Exception:
+                            pass  # Fall through to normal backoff
+
+                    # No alternate key — normal backoff
                     wacht = BASE_DELAY * (2 ** poging) * random.uniform(0.5, 1.5)
                     logger.warning(
                         f"{agent_naam}: 429 rate limit — "

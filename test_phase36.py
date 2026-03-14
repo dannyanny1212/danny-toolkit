@@ -11,16 +11,20 @@ Phase 36 Tests — REQUEST TRACER: Distributed Tracing.
   Tests 15-16: FastAPI /trace/{id} endpoint, /traces endpoint
   Tests 17-18: Pipeline integratie (swarm_engine spans), version check
 """
+from __future__ import annotations
 
+import logging
 import os
 import sys
+
+logger = logging.getLogger(__name__)
 
 try:
     sys.stdout = __import__("io").TextIOWrapper(
         sys.stdout.buffer, encoding="utf-8", errors="replace",
     )
 except (ValueError, OSError):
-    pass
+    logger.debug("Invalid value encountered")
 
 # Test-mode env
 os.environ.setdefault("DANNY_TEST_MODE", "1")
@@ -34,7 +38,8 @@ passed = 0
 failed = 0
 
 
-def check(beschrijving: str, conditie: bool):
+def check(beschrijving: str, conditie: bool) -> None:
+    """Registreer een check resultaat."""
     global passed, failed
     if conditie:
         passed += 1
@@ -48,7 +53,7 @@ def check(beschrijving: str, conditie: bool):
 # Tests 1-3: Module imports, ContextVar, dataclasses
 # ═══════════════════════════════════════════════════
 
-def test_1_module_import():
+def test_1_module_import() -> None:
     """request_tracer module importeert correct."""
     print("\n[Test 1] Module import")
     import danny_toolkit.core.request_tracer as mod
@@ -60,7 +65,7 @@ def test_1_module_import():
     check("RequestTrace dataclass bestaat", hasattr(mod, "RequestTrace"))
 
 
-def test_2_contextvars():
+def test_2_contextvars() -> None:
     """ContextVars zijn gedefinieerd."""
     print("\n[Test 2] ContextVars")
     from danny_toolkit.core.request_tracer import (
@@ -76,7 +81,7 @@ def test_2_contextvars():
     check("Default span is None", _current_span.get() is None)
 
 
-def test_3_dataclasses():
+def test_3_dataclasses() -> None:
     """TraceSpan en RequestTrace hebben correcte velden."""
     print("\n[Test 3] Dataclass velden")
     from danny_toolkit.core.request_tracer import (
@@ -107,7 +112,7 @@ def test_3_dataclasses():
 # Tests 4-6: begin_trace/eind_trace, span tracking
 # ═══════════════════════════════════════════════════
 
-def test_4_trace_lifecycle():
+def test_4_trace_lifecycle() -> None:
     """begin_trace/eind_trace lifecycle."""
     print("\n[Test 4] Trace lifecycle")
     from danny_toolkit.core.request_tracer import (
@@ -128,7 +133,7 @@ def test_4_trace_lifecycle():
     check("ContextVar gereset", _current_trace.get() is None)
 
 
-def test_5_span_tracking():
+def test_5_span_tracking() -> None:
     """Spans worden correct bijgehouden."""
     print("\n[Test 5] Span tracking")
     from danny_toolkit.core.request_tracer import RequestTracer
@@ -153,7 +158,7 @@ def test_5_span_tracking():
     tracer.eind_trace()
 
 
-def test_6_multiple_spans():
+def test_6_multiple_spans() -> None:
     """Meerdere spans in één trace."""
     print("\n[Test 6] Meerdere spans")
     from danny_toolkit.core.request_tracer import RequestTracer
@@ -179,7 +184,7 @@ def test_6_multiple_spans():
 # Tests 7-8: Ringbuffer, get_trace, get_recent
 # ═══════════════════════════════════════════════════
 
-def test_7_get_trace():
+def test_7_get_trace() -> None:
     """get_trace() haalt trace op via ID."""
     print("\n[Test 7] get_trace()")
     from danny_toolkit.core.request_tracer import RequestTracer
@@ -199,7 +204,7 @@ def test_7_get_trace():
     check("Niet-bestaande trace is None", not_found is None)
 
 
-def test_8_get_recent():
+def test_8_get_recent() -> None:
     """get_recent() haalt recente traces op."""
     print("\n[Test 8] get_recent()")
     from danny_toolkit.core.request_tracer import RequestTracer
@@ -220,7 +225,7 @@ def test_8_get_recent():
 # Tests 9-10: Fout registratie
 # ═══════════════════════════════════════════════════
 
-def test_9_registreer_fout():
+def test_9_registreer_fout() -> None:
     """registreer_fout() voegt fout_id toe aan trace."""
     print("\n[Test 9] registreer_fout()")
     from danny_toolkit.core.request_tracer import RequestTracer
@@ -237,7 +242,7 @@ def test_9_registreer_fout():
     tracer.eind_trace()
 
 
-def test_10_to_dict():
+def test_10_to_dict() -> None:
     """to_dict() en to_summary() serialisatie."""
     print("\n[Test 10] to_dict() en to_summary()")
     from danny_toolkit.core.request_tracer import RequestTracer
@@ -265,7 +270,7 @@ def test_10_to_dict():
 # Tests 11-12: NeuralBus events
 # ═══════════════════════════════════════════════════
 
-def test_11_neuralbus_event_defined():
+def test_11_neuralbus_event_defined() -> None:
     """NeuralBus heeft REQUEST_TRACE_COMPLETE event type."""
     print("\n[Test 11] NeuralBus REQUEST_TRACE_COMPLETE")
     from danny_toolkit.core.neural_bus import EventTypes
@@ -276,7 +281,7 @@ def test_11_neuralbus_event_defined():
           EventTypes.REQUEST_TRACE_COMPLETE == "request_trace_complete")
 
 
-def test_12_neuralbus_trace_event():
+def test_12_neuralbus_trace_event() -> None:
     """eind_trace() publiceert REQUEST_TRACE_COMPLETE."""
     print("\n[Test 12] NeuralBus trace event publicatie")
     from danny_toolkit.core.neural_bus import get_bus, EventTypes
@@ -285,7 +290,8 @@ def test_12_neuralbus_trace_event():
     bus = get_bus()
     received = []
 
-    def handler(event):
+    def handler(event: object) -> None:
+        """Handle bus event."""
         received.append(event)
 
     bus.subscribe(EventTypes.REQUEST_TRACE_COMPLETE, handler)
@@ -310,7 +316,7 @@ def test_12_neuralbus_trace_event():
 # Tests 13-14: Config.TRACING_ENABLED
 # ═══════════════════════════════════════════════════
 
-def test_13_config_tracing_enabled():
+def test_13_config_tracing_enabled() -> None:
     """Config.TRACING_ENABLED feature flag bestaat."""
     print("\n[Test 13] Config.TRACING_ENABLED")
     from danny_toolkit.core.config import Config
@@ -320,7 +326,7 @@ def test_13_config_tracing_enabled():
     check("Default is True", Config.TRACING_ENABLED is True)
 
 
-def test_14_singleton():
+def test_14_singleton() -> None:
     """get_request_tracer() geeft singleton terug."""
     print("\n[Test 14] Singleton patroon")
     from danny_toolkit.core.request_tracer import get_request_tracer
@@ -335,7 +341,7 @@ def test_14_singleton():
 # Tests 15-16: FastAPI endpoints
 # ═══════════════════════════════════════════════════
 
-def test_15_fastapi_trace_models():
+def test_15_fastapi_trace_models() -> None:
     """FastAPI trace response modellen bestaan."""
     print("\n[Test 15] FastAPI trace modellen")
     from fastapi_server import (
@@ -360,7 +366,7 @@ def test_15_fastapi_trace_models():
     check("TraceSummaryResponse.status", "status" in tsr_fields)
 
 
-def test_16_fastapi_trace_endpoints():
+def test_16_fastapi_trace_endpoints() -> None:
     """FastAPI heeft /trace/{id} en /traces endpoints."""
     print("\n[Test 16] FastAPI trace endpoints")
     from fastapi_server import app
@@ -376,7 +382,7 @@ def test_16_fastapi_trace_endpoints():
 # Tests 17-18: Pipeline integratie + version
 # ═══════════════════════════════════════════════════
 
-def test_17_pipeline_spans():
+def test_17_pipeline_spans() -> None:
     """swarm_engine.py bevat RequestTracer span code."""
     print("\n[Test 17] Pipeline RequestTracer integratie")
     import inspect
@@ -397,7 +403,7 @@ def test_17_pipeline_spans():
     check("schild span", '"schild"' in source)
 
 
-def test_18_module_integrity():
+def test_18_module_integrity() -> None:
     """Alle gewijzigde modules importeren zonder fouten."""
     print("\n[Test 18] Module integrity check")
     modules = [

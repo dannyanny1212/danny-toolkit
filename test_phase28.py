@@ -13,13 +13,15 @@ import re
 import sys
 import tempfile
 import time
+import logging
+logger = logging.getLogger(__name__)
 
 try:
     sys.stdout = __import__("io").TextIOWrapper(
         sys.stdout.buffer, encoding="utf-8", errors="replace",
     )
 except (ValueError, OSError):
-    pass
+    logger.debug("Invalid value encountered")
 
 # Test-mode env
 os.environ.setdefault("DANNY_TEST_MODE", "1")

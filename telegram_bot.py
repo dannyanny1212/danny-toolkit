@@ -1,5 +1,5 @@
 """
-Danny Toolkit — Telegram Bot.
+Danny Toolkit -- Telegram Bot.
 
 Stuur berichten naar je Telegram bot en ontvang antwoorden
 van de SwarmEngine. Admin-only beveiliging.
@@ -15,6 +15,7 @@ Setup:
     4. Stuur /start naar @userinfobot voor je ID
     5. Zet je ID in .env (TELEGRAM_ADMIN_ID)
 """
+from __future__ import annotations
 
 import atexit
 import asyncio
@@ -50,7 +51,7 @@ logging.basicConfig(
 logger = logging.getLogger("DannyBot")
 
 
-def _shutdown():
+def _shutdown() -> None:
     """Flush CorticalStack op shutdown."""
     try:
         from danny_toolkit.brain.cortical_stack import (
@@ -368,7 +369,7 @@ async def cmd_logs(update, context):
         try:
             count = min(int(context.args[0]), 25)
         except (ValueError, IndexError):
-            pass
+            logger.debug("Invalid value encountered")
 
     regels = [f"RECENTE EVENTS (laatste {count})\n━━━━━━━━━━━━━━━━━━━━\n"]
 

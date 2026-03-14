@@ -1,15 +1,14 @@
-"""
-Tests voor ProactiveEngine v1.0.
+"""Tests voor ProactiveEngine v1.0."""
+from __future__ import annotations
 
-Draai:
-    python test_proactive.py
-"""
-
+import logging
 import os
 import sys
 import time
 from unittest.mock import MagicMock, patch
 from datetime import datetime, timedelta
+
+logger = logging.getLogger(__name__)
 
 # Test-mode env
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
@@ -19,7 +18,7 @@ os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
 
 # ── Helpers ──
 
-def _maak_mock_daemon():
+def _maak_mock_daemon() -> MagicMock:
     """Maak een mock DigitalDaemon."""
     daemon = MagicMock()
     daemon.sensorium = MagicMock()
@@ -40,11 +39,15 @@ def _maak_mock_daemon():
     return daemon
 
 
-def _maak_engine(daemon=None):
+def _maak_engine(daemon: object = None) -> object:
     """Maak ProactiveEngine met mock daemon."""
-    from danny_toolkit.brain.proactive import (
-        ProactiveEngine,
-    )
+    try:
+        from danny_toolkit.brain.proactive import (
+            ProactiveEngine,
+        )
+    except ImportError:
+        logger.debug("proactive not available")
+        raise
     if daemon is None:
         daemon = _maak_mock_daemon()
     return ProactiveEngine(daemon)
@@ -52,22 +55,30 @@ def _maak_engine(daemon=None):
 
 # ── Tests ──
 
-def test_01_import():
+def test_01_import() -> None:
     """Test import van ProactiveRule en ProactiveEngine."""
-    from danny_toolkit.brain.proactive import (
-        ProactiveRule,
-        ProactiveEngine,
-    )
+    try:
+        from danny_toolkit.brain.proactive import (
+            ProactiveRule,
+            ProactiveEngine,
+        )
+    except ImportError:
+        logger.debug("proactive not available")
+        raise
     assert ProactiveRule is not None
     assert ProactiveEngine is not None
     print("  [OK] test_01_import")
 
 
-def test_02_proactive_rule_constructie():
+def test_02_proactive_rule_constructie() -> None:
     """Test ProactiveRule dataclass constructie."""
-    from danny_toolkit.brain.proactive import (
-        ProactiveRule,
-    )
+    try:
+        from danny_toolkit.brain.proactive import (
+            ProactiveRule,
+        )
+    except ImportError:
+        logger.debug("proactive not available")
+        raise
     regel = ProactiveRule(
         naam="test_regel",
         conditie=lambda s: True,
@@ -84,7 +95,7 @@ def test_02_proactive_rule_constructie():
     print("  [OK] test_02_proactive_rule_constructie")
 
 
-def test_03_engine_init():
+def test_03_engine_init() -> None:
     """Test ProactiveEngine initialisatie."""
     engine = _maak_engine()
     assert engine.regels is not None
@@ -94,7 +105,7 @@ def test_03_engine_init():
     print("  [OK] test_03_engine_init")
 
 
-def test_04_standaard_regels():
+def test_04_standaard_regels() -> None:
     """Test dat alle 8 standaard regels aanwezig zijn."""
     engine = _maak_engine()
     namen = {r.naam for r in engine.regels}
@@ -114,16 +125,21 @@ def test_04_standaard_regels():
     print("  [OK] test_04_standaard_regels")
 
 
-def test_05_cooldown_werkt():
+def test_05_cooldown_werkt() -> None:
     """Test dat cooldown herhaalde triggers voorkomt."""
-    from danny_toolkit.brain.proactive import (
-        ProactiveRule,
-    )
+    try:
+        from danny_toolkit.brain.proactive import (
+            ProactiveRule,
+        )
+    except ImportError:
+        logger.debug("proactive not available")
+        raise
     engine = _maak_engine()
 
     teller = {"count": 0}
 
-    def tel_actie(tekst):
+    def tel_actie(tekst: str) -> None:
+        """Count action invocations."""
         teller["count"] += 1
 
     engine._voeg_melding_toe = tel_actie
@@ -150,11 +166,15 @@ def test_05_cooldown_werkt():
     print("  [OK] test_05_cooldown_werkt")
 
 
-def test_06_governor_blokkeert_bij_red():
+def test_06_governor_blokkeert_bij_red() -> None:
     """Test dat Governor lage-prioriteit regels blokkeert."""
-    from danny_toolkit.brain.proactive import (
-        ProactiveRule,
-    )
+    try:
+        from danny_toolkit.brain.proactive import (
+            ProactiveRule,
+        )
+    except ImportError:
+        logger.debug("proactive not available")
+        raise
     engine = _maak_engine()
 
     # Mock governor met RED status
@@ -166,7 +186,8 @@ def test_06_governor_blokkeert_bij_red():
 
     teller = {"count": 0}
     original_voer_uit = engine._voer_uit
-    def mock_voer_uit(regel, state):
+    def mock_voer_uit(regel: object, state: dict) -> None:
+        """Mock execution that counts invocations."""
         teller["count"] += 1
         original_voer_uit(regel, state)
     engine._voer_uit = mock_voer_uit
@@ -201,17 +222,22 @@ def test_06_governor_blokkeert_bij_red():
     print("  [OK] test_06_governor_blokkeert_bij_red")
 
 
-def test_07_timer_regels():
+def test_07_timer_regels() -> None:
     """Test timer-gebaseerde regels."""
-    from danny_toolkit.brain.proactive import (
-        ProactiveRule,
-    )
+    try:
+        from danny_toolkit.brain.proactive import (
+            ProactiveRule,
+        )
+    except ImportError:
+        logger.debug("proactive not available")
+        raise
     engine = _maak_engine()
 
     now = datetime.now()
     teller = {"count": 0}
 
-    def tel_actie(tekst):
+    def tel_actie(tekst: str) -> None:
+        """Count action invocations."""
         teller["count"] += 1
 
     engine._voeg_melding_toe = tel_actie
@@ -234,7 +260,7 @@ def test_07_timer_regels():
     print("  [OK] test_07_timer_regels")
 
 
-def test_08_melding_queue():
+def test_08_melding_queue() -> None:
     """Test melding toevoegen, ophalen en legen."""
     engine = _maak_engine()
 
@@ -255,11 +281,15 @@ def test_08_melding_queue():
     print("  [OK] test_08_melding_queue")
 
 
-def test_09_voeg_regel_toe():
+def test_09_voeg_regel_toe() -> None:
     """Test custom regel toevoegen."""
-    from danny_toolkit.brain.proactive import (
-        ProactiveRule,
-    )
+    try:
+        from danny_toolkit.brain.proactive import (
+            ProactiveRule,
+        )
+    except ImportError:
+        logger.debug("proactive not available")
+        raise
     engine = _maak_engine()
     begin_count = len(engine.regels)
 
@@ -283,21 +313,26 @@ def test_09_voeg_regel_toe():
         engine.voeg_regel_toe(korte_regel)
         assert False, "Moet ValueError geven"
     except ValueError:
-        pass
+        logger.debug("ValueError raised as expected for short cooldown")
 
     print("  [OK] test_09_voeg_regel_toe")
 
 
-def test_10_sensorium_event_dispatch():
-    """Test dat Sensorium event → regel evaluatie werkt."""
-    from danny_toolkit.brain.proactive import (
-        ProactiveRule,
-    )
+def test_10_sensorium_event_dispatch() -> None:
+    """Test dat Sensorium event naar regel evaluatie werkt."""
+    try:
+        from danny_toolkit.brain.proactive import (
+            ProactiveRule,
+        )
+    except ImportError:
+        logger.debug("proactive not available")
+        raise
     engine = _maak_engine()
 
     teller = {"count": 0}
 
-    def tel_actie(tekst):
+    def tel_actie(tekst: str) -> None:
+        """Count action invocations."""
         teller["count"] += 1
 
     engine._voeg_melding_toe = tel_actie
@@ -323,7 +358,7 @@ def test_10_sensorium_event_dispatch():
     print("  [OK] test_10_sensorium_event_dispatch")
 
 
-def test_11_stop():
+def test_11_stop() -> None:
     """Test graceful stop."""
     engine = _maak_engine()
     assert not engine._stop.is_set()
@@ -332,7 +367,7 @@ def test_11_stop():
     print("  [OK] test_11_stop")
 
 
-def test_12_get_status():
+def test_12_get_status() -> None:
     """Test engine status rapport."""
     engine = _maak_engine()
     status = engine.get_status()
@@ -346,7 +381,7 @@ def test_12_get_status():
     print("  [OK] test_12_get_status")
 
 
-def test_13_registreer_fout():
+def test_13_registreer_fout() -> None:
     """Test error tracking."""
     engine = _maak_engine()
 
@@ -363,16 +398,21 @@ def test_13_registreer_fout():
     print("  [OK] test_13_registreer_fout")
 
 
-def test_14_prioriteit_volgorde():
+def test_14_prioriteit_volgorde() -> None:
     """Test dat prioriteit 1 regels voor 3 gaan."""
-    from danny_toolkit.brain.proactive import (
-        ProactiveRule,
-    )
+    try:
+        from danny_toolkit.brain.proactive import (
+            ProactiveRule,
+        )
+    except ImportError:
+        logger.debug("proactive not available")
+        raise
     engine = _maak_engine()
     volgorde = []
 
     original = engine._voer_uit
-    def mock_voer_uit(regel, state):
+    def mock_voer_uit(regel: object, state: dict) -> None:
+        """Mock execution recording order."""
         volgorde.append(regel.naam)
         # Registreer cooldown handmatig
         engine._cooldowns[regel.naam] = time.time()
@@ -414,7 +454,7 @@ def test_14_prioriteit_volgorde():
 
 # ── Runner ──
 
-def main():
+def main() -> int:
     """Draai alle tests."""
     tests = [
         test_01_import,

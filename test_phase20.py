@@ -6,15 +6,19 @@ routes correct reageren, en auth werkt op metrics.
 
 6 tests, standalone uitvoerbaar: python test_phase20.py
 """
+from __future__ import annotations
 
 import io
+import logging
 import os
 import sys
 
+logger = logging.getLogger(__name__)
+
 try:
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 except (ValueError, OSError):
-    pass
+    logger.debug("Invalid value encountered")
 
 # Test-mode env
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
@@ -25,14 +29,15 @@ passed = 0
 failed = 0
 
 
-def check(label: str, condition: bool):
+def check(label: str, condition: bool) -> None:
+    """Registreer een check resultaat."""
     global passed, failed
     if condition:
         passed += 1
-        print(f"  ✅ {label}")
+        print(f"  OK  {label}")
     else:
         failed += 1
-        print(f"  ❌ {label}")
+        print(f"  FAIL  {label}")
 
 
 print("=" * 60)

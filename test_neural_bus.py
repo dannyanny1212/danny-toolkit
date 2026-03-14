@@ -3,17 +3,21 @@ Tests voor NeuralBus - Pub/Sub Event Systeem.
 
 Voer uit: python test_neural_bus.py
 """
+from __future__ import annotations
 
+import logging
 import os
 import sys
 import threading
 import time
 
+logger = logging.getLogger(__name__)
+
 # Windows UTF-8
 try:
     sys.stdout.reconfigure(encoding="utf-8")
 except (ValueError, OSError):
-    pass
+    logger.debug("UTF-8 reconfigure niet mogelijk")
 
 # Test-mode env
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
@@ -28,7 +32,7 @@ mislukt = 0
 checks = 0
 
 
-def check(naam, conditie):
+def check(naam: str, conditie: bool) -> None:
     """Verificatie helper."""
     global geslaagd, mislukt, checks
     checks += 1
@@ -40,13 +44,13 @@ def check(naam, conditie):
         print(f"  [X]  {naam}")
 
 
-def fresh_bus():
+def fresh_bus() -> object:
     """Maak een schone bus voor elke test."""
     bus_module._bus_instance = None
     return bus_module.get_bus()
 
 
-def test_singleton():
+def test_singleton() -> None:
     """Test dat get_bus() altijd dezelfde instantie teruggeeft."""
     print("\n=== Test 1: Singleton ===")
     bus1 = fresh_bus()
@@ -54,13 +58,14 @@ def test_singleton():
     check("Zelfde instantie", bus1 is bus2)
 
 
-def test_publish_subscribe():
+def test_publish_subscribe() -> None:
     """Test basis publish/subscribe flow."""
     print("\n=== Test 2: Publish/Subscribe ===")
     bus = fresh_bus()
     ontvangen = []
 
-    def handler(event):
+    def handler(event: object) -> None:
+        """Verwerk ontvangen event."""
         ontvangen.append(event)
 
     bus.subscribe("test_event", handler)
@@ -73,16 +78,18 @@ def test_publish_subscribe():
     check("Timestamp aanwezig", ontvangen[0].timestamp is not None)
 
 
-def test_meerdere_subscribers():
+def test_meerdere_subscribers() -> None:
     """Test meerdere subscribers op hetzelfde event type."""
     print("\n=== Test 3: Meerdere Subscribers ===")
     bus = fresh_bus()
     resultaten = {"a": 0, "b": 0}
 
-    def handler_a(event):
+    def handler_a(event: object) -> None:
+        """Handler A telt events."""
         resultaten["a"] += 1
 
-    def handler_b(event):
+    def handler_b(event: object) -> None:
+        """Handler B telt events."""
         resultaten["b"] += 1
 
     bus.subscribe("shared_event", handler_a)
@@ -93,7 +100,7 @@ def test_meerdere_subscribers():
     check("Handler B ontvangen", resultaten["b"] == 1)
 
 
-def test_type_isolatie():
+def test_type_isolatie() -> None:
     """Test dat events alleen naar de juiste subscribers gaan."""
     print("\n=== Test 4: Type Isolatie ===")
     bus = fresh_bus()
@@ -109,7 +116,7 @@ def test_type_isolatie():
     check("Type B ontvangt niet", len(ontvangen_b) == 0)
 
 
-def test_wildcard_subscriber():
+def test_wildcard_subscriber() -> None:
     """Test wildcard (*) subscriber ontvangt alle events."""
     print("\n=== Test 5: Wildcard Subscriber ===")
     bus = fresh_bus()
@@ -125,13 +132,14 @@ def test_wildcard_subscriber():
     check("Tweede event correct", alle_events[1].event_type == "event_y")
 
 
-def test_unsubscribe():
+def test_unsubscribe() -> None:
     """Test dat unsubscribe werkt."""
     print("\n=== Test 6: Unsubscribe ===")
     bus = fresh_bus()
     teller = [0]
 
-    def handler(event):
+    def handler(event: object) -> None:
+        """Tel ontvangen events."""
         teller[0] += 1
 
     bus.subscribe("test_event", handler)
@@ -143,7 +151,7 @@ def test_unsubscribe():
     check("Na unsubscribe: niet meer ontvangen", teller[0] == 1)
 
 
-def test_history():
+def test_history() -> None:
     """Test event history."""
     print("\n=== Test 7: History ===")
     bus = fresh_bus()
@@ -163,7 +171,7 @@ def test_history():
           bus.get_latest("onbekend") is None)
 
 
-def test_history_bron_filter():
+def test_history_bron_filter() -> None:
     """Test history filtering op bron."""
     print("\n=== Test 8: History Bron Filter ===")
     bus = fresh_bus()
@@ -177,7 +185,7 @@ def test_history_bron_filter():
     check("Bron A data correct", all(e.bron == "app_a" for e in only_a))
 
 
-def test_history_ringbuffer():
+def test_history_ringbuffer() -> None:
     """Test dat history niet onbegrensd groeit."""
     print("\n=== Test 9: History Ringbuffer ===")
     bus = fresh_bus()
@@ -190,7 +198,7 @@ def test_history_ringbuffer():
           len(history) <= bus._MAX_HISTORY)
 
 
-def test_get_context():
+def test_get_context() -> None:
     """Test cross-app context ophalen."""
     print("\n=== Test 10: Cross-App Context ===")
     bus = fresh_bus()
@@ -211,7 +219,7 @@ def test_get_context():
           "health_status_change" not in ctx_weer)
 
 
-def test_event_to_dict():
+def test_event_to_dict() -> None:
     """Test BusEvent serialisatie."""
     print("\n=== Test 11: Event Serialisatie ===")
     bus = fresh_bus()
@@ -226,7 +234,7 @@ def test_event_to_dict():
     check("Dict heeft timestamp", "timestamp" in d)
 
 
-def test_statistieken():
+def test_statistieken() -> None:
     """Test bus statistieken."""
     print("\n=== Test 12: Statistieken ===")
     bus = fresh_bus()
@@ -242,16 +250,18 @@ def test_statistieken():
     check("Geen fouten", stats["fouten"] == 0)
 
 
-def test_fout_in_handler():
+def test_fout_in_handler() -> None:
     """Test dat een fout in een handler de bus niet crasht."""
     print("\n=== Test 13: Fout Tolerantie ===")
     bus = fresh_bus()
     goede_resultaten = []
 
-    def kapotte_handler(event):
+    def kapotte_handler(event: object) -> None:
+        """Handler die opzettelijk een fout gooit."""
         raise ValueError("Opzettelijke fout!")
 
-    def goede_handler(event):
+    def goede_handler(event: object) -> None:
+        """Handler die correct functioneert."""
         goede_resultaten.append(event)
 
     bus.subscribe("fout_event", kapotte_handler)
@@ -262,14 +272,15 @@ def test_fout_in_handler():
     check("Fout geregistreerd", bus.statistieken()["fouten"] >= 1)
 
 
-def test_thread_safety():
+def test_thread_safety() -> None:
     """Test thread-safe publish vanuit meerdere threads."""
     print("\n=== Test 14: Thread Safety ===")
     bus = fresh_bus()
     ontvangen = []
     lock = threading.Lock()
 
-    def handler(event):
+    def handler(event: object) -> None:
+        """Thread-safe event handler."""
         with lock:
             ontvangen.append(event.data["thread"])
 
@@ -293,13 +304,14 @@ def test_thread_safety():
           set(ontvangen) == set(range(10)))
 
 
-def test_dubbele_subscribe():
+def test_dubbele_subscribe() -> None:
     """Test dat dezelfde callback niet dubbel wordt geregistreerd."""
     print("\n=== Test 15: Dubbele Subscribe ===")
     bus = fresh_bus()
     teller = [0]
 
-    def handler(event):
+    def handler(event: object) -> None:
+        """Tel ontvangen events."""
         teller[0] += 1
 
     bus.subscribe("dubbel_event", handler)
@@ -309,7 +321,7 @@ def test_dubbele_subscribe():
     check("Handler maar 1x aangeroepen", teller[0] == 1)
 
 
-def test_reset():
+def test_reset() -> None:
     """Test bus reset."""
     print("\n=== Test 16: Reset ===")
     bus = fresh_bus()
@@ -325,10 +337,14 @@ def test_reset():
     check("History gewist", stats["events_in_history"] == 0)
 
 
-def test_event_types_constanten():
+def test_event_types_constanten() -> None:
     """Test dat EventTypes de verwachte constanten heeft."""
     print("\n=== Test 17: EventTypes Constanten ===")
-    from danny_toolkit.core.neural_bus import EventTypes
+    try:
+        from danny_toolkit.core.neural_bus import EventTypes
+    except ImportError:
+        logger.debug("EventTypes import niet beschikbaar")
+        raise
 
     check("WEATHER_UPDATE", EventTypes.WEATHER_UPDATE == "weather_update")
     check("HEALTH_STATUS_CHANGE",
@@ -338,13 +354,14 @@ def test_event_types_constanten():
     check("SYSTEM_EVENT", EventTypes.SYSTEM_EVENT == "system_event")
 
 
-def test_cross_app_scenario():
+def test_cross_app_scenario() -> None:
     """Test realistisch cross-app scenario: fitness -> recipe."""
     print("\n=== Test 18: Cross-App Scenario ===")
     bus = fresh_bus()
     recept_context = {}
 
-    def on_health(event):
+    def on_health(event: object) -> None:
+        """Verwerk health event voor recept context."""
         recept_context["calorieen"] = event.data.get("calorieen", 0)
         recept_context["doel"] = event.data.get("doel", "fit")
 

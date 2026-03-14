@@ -8,18 +8,21 @@ Veilig: shutil.copy2 (metadata behouden, originelen intact).
 Gebruik: python consolidate_omega.py
 """
 
+from __future__ import annotations
+
 import io
+import logging
 import os
 import sys
 import shutil
 import time
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
+
 # Windows UTF-8
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(
-        sys.stdout.buffer, encoding="utf-8", errors="replace"
-    )
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 # === CONFIGURATIE ===
 
@@ -69,7 +72,8 @@ class V:
     DLINE = f"{DIM}{'═' * 62}{RST}"
 
 
-def banner():
+def banner() -> None:
+    """Toon de Omega consolidatie banner."""
     print(f"""
 {V.DLINE}
 {V.BLD}{V.CYN}  ██████  ███    ███ ███████  ██████   █████  {V.RST}
@@ -200,7 +204,8 @@ def copy_files(bestanden: list[dict], target: Path) -> tuple[int, int, int]:
 
 # === MAIN ===
 
-def main():
+def main() -> None:
+    """Voer de Omega consolidatie uit."""
     start = time.time()
     banner()
 

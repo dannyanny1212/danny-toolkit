@@ -1,12 +1,13 @@
 """
-OMEGA INTEGRITY CHECK - De Goddelijke Systeemvalidatie.
+OMEGA INTEGRITY CHECK -- De Goddelijke Systeemvalidatie.
 
 Valideert ALLE modules, quests en subsystemen van het
-Cosmic Omega ecosysteem. Geen simpele 'ls' - dit is een
+Cosmic Omega ecosysteem. Geen simpele 'ls' -- dit is een
 diepgaande Python import + structuur verificatie.
 
 Draai: python omega_integrity_check.py
 """
+from __future__ import annotations
 
 import importlib
 import logging
@@ -36,23 +37,28 @@ CYAAN = "\033[96m"
 WIT = "\033[97m"
 
 
-def ok(tekst):
+def ok(tekst: str) -> str:
+    """Groene tekst formatter."""
     return f"{GROEN}{tekst}{RESET}"
 
 
-def fail(tekst):
+def fail(tekst: str) -> str:
+    """Rode tekst formatter."""
     return f"{ROOD}{tekst}{RESET}"
 
 
-def titel(tekst):
+def titel(tekst: str) -> str:
+    """Magenta bold tekst formatter."""
     return f"{BOLD}{MAGENTA}{tekst}{RESET}"
 
 
-def dim(tekst):
+def dim(tekst: str) -> str:
+    """Gedimde tekst formatter."""
     return f"{DIM}{tekst}{RESET}"
 
 
-def accent(tekst):
+def accent(tekst: str) -> str:
+    """Cyaan accent tekst formatter."""
     return f"{CYAAN}{tekst}{RESET}"
 
 
@@ -182,7 +188,7 @@ SUBSYSTEM_CHECKS = [
 # CHECK FUNCTIES
 # ═══════════════════════════════════════════════════════════
 
-def check_module(module_pad, objecten):
+def check_module(module_pad: str, objecten: list[str]) -> tuple[bool, str]:
     """
     Probeer een module te importeren en check of objecten bestaan.
 
@@ -205,7 +211,7 @@ def check_module(module_pad, objecten):
     return True, "Alle objecten gevonden"
 
 
-def check_launcher_app(app_nr):
+def check_launcher_app(app_nr: int) -> bool:
     """Check of een app in de launcher staat."""
     try:
         from danny_toolkit.launcher import Launcher
@@ -215,7 +221,7 @@ def check_launcher_app(app_nr):
         return False
 
 
-def check_voice_backend():
+def check_voice_backend() -> dict:
     """Check welke voice backend actief is."""
     try:
         from danny_toolkit.core.emotional_voice import EmotionalVoice
@@ -229,7 +235,7 @@ def check_voice_backend():
 # MAIN CHECK
 # ═══════════════════════════════════════════════════════════
 
-def run_integrity_check():
+def run_integrity_check() -> tuple[int, int, str]:
     """Draai de volledige integriteitscheck."""
     print()
     print(titel(
@@ -347,7 +353,8 @@ def run_integrity_check():
     edge_tts = voice_status.get("edge_tts", False)
     pyttsx3 = voice_status.get("pyttsx3", False)
 
-    def bool_status(val):
+    def bool_status(val: bool) -> str:
+        """Format boolean als JA/NEE."""
         return ok("JA") if val else fail("NEE")
 
     print(f"    Actieve backend:  {accent(backend)}")

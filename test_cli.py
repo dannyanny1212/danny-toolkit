@@ -6,7 +6,7 @@ Test de visualisatie-functies en media-integratie
 van cli.py en swarm_core.py media generators.
 
 1. render_metrics() — Cipher Market Ticker tabel
-2. render_chart_ascii() — DataFrame → ASCII bars
+2. render_chart_ascii() — DataFrame naar ASCII bars
 3. render_media() — dispatch naar juiste renderer
 4. Media generators — _crypto_metrics, _health_chart,
    _data_chart, _code_media
@@ -14,16 +14,23 @@ van cli.py en swarm_core.py media generators.
 
 Gebruik: python test_cli.py
 """
+from __future__ import annotations
 
-import sys
-import os
 import io
+import logging
+import os
+import sys
 import time
+
+logger = logging.getLogger(__name__)
 
 # Windows UTF-8 fix
 if os.name == "nt":
-    sys.stdout.reconfigure(encoding="utf-8")
-    sys.stderr.reconfigure(encoding="utf-8")
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except (ValueError, OSError):
+        logger.debug("UTF-8 reconfigure niet mogelijk")
 
 # Test-mode env
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
@@ -49,7 +56,7 @@ from swarm_core import (
 from cli import render_metrics, render_chart_ascii
 
 
-def test_crypto_metrics():
+def test_crypto_metrics() -> bool:
     """Test 1: _crypto_metrics() structuur."""
     print("\n" + "=" * 60)
     print("  TEST 1: Crypto Metrics Generator")
@@ -109,7 +116,7 @@ def test_crypto_metrics():
     return _print_checks(checks)
 
 
-def test_health_chart():
+def test_health_chart() -> bool:
     """Test 2: _health_chart() structuur."""
     print("\n" + "=" * 60)
     print("  TEST 2: Health Chart Generator")
@@ -143,7 +150,7 @@ def test_health_chart():
     return _print_checks(checks)
 
 
-def test_data_chart():
+def test_data_chart() -> bool:
     """Test 3: _data_chart() structuur."""
     print("\n" + "=" * 60)
     print("  TEST 3: Data Chart Generator")
@@ -176,7 +183,7 @@ def test_data_chart():
     return _print_checks(checks)
 
 
-def test_code_media():
+def test_code_media() -> bool:
     """Test 4: _code_media() extractie."""
     print("\n" + "=" * 60)
     print("  TEST 4: Code Media Extractie")
@@ -207,14 +214,14 @@ def test_code_media():
     # Zonder code block
     media_none = _code_media("Gewone tekst zonder code")
     checks.append((
-        "geen code → None",
+        "geen code -> None",
         media_none is None,
     ))
 
     return _print_checks(checks)
 
 
-def test_generate_media_dispatch():
+def test_generate_media_dispatch() -> bool:
     """Test 5: _generate_media() dispatcher."""
     print("\n" + "=" * 60)
     print("  TEST 5: Media Dispatcher")
@@ -225,21 +232,21 @@ def test_generate_media_dispatch():
     # CRYPTO → metrics
     m = _generate_media("CRYPTO", "")
     checks.append((
-        "CRYPTO → metrics",
+        "CRYPTO -> metrics",
         m is not None and m["type"] == "metrics",
     ))
 
     # HEALTH → area_chart
     m = _generate_media("HEALTH", "")
     checks.append((
-        "HEALTH → area_chart",
+        "HEALTH -> area_chart",
         m is not None and m["type"] == "area_chart",
     ))
 
     # DATA → bar_chart
     m = _generate_media("DATA", "")
     checks.append((
-        "DATA → bar_chart",
+        "DATA -> bar_chart",
         m is not None and m["type"] == "bar_chart",
     ))
 
@@ -248,22 +255,22 @@ def test_generate_media_dispatch():
         "CODE", "```python\nx = 1\n```"
     )
     checks.append((
-        "CODE → code block",
+        "CODE -> code block",
         m is not None and m["type"] == "code",
     ))
 
     # CASUAL → None
     m = _generate_media("CASUAL", "hallo")
     checks.append((
-        "CASUAL → None",
+        "CASUAL -> None",
         m is None,
     ))
 
     return _print_checks(checks)
 
 
-def test_render_metrics():
-    """Test 6: render_metrics() → Rich Table."""
+def test_render_metrics() -> bool:
+    """Test 6: render_metrics() naar Rich Table."""
     print("\n" + "=" * 60)
     print("  TEST 6: CLI render_metrics()")
     print("=" * 60)
@@ -290,8 +297,8 @@ def test_render_metrics():
     return _print_checks(checks)
 
 
-def test_render_chart_ascii():
-    """Test 7: render_chart_ascii() → ASCII string."""
+def test_render_chart_ascii() -> bool:
+    """Test 7: render_chart_ascii() naar ASCII string."""
     print("\n" + "=" * 60)
     print("  TEST 7: CLI render_chart_ascii()")
     print("=" * 60)
@@ -321,14 +328,14 @@ def test_render_chart_ascii():
     empty_df = pd.DataFrame()
     output_empty = render_chart_ascii(empty_df)
     checks.append((
-        "lege df → geen crash",
+        "lege df -> geen crash",
         isinstance(output_empty, str),
     ))
 
     # None
     output_none = render_chart_ascii(None)
     checks.append((
-        "None → fallback tekst",
+        "None -> fallback tekst",
         "Geen data" in output_none,
     ))
 
@@ -342,16 +349,20 @@ def test_render_chart_ascii():
     return _print_checks(checks)
 
 
-def test_pipeline_media_integration():
+def test_pipeline_media_integration() -> bool:
     """Test 8: Hub & Spoke pipeline met media."""
     print("\n" + "=" * 60)
     print("  TEST 8: Pipeline Media Integratie")
     print("=" * 60)
 
     from contextlib import redirect_stdout
-    from danny_toolkit.brain.trinity_omega import (
-        PrometheusBrain,
-    )
+    try:
+        from danny_toolkit.brain.trinity_omega import (
+            PrometheusBrain,
+        )
+    except ImportError:
+        logger.debug("trinity_omega import niet beschikbaar")
+        raise
 
     buf = io.StringIO()
     with redirect_stdout(buf):
@@ -360,7 +371,8 @@ def test_pipeline_media_integration():
     checks = []
     logs = []
 
-    def test_callback(msg):
+    def test_callback(msg: str) -> None:
+        """Callback voor test logging."""
         logs.append(msg)
 
     # Crypto query → moet media genereren
@@ -390,7 +402,7 @@ def test_pipeline_media_integration():
     ))
 
     checks.append((
-        "crypto → media gegenereerd",
+        "crypto -> media gegenereerd",
         media is not None,
     ))
 
@@ -410,7 +422,7 @@ def test_pipeline_media_integration():
 
 # --- HELPER ---
 
-def _print_checks(checks):
+def _print_checks(checks: list) -> bool:
     """Print check resultaten en return True als alles OK."""
     passed = 0
     failed = 0
@@ -429,7 +441,7 @@ def _print_checks(checks):
     return failed == 0
 
 
-def main():
+def main() -> None:
     """Draai alle CLI tests."""
     print()
     print("=" * 60)

@@ -1,19 +1,9 @@
-"""
-Phase 25: Operational Hardening — Tests
-========================================
-10 tests, ~30 checks.
-
-Valideert:
-- A1: request_timestamps deque(maxlen=120)
-- A2: groq_retry timeout + jitter
-- B1: Alerter singleton + dedup
-- B3: HealthResponse deep probe fields
-- C1: log_rotation
-- C2: DevOpsDaemon._prune_old_reports
-"""
+"""Phase 25: Operational Hardening — Tests for caches, alerter, health, and log rotation."""
+from __future__ import annotations
 
 import io
 import json
+import logging
 import os
 import sys
 import time
@@ -21,10 +11,12 @@ import tempfile
 from collections import deque
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
+
 try:
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 except (ValueError, OSError):
-    pass
+    logger.debug("stdout reconfigure failed")
 
 PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -37,7 +29,8 @@ geslaagd = 0
 mislukt = 0
 
 
-def check(naam, conditie, detail=""):
+def check(naam: str, conditie: bool, detail: str = "") -> None:
+    """Verify a single test condition."""
     global geslaagd, mislukt
     if conditie:
         geslaagd += 1

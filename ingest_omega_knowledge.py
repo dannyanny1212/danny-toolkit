@@ -6,12 +6,16 @@ Elke doc helpt ALLE agents + Omega begrijpen wat ze moeten doen.
 
 Gebruik: python ingest_omega_knowledge.py
 """
+from __future__ import annotations
 
 import json
+import logging
 import os
 import sys
 import time
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 sys.stdout = open(sys.stdout.fileno(), mode="w", encoding="utf-8", errors="replace")
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -27,7 +31,7 @@ from danny_toolkit.core.vector_store import VectorStore
 OMEGA_DOCS = []
 
 
-def doc(doc_id, tekst, category, agents, use_cases):
+def doc(doc_id: str, tekst: str, category: str, agents: list[str], use_cases: list[str]) -> None:
     """Helper: registreer een kennisdocument."""
     OMEGA_DOCS.append({
         "id": f"omega_kb_{doc_id}",
@@ -709,7 +713,7 @@ Wet 4: import_analyzer.py scant op overtredingen.
 doc("proc_windows_utf8", """
 PROCEDURE: WINDOWS UTF-8 ENCODING
 Bij elk nieuw entry point:
-  sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+  sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 Of simpeler:
   import sys; sys.stdout.reconfigure(encoding="utf-8")
 Subprocess env: PYTHONIOENCODING=utf-8.
@@ -1185,7 +1189,8 @@ reset_turn() — aanroepen bij elke nieuwe user query.
 # INGESTION
 # ═══════════════════════════════════════════════════════════════
 
-def main():
+def main() -> None:
+    """Start de Omega Knowledge Base injectie."""
     print("=" * 60)
     print("  OMEGA KNOWLEDGE INJECTION — 72 Multi-Functionele Docs")
     print("=" * 60)

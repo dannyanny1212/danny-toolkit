@@ -12,16 +12,20 @@ Phase 33 Tests — CONFIGAUDITOR: Runtime configuratie-validatie.
   Tests 17:    Governor integratie
   Test  18:    brain/__init__.py exports
 """
+from __future__ import annotations
 
+import logging
 import os
 import sys
+
+logger = logging.getLogger(__name__)
 
 try:
     sys.stdout = __import__("io").TextIOWrapper(
         sys.stdout.buffer, encoding="utf-8", errors="replace",
     )
 except (ValueError, OSError):
-    pass
+    logger.debug("Invalid value encountered")
 
 # Test-mode env
 os.environ.setdefault("DANNY_TEST_MODE", "1")
@@ -35,7 +39,8 @@ passed = 0
 failed = 0
 
 
-def check(beschrijving: str, conditie: bool):
+def check(beschrijving: str, conditie: bool) -> None:
+    """Registreer een check resultaat."""
     global passed, failed
     if conditie:
         passed += 1
@@ -49,7 +54,7 @@ def check(beschrijving: str, conditie: bool):
 # Tests 1-3: Module imports, dataclasses, singleton
 # ═══════════════════════════════════════════════════
 
-def test_1_module_import():
+def test_1_module_import() -> None:
     """config_auditor module importeert correct."""
     print("\n[Test 1] Module import")
     import danny_toolkit.brain.config_auditor as mod
@@ -61,7 +66,7 @@ def test_1_module_import():
     check("AuditRapport dataclass bestaat", hasattr(mod, "AuditRapport"))
 
 
-def test_2_dataclasses():
+def test_2_dataclasses() -> None:
     """Dataclasses hebben correcte velden."""
     print("\n[Test 2] Dataclass velden")
     from danny_toolkit.brain.config_auditor import (
@@ -85,7 +90,7 @@ def test_2_dataclasses():
     check("AuditRapport.timestamp", "timestamp" in r_fields)
 
 
-def test_3_singleton():
+def test_3_singleton() -> None:
     """get_config_auditor() geeft singleton terug."""
     print("\n[Test 3] Singleton patroon")
     from danny_toolkit.brain.config_auditor import get_config_auditor
@@ -100,7 +105,7 @@ def test_3_singleton():
 # Tests 4-6: Model allowlist validatie
 # ═══════════════════════════════════════════════════
 
-def test_4_model_allowlists_exist():
+def test_4_model_allowlists_exist() -> None:
     """Allowlists voor alle providers bestaan."""
     print("\n[Test 4] Model allowlists")
     from danny_toolkit.brain.config_auditor import (
@@ -116,7 +121,7 @@ def test_4_model_allowlists_exist():
     check("PROVIDER_MODELS heeft 4 providers", len(PROVIDER_MODELS) == 4)
 
 
-def test_5_current_models_valid():
+def test_5_current_models_valid() -> None:
     """Huidige Config modellen staan in de allowlists."""
     print("\n[Test 5] Huidige modellen in allowlist")
     from danny_toolkit.brain.config_auditor import (
@@ -132,7 +137,7 @@ def test_5_current_models_valid():
     check("NVIDIA_NIM_MODEL in NVIDIA", Config.NVIDIA_NIM_MODEL in NVIDIA_NIM_MODELS)
 
 
-def test_6_model_check_detects_invalid():
+def test_6_model_check_detects_invalid() -> None:
     """_check_models detecteert onbekend model."""
     print("\n[Test 6] Model check detecteert ongeldig model")
     from danny_toolkit.brain.config_auditor import ConfigAuditor
@@ -155,7 +160,7 @@ def test_6_model_check_detects_invalid():
 # Tests 7-8: URL validatie
 # ═══════════════════════════════════════════════════
 
-def test_7_valid_url_passes():
+def test_7_valid_url_passes() -> None:
     """Geldige NVIDIA URL passeert validatie."""
     print("\n[Test 7] Geldige URL passeert")
     from danny_toolkit.brain.config_auditor import ConfigAuditor
@@ -172,7 +177,7 @@ def test_7_valid_url_passes():
         Config.NVIDIA_NIM_BASE_URL = orig
 
 
-def test_8_invalid_url_detected():
+def test_8_invalid_url_detected() -> None:
     """Ongeldige URL wordt gedetecteerd."""
     print("\n[Test 8] Ongeldige URL gedetecteerd")
     from danny_toolkit.brain.config_auditor import ConfigAuditor
@@ -195,7 +200,7 @@ def test_8_invalid_url_detected():
 # Tests 9-10: Key prefix & lengte validatie
 # ═══════════════════════════════════════════════════
 
-def test_9_key_prefixes():
+def test_9_key_prefixes() -> None:
     """Key prefix constanten zijn gedefinieerd."""
     print("\n[Test 9] Key prefix constanten")
     from danny_toolkit.brain.config_auditor import (
@@ -209,7 +214,7 @@ def test_9_key_prefixes():
     check("AGENT_KEY_VARS heeft 10 vars", len(AGENT_KEY_VARS) == 10)
 
 
-def test_10_key_check_detects_bad_prefix():
+def test_10_key_check_detects_bad_prefix() -> None:
     """_check_keys detecteert verkeerde key prefix."""
     print("\n[Test 10] Key check detecteert verkeerde prefix")
     from danny_toolkit.brain.config_auditor import ConfigAuditor
@@ -232,7 +237,7 @@ def test_10_key_check_detects_bad_prefix():
 # Tests 11-12: Snapshot & drift detectie
 # ═══════════════════════════════════════════════════
 
-def test_11_snapshot():
+def test_11_snapshot() -> None:
     """snapshot() geeft SHA-256 hashes terug."""
     print("\n[Test 11] Snapshot functie")
     from danny_toolkit.brain.config_auditor import (
@@ -256,7 +261,7 @@ def test_11_snapshot():
             break  # test slechts 1 om output beperkt te houden
 
 
-def test_12_drift_detection():
+def test_12_drift_detection() -> None:
     """detect_drift() detecteert env wijzigingen."""
     print("\n[Test 12] Drift detectie")
     from danny_toolkit.brain.config_auditor import ConfigAuditor
@@ -294,7 +299,7 @@ def test_12_drift_detection():
 # Tests 13-14: Full audit + rapport
 # ═══════════════════════════════════════════════════
 
-def test_13_full_audit():
+def test_13_full_audit() -> None:
     """audit() retourneert AuditRapport."""
     print("\n[Test 13] Volledige audit")
     from danny_toolkit.brain.config_auditor import (
@@ -310,7 +315,7 @@ def test_13_full_audit():
     check("veilig is bool", isinstance(rapport.veilig, bool))
 
 
-def test_14_toon_rapport():
+def test_14_toon_rapport() -> None:
     """toon_rapport() print zonder crash."""
     print("\n[Test 14] toon_rapport()")
     from danny_toolkit.brain.config_auditor import ConfigAuditor
@@ -333,7 +338,7 @@ def test_14_toon_rapport():
                 sys.stdout.buffer, encoding="utf-8", errors="replace",
             )
         except (ValueError, OSError):
-            pass
+            logger.debug("Invalid value encountered")
 
     check("toon_rapport() produceert output", len(output) > 0)
     check("Bevat CONFIG AUDIT", "CONFIG AUDIT" in output)
@@ -343,7 +348,7 @@ def test_14_toon_rapport():
 # Tests 15-16: NeuralBus events
 # ═══════════════════════════════════════════════════
 
-def test_15_neuralbus_events_defined():
+def test_15_neuralbus_events_defined() -> None:
     """NeuralBus heeft CONFIG_DRIFT_DETECTED en CONFIG_AUDIT_COMPLETE."""
     print("\n[Test 15] NeuralBus config events")
     from danny_toolkit.core.neural_bus import EventTypes
@@ -358,7 +363,7 @@ def test_15_neuralbus_events_defined():
           EventTypes.CONFIG_AUDIT_COMPLETE == "config_audit_complete")
 
 
-def test_16_neuralbus_audit_event():
+def test_16_neuralbus_audit_event() -> None:
     """Audit publiceert CONFIG_AUDIT_COMPLETE event."""
     print("\n[Test 16] NeuralBus audit event publicatie")
     from danny_toolkit.core.neural_bus import get_bus, EventTypes
@@ -367,7 +372,8 @@ def test_16_neuralbus_audit_event():
     bus = get_bus()
     received = []
 
-    def handler(event):
+    def handler(event: object) -> None:
+        """Handle bus event."""
         received.append(event)
 
     bus.subscribe(EventTypes.CONFIG_AUDIT_COMPLETE, handler)
@@ -388,7 +394,7 @@ def test_16_neuralbus_audit_event():
 # Test 17: Governor integratie
 # ═══════════════════════════════════════════════════
 
-def test_17_governor_integratie():
+def test_17_governor_integratie() -> None:
     """OmegaGovernor heeft periodieke_audit() methode."""
     print("\n[Test 17] Governor integratie")
     from danny_toolkit.brain.governor import OmegaGovernor
@@ -408,7 +414,7 @@ def test_17_governor_integratie():
 # Test 18: brain/__init__.py exports
 # ═══════════════════════════════════════════════════
 
-def test_18_brain_exports():
+def test_18_brain_exports() -> None:
     """ConfigAuditor beschikbaar via brain package."""
     print("\n[Test 18] brain/__init__.py exports")
     import danny_toolkit.brain as brain_pkg

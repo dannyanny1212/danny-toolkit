@@ -1,11 +1,11 @@
 """
-KINETIC CORE — De fysieke manipulator voor LEGION.
+KINETIC CORE -- De fysieke manipulator voor LEGION.
 
 Gereedschapskist met acties voor muis, toetsenbord
 en applicatiebeheer. Gescheiden van AI-logica
 voor veiligheid.
 
-pyautogui.FAILSAFE = True → duw muis naar
+pyautogui.FAILSAFE = True -- duw muis naar
 linkerbovenhoek om ALLES te stoppen.
 
 Gebruik:
@@ -14,7 +14,9 @@ Gebruik:
     k.launch_app("notepad")
     k.type_text("Hallo wereld!")
 """
+from __future__ import annotations
 
+import logging
 import os
 import platform
 import subprocess
@@ -22,6 +24,8 @@ import sys
 import time
 
 import pyautogui
+
+logger = logging.getLogger(__name__)
 
 # Windows UTF-8 fix
 if os.name == "nt":
@@ -99,10 +103,11 @@ def _valideer_app_naam(app_name: str) -> str:
 class KineticUnit:
     """De fysieke manipulator voor LEGION."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialiseer KineticUnit met OS-detectie."""
         self.os_type = platform.system()
 
-    def launch_app(self, app_name):
+    def launch_app(self, app_name: str) -> str:
         """Start een applicatie (veilig, geen shell).
 
         Valideert app_name tegen whitelist en
@@ -131,30 +136,30 @@ class KineticUnit:
         except Exception as e:
             return f"Fout bij openen {naam}: {e}"
 
-    def type_text(self, text, interval=0.05):
+    def type_text(self, text: str, interval: float = 0.05) -> str:
         """Typt als een mens (niet in 1x plakken)."""
         print(f"[Kinesis] Typing: {text[:30]}...")
         pyautogui.write(text, interval=interval)
         return "Typing complete"
 
-    def press_key(self, key):
+    def press_key(self, key: str) -> str:
         """Drukt op speciale toetsen (enter, tab, esc, win)."""
         pyautogui.press(key)
         return f"Pressed {key}"
 
-    def double_click(self, x, y):
+    def double_click(self, x: int, y: int) -> str:
         """Dubbelklik op een positie."""
         print(f"[Kinesis] Double-click: ({x},{y})")
         pyautogui.doubleClick(x, y)
         return f"Double-clicked ({x},{y})"
 
-    def right_click(self, x, y):
+    def right_click(self, x: int, y: int) -> str:
         """Rechts-klik op een positie."""
         print(f"[Kinesis] Right-click: ({x},{y})")
         pyautogui.rightClick(x, y)
         return f"Right-clicked ({x},{y})"
 
-    def hotkey(self, *keys):
+    def hotkey(self, *keys: str) -> str:
         """Combo's zoals Ctrl+C, Alt+Tab, Ctrl+Shift+S.
 
         Args:
@@ -172,8 +177,8 @@ class KineticUnit:
         pyautogui.hotkey(*keys)
         return f"Hotkey {combo}"
 
-    def drag_drop(self, start_x, start_y,
-                  end_x, end_y, duration=0.5):
+    def drag_drop(self, start_x: int, start_y: int,
+                  end_x: int, end_y: int, duration: float = 0.5) -> str:
         """Sleep een element van A naar B.
 
         Args:
@@ -199,7 +204,7 @@ class KineticUnit:
             f" -> ({end_x},{end_y})"
         )
 
-    def click(self, x, y, button="left", clicks=1):
+    def click(self, x: int, y: int, button: str = "left", clicks: int = 1) -> str:
         """Klik op een positie.
 
         Args:
@@ -220,7 +225,7 @@ class KineticUnit:
             f" [{button}] x{clicks}"
         )
 
-    def scroll(self, amount, x=None, y=None):
+    def scroll(self, amount: int, x: int | None = None, y: int | None = None) -> str:
         """Scroll omhoog (positief) of omlaag (negatief).
 
         Args:
@@ -237,7 +242,7 @@ class KineticUnit:
         pyautogui.scroll(amount, x=x, y=y)
         return f"Scrolled {amount} ({richting})"
 
-    def take_screenshot(self):
+    def take_screenshot(self) -> str:
         """Maakt een screenshot (ogen voor Pixel)."""
         screenshot_dir = os.path.join(
             os.path.dirname(__file__), "data"
@@ -250,8 +255,8 @@ class KineticUnit:
         return path
 
     def capture_screen(
-        self, filename="vision_input.png"
-    ):
+        self, filename: str = "vision_input.png"
+    ) -> str:
         """Oculus: Maakt een screenshot voor analyse.
 
         Slaat op in data/plots/ voor de vision

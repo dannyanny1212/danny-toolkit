@@ -9,7 +9,9 @@ Phase 31 Tests — TRACE EN TOLERANTIE: Request Tracing + Fault Tolerance.
   Tests 13-14: FastAPI integration (QueryResponse, HealthResponse)
   Tests 15-16: Version bump + module integrity
 """
+from __future__ import annotations
 
+import logging
 import os
 import re
 import sys
@@ -17,12 +19,14 @@ import time
 import threading
 import asyncio
 
+logger = logging.getLogger(__name__)
+
 try:
     sys.stdout = __import__("io").TextIOWrapper(
         sys.stdout.buffer, encoding="utf-8", errors="replace",
     )
 except (ValueError, OSError):
-    pass
+    logger.debug("Invalid value encountered")
 
 # Test-mode env
 os.environ.setdefault("DANNY_TEST_MODE", "1")
@@ -36,7 +40,8 @@ passed = 0
 failed = 0
 
 
-def check(beschrijving: str, conditie: bool):
+def check(beschrijving: str, conditie: bool) -> None:
+    """Registreer een check resultaat."""
     global passed, failed
     if conditie:
         passed += 1
@@ -50,7 +55,7 @@ def check(beschrijving: str, conditie: bool):
 # Tests 1-4: trace_id
 # ═══════════════════════════════════════════════════
 
-def test_1_trace_id_in_payload():
+def test_1_trace_id_in_payload() -> None:
     """SwarmPayload heeft trace_id veld."""
     print("\n[Test 1] SwarmPayload trace_id veld")
     from swarm_engine import SwarmPayload
@@ -68,7 +73,7 @@ def test_1_trace_id_in_payload():
     check("trace_id kan gezet worden", p2.trace_id == "abc12345")
 
 
-def test_2_trace_id_generation():
+def test_2_trace_id_generation() -> None:
     """trace_id wordt gegenereerd als 8-char hex."""
     print("\n[Test 2] trace_id generatie formaat")
     import uuid
@@ -82,7 +87,7 @@ def test_2_trace_id_generation():
     check("100 trace_ids zijn uniek", len(traces) == 100)
 
 
-def test_3_log_to_cortical_trace():
+def test_3_log_to_cortical_trace() -> None:
     """_log_to_cortical injecteert trace_id in details."""
     print("\n[Test 3] _log_to_cortical trace_id injectie")
     from swarm_engine import _log_to_cortical
@@ -93,7 +98,7 @@ def test_3_log_to_cortical_trace():
     check("trace_id parameter aanwezig", "trace_id" in sig.parameters)
 
 
-def test_4_circuit_state_function():
+def test_4_circuit_state_function() -> None:
     """get_circuit_state() beschikbaar en geeft dict."""
     print("\n[Test 4] get_circuit_state() module-functie")
     from swarm_engine import get_circuit_state
@@ -106,7 +111,7 @@ def test_4_circuit_state_function():
 # Tests 5-8: Per-agent timeout + circuit breaker
 # ═══════════════════════════════════════════════════
 
-def test_5_agent_timeouts_config():
+def test_5_agent_timeouts_config() -> None:
     """Per-agent timeout configuratie bestaat."""
     print("\n[Test 5] Per-agent timeout configuratie")
     from swarm_engine import _AGENT_TIMEOUTS, _DEFAULT_AGENT_TIMEOUT
@@ -119,7 +124,7 @@ def test_5_agent_timeouts_config():
     check("Default timeout 20s", _DEFAULT_AGENT_TIMEOUT == 20)
 
 
-def test_6_circuit_breaker_config():
+def test_6_circuit_breaker_config() -> None:
     """Circuit breaker constanten bestaan."""
     print("\n[Test 6] Circuit breaker constanten")
     from swarm_engine import (
@@ -135,7 +140,7 @@ def test_6_circuit_breaker_config():
     check("Circuit lock is threading.Lock", hasattr(_CIRCUIT_LOCK, "acquire"))
 
 
-def test_7_circuit_breaker_methods():
+def test_7_circuit_breaker_methods() -> None:
     """SwarmEngine heeft circuit breaker methoden."""
     print("\n[Test 7] Circuit breaker methoden op SwarmEngine")
     from swarm_engine import SwarmEngine
@@ -173,7 +178,7 @@ def test_7_circuit_breaker_methods():
         _AGENT_CIRCUIT_STATE.pop(agent, None)
 
 
-def test_8_timed_dispatch_timeout():
+def test_8_timed_dispatch_timeout() -> None:
     """_timed_dispatch respecteert per-agent timeout."""
     print("\n[Test 8] _timed_dispatch timeout + trace_id")
     from swarm_engine import SwarmEngine
@@ -192,7 +197,7 @@ def test_8_timed_dispatch_timeout():
 # Tests 9-10: NeuralBus new events
 # ═══════════════════════════════════════════════════
 
-def test_9_neuralbus_circuit_events():
+def test_9_neuralbus_circuit_events() -> None:
     """NeuralBus heeft AGENT_CIRCUIT_OPEN/CLOSED events."""
     print("\n[Test 9] NeuralBus circuit breaker events")
     from danny_toolkit.core.neural_bus import EventTypes
@@ -207,7 +212,7 @@ def test_9_neuralbus_circuit_events():
           EventTypes.AGENT_CIRCUIT_CLOSED == "agent_circuit_closed")
 
 
-def test_10_neuralbus_subscribe_circuit():
+def test_10_neuralbus_subscribe_circuit() -> None:
     """NeuralBus kan circuit events ontvangen."""
     print("\n[Test 10] NeuralBus circuit event subscribe + publish")
     from danny_toolkit.core.neural_bus import get_bus, EventTypes
@@ -215,7 +220,8 @@ def test_10_neuralbus_subscribe_circuit():
     bus = get_bus()
     received = []
 
-    def handler(event):
+    def handler(event: object) -> None:
+        """Handle bus event."""
         received.append(event)
 
     bus.subscribe(EventTypes.AGENT_CIRCUIT_OPEN, handler)
@@ -235,7 +241,7 @@ def test_10_neuralbus_subscribe_circuit():
 # Tests 11-12: shadow_governance thread safety
 # ═══════════════════════════════════════════════════
 
-def test_11_shadow_voidwalker_lock():
+def test_11_shadow_voidwalker_lock() -> None:
     """shadow_governance _shadow_voidwalker_lock bestaat."""
     print("\n[Test 11] shadow_governance thread safety")
     from danny_toolkit.brain.shadow_governance import (
@@ -252,7 +258,7 @@ def test_11_shadow_voidwalker_lock():
     check("threading geimporteerd", hasattr(sg_mod, "threading"))
 
 
-def test_12_shadow_governance_threadsafe():
+def test_12_shadow_governance_threadsafe() -> None:
     """Concurrent access op check_voidwalker_limit is veilig."""
     print("\n[Test 12] shadow_governance concurrent access")
     from danny_toolkit.brain.shadow_governance import (
@@ -264,7 +270,8 @@ def test_12_shadow_governance_threadsafe():
     sg = ShadowGovernance()
     errors = []
 
-    def concurrent_check():
+    def concurrent_check() -> None:
+        """Concurrent access test."""
         try:
             for _ in range(20):
                 sg.check_voidwalker_limit()
@@ -291,7 +298,7 @@ def test_12_shadow_governance_threadsafe():
 # Tests 13-14: FastAPI integration
 # ═══════════════════════════════════════════════════
 
-def test_13_query_response_trace_id():
+def test_13_query_response_trace_id() -> None:
     """QueryResponse heeft trace_id veld."""
     print("\n[Test 13] FastAPI QueryResponse trace_id")
     try:
@@ -308,7 +315,7 @@ def test_13_query_response_trace_id():
         check("trace_id default is lege string (source)", 'trace_id: str = ""' in src)
 
 
-def test_14_health_response_phase31():
+def test_14_health_response_phase31() -> None:
     """HealthResponse heeft waakhuis_health + circuit_breakers."""
     print("\n[Test 14] FastAPI HealthResponse Phase 31 velden")
     try:
@@ -331,7 +338,7 @@ def test_14_health_response_phase31():
 # Tests 15-16: Version + module integrity
 # ═══════════════════════════════════════════════════
 
-def test_15_version_bump():
+def test_15_version_bump() -> None:
     """Brain versie >= 6.2.0."""
     print("\n[Test 15] Brain versie >= 6.2.0")
     import danny_toolkit.brain as brain_pkg
@@ -340,7 +347,7 @@ def test_15_version_bump():
     check("__version__ >= 6.2.0", _v >= (6, 2, 0))
 
 
-def test_16_module_integrity():
+def test_16_module_integrity() -> None:
     """Alle gewijzigde modules importeren zonder fouten."""
     print("\n[Test 16] Module integrity check")
     modules = [

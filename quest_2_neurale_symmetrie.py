@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import math
 import os
 import shutil
@@ -22,6 +23,8 @@ import hashlib
 from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Dict, List, Any
+
+logger = logging.getLogger(__name__)
 
 # ── Paths ────────────────────────────────────────────────────────
 ROOT = Path(__file__).parent
@@ -126,7 +129,7 @@ def fase_1_vector_density() -> Dict:
         try:
             total_loc += len(f.read_text(encoding="utf-8", errors="replace").splitlines())
         except Exception:
-            pass
+            logger.debug("Suppressed exception in quest_2_neurale_symmetrie")
     Q.info(f"Totaal LOC in brain/: {total_loc:,}")
     checks.append({"naam": f"brain/ bevat {len(py_files)} Python bestanden", "ok": len(py_files) >= 30})
 
@@ -217,7 +220,7 @@ def fase_1_vector_density() -> Dict:
         provider = Config.EMBEDDING_PROVIDER
         Q.info(f"Embedding provider: {provider}, dimensie: {embed_dim}d")
     except Exception:
-        pass
+        logger.debug("Suppressed exception in quest_2_neurale_symmetrie")
 
     checks.extend([
         {"naam": f"Ingestie succesvol: {ok_count}/{len(py_files)} bestanden", "ok": ok_count >= len(py_files) * 0.8},

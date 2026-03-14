@@ -23,6 +23,8 @@ import os
 from pathlib import Path
 from datetime import datetime
 from contextlib import redirect_stdout
+import logging
+logger = logging.getLogger(__name__)
 
 
 # --- CONFIGURATIE ---
@@ -110,7 +112,7 @@ try:
     _saver = get_auto_saver()
     _saver.start()
 except Exception:
-    pass
+    logger.debug("Suppressed exception in sanctuary_ui")
 
 # Watchtower daemon (process monitor)
 try:
@@ -120,7 +122,7 @@ try:
     _watcher = get_watchtower()
     _watcher.start()
 except Exception:
-    pass
+    logger.debug("Suppressed exception in sanctuary_ui")
 
 # Imports die brain nodig hebben
 from danny_toolkit.brain.trinity_omega import NodeTier

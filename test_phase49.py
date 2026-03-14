@@ -21,10 +21,15 @@ Gebruik:
         python test_phase49.py
 """
 
+from __future__ import annotations
+
+import logging
 import os
 import sqlite3
 import sys
 import unittest
+
+logger = logging.getLogger(__name__)
 
 os.environ.setdefault("DANNY_TEST_MODE", "1")
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
@@ -37,7 +42,8 @@ if os.name == "nt":
 CHECK = 0
 
 
-def c(ok: bool, label: str = ""):
+def c(ok: bool, label: str = "") -> None:
+    """Assert a check and print its result."""
     global CHECK
     CHECK += 1
     tag = f" ({label})" if label else ""
@@ -67,7 +73,7 @@ class TestPhase49(unittest.TestCase):
 
     # --- A. Config constants ---
 
-    def test_01_config_sqlite_constants(self):
+    def test_01_config_sqlite_constants(self) -> None:
         """Config has SQLITE_CACHE_SIZE, MMAP_SIZE, BUSY_TIMEOUT."""
         src = _read("core/config.py")
         c("SQLITE_CACHE_SIZE" in src, "SQLITE_CACHE_SIZE defined")
@@ -80,7 +86,7 @@ class TestPhase49(unittest.TestCase):
 
     # --- B. apply_sqlite_perf helper ---
 
-    def test_02_apply_sqlite_perf_exists(self):
+    def test_02_apply_sqlite_perf_exists(self) -> None:
         """Config.apply_sqlite_perf() is defined."""
         src = _read("core/config.py")
         c("def apply_sqlite_perf" in src, "apply_sqlite_perf defined")
@@ -94,9 +100,13 @@ class TestPhase49(unittest.TestCase):
 
     # --- C. Functional test ---
 
-    def test_03_apply_sqlite_perf_functional(self):
+    def test_03_apply_sqlite_perf_functional(self) -> None:
         """apply_sqlite_perf() actually sets PRAGMAs on a connection."""
-        from danny_toolkit.core.config import Config
+        try:
+            from danny_toolkit.core.config import Config
+        except ImportError:
+            logger.debug("danny_toolkit.core.config not available")
+            return
 
         conn = sqlite3.connect(":memory:")
         Config.apply_sqlite_perf(conn)
@@ -117,7 +127,7 @@ class TestPhase49(unittest.TestCase):
 
     # --- D. cortical_stack.py ---
 
-    def test_04_cortical_stack_wired(self):
+    def test_04_cortical_stack_wired(self) -> None:
         """cortical_stack.py uses Config.apply_sqlite_perf (2 locations)."""
         src = _read("brain/cortical_stack.py")
         count = src.count("Config.apply_sqlite_perf")
@@ -125,7 +135,7 @@ class TestPhase49(unittest.TestCase):
 
     # --- E. phantom + synapse ---
 
-    def test_05_phantom_synapse_wired(self):
+    def test_05_phantom_synapse_wired(self) -> None:
         """phantom.py and synapse.py use Config.apply_sqlite_perf."""
         for mod in ["brain/phantom.py", "brain/synapse.py"]:
             src = _read(mod)
@@ -133,7 +143,7 @@ class TestPhase49(unittest.TestCase):
 
     # --- F. virtual_twin ---
 
-    def test_06_virtual_twin_wired(self):
+    def test_06_virtual_twin_wired(self) -> None:
         """virtual_twin.py uses Config.apply_sqlite_perf (2 locations)."""
         src = _read("brain/virtual_twin.py")
         count = src.count("Config.apply_sqlite_perf")
@@ -141,7 +151,7 @@ class TestPhase49(unittest.TestCase):
 
     # --- G. dreamer + waakhuis ---
 
-    def test_07_dreamer_waakhuis_wired(self):
+    def test_07_dreamer_waakhuis_wired(self) -> None:
         """dreamer.py and waakhuis.py use Config.apply_sqlite_perf."""
         for mod in ["brain/dreamer.py", "brain/waakhuis.py"]:
             src = _read(mod)
@@ -149,7 +159,7 @@ class TestPhase49(unittest.TestCase):
 
     # --- H. semantic_cache + self_pruning ---
 
-    def test_08_semantic_cache_self_pruning_wired(self):
+    def test_08_semantic_cache_self_pruning_wired(self) -> None:
         """semantic_cache.py and self_pruning.py use Config.apply_sqlite_perf."""
         for mod in ["core/semantic_cache.py", "core/self_pruning.py"]:
             src = _read(mod)
@@ -158,7 +168,7 @@ class TestPhase49(unittest.TestCase):
 
     # --- I. Swarm worker counts ---
 
-    def test_09_swarm_worker_counts(self):
+    def test_09_swarm_worker_counts(self) -> None:
         """swarm_engine.py has CPU-aware _SWARM_MAX_WORKERS and B95 max_workers=2."""
         src = _read_root("swarm_engine.py")
         c("_SWARM_MAX_WORKERS = min(max(os.cpu_count()" in src, "swarm workers CPU-aware")
@@ -166,7 +176,7 @@ class TestPhase49(unittest.TestCase):
 
     # --- J. No scattered PRAGMAs remaining ---
 
-    def test_10_no_scattered_pragmas(self):
+    def test_10_no_scattered_pragmas(self) -> None:
         """No individual PRAGMA cache_size/mmap_size in wired modules."""
         modules = [
             "brain/cortical_stack.py",

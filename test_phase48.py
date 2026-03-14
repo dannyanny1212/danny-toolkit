@@ -21,11 +21,16 @@ Gebruik:
         python test_phase48.py
 """
 
+from __future__ import annotations
+
 import ast
 import importlib
+import logging
 import os
 import sys
 import unittest
+
+logger = logging.getLogger(__name__)
 
 os.environ.setdefault("DANNY_TEST_MODE", "1")
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
@@ -38,7 +43,8 @@ if os.name == "nt":
 CHECK = 0
 
 
-def c(ok: bool, label: str = ""):
+def c(ok: bool, label: str = "") -> None:
+    """Assert a check and print its result."""
     global CHECK
     CHECK += 1
     tag = f" ({label})" if label else ""
@@ -77,7 +83,7 @@ class TestPhase48(unittest.TestCase):
 
     # --- A. arbitrator.py HAS_GROQ ---
 
-    def test_01_arbitrator_has_groq_guard(self):
+    def test_01_arbitrator_has_groq_guard(self) -> None:
         """arbitrator.py defines HAS_GROQ at module level."""
         src = _read("brain/arbitrator.py")
         c("HAS_GROQ" in src, "HAS_GROQ defined in arbitrator")
@@ -93,7 +99,7 @@ class TestPhase48(unittest.TestCase):
 
     # --- B. No bare groq import inside methods ---
 
-    def test_02_arbitrator_no_inline_groq(self):
+    def test_02_arbitrator_no_inline_groq(self) -> None:
         """arbitrator.py: no 'from groq import' inside function bodies."""
         src = _read("brain/arbitrator.py")
         tree = ast.parse(src)
@@ -108,7 +114,7 @@ class TestPhase48(unittest.TestCase):
 
     # --- C. HAS_GROQ check before Groq() ---
 
-    def test_03_arbitrator_has_groq_check(self):
+    def test_03_arbitrator_has_groq_check(self) -> None:
         """arbitrator.py uses HAS_GROQ before creating Groq client."""
         src = _read("brain/arbitrator.py")
         c("HAS_GROQ" in src, "HAS_GROQ used in arbitrator")
@@ -117,7 +123,7 @@ class TestPhase48(unittest.TestCase):
 
     # --- D. limbic_system.py logger ---
 
-    def test_04_limbic_has_logger(self):
+    def test_04_limbic_has_logger(self) -> None:
         """limbic_system.py defines logger at module level."""
         src = _read("daemon/limbic_system.py")
         c("import logging" in src, "limbic has import logging")
@@ -126,7 +132,7 @@ class TestPhase48(unittest.TestCase):
 
     # --- E. limbic_system.py no bare pass ---
 
-    def test_05_limbic_no_bare_pass(self):
+    def test_05_limbic_no_bare_pass(self) -> None:
         """limbic_system.py: no bare except:pass."""
         src = _read("daemon/limbic_system.py")
         violations = _find_bare_pass(src)
@@ -135,7 +141,7 @@ class TestPhase48(unittest.TestCase):
 
     # --- F. daemon/ comprehensive ---
 
-    def test_06_no_bare_pass_in_daemon(self):
+    def test_06_no_bare_pass_in_daemon(self) -> None:
         """No daemon/ module has bare except:pass."""
         daemon_dir = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
@@ -156,7 +162,7 @@ class TestPhase48(unittest.TestCase):
 
     # --- G. brain/ regression ---
 
-    def test_07_no_bare_pass_in_brain(self):
+    def test_07_no_bare_pass_in_brain(self) -> None:
         """No brain/ module has bare except:pass (regression)."""
         brain_dir = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
@@ -177,7 +183,7 @@ class TestPhase48(unittest.TestCase):
 
     # --- H. All groq modules HAS_GROQ (regression) ---
 
-    def test_08_all_groq_modules_guarded(self):
+    def test_08_all_groq_modules_guarded(self) -> None:
         """All 11 groq modules have HAS_GROQ guard."""
         modules = [
             "brain/arbitrator.py",
@@ -198,7 +204,7 @@ class TestPhase48(unittest.TestCase):
 
     # --- I. No bare groq imports anywhere in brain/ ---
 
-    def test_09_no_bare_groq_in_brain(self):
+    def test_09_no_bare_groq_in_brain(self) -> None:
         """No brain/ module has bare 'from groq import' outside try/except."""
         brain_dir = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
@@ -222,7 +228,7 @@ class TestPhase48(unittest.TestCase):
 
     # --- J. Import roundtrip ---
 
-    def test_10_brain_import_roundtrip(self):
+    def test_10_brain_import_roundtrip(self) -> None:
         """brain/__init__.py can be imported without crashing."""
         try:
             mod = importlib.import_module("danny_toolkit.brain")

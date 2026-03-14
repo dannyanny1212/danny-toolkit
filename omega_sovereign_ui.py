@@ -29,7 +29,7 @@ if sys.platform == "win32":
     try:
         sys.stdout.reconfigure(encoding="utf-8")
     except Exception:
-        pass
+        logger.debug("UTF-8 stdout reconfigure not available")
 
 import streamlit as st
 
@@ -301,7 +301,7 @@ def _get_bus_safe():
         try:
             return get_bus()
         except Exception:
-            pass
+            logger.debug("Suppressed exception in omega_sovereign_ui")
     return None
 
 
@@ -311,7 +311,7 @@ def _get_key_manager_safe():
         try:
             return SmartKeyManager()
         except Exception:
-            pass
+            logger.debug("Suppressed exception in omega_sovereign_ui")
     return None
 
 
@@ -321,7 +321,7 @@ def _get_waakhuis_safe():
         try:
             return get_waakhuis()
         except Exception:
-            pass
+            logger.debug("Suppressed exception in omega_sovereign_ui")
     return None
 
 
@@ -429,7 +429,7 @@ with col_left:
                         elif health < 70:
                             status = "warn"
                 except Exception:
-                    pass
+                    logger.debug("Suppressed exception in omega_sovereign_ui")
 
             agent_data.append({
                 "name": name,
@@ -763,7 +763,7 @@ with col_right:
                 if rpm_max > 0:
                     usage_pct = min(100, (rpm_used / rpm_max) * 100)
             except Exception:
-                pass
+                logger.debug("Suppressed exception in omega_sovereign_ui")
 
         if HAS_PLOTLY:
             # Gauge color based on usage
@@ -1011,7 +1011,7 @@ with col_right:
                         label = label[:12] + "..."
                     event_labels.append(label)
             except Exception:
-                pass
+                logger.debug("Suppressed exception in omega_sovereign_ui")
 
         if not event_counts:
             # Synthetic waveform fallback
@@ -1117,7 +1117,7 @@ with sb3:
                     unsafe_allow_html=True,
                 )
         except Exception:
-            pass
+            logger.debug("Suppressed exception in omega_sovereign_ui")
 with sb4:
     st.markdown(
         f'<span style="color:#64748b;font-size:0.75em;'

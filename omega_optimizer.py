@@ -1,3 +1,7 @@
+"""Omega Optimizer v6.0 — System diagnostics, analysis and optimization."""
+
+from __future__ import annotations
+
 import io
 import json
 import logging
@@ -13,8 +17,8 @@ logger = logging.getLogger(__name__)
 
 # Windows UTF-8 fix (project conventie)
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 # Forceer de root map in het path zodat modules goed laden
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -22,7 +26,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from danny_toolkit.core.utils import Kleur
 
 class OmegaOptimizer:
-    def __init__(self):
+    """System optimizer: hardware check, data analysis, cache cleanup."""
+
+    def __init__(self) -> None:
+        """Initialize optimizer with project paths."""
         self.root_dir = os.path.dirname(os.path.abspath(__file__))
         self.db_path = os.path.join(self.root_dir, "danny_toolkit", "data", "brain", "cortical_stack.db")
         self.cache_dirs = [
@@ -31,7 +38,8 @@ class OmegaOptimizer:
             os.path.join(self.root_dir, "danny_toolkit", "core", "__pycache__")
         ]
 
-    def run(self):
+    def run(self) -> None:
+        """Run full optimization pipeline."""
         print(f"{Kleur.CYAAN}==================================================")
         print(f" ⚙️  PROJECT OMEGA v6.0 - SYSTEM OPTIMIZER & ANALYST")
         print(f"=================================================={Kleur.RESET}\n")
@@ -42,7 +50,8 @@ class OmegaOptimizer:
 
         print(f"\n{Kleur.GROEN}✨ Systeem is Volledig Geoptimaliseerd en Klaar voor Gebruik!{Kleur.RESET}")
 
-    def fase_1_controle(self):
+    def fase_1_controle(self) -> None:
+        """Check system prerequisites: API keys, GPU, Ollama."""
         print(f"{Kleur.GEEL}--- FASE 1: SYSTEEM CONTROLE ---{Kleur.RESET}")
 
         # 1. Groq API Check
@@ -79,7 +88,8 @@ class OmegaOptimizer:
         except FileNotFoundError:
              print(f"{Kleur.GEEL}⚠ GPU VRAM: Kon nvidia-smi niet uitvoeren.{Kleur.RESET}")
 
-    def fase_2_analyse(self):
+    def fase_2_analyse(self) -> None:
+        """Analyze database size and memory usage."""
         print(f"\n{Kleur.GEEL}--- FASE 2: DATA & MEMORY ANALYSE ---{Kleur.RESET}")
 
         # 1. CorticalStack (SQLite) Size
@@ -93,7 +103,8 @@ class OmegaOptimizer:
         else:
             print(f"{Kleur.MAGENTA}  > CorticalStack: Nog niet aangemaakt (Nieuw systeem){Kleur.RESET}")
 
-    def fase_3_optimalisatie(self):
+    def fase_3_optimalisatie(self) -> None:
+        """Optimize database, flush VRAM, clean caches."""
         print(f"\n{Kleur.GEEL}--- FASE 3: SYSTEEM OPTIMALISATIE ---{Kleur.RESET}")
 
         # 1. SQLite Vacuum (Defragmentatie)

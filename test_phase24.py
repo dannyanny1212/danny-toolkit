@@ -4,8 +4,10 @@ Phase 24 Tests — CorticalStack Backup + Data Retention
 
 Gebruik: python test_phase24.py
 """
+from __future__ import annotations
 
 import gzip
+import logging
 import os
 import sqlite3
 import sys
@@ -14,9 +16,14 @@ import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
+
 # UTF-8 voor Windows
-if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(encoding="utf-8")
+try:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+except (ValueError, OSError):
+    logger.debug("UTF-8 reconfigure niet mogelijk")
 
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
 os.environ.setdefault("DANNY_TEST_MODE", "1")
@@ -28,7 +35,8 @@ PASS = 0
 FAIL = 0
 
 
-def check(label, condition):
+def check(label: str, condition: bool) -> None:
+    """Verificatie helper voor test resultaten."""
     global PASS, FAIL
     if condition:
         PASS += 1
@@ -38,16 +46,20 @@ def check(label, condition):
         print(f"  [FAIL] {label}")
 
 
-def _make_test_stack(tmp_dir):
+def _make_test_stack(tmp_dir: str) -> object:
     """Create a CorticalStack in a temp directory for isolated testing."""
-    from danny_toolkit.brain.cortical_stack import CorticalStack
+    try:
+        from danny_toolkit.brain.cortical_stack import CorticalStack
+    except ImportError:
+        logger.debug("cortical_stack import niet beschikbaar")
+        raise
     db_path = Path(tmp_dir) / "test_cortical_stack.db"
     stack = CorticalStack(db_path=db_path)
     return stack
 
 
-def test_1_backup_creates_file():
-    """backup() creates file in backup dir."""
+def test_1_backup_creates_file() -> None:
+    """Backup() creates file in backup dir."""
     print("\n[TEST 1] backup() creates file")
     with tempfile.TemporaryDirectory() as tmp:
         stack = _make_test_stack(tmp)
@@ -56,7 +68,11 @@ def test_1_backup_creates_file():
         stack.flush()
 
         # Monkey-patch Config.BACKUP_DIR for testing
-        import danny_toolkit.core.config as cfg_mod
+        try:
+            import danny_toolkit.core.config as cfg_mod
+        except ImportError:
+            logger.debug("config import niet beschikbaar")
+            raise
         original_backup = getattr(cfg_mod.Config, "BACKUP_DIR", None)
         cfg_mod.Config.BACKUP_DIR = Path(tmp) / "backups"
 
@@ -71,7 +87,7 @@ def test_1_backup_creates_file():
             stack.close()
 
 
-def test_2_backup_gzip():
+def test_2_backup_gzip() -> None:
     """Backup file is gzip compressed."""
     print("\n[TEST 2] backup gzip compression")
     with tempfile.TemporaryDirectory() as tmp:
@@ -79,7 +95,11 @@ def test_2_backup_gzip():
         stack.log_event("test", "action", {"key": "value"})
         stack.flush()
 
-        import danny_toolkit.core.config as cfg_mod
+        try:
+            import danny_toolkit.core.config as cfg_mod
+        except ImportError:
+            logger.debug("config import niet beschikbaar")
+            raise
         original_backup = getattr(cfg_mod.Config, "BACKUP_DIR", None)
         cfg_mod.Config.BACKUP_DIR = Path(tmp) / "backups"
 
@@ -93,6 +113,7 @@ def test_2_backup_gzip():
                     data = f.read()
                 check("valid gzip file", len(data) > 0)
             except Exception:
+                logger.debug("gzip verificatie gefaald")
                 check("valid gzip file", False)
         finally:
             if original_backup is not None:
@@ -100,7 +121,7 @@ def test_2_backup_gzip():
             stack.close()
 
 
-def test_3_backup_pruning():
+def test_3_backup_pruning() -> None:
     """Backup prunes old backups (keeps last 7)."""
     print("\n[TEST 3] backup pruning")
     with tempfile.TemporaryDirectory() as tmp:
@@ -108,7 +129,11 @@ def test_3_backup_pruning():
         stack.log_event("test", "action", {})
         stack.flush()
 
-        import danny_toolkit.core.config as cfg_mod
+        try:
+            import danny_toolkit.core.config as cfg_mod
+        except ImportError:
+            logger.debug("config import niet beschikbaar")
+            raise
         original_backup = getattr(cfg_mod.Config, "BACKUP_DIR", None)
         backup_dir = Path(tmp) / "backups"
         cfg_mod.Config.BACKUP_DIR = backup_dir
@@ -127,8 +152,8 @@ def test_3_backup_pruning():
             stack.close()
 
 
-def test_4_retention_returns_counts():
-    """apply_retention_policy() returns deleted counts."""
+def test_4_retention_returns_counts() -> None:
+    """Apply_retention_policy() returns deleted counts."""
     print("\n[TEST 4] retention policy returns counts")
     with tempfile.TemporaryDirectory() as tmp:
         stack = _make_test_stack(tmp)
@@ -143,8 +168,8 @@ def test_4_retention_returns_counts():
         stack.close()
 
 
-def test_5_episodic_pruning():
-    """episodic_memory rows older than 90d are deleted."""
+def test_5_episodic_pruning() -> None:
+    """Episodic_memory rows older than 90d are deleted."""
     print("\n[TEST 5] episodic_memory retention (90 days)")
     with tempfile.TemporaryDirectory() as tmp:
         stack = _make_test_stack(tmp)
@@ -176,8 +201,8 @@ def test_5_episodic_pruning():
         stack.close()
 
 
-def test_6_interaction_trace_pruning():
-    """interaction_trace rows older than 60d are deleted."""
+def test_6_interaction_trace_pruning() -> None:
+    """Interaction_trace rows older than 60d are deleted."""
     print("\n[TEST 6] interaction_trace retention (60 days)")
     with tempfile.TemporaryDirectory() as tmp:
         stack = _make_test_stack(tmp)
@@ -214,8 +239,8 @@ def test_6_interaction_trace_pruning():
         stack.close()
 
 
-def test_7_phantom_predictions_pruning():
-    """phantom_predictions rows older than 30d are deleted."""
+def test_7_phantom_predictions_pruning() -> None:
+    """Phantom_predictions rows older than 30d are deleted."""
     print("\n[TEST 7] phantom_predictions retention (30 days)")
     with tempfile.TemporaryDirectory() as tmp:
         stack = _make_test_stack(tmp)
@@ -252,8 +277,8 @@ def test_7_phantom_predictions_pruning():
         stack.close()
 
 
-def test_8_semantic_memory_not_pruned():
-    """semantic_memory is NOT pruned (permanent)."""
+def test_8_semantic_memory_not_pruned() -> None:
+    """Semantic_memory is NOT pruned (permanent)."""
     print("\n[TEST 8] semantic_memory NOT pruned")
     with tempfile.TemporaryDirectory() as tmp:
         stack = _make_test_stack(tmp)
@@ -277,8 +302,8 @@ def test_8_semantic_memory_not_pruned():
         stack.close()
 
 
-def test_9_knowledge_graph_not_pruned():
-    """knowledge_graph is NOT pruned (permanent)."""
+def test_9_knowledge_graph_not_pruned() -> None:
+    """Knowledge_graph is NOT pruned (permanent)."""
     print("\n[TEST 9] knowledge_graph NOT pruned")
     with tempfile.TemporaryDirectory() as tmp:
         stack = _make_test_stack(tmp)
@@ -291,7 +316,8 @@ def test_9_knowledge_graph_not_pruned():
         stack.close()
 
 
-def main():
+def main() -> None:
+    """Start de Phase 24 test suite."""
     print("=" * 60)
     print("  PHASE 24 TESTS — CorticalStack Backup + Data Retention")
     print("=" * 60)

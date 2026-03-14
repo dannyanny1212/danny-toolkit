@@ -7,6 +7,9 @@ Ingest externe documentatie (FastAPI etc.) in de
 Stealth settings: 100 chunks/batch, 22s cooldown (Voyage 3 RPM).
 """
 
+from __future__ import annotations
+
+import logging
 import sys
 import io
 import os
@@ -14,16 +17,14 @@ import time
 import warnings
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
+
 # --- WINDOWS UTF-8 FIX ---
 try:
-    sys.stdout = io.TextIOWrapper(
-        sys.stdout.buffer, encoding="utf-8", errors="replace"
-    )
-    sys.stderr = io.TextIOWrapper(
-        sys.stderr.buffer, encoding="utf-8", errors="replace"
-    )
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 except (ValueError, OSError):
-    pass
+    logger.debug("UTF-8 reconfiguration not possible")
 
 # --- SILENT MODE ---
 warnings.filterwarnings("ignore")
@@ -77,7 +78,7 @@ def scan_fastapi_docs() -> list[Path]:
     return bestanden
 
 
-def main():
+def main() -> None:
     """Exodus protocol — ingest external intelligence."""
     t_start = time.time()
 
@@ -113,12 +114,22 @@ def main():
     # 3. ChromaDB connectie + LOCAL embeddings (geen rate limits)
     console.print("\n  [cyan]ChromaDB + Local Embeddings initialisatie...[/cyan]")
 
-    import chromadb
+    try:
+        import chromadb
+    except ImportError:
+        logger.debug("chromadb not available")
+        console.print("[red]chromadb niet geinstalleerd[/red]")
+        return
     os.makedirs(CHROMA_DIR, exist_ok=True)
     client = chromadb.PersistentClient(path=str(CHROMA_DIR))
 
     # Forceer lokale embeddings — bypass Voyage rate limits
-    from danny_toolkit.core.embeddings import LocalChromaEmbedding
+    try:
+        from danny_toolkit.core.embeddings import LocalChromaEmbedding
+    except ImportError:
+        logger.debug("LocalChromaEmbedding not available")
+        console.print("[red]LocalChromaEmbedding niet beschikbaar[/red]")
+        return
     embed_fn = LocalChromaEmbedding()
 
     # Collectie

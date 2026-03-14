@@ -1,17 +1,24 @@
+"""OMEGA v6.0 Auto-Patcher — migreert v5.x referenties naar v6.0."""
+from __future__ import annotations
+
+import io
+import logging
 import os
 import sys
-import io
+
+logger = logging.getLogger(__name__)
 
 # Windows UTF-8 fix (project conventie)
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from danny_toolkit.core.utils import Kleur
 
 
-def patch_system():
+def patch_system() -> None:
+    """Patch alle versie-referenties van v5.x naar v6.0."""
     root_dir = os.path.dirname(os.path.abspath(__file__))
 
     print(f"{Kleur.CYAAN}======================================")

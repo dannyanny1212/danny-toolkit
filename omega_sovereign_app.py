@@ -41,7 +41,7 @@ if sys.platform == "win32":
     try:
         sys.stdout.reconfigure(encoding="utf-8")
     except Exception:
-        pass
+        logger.debug("UTF-8 stdout reconfigure not available")
 
 import tkinter as tk
 import customtkinter as ctk
@@ -1757,7 +1757,7 @@ class DashboardTab(ctk.CTkFrame):
                     with open(log_path, "r", encoding="utf-8") as lf:
                         crash_detail = lf.read()[-500:]  # Laatste 500 chars
                 except Exception:
-                    pass
+                    logger.debug("Suppressed exception in omega_sovereign_app")
                 raise RuntimeError(
                     f"API server exited (code {proc.returncode}). "
                     f"Log: {crash_detail}"
@@ -2052,7 +2052,7 @@ class DashboardTab(ctk.CTkFrame):
                             last_lines = lf.read().strip().split("\n")[-3:]
                         crash_info += " | " + " ".join(last_lines)
                 except Exception:
-                    pass
+                    logger.debug("Suppressed exception in omega_sovereign_app")
                 wb(f"  [5/7] API: CRASHED \u2014 {crash_info}", "error")
             else:
                 wb(f"  [5/7] API: OFFLINE \u2014 {e}", "warn")
@@ -4414,13 +4414,13 @@ class ClaudePTY:
             try:
                 self._root.after_cancel(self._poll_id)
             except Exception:
-                pass
+                logger.debug("Suppressed exception in omega_sovereign_app")
             self._poll_id = None
         if self._proc is not None:
             try:
                 self._proc.terminate(force=True)
             except Exception:
-                pass
+                logger.debug("Suppressed exception in omega_sovereign_app")
             self._proc = None
 
     def is_alive(self) -> bool:
@@ -4475,7 +4475,7 @@ class ClaudePTY:
         try:
             self._proc.write(data)
         except Exception:
-            pass
+            logger.debug("Suppressed exception in omega_sovereign_app")
 
     # ── internal: reader thread ─────────────────────────────────
 
@@ -4880,7 +4880,7 @@ class OmegaSovereignApp(ctk.CTk):
             try:
                 api_log.close()
             except Exception:
-                pass
+                logger.debug("Suppressed exception in omega_sovereign_app")
         self.destroy()
 
     def _schedule_refresh(self):

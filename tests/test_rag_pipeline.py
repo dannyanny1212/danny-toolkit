@@ -18,12 +18,14 @@ import threading
 import time
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
+import logging
+logger = logging.getLogger(__name__)
 
 # Windows UTF-8
 try:
     sys.stdout.reconfigure(encoding="utf-8")
 except (ValueError, OSError):
-    pass
+    logger.debug("Invalid value encountered")
 
 
 # ── Helpers ──────────────────────────────────────────────────────

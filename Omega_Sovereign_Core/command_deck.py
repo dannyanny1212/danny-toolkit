@@ -17,7 +17,7 @@ import random
 from datetime import datetime
 
 # --- Windows UTF-8 ---
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 import streamlit as st
 import plotly.graph_objects as go

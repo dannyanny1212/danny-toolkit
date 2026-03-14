@@ -7,15 +7,19 @@ Live console output, Cognitive Load meter, Neural Pulse indicator.
 
 Entry point: python sovereign_app.py
 """
+from __future__ import annotations
 
 import io
+import logging
 import os
 import subprocess
 import sys
 import threading
 import random
 
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+logger = logging.getLogger(__name__)
+
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 import customtkinter as ctk
 from PIL import Image
@@ -37,7 +41,10 @@ if not os.path.isfile(PYTHON):
 
 
 class SovereignDashboard(ctk.CTk):
-    def __init__(self):
+    """Sovereign Dashboard GUI applicatie."""
+
+    def __init__(self) -> None:
+        """Initialiseer de Sovereign Dashboard GUI."""
         super().__init__()
 
         # --- Configuratie ---
@@ -221,7 +228,8 @@ class SovereignDashboard(ctk.CTk):
 
         self._update_live_meters()
 
-    def _add_stat(self, label, value):
+    def _add_stat(self, label: str, value: str) -> None:
+        """Voeg een statistiek toe aan het stats frame."""
         f = ctk.CTkFrame(self.stats_frame, fg_color="transparent")
         f.pack(fill="x", pady=2)
         ctk.CTkLabel(f, text=label, font=("Segoe UI", 10)).pack(side="left")
@@ -230,7 +238,8 @@ class SovereignDashboard(ctk.CTk):
             font=("Segoe UI", 10, "bold"), text_color="#A020F0",
         ).pack(side="right")
 
-    def _update_live_meters(self):
+    def _update_live_meters(self) -> None:
+        """Update de live meters (cognitive load, pulse, VRAM)."""
         val = random.uniform(0.3, 0.7) if self.running else 0.15
         self.awareness_bar.set(val)
 
@@ -248,7 +257,8 @@ class SovereignDashboard(ctk.CTk):
 
         self.after(1000, self._update_live_meters)
 
-    def _update_vram(self):
+    def _update_vram(self) -> None:
+        """Update VRAM monitor labels en progress bar."""
         if not _HAS_VRAM:
             self.vram_gpu_label.configure(text="GPU: N/A (torch)")
             self.vram_status_label.configure(text="Status: CPU only", text_color="gray")
@@ -279,11 +289,13 @@ class SovereignDashboard(ctk.CTk):
             self.vram_status_label.configure(text=f"Vrij: {vrij:,} MB  [!]", text_color="red")
             self.vram_bar.configure(progress_color="red")
 
-    def _append(self, text):
+    def _append(self, text: str) -> None:
+        """Voeg tekst toe aan de console en scroll naar einde."""
         self.console.insert("end", text)
         self.console.see("end")
 
-    def run_test(self, naam, cmd):
+    def run_test(self, naam: str, cmd: list) -> None:
+        """Start een test in een achtergrond thread."""
         if self.running:
             self._append("\n[WARN] Er draait al een taak. Wacht tot deze klaar is.\n")
             return
@@ -294,7 +306,8 @@ class SovereignDashboard(ctk.CTk):
         thread = threading.Thread(target=self._execute, args=(naam, cmd), daemon=True)
         thread.start()
 
-    def _execute(self, naam, cmd):
+    def _execute(self, naam: str, cmd: list) -> None:
+        """Voer een test commando uit in een subprocess."""
         try:
             process = subprocess.Popen(
                 cmd,

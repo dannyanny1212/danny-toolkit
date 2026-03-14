@@ -22,13 +22,15 @@ Phase 29 Tests — VirtualTwin: Mirror + VoidWalker in Sandbox Isolation.
 import os
 import re
 import sys
+import logging
+logger = logging.getLogger(__name__)
 
 try:
     sys.stdout = __import__("io").TextIOWrapper(
         sys.stdout.buffer, encoding="utf-8", errors="replace",
     )
 except (ValueError, OSError):
-    pass
+    logger.debug("Invalid value encountered")
 
 # Test-mode env
 os.environ.setdefault("DANNY_TEST_MODE", "1")
@@ -171,7 +173,7 @@ def test_6_no_bare_python_subprocess():
                 rel = os.path.relpath(fpath, PROJECT_ROOT)
                 violations.append(rel)
         except (IOError, UnicodeDecodeError):
-            pass
+            logger.debug("Unicode encoding error encountered")
 
     check(f'no bare ["python", subprocess calls (found: {violations})',
           len(violations) == 0)

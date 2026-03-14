@@ -55,11 +55,11 @@ class SemanticCache:
 
     # Per-agent configuratie: {agent_naam: (ttl_sec, similarity_threshold)}
     AGENT_CONFIG = {
-        "GhostWriter":  (3600, 0.90),   # 1 uur, hoge threshold (exacte code-match)
-        "Artificer":    (1800, 0.82),   # 30 min, medium (skill-patronen)
-        "Strategist":   (1200, 0.85),   # 20 min, medium-hoog
-        "Echo":         (600,  0.95),   # 10 min, zeer hoog (simpele antwoorden)
-        "Memex":        (900,  0.88),   # 15 min, hoog (RAG context)
+        "GhostWriter":  (3600, 0.82),   # 1 uur, was 0.90 — meer cache hits
+        "Artificer":    (1800, 0.75),   # 30 min, was 0.82 — skill-patronen
+        "Strategist":   (1200, 0.78),   # 20 min, was 0.85
+        "Echo":         (600,  0.88),   # 10 min, was 0.95 — simpele antwoorden
+        "Memex":        (900,  0.80),   # 15 min, was 0.88 — RAG context
         "Iolaax":       (600,  0.85),   # 10 min, code-generatie patronen
         "Oracle":       (900,  0.88),   # 15 min, redeneer-patronen
         "Navigator":    (300,  0.80),   # 5 min, web research veroudert snel

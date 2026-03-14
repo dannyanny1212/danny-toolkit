@@ -296,7 +296,7 @@ class HardwareFingerprint:
 try:
     from danny_toolkit.brain.cortical_stack import get_cortical_stack
 except ImportError:
-    pass
+    logger.debug("Optional import not available: danny_toolkit.brain.cortical_stack")
 import subprocess
 
 

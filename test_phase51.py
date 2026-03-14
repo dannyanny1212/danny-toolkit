@@ -17,9 +17,15 @@ Gebruik:
         python test_phase51.py
 """
 
+from __future__ import annotations
+
+import logging
 import os
+import re
 import sys
 import unittest
+
+logger = logging.getLogger(__name__)
 
 os.environ.setdefault("DANNY_TEST_MODE", "1")
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
@@ -31,7 +37,8 @@ if os.name == "nt":
 CHECK = 0
 
 
-def c(ok: bool, label: str = ""):
+def c(ok: bool, label: str = "") -> None:
+    """Assert a check and print its result."""
     global CHECK
     CHECK += 1
     tag = f" ({label})" if label else ""
@@ -41,6 +48,7 @@ def c(ok: bool, label: str = ""):
 
 
 def _read(relpath: str) -> str:
+    """Read a source file relative to danny_toolkit/."""
     root = os.path.dirname(os.path.abspath(__file__))
     path = os.path.join(root, "danny_toolkit", *relpath.split("/"))
     with open(path, encoding="utf-8") as f:
@@ -48,6 +56,7 @@ def _read(relpath: str) -> str:
 
 
 def _read_root(relpath: str) -> str:
+    """Read a source file relative to project root."""
     root = os.path.dirname(os.path.abspath(__file__))
     path = os.path.join(root, relpath)
     with open(path, encoding="utf-8") as f:
@@ -59,7 +68,7 @@ class TestPhase51(unittest.TestCase):
 
     # --- A. AsyncGroq string literals ---
 
-    def test_01_virtual_twin_asyncgroq_string_hints(self):
+    def test_01_virtual_twin_asyncgroq_string_hints(self) -> None:
         """virtual_twin.py uses string literal type hints for AsyncGroq."""
         src = _read("brain/virtual_twin.py")
         # Should use -> "AsyncGroq" (quoted), not -> AsyncGroq (bare)
@@ -75,12 +84,12 @@ class TestPhase51(unittest.TestCase):
 
     # --- B. Future annotations in 7 modules ---
 
-    def test_02_future_annotations_embeddings(self):
+    def test_02_future_annotations_embeddings(self) -> None:
         """core/embeddings.py has from __future__ import annotations."""
         src = _read("core/embeddings.py")
         c("from __future__ import annotations" in src, "embeddings.py")
 
-    def test_03_future_annotations_remaining(self):
+    def test_03_future_annotations_remaining(self) -> None:
         """6 other modules have from __future__ import annotations."""
         modules = [
             "core/groq_retry.py",
@@ -96,9 +105,8 @@ class TestPhase51(unittest.TestCase):
 
     # --- C. No bare X | None without future import ---
 
-    def test_04_no_unsafe_union_syntax(self):
+    def test_04_no_unsafe_union_syntax(self) -> None:
         """No module uses X | None syntax without from __future__ import annotations."""
-        import re
         # Scan all .py files in brain/ and core/ for X | None
         for subdir in ["brain", "core"]:
             base = os.path.join(
@@ -120,12 +128,10 @@ class TestPhase51(unittest.TestCase):
 
     # --- D. Version sync ---
 
-    def test_05_version_sync(self):
+    def test_05_version_sync(self) -> None:
         """learning/__init__.py version matches brain/__init__.py."""
         brain_src = _read("brain/__init__.py")
         learning_root = _read_root("learning/__init__.py")
-        # Extract versions
-        import re
         brain_ver = re.search(r'__version__\s*=\s*"([^"]+)"', brain_src)
         learn_ver = re.search(r'__version__\s*=\s*"([^"]+)"', learning_root)
         c(brain_ver is not None, "brain has __version__")
@@ -136,9 +142,8 @@ class TestPhase51(unittest.TestCase):
 
     # --- E. No bare Groq type hints in function signatures ---
 
-    def test_06_no_bare_groq_type_hints(self):
+    def test_06_no_bare_groq_type_hints(self) -> None:
         """No function signatures use bare AsyncGroq/Groq without string quotes."""
-        import re
         modules_with_groq = [
             "brain/virtual_twin.py",
             "brain/arbitrator.py",
@@ -157,7 +162,7 @@ class TestPhase51(unittest.TestCase):
 
     # --- F. Future annotations don't break imports ---
 
-    def test_07_embeddings_import(self):
+    def test_07_embeddings_import(self) -> None:
         """embeddings.py can be imported without errors."""
         try:
             from danny_toolkit.core.embeddings import mrl_truncate
@@ -165,7 +170,7 @@ class TestPhase51(unittest.TestCase):
         except Exception as e:
             c(False, f"import failed: {e}")
 
-    def test_08_vram_manager_import(self):
+    def test_08_vram_manager_import(self) -> None:
         """vram_manager.py can be imported without errors."""
         try:
             from danny_toolkit.core.vram_manager import vram_guard, get_vram_guard
@@ -174,7 +179,7 @@ class TestPhase51(unittest.TestCase):
         except Exception as e:
             c(False, f"import failed: {e}")
 
-    def test_09_groq_retry_import(self):
+    def test_09_groq_retry_import(self) -> None:
         """groq_retry.py can be imported without errors."""
         try:
             from danny_toolkit.core import groq_retry
@@ -182,7 +187,7 @@ class TestPhase51(unittest.TestCase):
         except Exception as e:
             c(False, f"import failed: {e}")
 
-    def test_10_file_guard_import(self):
+    def test_10_file_guard_import(self) -> None:
         """file_guard.py can be imported without errors."""
         try:
             from danny_toolkit.brain.file_guard import FileGuard

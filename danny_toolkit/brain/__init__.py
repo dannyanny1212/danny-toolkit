@@ -12,78 +12,79 @@ Componenten:
 # --- CORE INTELLIGENCE ---
 from __future__ import annotations
 
-from .central_brain import CentralBrain
-from .trinity_omega import PrometheusBrain
-from .trinity_models import (
+import logging
+
+logger = logging.getLogger(__name__)
+
+from danny_toolkit.brain.central_brain import CentralBrain
+from danny_toolkit.brain.trinity_omega import PrometheusBrain
+from danny_toolkit.brain.trinity_models import (
     CosmicRole, NodeTier, TaskPriority,
     AgentNode, OmegaSwarm, SwarmMetrics, TaskResult,
 )
-from .governor import OmegaGovernor
-from .cortical_stack import CorticalStack, get_cortical_stack
-from .unified_memory import UnifiedMemory
+from danny_toolkit.brain.governor import OmegaGovernor
+from danny_toolkit.brain.cortical_stack import CorticalStack, get_cortical_stack
+from danny_toolkit.brain.unified_memory import UnifiedMemory
 
 # --- v6.0 INVENTIONS (SELF-EFFICIENCY) ---
 # Lazy — heavy deps (groq, sentence-transformers, duckduckgo-search)
 try:
-    from .strategist import Strategist
-    from .tribunal import Tribunal
-    from .adversarial_tribunal import AdversarialTribunal
-    from .void_walker import VoidWalker
-    from .artificer import Artificer
-    from .black_box import BlackBox
-    from .the_mirror import TheMirror
-    from .ghost_writer import GhostWriter
-    from .dreamer import Dreamer
-    from .devops_daemon import DevOpsDaemon
-    from .cortex import TheCortex
-    from .oracle_eye import TheOracleEye
-    from .synapse import TheSynapse
-    from .phantom import ThePhantom
-    from .virtual_twin import VirtualTwin, ShadowCortex
-    from .shadow_governance import ShadowGovernance
-    from .shadow_permissions import ShadowPermissions
-    from .waakhuis import WaakhuisMonitor, get_waakhuis
-    from .hallucination_shield import HallucinatieSchild, get_hallucination_shield
-    from .black_box import get_black_box
-    from .adversarial_tribunal import get_adversarial_tribunal
-    from .config_auditor import ConfigAuditor, get_config_auditor
-    from .arbitrator import TaskArbitrator, get_arbitrator, GoalManifest, SwarmTask
-    from .model_sync import (
+    from danny_toolkit.brain.strategist import Strategist
+    from danny_toolkit.brain.tribunal import Tribunal
+    from danny_toolkit.brain.adversarial_tribunal import AdversarialTribunal
+    from danny_toolkit.brain.void_walker import VoidWalker
+    from danny_toolkit.brain.artificer import Artificer
+    from danny_toolkit.brain.black_box import BlackBox
+    from danny_toolkit.brain.the_mirror import TheMirror
+    from danny_toolkit.brain.ghost_writer import GhostWriter
+    from danny_toolkit.brain.dreamer import Dreamer
+    from danny_toolkit.brain.devops_daemon import DevOpsDaemon
+    from danny_toolkit.brain.cortex import TheCortex
+    from danny_toolkit.brain.oracle_eye import TheOracleEye
+    from danny_toolkit.brain.synapse import TheSynapse
+    from danny_toolkit.brain.phantom import ThePhantom
+    from danny_toolkit.brain.virtual_twin import VirtualTwin, ShadowCortex
+    from danny_toolkit.brain.shadow_governance import ShadowGovernance
+    from danny_toolkit.brain.shadow_permissions import ShadowPermissions
+    from danny_toolkit.brain.waakhuis import WaakhuisMonitor, get_waakhuis
+    from danny_toolkit.brain.hallucination_shield import HallucinatieSchild, get_hallucination_shield
+    from danny_toolkit.brain.black_box import get_black_box
+    from danny_toolkit.brain.adversarial_tribunal import get_adversarial_tribunal
+    from danny_toolkit.brain.config_auditor import ConfigAuditor, get_config_auditor
+    from danny_toolkit.brain.arbitrator import TaskArbitrator, get_arbitrator, GoalManifest, SwarmTask
+    from danny_toolkit.brain.model_sync import (
         ModelWorker, ModelRegistry, get_model_registry,
         ModelProfile, ModelResponse, ModelBid, ModelCapability,
     )
-    from .introspector import SystemIntrospector, get_introspector
-    from .claude_memory import ClaudeMemory, get_claude_memory
-    from .observatory_sync import ObservatorySync, get_observatory_sync
-    from .agent_factory import AgentFactory, get_agent_factory
-    from .oracle import OracleAgent
-    from .ultimate_hunt import UltimateHunt, HuntStatus, HuntAnimator
-    from .dream_monitor import dream_monitor, quick_peek
-    from .ghost_amplifier import GhostAmplifier, get_ghost_amplifier
-    from .sanctuary_dashboard import SanctuaryDashboard, get_sanctuary
-    from .tool_dispatcher import ToolDispatcher, get_tool_dispatcher
+    from danny_toolkit.brain.introspector import SystemIntrospector, get_introspector
+    from danny_toolkit.brain.claude_memory import ClaudeMemory, get_claude_memory
+    from danny_toolkit.brain.observatory_sync import ObservatorySync, get_observatory_sync
+    from danny_toolkit.brain.agent_factory import AgentFactory, get_agent_factory
+    from danny_toolkit.brain.oracle import OracleAgent
+    from danny_toolkit.brain.ultimate_hunt import UltimateHunt, HuntStatus, HuntAnimator
+    from danny_toolkit.brain.dream_monitor import dream_monitor, quick_peek
+    from danny_toolkit.brain.ghost_amplifier import GhostAmplifier, get_ghost_amplifier
+    from danny_toolkit.brain.sanctuary_dashboard import SanctuaryDashboard, get_sanctuary
+    from danny_toolkit.brain.tool_dispatcher import ToolDispatcher, get_tool_dispatcher
 except ImportError:
-    logger.debug("Suppressed error")
+    logger.debug("Optional brain inventions not available (heavy deps)")
 
 # --- ANTI-HALLUCINATION & TRUTH ---
 try:
-    from .citation_marshall import CitationMarshall
-    from .reality_anchor import RealityAnchor
-    from .truth_anchor import TruthAnchor
+    from danny_toolkit.brain.citation_marshall import CitationMarshall
+    from danny_toolkit.brain.reality_anchor import RealityAnchor
+    from danny_toolkit.brain.truth_anchor import TruthAnchor
 except ImportError:
-    logger.debug("Suppressed error")
+    logger.debug("Anti-hallucination modules not available")
 
 # --- SUBSYSTEMS & INFRASTRUCTURE ---
-from .nexus_bridge import NexusBridge
-from .visual_nexus import VisualNexus
-from .singularity import SingularityEngine
-from .proactive import ProactiveEngine
-from .file_guard import FileGuard
-from .workflows import WorkflowEngine
-from .project_map import ProjectMap
-import logging
-
-logger = logging.getLogger(__name__)
+from danny_toolkit.brain.nexus_bridge import NexusBridge
+from danny_toolkit.brain.visual_nexus import VisualNexus
+from danny_toolkit.brain.singularity import SingularityEngine
+from danny_toolkit.brain.proactive import ProactiveEngine
+from danny_toolkit.brain.file_guard import FileGuard
+from danny_toolkit.brain.workflows import WorkflowEngine
+from danny_toolkit.brain.project_map import ProjectMap
 
 __all__ = [
     # Core Intelligence

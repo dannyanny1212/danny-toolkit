@@ -12,11 +12,15 @@ Observeert:
   5. HallucinatieSchild 95% Barrière → goedgekeurd of ontslagen?
   6. Performance stats → latency, tokens, success_rate
 """
+from __future__ import annotations
 
 import asyncio
+import logging
 import os
 import sys
 import time
+
+logger = logging.getLogger(__name__)
 
 # Windows UTF-8
 if os.name == "nt":
@@ -29,13 +33,14 @@ from danny_toolkit.core.config import Config
 from danny_toolkit.core.utils import Kleur
 
 
-def separator(title: str):
+def separator(title: str) -> None:
+    """Print een sectie-separator."""
     print(f"\n{'='*60}")
     print(f"  {title}")
     print(f"{'='*60}")
 
 
-async def maiden_flight():
+async def maiden_flight() -> None:
     """De eerste live inzet van de Generaal."""
 
     separator("MAIDEN FLIGHT — Generaal Mode v6.11.0")

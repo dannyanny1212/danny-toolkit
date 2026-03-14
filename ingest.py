@@ -10,6 +10,8 @@ Gebruik:
     python ingest.py --stats
 """
 
+from __future__ import annotations
+
 import sys
 import io
 import argparse
@@ -17,13 +19,11 @@ import os
 import warnings
 import logging
 
+logger = logging.getLogger(__name__)
+
 # --- WINDOWS UTF-8 FIX ---
-sys.stdout = io.TextIOWrapper(
-    sys.stdout.buffer, encoding="utf-8"
-)
-sys.stderr = io.TextIOWrapper(
-    sys.stderr.buffer, encoding="utf-8"
-)
+sys.stdout.reconfigure(encoding="utf-8")
+sys.stderr.reconfigure(encoding="utf-8")
 
 # --- SILENT MODE ---
 warnings.filterwarnings("ignore")
@@ -69,7 +69,7 @@ console = Console()
 
 # ─── Entry Point ───
 
-def main():
+def main() -> None:
     """CLI entry point."""
     parser = argparse.ArgumentParser(
         description=(
@@ -181,7 +181,7 @@ def main():
                     " chunks"
                 )
     except Exception:
-        pass
+        logger.debug("Shard statistics not available")
 
 
 if __name__ == "__main__":

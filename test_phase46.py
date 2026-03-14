@@ -18,13 +18,18 @@ Gebruik:
         python test_phase46.py
 """
 
+from __future__ import annotations
+
 import ast
 import importlib
 import inspect
+import logging
 import os
 import sys
 import textwrap
 import unittest
+
+logger = logging.getLogger(__name__)
 
 os.environ.setdefault("DANNY_TEST_MODE", "1")
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "-1")
@@ -37,7 +42,8 @@ if os.name == "nt":
 CHECK = 0
 
 
-def c(ok: bool, label: str = ""):
+def c(ok: bool, label: str = "") -> None:
+    """Assert a check and print its result."""
     global CHECK
     CHECK += 1
     tag = f" ({label})" if label else ""
@@ -59,7 +65,7 @@ class TestPhase46(unittest.TestCase):
 
     # --- A. Groq import guards (5 modules) ---
 
-    def test_01_artificer_groq_guard(self):
+    def test_01_artificer_groq_guard(self) -> None:
         """artificer.py: from groq import AsyncGroq wrapped in try/except."""
         src = _read("brain/artificer.py")
         tree = ast.parse(src)
@@ -75,7 +81,7 @@ class TestPhase46(unittest.TestCase):
         # Verify client = None fallback
         c("self.client = None" in src, "client = None fallback")
 
-    def test_02_dreamer_groq_guard(self):
+    def test_02_dreamer_groq_guard(self) -> None:
         """dreamer.py: from groq import AsyncGroq wrapped in try/except."""
         src = _read("brain/dreamer.py")
         tree = ast.parse(src)
@@ -89,7 +95,7 @@ class TestPhase46(unittest.TestCase):
         c(found_try, "groq import inside try block")
         c("self.client = None" in src, "client = None fallback")
 
-    def test_03_ghost_writer_groq_guard(self):
+    def test_03_ghost_writer_groq_guard(self) -> None:
         """ghost_writer.py: from groq import AsyncGroq wrapped in try/except."""
         src = _read("brain/ghost_writer.py")
         tree = ast.parse(src)
@@ -103,7 +109,7 @@ class TestPhase46(unittest.TestCase):
         c(found_try, "groq import inside try block")
         c("self.client = None" in src, "client = None fallback")
 
-    def test_04_the_mirror_groq_guard(self):
+    def test_04_the_mirror_groq_guard(self) -> None:
         """the_mirror.py: from groq import AsyncGroq wrapped in try/except."""
         src = _read("brain/the_mirror.py")
         tree = ast.parse(src)
@@ -117,7 +123,7 @@ class TestPhase46(unittest.TestCase):
         c(found_try, "groq import inside try block")
         c("self.client = None" in src, "client = None fallback")
 
-    def test_05_cortex_groq_guard(self):
+    def test_05_cortex_groq_guard(self) -> None:
         """cortex.py: from groq import AsyncGroq wrapped in try/except."""
         src = _read("brain/cortex.py")
         tree = ast.parse(src)
@@ -133,7 +139,7 @@ class TestPhase46(unittest.TestCase):
 
     # --- B. sentence_transformers guard ---
 
-    def test_06_truth_anchor_cross_encoder_guard(self):
+    def test_06_truth_anchor_cross_encoder_guard(self) -> None:
         """truth_anchor.py: CrossEncoder import wrapped in try/except."""
         src = _read("brain/truth_anchor.py")
         tree = ast.parse(src)
@@ -149,7 +155,7 @@ class TestPhase46(unittest.TestCase):
 
     # --- C. cortex.py dotenv bare pass fix ---
 
-    def test_07_cortex_dotenv_no_bare_pass(self):
+    def test_07_cortex_dotenv_no_bare_pass(self) -> None:
         """cortex.py: except ImportError for dotenv must log, not bare pass."""
         src = _read("brain/cortex.py")
         lines = src.split("\n")
@@ -167,7 +173,7 @@ class TestPhase46(unittest.TestCase):
 
     # --- D. HAS_GROQ flags existence (module-level) ---
 
-    def test_08_has_groq_flags_at_module_level(self):
+    def test_08_has_groq_flags_at_module_level(self) -> None:
         """All 10 groq modules define HAS_GROQ at module level."""
         modules = [
             "brain/artificer.py",
@@ -188,7 +194,7 @@ class TestPhase46(unittest.TestCase):
 
     # --- E. No remaining bare groq imports in brain/ ---
 
-    def test_09_no_bare_groq_imports(self):
+    def test_09_no_bare_groq_imports(self) -> None:
         """No brain/ module has bare 'from groq import' outside try/except."""
         brain_dir = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
@@ -212,7 +218,7 @@ class TestPhase46(unittest.TestCase):
 
     # --- F. Version sync ---
 
-    def test_10_learning_version_synced(self):
+    def test_10_learning_version_synced(self) -> None:
         """learning/__init__.py version matches main package."""
         learn_src = _read("learning/__init__.py")
         main_src = _read("__init__.py")
@@ -231,7 +237,7 @@ class TestPhase46(unittest.TestCase):
 
     # --- G. ghost_amplifier still guarded (Phase 46 regression check) ---
 
-    def test_11_ghost_amplifier_still_guarded(self):
+    def test_11_ghost_amplifier_still_guarded(self) -> None:
         """ghost_amplifier.py: HAS_GROQ guard persists from Phase 46."""
         src = _read("brain/ghost_amplifier.py")
         c("HAS_GROQ" in src, "ghost_amplifier HAS_GROQ persists")
@@ -239,14 +245,14 @@ class TestPhase46(unittest.TestCase):
 
     # --- H. truth_anchor verify handles None model ---
 
-    def test_12_truth_anchor_verify_none_model(self):
+    def test_12_truth_anchor_verify_none_model(self) -> None:
         """truth_anchor.py: verify() returns (False, 0.0) when model is None."""
         src = _read("brain/truth_anchor.py")
         c("self.model is None" in src, "verify checks for None model")
 
     # --- I. cortex.py has no bare pass (Phase 47 fix validated) ---
 
-    def test_13_cortex_no_bare_pass(self):
+    def test_13_cortex_no_bare_pass(self) -> None:
         """cortex.py: no bare except:pass after Phase 47 fix."""
         src = _read("brain/cortex.py")
         lines = src.split("\n")
@@ -265,7 +271,7 @@ class TestPhase46(unittest.TestCase):
 
     # --- J. Import roundtrip ---
 
-    def test_14_brain_package_imports(self):
+    def test_14_brain_package_imports(self) -> None:
         """brain/__init__.py can be imported without crashing."""
         try:
             mod = importlib.import_module("danny_toolkit.brain")
