@@ -287,10 +287,10 @@ class Strategist:
         Objective: "{objective}"
 
         Available Tools:
-        - "void_walker": for researching unknown topics, libraries, or documentation.
-        - "artificer": for writing and running Python scripts or file operations.
+        - "brain": for summarization, analysis, explanation, or writing text. PREFERRED for most tasks — use this by default for answering questions, analyzing concepts, and synthesizing knowledge.
+        - "void_walker": for researching unknown topics, libraries, or external documentation via web search.
+        - "artificer": ONLY for tasks that explicitly require writing and executing a NEW Python script (e.g. "build a calculator", "create a data pipeline"). NEVER use artificer for research, analysis, code review, or answering questions about existing code.
         - "refactor_guard": for scanning Python files for code quality (type hints, docstrings, imports). Returns a quality score 0-10.
-        - "brain": for summarization, analysis, or writing text.
 
         CRITICAL RULE for "details" field:
         When a step uses "void_walker" (internet research), write the "details" field

@@ -51,6 +51,11 @@ _FORBIDDEN = [
     "__import__", "eval(", "exec(",
     "importlib", "getattr(os", "setattr(",
     "open('/", 'open("/', "open('C:", 'open("C:',
+    # Forge scripts must NEVER touch RAG/vector stores directly
+    "import chromadb", "from chromadb",
+    "import faiss", "from faiss",
+    "PersistentClient", "ChromaDB",
+    "import danny_toolkit", "from danny_toolkit",
 ]
 
 try:
