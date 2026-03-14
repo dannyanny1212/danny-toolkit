@@ -1,0 +1,1697 @@
+{
+  "pathways": {
+    "ALCHEMIST+ARTIFICER": {
+      "Artificer": {
+        "strength": 0.5224,
+        "raw_bias": 0.9199,
+        "effective_bias": 0.9746,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 2,
+        "fails": 0,
+        "updated": "2026-03-14 05:53:11"
+      },
+      "HallucinatieSchild": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 17:00:09"
+      },
+      "Iolaax": {
+        "strength": 0.5224,
+        "raw_bias": 0.9199,
+        "effective_bias": 0.9746,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 2,
+        "fails": 0,
+        "updated": "2026-03-14 05:53:11"
+      }
+    },
+    "ALCHEMIST+IOLAAX": {
+      "Alchemist": {
+        "strength": 0.42,
+        "raw_bias": 0.8289,
+        "effective_bias": 0.8816,
+        "confidence": 0.6919,
+        "fires": 10,
+        "successes": 7,
+        "fails": 3,
+        "updated": "2026-03-14 08:24:28"
+      },
+      "Artificer": {
+        "strength": 0.42,
+        "raw_bias": 0.8289,
+        "effective_bias": 0.8816,
+        "confidence": 0.6919,
+        "fires": 10,
+        "successes": 7,
+        "fails": 3,
+        "updated": "2026-03-14 08:24:28"
+      },
+      "Iolaax": {
+        "strength": 0.42,
+        "raw_bias": 0.8289,
+        "effective_bias": 0.8816,
+        "confidence": 0.6919,
+        "fires": 10,
+        "successes": 7,
+        "fails": 3,
+        "updated": "2026-03-14 08:24:28"
+      }
+    },
+    "ALCHEMIST+MEMEX": {
+      "Alchemist": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 20:56:30"
+      },
+      "HallucinatieSchild": {
+        "strength": 0.5186,
+        "raw_bias": 0.9165,
+        "effective_bias": 0.9735,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 2,
+        "fails": 0,
+        "updated": "2026-03-14 08:29:25"
+      },
+      "Memex": {
+        "strength": 0.532,
+        "raw_bias": 0.9284,
+        "effective_bias": 0.9773,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 2,
+        "fails": 0,
+        "updated": "2026-03-07 20:56:30"
+      }
+    },
+    "ALCHEMIST+STRATEGIST": {
+      "Alchemist": {
+        "strength": 0.5384,
+        "raw_bias": 0.9341,
+        "effective_bias": 0.9737,
+        "confidence": 0.4,
+        "fires": 3,
+        "successes": 3,
+        "fails": 0,
+        "updated": "2026-03-14 06:33:35"
+      },
+      "Artificer": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 16:45:19"
+      },
+      "Strategist": {
+        "strength": 0.5384,
+        "raw_bias": 0.9341,
+        "effective_bias": 0.9737,
+        "confidence": 0.4,
+        "fires": 3,
+        "successes": 3,
+        "fails": 0,
+        "updated": "2026-03-14 06:33:35"
+      }
+    },
+    "ALCHEMIST+VIRTUAL_TWIN": {
+      "Echo": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 17:38:38"
+      }
+    },
+    "ALCHEMIST+VITA": {
+      "Echo": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 20:55:10"
+      }
+    },
+    "ARTIFICER+CHRONOS_AGENT": {
+      "Artificer": {
+        "strength": 0.532,
+        "raw_bias": 0.9284,
+        "effective_bias": 0.9773,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 2,
+        "fails": 0,
+        "updated": "2026-03-08 12:53:53"
+      },
+      "Chronos": {
+        "strength": 0.532,
+        "raw_bias": 0.9284,
+        "effective_bias": 0.9773,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 2,
+        "fails": 0,
+        "updated": "2026-03-08 12:53:53"
+      },
+      "Echo": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 15:42:33"
+      },
+      "Strategist": {
+        "strength": 0.532,
+        "raw_bias": 0.9284,
+        "effective_bias": 0.9773,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 2,
+        "fails": 0,
+        "updated": "2026-03-08 12:53:53"
+      }
+    },
+    "ARTIFICER+IOLAAX": {
+      "Alchemist": {
+        "strength": 0.484,
+        "raw_bias": 0.8858,
+        "effective_bias": 0.921,
+        "confidence": 0.6919,
+        "fires": 10,
+        "successes": 8,
+        "fails": 2,
+        "updated": "2026-03-14 06:29:05"
+      },
+      "Artificer": {
+        "strength": 0.9276,
+        "raw_bias": 1.2801,
+        "effective_bias": 1.2801,
+        "confidence": 1.0,
+        "fires": 88,
+        "successes": 84,
+        "fails": 4,
+        "updated": "2026-03-14 09:22:30"
+      },
+      "Coherentie": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 15:33:30"
+      },
+      "HallucinatieSchild": {
+        "strength": 0.46,
+        "raw_bias": 0.8644,
+        "effective_bias": 0.9458,
+        "confidence": 0.4,
+        "fires": 3,
+        "successes": 2,
+        "fails": 1,
+        "updated": "2026-03-07 08:40:15"
+      },
+      "Iolaax": {
+        "strength": 0.9276,
+        "raw_bias": 1.2801,
+        "effective_bias": 1.2801,
+        "confidence": 1.0,
+        "fires": 92,
+        "successes": 88,
+        "fails": 4,
+        "updated": "2026-03-14 09:22:30"
+      },
+      "Spark": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-02-22 14:41:12"
+      },
+      "Strategist": {
+        "strength": 0.95,
+        "raw_bias": 1.3,
+        "effective_bias": 1.3,
+        "confidence": 1.0,
+        "fires": 72,
+        "successes": 70,
+        "fails": 2,
+        "updated": "2026-02-26 03:58:11"
+      }
+    },
+    "ARTIFICER+MEMEX": {
+      "Echo": {
+        "strength": 0.5224,
+        "raw_bias": 0.9199,
+        "effective_bias": 0.9746,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 2,
+        "fails": 0,
+        "updated": "2026-03-14 08:42:15"
+      }
+    },
+    "ARTIFICER+PIXEL": {
+      "Echo": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 21:55:46"
+      }
+    },
+    "ARTIFICER+SPARK": {
+      "Echo": {
+        "strength": 0.548,
+        "raw_bias": 0.9427,
+        "effective_bias": 0.9771,
+        "confidence": 0.4,
+        "fires": 3,
+        "successes": 3,
+        "fails": 0,
+        "updated": "2026-03-07 17:28:25"
+      },
+      "Spark": {
+        "strength": 0.5384,
+        "raw_bias": 0.9341,
+        "effective_bias": 0.9737,
+        "confidence": 0.4,
+        "fires": 3,
+        "successes": 3,
+        "fails": 0,
+        "updated": "2026-03-14 09:50:02"
+      }
+    },
+    "ARTIFICER+STRATEGIST": {
+      "Alchemist": {
+        "strength": 0.5224,
+        "raw_bias": 0.9199,
+        "effective_bias": 0.9746,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 2,
+        "fails": 0,
+        "updated": "2026-03-14 09:18:01"
+      },
+      "Artificer": {
+        "strength": 0.4104,
+        "raw_bias": 0.8204,
+        "effective_bias": 0.8922,
+        "confidence": 0.6,
+        "fires": 7,
+        "successes": 4,
+        "fails": 3,
+        "updated": "2026-03-14 09:18:01"
+      },
+      "Chronos": {
+        "strength": 0.468,
+        "raw_bias": 0.8716,
+        "effective_bias": 0.9593,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 1,
+        "fails": 1,
+        "updated": "2026-03-07 21:59:44"
+      },
+      "Echo": {
+        "strength": 0.548,
+        "raw_bias": 0.9427,
+        "effective_bias": 0.9771,
+        "confidence": 0.4,
+        "fires": 3,
+        "successes": 3,
+        "fails": 0,
+        "updated": "2026-03-07 20:57:09"
+      },
+      "Pixel": {
+        "strength": 0.452,
+        "raw_bias": 0.8573,
+        "effective_bias": 0.9715,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 0,
+        "fails": 1,
+        "updated": "2026-03-07 16:55:07"
+      },
+      "Strategist": {
+        "strength": 0.4104,
+        "raw_bias": 0.8204,
+        "effective_bias": 0.8922,
+        "confidence": 0.6,
+        "fires": 7,
+        "successes": 4,
+        "fails": 3,
+        "updated": "2026-03-14 09:18:01"
+      }
+    },
+    "ARTIFICER+VIRTUAL_TWIN": {
+      "#@*VirtualTwin": {
+        "strength": 0.5608,
+        "raw_bias": 0.954,
+        "effective_bias": 0.9762,
+        "confidence": 0.517,
+        "fires": 5,
+        "successes": 5,
+        "fails": 0,
+        "updated": "2026-03-14 09:38:51"
+      },
+      "Artificer": {
+        "strength": 0.5832,
+        "raw_bias": 0.974,
+        "effective_bias": 0.9844,
+        "confidence": 0.6,
+        "fires": 7,
+        "successes": 7,
+        "fails": 0,
+        "updated": "2026-03-14 09:38:51"
+      },
+      "Strategist": {
+        "strength": 0.5448,
+        "raw_bias": 0.9398,
+        "effective_bias": 0.9721,
+        "confidence": 0.4644,
+        "fires": 4,
+        "successes": 4,
+        "fails": 0,
+        "updated": "2026-03-14 09:38:51"
+      }
+    },
+    "ARTIFICER+VOID": {
+      "Artificer": {
+        "strength": 0.5224,
+        "raw_bias": 0.9199,
+        "effective_bias": 0.9746,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 2,
+        "fails": 0,
+        "updated": "2026-03-14 05:43:25"
+      },
+      "Strategist": {
+        "strength": 0.5211,
+        "raw_bias": 0.9188,
+        "effective_bias": 0.9743,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 2,
+        "fails": 0,
+        "updated": "2026-03-14 05:43:25"
+      },
+      "Void": {
+        "strength": 0.5224,
+        "raw_bias": 0.9199,
+        "effective_bias": 0.9746,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 2,
+        "fails": 0,
+        "updated": "2026-03-14 05:43:25"
+      }
+    },
+    "CHRONOS_AGENT+COHERENTIE": {
+      "Chronos": {
+        "strength": 0.5544,
+        "raw_bias": 0.9484,
+        "effective_bias": 0.976,
+        "confidence": 0.4644,
+        "fires": 4,
+        "successes": 4,
+        "fails": 0,
+        "updated": "2026-03-14 08:45:33"
+      },
+      "Coherentie": {
+        "strength": 0.5224,
+        "raw_bias": 0.9199,
+        "effective_bias": 0.9746,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 2,
+        "fails": 0,
+        "updated": "2026-03-14 08:45:33"
+      },
+      "Memex": {
+        "strength": 0.5224,
+        "raw_bias": 0.9199,
+        "effective_bias": 0.9746,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 2,
+        "fails": 0,
+        "updated": "2026-03-14 08:45:33"
+      }
+    },
+    "CHRONOS_AGENT+MEMEX": {
+      "Echo": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 17:29:33"
+      }
+    },
+    "CHRONOS_AGENT+NAVIGATOR": {
+      "Artificer": {
+        "strength": 0.5384,
+        "raw_bias": 0.9341,
+        "effective_bias": 0.9737,
+        "confidence": 0.4,
+        "fires": 3,
+        "successes": 3,
+        "fails": 0,
+        "updated": "2026-03-14 05:50:03"
+      },
+      "Chronos": {
+        "strength": 0.5384,
+        "raw_bias": 0.9341,
+        "effective_bias": 0.9737,
+        "confidence": 0.4,
+        "fires": 3,
+        "successes": 3,
+        "fails": 0,
+        "updated": "2026-03-14 05:50:03"
+      },
+      "Navigator": {
+        "strength": 0.5384,
+        "raw_bias": 0.9341,
+        "effective_bias": 0.9737,
+        "confidence": 0.4,
+        "fires": 3,
+        "successes": 3,
+        "fails": 0,
+        "updated": "2026-03-14 05:50:03"
+      }
+    },
+    "CHRONOS_AGENT+ORACLE": {
+      "Echo": {
+        "strength": 0.5384,
+        "raw_bias": 0.9341,
+        "effective_bias": 0.9737,
+        "confidence": 0.4,
+        "fires": 3,
+        "successes": 3,
+        "fails": 0,
+        "updated": "2026-03-14 06:00:26"
+      }
+    },
+    "CHRONOS_AGENT+STRATEGIST": {
+      "Chronos": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-08 13:00:40"
+      },
+      "Echo": {
+        "strength": 0.532,
+        "raw_bias": 0.9284,
+        "effective_bias": 0.9773,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 2,
+        "fails": 0,
+        "updated": "2026-03-07 20:53:41"
+      },
+      "HallucinatieSchild": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 17:42:49"
+      },
+      "Navigator": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-08 13:00:40"
+      },
+      "Strategist": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-08 13:00:40"
+      }
+    },
+    "CHRONOS_AGENT+VIRTUAL_TWIN": {
+      "Echo": {
+        "strength": 0.5544,
+        "raw_bias": 0.9484,
+        "effective_bias": 0.976,
+        "confidence": 0.4644,
+        "fires": 4,
+        "successes": 4,
+        "fails": 0,
+        "updated": "2026-03-14 05:47:42"
+      },
+      "HallucinatieSchild": {
+        "strength": 0.412,
+        "raw_bias": 0.8218,
+        "effective_bias": 0.9172,
+        "confidence": 0.4644,
+        "fires": 4,
+        "successes": 2,
+        "fails": 2,
+        "updated": "2026-03-07 17:15:19"
+      }
+    },
+    "CHRONOS_AGENT+VITA": {
+      "Chronos": {
+        "strength": 0.468,
+        "raw_bias": 0.8716,
+        "effective_bias": 0.9593,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 1,
+        "fails": 1,
+        "updated": "2026-03-07 15:38:50"
+      },
+      "Echo": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-02-22 09:33:06"
+      },
+      "Memex": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 15:38:50"
+      },
+      "Vita": {
+        "strength": 0.468,
+        "raw_bias": 0.8716,
+        "effective_bias": 0.9593,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 1,
+        "fails": 1,
+        "updated": "2026-03-07 15:38:50"
+      }
+    },
+    "CIPHER+COHERENTIE": {
+      "Cipher": {
+        "strength": 0.0948,
+        "raw_bias": 0.5398,
+        "effective_bias": 0.5398,
+        "confidence": 1.0,
+        "fires": 296,
+        "successes": 161,
+        "fails": 135,
+        "updated": "2026-03-14 09:49:41"
+      },
+      "Coherentie": {
+        "strength": 0.0948,
+        "raw_bias": 0.5398,
+        "effective_bias": 0.5398,
+        "confidence": 1.0,
+        "fires": 296,
+        "successes": 161,
+        "fails": 135,
+        "updated": "2026-03-14 09:49:41"
+      },
+      "HallucinatieSchild": {
+        "strength": 0.052,
+        "raw_bias": 0.5018,
+        "effective_bias": 0.5623,
+        "confidence": 0.8785,
+        "fires": 20,
+        "successes": 8,
+        "fails": 12,
+        "updated": "2026-02-23 22:44:11"
+      },
+      "Navigator": {
+        "strength": 0.95,
+        "raw_bias": 1.3,
+        "effective_bias": 1.3,
+        "confidence": 1.0,
+        "fires": 72,
+        "successes": 65,
+        "fails": 7,
+        "updated": "2026-02-26 03:02:30"
+      },
+      "Sentinel": {
+        "strength": 0.05,
+        "raw_bias": 0.5,
+        "effective_bias": 0.5,
+        "confidence": 1.0,
+        "fires": 218,
+        "successes": 91,
+        "fails": 127,
+        "updated": "2026-03-14 06:29:07"
+      }
+    },
+    "CIPHER+NAVIGATOR": {
+      "Cipher": {
+        "strength": 0.95,
+        "raw_bias": 1.3,
+        "effective_bias": 1.3,
+        "confidence": 1.0,
+        "fires": 88,
+        "successes": 88,
+        "fails": 0,
+        "updated": "2026-02-26 03:01:50"
+      },
+      "Coherentie": {
+        "strength": 0.95,
+        "raw_bias": 1.3,
+        "effective_bias": 1.3,
+        "confidence": 1.0,
+        "fires": 88,
+        "successes": 88,
+        "fails": 0,
+        "updated": "2026-02-26 03:01:50"
+      },
+      "Navigator": {
+        "strength": 0.95,
+        "raw_bias": 1.3,
+        "effective_bias": 1.3,
+        "confidence": 1.0,
+        "fires": 88,
+        "successes": 88,
+        "fails": 0,
+        "updated": "2026-02-26 03:01:50"
+      }
+    },
+    "CODE": {
+      "Sentinel": {
+        "strength": 0.08,
+        "raw_bias": 0.5267,
+        "effective_bias": 0.716,
+        "confidence": 0.6,
+        "fires": 7,
+        "successes": 0,
+        "fails": 7,
+        "updated": "2026-03-14 09:32:57"
+      }
+    },
+    "COHERENTIE+ORACLE": {
+      "Echo": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-02-22 09:32:25"
+      }
+    },
+    "COHERENTIE+SENTINEL": {
+      "HallucinatieSchild": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 16:51:36"
+      }
+    },
+    "COHERENTIE+VIRTUAL_TWIN": {
+      "#@*VirtualTwin": {
+        "strength": 0.5064,
+        "raw_bias": 0.9057,
+        "effective_bias": 0.9512,
+        "confidence": 0.517,
+        "fires": 5,
+        "successes": 4,
+        "fails": 1,
+        "updated": "2026-03-14 09:50:02"
+      },
+      "Chronos": {
+        "strength": 0.5064,
+        "raw_bias": 0.9057,
+        "effective_bias": 0.9811,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-14 09:50:02"
+      },
+      "Coherentie": {
+        "strength": 0.5064,
+        "raw_bias": 0.9057,
+        "effective_bias": 0.9512,
+        "confidence": 0.517,
+        "fires": 5,
+        "successes": 4,
+        "fails": 1,
+        "updated": "2026-03-14 09:50:02"
+      },
+      "Iolaax": {
+        "strength": 0.452,
+        "raw_bias": 0.8573,
+        "effective_bias": 0.9715,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 0,
+        "fails": 1,
+        "updated": "2026-03-07 22:43:23"
+      },
+      "Memex": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-08 13:09:55"
+      },
+      "Strategist": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 23:18:03"
+      }
+    },
+    "COHERENTIE+VITA": {
+      "#@*VirtualTwin": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-13 09:03:22"
+      },
+      "Coherentie": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-13 09:03:22"
+      },
+      "Echo": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 17:37:49"
+      },
+      "Vita": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-13 09:03:22"
+      }
+    },
+    "DATA": {
+      "Cipher": {
+        "strength": 0.564,
+        "raw_bias": 0.9569,
+        "effective_bias": 0.9914,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-14 09:13:21"
+      },
+      "Coherentie": {
+        "strength": 0.564,
+        "raw_bias": 0.9569,
+        "effective_bias": 0.9914,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-14 08:24:27"
+      },
+      "HallucinatieSchild": {
+        "strength": 0.564,
+        "raw_bias": 0.9569,
+        "effective_bias": 0.9914,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-14 09:14:01"
+      },
+      "Sentinel": {
+        "strength": 0.95,
+        "raw_bias": 1.3,
+        "effective_bias": 1.2751,
+        "confidence": 0.917,
+        "fires": 23,
+        "successes": 17,
+        "fails": 6,
+        "updated": "2026-03-14 09:44:35"
+      },
+      "Void": {
+        "strength": 0.564,
+        "raw_bias": 0.9569,
+        "effective_bias": 0.9914,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-14 07:02:32"
+      }
+    },
+    "GENERAL": {
+      "Cipher": {
+        "strength": 0.564,
+        "raw_bias": 0.9569,
+        "effective_bias": 0.9914,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-14 09:13:21"
+      },
+      "Coherentie": {
+        "strength": 0.564,
+        "raw_bias": 0.9569,
+        "effective_bias": 0.9914,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-14 08:24:27"
+      },
+      "HallucinatieSchild": {
+        "strength": 0.564,
+        "raw_bias": 0.9569,
+        "effective_bias": 0.9914,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-14 09:14:01"
+      },
+      "Sentinel": {
+        "strength": 0.95,
+        "raw_bias": 1.3,
+        "effective_bias": 1.2714,
+        "confidence": 0.9047,
+        "fires": 22,
+        "successes": 16,
+        "fails": 6,
+        "updated": "2026-03-14 09:44:35"
+      },
+      "Void": {
+        "strength": 0.564,
+        "raw_bias": 0.9569,
+        "effective_bias": 0.9914,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-14 07:02:32"
+      }
+    },
+    "IOLAAX+MEMEX": {
+      "Echo": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-02-24 23:59:27"
+      },
+      "Iolaax": {
+        "strength": 0.5448,
+        "raw_bias": 0.9398,
+        "effective_bias": 0.9721,
+        "confidence": 0.4644,
+        "fires": 4,
+        "successes": 4,
+        "fails": 0,
+        "updated": "2026-03-14 09:13:27"
+      }
+    },
+    "IOLAAX+STRATEGIST": {
+      "Echo": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 21:06:31"
+      }
+    },
+    "IOLAAX+VOID": {
+      "Artificer": {
+        "strength": 0.5064,
+        "raw_bias": 0.9057,
+        "effective_bias": 0.9811,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-14 05:31:14"
+      },
+      "Iolaax": {
+        "strength": 0.5064,
+        "raw_bias": 0.9057,
+        "effective_bias": 0.9811,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-14 05:31:14"
+      }
+    },
+    "MEMEX+NAVIGATOR": {
+      "HallucinatieSchild": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 17:39:46"
+      },
+      "Memex": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 17:39:46"
+      }
+    },
+    "MEMEX+STRATEGIST": {
+      "Echo": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 20:55:33"
+      }
+    },
+    "MEMEX+VIRTUAL_TWIN": {
+      "#@*VirtualTwin": {
+        "strength": 0.548,
+        "raw_bias": 0.9427,
+        "effective_bias": 0.9771,
+        "confidence": 0.4,
+        "fires": 3,
+        "successes": 3,
+        "fails": 0,
+        "updated": "2026-03-08 12:55:51"
+      },
+      "Chronos": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 15:34:51"
+      },
+      "Echo": {
+        "strength": 0.5224,
+        "raw_bias": 0.9199,
+        "effective_bias": 0.9746,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 2,
+        "fails": 0,
+        "updated": "2026-03-14 08:24:55"
+      },
+      "HallucinatieSchild": {
+        "strength": 0.532,
+        "raw_bias": 0.9284,
+        "effective_bias": 0.9773,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 2,
+        "fails": 0,
+        "updated": "2026-03-07 16:59:25"
+      },
+      "Memex": {
+        "strength": 0.564,
+        "raw_bias": 0.9569,
+        "effective_bias": 0.98,
+        "confidence": 0.4644,
+        "fires": 4,
+        "successes": 4,
+        "fails": 0,
+        "updated": "2026-03-08 12:55:51"
+      },
+      "Navigator": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-02-22 14:17:55"
+      }
+    },
+    "NAVIGATOR+VITA": {
+      "#@*VirtualTwin": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 15:35:39"
+      },
+      "Navigator": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 15:35:39"
+      },
+      "Vita": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 15:35:39"
+      }
+    },
+    "ORACLE+PIXEL": {
+      "Echo": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-02-22 09:31:57"
+      }
+    },
+    "ORACLE+SPARK": {
+      "Echo": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-02-22 10:06:32"
+      },
+      "Oracle": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 17:45:41"
+      },
+      "Spark": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 17:45:41"
+      }
+    },
+    "ORACLE+VIRTUAL_TWIN": {
+      "Echo": {
+        "strength": 0.532,
+        "raw_bias": 0.9284,
+        "effective_bias": 0.9773,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 2,
+        "fails": 0,
+        "updated": "2026-03-07 17:37:04"
+      },
+      "Oracle": {
+        "strength": 0.532,
+        "raw_bias": 0.9284,
+        "effective_bias": 0.9773,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 2,
+        "fails": 0,
+        "updated": "2026-03-07 17:29:56"
+      }
+    },
+    "ORACLE+VITA": {
+      "Vita": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 15:35:28"
+      }
+    },
+    "PIXEL+VIRTUAL_TWIN": {
+      "Echo": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 17:39:09"
+      }
+    },
+    "SEARCH": {
+      "Cipher": {
+        "strength": 0.564,
+        "raw_bias": 0.9569,
+        "effective_bias": 0.9914,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-14 09:13:21"
+      },
+      "Coherentie": {
+        "strength": 0.564,
+        "raw_bias": 0.9569,
+        "effective_bias": 0.9914,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-14 08:24:27"
+      },
+      "HallucinatieSchild": {
+        "strength": 0.564,
+        "raw_bias": 0.9569,
+        "effective_bias": 0.9914,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-14 09:14:01"
+      },
+      "Sentinel": {
+        "strength": 0.95,
+        "raw_bias": 1.3,
+        "effective_bias": 1.2786,
+        "confidence": 0.9288,
+        "fires": 24,
+        "successes": 17,
+        "fails": 7,
+        "updated": "2026-03-14 09:44:35"
+      },
+      "Void": {
+        "strength": 0.564,
+        "raw_bias": 0.9569,
+        "effective_bias": 0.9914,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-14 07:02:32"
+      }
+    },
+    "SECURITY": {
+      "Sentinel": {
+        "strength": 0.05,
+        "raw_bias": 0.5,
+        "effective_bias": 0.6541,
+        "confidence": 0.6919,
+        "fires": 10,
+        "successes": 0,
+        "fails": 10,
+        "updated": "2026-03-14 09:32:57"
+      }
+    },
+    "SENTINEL+STRATEGIST": {
+      "#@*VirtualTwin": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 23:25:48"
+      },
+      "HallucinatieSchild": {
+        "strength": 0.548,
+        "raw_bias": 0.9427,
+        "effective_bias": 0.9771,
+        "confidence": 0.4,
+        "fires": 3,
+        "successes": 3,
+        "fails": 0,
+        "updated": "2026-03-07 16:50:14"
+      },
+      "Sentinel": {
+        "strength": 0.532,
+        "raw_bias": 0.9284,
+        "effective_bias": 0.9773,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 2,
+        "fails": 0,
+        "updated": "2026-03-08 12:55:07"
+      },
+      "Strategist": {
+        "strength": 0.532,
+        "raw_bias": 0.9284,
+        "effective_bias": 0.9773,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 2,
+        "fails": 0,
+        "updated": "2026-03-08 12:55:07"
+      }
+    },
+    "SENTINEL+VIRTUAL_TWIN": {
+      "Sentinel": {
+        "strength": 0.5064,
+        "raw_bias": 0.9057,
+        "effective_bias": 0.9811,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-14 05:31:38"
+      }
+    },
+    "SPARK+STRATEGIST": {
+      "Spark": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 17:41:16"
+      }
+    },
+    "SPARK+VIRTUAL_TWIN": {
+      "HallucinatieSchild": {
+        "strength": 0.532,
+        "raw_bias": 0.9284,
+        "effective_bias": 0.9773,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 2,
+        "fails": 0,
+        "updated": "2026-03-07 16:56:45"
+      },
+      "Spark": {
+        "strength": 0.5224,
+        "raw_bias": 0.9199,
+        "effective_bias": 0.9746,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 2,
+        "fails": 0,
+        "updated": "2026-03-14 05:52:54"
+      }
+    },
+    "STRATEGIST+VIRTUAL_TWIN": {
+      "#@*VirtualTwin": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-02-25 00:16:09"
+      },
+      "Echo": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 17:38:16"
+      },
+      "HallucinatieSchild": {
+        "strength": 0.532,
+        "raw_bias": 0.9284,
+        "effective_bias": 0.9773,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 2,
+        "fails": 0,
+        "updated": "2026-03-07 17:44:26"
+      },
+      "Spark": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 17:44:26"
+      }
+    },
+    "STRATEGIST+VITA": {
+      "Echo": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 23:28:23"
+      }
+    },
+    "UNKNOWN": {
+      "#@*VirtualTwin": {
+        "strength": 0.066,
+        "raw_bias": 0.5142,
+        "effective_bias": 0.6405,
+        "confidence": 0.7401,
+        "fires": 12,
+        "successes": 1,
+        "fails": 11,
+        "updated": "2026-03-14 05:26:32"
+      },
+      "Artificer": {
+        "strength": 0.05,
+        "raw_bias": 0.5,
+        "effective_bias": 0.6415,
+        "confidence": 0.717,
+        "fires": 11,
+        "successes": 0,
+        "fails": 11,
+        "updated": "2026-03-14 05:03:44"
+      },
+      "Chronos": {
+        "strength": 0.404,
+        "raw_bias": 0.8147,
+        "effective_bias": 0.9413,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 0,
+        "fails": 2,
+        "updated": "2026-03-14 01:18:51"
+      },
+      "Cipher": {
+        "strength": 0.404,
+        "raw_bias": 0.8147,
+        "effective_bias": 0.9413,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 0,
+        "fails": 2,
+        "updated": "2026-03-14 04:25:05"
+      },
+      "Coherentie": {
+        "strength": 0.05,
+        "raw_bias": 0.5,
+        "effective_bias": 0.6541,
+        "confidence": 0.6919,
+        "fires": 10,
+        "successes": 0,
+        "fails": 10,
+        "updated": "2026-03-14 04:25:05"
+      },
+      "Echo": {
+        "strength": 0.05,
+        "raw_bias": 0.5,
+        "effective_bias": 0.5541,
+        "confidence": 0.8919,
+        "fires": 21,
+        "successes": 0,
+        "fails": 21,
+        "updated": "2026-03-14 04:27:07"
+      },
+      "HallucinatieSchild": {
+        "strength": 0.308,
+        "raw_bias": 0.7293,
+        "effective_bias": 0.8743,
+        "confidence": 0.4644,
+        "fires": 4,
+        "successes": 0,
+        "fails": 4,
+        "updated": "2026-03-14 05:04:04"
+      },
+      "Iolaax": {
+        "strength": 0.05,
+        "raw_bias": 0.5,
+        "effective_bias": 0.6541,
+        "confidence": 0.6919,
+        "fires": 10,
+        "successes": 0,
+        "fails": 10,
+        "updated": "2026-03-14 04:13:01"
+      },
+      "Memex": {
+        "strength": 0.42,
+        "raw_bias": 0.8289,
+        "effective_bias": 0.9316,
+        "confidence": 0.4,
+        "fires": 3,
+        "successes": 1,
+        "fails": 2,
+        "updated": "2026-03-14 05:26:32"
+      },
+      "Navigator": {
+        "strength": 0.468,
+        "raw_bias": 0.8716,
+        "effective_bias": 0.9593,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 1,
+        "fails": 1,
+        "updated": "2026-03-14 05:26:32"
+      },
+      "Sentinel": {
+        "strength": 0.404,
+        "raw_bias": 0.8147,
+        "effective_bias": 0.9413,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 0,
+        "fails": 2,
+        "updated": "2026-03-14 04:26:47"
+      },
+      "Spark": {
+        "strength": 0.404,
+        "raw_bias": 0.8147,
+        "effective_bias": 0.9413,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 0,
+        "fails": 2,
+        "updated": "2026-03-14 04:25:05"
+      },
+      "Strategist": {
+        "strength": 0.05,
+        "raw_bias": 0.5,
+        "effective_bias": 0.63,
+        "confidence": 0.7401,
+        "fires": 12,
+        "successes": 0,
+        "fails": 12,
+        "updated": "2026-03-14 04:26:11"
+      }
+    },
+    "VIRTUAL_TWIN+VITA": {
+      "#@*VirtualTwin": {
+        "strength": 0.516,
+        "raw_bias": 0.9142,
+        "effective_bias": 0.9828,
+        "confidence": 0.2,
+        "fires": 1,
+        "successes": 1,
+        "fails": 0,
+        "updated": "2026-03-07 15:37:10"
+      },
+      "Vita": {
+        "strength": 0.532,
+        "raw_bias": 0.9284,
+        "effective_bias": 0.9773,
+        "confidence": 0.317,
+        "fires": 2,
+        "successes": 2,
+        "fails": 0,
+        "updated": "2026-03-07 16:50:44"
+      }
+    }
+  },
+  "stats": {
+    "pathways": 150,
+    "interactions": 648,
+    "avg_strength": 0.5057,
+    "positive_signals": 430,
+    "negative_signals": 217
+  },
+  "telemetry": {
+    "Spark": {
+      "avg_latency": 0.06266379356384277,
+      "success_count": 1,
+      "total_latency": 0.06266379356384277,
+      "updated_at": "2026-03-14 09:49:41"
+    },
+    "Sentinel": {
+      "avg_latency": 0.460314,
+      "success_count": 3,
+      "total_latency": 1.3899971406866403,
+      "updated_at": "2026-03-14 09:38:24"
+    },
+    "Cipher": {
+      "avg_latency": 0.53082,
+      "success_count": 2,
+      "total_latency": 0.7970293365763764,
+      "updated_at": "2026-03-14 09:38:41"
+    },
+    "Memex": {
+      "avg_latency": 0.5636387423445466,
+      "success_count": 1,
+      "total_latency": 0.5636387423445466,
+      "updated_at": "2026-03-14 09:38:24"
+    },
+    "Navigator": {
+      "avg_latency": 0.836687,
+      "success_count": 3,
+      "total_latency": 2.4891886607056755,
+      "updated_at": "2026-03-14 09:38:24"
+    },
+    "Pixel": {
+      "avg_latency": 1.122302476400765,
+      "success_count": 1,
+      "total_latency": 1.122302476400765,
+      "updated_at": "2026-03-14 09:38:24"
+    },
+    "Oracle": {
+      "avg_latency": 1.365182,
+      "success_count": 2,
+      "total_latency": 2.827570414341398,
+      "updated_at": "2026-03-14 09:38:24"
+    },
+    "Iolaax": {
+      "avg_latency": 2.103924,
+      "success_count": 2,
+      "total_latency": 4.332530065037627,
+      "updated_at": "2026-03-14 09:38:24"
+    },
+    "Chronos": {
+      "avg_latency": 3.523672,
+      "success_count": 2,
+      "total_latency": 10.477757142918355,
+      "updated_at": "2026-03-14 09:49:56"
+    },
+    "Coherentie": {
+      "avg_latency": 10.047044,
+      "success_count": 2,
+      "total_latency": 20.093417644500732,
+      "updated_at": "2026-03-14 09:49:57"
+    },
+    "Artificer": {
+      "avg_latency": 10.51059,
+      "success_count": 3,
+      "total_latency": 23.791399297910857,
+      "updated_at": "2026-03-14 09:38:24"
+    },
+    "#@*VirtualTwin": {
+      "avg_latency": 16.021952,
+      "success_count": 2,
+      "total_latency": 30.9797465801239,
+      "updated_at": "2026-03-14 09:50:01"
+    },
+    "Strategist": {
+      "avg_latency": 16.409809,
+      "success_count": 3,
+      "total_latency": 52.42181711894198,
+      "updated_at": "2026-03-14 09:38:24"
+    }
+  },
+  "exported_at": "2026-03-14T10:56:34.517930",
+  "version": "1.1"
+}

@@ -36,6 +36,23 @@ except ImportError:
     class Kleur:
         GROEN = ROOD = GEEL = CYAAN = RESET = ""
 
+try:
+    from danny_toolkit.omega_sovereign_core.memory_interface import secure_store_state
+except ImportError:
+    secure_store_state = None  # type: ignore[assignment]
+try:
+    from danny_toolkit.core.neural_bus import get_bus
+except ImportError:
+    get_bus = None  # type: ignore[assignment]
+try:
+    from danny_toolkit.omega_sovereign_core.event_signing import get_event_signer
+except ImportError:
+    get_event_signer = None  # type: ignore[assignment]
+try:
+    from danny_toolkit.brain.cortical_stack import get_cortical_stack
+except ImportError:
+    get_cortical_stack = None  # type: ignore[assignment]
+
 
 class LifecycleManager:
     """
@@ -244,23 +261,6 @@ def safe_shutdown(
             )
         except Exception as e:
             logger.debug("CorticalStack lifecycle log mislukt: %s", e)
-
-try:
-    from danny_toolkit.omega_sovereign_core.memory_interface import secure_store_state
-except ImportError:
-    pass
-try:
-    from danny_toolkit.core.neural_bus import get_bus
-except ImportError:
-    pass
-try:
-    from danny_toolkit.omega_sovereign_core.event_signing import get_event_signer
-except ImportError:
-    pass
-try:
-    from danny_toolkit.brain.cortical_stack import get_cortical_stack
-except ImportError:
-    pass
 
     # ── Final status ──
     if success:

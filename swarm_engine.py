@@ -17,6 +17,7 @@ Gebruik:
     for p in payloads:
         print(p.agent, p.type, p.content)
 """
+from __future__ import annotations
 
 import atexit
 import asyncio
@@ -114,6 +115,23 @@ def get_paused_agents() -> list:
         return sorted(_PAUSED_AGENTS)
 
 
+def boost_agent(agent_name: str) -> Dict[str, Any]:
+    """Operation Phoenix: rehabilitate an underperforming agent.
+
+    Gives the agent 3 consecutive trivial success tasks via Hebbian
+    plasticity to undo WEAKEN penalties and restore SP.
+
+    Returns dict with old_sp, new_sp, and reinforcement details.
+    """
+    try:
+        from danny_toolkit.brain.synapse import get_synapse
+        synapse = get_synapse()
+        return synapse.phoenix_boost(agent_name)
+    except Exception as e:
+        logger.error("boost_agent failed for %s: %s", agent_name, e)
+        return {"agent": agent_name, "error": str(e)}
+
+
 def get_pipeline_metrics() -> Dict[str, Any]:
     """Per-agent pipeline metrics (module-level singleton)."""
     with _METRICS_LOCK:
@@ -137,7 +155,7 @@ _ERROR_HISTORY: deque = deque(maxlen=200)
 _ERROR_HISTORY_LOCK = _threading.Lock()
 
 
-def _record_error_context(fc):
+def _record_error_context(fc: object) -> None:
     """Voeg FoutContext toe aan de ring buffer."""
     try:
         with _ERROR_HISTORY_LOCK:
@@ -146,7 +164,7 @@ def _record_error_context(fc):
         logger.debug("_record_error_context fout: %s", e)
 
 
-def get_recent_errors(count: int = 50):
+def get_recent_errors(count: int = 50) -> list[object]:
     """Retourneer recente FoutContext objecten (nieuwste eerst)."""
     try:
         with _ERROR_HISTORY_LOCK:
@@ -225,7 +243,7 @@ def _log_to_cortical(
         logger.debug("Cortical log failed: %s", e)
 
 
-def _learn_from_input(prompt):
+def _learn_from_input(prompt: str) -> None:
     """Extraheer feiten uit user input."""
     if not HAS_CORTICAL:
         return
@@ -1530,8 +1548,8 @@ class SentinelValidator:
         ]
 
     def valideer(
-        self, payload,
-    ) -> dict:
+        self, payload: SwarmPayload,
+    ) -> dict[str, object]:
         """Valideer een SwarmPayload.
 
         Args:
@@ -1845,9 +1863,9 @@ class AdaptiveRouter:
     def route(
         self,
         user_input: str,
-        synapse_bias: Dict[str, float] = None,
-        exclude_agents: set = None,
-    ) -> List[str]:
+        synapse_bias: dict[str, float] | None = None,
+        exclude_agents: set[str] | None = None,
+    ) -> list[str]:
         """Semantische routing via cosine similarity.
 
         Args:
@@ -2051,7 +2069,7 @@ class PipelineTuner:
             parts.append(f"{label}:{ms:.0f}ms")
         return " ".join(parts)
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset alle stats."""
         self._stats.clear()
         self._call_count.clear()
@@ -2212,6 +2230,7 @@ class SwarmEngine:
             "tribunal_warnings": 0,
             "tribunal_errors": 0,
             "synapse_adjustments": 0,
+            "synapse_reinforcements": 0,
             "phantom_predictions": 0,
             "phantom_hits": 0,
             "agent_errors": 0,
@@ -2227,6 +2246,10 @@ class SwarmEngine:
             "error_retries_succeeded": 0,
             "cortex_enrichments": 0,
         }
+
+        # Phase 56: Forge Loader — dynamically loaded tools
+        self._forged_tools: Dict[str, Any] = {}
+        self._forged_schemas: list = []
 
         # Cached ShadowCortex instance (lazy init)
         self._shadow_cortex = None
@@ -2348,6 +2371,117 @@ class SwarmEngine:
             if error:
                 m["errors"] += 1
                 m["last_error"] = str(error)[:200]
+
+    # ── Phase 56: Forge Tool Dispatch ──
+
+    async def dispatch_forged_tool(
+        self, tool_name: str, arguments: Dict[str, Any],
+        trace_id: str = "",
+    ) -> "SwarmPayload":
+        """Execute a dynamically loaded forge tool as a SwarmPayload.
+
+        S-Tier: any failure returns error payload, never crashes server.
+        """
+        t0 = time.time()
+        try:
+            from danny_toolkit.core.forge_loader import execute_forged_tool
+            result = execute_forged_tool(tool_name, arguments)
+            elapsed = time.time() - t0
+
+            if result.get("status") == "error":
+                return SwarmPayload(
+                    agent="Artificer",
+                    type="error",
+                    content=f"Forged tool error: {result.get('error', '?')}",
+                    display_text=f"Tool {tool_name} failed",
+                    metadata={"execution_time": elapsed, "forged_tool": tool_name},
+                    trace_id=trace_id,
+                )
+
+            content = str(result.get("result", ""))
+            return SwarmPayload(
+                agent="Artificer",
+                type="text",
+                content=content,
+                display_text=content[:500],
+                metadata={
+                    "execution_time": elapsed,
+                    "forged_tool": tool_name,
+                    "forged": True,
+                },
+                trace_id=trace_id,
+            )
+        except Exception as e:
+            logger.error("Forge dispatch crashed: %s", e)
+            return SwarmPayload(
+                agent="Artificer",
+                type="error",
+                content=f"Forge dispatch error: {e}",
+                display_text=f"Tool {tool_name} crashed",
+                metadata={"forged_tool": tool_name},
+                trace_id=trace_id,
+            )
+
+    def get_forged_tool_schemas(self) -> List[Dict]:
+        """Return OpenAI-compatible schemas for all loaded forge tools."""
+        return self._forged_schemas
+
+    # ── Phase 56: Resonance Optimizer — Turbo-Boost ──
+
+    def apply_turbo_boost(self) -> Optional[Dict]:
+        """Resonance Optimizer: find the most efficient agent and apply Turbo-Boost.
+
+        Efficiency Score = SP / avg_latency (seconds).
+        The winning agent receives a one-time Hebbian boost of +0.15
+        across GENERAL, DATA, SEARCH categories.
+
+        Returns dict with winner details or None if no telemetry available.
+        """
+        try:
+            from danny_toolkit.brain.synapse import get_synapse
+            synapse = get_synapse()
+            scores = synapse.get_efficiency_scores()
+            if not scores:
+                logger.info("Turbo-Boost: geen telemetry beschikbaar")
+                return None
+
+            winner = scores[0]
+            agent_name = winner["agent"]
+
+            # Apply +0.15 boost across 3 categories
+            TURBO_SIGNAL = 0.15
+            for category in ["GENERAL", "DATA", "SEARCH"]:
+                synapse._apply_plasticity(category, agent_name, TURBO_SIGNAL)
+            synapse._safe_commit()
+            synapse._auto_export()
+
+            new_sp = synapse._agent_sp(agent_name)
+            winner["new_sp"] = new_sp
+
+            logger.info(
+                "Turbo-Boost: %s (efficiency=%.2f, SP=%d→%d)",
+                agent_name, winner["efficiency"], winner["sp"], new_sp,
+            )
+
+            try:
+                from danny_toolkit.core.neural_bus import get_bus, EventTypes
+                bus = get_bus()
+                bus.publish(
+                    EventTypes.SYNAPSE_FEEDBACK,
+                    {
+                        "operation": "turbo_boost",
+                        "winner": winner,
+                        "top_3": scores[:3],
+                    },
+                    bron="swarm_engine",
+                )
+            except Exception:
+                pass
+
+            return winner
+        except Exception as e:
+            logger.warning("Turbo-Boost failed: %s", e)
+            return None
 
     # ── Phase 31: Per-agent circuit breaker helpers ──
 
@@ -2588,6 +2722,12 @@ class SwarmEngine:
             elapsed_ms = (time.time() - t0) * 1000
             self._record_agent_metric(agent_naam, elapsed_ms)
             self._record_circuit_success(agent_naam)
+            # Phase 56: Synapse telemetry — record execution latency
+            try:
+                from danny_toolkit.brain.synapse import get_synapse
+                get_synapse().record_telemetry(agent_naam, elapsed_ms / 1000.0)
+            except Exception as e:
+                logger.debug("Synapse telemetry: %s", e)
             # Waakhuis: registreer succesvolle dispatch
             try:
                 from danny_toolkit.brain.waakhuis import get_waakhuis
@@ -2847,7 +2987,7 @@ class SwarmEngine:
     # ── Lazy Oracle Property ──
 
     @property
-    def oracle(self):
+    def oracle(self) -> OracleAgent:
         """Lazy OracleAgent — geen import overhead."""
         if self._oracle is None:
             from danny_toolkit.brain.oracle import (
@@ -2873,14 +3013,14 @@ class SwarmEngine:
         return self._tribunal_instance
 
     @property
-    def synapse(self):
-        """Lazy TheSynapse — synaptic pathway plasticity."""
+    def synapse(self) -> TheSynapse | None:
+        """Lazy TheSynapse singleton — synaptic pathway plasticity."""
         if not hasattr(self, "_synapse_instance"):
             try:
                 from danny_toolkit.brain.synapse import (
-                    TheSynapse,
+                    get_synapse,
                 )
-                self._synapse_instance = TheSynapse()
+                self._synapse_instance = get_synapse()
             except Exception as e:
                 logger.debug(
                     "TheSynapse laden mislukt: %s", e,
@@ -2889,7 +3029,7 @@ class SwarmEngine:
         return self._synapse_instance
 
     @property
-    def phantom(self):
+    def phantom(self) -> ThePhantom | None:
         """Lazy ThePhantom — anticipatory intelligence."""
         if not hasattr(self, "_phantom_instance"):
             try:
@@ -3915,6 +4055,18 @@ class SwarmEngine:
         if _tracer:
             _tracer.eind_span("ok", {"cortex_fragments": _cortex_added})
 
+        # 4.9 Phase 56: Forge Loader — hot-reload dynamische tools
+        try:
+            from danny_toolkit.core.forge_loader import scan_and_load_tools
+            self._forged_tools, self._forged_schemas = scan_and_load_tools()
+            if self._forged_tools:
+                log(
+                    f"\u2692\ufe0f Forge: {len(self._forged_tools)}"
+                    f" tools geladen"
+                )
+        except Exception as e:
+            logger.debug("Forge loader scan: %s", e)
+
         # 5. Nexus Route (NOOIT skippen)
         if _tracer:
             _tracer.begin_span("routing")
@@ -4256,7 +4408,7 @@ class SwarmEngine:
                 "Triple extraction failed: %s", e
             )
 
-        # Synapse: record interaction trace
+        # Synapse: record interaction trace + outcome reinforcement
         if self.synapse:
             try:
                 total_len = sum(
@@ -4276,6 +4428,34 @@ class SwarmEngine:
             except Exception as e:
                 logger.debug(
                     "Synapse record failed: %s", e,
+                )
+
+            # Synaptic Reinforcement: backpropagate
+            try:
+                _schild_sc = None
+                try:
+                    _schild_sc = schild_rapport.totaal_score
+                except Exception:
+                    pass
+                bp = self.synapse.backpropagate_success(
+                    user_input,
+                    results,
+                    sentinel_warns=_sentinel_warns,
+                    schild_score=_schild_sc,
+                )
+                if bp.get("agents"):
+                    self._swarm_metrics[
+                        "synapse_reinforcements"
+                    ] += 1
+                    log(
+                        f"\U0001f9ec Synapse backprop:"
+                        f" {len(bp['agents'])} agents"
+                        f" [{bp['category']}]"
+                    )
+            except Exception as e:
+                logger.debug(
+                    "Synapse backprop failed: %s",
+                    e,
                 )
 
         # Phantom: resolve predictions

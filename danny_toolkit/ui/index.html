@@ -125,8 +125,36 @@
                     <!-- Active Agents -->
                     <div class="space-y-2">
                         <h3 class="text-xs text-gray-500 uppercase tracking-wider">Active Agents</h3>
+                        <div class="agent-row text-xs text-gray-600 border-b border-sovereign-border pb-1 mb-1">
+                            <span class="flex-1">Agent</span>
+                            <span class="w-14 text-right">SP</span>
+                            <span class="w-16 text-center">Status</span>
+                            <span class="w-14 text-right">Tasks</span>
+                            <span class="ml-2 w-6"></span>
+                        </div>
                         <div id="agent-list" class="space-y-1">
                             <div class="text-xs text-gray-500">Loading...</div>
+                        </div>
+                    </div>
+
+                    <!-- Synaptic Leaderboard -->
+                    <div class="space-y-2">
+                        <h3 class="text-xs text-gray-500 uppercase tracking-wider flex items-center gap-2">
+                            <span>&#129504;</span> Synaptic Leaderboard
+                            <span id="synapse-pulse" class="w-1.5 h-1.5 rounded-full bg-sovereign-green status-pulse ml-auto"></span>
+                        </h3>
+                        <div id="synapse-leaderboard" class="space-y-2">
+                            <div class="text-xs text-gray-600">Scanning pathways...</div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div class="bg-sovereign-bg rounded p-2">
+                                <div class="text-gray-600">Swarm Avg</div>
+                                <div id="synapse-avg" class="text-sovereign-cyan font-bold">--</div>
+                            </div>
+                            <div class="bg-sovereign-bg rounded p-2">
+                                <div class="text-gray-600">Total Fires</div>
+                                <div id="synapse-fires" class="text-sovereign-green font-bold">--</div>
+                            </div>
                         </div>
                     </div>
                 </div>

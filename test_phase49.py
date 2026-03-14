@@ -159,9 +159,9 @@ class TestPhase49(unittest.TestCase):
     # --- I. Swarm worker counts ---
 
     def test_09_swarm_worker_counts(self):
-        """swarm_engine.py has _SWARM_MAX_WORKERS=10 and B95 max_workers=2."""
+        """swarm_engine.py has CPU-aware _SWARM_MAX_WORKERS and B95 max_workers=2."""
         src = _read_root("swarm_engine.py")
-        c("_SWARM_MAX_WORKERS = 10" in src, "swarm workers = 10")
+        c("_SWARM_MAX_WORKERS = min(max(os.cpu_count()" in src, "swarm workers CPU-aware")
         c('max_workers=2, thread_name_prefix="b95"' in src, "B95 workers = 2")
 
     # --- J. No scattered PRAGMAs remaining ---

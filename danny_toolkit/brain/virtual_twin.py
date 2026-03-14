@@ -620,10 +620,10 @@ class VirtualTwin:
 
         # Synapse: top pathway strengths
         try:
-            from danny_toolkit.brain.synapse import TheSynapse
-            synapse = TheSynapse()
+            from danny_toolkit.brain.synapse import get_synapse
+            synapse = get_synapse()
             if hasattr(synapse, "get_top_pathways"):
-                top = synapse.get_top_pathways(n=10)
+                top = synapse.get_top_pathways(limit=10)
                 state["synapse"]["top_pathways"] = top
         except Exception as e:
             logger.debug("Synapse snapshot failed: %s", e)
@@ -980,8 +980,8 @@ class ShadowCortex:
         routes in the physical swarm's adaptive router.
         """
         try:
-            from danny_toolkit.brain.synapse import TheSynapse
-            synapse = TheSynapse()
+            from danny_toolkit.brain.synapse import get_synapse
+            synapse = get_synapse()
             if hasattr(synapse, "verwerk_feedback"):
                 # Positive feedback on all keyword→agent pathways
                 for kw in keywords[:4]:

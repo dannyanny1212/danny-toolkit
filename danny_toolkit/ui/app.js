@@ -68,6 +68,7 @@ async function authenticate_stored() {
 function startTelemetry() {
     pollHealth();
     healthTimer = setInterval(pollHealth, POLL_INTERVAL);
+    startSynapseMonitor();
 }
 
 async function pollHealth() {
@@ -160,15 +161,31 @@ function updateAgents(agents) {
         return;
     }
     container.innerHTML = agents.map(a => {
-        const isPaused = a.status === "paused";
+        const status = (a.status || "").toUpperCase();
+        const isPaused = status === "PAUSED";
         const statusColor = isPaused ? "text-sovereign-red" :
-                           a.status === "active" ? "text-sovereign-green" :
-                           a.status === "cooldown" ? "text-sovereign-amber" : "text-gray-500";
+                           status === "ACTIVE" ? "text-sovereign-green glow-green" :
+                           status === "COOLDOWN" ? "text-sovereign-amber" : "text-gray-500";
         const toggleLabel = isPaused ? "&#9654;" : "&#10074;&#10074;";
         const toggleTitle = isPaused ? "Hervat agent" : "Pauzeer agent";
+        // Synaptic Power badge: SP = weight * 100 (percentage display)
+        const sw = a.synaptic_weight;
+        let swBadge = "";
+        if (sw != null) {
+            const sp = Math.round(sw * 100);
+            const isElite = sp >= 150;
+            const swColor = isElite ? "text-yellow-300 glow-gold" :
+                           sp >= 110 ? "text-sovereign-green" :
+                           sp >= 90 ? "text-sovereign-cyan" :
+                           sp >= 70 ? "text-sovereign-amber" : "text-sovereign-red";
+            swBadge = `<span class="${swColor} w-14 text-right text-xs font-mono font-bold" title="Synaptic Power (${sw.toFixed(3)})">SP:${sp}</span>`;
+        } else {
+            swBadge = `<span class="text-gray-700 w-14 text-right text-xs">—</span>`;
+        }
         return `<div class="agent-row">
             <span class="text-gray-300 flex-1">${a.name}</span>
-            <span class="${statusColor} w-16 text-center">${a.status}</span>
+            ${swBadge}
+            <span class="${statusColor} w-16 text-center">${status}</span>
             <span class="text-gray-500 w-14 text-right">${a.tasks_completed}</span>
             <button onclick="toggleAgent('${a.name}', ${!isPaused})"
                     class="ml-2 px-1.5 py-0.5 rounded text-xs border transition-colors
@@ -519,6 +536,172 @@ function escapeHtml(text) {
     const div = document.createElement("div");
     div.textContent = text;
     return div.innerHTML;
+}
+
+// ─── SYNAPTIC LEADERBOARD ────────────────────────────
+
+const SYNAPSE_POLL_MS = 30000; // 30s refresh
+let synapseTimer = null;
+
+function startSynapseMonitor() {
+    pollSynapseLeaderboard();
+    synapseTimer = setInterval(pollSynapseLeaderboard, SYNAPSE_POLL_MS);
+}
+
+async function pollSynapseLeaderboard() {
+    try {
+        const resp = await apiFetch("/api/v1/synapse/weights");
+        if (!resp.ok) return;
+        const data = await resp.json();
+        renderLeaderboard(data);
+    } catch { /* non-critical */ }
+}
+
+function renderLeaderboard(data) {
+    const pathways = data.pathways || {};
+    const container = document.getElementById("synapse-leaderboard");
+    if (!container) return;
+
+    // Compute per-agent averages
+    const agentMap = {};
+    for (const [cat, agents] of Object.entries(pathways)) {
+        for (const [name, info] of Object.entries(agents)) {
+            if (!agentMap[name]) agentMap[name] = { biases: [], fires: 0, succ: 0, fail: 0 };
+            if (info.effective_bias != null) agentMap[name].biases.push(info.effective_bias);
+            agentMap[name].fires += info.fires || 0;
+            agentMap[name].succ += info.successes || 0;
+            agentMap[name].fail += info.fails || 0;
+        }
+    }
+
+    const ranked = Object.entries(agentMap)
+        .map(([name, d]) => ({
+            name,
+            sp: d.biases.length ? d.biases.reduce((a, b) => a + b, 0) / d.biases.length : 0,
+            fires: d.fires,
+            succ: d.succ,
+            rate: d.fires > 0 ? (d.succ / d.fires * 100) : 0,
+        }))
+        .sort((a, b) => b.sp - a.sp);
+
+    if (ranked.length === 0) {
+        container.innerHTML = '<div class="text-xs text-gray-600">No pathway data</div>';
+        return;
+    }
+
+    // Top 3 Alphas + weakest Underperformer
+    const top3 = ranked.slice(0, 3);
+    const weakest = ranked[ranked.length - 1];
+
+    // Build HTML table
+    let html = `<table class="w-full text-xs border-collapse">
+        <thead>
+            <tr class="text-gray-600 border-b border-sovereign-border">
+                <th class="text-left py-1 pl-1">Rank</th>
+                <th class="text-left py-1">Agent</th>
+                <th class="text-right py-1">SP</th>
+                <th class="text-right py-1 pr-1">Power</th>
+                <th class="text-right py-1 pr-1">Fires</th>
+                <th class="text-right py-1 pr-1">Rate</th>
+            </tr>
+        </thead>
+        <tbody>`;
+
+    // Render Alpha rows (top 3)
+    top3.forEach((a, i) => {
+        const spVal = Math.round(a.sp * 100);
+        const pct = Math.min(Math.max(a.sp / 1.3, 0), 1) * 100;
+        const isAlpha = i === 0;
+        const rank = isAlpha ? "👑" : `#${i + 1}`;
+        const rowClass = isAlpha ? "border border-yellow-800/40 bg-yellow-900/5" : "";
+        const textColor = isAlpha ? "text-yellow-300 glow-gold" :
+                         spVal >= 110 ? "text-sovereign-green" : "text-sovereign-cyan";
+        const label = isAlpha ? "ALPHA" : "";
+        html += `<tr class="${rowClass}">
+            <td class="py-1.5 pl-1 ${textColor} font-bold">${rank}</td>
+            <td class="py-1.5 ${textColor} font-bold">${escapeHtml(a.name)} ${label ? `<span class="text-yellow-500/60 text-[10px]">${label}</span>` : ""}</td>
+            <td class="py-1.5 text-right font-mono ${textColor} font-bold">${spVal}</td>
+            <td class="py-1.5 pr-1 w-16">
+                <div class="w-full h-1.5 bg-gray-800 rounded overflow-hidden">
+                    <div class="${isAlpha ? 'bg-yellow-400' : 'bg-sovereign-green'} h-full rounded transition-all duration-700" style="width:${pct.toFixed(1)}%"></div>
+                </div>
+            </td>
+            <td class="py-1.5 text-right text-gray-500 pr-1">${a.fires}</td>
+            <td class="py-1.5 text-right text-gray-500 pr-1">${a.rate.toFixed(0)}%</td>
+        </tr>`;
+    });
+
+    // Separator + Underperformer
+    if (weakest && !top3.includes(weakest)) {
+        const spVal = Math.round(weakest.sp * 100);
+        const pct = Math.min(Math.max(weakest.sp / 1.3, 0), 1) * 100;
+        html += `<tr class="border-t border-sovereign-border/50"><td colspan="6" class="py-0.5"></td></tr>
+        <tr class="border border-red-900/30 bg-red-900/5">
+            <td class="py-1.5 pl-1 text-sovereign-red font-bold">📉</td>
+            <td class="py-1.5 text-sovereign-red font-bold">${escapeHtml(weakest.name)} <span class="text-red-500/60 text-[10px]">ATROPHY</span></td>
+            <td class="py-1.5 text-right font-mono text-sovereign-red font-bold">${spVal}</td>
+            <td class="py-1.5 pr-1 w-16">
+                <div class="w-full h-1.5 bg-gray-800 rounded overflow-hidden">
+                    <div class="bg-sovereign-red h-full rounded transition-all duration-700" style="width:${pct.toFixed(1)}%"></div>
+                </div>
+            </td>
+            <td class="py-1.5 text-right text-gray-500 pr-1">${weakest.fires}</td>
+            <td class="py-1.5 text-right text-gray-500 pr-1">${weakest.rate.toFixed(0)}%</td>
+        </tr>`;
+    }
+
+    html += `</tbody></table>`;
+
+    // Phoenix Boost button for weakest agent
+    if (weakest && !top3.includes(weakest)) {
+        html += `<button onclick="boostAgent('${escapeHtml(weakest.name)}')"
+            class="mt-2 w-full text-xs py-1.5 rounded border border-sovereign-amber text-sovereign-amber
+                   hover:bg-amber-900/20 transition-colors font-bold"
+            title="Operation Phoenix: 3 triviale succes-taken om SP te herstellen">
+            &#x1F525; PHOENIX BOOST: ${escapeHtml(weakest.name)}
+        </button>`;
+    }
+
+    container.innerHTML = html;
+
+    // Summary stats
+    const swarmAvg = ranked.reduce((s, a) => s + a.sp, 0) / ranked.length;
+    const totalFires = ranked.reduce((s, a) => s + a.fires, 0);
+    document.getElementById("synapse-avg").textContent = `SP:${Math.round(swarmAvg * 100)}`;
+    document.getElementById("synapse-fires").textContent = totalFires.toLocaleString();
+
+    // Pulse indicator
+    const pulse = document.getElementById("synapse-pulse");
+    if (pulse) {
+        pulse.classList.add("bg-sovereign-green");
+        pulse.classList.remove("bg-gray-600");
+    }
+}
+
+async function boostAgent(agentName) {
+    const btn = event.target;
+    btn.disabled = true;
+    btn.textContent = "⏳ Phoenix activating...";
+    try {
+        const resp = await apiFetch("/api/v1/phoenix/boost", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ agent: agentName }),
+        });
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            btn.textContent = `❌ ${err.detail || "Boost failed"}`;
+            return;
+        }
+        const data = await resp.json();
+        btn.textContent = `✅ SP ${data.old_sp} → ${data.new_sp}`;
+        btn.className = btn.className.replace("border-sovereign-amber", "border-sovereign-green")
+                                     .replace("text-sovereign-amber", "text-sovereign-green");
+        // Refresh leaderboard after boost
+        setTimeout(pollSynapseLeaderboard, 1000);
+    } catch (err) {
+        btn.textContent = "❌ Network error";
+    }
 }
 
 // ─── UTILS ──────────────────────────────────────────

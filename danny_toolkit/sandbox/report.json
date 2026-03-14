@@ -1,0 +1,85 @@
+{
+  "total_files": 256,
+  "total_size_mb": 4.35,
+  "per_extension": {
+    ".py": {
+      "files": 228,
+      "size_mb": 4.21
+    },
+    ".html": {
+      "files": 16,
+      "size_mb": 0.04
+    },
+    ".json": {
+      "files": 5,
+      "size_mb": 0.04
+    },
+    ".png": {
+      "files": 1,
+      "size_mb": 0.03
+    },
+    ".js": {
+      "files": 1,
+      "size_mb": 0.02
+    },
+    ".css": {
+      "files": 2,
+      "size_mb": 0.01
+    },
+    ".log": {
+      "files": 1,
+      "size_mb": 0.0
+    },
+    ".txt": {
+      "files": 1,
+      "size_mb": 0.0
+    },
+    ".csv": {
+      "files": 1,
+      "size_mb": 0.0
+    }
+  },
+  "top_10_largest": [
+    {
+      "path": "C:/Users/danny/danny-toolkit/danny_toolkit/apps\\virtueel_huisdier.py",
+      "size_mb": 0.38
+    },
+    {
+      "path": "C:/Users/danny/danny-toolkit/danny_toolkit/brain\\central_brain.py",
+      "size_mb": 0.1
+    },
+    {
+      "path": "C:/Users/danny/danny-toolkit/danny_toolkit/apps\\code_analyse.py",
+      "size_mb": 0.08
+    },
+    {
+      "path": "C:/Users/danny/danny-toolkit/danny_toolkit/launcher.py",
+      "size_mb": 0.08
+    },
+    {
+      "path": "C:/Users/danny/danny-toolkit/danny_toolkit/apps\\schatzoek.py",
+      "size_mb": 0.07
+    },
+    {
+      "path": "C:/Users/danny/danny-toolkit/danny_toolkit/apps\\rekenmachine.py",
+      "size_mb": 0.07
+    },
+    {
+      "path": "C:/Users/danny/danny-toolkit/danny_toolkit/ai\\artificial_life.py",
+      "size_mb": 0.07
+    },
+    {
+      "path": "C:/Users/danny/danny-toolkit/danny_toolkit/ai\\nieuws_agent.py",
+      "size_mb": 0.06
+    },
+    {
+      "path": "C:/Users/danny/danny-toolkit/danny_toolkit/apps\\boodschappenlijst.py",
+      "size_mb": 0.06
+    },
+    {
+      "path": "C:/Users/danny/danny-toolkit/danny_toolkit/brain\\app_tools.py",
+      "size_mb": 0.06
+    }
+  ],
+  "timestamp": "2026-03-14T05:10:12.695033"
+}

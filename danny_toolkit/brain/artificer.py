@@ -179,6 +179,32 @@ class Artificer:
             self._report_to_black_box(request, "", "LLM failed to generate code")
             return "❌ Artificer: Failed to generate code."
 
+        # Short-circuit guard: reject trivial/placeholder output
+        _code_lower = code.lower().replace(" ", "").replace("!", "")
+        _is_trivial = (
+            len(code.strip()) < 50
+            or "helloworld" in _code_lower
+            or "hello,world" in _code_lower
+            or "print(\"hello" in code.lower()
+            or "print('hello" in code.lower()
+            or code.strip().count("\n") < 2
+        )
+        if _is_trivial:
+            print(f"{Kleur.GEEL}🔄 Artificer: Trivial output detected, "
+                  f"retrying with force-code prompt...{Kleur.RESET}")
+            code = await self._write_script(
+                f"CRITICAL: The previous attempt produced placeholder code "
+                f"(like 'Hello World'). Generate REAL, FUNCTIONAL Python "
+                f"code that actually solves: {request}"
+            )
+            if not code or len(code.strip()) < 50:
+                self._report_to_black_box(
+                    request, code or "",
+                    "LLM produced trivial/placeholder code twice",
+                )
+                return ("❌ Artificer: LLM produced placeholder code. "
+                        "Mogelijk rate-limited — probeer later opnieuw.")
+
         # Verify (safety + syntax)
         if not self._safety_check(code):
             self._report_to_black_box(request, code[:300], "Forbidden pattern detected in generated code")
@@ -194,8 +220,17 @@ class Artificer:
             print(f"{Kleur.ROOD}⚠️  Missing modules: {', '.join(missing)}{Kleur.RESET}")
             return f"❌ Artificer: ontbrekende modules: {', '.join(missing)}. Installeer met: pip install {' '.join(missing)}"
 
-        # Quality gate — Diamond Polish scan (non-blocking, advisory)
-        self._quality_gate(code, request)
+        # Quality gate — Diamond Polish scan (retry once if <A+)
+        gate_issues = self._quality_gate(code, request)
+        if gate_issues:
+            print(f"{Kleur.GEEL}🔄 Artificer: Retry for A+ quality...{Kleur.RESET}")
+            issues_txt = "; ".join(gate_issues[:8])
+            code_v2 = await self._polish_retry(code, issues_txt)
+            if code_v2 and self._syntax_check(code_v2) and self._safety_check(code_v2):
+                code = code_v2
+                retry_issues = self._quality_gate(code, request)
+                if not retry_issues:
+                    print(f"{Kleur.GROEN}✅ Artificer: A+ achieved on retry{Kleur.RESET}")
 
         # Save & Register (incrementing skill number)
         skill_name = f"skill_{len(registry) + 1}.py"
@@ -204,6 +239,27 @@ class Artificer:
         # 5. Execute
         print(f"{Kleur.GROEN}🚀 Artificer: Executing...{Kleur.RESET}")
         result = self._run_script(skill_name)
+
+        # Output sanity check: reject trivial/placeholder results
+        _result_clean = (result or "").strip().lower().replace("!", "")
+        if _result_clean in (
+            "hello, world", "hello world", "hello,world",
+            "(no output)", "",
+        ) or len(_result_clean) < 10:
+            print(f"{Kleur.GEEL}🔄 Artificer: Trivial output "
+                  f"'{result.strip()[:40]}', retrying...{Kleur.RESET}")
+            code = await self._write_script(
+                f"CRITICAL RETRY: Your previous script produced trivial "
+                f"output ('{result.strip()[:60]}'). Write a REAL script "
+                f"that ACTUALLY performs the task: {request}\n"
+                f"Do NOT write boilerplate. Do NOT use 'Hello World'. "
+                f"The script must produce MEANINGFUL output related to "
+                f"the task."
+            )
+            if code and self._safety_check(code) and self._syntax_check(code):
+                skill_name_v2 = f"skill_{len(registry) + 2}.py"
+                self._save_script(skill_name_v2, code, request)
+                result = self._run_script(skill_name_v2)
 
         # 6. Promoveer .md bestanden uit workspace naar DocumentForge staging
         self._promoveer_workspace_docs(skill_name)
@@ -418,14 +474,32 @@ class Artificer:
             "- Return ONLY raw Python source code.\n"
             "- Do NOT wrap in markdown fences (no ```python, no ```).\n"
             "- Do NOT add explanations, comments about the code, or text before/after.\n"
-            "- The very first character must be a Python statement (import, def, etc)."
+            "- The very first character must be a Python statement (import, def, etc).\n"
+            "\n"
+            "DIAMOND POLISH (mandatory code quality — A+ grade required):\n"
+            "1. FIRST LINE must be: from __future__ import annotations\n"
+            "2. EVERY function MUST have a return type hint (-> type).\n"
+            "3. EVERY function MUST have a one-line docstring.\n"
+            "4. EVERY function parameter MUST have a type hint.\n"
+            "5. ALL imports at top level — NEVER import inside a function.\n"
+            "6. NEVER use bare 'except: pass' or 'except Exception: pass' — "
+            "always log or re-raise.\n"
+            "7. If the script is >50 lines, add a module-level logger: "
+            "logger = logging.getLogger(__name__)\n"
+            "8. Use ONLY absolute imports (no relative 'from .' imports)."
         )
         _sys = (
             "You are the Artificer — a code generator. "
             "You ONLY produce raw Python source code. "
             "NEVER produce reports, summaries, or explanations. "
             "NEVER reference MEMEX, ShadowCortex, or context data. "
-            "Your output is executed immediately as a Python script."
+            "Your output is executed immediately as a Python script. "
+            "You MUST follow the Diamond Polish rules: "
+            "start with 'from __future__ import annotations', "
+            "type-hint every parameter and return type, "
+            "add a docstring to every function, "
+            "keep all imports at top level, "
+            "never use bare except/pass."
         )
         _messages = [
             {"role": "system", "content": _sys},
@@ -448,6 +522,52 @@ class Artificer:
             return code
         except Exception as e:
             print(f"{Kleur.ROOD}🔥 Forge error: {e}{Kleur.RESET}")
+            return None
+
+    async def _polish_retry(self, code: str, issues: str) -> Optional[str]:
+        """Retry code generation with explicit Diamond Polish issue feedback.
+
+        Args:
+            code: The original generated code that scored below A+.
+            issues: Semicolon-separated list of quality issues to fix.
+        """
+        prompt = (
+            "The following Python code scored BELOW A+ on Diamond Polish.\n"
+            f"Issues found: {issues}\n\n"
+            "Fix ALL issues and return the COMPLETE corrected script.\n"
+            "Rules:\n"
+            "- FIRST LINE: from __future__ import annotations\n"
+            "- Type hints on ALL parameters and return types\n"
+            "- Docstring on EVERY function\n"
+            "- All imports at top level\n"
+            "- No bare except/pass\n"
+            "- Return ONLY raw Python code, no markdown fences.\n\n"
+            f"Original code:\n{code}"
+        )
+        _sys = (
+            "You are a code polisher. Fix the quality issues and return "
+            "the complete corrected Python script. Output ONLY code."
+        )
+        _messages = [
+            {"role": "system", "content": _sys},
+            {"role": "user", "content": prompt},
+        ]
+        try:
+            if HAS_RETRY:
+                raw = await groq_call_async(
+                    self.client, "Artificer", self.model,
+                    messages=_messages,
+                    temperature=0.2,
+                )
+                return self._clean_generated_code(raw) if raw else None
+            chat = await self.client.chat.completions.create(
+                messages=_messages,
+                model=self.model,
+                temperature=0.2,
+            )
+            return self._clean_generated_code(chat.choices[0].message.content)
+        except Exception as e:
+            logger.debug("Polish retry error: %s", e)
             return None
 
     @staticmethod
@@ -494,19 +614,17 @@ class Artificer:
             print(f"{Kleur.ROOD}⚠️  Syntax error: {e}{Kleur.RESET}")
             return False
 
-    def _quality_gate(self, code: str, request: str) -> None:
-        """Run Diamond Polish quality scan op gegenereerde code (advisory, non-blocking).
+    def _quality_gate(self, code: str, request: str) -> Optional[list[str]]:
+        """Run Diamond Polish quality scan op gegenereerde code.
 
-        Scant de gegenereerde code met AutoRefactorGuard en logt het resultaat
-        naar de CorticalStack. Blokkeert NIET — Artificer-gesmede scripts zijn
-        tijdelijke skills, geen productie-code. De score dient als telemetrie.
+        Returns lijst van issues als score < 9.0, anders None (pass).
 
         Args:
             code: De gegenereerde Python broncode.
             request: De oorspronkelijke taakomschrijving.
         """
         if not HAS_GUARD:
-            return
+            return None
 
         import tempfile
         from pathlib import Path
@@ -522,7 +640,7 @@ class Artificer:
             result = guard_audit_file(tmp_path)
 
             # Visuele feedback
-            if result.quality >= 8:
+            if result.quality >= 9:
                 print(f"{Kleur.GROEN}🛡️  Quality Gate: {result.quality}/10 "
                       f"[{result.grade}]{Kleur.RESET}")
             elif result.quality >= 5:
@@ -544,8 +662,14 @@ class Artificer:
             # Cleanup temp file
             tmp_path.unlink(missing_ok=True)
 
+            # Return issues als score onder A+ drempel
+            if result.quality < 9:
+                return result.issues
+            return None
+
         except Exception as e:
             logger.debug("Quality gate error: %s", e)
+            return None
 
     @staticmethod
     def _preflight_imports(code: str) -> list[str]:

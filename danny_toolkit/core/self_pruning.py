@@ -30,6 +30,22 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from danny_toolkit.core.config import Config
 
+try:
+    from danny_toolkit.core.shard_router import ALL_SHARDS
+except ImportError:
+    ALL_SHARDS = ["code_shard", "docs_shard", "data_shard"]
+
+try:
+    from danny_toolkit.core.neural_bus import get_bus, EventTypes
+except ImportError:
+    get_bus = None  # type: ignore[assignment]
+    EventTypes = None  # type: ignore[assignment]
+
+try:
+    from danny_toolkit.core.memory_interface import log_to_cortical
+except ImportError:
+    log_to_cortical = None  # type: ignore[assignment]
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -45,9 +61,10 @@ except ImportError:
     HAS_CHROMADB = False
 
 try:
-    import danny_toolkit.core.embeddings
+    from danny_toolkit.core.embeddings import get_chroma_embed_fn
     HAS_EMBEDDINGS = True
 except ImportError:
+    get_chroma_embed_fn = None  # type: ignore[assignment]
     HAS_EMBEDDINGS = False
 
 try:
@@ -968,7 +985,8 @@ class SelfPruning:
     def _bus_publish(self, event_naam: str, data: dict) -> None:
         """Publiceer event naar NeuralBus."""
         try:
-            pass  # import moved to top-level
+            if get_bus is None:
+                return
             bus = get_bus()
             event_type = getattr(EventTypes, event_naam, event_naam.lower())
             bus.publish(event_type, data, bron="SelfPruning")
@@ -977,7 +995,8 @@ class SelfPruning:
 
     def _log_cortical(self, resultaat: dict) -> None:
         """Log prune resultaat naar CorticalStack."""
-        pass  # import moved to top-level
+        if log_to_cortical is None:
+            return
         log_to_cortical(
             actor="self_pruning",
             action="prune_complete",

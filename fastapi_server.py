@@ -20,11 +20,15 @@ import json
 import logging
 import os
 import sys
+
+# ── Sovereign embedding: Qwen3 via Ollama (lokaal, onbeperkt, native MRL) ──
+if not os.environ.get("EMBEDDING_PROVIDER"):
+    os.environ["EMBEDDING_PROVIDER"] = "qwen3"
 import time
 from contextlib import redirect_stdout
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +112,7 @@ except ImportError:
 _brain = None
 
 
-def _get_brain():
+def _get_brain() -> "PrometheusBrain":
     """Lazy-load PrometheusBrain (1x per worker)."""
     global _brain
     if _brain is None:
@@ -186,6 +190,7 @@ class AgentInfo(BaseModel):
     status: str
     energy: int
     tasks_completed: int
+    synaptic_weight: Optional[float] = None
 
 
 class HeartbeatResponse(BaseModel):
@@ -737,7 +742,7 @@ async def query(
     if trace_id:
         response.headers["X-Trace-Id"] = trace_id
 
-    def _safe_metadata(meta) -> dict:
+    def _safe_metadata(meta: dict) -> dict:
         """Sanitize metadata — drop non-JSON-serializable values."""
         if not isinstance(meta, dict):
             return {}
@@ -780,7 +785,7 @@ async def _stream_response(message: str, brain):
         engine = SwarmEngine(brain=brain)
         updates = []
 
-        def callback(msg):
+        def callback(msg: str) -> None:
             updates.append(msg)
 
         try:
@@ -1055,6 +1060,25 @@ async def agents(
                 a.energy = node.energy
                 if a.status != "paused":
                     a.status = node.status
+
+    # Enriche met Synaptic Weight (gemiddelde bias over alle categorieën)
+    try:
+        from danny_toolkit.brain.synapse import get_synapse
+        synapse = get_synapse()
+        weight_matrix = synapse.get_weight_matrix()
+        # Bereken per agent de gemiddelde effective_bias
+        agent_weights: dict[str, list[float]] = {}
+        for _cat, agents_dict in weight_matrix.get("pathways", {}).items():
+            for agent_name, info in agents_dict.items():
+                eb = info.get("effective_bias")
+                if eb is not None:
+                    agent_weights.setdefault(agent_name, []).append(eb)
+        for a in result:
+            biases = agent_weights.get(a.name, [])
+            if biases:
+                a.synaptic_weight = round(sum(biases) / len(biases), 3)
+    except Exception:
+        pass  # synapse niet beschikbaar — geen weight data
 
     return result
 
@@ -1801,8 +1825,8 @@ async def synapse_stats(
 ):
     """Haal TheSynapse statistieken en top pathways op."""
     try:
-        from danny_toolkit.brain.synapse import TheSynapse
-        synapse = TheSynapse()
+        from danny_toolkit.brain.synapse import get_synapse
+        synapse = get_synapse()
         stats = synapse.get_stats()
         top = synapse.get_top_pathways(limit=20)
         return SynapseStatsResponse(
@@ -1816,6 +1840,246 @@ async def synapse_stats(
             status_code=500,
             detail=f"Synapse stats mislukt: {e}",
         )
+
+
+@app.get(
+    "/api/v1/synapse/weights",
+    summary="Synapse weight matrix (JSON)",
+    tags=["Observatory"],
+)
+async def synapse_weights(
+    _key: str = Depends(verify_api_key),
+):
+    """Volledige Hebbian weight matrix per category/agent."""
+    try:
+        from danny_toolkit.brain.synapse import get_synapse
+        synapse = get_synapse()
+        return synapse.get_weight_matrix()
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Synapse weights mislukt: {e}",
+        )
+
+
+@app.post(
+    "/api/v1/synapse/export",
+    summary="Exporteer synapse weights naar JSON bestand",
+    tags=["Observatory"],
+)
+async def synapse_export(
+    _key: str = Depends(verify_api_key),
+):
+    """Exporteer weight matrix naar data/synapse_weights.json."""
+    try:
+        from danny_toolkit.brain.synapse import get_synapse
+        synapse = get_synapse()
+        path = synapse.export_weights()
+        return {"exported": True, "path": path}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Synapse export mislukt: {e}",
+        )
+
+
+# ─── OPERATION PHOENIX: Agent Re-Education ───
+
+
+class PhoenixBoostRequest(BaseModel):
+    """Request body voor Operation Phoenix."""
+    agent: str = Field(..., min_length=1, max_length=50, description="Agent naam om te boosten")
+
+
+@app.post(
+    "/api/v1/phoenix/boost",
+    summary="Operation Phoenix — rehabiliteer een underperforming agent",
+    tags=["Observatory"],
+)
+async def phoenix_boost(
+    req: PhoenixBoostRequest,
+    _key: str = Depends(verify_api_key),
+):
+    """Geef een agent 3 triviale succes-taken om Hebbian WEAKEN-straf
+    ongedaan te maken en de Synaptic Power te herstellen."""
+    try:
+        from danny_toolkit.brain.synapse import get_synapse
+        synapse = get_synapse()
+        result = synapse.phoenix_boost(req.agent)
+        if "error" in result:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Phoenix boost mislukt: {result['error']}",
+            )
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Phoenix boost mislukt: {_sanitize_error(str(e))}",
+        )
+
+
+# ─── BULK ASSIMILATION: Knowledge Ingestion Loop ───
+
+
+class BulkAssimilateRequest(BaseModel):
+    """Request body voor bulk assimilatie."""
+    directory: str = Field(
+        ..., min_length=1, max_length=500,
+        description="Map pad relatief ten opzichte van project root (bijv. 'danny_toolkit/brain')",
+    )
+    extensions: List[str] = Field(
+        default=[".py", ".md"],
+        description="Bestandsextensies om te scannen",
+    )
+    tags: str = Field(
+        default="", description="Comma-separated tags (bijv. 'bron:brain, type:core')",
+    )
+    batch_size: int = Field(
+        default=15, ge=1, le=50, description="Bestanden per batch",
+    )
+
+
+_assimilation_jobs: Dict[str, Dict[str, Any]] = {}
+_assimilation_lock = _bg_threading.Lock()
+
+
+def _run_bulk_assimilation(
+    job_id: str, directory: str, extensions: List[str],
+    tag_meta: Optional[Dict], batch_size: int,
+) -> None:
+    """Background worker voor bulk assimilatie."""
+    import glob as _glob
+    with _assimilation_lock:
+        _assimilation_jobs[job_id]["status"] = "running"
+        _assimilation_jobs[job_id]["started_at"] = time.time()
+
+    try:
+        from danny_toolkit.skills.librarian import TheLibrarian
+        librarian = TheLibrarian()
+    except ImportError:
+        with _assimilation_lock:
+            _assimilation_jobs[job_id]["status"] = "error"
+            _assimilation_jobs[job_id]["error"] = "TheLibrarian niet beschikbaar"
+        return
+
+    # Scan bestanden
+    root = Path(_ROOT) / directory
+    if not root.exists() or not root.is_dir():
+        with _assimilation_lock:
+            _assimilation_jobs[job_id]["status"] = "error"
+            _assimilation_jobs[job_id]["error"] = f"Map niet gevonden: {root}"
+        return
+
+    files = []
+    for ext in extensions:
+        pattern = f"**/*{ext}" if not ext.startswith("*") else f"**/{ext}"
+        files.extend(root.glob(pattern))
+    files = sorted(set(f for f in files if f.is_file()))
+
+    with _assimilation_lock:
+        _assimilation_jobs[job_id]["total_files"] = len(files)
+
+    total_chunks = 0
+    ok_count = 0
+    fail_count = 0
+
+    for i in range(0, len(files), batch_size):
+        batch = files[i:i + batch_size]
+        for fpath in batch:
+            try:
+                chunks = librarian.ingest_file(str(fpath), extra_metadata=tag_meta)
+                total_chunks += chunks
+                ok_count += 1
+            except Exception as e:
+                logger.warning("Assimilate failed %s: %s", fpath.name, e)
+                fail_count += 1
+
+        with _assimilation_lock:
+            _assimilation_jobs[job_id]["chunks"] = total_chunks
+            _assimilation_jobs[job_id]["ok"] = ok_count
+            _assimilation_jobs[job_id]["failed"] = fail_count
+
+    with _assimilation_lock:
+        _assimilation_jobs[job_id]["status"] = "completed"
+        _assimilation_jobs[job_id]["completed_at"] = time.time()
+
+
+@app.post(
+    "/api/v1/assimilate/bulk",
+    summary="Bulk Knowledge Ingestion — map batchgewijs door RAG pijplijn",
+    tags=["RAG"],
+)
+async def bulk_assimilate(
+    req: BulkAssimilateRequest,
+    background_tasks: BackgroundTasks,
+    _key: str = Depends(verify_api_key),
+):
+    """Start een automatische Knowledge Ingestion loop die een opgegeven map
+    met .md of .py bestanden batchgewijs door de embedding pijplijn haalt
+    en in de vector-DB plaatst."""
+    import uuid as _uuid
+    job_id = _uuid.uuid4().hex[:12]
+
+    tag_meta = {}
+    if req.tags.strip():
+        for part in req.tags.split(","):
+            part = part.strip()
+            if ":" in part:
+                k, v = part.split(":", 1)
+                tag_meta[k.strip()] = v.strip()
+            elif part:
+                tag_meta.setdefault("tags", [])
+                if isinstance(tag_meta.get("tags"), list):
+                    tag_meta["tags"].append(part)
+        if "tags" in tag_meta and isinstance(tag_meta["tags"], list):
+            tag_meta["tags"] = ", ".join(tag_meta["tags"])
+
+    with _assimilation_lock:
+        _assimilation_jobs[job_id] = {
+            "status": "pending",
+            "directory": req.directory,
+            "extensions": req.extensions,
+            "total_files": 0,
+            "chunks": 0,
+            "ok": 0,
+            "failed": 0,
+            "error": "",
+            "started_at": 0.0,
+            "completed_at": 0.0,
+        }
+
+    background_tasks.add_task(
+        _run_bulk_assimilation, job_id, req.directory,
+        req.extensions, tag_meta or None, req.batch_size,
+    )
+
+    return {
+        "job_id": job_id,
+        "status": "accepted",
+        "directory": req.directory,
+        "extensions": req.extensions,
+        "message": f"Bulk assimilation gestart. Poll via GET /api/v1/assimilate/bulk/{job_id}",
+    }
+
+
+@app.get(
+    "/api/v1/assimilate/bulk/{job_id}",
+    summary="Status van een bulk assimilatie job",
+    tags=["RAG"],
+)
+async def bulk_assimilate_status(
+    job_id: str,
+    _key: str = Depends(verify_api_key),
+):
+    """Poll de status van een bulk assimilatie job."""
+    with _assimilation_lock:
+        job = _assimilation_jobs.get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail=f"Job '{job_id}' niet gevonden.")
+    return {"job_id": job_id, **job}
 
 
 @app.get(
@@ -2660,7 +2924,7 @@ if _CMD_DIR.exists():
 
 # ─── ENTRY POINT ───────────────────────────────────
 
-def main():
+def main() -> None:
     """Start de FastAPI server."""
     print(
         f"\n  Danny Toolkit API — "

@@ -206,8 +206,8 @@ The Groq client is initialized lazily, attempting to create a synchronous client
         """Lazy TheSynapse."""
         if self._synapse is None:
             try:
-                from danny_toolkit.brain.synapse import TheSynapse
-                self._synapse = TheSynapse()
+                from danny_toolkit.brain.synapse import get_synapse
+                self._synapse = get_synapse()
             except Exception as e:
                 logger.debug("Synapse init: %s", e)
         return self._synapse

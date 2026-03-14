@@ -379,8 +379,8 @@ class _DataCache:
         # Brain: Synapse
         try:
             if not hasattr(self, '_synapse'):
-                from danny_toolkit.brain.synapse import TheSynapse
-                self._synapse = TheSynapse()
+                from danny_toolkit.brain.synapse import get_synapse
+                self._synapse = get_synapse()
             self.put("synapse_stats", self._synapse.get_stats())
             self.put("synapse_pathways", self._synapse.get_top_pathways(limit=10))
         except Exception as e:

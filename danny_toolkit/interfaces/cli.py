@@ -78,9 +78,10 @@ except ImportError as e:
     print(f"CRITICAL Import Error: {e}")
 
 try:
-    import rich.syntax
+    from rich.syntax import Syntax
     HAS_SYNTAX = True
 except ImportError:
+    Syntax = None  # type: ignore[assignment,misc]
     HAS_SYNTAX = False
 
     sys.exit(1)

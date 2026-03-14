@@ -740,47 +740,6 @@ class SystemIntrospector:
         except Exception as e:
             logger.debug("CorticalStack log error: %s", e)
 
-try:
-    from danny_toolkit.brain.governor import OmegaGovernor
-except ImportError:
-    pass
-try:
-    from danny_toolkit.brain.hallucination_shield import HallucinatieSchild
-except ImportError:
-    pass
-try:
-    from danny_toolkit.brain.shadow_governance import ShadowGovernance
-except ImportError:
-    pass
-try:
-    from danny_toolkit.brain.black_box import BlackBox
-except ImportError:
-    pass
-try:
-    from danny_toolkit.brain.truth_anchor import TruthAnchor
-except ImportError:
-    pass
-try:
-    from danny_toolkit.brain.central_brain import CentralBrain
-except ImportError:
-    pass
-try:
-    from danny_toolkit.brain.waakhuis import get_waakhuis
-except ImportError:
-    pass
-try:
-    from danny_toolkit.brain.cortex import TheCortex
-except ImportError:
-    pass
-try:
-    from danny_toolkit.brain.model_sync import get_model_registry
-except ImportError:
-    pass
-try:
-    import danny_toolkit.brain
-except ImportError:
-    pass
-
     @staticmethod
     def _snapshot_to_text(snapshot: SystemSnapshot) -> str:
         """Converteer snapshot naar leesbare tekst voor VectorStore."""

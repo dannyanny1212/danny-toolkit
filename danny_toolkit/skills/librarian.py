@@ -90,7 +90,7 @@ def _sanitize_error(msg: str) -> str:
             if key and key in msg:
                 msg = msg.replace(key, "***REDACTED***")
     except ImportError:
-        pass
+        logger.debug("Config niet beschikbaar voor key redaction")
     return msg
 
 

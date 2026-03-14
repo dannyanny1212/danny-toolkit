@@ -4,6 +4,8 @@ Digital Daemon - De Levende Interface.
 Het Virtuele Huisdier als Always-On Symbiotische Entiteit.
 """
 
+from __future__ import annotations
+
 from .sensorium import Sensorium
 from .limbic_system import LimbicSystem
 from .metabolisme import Metabolisme

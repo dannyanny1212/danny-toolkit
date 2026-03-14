@@ -519,7 +519,7 @@ class LocalEmbeddings(EmbeddingProvider):
             if _torch.cuda.is_available():
                 device = "cuda"
         except ImportError:
-            pass
+            logger.debug("torch niet beschikbaar, SentenceTransformer draait op CPU")
         self._model = SentenceTransformer(self._model_name, device=device)
         self.dimensies = self._model.get_sentence_embedding_dimension()
         self._device = device
@@ -565,7 +565,7 @@ class LocalChromaEmbedding:
                         if _torch.cuda.is_available():
                             device = "cuda"
                     except ImportError:
-                        pass
+                        logger.debug("torch niet beschikbaar, ChromaEmbedding draait op CPU")
                     self._model = SentenceTransformer(self._model_name, device=device)
                     self._target_dim = self._model.get_sentence_embedding_dimension()
                     logger.info("LocalChromaEmbedding geladen: %s (%dd, %s)", self._model_name, self._target_dim, device)
@@ -589,7 +589,7 @@ class LocalChromaEmbedding:
         embeddings = self._model.encode(texts, normalize_embeddings=True, show_progress_bar=False)
         return embeddings.tolist()
 
-    def __call__(self, input):
+    def __call__(self, input: list[str]) -> list[list[float]]:
         """ChromaDB embedding interface — batch embed documenten."""
         self._ensure_model()
         embeddings = self._model.encode(input, normalize_embeddings=True, show_progress_bar=False)
@@ -657,7 +657,7 @@ class VoyageChromaEmbedding:
                     raise
         raise RuntimeError("Voyage embed_query rate limit na 5 pogingen")
 
-    def __call__(self, input):
+    def __call__(self, input: list[str]) -> list[list[float]]:
         """ChromaDB embedding interface.
 
         Retry bij rate limits met conservatieve backoff (free tier: 3 RPM).
@@ -686,15 +686,126 @@ class VoyageChromaEmbedding:
         )
 
 
+class Qwen3ChromaEmbedding:
+    """ChromaDB-compatibele wrapper voor Qwen3-Embedding-0.6B via Ollama.
+
+    Sovereign embedding: lokaal, onbeperkt, code-aware, Nederlands, native MRL.
+    Draait via Ollama op http://localhost:11434/api/embed.
+    """
+
+    def __init__(
+        self,
+        model: str = "qwen3-embedding:0.6b",
+        base_url: str = "http://localhost:11434",
+        target_dim: int = 0,
+    ) -> None:
+        """Init met Ollama model en MRL target dimensie."""
+        self._model = model
+        self._base_url = base_url.rstrip("/")
+        self._target_dim = target_dim or Config.EMBEDDING_DIM
+        self._native_dim = 1024  # Qwen3-Embedding native
+        logger.info(
+            "Qwen3ChromaEmbedding: %s (%dd → MRL %dd)",
+            self._model, self._native_dim, self._target_dim,
+        )
+
+    def __repr__(self) -> str:
+        """Toon model + dimensie."""
+        return f"<Qwen3ChromaEmbedding model={self._model} dim={self._target_dim}d>"
+
+    def name(self) -> str:
+        """ChromaDB protocol: unieke naam."""
+        return "Qwen3ChromaEmbedding"
+
+    def _call_ollama(self, texts: list[str]) -> list[list[float]]:
+        """Call Ollama embed API en pas MRL truncatie toe."""
+        import urllib.request
+        payload = json.dumps({"model": self._model, "input": texts}).encode()
+        req = urllib.request.Request(
+            f"{self._base_url}/api/embed",
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            data = json.loads(resp.read())
+        embeddings = data["embeddings"]
+        if self._target_dim < self._native_dim:
+            return mrl_truncate(embeddings, self._target_dim)
+        return embeddings
+
+    def embed_query(self, query: str = None, *, input=None) -> list:
+        """Embed query — ChromaDB compatible."""
+        raw = query if query is not None else input
+        if isinstance(raw, list):
+            texts = [str(t) for t in raw]
+        else:
+            texts = [str(raw)] if raw else [""]
+        return self._call_ollama(texts)
+
+    def __call__(self, input: list[str]) -> list[list[float]]:
+        """ChromaDB embedding interface — batch embed documenten."""
+        return self._call_ollama(input)
+
+
+class Qwen3Embeddings(EmbeddingProvider):
+    """Standalone Qwen3-Embedding provider (niet-ChromaDB gebruik)."""
+
+    naam = "qwen3"
+
+    def __init__(
+        self,
+        model: str = "qwen3-embedding:0.6b",
+        base_url: str = "http://localhost:11434",
+    ) -> None:
+        """Init met Ollama endpoint."""
+        import urllib.request
+        self._model = model
+        self._base_url = base_url.rstrip("/")
+        self.dimensies = Config.EMBEDDING_DIM
+        self._native_dim = 1024
+        logger.info("Qwen3Embeddings: %s (%dd MRL)", self._model, self.dimensies)
+
+    def __repr__(self) -> str:
+        """Toon model + dimensie."""
+        return f"<Qwen3Embeddings model={self._model} dim={self.dimensies}d>"
+
+    def embed(self, teksten: list) -> list:
+        """Embed teksten via Ollama."""
+        import urllib.request
+        payload = json.dumps({"model": self._model, "input": teksten}).encode()
+        req = urllib.request.Request(
+            f"{self._base_url}/api/embed",
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            data = json.loads(resp.read())
+        return mrl_truncate(data["embeddings"], self.dimensies)
+
+    def embed_query(self, query: str) -> list:
+        """Embed enkele query via Ollama."""
+        return self.embed([query])[0]
+
+
 def get_chroma_embed_fn() -> None:
     """Geeft ChromaDB embedding functie op basis van Config.EMBEDDING_PROVIDER.
 
     Provider keuze:
+    - "qwen3" → Qwen3ChromaEmbedding (Ollama, sovereign, native MRL)
     - "local" → LocalChromaEmbedding (BAAI/bge-small-en-v1.5, geen API calls)
     - "voyage" → VoyageChromaEmbedding (Voyage AI, rate-limited)
     - fallback → SentenceTransformer (paraphrase-multilingual)
     """
     provider = Config.EMBEDDING_PROVIDER.lower()
+
+    # Qwen3 via Ollama: sovereign, lokaal, native MRL
+    if provider == "qwen3":
+        try:
+            return Qwen3ChromaEmbedding()
+        except Exception as e:
+            logger.warning("Qwen3ChromaEmbedding mislukt: %s, fallback naar local/Voyage", e)
 
     # Local provider: geen API, geen rate limits
     if provider == "local":
@@ -849,8 +960,17 @@ def get_embedder(gebruik_voyage: bool = True,
     """
     provider = None
 
-    # Local provider heeft prioriteit als geconfigureerd
-    if Config.EMBEDDING_PROVIDER.lower() == "local":
+    cfg_provider = Config.EMBEDDING_PROVIDER.lower()
+
+    # Qwen3 via Ollama: sovereign, lokaal, native MRL
+    if cfg_provider == "qwen3":
+        try:
+            provider = Qwen3Embeddings()
+        except Exception as e:
+            logger.warning("Qwen3Embeddings mislukt: %s, fallback naar local/Voyage/Hash", e)
+
+    # Local provider (sentence-transformer)
+    if provider is None and cfg_provider == "local":
         try:
             provider = LocalEmbeddings()
         except Exception as e:
@@ -876,7 +996,7 @@ def get_embedder(gebruik_voyage: bool = True,
 
 def lijst_providers() -> List[str]:
     """Lijst van beschikbare provider namen."""
-    providers = ["local", "hash", "tfidf"]
+    providers = ["qwen3", "local", "hash", "tfidf"]
     if Config.has_voyage_key():
         providers.insert(0, "voyage")
     return providers
@@ -974,7 +1094,8 @@ class TorchGPUEmbeddings(EmbeddingProvider):
             from danny_toolkit.core.vram_manager import vram_rapport
             vram = vram_rapport()
             vrij_mb = vram.get("vrij_mb", 4000) if vram.get("beschikbaar") else 4000
-        except Exception:
+        except Exception as e:
+            logger.debug("VRAM rapport niet beschikbaar: %s", e)
             vrij_mb = 4000
 
         if cpu_pct > 70 or vrij_mb < 2000:

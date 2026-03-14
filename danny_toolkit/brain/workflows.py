@@ -10,11 +10,14 @@ Definieert de drie hoofd workflows:
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections import deque
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Callable
 from dataclasses import dataclass, field
 from enum import Enum
+
+logger = logging.getLogger(__name__)
 
 
 class WorkflowStatus(Enum):

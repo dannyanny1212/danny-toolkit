@@ -770,11 +770,6 @@ class HallucinatieSchild:
         except Exception as e:
             logger.debug("NeuralBus publicatie mislukt: %s", e)
 
-try:
-    from danny_toolkit.core.config import Config
-except ImportError:
-    pass
-
     def get_stats(self) -> dict:
         """Retourneer thread-safe statistieken."""
         with self._lock:

@@ -1,4 +1,6 @@
 # core/gpu.py
+from __future__ import annotations
+
 import os
 
 # Guard: lege string veroorzaakt CUDA segfault op Windows (0xC0000005)

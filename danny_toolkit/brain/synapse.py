@@ -23,8 +23,8 @@ Feedback signals are IMPLICIT (no user ratings needed):
   - Tribunal reject        -> strong neg     (-0.8)
 
 Gebruik:
-    from danny_toolkit.brain.synapse import TheSynapse
-    synapse = TheSynapse()
+    from danny_toolkit.brain.synapse import get_synapse
+    synapse = get_synapse()
     bias = synapse.get_routing_bias("bitcoin prijs")
     synapse.record_interaction("bitcoin prijs", ["CIPHER"], 1200, 350)
 """
@@ -32,11 +32,16 @@ Gebruik:
 from __future__ import annotations
 
 import hashlib
+import io as _io
+import json
 import logging
 import math
+import os
 import sqlite3
+import sys
 import threading
 import time
+import pathlib
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
@@ -52,6 +57,10 @@ try:
     HAS_BUS = True
 except ImportError:
     HAS_BUS = False
+
+# Module-level export pool — 1 daemon thread, reused across all phoenix boosts
+from concurrent.futures import ThreadPoolExecutor as _ThreadPoolExecutor
+_PHOENIX_EXPORT_POOL = _ThreadPoolExecutor(max_workers=1, thread_name_prefix="phoenix-export")
 
 
 class TheSynapse:
@@ -71,8 +80,9 @@ class TheSynapse:
     MAX_STRENGTH = 0.95
 
     # Bias multiplier range applied to cosine scores
-    BIAS_MIN = 0.715
-    BIAS_MAX = 0.985
+    # Wide range: strong agents CAN overtake weak vector matches
+    BIAS_MIN = 0.5
+    BIAS_MAX = 1.3
 
     # Default strength for new pathways
     DEFAULT_STRENGTH = 0.5
@@ -117,6 +127,7 @@ class TheSynapse:
         )
         Config.apply_sqlite_perf(self._conn)
         self._create_tables()
+        self._ensure_weights_file()
 
         # Cache: embed function from AdaptiveRouter
         self._embed_fn = None
@@ -159,8 +170,81 @@ class TheSynapse:
                 ON interaction_trace(timestamp);
             CREATE INDEX IF NOT EXISTS idx_pathways_category
                 ON synaptic_pathways(query_category);
+
+            CREATE TABLE IF NOT EXISTS agent_telemetry (
+                agent_key TEXT PRIMARY KEY,
+                avg_latency REAL NOT NULL DEFAULT 1.0,
+                success_count INTEGER NOT NULL DEFAULT 0,
+                total_latency REAL NOT NULL DEFAULT 0.0,
+                updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+            );
         """)
         self._conn.commit()
+
+    def _ensure_weights_file(self) -> None:
+        """Create synapse_weights.json with base values if missing or empty."""
+        if Config:
+            path = Config.DATA_DIR / "synapse_weights.json"
+        else:
+            path = pathlib.Path("data/synapse_weights.json")
+        if path.exists() and path.stat().st_size > 10:
+            return
+        agents = [
+            "Iolaax", "Cipher", "Vita", "Echo", "Navigator", "Oracle",
+            "Spark", "Sentinel", "Memex", "Chronos", "Weaver", "Pixel",
+            "Alchemist", "Void", "Coherentie", "Strategist", "Artificer",
+            "#@*VirtualTwin",
+        ]
+        categories = [
+            "CODE", "SECURITY", "RESEARCH", "GENERAL", "FINANCE",
+            "HEALTH", "CREATIVE", "DATA", "PLANNING", "MEMORY",
+            "VISION", "HARDWARE", "SEARCH", "SCHEDULE", "SYNTHESIS",
+        ]
+        base = {
+            "pathways": {
+                cat: {
+                    a: {
+                        "strength": 0.05,
+                        "raw_bias": 0.5,
+                        "effective_bias": 0.5,
+                        "confidence": 0.0,
+                        "fires": 0,
+                        "successes": 0,
+                        "fails": 0,
+                        "updated": datetime.now().isoformat(timespec="seconds"),
+                    }
+                    for a in agents
+                }
+                for cat in categories
+            },
+            "version": "1.0",
+            "exported_at": datetime.now().isoformat(),
+        }
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(base, f, indent=2, ensure_ascii=False)
+        logger.info("Synapse weights initialized at %s", path)
+
+    def _safe_commit(self, retries: int = 3) -> bool:
+        """Commit with retry on database lock.
+
+        CorticalStack B-95 writer runs in background threads
+        and may hold brief WAL locks. Retry avoids silent drops.
+        """
+        for attempt in range(retries):
+            try:
+                self._conn.commit()
+                return True
+            except sqlite3.OperationalError as e:
+                if "locked" in str(e) and attempt < retries - 1:
+                    time.sleep(0.1 * (attempt + 1))
+                else:
+                    logger.warning(
+                        "Synapse commit failed after %d attempts: %s",
+                        attempt + 1, e,
+                    )
+                    return False
+        return False
 
     def _get_embed_fn(self) -> None:
         """Reuse AdaptiveRouter's embedding function (zero extra load)."""
@@ -193,7 +277,7 @@ class TheSynapse:
         if not embed:
             return None
         try:
-            # Import AGENT_PROFIELEN from swarm_engine
+            from swarm_engine import AdaptiveRouter
             self._profiel_embeddings = {}
             for agent, subs in AdaptiveRouter.AGENT_PROFIELEN.items():
                 self._profiel_embeddings[agent] = [
@@ -302,7 +386,7 @@ class TheSynapse:
                     if agent:
                         self._apply_plasticity(prev_cat, agent, signal)
 
-        self._conn.commit()
+        self._safe_commit()
 
     def _compute_feedback(
         self,
@@ -349,46 +433,61 @@ class TheSynapse:
 
         Positive signal -> strengthen, negative -> weaken.
         Bounded by sigmoid to [MIN_STRENGTH, MAX_STRENGTH].
+        Retries on database lock (shared WAL with CorticalStack).
         """
-        # Ensure pathway exists
-        row = self._conn.execute(
-            """SELECT strength, fire_count, success_count, fail_count
-               FROM synaptic_pathways
-               WHERE query_category = ? AND agent_key = ?""",
-            (category, agent),
-        ).fetchone()
+        for attempt in range(5):
+            try:
+                self._apply_plasticity_inner(
+                    category, agent, signal,
+                )
+                return
+            except sqlite3.OperationalError as e:
+                if "locked" in str(e) and attempt < 4:
+                    time.sleep(0.5 * (attempt + 1))
+                else:
+                    logger.warning(
+                        "Plasticity write failed: %s", e,
+                    )
 
-        if row:
-            strength, fires, successes, fails = row
-        else:
-            strength = self.DEFAULT_STRENGTH
-            fires, successes, fails = 0, 0, 0
-            self._conn.execute(
-                """INSERT INTO synaptic_pathways
-                   (query_category, agent_key, strength)
-                   VALUES (?, ?, ?)""",
-                (category, agent, strength),
-            )
+    def _apply_plasticity_inner(
+        self, category: str, agent: str, signal: float,
+    ) -> None:
+        """Inner plasticity — single attempt, may raise.
 
-        # Update counters
-        fires += 1
+        Uses upsert (INSERT ON CONFLICT UPDATE) to atomically
+        apply Hebbian plasticity in one SQL statement.
+        """
         if signal > 0:
-            successes += 1
             delta = self.STRENGTHEN_RATE * signal
+            succ_inc, fail_inc = 1, 0
         else:
-            fails += 1
-            delta = self.WEAKEN_RATE * signal  # signal is negative
-
-        # Apply delta with sigmoid bounding
-        new_strength = strength + delta
-        new_strength = max(self.MIN_STRENGTH, min(self.MAX_STRENGTH, new_strength))
+            delta = self.WEAKEN_RATE * signal
+            succ_inc, fail_inc = 0, 1
 
         self._conn.execute(
-            """UPDATE synaptic_pathways
-               SET strength = ?, fire_count = ?, success_count = ?,
-                   fail_count = ?, updated_at = datetime('now')
-               WHERE query_category = ? AND agent_key = ?""",
-            (new_strength, fires, successes, fails, category, agent),
+            """INSERT INTO synaptic_pathways
+                   (query_category, agent_key, strength,
+                    fire_count, success_count, fail_count)
+               VALUES (?, ?, ?, 1, ?, ?)
+               ON CONFLICT(query_category, agent_key)
+               DO UPDATE SET
+                   strength = MAX(?, MIN(?,
+                       synaptic_pathways.strength + ?)),
+                   fire_count = fire_count + 1,
+                   success_count = success_count + ?,
+                   fail_count = fail_count + ?,
+                   updated_at = datetime('now')""",
+            (
+                category, agent,
+                max(self.MIN_STRENGTH, min(
+                    self.MAX_STRENGTH,
+                    self.DEFAULT_STRENGTH + delta,
+                )),
+                succ_inc, fail_inc,
+                self.MIN_STRENGTH, self.MAX_STRENGTH,
+                delta,
+                succ_inc, fail_inc,
+            ),
         )
 
         # Publish event
@@ -400,8 +499,7 @@ class TheSynapse:
                     {
                         "category": category,
                         "agent": agent,
-                        "old_strength": round(strength, 4),
-                        "new_strength": round(new_strength, 4),
+                        "delta": round(delta, 4),
                         "signal": round(signal, 2),
                     },
                     bron="synapse",
@@ -418,7 +516,7 @@ class TheSynapse:
             self._apply_plasticity(
                 category, agent, self.SIGNALS["tribunal_reject"],
             )
-        self._conn.commit()
+        self._safe_commit()
 
         if HAS_BUS:
             try:
@@ -436,42 +534,85 @@ class TheSynapse:
             except Exception as e:
                 logger.debug("NeuralBus publish failed: %s", e)
 
-import sys
-import io
-try:
-    from danny_toolkit.core.engine import AdaptiveRouter
-except ImportError:
-    pass
-
     def get_routing_bias(self, user_input: str) -> Dict[str, float]:
-        """Get bias multipliers for routing.
+        """Dynamic Bias — confidence-weighted routing multipliers.
 
         Returns dict of agent_key -> multiplier in [BIAS_MIN, BIAS_MAX].
-        Unknown agents get the midpoint (0.85).
+
+        Strategy:
+        1. Exact category match (strongest signal)
+        2. Sub-category fallback: aggregate per-agent across
+           all categories containing that agent
+        3. Confidence weighting: log(fire_count) dampens
+           low-evidence pathways toward neutral (1.0)
+
+        A high-bias agent on "Code" WILL be preferred for
+        programming queries even when vector-match is tight.
         """
         category = self.categorize_query(user_input)
         if category == "UNKNOWN":
             return {}
 
+        # Try exact category match first
         rows = self._conn.execute(
-            """SELECT agent_key, strength
+            """SELECT agent_key, strength, fire_count
                FROM synaptic_pathways
                WHERE query_category = ?""",
             (category,),
         ).fetchall()
 
-        if not rows:
-            return {}
+        if rows:
+            return self._compute_bias(rows)
 
+        # Sub-category fallback: match any category containing
+        # one of the category's agents (e.g. "CIPHER" matches
+        # "CIPHER+ORACLE", "CIPHER+NAVIGATOR", etc.)
+        parts = category.split("+")
+        placeholders = " OR ".join(
+            "query_category LIKE ?" for _ in parts
+        )
+        params = [f"%{p}%" for p in parts]
+
+        rows = self._conn.execute(
+            f"""SELECT agent_key,
+                       AVG(strength) as strength,
+                       SUM(fire_count) as fire_count
+                FROM synaptic_pathways
+                WHERE {placeholders}
+                GROUP BY agent_key""",
+            params,
+        ).fetchall()
+
+        return self._compute_bias(rows)
+
+    def _compute_bias(
+        self, rows: list,
+    ) -> Dict[str, float]:
+        """Compute confidence-weighted bias from pathway rows.
+
+        Low fire_count -> bias dampened toward 1.0 (neutral).
+        High fire_count -> bias fully expressed.
+
+        Confidence = min(1.0, log2(fires + 1) / 5)
+        At 1 fire:  confidence = 0.20 (mostly neutral)
+        At 8 fires: confidence = 0.64 (growing trust)
+        At 31 fires: confidence = 1.00 (full expression)
+        """
         bias = {}
-        for agent, strength in rows:
-            # Map strength [0.05, 0.95] -> bias [BIAS_MIN, BIAS_MAX]
+        for agent, strength, fires in rows:
+            # Raw bias from strength
             normalized = (strength - self.MIN_STRENGTH) / (
                 self.MAX_STRENGTH - self.MIN_STRENGTH
             )
-            bias[agent] = self.BIAS_MIN + normalized * (
+            raw_bias = self.BIAS_MIN + normalized * (
                 self.BIAS_MAX - self.BIAS_MIN
             )
+
+            # Confidence dampening: lerp toward 1.0
+            confidence = min(
+                1.0, math.log2(fires + 1) / 5.0,
+            )
+            bias[agent] = 1.0 + confidence * (raw_bias - 1.0)
 
         return bias
 
@@ -511,8 +652,352 @@ except ImportError:
             decayed += 1
 
         if decayed:
-            self._conn.commit()
+            self._safe_commit()
             logger.info("Synapse: pruned %d unused pathways", decayed)
+
+    # ── Synaptic Reinforcement Protocol ─────────────────────────
+
+    def record_outcome(
+        self,
+        user_input: str,
+        agent_outcomes: Dict[str, str],
+    ) -> None:
+        """Direct outcome-based Hebbian reinforcement.
+
+        Called post-pipeline with per-agent verdicts.
+
+        Args:
+            user_input: Original query text.
+            agent_outcomes: Dict of agent_key -> outcome.
+                Outcomes: "success", "error", "ungrounded",
+                          "tribunal_reject", "blocked".
+        """
+        category = self.categorize_query(user_input)
+        if category == "UNKNOWN":
+            return
+
+        outcome_signals = {
+            "success": self.STRENGTHEN_RATE,
+            "error": -self.WEAKEN_RATE,
+            "ungrounded": -self.WEAKEN_RATE * 0.8,
+            "tribunal_reject": self.SIGNALS["tribunal_reject"],
+            "blocked": -self.WEAKEN_RATE * 0.5,
+        }
+
+        reinforced = []
+        for agent, outcome in agent_outcomes.items():
+            signal = outcome_signals.get(outcome)
+            if signal is None:
+                continue
+            self._apply_plasticity(category, agent, signal)
+            reinforced.append({
+                "agent": agent,
+                "outcome": outcome,
+                "signal": round(signal, 4),
+            })
+
+        if reinforced:
+            self._safe_commit()
+            logger.info(
+                "Synapse reinforcement: %d agents, category=%s",
+                len(reinforced), category,
+            )
+
+        # Publish batch event
+        if HAS_BUS and reinforced:
+            try:
+                bus = get_bus()
+                bus.publish(
+                    EventTypes.SYNAPSE_FEEDBACK,
+                    {
+                        "category": category,
+                        "reinforcements": reinforced,
+                        "source": "outcome",
+                    },
+                    bron="synapse",
+                )
+            except Exception as e:
+                logger.debug("NeuralBus publish failed: %s", e)
+
+        # Auto-export weight matrix after reinforcement
+        self._auto_export()
+
+    def backpropagate_success(
+        self,
+        user_input: str,
+        payloads: list,
+        sentinel_warns: int = 0,
+        schild_score: Optional[float] = None,
+    ) -> Dict:
+        """Full pipeline backpropagation after execution.
+
+        Computes a composite reward signal per agent from
+        ALL verification layers, then applies Hebbian
+        plasticity. Replaces simple outcome labeling with
+        a continuous, weighted signal.
+
+        Signal composition per agent:
+          base    = +1.0 (success) or -1.0 (error)
+          tribunal = +0.3 (verified) / -0.5 (rejected) / 0
+          sentinel = -0.2 per warning on that agent
+          schild   = score * 0.4 if not blocked, else -0.6
+          speed    = +0.1 bonus if < 5s execution
+
+        Final signal is clamped to [-1.0, +1.0] then scaled
+        by STRENGTHEN_RATE or WEAKEN_RATE.
+
+        Args:
+            user_input: Original query text.
+            payloads: List of SwarmPayload results.
+            sentinel_warns: Number of Sentinel warnings.
+            schild_score: HallucinatieSchild totaal_score
+                (0.0-1.0), or None if not evaluated.
+
+        Returns:
+            Dict with per-agent reinforcement details.
+        """
+        category = self.categorize_query(user_input)
+        if category == "UNKNOWN":
+            return {"category": "UNKNOWN", "agents": []}
+
+        reinforced = []
+        for payload in payloads:
+            agent = payload.agent if hasattr(payload, "agent") else str(payload.get("agent", "?"))
+            meta = payload.metadata if hasattr(payload, "metadata") else payload.get("metadata", {})
+            ptype = payload.type if hasattr(payload, "type") else payload.get("type", "text")
+
+            # 1. Base signal: success or error
+            if ptype == "error":
+                base = -1.0
+            else:
+                base = 1.0
+
+            # 2. Tribunal modifier
+            tribunal_mod = 0.0
+            tv = meta.get("tribunal_verified")
+            if tv is True:
+                tribunal_mod = 0.3
+            elif tv is False:
+                tribunal_mod = -0.5
+
+            # 3. Sentinel modifier
+            sentinel_mod = 0.0
+            if sentinel_warns > 0:
+                # Distribute penalty across agents
+                sentinel_mod = -0.2 * min(
+                    sentinel_warns, 3,
+                )
+
+            # 4. HallucinatieSchild modifier
+            schild_mod = 0.0
+            if meta.get("schild_blocked"):
+                schild_mod = -0.6
+            elif schild_score is not None:
+                # Reward high schild scores
+                schild_mod = (schild_score - 0.5) * 0.4
+
+            # 5. Speed bonus
+            speed_mod = 0.0
+            exec_time = meta.get("execution_time", 0)
+            if exec_time > 0 and exec_time < 5.0:
+                speed_mod = 0.1
+
+            # Composite signal [-1.0, +1.0]
+            composite = base + tribunal_mod + sentinel_mod + schild_mod + speed_mod
+            composite = max(-1.0, min(1.0, composite))
+
+            # Scale by plasticity rate
+            if composite >= 0:
+                signal = self.STRENGTHEN_RATE * composite
+            else:
+                signal = self.WEAKEN_RATE * abs(composite)
+                signal = -signal  # negative
+
+            self._apply_plasticity(category, agent, signal)
+
+            reinforced.append({
+                "agent": agent,
+                "composite": round(composite, 4),
+                "signal": round(signal, 4),
+                "components": {
+                    "base": base,
+                    "tribunal": round(tribunal_mod, 2),
+                    "sentinel": round(sentinel_mod, 2),
+                    "schild": round(schild_mod, 2),
+                    "speed": round(speed_mod, 2),
+                },
+            })
+
+        if reinforced:
+            self._safe_commit()
+            logger.info(
+                "Synapse backprop: %d agents, category=%s",
+                len(reinforced), category,
+            )
+
+        # NeuralBus event
+        if HAS_BUS and reinforced:
+            try:
+                bus = get_bus()
+                bus.publish(
+                    EventTypes.SYNAPSE_FEEDBACK,
+                    {
+                        "category": category,
+                        "reinforcements": reinforced,
+                        "source": "backpropagate",
+                    },
+                    bron="synapse",
+                )
+            except Exception as e:
+                logger.debug("NeuralBus publish failed: %s", e)
+
+        self._auto_export()
+
+        return {
+            "category": category,
+            "agents": reinforced,
+        }
+
+    def _auto_export(self) -> None:
+        """Export weight matrix to JSON after changes."""
+        try:
+            self.export_weights()
+        except Exception as e:
+            logger.debug("Auto-export weights failed: %s", e)
+
+    def export_weights(self, path: Optional[str] = None) -> str:
+        """Export full weight matrix to synapse_weights.json.
+
+        Returns the path where the file was written.
+        """
+        if path is None:
+            if Config:
+                path = str(Config.DATA_DIR / "synapse_weights.json")
+            else:
+                path = "data/synapse_weights.json"
+
+        matrix = self.get_weight_matrix()
+        matrix["telemetry"] = self.get_all_telemetry()
+        matrix["exported_at"] = datetime.now().isoformat()
+        matrix["version"] = "1.1"
+
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(matrix, f, indent=2, ensure_ascii=False)
+
+        logger.info("Synapse weights exported to %s", path)
+        return path
+
+    def load_weights(self, path: Optional[str] = None) -> int:
+        """Import weight matrix from synapse_weights.json.
+
+        Merges with existing pathways (JSON wins on conflict).
+        Returns number of pathways imported.
+        """
+        if path is None:
+            if Config:
+                path = str(Config.DATA_DIR / "synapse_weights.json")
+            else:
+                path = "data/synapse_weights.json"
+
+        if not os.path.exists(path):
+            logger.warning("No synapse weights file at %s", path)
+            return 0
+
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        imported = 0
+        for category, agents in data.get("pathways", {}).items():
+            for agent, info in agents.items():
+                strength = info.get("strength", self.DEFAULT_STRENGTH)
+                strength = max(
+                    self.MIN_STRENGTH,
+                    min(self.MAX_STRENGTH, strength),
+                )
+                fires = info.get("fires", 0)
+                successes = info.get("successes", 0)
+                fails = info.get("fails", 0)
+
+                self._conn.execute(
+                    """INSERT INTO synaptic_pathways
+                       (query_category, agent_key, strength,
+                        fire_count, success_count, fail_count)
+                       VALUES (?, ?, ?, ?, ?, ?)
+                       ON CONFLICT(query_category, agent_key)
+                       DO UPDATE SET
+                           strength = excluded.strength,
+                           fire_count = excluded.fire_count,
+                           success_count = excluded.success_count,
+                           fail_count = excluded.fail_count,
+                           updated_at = datetime('now')""",
+                    (category, agent, strength,
+                     fires, successes, fails),
+                )
+                imported += 1
+
+        self._safe_commit()
+        logger.info("Imported %d pathways from %s", imported, path)
+        return imported
+
+    def get_weight_matrix(self) -> Dict:
+        """Return full weight matrix as nested dict.
+
+        Structure:
+            {
+                "pathways": {
+                    "CIPHER+ORACLE": {
+                        "CIPHER": {
+                            "strength": 0.72,
+                            "bias": 0.92,
+                            "fires": 15,
+                            "successes": 12,
+                            "fails": 3,
+                            "updated": "2026-03-14 ..."
+                        }, ...
+                    }, ...
+                },
+                "stats": { ... }
+            }
+        """
+        rows = self._conn.execute(
+            """SELECT query_category, agent_key, strength,
+                      fire_count, success_count, fail_count,
+                      updated_at
+               FROM synaptic_pathways
+               ORDER BY query_category, agent_key"""
+        ).fetchall()
+
+        pathways: Dict[str, Dict] = {}
+        for cat, agent, strength, fires, succ, fail, updated in rows:
+            if cat not in pathways:
+                pathways[cat] = {}
+            # Compute confidence-weighted bias
+            normalized = (strength - self.MIN_STRENGTH) / (
+                self.MAX_STRENGTH - self.MIN_STRENGTH
+            )
+            raw_bias = self.BIAS_MIN + normalized * (
+                self.BIAS_MAX - self.BIAS_MIN
+            )
+            confidence = min(
+                1.0, math.log2(fires + 1) / 5.0,
+            )
+            effective_bias = 1.0 + confidence * (raw_bias - 1.0)
+            pathways[cat][agent] = {
+                "strength": round(strength, 4),
+                "raw_bias": round(raw_bias, 4),
+                "effective_bias": round(effective_bias, 4),
+                "confidence": round(confidence, 4),
+                "fires": fires,
+                "successes": succ,
+                "fails": fail,
+                "updated": updated,
+            }
+
+        return {
+            "pathways": pathways,
+            "stats": self.get_stats(),
+        }
 
     def get_stats(self) -> Dict:
         """Dashboard statistics."""
@@ -575,6 +1060,193 @@ except ImportError:
             }
             for r in rows
         ]
+
+
+    # ── Operation Phoenix ────────────────────────────────────────
+
+    PHOENIX_BOOST_CATEGORIES = ["GENERAL", "DATA", "SEARCH"]
+    PHOENIX_BOOST_SIGNAL = 0.8  # Strong positive per task
+
+    def _agent_sp(self, agent_name: str) -> int:
+        """Fast SP computation for a single agent via direct SQL."""
+        row = self._conn.execute(
+            """SELECT AVG(strength), SUM(fire_count)
+               FROM synaptic_pathways WHERE agent_key = ?""",
+            (agent_name,),
+        ).fetchone()
+        if not row or row[0] is None:
+            return 50
+        avg_strength = row[0]
+        fires = row[1] or 0
+        normalized = (avg_strength - self.MIN_STRENGTH) / (
+            self.MAX_STRENGTH - self.MIN_STRENGTH
+        )
+        raw_bias = self.BIAS_MIN + normalized * (self.BIAS_MAX - self.BIAS_MIN)
+        confidence = min(1.0, math.log2(fires + 1) / 5.0)
+        effective_bias = 1.0 + confidence * (raw_bias - 1.0)
+        return round(effective_bias * 100)
+
+    def phoenix_boost(self, agent_name: str) -> Dict:
+        """Operation Phoenix: rehabilitate an underperforming agent.
+
+        Fires 3 trivial success tasks across different categories to
+        counteract accumulated Hebbian WEAKEN penalties. Each task applies
+        a strong positive signal (+0.8) to rebuild pathway strength.
+
+        Returns dict with old/new SP values and reinforcement details.
+        """
+        # Fast pre-boost SP via direct SQL (no full matrix scan)
+        old_sp = self._agent_sp(agent_name)
+
+        # Fire 3 synthetic success tasks — commit after each to avoid WAL lock
+        boosted_categories = []
+        for category in self.PHOENIX_BOOST_CATEGORIES:
+            self._apply_plasticity(category, agent_name, self.PHOENIX_BOOST_SIGNAL)
+            self._safe_commit()
+            boosted_categories.append(category)
+
+        # Fast post-boost SP
+        new_sp = self._agent_sp(agent_name)
+
+        # Deferred export via module-level B95 executor (fire-and-forget)
+        try:
+            _PHOENIX_EXPORT_POOL.submit(self._auto_export)
+        except Exception as e:
+            logger.debug("Auto-export submit failed (best-effort): %s", e)
+
+        # Publish NeuralBus event
+        if HAS_BUS:
+            try:
+                bus = get_bus()
+                bus.publish(
+                    EventTypes.SYNAPSE_FEEDBACK,
+                    {
+                        "operation": "phoenix_boost",
+                        "agent": agent_name,
+                        "old_sp": old_sp,
+                        "new_sp": new_sp,
+                        "categories": boosted_categories,
+                    },
+                    bron="synapse",
+                )
+            except Exception as e:
+                logger.debug("NeuralBus publish failed: %s", e)
+
+        logger.info(
+            "Phoenix boost: %s SP %d → %d (%s)",
+            agent_name, old_sp, new_sp, boosted_categories,
+        )
+
+        return {
+            "agent": agent_name,
+            "old_sp": old_sp,
+            "new_sp": new_sp,
+            "categories_boosted": boosted_categories,
+            "signal_per_task": self.PHOENIX_BOOST_SIGNAL,
+        }
+
+
+    # ── Telemetry: latency tracking per agent ──────────────────────
+
+    def record_telemetry(self, agent_name: str, execution_time: float) -> None:
+        """Record execution time for an agent (moving average).
+
+        Updates avg_latency as exponential moving average (EMA, alpha=0.3)
+        for fast adaptation to recent performance changes.
+
+        Args:
+            agent_name: Name of the agent.
+            execution_time: Execution time in seconds.
+        """
+        alpha = 0.3  # EMA smoothing factor
+
+        row = self._conn.execute(
+            "SELECT avg_latency, success_count FROM agent_telemetry WHERE agent_key = ?",
+            (agent_name,),
+        ).fetchone()
+
+        if row:
+            old_avg, old_count = row
+            new_avg = alpha * execution_time + (1 - alpha) * old_avg
+            self._conn.execute(
+                """UPDATE agent_telemetry
+                   SET avg_latency = ?, success_count = success_count + 1,
+                       total_latency = total_latency + ?,
+                       updated_at = datetime('now')
+                   WHERE agent_key = ?""",
+                (round(new_avg, 6), execution_time, agent_name),
+            )
+        else:
+            self._conn.execute(
+                """INSERT INTO agent_telemetry
+                       (agent_key, avg_latency, success_count, total_latency)
+                   VALUES (?, ?, 1, ?)""",
+                (agent_name, execution_time, execution_time),
+            )
+
+        self._safe_commit()
+        logger.debug(
+            "Telemetry: %s exec=%.3fs avg=%.3fs",
+            agent_name, execution_time,
+            row[0] if row else execution_time,
+        )
+
+    def get_telemetry(self, agent_name: str) -> Dict:
+        """Get telemetry data for a single agent."""
+        row = self._conn.execute(
+            """SELECT avg_latency, success_count, total_latency, updated_at
+               FROM agent_telemetry WHERE agent_key = ?""",
+            (agent_name,),
+        ).fetchone()
+        if not row:
+            return {"avg_latency": 1.0, "success_count": 0, "total_latency": 0.0}
+        return {
+            "avg_latency": row[0],
+            "success_count": row[1],
+            "total_latency": row[2],
+            "updated_at": row[3],
+        }
+
+    def get_all_telemetry(self) -> Dict[str, Dict]:
+        """Get telemetry data for all agents."""
+        rows = self._conn.execute(
+            """SELECT agent_key, avg_latency, success_count, total_latency, updated_at
+               FROM agent_telemetry ORDER BY avg_latency ASC"""
+        ).fetchall()
+        return {
+            r[0]: {
+                "avg_latency": r[1],
+                "success_count": r[2],
+                "total_latency": r[3],
+                "updated_at": r[4],
+            }
+            for r in rows
+        }
+
+    def get_efficiency_scores(self) -> List[Dict]:
+        """Compute Efficiency Score (SP / avg_latency) for all agents with telemetry.
+
+        Returns list sorted by efficiency (highest first).
+        """
+        telemetry = self.get_all_telemetry()
+        if not telemetry:
+            return []
+
+        scores = []
+        for agent_name, telem in telemetry.items():
+            sp = self._agent_sp(agent_name)
+            avg_lat = max(telem["avg_latency"], 0.001)  # floor to avoid div/0
+            efficiency = sp / avg_lat
+            scores.append({
+                "agent": agent_name,
+                "sp": sp,
+                "avg_latency": round(avg_lat, 4),
+                "efficiency": round(efficiency, 2),
+                "success_count": telem["success_count"],
+            })
+
+        scores.sort(key=lambda x: x["efficiency"], reverse=True)
+        return scores
 
 
 # ── Singleton ────────────────────────────────────────────────────

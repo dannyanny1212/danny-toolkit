@@ -282,8 +282,12 @@ class Config:
     VISION_MODEL = "llava:latest"
     OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
 
-    # THE MEMORY (Hybrid)
-    EMBEDDING_PROVIDER = os.environ.get("EMBEDDING_PROVIDER", "voyage")
+    # THE MEMORY (Sovereign Embeddings)
+    EMBEDDING_PROVIDER = os.environ.get("EMBEDDING_PROVIDER", "qwen3")
+    QWEN3_EMBEDDING_MODEL = os.environ.get(
+        "QWEN3_EMBEDDING_MODEL", "qwen3-embedding:0.6b"
+    )
+    QWEN3_NATIVE_DIM = 1024               # Qwen3-Embedding native output
     LOCAL_EMBEDDING_MODEL = os.environ.get(
         "LOCAL_EMBEDDING_MODEL", "BAAI/bge-small-en-v1.5"
     )

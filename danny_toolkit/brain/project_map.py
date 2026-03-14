@@ -31,16 +31,13 @@ except ImportError:
     HAS_CHROMADB = False
 
 try:
-    import danny_toolkit.core.embeddings
+    from danny_toolkit.core.embeddings import get_chroma_embed_fn
     HAS_EMBEDDINGS = True
 except ImportError:
+    get_chroma_embed_fn = None  # type: ignore[assignment]
     HAS_EMBEDDINGS = False
 
-try:
-    import io
-    HAS_IO = True
-except ImportError:
-    HAS_IO = False
+import io as _io
 
 
 # ─── Paden (zelfde als config.py in root) ───

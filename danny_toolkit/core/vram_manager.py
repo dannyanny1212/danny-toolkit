@@ -199,11 +199,11 @@ class vram_guard:
         self._required_mb = required_mb
         self._blocking = blocking
 
-    def __enter__(self):
+    def __enter__(self) -> VRAMBudgetGuard:
         _vram_guard.acquire(self._name, self._required_mb, self._blocking)
         return _vram_guard
 
-    def __exit__(self, *exc):
+    def __exit__(self, *exc: object) -> bool:
         _vram_guard.release()
         return False
 
