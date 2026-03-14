@@ -24,6 +24,8 @@ ENV/
 # Environment variables
 .env
 .env.local
+.env.vault
+data/.env.vault
 
 # User data (gegenereerd)
 data/apps/

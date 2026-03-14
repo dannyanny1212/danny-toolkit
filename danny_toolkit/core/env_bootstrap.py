@@ -50,12 +50,55 @@ def bootstrap() -> None:
 
     Veilig om meerdere keren aan te roepen.
     """
-    # 1. Laad .env
+    # 1. Laad secrets — triple fallback: vault → .env → dotenv
+    # Danny moet ALTIJD verbonden zijn met zijn keys.
+    # Geen enkele failure mag de connectie verbreken.
+    _keys_loaded = False
+
+    # Poging 1: DPAPI Vault (meest veilig)
     try:
-        from dotenv import load_dotenv
-        load_dotenv(Path(_PROJECT_ROOT) / ".env", override=False)
-    except ImportError:
-        logger.debug("dotenv not available, skipping .env load")
+        from danny_toolkit.core.env_vault import unseal_env
+        count = unseal_env()
+        if count != 0:
+            _keys_loaded = True
+            logger.info("Keys geladen via DPAPI vault (%s)", count)
+    except FileNotFoundError:
+        logger.debug("Geen env vault gevonden, probeer .env")
+    except (ImportError, OSError) as e:
+        logger.debug("Vault unavailable (%s), fallback", e)
+
+    # Poging 2: Plain .env via dotenv
+    if not _keys_loaded:
+        _env_path = Path(_PROJECT_ROOT) / ".env"
+        try:
+            from dotenv import load_dotenv
+            if _env_path.exists():
+                load_dotenv(_env_path, override=False)
+                _keys_loaded = True
+                logger.info("Keys geladen via plain .env (dotenv)")
+        except ImportError:
+            logger.debug("dotenv niet beschikbaar")
+
+    # Poging 3: Manual .env parse (als dotenv niet geïnstalleerd)
+    if not _keys_loaded:
+        _env_path = Path(_PROJECT_ROOT) / ".env"
+        if _env_path.exists():
+            for line in _env_path.read_text("utf-8").splitlines():
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, _, v = line.partition("=")
+                k, v = k.strip(), v.strip().strip('"').strip("'")
+                if k and k not in os.environ:
+                    os.environ[k] = v
+            _keys_loaded = True
+            logger.info("Keys geladen via manual .env parse")
+
+    if not _keys_loaded:
+        logger.warning(
+            "GEEN KEYS GELADEN — geen vault, geen .env. "
+            "API calls zullen falen."
+        )
 
     # 2. GPU guard
     try:
