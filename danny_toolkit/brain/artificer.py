@@ -138,6 +138,7 @@ class Artificer:
         self.skills_dir = Config.BASE_DIR / "danny_toolkit" / "skills" / "forge"
         self.registry_path = self.skills_dir / "registry.json"
         self.workspace_dir = Config.BASE_DIR / "danny_toolkit" / "workspace"
+        self.sandbox_dir = Config.BASE_DIR / "danny_toolkit" / "sandbox"
         if not HAS_GROQ:
             self.client = None
         elif HAS_KEY_MANAGER:
@@ -155,6 +156,7 @@ class Artificer:
         """Ensure setup."""
         self.skills_dir.mkdir(parents=True, exist_ok=True)
         self.workspace_dir.mkdir(parents=True, exist_ok=True)
+        self.sandbox_dir.mkdir(parents=True, exist_ok=True)
         if not self.registry_path.exists():
             with open(self.registry_path, "w", encoding="utf-8") as f:
                 json.dump({}, f)
@@ -356,30 +358,45 @@ class Artificer:
 
     @staticmethod
     def _sanitize_task_input(task: str) -> str:
-        """### Docstring
-
-Sanitize user task input to prevent prompt injection.
-
-This function removes potential prompt override attempts and limits the input length.
-
-* Removes triple quotes and newline characters
-* Limits the input length to 500 characters
-* Strips leading and trailing whitespace
-
-Returns the sanitized task input string."""
         """Sanitize user task input voor veilige prompt-injectie.
 
-        Verwijdert prompt-escape pogingen en limiteert lengte.
+        Verwijdert prompt-escape pogingen, stale context markers
+        (MEMEX, ShadowCortex, CONTEXT FROM RESEARCH) en limiteert lengte.
         """
+        import re
+
+        # Strip stale context blocks die de taak overwelmen
+        sanitized = re.sub(
+            r"\[/?MEMEX CONTEXT\].*?(?=\[/?MEMEX CONTEXT\]|\Z)",
+            "", task, flags=re.DOTALL,
+        )
+        sanitized = re.sub(
+            r"\[MEMEX CONTEXT\].*?\[/MEMEX CONTEXT\]",
+            "", sanitized, flags=re.DOTALL,
+        )
+        sanitized = re.sub(
+            r"CONTEXT FROM RESEARCH:.*",
+            "", sanitized, flags=re.DOTALL,
+        )
+        sanitized = re.sub(
+            r"\[Result of Step \d+\]:.*",
+            "", sanitized, flags=re.DOTALL,
+        )
+        # Strip ShadowCortex, Tribunal, Observatory noise
+        sanitized = re.sub(
+            r"#@\*ShadowCortex.*?(?=\n\n|\Z)",
+            "", sanitized, flags=re.DOTALL,
+        )
+
         # Strip potentiële prompt-overrides
-        sanitized = task.replace('"""', '').replace("'''", "")
+        sanitized = sanitized.replace('"""', '').replace("'''", "")
         sanitized = sanitized.replace("\\n", " ").replace("\n", " ")
         # Limiet op lengte
         return sanitized[:500].strip()
 
     async def _write_script(self, task: str) -> Optional[str]:
         """Write script."""
-        workspace = str(self.workspace_dir).replace("\\", "/")
+        sandbox = str(self.sandbox_dir).replace("\\", "/")
         safe_task = self._sanitize_task_input(task)
         prompt = (
             f"Write a STANDALONE Python script to: {safe_task}.\n"
@@ -392,27 +409,38 @@ Returns the sanitized task input string."""
             "(e.g. while True), ALWAYS add a safety limit so it exits "
             "after at most 5 iterations. Your code is executed immediately "
             "to verify it works; infinite loops cause a 30s timeout.\n"
-            f"- FILE I/O: If you need to read or write files, you may use open(). "
-            f"ALL file output MUST go to the workspace directory: {workspace}/ — "
-            f"use os.path.join(\"{workspace}\", \"filename\") for every file path. "
+            f"- FILE I/O: ALL file output MUST go to the sandbox: {sandbox}/ — "
+            f"use os.path.join(\"{sandbox}\", \"filename\") for every file path. "
             f"NEVER write files outside this directory.\n"
             "- FORBIDDEN: os.remove, os.rmdir, shutil.rmtree, subprocess, "
-            "os.system, eval(), exec(), __import__.\n"
+            "os.system, eval(), exec(), __import__, import chromadb, "
+            "from chromadb, import danny_toolkit, from danny_toolkit.\n"
             "- Return ONLY raw Python source code.\n"
             "- Do NOT wrap in markdown fences (no ```python, no ```).\n"
             "- Do NOT add explanations, comments about the code, or text before/after.\n"
             "- The very first character must be a Python statement (import, def, etc)."
         )
+        _sys = (
+            "You are the Artificer — a code generator. "
+            "You ONLY produce raw Python source code. "
+            "NEVER produce reports, summaries, or explanations. "
+            "NEVER reference MEMEX, ShadowCortex, or context data. "
+            "Your output is executed immediately as a Python script."
+        )
+        _messages = [
+            {"role": "system", "content": _sys},
+            {"role": "user", "content": prompt},
+        ]
         if HAS_RETRY:
             raw = await groq_call_async(
                 self.client, "Artificer", self.model,
-                messages=[{"role": "user", "content": prompt}],
+                messages=_messages,
                 temperature=0.4,
             )
             return self._clean_generated_code(raw) if raw else None
         try:
             chat = await self.client.chat.completions.create(
-                messages=[{"role": "user", "content": prompt}],
+                messages=_messages,
                 model=self.model,
                 temperature=0.4,
             )
@@ -584,7 +612,7 @@ Returns the sanitized task input string."""
     def _run_script(self, filename: str) -> str:
         """Run script."""
         path = str(self.skills_dir / filename)
-        workspace = str(self.workspace_dir)
+        workspace = str(self.sandbox_dir)
 
         if HAS_SANDBOX:
             sandbox = get_sandbox()
