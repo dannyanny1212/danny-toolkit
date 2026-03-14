@@ -2245,6 +2245,8 @@ class SwarmEngine:
             "error_retries_attempted": 0,
             "error_retries_succeeded": 0,
             "cortex_enrichments": 0,
+            "ouroboros_heals": 0,
+            "ouroboros_attempts": 0,
         }
 
         # Phase 56: Forge Loader — dynamically loaded tools
@@ -2641,8 +2643,8 @@ class SwarmEngine:
             logger.debug("ERROR_CLASSIFIED publish fout: %s", e)
 
     async def _timed_dispatch(self, agent, agent_input,
-                              trace_id=""):
-        """Wrap agent.process() met timing, timeout + error handling."""
+                              trace_id="", recovery_depth=0):
+        """Wrap agent.process() met timing, timeout + error handling + Ouroboros self-heal."""
         agent_naam = agent.name
         t0 = time.time()
 
@@ -2891,6 +2893,52 @@ class SwarmEngine:
                     fc.herstel_gelukt = False
             except Exception as _retry_final_e:
                 logger.warning("Retry fallback fout voor %s: %s", agent_naam, _retry_final_e)
+
+            # ── Phase 57: Ouroboros Self-Healing ─────────────────
+            if recovery_depth < 1:
+                try:
+                    import traceback as _tb
+                    from danny_toolkit.core.ouroboros import get_ouroboros
+                    _ouroboros = get_ouroboros()
+                    _error_trace = _tb.format_exception(
+                        type(e), e, e.__traceback__,
+                    )
+                    _heal = await _ouroboros.handle_exception(
+                        failed_agent=agent_naam,
+                        error_trace="".join(_error_trace),
+                        original_task=agent_input[:1000],
+                        recovery_depth=recovery_depth + 1,
+                        trace_id=trace_id,
+                    )
+                    self._swarm_metrics["ouroboros_attempts"] += 1
+                    if _heal.success:
+                        self._swarm_metrics["ouroboros_heals"] += 1
+                        logger.info(
+                            "Ouroboros: %s geheeld door Artificer (trace=%s)",
+                            agent_naam, trace_id,
+                        )
+                        _meta["ouroboros_healed"] = True
+                        _meta["heal_output"] = _heal.heal_output[:300]
+                        return SwarmPayload(
+                            agent=agent_naam, type="text",
+                            content=_heal.heal_output,
+                            display_text=(
+                                f"🐍 Ouroboros: {agent_naam} hersteld "
+                                f"via Artificer ({_heal.elapsed_s:.1f}s)"
+                            ),
+                            metadata=_meta,
+                            trace_id=trace_id,
+                        )
+                    else:
+                        logger.warning(
+                            "Ouroboros: heal mislukt voor %s: %s",
+                            agent_naam, _heal.heal_output[:100],
+                        )
+                        _meta["ouroboros_attempted"] = True
+                        _meta["ouroboros_halt"] = _heal.heal_output[:200]
+                except Exception as _ouroboros_err:
+                    logger.debug("Ouroboros dispatch fout: %s", _ouroboros_err)
+
             return SwarmPayload(
                 agent=agent_naam, type="error",
                 content=f"[{agent_naam}] Fout: {e}",

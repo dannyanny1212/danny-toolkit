@@ -90,6 +90,85 @@ FASTAPI_PORT = int(os.getenv("FASTAPI_PORT", "8000"))
 
 _SERVER_START_TIME = time.time()
 
+# ── Phase 57: Singleton Lock — voorkom zombie-processen ──────────
+_LOCK_FILE = None
+_LOCK_FD = None
+
+
+def _acquire_singleton_lock() -> bool:
+    """Probeer singleton lock via msvcrt (Windows) of fcntl (Unix).
+
+    Voorkomt meerdere server-instanties op dezelfde poort.
+    Returneert True als lock verkregen, False als al een server draait.
+    """
+    global _LOCK_FILE, _LOCK_FD
+    lock_path = Path(__file__).parent / "data" / f".fastapi_{FASTAPI_PORT}.lock"
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        _LOCK_FD = open(lock_path, "w")
+        _LOCK_FD.write(str(os.getpid()))
+        _LOCK_FD.flush()
+        if os.name == "nt":
+            import msvcrt
+            msvcrt.locking(_LOCK_FD.fileno(), msvcrt.LK_NBLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(_LOCK_FD.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        _LOCK_FILE = lock_path
+        logger.info("Singleton lock verkregen: PID %d", os.getpid())
+        return True
+    except (OSError, IOError):
+        logger.error(
+            "SINGLETON LOCK FAILED — er draait al een server op poort %d. "
+            "Kill het bestaande proces of gebruik een andere poort.",
+            FASTAPI_PORT,
+        )
+        if _LOCK_FD:
+            _LOCK_FD.close()
+            _LOCK_FD = None
+        return False
+
+
+def _release_singleton_lock() -> None:
+    """Release singleton lock bij shutdown."""
+    global _LOCK_FILE, _LOCK_FD
+    if _LOCK_FD:
+        try:
+            if os.name == "nt":
+                import msvcrt
+                try:
+                    msvcrt.locking(_LOCK_FD.fileno(), msvcrt.LK_UNLCK, 1)
+                except OSError:
+                    pass
+            _LOCK_FD.close()
+        except Exception as e:
+            logger.debug("Lock release: %s", e)
+        _LOCK_FD = None
+    if _LOCK_FILE and _LOCK_FILE.exists():
+        try:
+            _LOCK_FILE.unlink()
+        except Exception:
+            pass
+        _LOCK_FILE = None
+
+
+# ── Phase 57: MIND Override Routing Patterns ─────────────────────
+_MIND_OVERRIDE_PATTERNS = [
+    "localhost", "127.0.0.1", "bridge", "scrape",
+    "fetch url", "haal op van", "open pagina",
+]
+
+
+def _is_mind_override_query(message: str) -> bool:
+    """Detecteer of een query direct naar CentralBrain moet (bridge/localhost).
+
+    Localhost/bridge queries omzeilen de SwarmEngine en gaan direct
+    naar CentralBrain.process_request() — voorkomt routing naar
+    agents die niet met localhost mogen communiceren.
+    """
+    msg_lower = message.lower()
+    return any(pattern in msg_lower for pattern in _MIND_OVERRIDE_PATTERNS)
+
 
 def _sanitize_error(msg: str) -> str:
     """Strip API keys uit error messages (anti-leak)."""
@@ -180,6 +259,8 @@ class HealthResponse(BaseModel):
     # Phase 31: Waakhuis health + circuit breakers
     waakhuis_health: Dict[str, Any] = {}
     circuit_breakers: Dict[str, Any] = {}
+    # Phase 57: Ouroboros self-healing
+    ouroboros: Dict[str, Any] = {}
 
 
 class AgentInfo(BaseModel):
@@ -690,7 +771,7 @@ async def _startup_event():
 
 @app.on_event("shutdown")
 async def _shutdown_event():
-    """Flush CorticalStack bij server shutdown."""
+    """Flush CorticalStack + release singleton lock bij shutdown."""
     try:
         from danny_toolkit.brain.cortical_stack import (
             get_cortical_stack,
@@ -698,6 +779,8 @@ async def _shutdown_event():
         get_cortical_stack().flush()
     except Exception as e:
         logger.debug("CorticalStack flush on shutdown failed: %s", e)
+    # Phase 57: Release singleton lock
+    _release_singleton_lock()
 
 
 # ─── ENDPOINTS ──────────────────────────────────────
@@ -722,6 +805,33 @@ async def query(
         return await _stream_response(req.message, brain)
 
     start = time.time()
+
+    # ── Phase 57: MIND Override — localhost/bridge → CentralBrain ──
+    if _is_mind_override_query(req.message):
+        try:
+            loop = asyncio.get_running_loop()
+            mind_result = await loop.run_in_executor(
+                None,
+                lambda: brain.process_request(req.message),
+            )
+            elapsed = round(time.time() - start, 2)
+            return QueryResponse(
+                payloads=[
+                    PayloadResponse(
+                        agent="CentralBrain",
+                        type="text",
+                        display_text=str(mind_result),
+                        timestamp=datetime.now().isoformat(),
+                        metadata={"mind_override": True},
+                    )
+                ],
+                execution_time=elapsed,
+                error_count=0,
+                trace_id="mind-override",
+            )
+        except Exception as e:
+            logger.warning("MIND override mislukt, fallback naar SwarmEngine: %s", e)
+
     engine = _get_swarm_engine(brain)
 
     try:
@@ -830,37 +940,38 @@ async def _stream_response(message: str, brain):
 
 @app.get(
     "/api/v1/health",
-    summary="L1 Pulse — razendsnelle health check (<100ms)",
+    summary="L1 Pulse — <2ms heartbeat",
     tags=["Systeem"],
 )
 async def health_pulse(
     _key: str = Depends(verify_api_key),
 ):
-    """Ultra-lichte health check voor monitoring/k8s probes.
+    """L1 Pulse: <2ms health check voor monitoring/k8s probes.
 
-    Geen brain loading, geen externe API calls, geen DB writes.
-    Antwoordt in <100ms.
+    Zero allocatie, zero DB, zero brain loading.
+    Alleen status + uptime — niets anders.
     """
-    uptime = time.time() - _SERVER_START_TIME
     return {
         "status": "online",
-        "version": "6.11.0",
-        "uptime_seconds": round(uptime, 1),
-        "timestamp": datetime.now().isoformat(),
+        "version": "6.17.0",
+        "uptime_s": round(time.time() - _SERVER_START_TIME, 1),
+        "pid": os.getpid(),
     }
 
 
 @app.get(
     "/api/v1/health/deep",
     response_model=HealthResponse,
-    summary="L3 Deep Scan — volledige systeemdiagnose",
+    summary="L3 Deep Scan — volledige systeemdiagnose (~400ms)",
     tags=["Systeem"],
 )
 async def health_deep(
     _key: str = Depends(verify_api_key),
 ):
-    """Uitgebreide gezondheidscheck: brain, Governor, Groq,
-    CorticalStack, disk, agents, caches, circuit breakers.
+    """L3 Deep Scan: ~400ms volledige systeemdiagnose.
+
+    Probes: brain, Governor, Groq, CorticalStack, disk, agents,
+    caches, circuit breakers, Ouroboros status.
     """
     brain = _get_brain()
 
@@ -992,13 +1103,21 @@ async def health_deep(
     except ImportError:
         pass
 
+    # Phase 57: Ouroboros self-healing status
+    ouroboros_data = {}
+    try:
+        from danny_toolkit.core.ouroboros import get_ouroboros
+        ouroboros_data = get_ouroboros().get_status()
+    except Exception as e:
+        logger.debug("Ouroboros status probe: %s", e)
+
     return HealthResponse(
         status="ONLINE",
         brain_online=brain.is_online,
         governor_status=gov_status,
         circuit_breaker=cb_status,
         timestamp=datetime.now().isoformat(),
-        version="6.11.0",
+        version="6.17.0",
         uptime_seconds=round(uptime, 1),
         memory_mb=round(mem_mb, 1),
         active_agents=actief,
@@ -1010,6 +1129,7 @@ async def health_deep(
         response_cache=cache_stats,
         waakhuis_health=waakhuis_data,
         circuit_breakers=circuit_data,
+        ouroboros=ouroboros_data,
     )
 
 
@@ -1161,6 +1281,26 @@ async def gpu_status(
     except Exception as e:
         logger.error("GPU status ophalen mislukt: %s", e)
         return {"beschikbaar": False, "error": str(e)}
+
+
+# ─── G5: Ouroboros Self-Healing Status ────────────────
+
+
+@app.get(
+    "/api/v1/ouroboros/status",
+    summary="Ouroboros self-healing pipeline status",
+    tags=["Systeem"],
+)
+async def ouroboros_status(
+    _key: str = Depends(verify_api_key),
+):
+    """Retourneer heal-pogingen, succespercentage en configuratie."""
+    try:
+        from danny_toolkit.core.ouroboros import get_ouroboros
+        return get_ouroboros().get_status()
+    except Exception as e:
+        logger.error("Ouroboros status ophalen mislukt: %s", e)
+        return {"heal_attempts": 0, "heal_successes": 0, "error": str(e)}
 
 
 # ─── G6: Governor Rate Limits ────────────────────────
@@ -2925,20 +3065,32 @@ if _CMD_DIR.exists():
 # ─── ENTRY POINT ───────────────────────────────────
 
 def main() -> None:
-    """Start de FastAPI server."""
+    """Start de FastAPI server met singleton lock."""
+    # Phase 57: Singleton Lock — voorkom zombie-processen
+    if not _acquire_singleton_lock():
+        print(
+            f"\n  ❌ SINGLETON LOCK FAILED — er draait al een server op poort {FASTAPI_PORT}.\n"
+            f"     Kill het bestaande proces of gebruik FASTAPI_PORT=<ander> env var.\n"
+        )
+        sys.exit(1)
+
     print(
-        f"\n  Danny Toolkit API — "
+        f"\n  Danny Toolkit API v6.17.0 — "
         f"http://localhost:{FASTAPI_PORT}/docs\n"
         f"  Command Center — "
         f"http://localhost:{FASTAPI_PORT}/cmd/\n"
+        f"  PID: {os.getpid()} (singleton locked)\n"
     )
-    uvicorn.run(
-        "fastapi_server:app",
-        host="0.0.0.0",
-        port=FASTAPI_PORT,
-        reload=False,
-        log_level="info",
-    )
+    try:
+        uvicorn.run(
+            "fastapi_server:app",
+            host="0.0.0.0",
+            port=FASTAPI_PORT,
+            reload=False,
+            log_level="info",
+        )
+    finally:
+        _release_singleton_lock()
 
 
 if __name__ == "__main__":
