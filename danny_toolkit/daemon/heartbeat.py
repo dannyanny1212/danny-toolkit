@@ -59,7 +59,7 @@ class HeartbeatDaemon:
 
     HEARTBEAT_INTERVAL = 1.0    # seconden
     REFLECTION_INTERVAL = 10.0  # seconden
-    GROWTH_CHANCE = float(os.environ.get("GROWTH_CHANCE", "0.50"))  # 50% X2 hyper learn
+    GROWTH_CHANCE = float(os.environ.get("GROWTH_CHANCE", "1.0"))  # 100% X6 — always grow
 
     VERSION = "2.0.0"
 
@@ -936,10 +936,10 @@ Initializes a new instance of the class.
                     if self._reflection_count > 0:
                         self._autonomous_growth()
 
-                    # X2 Hyper Learn: learning cycle elke 15 reflecties (~2.5 min)
+                    # X6 Hyper Learn: learning cycle elke 5 reflecties (~50s)
                     if (
                         self._reflection_count > 0
-                        and self._reflection_count % 15 == 0
+                        and self._reflection_count % 5 == 0
                     ):
                         self._learning_pulse()
 
@@ -1033,16 +1033,15 @@ Initializes a new instance of the class.
                                 f"REM fout: {str(_e)[:50]}",
                             )
 
-                    # X2 Hyper Learn: mini cycle every 3 hours
-                    # (01:00, 07:00, 10:00, 13:00, 16:00, 19:00, 22:00 — full REM at 04:00)
+                    # X6 Hyper Learn: mini cycle EVERY hour (except 04:00 full REM)
                     if (
-                        now_dt.hour in (1, 7, 10, 13, 16, 19, 22)
+                        now_dt.hour != 4
                         and now_dt.minute == 0
                         and self._pulse_count % 60 == 0
                     ):
                         self._log_activity(
                             "hyper_learn",
-                            f"Mini learning cycle @ {now_dt.hour}:00",
+                            f"X6 learning cycle @ {now_dt.hour}:00",
                         )
                         try:
                             from danny_toolkit.learning import LearningSystem
@@ -1063,7 +1062,7 @@ Initializes a new instance of the class.
                                 if facts:
                                     ls.log_learning("cortical_extract", facts[:10])
                         except Exception as _e:
-                            logger.debug("X2 hyper learn mini-cycle: %s", _e)
+                            logger.debug("X6 hyper learn mini-cycle: %s", _e)
 
                     # Oracle Eye forecast check (~300 pulsen)
                     if self._pulse_count % 300 == 0:
