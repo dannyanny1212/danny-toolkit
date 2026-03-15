@@ -1,14 +1,15 @@
 """
-Sovereign Engine — De Generaal van de Swarm.
+Sovereign Engine v3.1 — De Generaal van de Omega Swarm.
 
-Orkesreert het hele agent-netwerk. Beheert de Swarm Snapshot Protocol
-voor veilige shutdowns zonder Boundary Violations.
+Orkestrator van het volledige agent-netwerk met daemon integratie.
 
-De Engine leeft in /core/ (Body). Hij kan NIET direct:
-- De gedachten van /brain/ (Mind) lezen
-- Naar /data/ (Soul) schrijven
-Hij communiceert uitsluitend via NeuralBus events en de
-Universal Save Protocol (lifecycle.py).
+Features:
+    - Agent registratie + health tracking
+    - Swarm Snapshot Protocol (veilige shutdowns)
+    - ViolationSweeper (async decoupling)
+    - NeuralBus event broadcasting
+    - Daemon integratie (HeartbeatDaemon headless)
+    - Auto-registration van core subsystemen
 
 Swarm Snapshot Protocol:
     1. CEASEFIRE  — Stop nieuwe inputs, broadcast SWARM_SUSPEND
@@ -21,8 +22,7 @@ Gebruik:
         get_sovereign_engine, SovereignEngine
     )
     engine = get_sovereign_engine()
-    engine.register_agent("oracle", oracle_instance)
-    engine.run()  # of: await engine.run_async()
+    engine.boot_all()  # Start alles: bus, agents, daemon
 """
 
 from __future__ import annotations
@@ -401,6 +401,91 @@ class SovereignEngine:
         self._sweeper.start()
         print(f"{Kleur.GROEN}[ENGINE] Sovereign Swarm Online. "
               f"Agents: {len(self._agents)}{Kleur.RESET}")
+
+    def boot_all(self, start_api: bool = True, start_daemon: bool = True) -> dict:
+        """Boot het VOLLEDIGE Omega Sovereign systeem via boot_sovereign().
+
+        Dit is de unified launcher — één call voor alles:
+          1. NeuralBus + OmegaSeal
+          2. CorticalStack
+          3. FastAPI (uvicorn daemon thread)
+          4. HeartbeatDaemon (headless daemon thread)
+          5. SovereignEngine zelf (sweeper + agents)
+
+        Args:
+            start_api: Start FastAPI via uvicorn.
+            start_daemon: Start HeartbeatDaemon headless.
+
+        Returns:
+            Status dict van boot_sovereign() + engine stats.
+        """
+        from danny_toolkit.omega_sovereign_core import boot_sovereign
+        status = boot_sovereign(
+            start_api=start_api,
+            start_daemon=start_daemon,
+        )
+        # Start engine zelf
+        self.start()
+        status["engine"] = {"ok": True, "agents": len(self._agents)}
+
+        # Auto-register core subsystemen als agents
+        self._auto_register_subsystems()
+
+        ok = sum(1 for v in status.values() if isinstance(v, dict) and v.get("ok"))
+        total = sum(1 for v in status.values() if isinstance(v, dict))
+        status["summary"] = f"{ok}/{total} systems online"
+        logger.info("[SOVEREIGN ENGINE] boot_all complete: %s", status["summary"])
+        return status
+
+    def _auto_register_subsystems(self) -> None:
+        """Registreer core subsystemen als agents in de swarm."""
+        # NeuralBus
+        try:
+            from danny_toolkit.core.neural_bus import get_bus
+            bus = get_bus()
+            self.register_agent("neural_bus", bus)
+        except Exception as e:
+            logger.debug("Auto-register neural_bus: %s", e)
+
+        # CorticalStack
+        try:
+            from danny_toolkit.brain.cortical_stack import get_cortical_stack
+            self.register_agent("cortical_stack", get_cortical_stack())
+        except Exception as e:
+            logger.debug("Auto-register cortical_stack: %s", e)
+
+        # HallucinatieSchild
+        try:
+            from danny_toolkit.brain.hallucination_shield import get_hallucination_shield
+            self.register_agent("hallucination_shield", get_hallucination_shield())
+        except Exception as e:
+            logger.debug("Auto-register hallucination_shield: %s", e)
+
+        # BlackBox
+        try:
+            from danny_toolkit.brain import get_black_box
+            self.register_agent("black_box", get_black_box())
+        except Exception as e:
+            logger.debug("Auto-register black_box: %s", e)
+
+        # PhantomAgent (Cerberus)
+        try:
+            from danny_toolkit.agents.phantom_agent import PhantomAgent
+            self.register_agent("phantom_9042", PhantomAgent())
+        except Exception as e:
+            logger.debug("Auto-register phantom: %s", e)
+
+        # CoherentieMonitor
+        try:
+            from danny_toolkit.daemon.coherentie import CoherentieMonitor
+            self.register_agent("coherentie", CoherentieMonitor())
+        except Exception as e:
+            logger.debug("Auto-register coherentie: %s", e)
+
+        logger.info(
+            "[SOVEREIGN ENGINE] %d subsystemen auto-geregistreerd",
+            len(self._agents),
+        )
 
     def get_sweeper(self) -> ViolationSweeper:
         """Geeft de ViolationSweeper voor externe modules."""
