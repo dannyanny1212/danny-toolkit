@@ -215,12 +215,20 @@ class ShardRouter:
                 # keys en string values gecapt op 500 chars
                 raw_metas = [d.get("metadata", {}) for d in docs]
                 metadatas = []
-                for m in raw_metas:
+                for i, m in enumerate(raw_metas):
                     clean = {}
                     for k, v in (m if isinstance(m, dict) else {}).items():
                         if isinstance(v, (str, int, float, bool)):
-                            sk = str(k)[:500]
+                            sk = str(k)[:200]
                             clean[sk] = str(v)[:500] if isinstance(v, str) else v
+                    # Crypto metadata stamp — OmegaSeal hash van inhoud
+                    # Bij retrieval kan de hash geverifieerd worden
+                    import hashlib as _hl
+                    content_hash = _hl.sha256(
+                        documents[i].encode("utf-8", errors="replace")
+                    ).hexdigest()[:16]
+                    clean["_omega_hash"] = content_hash
+                    clean["_ingest_ts"] = str(int(time.time()))
                     metadatas.append(clean)
 
                 coll.upsert(
@@ -321,6 +329,22 @@ class ShardRouter:
                         continue
                     if min_score and dist > min_score:
                         continue
+
+                    # Crypto metadata verificatie — check OmegaSeal hash
+                    if isinstance(meta, dict) and "_omega_hash" in meta:
+                        import hashlib as _hl
+                        expected_hash = _hl.sha256(
+                            doc.encode("utf-8", errors="replace")
+                        ).hexdigest()[:16]
+                        if meta["_omega_hash"] != expected_hash:
+                            logger.warning(
+                                "METADATA SPOOFING: hash mismatch in shard %s "
+                                "(expected=%s, stored=%s) — chunk verwijderd",
+                                shard_naam, expected_hash[:8],
+                                str(meta["_omega_hash"])[:8],
+                            )
+                            continue
+
                     # Sanitize metadata — alleen primitieve types
                     clean_meta = {}
                     if isinstance(meta, dict):
