@@ -99,6 +99,7 @@ class PatternRecognizer:
     def get_cached_response(self, query: str) -> Optional[str]:
         """Haal cached response op als beschikbaar (thread-safe)."""
         normalized = self._normalize_query(query)
+        response = None
 
         with self._lock:
             for cached in self._data["cached_responses"]:

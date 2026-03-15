@@ -33,6 +33,12 @@ from typing import Any, Dict, List, Optional, Tuple
 logger = logging.getLogger(__name__)
 
 try:
+    from danny_toolkit.core.config import Config
+    HAS_CONFIG = True
+except ImportError:
+    HAS_CONFIG = False
+
+try:
     from danny_toolkit.core.neural_bus import get_bus, EventTypes
     HAS_BUS = True
 except ImportError:
@@ -211,7 +217,7 @@ class HallucinatieSchild:
         """Lazy RealityAnchor — AST codebase scanner."""
         if not self._reality_anchor_checked:
             self._reality_anchor_checked = True
-            if HAS_REALITY_ANCHOR:
+            if HAS_REALITY_ANCHOR and HAS_CONFIG:
                 try:
                     root = str(Config.BASE_DIR / "danny_toolkit")
                     self._reality_anchor = RealityAnchor(root)

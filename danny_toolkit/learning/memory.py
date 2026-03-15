@@ -137,9 +137,10 @@ class UnifiedMemory:
                     })
 
         results.sort(key=lambda x: (x["score"], x["success_score"]), reverse=True)
-        self._memory["metadata"]["total_queries"] += 1
-        if results:
-            self._memory["metadata"]["total_hits"] += 1
+        with self._lock:
+            self._memory["metadata"]["total_queries"] += 1
+            if results:
+                self._memory["metadata"]["total_hits"] += 1
 
         return results[:top_k]
 
