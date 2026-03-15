@@ -369,7 +369,8 @@ class RagGUI:
 
             prompt = f"<|user|>\n{vraag}\n<|end|>\n<|assistant|>\n"
             output = llm(prompt, max_tokens=512, temperature=0.2, top_p=0.9)
-            antwoord = output["choices"][0]["text"].strip()
+            choices = output.get("choices") if isinstance(output, dict) else []
+            antwoord = choices[0]["text"].strip() if choices else "(geen antwoord)"
 
             self.root.after(0, lambda: self._print(antwoord))
 
@@ -518,7 +519,8 @@ class RagGUI:
                 f"<|end|>\n<|assistant|>\n"
             )
             output = llm(prompt, max_tokens=512, temperature=0.2, top_p=0.9)
-            antwoord = output["choices"][0]["text"].strip()
+            choices = output.get("choices") if isinstance(output, dict) else []
+            antwoord = choices[0]["text"].strip() if choices else "(geen antwoord)"
 
             self.root.after(0, lambda: self._print(f"\n{'=' * 50}", "header"))
             self.root.after(0, lambda: self._print(antwoord))

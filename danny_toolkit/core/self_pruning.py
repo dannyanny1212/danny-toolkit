@@ -282,7 +282,8 @@ class AccessTracker:
                 cursor = conn.execute(
                     "SELECT COUNT(*) AS c FROM fragment_access"
                 )
-                count = cursor.fetchone()["c"]
+                row = cursor.fetchone()
+                count = row["c"] if row else 0
                 conn.close()
                 return count
             except Exception as e:
