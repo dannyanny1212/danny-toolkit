@@ -59,7 +59,7 @@ class HeartbeatDaemon:
 
     HEARTBEAT_INTERVAL = 1.0    # seconden
     REFLECTION_INTERVAL = 10.0  # seconden
-    GROWTH_CHANCE = 0.05        # 5% per reflectie
+    GROWTH_CHANCE = float(os.environ.get("GROWTH_CHANCE", "0.50"))  # 50% X2 hyper learn
 
     VERSION = "2.0.0"
 
@@ -662,6 +662,42 @@ Initializes a new instance of the class.
 
     # ─── Groei ───
 
+    def _learning_pulse(self) -> None:
+        """X2 Hyper Learn: full learning cycle + consolidation + ranking."""
+        try:
+            from danny_toolkit.learning import LearningSystem
+            ls = LearningSystem()
+            result = ls.run_learning_cycle()
+            cycle = result.get("learning_cycle", {})
+            adapted = cycle.get("adaptations_applied", 0) if isinstance(cycle, dict) else 0
+            consolidated = 0
+            dupes_removed = 0
+            facts = ls.memory.get_all_facts()
+            if facts:
+                consolidated = ls.consolidate()
+                dupes_removed = ls.remove_duplicates()
+                ls.rank_knowledge()
+            self._log_activity(
+                "learn",
+                f"X2 pulse: {adapted} adapt, {consolidated} consol, {dupes_removed} dedup, {len(facts)} facts",
+            )
+            stack = self._get_stack()
+            if stack:
+                stack.log_event(
+                    actor="heartbeat",
+                    action="learning_pulse",
+                    details={
+                        "adaptations": adapted,
+                        "consolidated": consolidated,
+                        "duplicates_removed": dupes_removed,
+                        "total_facts": len(facts),
+                        "reflection_nr": self._reflection_count,
+                    },
+                    source="daemon",
+                )
+        except Exception as e:
+            logger.debug("Learning pulse failed: %s", e)
+
     def _autonomous_growth(self) -> None:
         """5% kans: re-index of leer nieuwe feiten."""
         if random.random() > self.GROWTH_CHANCE:
@@ -900,6 +936,13 @@ Initializes a new instance of the class.
                     if self._reflection_count > 0:
                         self._autonomous_growth()
 
+                    # X2 Hyper Learn: learning cycle elke 15 reflecties (~2.5 min)
+                    if (
+                        self._reflection_count > 0
+                        and self._reflection_count % 15 == 0
+                    ):
+                        self._learning_pulse()
+
                     # Swarm schedule check (elke 60 pulsen)
                     if self._pulse_count % 60 == 0:
                         self._check_swarm_schedule()
@@ -989,6 +1032,38 @@ Initializes a new instance of the class.
                                 "dreamer",
                                 f"REM fout: {str(_e)[:50]}",
                             )
+
+                    # X2 Hyper Learn: mini cycle every 3 hours
+                    # (01:00, 07:00, 10:00, 13:00, 16:00, 19:00, 22:00 — full REM at 04:00)
+                    if (
+                        now_dt.hour in (1, 7, 10, 13, 16, 19, 22)
+                        and now_dt.minute == 0
+                        and self._pulse_count % 60 == 0
+                    ):
+                        self._log_activity(
+                            "hyper_learn",
+                            f"Mini learning cycle @ {now_dt.hour}:00",
+                        )
+                        try:
+                            from danny_toolkit.learning import LearningSystem
+                            ls = LearningSystem()
+                            ls.run_learning_cycle()
+                            ls.consolidate()
+                            ls.remove_duplicates()
+                            ls.rank_knowledge()
+                            # X2: extract facts from recent CorticalStack events
+                            stack = self._get_stack()
+                            if stack:
+                                recent = stack.get_recent_events(count=20)
+                                facts = []
+                                for ev in recent:
+                                    details = ev.get("details", "")
+                                    if isinstance(details, str) and len(details) > 30:
+                                        facts.append(details[:200])
+                                if facts:
+                                    ls.log_learning("cortical_extract", facts[:10])
+                        except Exception as _e:
+                            logger.debug("X2 hyper learn mini-cycle: %s", _e)
 
                     # Oracle Eye forecast check (~300 pulsen)
                     if self._pulse_count % 300 == 0:
