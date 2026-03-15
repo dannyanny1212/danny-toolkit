@@ -246,7 +246,7 @@ class GhostWriter:
                 model=self.model,
                 temperature=0.3,
             )
-            content = chat.choices[0].message.content
+            content = chat.choices[0].message.content if chat.choices else ""
             tokens = getattr(chat.usage, "total_tokens", 0) if chat.usage else 0
             self._track_tokens("groq_primary", tokens)
             return content

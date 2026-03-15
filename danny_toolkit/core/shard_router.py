@@ -288,6 +288,8 @@ class ShardRouter:
                     n_results=n,
                     include=["documents", "metadatas", "distances"],
                 )
+                if not results.get("documents") or not results["documents"]:
+                    continue
                 docs = results["documents"][0]
                 metas = results["metadatas"][0]
                 dists = results["distances"][0]

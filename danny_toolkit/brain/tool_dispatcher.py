@@ -413,7 +413,7 @@ class ToolDispatcher:
             max_tokens=60,
         )
 
-        content = response.choices[0].message.content or ""
+        content = (response.choices[0].message.content or "") if response.choices else ""
         # Parse app names uit response
         valid_apps = set(_APP_MANIFEST_NAMES)
         matched: Set[str] = set()

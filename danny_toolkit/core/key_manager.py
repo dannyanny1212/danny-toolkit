@@ -493,6 +493,8 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
                     usage[idx] += len(agent.request_timestamps)
 
             # Kies de key met minste load
+            if not usage:
+                return self._keys[0] if self._keys else ""
             min_load = min(usage.values())
             candidates = [i for i, load in usage.items() if load == min_load]
 
@@ -721,7 +723,7 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
                     max_tokens=max_tokens,
                     temperature=temperature,
                 )
-                tekst = resp.choices[0].message.content or ""
+                tekst = (resp.choices[0].message.content or "") if resp.choices else ""
                 latency = (time.time() - t0) * 1000
 
                 # Registreer verbruik

@@ -392,10 +392,11 @@ class SemanticCache:
                 conn.commit()
 
                 # FIFO eviction per agent
-                count = conn.execute(
+                _row = conn.execute(
                     "SELECT COUNT(*) FROM cache_entries WHERE agent = ?",
                     (agent_naam,),
-                ).fetchone()[0]
+                ).fetchone()
+                count = _row[0] if _row else 0
                 if count > self._MAX_ENTRIES_PER_AGENT:
                     overschot = count - self._MAX_ENTRIES_PER_AGENT
                     conn.execute(

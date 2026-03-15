@@ -102,7 +102,7 @@ Sets up the profile path, asynchronous client, and model.
                 model=self.model,
                 temperature=0.4,
             )
-            new_profile_json = chat.choices[0].message.content
+            new_profile_json = chat.choices[0].message.content if chat.choices else "{}"
             self.save_profile(new_profile_json)
             print(f"{Kleur.GROEN}🪞 Profile Updated.{Kleur.RESET}")
         except Exception as e:

@@ -460,15 +460,18 @@ class CorticalStack:
 
     def get_stats(self) -> dict:
         """Totalen per tabel."""
-        episodic = self._conn.execute(
+        row = self._conn.execute(
             "SELECT COUNT(*) as c FROM episodic_memory"
-        ).fetchone()["c"]
-        semantic = self._conn.execute(
+        ).fetchone()
+        episodic = row["c"] if row else 0
+        row = self._conn.execute(
             "SELECT COUNT(*) as c FROM semantic_memory"
-        ).fetchone()["c"]
-        stats = self._conn.execute(
+        ).fetchone()
+        semantic = row["c"] if row else 0
+        row = self._conn.execute(
             "SELECT COUNT(*) as c FROM system_stats"
-        ).fetchone()["c"]
+        ).fetchone()
+        stats = row["c"] if row else 0
 
         result = {
             "episodic_events": episodic,

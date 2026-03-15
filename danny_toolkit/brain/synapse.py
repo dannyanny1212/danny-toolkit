@@ -1131,7 +1131,7 @@ class TheSynapse:
                FROM synaptic_pathways WHERE agent_key = ?""",
             (agent_name,),
         ).fetchone()
-        if not row or row[0] is None:
+        if not row or len(row) < 2 or row[0] is None:
             return 50
         avg_strength = row[0]
         fires = row[1] or 0

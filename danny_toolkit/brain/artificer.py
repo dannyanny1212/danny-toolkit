@@ -325,6 +325,8 @@ class Artificer:
                     model=self.model,
                     temperature=0.4,
                 )
+                if not chat.choices:
+                    return "❌ LLM retourneerde geen response"
                 ruwe_tekst = chat.choices[0].message.content
             except Exception as e:
                 print(f"{Kleur.ROOD}📄 Forge document fout: {e}{Kleur.RESET}")
@@ -523,6 +525,8 @@ class Artificer:
                 model=self.model,
                 temperature=0.4,
             )
+            if not chat.choices:
+                return ""
             code = self._clean_generated_code(chat.choices[0].message.content)
             return code
         except Exception as e:
@@ -570,6 +574,8 @@ class Artificer:
                 model=self.model,
                 temperature=0.2,
             )
+            if not chat.choices:
+                return None
             return self._clean_generated_code(chat.choices[0].message.content)
         except Exception as e:
             logger.debug("Polish retry error: %s", e)

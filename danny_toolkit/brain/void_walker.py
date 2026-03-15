@@ -255,7 +255,7 @@ None
                 model=self.model,
                 temperature=0.3,
             )
-            return chat.choices[0].message.content
+            return chat.choices[0].message.content if chat.choices else ""
         except Exception as e:
             print(f"{Kleur.ROOD}🌌 Digest error: {e}{Kleur.RESET}")
             return None

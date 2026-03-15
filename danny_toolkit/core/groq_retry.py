@@ -105,7 +105,7 @@ async def groq_call_async(
                 client.chat.completions.create(**create_kwargs),
                 timeout=API_TIMEOUT,
             )
-            tekst = chat.choices[0].message.content
+            tekst = chat.choices[0].message.content if chat.choices else ""
 
             # Registreer verbruik
             if km and tekst:
@@ -209,7 +209,7 @@ def groq_call_sync(
                 create_kwargs["max_tokens"] = max_tokens
 
             chat = client.chat.completions.create(**create_kwargs)
-            tekst = chat.choices[0].message.content
+            tekst = chat.choices[0].message.content if chat.choices else ""
 
             if km and tekst:
                 km.registreer_tokens(agent_naam, tekst)

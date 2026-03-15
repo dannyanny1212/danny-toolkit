@@ -107,7 +107,9 @@ class PatternRecognizer:
                     cached["hits"] = cached.get("hits", 0) + 1
                     cached["last_used"] = datetime.now().isoformat()
                     self._data["stats"]["cache_hits"] += 1
-                    response = cached["response"]
+                    response = cached.get("response")
+                    if response is None:
+                        continue
                     break
             else:
                 self._data["stats"]["cache_misses"] += 1
@@ -252,7 +254,7 @@ class PatternRecognizer:
             "most_frequent": self.get_frequent_queries(5),
         }
 
-    def cleanup_old_cache(self, min_score: float = 0.5, max_age_days: int = 30) -> None:
+    def cleanup_old_cache(self, min_score: float = 0.5, max_age_days: int = 30) -> int:
         """Ruim oude of slechte cache entries op."""
 
         cutoff = datetime.now() - timedelta(days=max_age_days)

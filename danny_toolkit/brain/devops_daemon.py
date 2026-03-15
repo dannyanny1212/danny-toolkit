@@ -322,7 +322,9 @@ class DevOpsDaemon:
                 temperature=0.3,
                 max_tokens=500,
             )
-            return response.choices[0].message.content.strip()
+            if not response.choices:
+                return "[Geen LLM response]"
+            return (response.choices[0].message.content or "").strip()
         except Exception as e:
             return f"[LLM analyse mislukt: {e}]"
 

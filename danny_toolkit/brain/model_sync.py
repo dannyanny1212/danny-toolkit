@@ -265,7 +265,7 @@ class GroqModelWorker(ModelWorker):
                     max_tokens=self.profile.max_tokens,
                     temperature=0.4,
                 )
-                content = response.choices[0].message.content or ""
+                content = (response.choices[0].message.content or "") if response.choices else ""
                 tokens = getattr(response.usage, "total_tokens", 0)
                 latency = (time.time() - t0) * 1000
 
@@ -438,7 +438,7 @@ class OpenAIModelWorker(ModelWorker):
                 max_tokens=self.profile.max_tokens,
                 temperature=0.4,
             )
-            content = response.choices[0].message.content or ""
+            content = (response.choices[0].message.content or "") if response.choices else ""
             tokens = getattr(response.usage, "total_tokens", 0)
             latency = (time.time() - t0) * 1000
 
@@ -518,7 +518,7 @@ class NVIDIAModelWorker(ModelWorker):
                 max_tokens=self.profile.max_tokens,
                 temperature=0.4,
             )
-            content = response.choices[0].message.content or ""
+            content = (response.choices[0].message.content or "") if response.choices else ""
             tokens = getattr(response.usage, "total_tokens", 0)
             latency = (time.time() - t0) * 1000
 

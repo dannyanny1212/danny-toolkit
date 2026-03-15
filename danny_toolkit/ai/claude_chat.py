@@ -804,7 +804,7 @@ class ClaudeChatApp:
                         {"role": "user", "content": prompt}
                     ]
                 )
-                vertaling = response.choices[0].message.content
+                vertaling = response.choices[0].message.content if response.choices else ""
 
             print(kleur(f"\n{naar_taal}:", Kleur.GROEN))
             print(vertaling)

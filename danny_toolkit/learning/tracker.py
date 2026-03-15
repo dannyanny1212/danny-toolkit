@@ -197,10 +197,10 @@ class InteractionTracker:
         return {
             "count": len(with_feedback),
             "avg_rating": sum(
-                i["feedback"]["rating"] for i in with_feedback
+                i.get("feedback", {}).get("rating", 0) for i in with_feedback
             ) / len(with_feedback),
             "helpful_ratio": sum(
-                1 for i in with_feedback if i["feedback"]["helpful"]
+                1 for i in with_feedback if i.get("feedback", {}).get("helpful")
             ) / len(with_feedback),
             "feedback_coverage": len(with_feedback) / max(total, 1)
         }

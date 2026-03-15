@@ -206,7 +206,7 @@ class GhostAmplifier:
                 temperature=0.7,
                 max_tokens=max_tokens,
             )
-            output = chat.choices[0].message.content or ""
+            output = (chat.choices[0].message.content or "") if chat.choices else ""
             output_tokens = len(output.split())
             actual_factor = output_tokens / max(input_tokens, 1)
             duur_ms = (time.time() - t0) * 1000

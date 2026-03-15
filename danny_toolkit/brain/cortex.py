@@ -264,7 +264,7 @@ The initialization process involves:
                     model=self.model,
                     temperature=0.2,
                 )
-                raw = chat.choices[0].message.content
+                raw = chat.choices[0].message.content if chat.choices else ""
 
             # Parse JSON uit response
             import json

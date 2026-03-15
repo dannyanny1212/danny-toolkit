@@ -4397,7 +4397,10 @@ class SwarmEngine:
         t0 = time.time()
         tasks = []
         for name in targets:
-            agent = self.agents[name]
+            agent = self.agents.get(name)
+            if agent is None:
+                logger.warning("Agent %s niet geregistreerd, overgeslagen", name)
+                continue
             log(f"\u26a1 {agent.name}: gestart...")
 
             if name == "MEMEX" or not memex_ctx:

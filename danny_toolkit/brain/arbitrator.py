@@ -269,6 +269,8 @@ The Groq client is initialized lazily, attempting to create a synchronous client
                 max_tokens=500,
                 temperature=0.3,
             )
+            if not response.choices:
+                return "[]"
             return response.choices[0].message.content or "[]"
         except Exception as e:
             logger.debug("Decompose LLM call failed: %s", e)

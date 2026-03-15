@@ -383,7 +383,7 @@ Sets the model attribute to the LLM model specified in the configuration."""
                 model=self.model,
                 temperature=0.3,
             )
-            summary = chat.choices[0].message.content
+            summary = chat.choices[0].message.content if chat.choices else ""
 
             # Store digest back into CorticalStack
             stack.log_event(
@@ -420,7 +420,7 @@ Sets the model attribute to the LLM model specified in the configuration."""
                 model=self.model,
                 temperature=0.5,
             )
-            return chat.choices[0].message.content
+            return chat.choices[0].message.content if chat.choices else ""
         except Exception as e:
             print(f"{Kleur.ROOD}🔮 Anticipation error: {e}{Kleur.RESET}")
             return None
@@ -539,7 +539,7 @@ Sets the model attribute to the LLM model specified in the configuration."""
                             model=self.model,
                             temperature=0.2,
                         )
-                        samenvatting = (chat.choices[0].message.content or "").strip()
+                        samenvatting = ((chat.choices[0].message.content or "") if chat.choices else "").strip()
 
                         if samenvatting and len(samenvatting) >= 10:
                             doc_hash = sc._doc_hash(tekst)
@@ -661,7 +661,7 @@ Sets the model attribute to the LLM model specified in the configuration."""
                         model=self.model,
                         temperature=0.1,
                     )
-                    super_token = (chat.choices[0].message.content or "").strip()
+                    super_token = ((chat.choices[0].message.content or "") if chat.choices else "").strip()
 
                     if super_token and len(super_token) >= 5:
                         nieuwe_tokens = max(1, len(super_token.split()))

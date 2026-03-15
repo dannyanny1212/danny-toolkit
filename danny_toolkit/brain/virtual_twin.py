@@ -751,6 +751,8 @@ class VirtualTwin:
                 model=self.model,
                 temperature=0.4,
             )
+            if not chat.choices:
+                return ""
             result = chat.choices[0].message.content
             if result:
                 self._vault.registreer_shadow_tokens(len(result) // 4)
@@ -1178,7 +1180,7 @@ class ShadowCortex:
                     model=Config.LLM_MODEL,
                     temperature=0.2,
                 )
-                samenvatting = chat.choices[0].message.content
+                samenvatting = chat.choices[0].message.content if chat.choices else ""
 
             if not samenvatting or not samenvatting.strip():
                 return None
@@ -1314,6 +1316,11 @@ class ShadowCortex:
                    FROM shadow_summaries"""
             ).fetchone()
 
+            if not row:
+                return {
+                    "invested": 0, "saved": 0, "net_savings": 0,
+                    "roi_ratio": 0.0, "summaries_count": 0, "summaries_served": 0,
+                }
             invested = row[0]
             saved = row[1]
             net = saved - invested

@@ -165,6 +165,6 @@ If initialization fails, logs the error and continues without a TruthAnchor."""
                 model=model,
                 temperature=0.6,
             )
-            return chat_completion.choices[0].message.content
+            return chat_completion.choices[0].message.content if chat_completion.choices else ""
         except Exception as e:
             return f"Tribunal Error: {str(e)}"

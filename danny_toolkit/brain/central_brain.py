@@ -641,7 +641,7 @@ Regels:
                 response = await client.chat.completions.create(**call_kwargs)
 
                 async for chunk in response:
-                    if chunk.choices and chunk.choices[0].delta.content is not None:
+                    if chunk.choices and len(chunk.choices) > 0 and chunk.choices[0].delta.content is not None:
                         token = chunk.choices[0].delta.content
                         full_response += token
                         yield token
@@ -670,7 +670,7 @@ Regels:
                         logger.warning("NIM stream 400, probeer non-streaming...")
                         call_kwargs["stream"] = False
                         resp = await client.chat.completions.create(**call_kwargs)
-                        content = resp.choices[0].message.content or ""
+                        content = (resp.choices[0].message.content or "") if resp.choices else ""
                         full_response += content
                         yield content
                         with self._history_lock:
@@ -1327,6 +1327,9 @@ Regels:
                     summary = self._format_tool_results(self._last_tool_results)
                     return (summary, turns_used)
                 raise  # Geen backup → propageer error naar fallback chain
+            if not response.choices:
+                logger.warning("LLM response had empty choices list")
+                return ("Geen response van het model.", turns_used)
             choice = response.choices[0]
             message = choice.message
 
@@ -1488,7 +1491,8 @@ Regels:
                             messages=messages,
                             max_tokens=max_tokens,
                         )
-                        return (forced.choices[0].message.content or "", turns_used + 1)
+                        content = (forced.choices[0].message.content or "") if forced.choices else ""
+                        return (content, turns_used + 1)
                     except Exception:
                         return (None, turns_used)
                 _seen_tool_sets.append(current_tools)
