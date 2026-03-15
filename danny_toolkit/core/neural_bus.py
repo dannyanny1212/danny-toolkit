@@ -55,6 +55,7 @@ _AEGIS_STATS = {
     "replay_attempts": 0,
     "valid_seals": 0,
 }
+_AEGIS_STATS_LOCK = threading.Lock()
 
 
 class EventTypes:
@@ -276,8 +277,9 @@ class OmegaSeal:
         if aegis_ts > 0.0:
             age = _time.time() - aegis_ts
             if age > AEGIS_TTL_SECONDS:
-                _AEGIS_STATS["ttl_rejections"] += 1
-                _AEGIS_STATS["replay_attempts"] += 1
+                with _AEGIS_STATS_LOCK:
+                    _AEGIS_STATS["ttl_rejections"] += 1
+                    _AEGIS_STATS["replay_attempts"] += 1
                 logger.warning(
                     "[AEGIS] Token EXPIRED — age=%.3fs > TTL=%.1fs. "
                     "Mogelijke Replay Attack.",
@@ -285,9 +287,9 @@ class OmegaSeal:
                 )
                 return False
             if age < -1.0:
-                # Timestamp in de toekomst (> 1s tolerantie) = manipulatie
-                _AEGIS_STATS["ttl_rejections"] += 1
-                _AEGIS_STATS["replay_attempts"] += 1
+                with _AEGIS_STATS_LOCK:
+                    _AEGIS_STATS["ttl_rejections"] += 1
+                    _AEGIS_STATS["replay_attempts"] += 1
                 logger.warning(
                     "[AEGIS] Token FUTURE timestamp — age=%.3fs. "
                     "Clock manipulation detected.",
@@ -309,7 +311,6 @@ class OmegaSeal:
                     return False
                 # Registreer nonce in ledger
                 if len(_NONCE_LEDGER) >= AEGIS_NONCE_LEDGER_SIZE:
-                    # Verwijder oudste nonce uit de set
                     evicted = _NONCE_LEDGER[0]
                     _NONCE_SET.discard(evicted)
                 _NONCE_LEDGER.append(aegis_nonce)
@@ -326,7 +327,8 @@ class OmegaSeal:
         expected = hmac.new(key, canonical.encode("utf-8"), hashlib.sha256).hexdigest()
 
         if not hmac.compare_digest(expected, seal):
-            _AEGIS_STATS["replay_attempts"] += 1
+            with _AEGIS_STATS_LOCK:
+                _AEGIS_STATS["replay_attempts"] += 1
             logger.warning(
                 "[AEGIS] HMAC MISMATCH — payload is gewijzigd of seal is gestolen. "
                 "Verwacht: %s...  Ontvangen: %s...",
@@ -334,7 +336,8 @@ class OmegaSeal:
             )
             return False
 
-        _AEGIS_STATS["valid_seals"] += 1
+        with _AEGIS_STATS_LOCK:
+            _AEGIS_STATS["valid_seals"] += 1
         return True
 
     @classmethod
@@ -350,11 +353,13 @@ class OmegaSeal:
 
     @classmethod
     def get_aegis_stats(cls) -> dict:
-        """Protocol Aegis statistieken."""
+        """Protocol Aegis statistieken (thread-safe snapshot)."""
         with _NONCE_LOCK:
             ledger_size = len(_NONCE_LEDGER)
+        with _AEGIS_STATS_LOCK:
+            stats_snap = dict(_AEGIS_STATS)
         return {
-            **_AEGIS_STATS,
+            **stats_snap,
             "nonce_ledger_size": ledger_size,
             "nonce_ledger_capacity": AEGIS_NONCE_LEDGER_SIZE,
             "ttl_seconds": AEGIS_TTL_SECONDS,
@@ -861,6 +866,7 @@ class NeuralBus:
                     "c2_verified": _c2_verified,
                     "active_chains": active_chains,
                     "max_chain_depth": self._MAX_CHAIN_DEPTH,
+                    "aegis": OmegaSeal.get_aegis_stats(),
                     **self._stats,
                 }
         except Exception as e:
