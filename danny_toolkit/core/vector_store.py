@@ -9,6 +9,9 @@ from __future__ import annotations
 import json
 import logging
 import math
+import threading
+import time
+from collections import deque
 from pathlib import Path
 from datetime import datetime
 from typing import List, Dict, Optional, Callable
@@ -16,6 +19,104 @@ from danny_toolkit.core.config import Config
 from danny_toolkit.core.embeddings import EmbeddingProvider
 
 logger = logging.getLogger(__name__)
+
+# ═══════════════════════════════════════════════════════════════
+#  ANTI-EXTRACTION GUARD — Vector Search Rate Limiting + OOD
+# ═══════════════════════════════════════════════════════════════
+# Voorkomt systematische aftasting van de vectorruimte.
+#   1. Max 30 vector searches per minuut (strenger dan HTTP 120/min)
+#   2. Tainted similarity detection (>0.99 = verdacht)
+#   3. Duplicate query detection (zelfde query binnen 5s = probing)
+
+_VECTOR_SEARCH_LIMIT = 30       # max zoekacties per minuut
+_VECTOR_SEARCH_WINDOW = 60      # seconden
+_TAINTED_THRESHOLD = 0.99       # scores boven 0.99 = verdacht kloon
+_DUPLICATE_COOLDOWN = 5.0       # zelfde query binnen 5s = probing
+
+_vector_search_log: deque = deque(maxlen=500)
+_vector_search_lock = threading.Lock()
+_recent_queries: dict = {}  # query_hash -> timestamp
+_extraction_alerts = 0
+
+
+def _vector_rate_check(query: str) -> tuple[bool, str]:
+    """Check vector search rate limit + duplicate detection.
+
+    Returns:
+        (allowed, reason) — allowed=False blokkeert de zoekopdracht.
+    """
+    global _extraction_alerts
+    now = time.time()
+    query_hash = str(hash(query.strip().lower()))
+
+    with _vector_search_lock:
+        # 1. Rate limit: max 30 searches per minuut
+        cutoff = now - _VECTOR_SEARCH_WINDOW
+        while _vector_search_log and _vector_search_log[0] < cutoff:
+            _vector_search_log.popleft()
+
+        if len(_vector_search_log) >= _VECTOR_SEARCH_LIMIT:
+            _extraction_alerts += 1
+            logger.warning(
+                "[EXTRACTION GUARD] Vector search rate limit bereikt "
+                "(%d/%d per min). Mogelijke knowledge extraction. "
+                "Alerts: %d",
+                len(_vector_search_log), _VECTOR_SEARCH_LIMIT,
+                _extraction_alerts,
+            )
+            return False, "Vector search rate limit bereikt"
+
+        # 2. Duplicate detection: zelfde query binnen 5s = probing
+        last_seen = _recent_queries.get(query_hash, 0)
+        if (now - last_seen) < _DUPLICATE_COOLDOWN:
+            _extraction_alerts += 1
+            logger.warning(
+                "[EXTRACTION GUARD] Duplicate query binnen %.1fs. "
+                "Mogelijke vectorruimte probing. Alerts: %d",
+                now - last_seen, _extraction_alerts,
+            )
+            return False, "Duplicate query te snel herhaald"
+
+        # Registreer
+        _vector_search_log.append(now)
+        _recent_queries[query_hash] = now
+
+        # Cleanup oude query hashes (>60s)
+        stale = [k for k, v in _recent_queries.items() if now - v > 60]
+        for k in stale:
+            del _recent_queries[k]
+
+    return True, "OK"
+
+
+def _check_tainted_results(scores: list) -> list:
+    """Filter tainted results (similarity > 0.99 = verdacht kloon).
+
+    Als >3 resultaten score >0.99 hebben, is de vectorruimte
+    waarschijnlijk vergiftigd met identieke klonen.
+    """
+    tainted_count = sum(1 for s in scores if s.get("score", 0) > _TAINTED_THRESHOLD)
+    if tainted_count >= 3:
+        logger.warning(
+            "[TAINTED GUARD] %d resultaten met score > %.2f — "
+            "mogelijke vector poisoning gedetecteerd. "
+            "Alle tainted results verwijderd.",
+            tainted_count, _TAINTED_THRESHOLD,
+        )
+        return [s for s in scores if s.get("score", 0) <= _TAINTED_THRESHOLD]
+    return scores
+
+
+def get_extraction_stats() -> dict:
+    """Statistieken van de anti-extraction guard."""
+    with _vector_search_lock:
+        return {
+            "searches_last_minute": len(_vector_search_log),
+            "limit_per_minute": _VECTOR_SEARCH_LIMIT,
+            "extraction_alerts": _extraction_alerts,
+            "tracked_queries": len(_recent_queries),
+            "tainted_threshold": _TAINTED_THRESHOLD,
+        }
 
 
 class VectorStore:
@@ -137,6 +238,12 @@ class VectorStore:
         if not self.documenten:
             return []
 
+        # Anti-extraction guard: rate limit + duplicate detection
+        allowed, reason = _vector_rate_check(query)
+        if not allowed:
+            logger.warning("Vector zoek geblokkeerd: %s", reason)
+            return []
+
         query_emb = self.embedder.embed_query(query)
 
         if self.documenten:
@@ -169,6 +276,9 @@ class VectorStore:
                 })
 
         scores.sort(key=lambda x: x["score"], reverse=True)
+
+        # Anti-poisoning: filter tainted results (>0.99 klonen)
+        scores = _check_tainted_results(scores)
 
         # Update statistieken
         self._statistieken["queries"] += 1

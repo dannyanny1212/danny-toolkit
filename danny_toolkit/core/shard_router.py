@@ -272,6 +272,16 @@ class ShardRouter:
         if not getattr(Config, "SHARD_ENABLED", False):
             return []
 
+        # Anti-extraction guard (shared met VectorStore)
+        try:
+            from danny_toolkit.core.vector_store import _vector_rate_check
+            allowed, reason = _vector_rate_check(query)
+            if not allowed:
+                logger.warning("Shard zoek geblokkeerd: %s", reason)
+                return []
+        except ImportError:
+            pass  # VectorStore niet beschikbaar, skip guard
+
         zoek_shards = shards or ALL_SHARDS
         alle_resultaten = []
 
