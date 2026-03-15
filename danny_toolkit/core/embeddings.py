@@ -201,7 +201,8 @@ class HashEmbeddings(EmbeddingProvider):
         print(f"   [OK] Hash Embeddings ({dimensies}d)")
 
     def embed(self, teksten: list) -> list:
-        """Embed teksten met hash-methode."""
+        """Embed teksten met hash-methode (gevalideerd)."""
+        teksten = self._validate_input(teksten)
         return [self._embed_one(t) for t in teksten]
 
     def _embed_one(self, tekst: str) -> list:
@@ -318,7 +319,8 @@ class TFIDFEmbeddings(EmbeddingProvider):
         print(f"   [OK] TF-IDF getraind met {len(self.vocabulary)} termen")
 
     def embed(self, teksten: list) -> list:
-        """Embed teksten met TF-IDF."""
+        """Embed teksten met TF-IDF (gevalideerd)."""
+        teksten = self._validate_input(teksten)
         if not self.vocabulary:
             # Auto-fit als nog niet getraind
             self.fit(teksten)
@@ -563,7 +565,8 @@ class LocalEmbeddings(EmbeddingProvider):
         return f"<LocalEmbeddings model={self._model_name} dim={self.dimensies}d device={self._device}>"
 
     def embed(self, teksten: list) -> list:
-        """Embed teksten lokaal (batch, geen API)."""
+        """Embed teksten lokaal (batch, gevalideerd)."""
+        teksten = self._validate_input(teksten)
         embeddings = self._model.encode(teksten, normalize_embeddings=True, show_progress_bar=False)
         return embeddings.tolist()
 
@@ -805,7 +808,8 @@ class Qwen3Embeddings(EmbeddingProvider):
         return f"<Qwen3Embeddings model={self._model} dim={self.dimensies}d>"
 
     def embed(self, teksten: list) -> list:
-        """Embed teksten via Ollama."""
+        """Embed teksten via Ollama (gevalideerd)."""
+        teksten = self._validate_input(teksten)
         import urllib.request
         payload = json.dumps({"model": self._model, "input": teksten}).encode()
         req = urllib.request.Request(

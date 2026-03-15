@@ -212,6 +212,7 @@ class AccessTracker:
                     SELECT fragment_id, shard, last_accessed, access_count
                     FROM fragment_access
                     WHERE last_accessed < ? AND shard != ?
+                    LIMIT 10000
                 """, (grens, Config.COLD_STORAGE_COLLECTION))
                 rijen = [dict(r) for r in cursor.fetchall()]
                 conn.close()

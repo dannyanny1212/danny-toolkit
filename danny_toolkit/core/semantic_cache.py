@@ -23,6 +23,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import math
 import os
 import sqlite3
 import struct
@@ -180,9 +181,16 @@ class SemanticCache:
 
     @staticmethod
     def _blob_to_embedding(blob: bytes) -> list:
-        """Converteer BLOB terug naar float-lijst."""
+        """Converteer BLOB terug naar float-lijst (gevalideerd)."""
+        if not blob or len(blob) % 4 != 0:
+            logger.debug("Ongeldige embedding blob: len=%d", len(blob) if blob else 0)
+            return []
         count = len(blob) // 4
-        return list(struct.unpack(f"{count}f", blob))
+        result = list(struct.unpack(f"{count}f", blob))
+        if any(math.isnan(v) or math.isinf(v) for v in result):
+            logger.warning("NaN/Inf in cached embedding blob — verwijderd")
+            return []
+        return result
 
     @staticmethod
     def _cosine_similarity(a: list, b: list) -> float:

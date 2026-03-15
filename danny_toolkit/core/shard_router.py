@@ -209,6 +209,22 @@ class ShardRouter:
                 continue
 
             try:
+                # Input validatie: max 1MB per document, type check
+                _MAX_DOC_BYTES = 1_000_000
+                valid_docs = []
+                for d in docs:
+                    tekst = d.get("tekst", "")
+                    if not isinstance(tekst, str) or not tekst.strip():
+                        logger.debug("ShardRouter: leeg/niet-string document overgeslagen")
+                        continue
+                    if len(tekst.encode("utf-8", errors="replace")) > _MAX_DOC_BYTES:
+                        logger.warning("ShardRouter: document te groot (%d bytes) — overgeslagen", len(tekst))
+                        continue
+                    valid_docs.append(d)
+                if not valid_docs:
+                    resultaat[shard_naam] = 0
+                    continue
+                docs = valid_docs
                 ids = [d["id"] for d in docs]
                 documents = [d["tekst"] for d in docs]
                 # Sanitize metadata: alleen str/int/float/bool values,

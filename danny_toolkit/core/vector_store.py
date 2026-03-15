@@ -183,19 +183,22 @@ class VectorStore:
             print(f"   [OK] Vector DB (nieuw)")
 
     def _opslaan(self) -> None:
-        """Sla database op naar disk."""
+        """Sla database op naar disk (atomic write — crash-safe)."""
         self.db_file.parent.mkdir(parents=True, exist_ok=True)
         data = {
             "documenten": self.documenten,
             "statistieken": self._statistieken,
             "versie": "2.0"
         }
-        with open(self.db_file, "w", encoding="utf-8") as f:
+        # Atomic write: dump naar .tmp, dan rename (voorkomt corruptie bij crash)
+        tmp_file = self.db_file.with_suffix(".json.tmp")
+        with open(tmp_file, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
+        tmp_file.replace(self.db_file)
 
     def voeg_toe(self, documenten: list) -> None:
         """
-        Voeg documenten toe.
+        Voeg documenten toe met embedding validatie.
         Args: documenten: List van {"id": str, "tekst": str, "metadata": dict}
         """
         if not documenten:
@@ -205,6 +208,13 @@ class VectorStore:
         embeddings = self.embedder.embed(teksten)
 
         for doc, emb in zip(documenten, embeddings):
+            # Embedding validatie — weiger NaN/Inf/lege vectoren
+            if not emb or not isinstance(emb, list):
+                logger.warning("voeg_toe: lege embedding voor '%s' — overgeslagen", doc.get("id", "?"))
+                continue
+            if any(not isinstance(v, (int, float)) or math.isnan(v) or math.isinf(v) for v in emb):
+                logger.warning("voeg_toe: NaN/Inf in embedding voor '%s' — overgeslagen", doc.get("id", "?"))
+                continue
             self.documenten[doc["id"]] = {
                 "tekst": doc["tekst"],
                 "metadata": doc.get("metadata", {}),

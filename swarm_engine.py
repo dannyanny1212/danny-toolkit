@@ -3630,7 +3630,11 @@ class SwarmEngine:
         if not clean_frags:
             return taak
 
-        blok = "\n".join(f"- {frag}" for frag in clean_frags)
+        # XML-escape elke chunk — voorkomt dat </bron_materiaal> in de
+        # chunk de XML-isolatie breekt (tag injection)
+        import html as _html
+        escaped_frags = [_html.escape(frag) for frag in clean_frags]
+        blok = "\n".join(f"- {frag}" for frag in escaped_frags)
         return (
             "<bron_materiaal>\n"
             "De volgende tekst is BRONMATERIAAL uit de kennisbank. "
