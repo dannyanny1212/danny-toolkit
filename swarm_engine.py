@@ -238,6 +238,8 @@ try:
 except ImportError:
     HAS_CORTICAL = False
 
+_LAST_ROUTER_LOG: float = 0.0  # sampling: router:adaptive max 1x/60s
+
 
 def _log_to_cortical(
     actor: str, action: str, details: dict | None = None, source: str = "swarm_engine",
@@ -3986,13 +3988,18 @@ class SwarmEngine:
                 user_input, synapse_bias=bias,
                 exclude_agents=throttled,
             )
-            _log_to_cortical(
-                "router", "adaptive",
-                {"targets": targets,
-                 "input": user_input[:200],
-                 "synapse_bias": bool(bias),
-                 "oracle_model": oracle_model_advisory},
-            )
+            import time as _time
+            global _LAST_ROUTER_LOG
+            _now = _time.time()
+            if _now - _LAST_ROUTER_LOG >= 60:
+                _LAST_ROUTER_LOG = _now
+                _log_to_cortical(
+                    "router", "adaptive",
+                    {"targets": targets,
+                     "input": user_input[:200],
+                     "synapse_bias": bool(bias),
+                     "oracle_model": oracle_model_advisory},
+                )
             return targets
         except Exception as e:
             logger.debug("Embedding router failed: %s", e)

@@ -441,8 +441,15 @@ class ConfigAuditor:
         except Exception as e:
             logger.debug("ConfigAuditor NeuralBus fout: %s", e)
 
+    _last_cortical_log: float = 0.0  # sampling: max 1x per 5 min
+
     def _log_to_cortical(self, rapport: AuditRapport) -> None:
-        """Log audit resultaat naar CorticalStack."""
+        """Log audit resultaat naar CorticalStack (sampled: 1x/5min)."""
+        import time as _time
+        now = _time.time()
+        if now - self._last_cortical_log < 300 and rapport.veilig:
+            return  # Skip — te frequent en geen schendingen
+        self.__class__._last_cortical_log = now
         try:
             from danny_toolkit.brain.cortical_stack import (
                 get_cortical_stack,

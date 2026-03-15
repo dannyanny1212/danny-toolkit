@@ -721,8 +721,15 @@ class SystemIntrospector:
         except Exception as e:
             logger.debug("Self-knowledge save error: %s", e)
 
+    _last_snapshot_log: float = 0.0  # sampling: max 1x per 5 min
+
     def _log_snapshot(self, snapshot: SystemSnapshot) -> None:
-        """Log introspectie naar CorticalStack."""
+        """Log introspectie naar CorticalStack (sampled: 1x/5min)."""
+        import time as _time
+        now = _time.time()
+        if now - self._last_snapshot_log < 300:
+            return  # Skip — te frequent
+        self.__class__._last_snapshot_log = now
         if not self._stack:
             return
         try:
