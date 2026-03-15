@@ -25,8 +25,19 @@ import threading
 
 logger = logging.getLogger(__name__)
 
+# Direct imports — altijd beschikbaar (geen lazy loading nodig)
+from danny_toolkit.omega_sovereign_core.contracts import (
+    SwarmPayload, SwarmEvent, AgentState,
+)
+from danny_toolkit.omega_sovereign_core.base_agent import BaseAgent
+
 __all__ = [
-    # Submodules
+    # Contracts (immutable dataclasses)
+    "SwarmPayload",
+    "SwarmEvent",
+    "AgentState",
+    "BaseAgent",
+    # Submodules (lazy loaded)
     "sovereign_gate",
     "hardware_fingerprint",
     "event_signing",
@@ -36,11 +47,13 @@ __all__ = [
     "lifecycle",
     "sovereign_engine",
     "auto_saver",
+    "contracts",
+    "base_agent",
     # Unified boot
     "boot_sovereign",
 ]
 
-__version__ = "3.0.0"
+__version__ = "3.1.0"
 __author__ = "Danny"
 
 
