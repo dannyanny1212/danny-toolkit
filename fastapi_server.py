@@ -4055,6 +4055,44 @@ async def websocket_events(websocket: WebSocket) -> None:
         logger.info("WebSocket client los (%d actief)", len(_ws_clients))
 
 
+# ─── LEARNING SYSTEM ENDPOINTS ────────────────────
+
+
+@app.get("/api/v1/learning/stats")
+async def learning_stats():
+    """Self-learning system statistieken."""
+    try:
+        from danny_toolkit.learning import LearningSystem
+        ls = LearningSystem()
+        return ls.get_stats()
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/api/v1/learning/improvement-report")
+async def learning_improvement_report():
+    """Self-improvement rapport met trends en adaptaties."""
+    try:
+        from danny_toolkit.learning import LearningSystem
+        ls = LearningSystem()
+        return ls.get_self_improvement_report()
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.post("/api/v1/learning/cycle")
+async def learning_cycle(request: Request):
+    """Trigger een handmatige learning cycle."""
+    body = await request.json()
+    _deep_seal_check(body.get("seal", ""))
+    try:
+        from danny_toolkit.learning import LearningSystem
+        ls = LearningSystem()
+        return ls.run_learning_cycle()
+    except Exception as e:
+        return {"error": str(e)}
+
+
 # ─── SOVEREIGN COMMAND CENTER ─────────────────────
 
 _CMD_DIR = Path(__file__).parent / "danny_toolkit" / "ui"

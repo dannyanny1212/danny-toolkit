@@ -4781,6 +4781,19 @@ class SwarmEngine:
         # B-95: Record response outcome to CorticalStack
         self._record_response_outcome(user_input, results)
 
+        # Learning System: log interaction for self-improvement
+        try:
+            from danny_toolkit.learning import LearningSystem
+            if not hasattr(self, "_learning_system"):
+                self._learning_system = LearningSystem()
+            ai_output = str(results[0].display_text or results[0].content)[:500] if results else ""
+            self._learning_system.log_chat(user_input, ai_output, context={
+                "agents": [r.agent for r in results],
+                "trace_id": trace_id,
+            })
+        except Exception as e:
+            logger.debug("Learning system log failed: %s", e)
+
         log("\u2705 SWARM COMPLETE")
         self._query_count += 1
         self._total_time += sum(

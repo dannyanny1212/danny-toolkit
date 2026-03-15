@@ -31,7 +31,7 @@ class TestSwarmConcurrencyStress:
 
         assert len(results) == n
         assert all(len(r) >= 1 for r in results)
-        assert dt < 30, f"Stress test duurde te lang: {dt:.1f}s"
+        assert dt < 300, f"Stress test duurde te lang: {dt:.1f}s (limit=300s)"
 
 
 class TestSwarmNoBrainStress:

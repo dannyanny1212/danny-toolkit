@@ -269,6 +269,17 @@ Sets the model attribute to the LLM model specified in the configuration."""
         if insight:
             print(f"{Kleur.CYAAN}✨ Morning Insight: {insight}{Kleur.RESET}")
 
+        # 6.5 Learning System — run self-improvement cycle
+        try:
+            from danny_toolkit.learning import LearningSystem
+            ls = LearningSystem()
+            cycle_result = ls.run_learning_cycle()
+            improvements = cycle_result.get("learning_cycle", {})
+            adapted = improvements.get("adaptations_applied", 0) if isinstance(improvements, dict) else 0
+            print(f"{Kleur.GROEN}🧠 Learning cycle: {adapted} adaptations applied{Kleur.RESET}")
+        except Exception as e:
+            logger.debug("Learning cycle REM failed: %s", e)
+
         # 7. Oracle Eye — dagelijkse resource forecast
         try:
             from danny_toolkit.brain.oracle_eye import TheOracleEye
