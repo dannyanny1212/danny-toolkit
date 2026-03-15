@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 
 logger = logging.getLogger(__name__)
 import re
@@ -32,6 +33,7 @@ class PatternRecognizer:
         self.data_dir = Config.APPS_DATA_DIR / "learning"
         self.data_dir.mkdir(exist_ok=True)
         self.patterns_file = self.data_dir / "patterns.json"
+        self._lock = threading.Lock()
         self._data = self._load()
 
     def _load(self) -> dict:
@@ -66,9 +68,10 @@ class PatternRecognizer:
         }
 
     def save(self) -> None:
-        """Sla data op naar disk."""
-        with open(self.patterns_file, "w", encoding="utf-8") as f:
-            json.dump(self._data, f, indent=2, ensure_ascii=False)
+        """Sla data op naar disk (thread-safe)."""
+        with self._lock:
+            with open(self.patterns_file, "w", encoding="utf-8") as f:
+                json.dump(self._data, f, indent=2, ensure_ascii=False)
 
     def _normalize_query(self, query: str) -> str:
         """Normaliseer query voor matching."""
@@ -78,38 +81,40 @@ class PatternRecognizer:
         return query
 
     def record_query(self, query: str) -> None:
-        """Registreer een query voor frequentie tracking."""
+        """Registreer een query voor frequentie tracking (thread-safe)."""
         normalized = self._normalize_query(query)
 
         if len(normalized) < 3:
             return
 
-        freq = self._data["frequent_queries"]
-        freq[normalized] = freq.get(normalized, 0) + 1
-        # Batch save: only persist every 10 queries to reduce disk I/O
-        total = sum(freq.values())
-        if total % 10 == 0:
+        with self._lock:
+            freq = self._data["frequent_queries"]
+            freq[normalized] = freq.get(normalized, 0) + 1
+            total = sum(freq.values())
+            should_save = (total % 10 == 0)
+
+        if should_save:
             self.save()
 
     def get_cached_response(self, query: str) -> Optional[str]:
-        """Haal cached response op als beschikbaar.
-
-        Returns:
-            Response string als cache hit, None anders.
-        """
+        """Haal cached response op als beschikbaar (thread-safe)."""
         normalized = self._normalize_query(query)
 
-        for cached in self._data["cached_responses"]:
-            cached_query = cached.get("query", "")
-            if self._queries_match(normalized, cached_query):
-                cached["hits"] = cached.get("hits", 0) + 1
-                cached["last_used"] = datetime.now().isoformat()
-                self._data["stats"]["cache_hits"] += 1
-                self.save()
-                return cached["response"]
+        with self._lock:
+            for cached in self._data["cached_responses"]:
+                cached_query = cached.get("query", "")
+                if self._queries_match(normalized, cached_query):
+                    cached["hits"] = cached.get("hits", 0) + 1
+                    cached["last_used"] = datetime.now().isoformat()
+                    self._data["stats"]["cache_hits"] += 1
+                    response = cached["response"]
+                    break
+            else:
+                self._data["stats"]["cache_misses"] += 1
+                return None
 
-        self._data["stats"]["cache_misses"] += 1
-        return None
+        self.save()
+        return response
 
     def _queries_match(self, q1: str, q2: str) -> bool:
         """Check of twee queries matchen."""
@@ -132,40 +137,38 @@ class PatternRecognizer:
         query: str,
         response: str,
         score: float,
-    ) -> None:
-        """Cache een succesvolle response.
-
-        Alleen responses met score >= MIN_CACHE_SCORE worden gecached.
-        """
+    ) -> bool:
+        """Cache een succesvolle response (thread-safe)."""
         if score < self.MIN_CACHE_SCORE:
             return False
 
         normalized = self._normalize_query(query)
 
-        for cached in self._data["cached_responses"]:
-            if self._queries_match(normalized, cached["query"]):
-                if score > cached.get("score", 0):
-                    cached["response"] = response
-                    cached["score"] = score
-                    cached["updated"] = datetime.now().isoformat()
-                    self.save()
-                return True
+        with self._lock:
+            for cached in self._data["cached_responses"]:
+                if self._queries_match(normalized, cached["query"]):
+                    if score > cached.get("score", 0):
+                        cached["response"] = response
+                        cached["score"] = score
+                        cached["updated"] = datetime.now().isoformat()
+                    return True
 
-        if len(self._data["cached_responses"]) >= 100:
-            self._data["cached_responses"].sort(
-                key=lambda x: (x.get("score", 0), x.get("hits", 0)),
-                reverse=True,
-            )
-            self._data["cached_responses"] = self._data["cached_responses"][:80]
+            if len(self._data["cached_responses"]) >= 100:
+                self._data["cached_responses"].sort(
+                    key=lambda x: (x.get("score", 0), x.get("hits", 0)),
+                    reverse=True,
+                )
+                self._data["cached_responses"] = self._data["cached_responses"][:80]
 
-        self._data["cached_responses"].append({
-            "query": normalized,
-            "response": response,
-            "score": score,
-            "hits": 0,
-            "created": datetime.now().isoformat(),
-            "last_used": datetime.now().isoformat(),
-        })
+            self._data["cached_responses"].append({
+                "query": normalized,
+                "response": response,
+                "score": score,
+                "hits": 0,
+                "created": datetime.now().isoformat(),
+                "last_used": datetime.now().isoformat(),
+            })
+
         self.save()
         return True
 

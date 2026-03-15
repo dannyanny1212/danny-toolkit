@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 
 logger = logging.getLogger(__name__)
 from datetime import datetime
@@ -24,6 +25,7 @@ class UnifiedMemory:
         """Initialiseer UnifiedMemory met alle bronnen."""
         Config.ensure_dirs()
         self.memory_file = Config.APPS_DATA_DIR / "unified_memory.json"
+        self._lock = threading.Lock()
         self._memory = self._load()
 
     def _load(self) -> dict:
@@ -58,7 +60,12 @@ class UnifiedMemory:
         }
 
     def save(self) -> None:
-        """Sla geheugen op naar disk."""
+        """Sla geheugen op naar disk (thread-safe)."""
+        with self._lock:
+            self._save_unlocked()
+
+    def _save_unlocked(self) -> None:
+        """Internal save — caller must hold self._lock."""
         self._memory["last_updated"] = datetime.now().isoformat()
         with open(self.memory_file, "w", encoding="utf-8") as f:
             json.dump(self._memory, f, indent=2, ensure_ascii=False)
@@ -69,7 +76,7 @@ class UnifiedMemory:
         source: str = "unknown",
         success_score: float = 0.5,
     ) -> bool:
-        """Voeg een feit toe aan het geheugen.
+        """Voeg een feit toe aan het geheugen (thread-safe).
 
         Returns:
             True als nieuw feit toegevoegd, False als bestaand bijgewerkt.
@@ -77,25 +84,24 @@ class UnifiedMemory:
         if not fact or len(fact.strip()) < 5:
             return False
 
-        knowledge = self._memory["knowledge"]
+        with self._lock:
+            knowledge = self._memory["knowledge"]
 
-        # Check exact match
-        if fact in knowledge["facts"]:
-            idx = knowledge["facts"].index(fact)
-            knowledge["usage_count"][idx] += 1
-            old_score = knowledge["success_scores"][idx]
-            knowledge["success_scores"][idx] = (old_score + success_score) / 2
-            self.save()
-            return False
+            if fact in knowledge["facts"]:
+                idx = knowledge["facts"].index(fact)
+                knowledge["usage_count"][idx] += 1
+                old_score = knowledge["success_scores"][idx]
+                knowledge["success_scores"][idx] = (old_score + success_score) / 2
+                self._save_unlocked()
+                return False
 
-        knowledge["facts"].append(fact)
-        knowledge["sources"].append(source)
-        knowledge["learned_at"].append(datetime.now().isoformat())
-        knowledge["usage_count"].append(1)
-        knowledge["success_scores"].append(success_score)
-
-        self.save()
-        return True
+            knowledge["facts"].append(fact)
+            knowledge["sources"].append(source)
+            knowledge["learned_at"].append(datetime.now().isoformat())
+            knowledge["usage_count"].append(1)
+            knowledge["success_scores"].append(success_score)
+            self._save_unlocked()
+            return True
 
     def search(
         self,
@@ -103,16 +109,19 @@ class UnifiedMemory:
         top_k: int = 5,
         min_score: float = 0.0,
     ) -> list[dict]:
-        """Zoek relevante feiten met simple text matching.
-
-        Voor echte semantic search zou dit embeddings moeten gebruiken,
-        maar voor nu gebruiken we keyword matching.
-        """
+        """Zoek relevante feiten met simple text matching (thread-safe)."""
         results = []
         query_words = set(query.lower().split())
-        knowledge = self._memory["knowledge"]
 
-        for i, fact in enumerate(knowledge["facts"]):
+        with self._lock:
+            knowledge = self._memory["knowledge"]
+            # Snapshot lists to iterate safely
+            facts_snap = list(knowledge["facts"])
+            sources_snap = list(knowledge["sources"])
+            usage_snap = list(knowledge["usage_count"])
+            scores_snap = list(knowledge["success_scores"])
+
+        for i, fact in enumerate(facts_snap):
             fact_words = set(fact.lower().split())
             overlap = len(query_words & fact_words)
 
@@ -121,10 +130,10 @@ class UnifiedMemory:
                 if score >= min_score:
                     results.append({
                         "fact": fact,
-                        "source": knowledge["sources"][i],
+                        "source": sources_snap[i],
                         "score": score,
-                        "usage_count": knowledge["usage_count"][i],
-                        "success_score": knowledge["success_scores"][i],
+                        "usage_count": usage_snap[i],
+                        "success_score": scores_snap[i],
                     })
 
         results.sort(key=lambda x: (x["score"], x["success_score"]), reverse=True)
@@ -152,21 +161,23 @@ class UnifiedMemory:
         return facts_with_meta[:n]
 
     def update_score(self, fact: str, new_score: float) -> None:
-        """Update de success score van een feit."""
-        knowledge = self._memory["knowledge"]
-        if fact in knowledge["facts"]:
-            idx = knowledge["facts"].index(fact)
-            old_score = knowledge["success_scores"][idx]
-            knowledge["success_scores"][idx] = (old_score * 0.7 + new_score * 0.3)
-            self.save()
+        """Update de success score van een feit (thread-safe)."""
+        with self._lock:
+            knowledge = self._memory["knowledge"]
+            if fact in knowledge["facts"]:
+                idx = knowledge["facts"].index(fact)
+                old_score = knowledge["success_scores"][idx]
+                knowledge["success_scores"][idx] = (old_score * 0.7 + new_score * 0.3)
+                self._save_unlocked()
 
     def increment_usage(self, fact: str) -> None:
-        """Verhoog usage count van een feit."""
-        knowledge = self._memory["knowledge"]
-        if fact in knowledge["facts"]:
-            idx = knowledge["facts"].index(fact)
-            knowledge["usage_count"][idx] += 1
-            self.save()
+        """Verhoog usage count van een feit (thread-safe)."""
+        with self._lock:
+            knowledge = self._memory["knowledge"]
+            if fact in knowledge["facts"]:
+                idx = knowledge["facts"].index(fact)
+                knowledge["usage_count"][idx] += 1
+                self._save_unlocked()
 
     def get_stats(self) -> dict:
         """Haal statistieken op."""
@@ -185,8 +196,9 @@ class UnifiedMemory:
         }
 
     def get_all_facts(self) -> list[str]:
-        """Haal alle feiten op."""
-        return self._memory["knowledge"]["facts"].copy()
+        """Haal alle feiten op (thread-safe snapshot)."""
+        with self._lock:
+            return list(self._memory["knowledge"]["facts"])
 
     def remove_fact(self, fact: str) -> bool:
         """Verwijder een feit uit het geheugen."""

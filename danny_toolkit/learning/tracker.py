@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 
 logger = logging.getLogger(__name__)
 import time
@@ -31,6 +32,7 @@ class InteractionTracker:
         self.data_dir = Config.APPS_DATA_DIR / "learning"
         self.data_dir.mkdir(exist_ok=True)
         self.interactions_file = self.data_dir / "interactions.json"
+        self._lock = threading.Lock()
         self._data = self._load()
 
     def _load(self) -> dict:
@@ -58,11 +60,12 @@ class InteractionTracker:
         }
 
     def save(self) -> None:
-        """Sla data op naar disk."""
-        if len(self._data["interactions"]) > self.MAX_INTERACTIONS:
-            self._prune_old()
-        with open(self.interactions_file, "w", encoding="utf-8") as f:
-            json.dump(self._data, f, indent=2, ensure_ascii=False)
+        """Sla data op naar disk (thread-safe)."""
+        with self._lock:
+            if len(self._data["interactions"]) > self.MAX_INTERACTIONS:
+                self._prune_old()
+            with open(self.interactions_file, "w", encoding="utf-8") as f:
+                json.dump(self._data, f, indent=2, ensure_ascii=False)
 
     def _prune_old(self) -> None:
         """Verwijder oude interacties, behoud beste scores."""

@@ -11,6 +11,7 @@ SelfImprovementEngine voor echte self-learning.
 
 from __future__ import annotations
 
+import atexit
 import logging
 from typing import Optional
 
@@ -62,6 +63,18 @@ class LearningSystem:
 
         # Register adaptable parameters
         self._register_adaptations()
+
+        # Crash safety: flush all pending data on shutdown
+        atexit.register(self._shutdown_flush)
+
+    def _shutdown_flush(self) -> None:
+        """Flush all batched data to disk on process exit."""
+        try:
+            self.tracker.save()
+            self.patterns.save()
+            self.memory.save()
+        except Exception as e:
+            logger.debug("Learning shutdown flush failed: %s", e)
 
     def log_chat(
         self,
@@ -426,7 +439,7 @@ class LearningSystem:
             self.patterns.detect_topic_preference(queries)
 
     def consolidate(self) -> int:
-        """Consolideer gerelateerde kennis.
+        """Consolideer gerelateerde kennis en persisteer resultaat.
 
         Returns:
             Aantal geconsolideerde feiten.
@@ -438,30 +451,65 @@ class LearningSystem:
         new_facts, consolidated = self.optimizer.consolidate_facts(facts)
 
         if consolidated > 0:
-            for fact in new_facts:
-                self.memory.add_fact(fact, source="consolidated", success_score=0.7)
+            self._replace_facts(new_facts)
 
         return consolidated
 
     def remove_duplicates(self) -> int:
-        """Verwijder duplicate feiten.
+        """Verwijder duplicate feiten en persisteer resultaat.
 
         Returns:
             Aantal verwijderde duplicaten.
         """
         facts = self.memory.get_all_facts()
         unique_facts, removed = self.optimizer.remove_duplicates(facts)
+
+        if removed > 0:
+            self._replace_facts(unique_facts)
+
         return removed
+
+    def _replace_facts(self, new_facts: list[str]) -> None:
+        """Replace memory facts list, preserving metadata for kept facts."""
+        knowledge = self.memory._memory["knowledge"]
+        old_facts = knowledge["facts"]
+
+        # Build lookup for metadata preservation
+        old_meta = {}
+        for i, f in enumerate(old_facts):
+            old_meta[f] = {
+                "source": knowledge["sources"][i],
+                "learned_at": knowledge["learned_at"][i],
+                "usage_count": knowledge["usage_count"][i],
+                "success_score": knowledge["success_scores"][i],
+            }
+
+        # Rebuild arrays
+        knowledge["facts"] = []
+        knowledge["sources"] = []
+        knowledge["learned_at"] = []
+        knowledge["usage_count"] = []
+        knowledge["success_scores"] = []
+
+        from datetime import datetime
+        for fact in new_facts:
+            meta = old_meta.get(fact, {})
+            knowledge["facts"].append(fact)
+            knowledge["sources"].append(meta.get("source", "optimized"))
+            knowledge["learned_at"].append(meta.get("learned_at", datetime.now().isoformat()))
+            knowledge["usage_count"].append(meta.get("usage_count", 1))
+            knowledge["success_scores"].append(meta.get("success_score", 0.7))
+
+        self.memory.save()
 
     def rank_knowledge(self) -> None:
         """Rank alle kennis op bruikbaarheid."""
-        stats = self.memory.get_stats()
         knowledge = self.memory._memory["knowledge"]
 
         if not knowledge["facts"]:
             return
 
-        ranked = self.optimizer.rank_knowledge(
+        self.optimizer.rank_knowledge(
             knowledge["facts"],
             knowledge["usage_count"],
             knowledge["success_scores"],
