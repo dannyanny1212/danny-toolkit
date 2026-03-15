@@ -4149,6 +4149,23 @@ class SwarmEngine:
         except Exception as e:
             logger.debug("Echo guard error: %s", e)
 
+        # 0.5 Learning Cache — instant response for known-good answers
+        try:
+            if not hasattr(self, "_learning_system"):
+                from danny_toolkit.learning import LearningSystem
+                self._learning_system = LearningSystem()
+            cached = self._learning_system.get_cached_response(user_input)
+            if cached:
+                log("\u26a1 Cache HIT — instant response")
+                self._swarm_metrics["cache_hits"] = self._swarm_metrics.get("cache_hits", 0) + 1
+                return [SwarmPayload(
+                    agent="Cache", type="text",
+                    content=cached, display_text=cached,
+                    confidence=0.9,
+                )]
+        except Exception as e:
+            logger.debug("Learning cache check: %s", e)
+
         # Cortical Stack logging
         _log_to_cortical(
             "user", "query",
