@@ -49,17 +49,35 @@ class VectorStore:
             "laatste_toevoeging": None
         }
 
-        # Laad bestaande data
+        # Laad bestaande data met schema validatie
         if self.db_file.exists():
             with open(self.db_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                # Ondersteuning voor oud en nieuw format
                 if isinstance(data, dict) and "documenten" in data:
                     self.documenten = data["documenten"]
                     self._statistieken.update(data.get("statistieken", {}))
                 else:
                     self.documenten = data
-            print(f"   [OK] Vector DB geladen ({len(self.documenten)} docs)")
+            # Schema validatie: verwijder corrupte entries
+            corrupted = []
+            for doc_id, doc in list(self.documenten.items()):
+                emb = doc.get("embedding", [])
+                if not isinstance(emb, list) or not emb:
+                    corrupted.append(doc_id)
+                    continue
+                if not all(isinstance(v, (int, float)) for v in emb):
+                    corrupted.append(doc_id)
+                    continue
+                if any(math.isnan(v) or math.isinf(v) for v in emb):
+                    corrupted.append(doc_id)
+            for doc_id in corrupted:
+                del self.documenten[doc_id]
+                logger.warning(
+                    "Vector fraud guard: corrupte entry '%s' verwijderd "
+                    "(NaN/Inf/missing embedding)", doc_id,
+                )
+            print(f"   [OK] Vector DB geladen ({len(self.documenten)} docs"
+                  f"{f', {len(corrupted)} corrupt verwijderd' if corrupted else ''})")
         else:
             print(f"   [OK] Vector DB (nieuw)")
 
@@ -126,11 +144,12 @@ class VectorStore:
             opgeslagen_dim = len(eerste.get("embedding", []))
             query_dim = len(query_emb)
             if opgeslagen_dim != query_dim:
-                logger.warning(
-                    "Dimensie mismatch: opgeslagen=%dd, query=%dd. "
-                    "Herindexeer met ingest.py --reset",
+                logger.error(
+                    "DIMENSIE MISMATCH: opgeslagen=%dd, query=%dd. "
+                    "Resultaten onbetrouwbaar. Herindexeer met ingest.py --reset",
                     opgeslagen_dim, query_dim,
                 )
+                return []  # Fail loud: geen garbage resultaten
 
         scores = []
 
@@ -194,13 +213,16 @@ class VectorStore:
         return resultaten
 
     def _cosine_similarity(self, vec1: list, vec2: list) -> float:
-        """Bereken cosine similarity tussen twee vectoren."""
+        """Bereken cosine similarity tussen twee vectoren (NaN/Inf-safe)."""
         dot = sum(a * b for a, b in zip(vec1, vec2))
         mag1 = math.sqrt(sum(a**2 for a in vec1))
         mag2 = math.sqrt(sum(b**2 for b in vec2))
         if mag1 == 0 or mag2 == 0:
             return 0.0
-        return dot / (mag1 * mag2)
+        result = dot / (mag1 * mag2)
+        if math.isnan(result) or math.isinf(result):
+            return 0.0
+        return result
 
     def verwijder(self, doc_id: str) -> bool:
         """

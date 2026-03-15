@@ -85,13 +85,46 @@ def mrl_truncate(embeddings: list, dim: int) -> list:
     return [vec for chunk in results for vec in chunk]
 
 
+_MAX_TEXT_LENGTH = 8000  # Max karakters per tekst (veilig voor alle providers)
+_MAX_BATCH_SIZE = 128   # Max teksten per batch
+
+
 class EmbeddingProvider:
-    """Basis klasse voor embedding providers."""
+    """Basis klasse voor embedding providers met input validatie."""
     dimensies: int = 0
     naam: str = "basis"
 
+    def _validate_input(self, teksten: list) -> list:
+        """Valideer en sanitize embedding input (vector fraud guard).
+
+        Guards:
+          - Lege lijst → ValueError
+          - Non-string items → gefilterd
+          - Te lange teksten → getrunceerd
+          - Batch te groot → getrunceerd met warning
+          - None/empty strings → gefilterd
+        """
+        if not teksten:
+            raise ValueError("Embedding input mag niet leeg zijn")
+        # Filter non-strings en lege waarden
+        clean = []
+        for t in teksten:
+            if not isinstance(t, str) or not t.strip():
+                logger.debug("Embedding: non-string of lege input overgeslagen: %s", type(t))
+                continue
+            if len(t) > _MAX_TEXT_LENGTH:
+                logger.debug("Embedding: tekst getrunceerd van %d naar %d chars", len(t), _MAX_TEXT_LENGTH)
+                t = t[:_MAX_TEXT_LENGTH]
+            clean.append(t)
+        if not clean:
+            raise ValueError("Geen geldige teksten na validatie")
+        if len(clean) > _MAX_BATCH_SIZE:
+            logger.warning("Embedding: batch getrunceerd van %d naar %d", len(clean), _MAX_BATCH_SIZE)
+            clean = clean[:_MAX_BATCH_SIZE]
+        return clean
+
     def embed(self, teksten: list) -> list:
-        """Embed meerdere teksten."""
+        """Embed meerdere teksten (met input validatie)."""
         raise NotImplementedError
 
     def embed_query(self, query: str) -> list:
@@ -135,7 +168,8 @@ The `dimensions` attribute is compared to the native dimension of the Voyage AI 
         )
 
     def embed(self, teksten: list) -> list:
-        """Embed teksten met Voyage AI."""
+        """Embed teksten met Voyage AI (met input validatie)."""
+        teksten = self._validate_input(teksten)
         result = self.client.embed(
             texts=teksten,
             model=self.model,

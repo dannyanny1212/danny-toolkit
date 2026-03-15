@@ -13,6 +13,7 @@ Backward compatible: Config.SHARD_ENABLED=False (default) = legacy danny_knowled
 from __future__ import annotations
 
 import logging
+import math
 import os
 import threading
 from dataclasses import dataclass, field
@@ -295,11 +296,30 @@ class ShardRouter:
                 dists = results["distances"][0]
 
                 for doc, meta, dist in zip(docs, metas, dists):
+                    # Vector fraud guard: valideer resultaat-integriteit
+                    if not isinstance(doc, str) or not doc.strip():
+                        continue
+                    if not isinstance(dist, (int, float)):
+                        continue
+                    if isinstance(dist, float) and (
+                        math.isnan(dist) or math.isinf(dist) or dist < 0
+                    ):
+                        logger.warning(
+                            "Vector fraud: ongeldige distance %.4f in shard %s",
+                            dist, shard_naam,
+                        )
+                        continue
                     if min_score and dist > min_score:
                         continue
+                    # Sanitize metadata — alleen primitieve types
+                    clean_meta = {}
+                    if isinstance(meta, dict):
+                        for k, v in meta.items():
+                            if isinstance(v, (str, int, float, bool)):
+                                clean_meta[str(k)[:200]] = v
                     alle_resultaten.append({
                         "tekst": doc,
-                        "metadata": meta,
+                        "metadata": clean_meta,
                         "distance": dist,
                         "shard": shard_naam,
                     })
