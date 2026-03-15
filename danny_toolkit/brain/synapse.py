@@ -346,6 +346,8 @@ class TheSynapse:
         looks at the PREVIOUS unresolved trace to compute implicit feedback.
         """
         category = self.categorize_query(user_input)
+        if category == "UNKNOWN":
+            return  # No learning signal from uncategorized queries
         query_hash = self._hash_query(user_input)
         agents_str = ",".join(sorted(agents_routed))
 
@@ -512,6 +514,8 @@ class TheSynapse:
     ) -> None:
         """Record a tribunal rejection as strong negative feedback."""
         category = self.categorize_query(user_input)
+        if category == "UNKNOWN":
+            return  # No learning signal from uncategorized queries
         for agent in agents:
             self._apply_plasticity(
                 category, agent, self.SIGNALS["tribunal_reject"],
@@ -654,6 +658,37 @@ class TheSynapse:
         if decayed:
             self._safe_commit()
             logger.info("Synapse: pruned %d unused pathways", decayed)
+
+    def prune_dead_pathways(self, min_fires: int = 5) -> int:
+        """Remove pathways with 0% success rate and enough data.
+
+        UNKNOWN category is always pruned entirely (dead routing noise).
+        Other categories: only prune agents with >= min_fires and 0 successes.
+
+        Returns number of pruned pathways.
+        """
+        # 1. Delete all UNKNOWN pathways
+        cur = self._conn.execute(
+            "DELETE FROM synaptic_pathways WHERE query_category = 'UNKNOWN'"
+        )
+        pruned = cur.rowcount
+
+        # 2. Delete zero-success pathways with enough evidence
+        cur2 = self._conn.execute(
+            """DELETE FROM synaptic_pathways
+               WHERE success_count = 0
+               AND fire_count >= ?
+               AND query_category != 'UNKNOWN'""",
+            (min_fires,),
+        )
+        pruned += cur2.rowcount
+
+        if pruned > 0:
+            self._safe_commit()
+            self._auto_export()
+            logger.info("Synapse: pruned %d dead pathways", pruned)
+
+        return pruned
 
     # ── Synaptic Reinforcement Protocol ─────────────────────────
 

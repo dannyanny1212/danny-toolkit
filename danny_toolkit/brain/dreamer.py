@@ -124,7 +124,8 @@ Sets the model attribute to the LLM model specified in the configuration."""
             from danny_toolkit.brain.synapse import get_synapse
             synapse = get_synapse()
             synapse.decay_unused(days_threshold=7)
-            logger.info("🧠 Synapse pruning complete.")
+            pruned = synapse.prune_dead_pathways(min_fires=5)
+            logger.info("🧠 Synapse pruning complete (%d dead removed).", pruned)
         except Exception as e:
             logger.debug("Synapse pruning error: %s", e)
 

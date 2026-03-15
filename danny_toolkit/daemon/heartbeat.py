@@ -1057,7 +1057,15 @@ Initializes a new instance of the class.
                                 facts = []
                                 for ev in recent:
                                     details = ev.get("details", "")
-                                    if isinstance(details, str) and len(details) > 30:
+                                    # _row_to_dict parses JSON → dict; handle both
+                                    if isinstance(details, dict):
+                                        # Extract meaningful fields from structured data
+                                        for key in ("result", "summary", "response", "content", "output"):
+                                            val = details.get(key, "")
+                                            if isinstance(val, str) and len(val) > 30:
+                                                facts.append(val[:200])
+                                                break
+                                    elif isinstance(details, str) and len(details) > 30:
                                         facts.append(details[:200])
                                 if facts:
                                     ls.log_learning("cortical_extract", facts[:10])
