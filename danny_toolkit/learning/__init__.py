@@ -48,4 +48,4 @@ __all__ = [
     "SelfImprovementEngine",
 ]
 
-__version__ = "6.11.0"
+__version__ = "7.1.0"
