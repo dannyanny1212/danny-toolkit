@@ -17,7 +17,6 @@ Gebruik per module:
 from __future__ import annotations
 
 __all__ = [
-    # Modules (import individueel)
     "sovereign_gate",
     "hardware_fingerprint",
     "event_signing",
@@ -31,3 +30,11 @@ __all__ = [
 
 __version__ = "2.0.0"
 __author__ = "Danny"
+
+
+def __getattr__(name: str):
+    """Lazy submodule loading — voorkomt circulaire imports."""
+    if name in __all__:
+        import importlib
+        return importlib.import_module(f".{name}", __name__)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

@@ -13,3 +13,11 @@ __all__ = [
     "calculator",
     "phoenix_ping",
 ]
+
+
+def __getattr__(name: str):
+    """Lazy submodule loading voor forge tools."""
+    if name in __all__:
+        import importlib
+        return importlib.import_module(f".{name}", __name__)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
