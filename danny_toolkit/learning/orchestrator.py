@@ -91,8 +91,16 @@ class LearningSystem:
             success_score=success_score,
         )
 
-        if success_score >= 0.8:
+        if success_score >= 0.75:
             self.patterns.cache_response(user_input, ai_response, success_score)
+            # Seed knowledge from quality responses
+            if len(ai_response) >= 50:
+                fact = f"Q: {user_input[:80]} → {ai_response[:150]}"
+                self.memory.add_fact(
+                    fact,
+                    source="chat_highscore",
+                    success_score=success_score,
+                )
 
         self._chat_count += 1
         self._last_interaction_id = interaction_id
@@ -286,17 +294,24 @@ class LearningSystem:
         """Schat de success score van een interactie.
 
         Heuristiek gebaseerd op response kwaliteit.
+        Scores: 0.5 base + length + confidence + sentiment bonuses.
         """
         score = 0.5
 
-        if len(ai_response) >= 20:
+        # Length signals: longer = more informative
+        resp_len = len(ai_response)
+        if resp_len >= 20:
             score += 0.1
-        if len(ai_response) >= 50:
+        if resp_len >= 50:
             score += 0.1
+        if resp_len >= 150:
+            score += 0.05  # Detailed response bonus
 
+        # Positive user sentiment
         positive_indicators = [
             "bedankt", "dankje", "leuk", "goed", "super",
             "ja", "perfect", "geweldig", "cool",
+            "thanks", "good", "great", "nice", "awesome",
         ]
         input_lower = user_input.lower()
         for indicator in positive_indicators:
@@ -304,10 +319,11 @@ class LearningSystem:
                 score += 0.1
                 break
 
-        if "?" not in ai_response and len(ai_response) > 30:
+        # Confident response (no hedging with questions)
+        if "?" not in ai_response and resp_len > 30:
             score += 0.1
 
-        return min(score, 1.0)
+        return min(round(score, 2), 1.0)
 
     def get_cached_response(self, query: str) -> Optional[str]:
         """Haal cached response op voor snelle antwoord.
