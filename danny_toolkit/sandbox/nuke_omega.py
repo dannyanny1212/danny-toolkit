@@ -8,9 +8,12 @@ Gebruik:
 """
 from __future__ import annotations
 
+import logging
 import sys
 import os
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 # Project root op path
 _root = Path(__file__).parent.parent.parent
@@ -21,8 +24,8 @@ if os.name == "nt":
     try:
         sys.stdout.reconfigure(encoding="utf-8")
         sys.stderr.reconfigure(encoding="utf-8")
-    except (ValueError, OSError):
-        pass
+    except (ValueError, OSError) as _enc_err:
+        logger.debug("UTF-8 reconfigure skipped: %s", _enc_err)
 
 
 def rebuild_omega() -> None:

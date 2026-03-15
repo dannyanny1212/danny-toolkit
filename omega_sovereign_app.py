@@ -4031,7 +4031,7 @@ class RealTerminalTab(ctk.CTkFrame):
             self._proc = None
 
     def refresh(self):
-        pass  # Terminal doesn't need periodic refresh
+        """No-op: terminal widget manages its own refresh via process output."""
 
 
 # ╔══════════════════════════════════════════════════════════════════╗

@@ -146,8 +146,8 @@ async def groq_call_async(
                                 f"(poging {poging + 1}/{max_retries})"
                             )
                             continue  # Retry immediately, no backoff
-                        except Exception:
-                            pass  # Fall through to normal backoff
+                        except Exception as _rot_err:
+                            logger.debug("%s: key rotation failed: %s", agent_naam, _rot_err)
 
                     # No alternate key — normal backoff
                     wacht = BASE_DELAY * (2 ** poging) * random.uniform(0.5, 1.5)
@@ -234,8 +234,8 @@ def groq_call_sync(
                                 f"(poging {poging + 1}/{max_retries})"
                             )
                             continue  # Retry immediately, no backoff
-                        except Exception:
-                            pass  # Fall through to normal backoff
+                        except Exception as _rot_err:
+                            logger.debug("%s: key rotation failed: %s", agent_naam, _rot_err)
 
                     # No alternate key — normal backoff
                     wacht = BASE_DELAY * (2 ** poging) * random.uniform(0.5, 1.5)

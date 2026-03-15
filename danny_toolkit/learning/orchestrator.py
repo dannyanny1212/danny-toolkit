@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import atexit
 import logging
+import threading
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -41,6 +42,7 @@ class LearningSystem:
             huisdier_app: Optionele referentie naar VirtueelHuisdierApp.
         """
         self.huisdier = huisdier_app
+        self._lock = threading.Lock()
 
         # Core learning components
         self.memory = UnifiedMemory()
@@ -217,29 +219,35 @@ class LearningSystem:
         helpful: bool
     ) -> None:
         """Pas feedback toe op learning systemen."""
-        # Get the interaction
-        for interaction in self.tracker._data["interactions"]:
-            if interaction.get("id") == interaction_id:
-                user_input = interaction.get("input", "")
-
-                # Update pattern cache quality
-                if rating >= 4:
-                    # Good response - reinforce cache
-                    self.patterns.record_query(user_input)
-                elif rating <= 2:
-                    logger.debug("Negative feedback (rating=%d) for: %s",
-                                 rating, user_input[:50])
-
-                # Update memory fact scores based on feedback
-                actual_score = (rating / 5.0) * 0.8 + 0.2
-                related_facts = self.memory.search(user_input, top_k=3)
-
-                for fact_data in related_facts:
-                    if helpful:
-                        self.memory.increment_usage(fact_data["fact"])
-                    self.memory.update_score(fact_data["fact"], actual_score)
-
+        # Get the interaction via public API
+        interaction = None
+        recent = self.tracker.get_recent(100)
+        for item in recent:
+            if item.get("id") == interaction_id:
+                interaction = item
                 break
+
+        if not interaction:
+            return
+
+        user_input = interaction.get("input", "")
+
+        # Update pattern cache quality
+        if rating >= 4:
+            # Good response - reinforce cache
+            self.patterns.record_query(user_input)
+        elif rating <= 2:
+            logger.debug("Negative feedback (rating=%d) for: %s",
+                         rating, user_input[:50])
+
+        # Update memory fact scores based on feedback
+        actual_score = (rating / 5.0) * 0.8 + 0.2
+        related_facts = self.memory.search(user_input, top_k=3)
+
+        for fact_data in related_facts:
+            if helpful:
+                self.memory.increment_usage(fact_data["fact"])
+            self.memory.update_score(fact_data["fact"], actual_score)
 
     def run_learning_cycle(self) -> dict:
         """

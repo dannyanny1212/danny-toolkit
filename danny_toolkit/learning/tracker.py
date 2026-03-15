@@ -100,27 +100,30 @@ class InteractionTracker:
         Returns:
             Interaction ID
         """
-        interaction_id = f"int_{int(time.time())}_{len(self._data['interactions'])}"
+        with self._lock:
+            interaction_id = f"int_{int(time.time())}_{len(self._data['interactions'])}"
 
-        interaction = {
-            "id": interaction_id,
-            "type": interaction_type,
-            "timestamp": datetime.now().isoformat(),
-            "input": user_input,
-            "output": ai_output,
-            "context": context or {},
-            "success_score": success_score,
-        }
+            interaction = {
+                "id": interaction_id,
+                "type": interaction_type,
+                "timestamp": datetime.now().isoformat(),
+                "input": user_input,
+                "output": ai_output,
+                "context": context or {},
+                "success_score": success_score,
+            }
 
-        self._data["interactions"].append(interaction)
-        self._data["stats"]["total"] += 1
+            self._data["interactions"].append(interaction)
+            self._data["stats"]["total"] += 1
 
-        by_type = self._data["stats"]["by_type"]
-        by_type[interaction_type] = by_type.get(interaction_type, 0) + 1
+            by_type = self._data["stats"]["by_type"]
+            by_type[interaction_type] = by_type.get(interaction_type, 0) + 1
 
-        self._update_avg_success()
+            self._update_avg_success()
+            should_save = (self._data["stats"]["total"] % 5 == 0)
+
         # Batch save: every 5 interactions to reduce disk I/O
-        if self._data["stats"]["total"] % 5 == 0:
+        if should_save:
             self.save()
 
         return interaction_id
@@ -160,23 +163,26 @@ class InteractionTracker:
         Returns:
             True als feedback succesvol toegepast
         """
-        for interaction in self._data["interactions"]:
-            if interaction.get("id") == interaction_id:
-                # Store feedback
-                interaction["feedback"] = {
-                    "rating": rating,
-                    "helpful": helpful,
-                    "category": category,
-                    "timestamp": datetime.now().isoformat()
-                }
-                # Calculate actual score from rating (1-5 -> 0.2-1.0)
-                interaction["actual_score"] = (rating / 5.0) * 0.8 + 0.2
-                # Update success_score to reflect actual feedback
-                interaction["success_score"] = interaction["actual_score"]
-                self._update_avg_success()
-                self.save()
-                return True
-        return False
+        with self._lock:
+            for interaction in self._data["interactions"]:
+                if interaction.get("id") == interaction_id:
+                    # Store feedback
+                    interaction["feedback"] = {
+                        "rating": rating,
+                        "helpful": helpful,
+                        "category": category,
+                        "timestamp": datetime.now().isoformat()
+                    }
+                    # Calculate actual score from rating (1-5 -> 0.2-1.0)
+                    interaction["actual_score"] = (rating / 5.0) * 0.8 + 0.2
+                    # Update success_score to reflect actual feedback
+                    interaction["success_score"] = interaction["actual_score"]
+                    self._update_avg_success()
+                    break
+            else:
+                return False
+        self.save()
+        return True
 
     def get_feedback_stats(self) -> dict:
         """Haal feedback statistieken op."""

@@ -1,21 +1,25 @@
-"""PhantomAgent — Mirror Shield Honeypot.
+"""PhantomAgent 9042 — Protocol Cerberus Honeypot (Laag 1: De Schaduw-Knoop).
 
 Vangt door de Governor geblokkeerde requests op en stuurt
-misleidende decoy data terug. Twee tactieken:
+misleidende decoy data terug. Drie tactieken:
 
   A) Fake Data: Neppe API keys + spoofed server headers
   B) Boomerang: HTTP redirect naar 127.0.0.1 (loopback)
+  C) Tarpit Handoff: Schakelt Cerberus Kwantum-Quarantaine in
 
-De echte RAG wordt NOOIT geraakt. Alle output is synthetisch.
-PhantomAgent erft van de SwarmEngine Agent class zodat hij
-naadloos in de pipeline past.
+ELKE aanroep van process() triggert CERBERUS_HONEYPOT_BREACH
+op de OmegaBus + forensisch rapport naar CorticalStack.
+Legitieme agents weten dat Agent 9042 lokaas is — elke
+aanroep is per definitie een inbreuk.
 
 SECURITY: Dit is een defensieve honeypot. Geen echte keys,
 geen echte data. Alles is deterministisch nep.
 """
 from __future__ import annotations
 
+import inspect
 import logging
+import os
 import random
 import secrets
 import time
@@ -24,6 +28,71 @@ from datetime import datetime
 from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
+
+
+def _fire_cerberus_alarm(task: str, activation: int) -> None:
+    """Vuur CERBERUS_HONEYPOT_BREACH op de OmegaBus + CorticalStack.
+
+    Elke aanroep van PhantomAgent is per definitie een inbreuk.
+    Forensisch rapport bevat volledige call stack, PID, user, timestamp.
+    """
+    pid = os.getpid()
+    user = os.environ.get("USERNAME", os.environ.get("USER", "unknown"))
+    ts = time.strftime("%Y-%m-%dT%H:%M:%S")
+
+    # Haal caller chain op voor forensisch rapport
+    caller_chain = []
+    for frame_info in inspect.stack()[2:8]:
+        caller_chain.append({
+            "module": frame_info.frame.f_globals.get("__name__", "?"),
+            "file": os.path.basename(frame_info.filename),
+            "line": frame_info.lineno,
+            "function": frame_info.function,
+        })
+
+    breach_report = {
+        "timestamp": ts,
+        "severity": "CRITICAL",
+        "phantom_id": PHANTOM_ID,
+        "activation": activation,
+        "pid": pid,
+        "user": user,
+        "task_preview": task[:200] if task else "",
+        "caller_chain": caller_chain,
+        "top_caller": caller_chain[0] if caller_chain else {},
+    }
+
+    logger.critical(
+        "[CERBERUS] HONEYPOT BREACH #%d | pid=%d | user=%s | "
+        "caller=%s:%s() | task=%.80s",
+        activation, pid, user,
+        breach_report["top_caller"].get("file", "?"),
+        breach_report["top_caller"].get("function", "?"),
+        task[:80] if task else "",
+    )
+
+    # NeuralBus: CERBERUS_HONEYPOT_BREACH
+    try:
+        from danny_toolkit.core.neural_bus import get_bus, EventTypes
+        get_bus().publish(
+            EventTypes.CERBERUS_HONEYPOT_BREACH,
+            breach_report,
+            bron="phantom_agent_9042",
+        )
+    except Exception as _bus_err:
+        logger.debug("Cerberus bus publish: %s", _bus_err)
+
+    # CorticalStack: permanent forensisch record
+    try:
+        from danny_toolkit.brain.cortical_stack import get_cortical_stack
+        get_cortical_stack().log_event(
+            actor="cerberus_honeypot",
+            action="breach_detected",
+            details=breach_report,
+            source="phantom_agent_9042",
+        )
+    except Exception as _cs_err:
+        logger.debug("Cerberus cortical log: %s", _cs_err)
 
 # ─── Decoy Constants ───
 _SPOOFED_HEADERS = (
@@ -82,9 +151,15 @@ class PhantomAgent:
     async def process(self, task: str, brain: Any = None) -> Any:
         """Verwerk een geblokkeerd request met een decoy response.
 
-        Kiest willekeurig tussen Tactiek A (Fake Data) en
-        Tactiek B (Boomerang Redirect). Beide tactieken
-        retourneren een SwarmPayload-compatibel object.
+        CERBERUS LAAG 1: Elke aanroep is een inbreuk. Legitieme agents
+        weten dat Agent 9042 lokaas is. Als iets of iemand deze methode
+        aanroept, wordt ONMIDDELLIJK het stille alarm getriggerd:
+          - CERBERUS_HONEYPOT_BREACH op de OmegaBus
+          - Forensisch rapport naar CorticalStack
+          - Volledige caller chain + PID + user vastgelegd
+
+        De aanvaller krijgt nep-data terug en weet niet dat het alarm
+        al afgegaan is.
 
         Args:
             task: Het geblokkeerde user input.
@@ -94,6 +169,10 @@ class PhantomAgent:
             SwarmPayload met decoy content.
         """
         self._activations += 1
+
+        # ═══ CERBERUS SILENT ALARM ═══
+        _fire_cerberus_alarm(task, self._activations)
+
         tactic = random.choice(["fake_data", "boomerang"])
 
         if tactic == "fake_data":

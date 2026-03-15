@@ -95,8 +95,8 @@ logger.info(
 try:
     from danny_toolkit.core import neural_bus as _nb
     _nb._cached_live_seal = _ACTIVE_SILICON_SEAL
-except Exception:
-    pass
+except Exception as _nb_err:
+    logger.debug("NeuralBus pre-seed skipped: %s", _nb_err)
 
 FASTAPI_PORT = int(os.getenv("FASTAPI_PORT", "8001"))
 
@@ -3228,8 +3228,8 @@ async def brain_agents_detail(
             biases = agent_weights.get(a["name"], [])
             if biases:
                 a["synaptic_weight"] = round(sum(biases) / len(biases), 3)
-    except Exception:
-        pass
+    except Exception as _syn_err:
+        logger.debug("Synapse weight enrichment skipped: %s", _syn_err)
     return {"agents": agents, "total": len(agents)}
 
 
@@ -4012,7 +4012,7 @@ async def websocket_events(websocket: WebSocket) -> None:
                     if data == "ping":
                         await websocket.send_json({"type": "pong"})
                 except asyncio.TimeoutError:
-                    pass
+                    data = None  # no client data within 1s — expected in WS poll loop
 
                 # Haal NeuralBus events op en push nieuwe
                 try:

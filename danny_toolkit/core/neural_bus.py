@@ -21,12 +21,40 @@ import hmac
 import json
 import logging
 import os
+import secrets as _secrets
 import threading
+import time as _time
 from collections import defaultdict, deque
 from datetime import datetime
 from typing import Any, Callable, Deque, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
+# ═══════════════════════════════════════════════════════════════
+#  PROTOCOL AEGIS — 3-Layer Anti-Replay Defense
+# ═══════════════════════════════════════════════════════════════
+#  Layer 1: Payload Binding — HMAC covers full payload + timestamp + nonce
+#  Layer 2: Micro-TTL       — Events ouder dan 2s worden geweigerd
+#  Layer 3: Nonce Ledger    — Elke nonce mag slechts 1x voorkomen
+#
+#  Een gestolen/gedupliceerd token is WAARDELOOS:
+#    - Ander payload → HMAC breekt (Layer 1)
+#    - Zelfde payload, later → TTL verlopen (Layer 2)
+#    - Zelfde payload, binnen 2s → Nonce al gezien (Layer 3)
+
+AEGIS_TTL_SECONDS = 2.0
+AEGIS_NONCE_LEDGER_SIZE = 1000
+
+_NONCE_LEDGER: deque = deque(maxlen=AEGIS_NONCE_LEDGER_SIZE)
+_NONCE_SET: set = set()  # O(1) lookup naast de deque
+_NONCE_LOCK = threading.Lock()
+
+_AEGIS_STATS = {
+    "ttl_rejections": 0,
+    "nonce_rejections": 0,
+    "replay_attempts": 0,
+    "valid_seals": 0,
+}
 
 
 class EventTypes:
@@ -84,10 +112,15 @@ class EventTypes:
     AGENT_CHAIN_REQUEST = "agent_chain_request"
     AGENT_CHAIN_RESPONSE = "agent_chain_response"
     AGENT_CHAIN_BLOCKED = "agent_chain_blocked"
+    # Protocol Cerberus: Honeypot + Quarantaine + Scorched Earth
+    CERBERUS_HONEYPOT_BREACH = "cerberus_honeypot_breach"
+    CERBERUS_TARPIT_ENGAGED = "cerberus_tarpit_engaged"
+    CERBERUS_SCORCHED_EARTH = "cerberus_scorched_earth"
+    CERBERUS_INTEGRITY_ALERT = "cerberus_integrity_alert"
 
 
 class OmegaSeal:
-    """HMAC-SHA256 payload signing voor interne bus-communicatie.
+    """HMAC-SHA256 payload signing met Protocol Aegis anti-replay.
 
     Elke payload die over de NeuralBus reist krijgt een 'omega_seal'
     handtekening. Ontvangende agents verifiëren het zegel voordat
@@ -98,10 +131,15 @@ class OmegaSeal:
         2. LIVE hardware fingerprint — real-time CPU+GPU+moederbord scan
         3. SHA-256(key | live_seal) — derived HMAC key
 
-        De LIVE scan is cruciaal: zelfs als .env gestolen wordt,
-        kan de key niet gereconstrueerd worden zonder het fysieke
-        silicium. De opgeslagen AUTHORIZED_SILICON_SEAL wordt NIET
-        gebruikt voor key derivatie — alleen de live hardware scan.
+    Protocol Aegis (3-laags anti-replay):
+        Layer 1: Payload Binding — HMAC dekt payload + timestamp + nonce
+        Layer 2: Micro-TTL      — Events ouder dan 2s → geweigerd
+        Layer 3: Nonce Ledger   — Elke nonce slechts 1x → duplicatie dood
+
+    De LIVE scan is cruciaal: zelfs als .env gestolen wordt,
+    kan de key niet gereconstrueerd worden zonder het fysieke
+    silicium. De opgeslagen AUTHORIZED_SILICON_SEAL wordt NIET
+    gebruikt voor key derivatie — alleen de live hardware scan.
     """
 
     _key: Optional[bytes] = None
@@ -160,9 +198,41 @@ class OmegaSeal:
                     )
         return cls._key
 
+    # ── Layer 1: Payload Binding (Aegis) ──
+
     @classmethod
-    def sign_payload(cls, payload: dict) -> str:
-        """Genereer HMAC-SHA256 handtekening voor een payload dict.
+    def sign_payload(cls, payload: dict) -> tuple[str, float, str]:
+        """Genereer HMAC-SHA256 handtekening met Aegis anti-replay velden.
+
+        Injecteert automatisch:
+            _aegis_ts    — UNIX timestamp (float)
+            _aegis_nonce — 16-byte cryptografisch random hex string
+
+        De HMAC dekt de VOLLEDIGE payload inclusief ts + nonce.
+        Een oud zegel op een nieuw payload breekt de wiskunde.
+
+        Returns:
+            (seal_hex, timestamp, nonce) — of ("", 0.0, "") als key ontbreekt.
+        """
+        key = cls._load_key()
+        if not key:
+            return "", 0.0, ""
+
+        ts = _time.time()
+        nonce = _secrets.token_hex(8)
+
+        # Bouw de canonieke signing-payload (payload + Aegis velden)
+        sign_data = dict(payload)
+        sign_data["_aegis_ts"] = ts
+        sign_data["_aegis_nonce"] = nonce
+
+        canonical = json.dumps(sign_data, sort_keys=True, default=str)
+        seal = hmac.new(key, canonical.encode("utf-8"), hashlib.sha256).hexdigest()
+        return seal, ts, nonce
+
+    @classmethod
+    def sign_payload_legacy(cls, payload: dict) -> str:
+        """Legacy sign zonder Aegis (voor backward-compatible chain_dispatch).
 
         Returns:
             Hex-encoded HMAC digest, of lege string als key ontbreekt.
@@ -173,21 +243,99 @@ class OmegaSeal:
         canonical = json.dumps(payload, sort_keys=True, default=str)
         return hmac.new(key, canonical.encode("utf-8"), hashlib.sha256).hexdigest()
 
+    # ── Layer 1+2+3: Full Aegis Verification ──
+
     @classmethod
-    def verify(cls, payload: dict, seal: str) -> bool:
-        """Verifieer een omega_seal tegen de payload.
+    def verify(cls, payload: dict, seal: str,
+               aegis_ts: float = 0.0, aegis_nonce: str = "") -> bool:
+        """Verifieer een omega_seal met 3-laags Aegis anti-replay.
+
+        Layer 1: Payload Binding — HMAC over payload+ts+nonce
+        Layer 2: Micro-TTL      — Weiger als ouder dan AEGIS_TTL_SECONDS
+        Layer 3: Nonce Ledger   — Weiger als nonce al gezien is
 
         Timing-safe vergelijking via hmac.compare_digest.
 
+        Args:
+            payload:     Het originele payload dict.
+            seal:        De hex-encoded HMAC handtekening.
+            aegis_ts:    De timestamp waarmee gesigned is.
+            aegis_nonce: De nonce waarmee gesigned is.
+
         Returns:
-            True als het zegel klopt, False als het ontbreekt of corrupt is.
+            True als alle 3 lagen slagen. False bij elke overtreding.
         """
         if not seal:
             return False
-        expected = cls.sign_payload(payload)
-        if not expected:
+
+        key = cls._load_key()
+        if not key:
             return False
-        return hmac.compare_digest(expected, seal)
+
+        # ── Layer 2: Micro-TTL ──
+        if aegis_ts > 0.0:
+            age = _time.time() - aegis_ts
+            if age > AEGIS_TTL_SECONDS:
+                _AEGIS_STATS["ttl_rejections"] += 1
+                _AEGIS_STATS["replay_attempts"] += 1
+                logger.warning(
+                    "[AEGIS] Token EXPIRED — age=%.3fs > TTL=%.1fs. "
+                    "Mogelijke Replay Attack.",
+                    age, AEGIS_TTL_SECONDS,
+                )
+                return False
+            if age < -1.0:
+                # Timestamp in de toekomst (> 1s tolerantie) = manipulatie
+                _AEGIS_STATS["ttl_rejections"] += 1
+                _AEGIS_STATS["replay_attempts"] += 1
+                logger.warning(
+                    "[AEGIS] Token FUTURE timestamp — age=%.3fs. "
+                    "Clock manipulation detected.",
+                    age,
+                )
+                return False
+
+        # ── Layer 3: Nonce Ledger ──
+        if aegis_nonce:
+            with _NONCE_LOCK:
+                if aegis_nonce in _NONCE_SET:
+                    _AEGIS_STATS["nonce_rejections"] += 1
+                    _AEGIS_STATS["replay_attempts"] += 1
+                    logger.warning(
+                        "[AEGIS] Token DUPLICATIE — nonce '%s' is al gebruikt. "
+                        "Replay Attack geblokkeerd.",
+                        aegis_nonce[:8],
+                    )
+                    return False
+                # Registreer nonce in ledger
+                if len(_NONCE_LEDGER) >= AEGIS_NONCE_LEDGER_SIZE:
+                    # Verwijder oudste nonce uit de set
+                    evicted = _NONCE_LEDGER[0]
+                    _NONCE_SET.discard(evicted)
+                _NONCE_LEDGER.append(aegis_nonce)
+                _NONCE_SET.add(aegis_nonce)
+
+        # ── Layer 1: Payload Binding (HMAC verificatie) ──
+        sign_data = dict(payload)
+        if aegis_ts > 0.0:
+            sign_data["_aegis_ts"] = aegis_ts
+        if aegis_nonce:
+            sign_data["_aegis_nonce"] = aegis_nonce
+
+        canonical = json.dumps(sign_data, sort_keys=True, default=str)
+        expected = hmac.new(key, canonical.encode("utf-8"), hashlib.sha256).hexdigest()
+
+        if not hmac.compare_digest(expected, seal):
+            _AEGIS_STATS["replay_attempts"] += 1
+            logger.warning(
+                "[AEGIS] HMAC MISMATCH — payload is gewijzigd of seal is gestolen. "
+                "Verwacht: %s...  Ontvangen: %s...",
+                expected[:12], seal[:12],
+            )
+            return False
+
+        _AEGIS_STATS["valid_seals"] += 1
+        return True
 
     @classmethod
     def is_armed(cls) -> bool:
@@ -200,9 +348,35 @@ class OmegaSeal:
         cls._load_key()
         return cls._hardware_verified
 
+    @classmethod
+    def get_aegis_stats(cls) -> dict:
+        """Protocol Aegis statistieken."""
+        with _NONCE_LOCK:
+            ledger_size = len(_NONCE_LEDGER)
+        return {
+            **_AEGIS_STATS,
+            "nonce_ledger_size": ledger_size,
+            "nonce_ledger_capacity": AEGIS_NONCE_LEDGER_SIZE,
+            "ttl_seconds": AEGIS_TTL_SECONDS,
+            "armed": cls.is_armed(),
+            "hardware_bound": cls.is_hardware_bound(),
+        }
+
 
 def verified_callback(callback: Callable) -> Callable:
     """Decorator die inkomende BusEvents verifieert voor een callback.
+
+    Protocol Aegis — De Ontvanger (Subscriber):
+        1. Valideert HMAC (payload binding)
+        2. Checkt TTL (max 2s oud)
+        3. VERBRANDT de nonce (consume_nonce=True) — het ticket
+           wordt versnipperd zodat exact hetzelfde bericht nooit
+           meer geaccepteerd wordt, zelfs niet binnen de TTL.
+
+    De Bus zelf checkt alleen HMAC + TTL bij publicatie ZONDER
+    het ticket te verbranden (consume_nonce=False). Zo kan het
+    bericht meerdere subscribers bereiken, maar elk bericht
+    wordt slechts 1x door de EERSTE subscriber geconsumeerd.
 
     Gebruik:
         @verified_callback
@@ -212,9 +386,10 @@ def verified_callback(callback: Callable) -> Callable:
     Events zonder geldig omega_seal worden geweigerd en gelogd.
     """
     def wrapper(event: BusEvent) -> Any:
-        if hasattr(event, "verify_seal") and not event.verify_seal():
+        if hasattr(event, "verify_seal") and not event.verify_seal(consume_nonce=True):
             logger.warning(
-                "[OMEGA GATE] Event geweigerd — ongeldig seal: "
+                "[AEGIS GATE] Event geweigerd door ontvanger — "
+                "ongeldig seal, verlopen TTL, of hergebruikte nonce: "
                 "type=%s bron=%s", event.event_type, event.bron,
             )
             return None
@@ -226,9 +401,12 @@ def verified_callback(callback: Callable) -> Callable:
 
 
 class BusEvent:
-    """Representatie van een event op de bus."""
+    """Representatie van een event op de bus met Aegis anti-replay."""
 
-    __slots__ = ("event_type", "data", "bron", "timestamp", "omega_seal")
+    __slots__ = (
+        "event_type", "data", "bron", "timestamp",
+        "omega_seal", "_aegis_ts", "_aegis_nonce",
+    )
 
     def __init__(
         self,
@@ -236,7 +414,7 @@ class BusEvent:
         data: Dict[str, Any],
         bron: str = "unknown",
     ) -> None:
-        """Initializes an event object.
+        """Initializes an event object met Aegis cryptografisch zegel.
 
         Args:
             event_type: The type of event.
@@ -247,14 +425,37 @@ class BusEvent:
         self.data = data
         self.bron = bron
         self.timestamp = datetime.now()
-        # Cryptografisch zegel — sign de payload bij creatie
+        # Protocol Aegis: sign met timestamp + nonce (anti-replay)
         seal_payload = {"event_type": event_type, "data": data, "bron": bron}
-        self.omega_seal = OmegaSeal.sign_payload(seal_payload)
+        seal, ts, nonce = OmegaSeal.sign_payload(seal_payload)
+        self.omega_seal = seal
+        self._aegis_ts = ts
+        self._aegis_nonce = nonce
 
-    def verify_seal(self) -> bool:
-        """Verifieer het omega_seal van dit event."""
-        seal_payload = {"event_type": self.event_type, "data": self.data, "bron": self.bron}
-        return OmegaSeal.verify(seal_payload, self.omega_seal)
+    def verify_seal(self, consume_nonce: bool = True) -> bool:
+        """Verifieer het omega_seal met 3-laags Aegis anti-replay.
+
+        Layer 1: Payload Binding  — HMAC dekt payload + ts + nonce
+        Layer 2: Micro-TTL        — Event ouder dan 2s → geweigerd
+        Layer 3: Nonce Ledger     — Dubbele nonce → geweigerd
+
+        Args:
+            consume_nonce: Als True, wordt de nonce geregistreerd in de
+                ledger (standaard bij ontvangst). Als False, wordt alleen
+                HMAC+TTL gevalideerd zonder nonce te consumeren (voor
+                self-check bij publicatie — voorkomt dat de eerste
+                verify het nonce al opmaakt).
+        """
+        seal_payload = {
+            "event_type": self.event_type,
+            "data": self.data,
+            "bron": self.bron,
+        }
+        return OmegaSeal.verify(
+            seal_payload, self.omega_seal,
+            aegis_ts=self._aegis_ts,
+            aegis_nonce=self._aegis_nonce if consume_nonce else "",
+        )
 
     def to_dict(self) -> dict:
         """To dict."""
@@ -380,8 +581,10 @@ class NeuralBus:
         event = BusEvent(event_type, data, bron)
 
         # Seal verificatie op het moment van publicatie
+        # consume_nonce=False: nonce NIET consumeren bij self-check,
+        # anders is het nonce al "gebruikt" voordat subscribers het zien
         if OmegaSeal.is_armed() and event.omega_seal:
-            if not event.verify_seal():
+            if not event.verify_seal(consume_nonce=False):
                 logger.warning(
                     "[OMEGA GATE] Event GEWEIGERD — seal corrupt bij publicatie: "
                     "type=%s bron=%s", event_type, bron,
@@ -451,7 +654,7 @@ class NeuralBus:
             True als het event succesvol gesigned en gepubliceerd is.
         """
         event = BusEvent(event_type, data, bron)
-        if not event.verify_seal():
+        if not event.verify_seal(consume_nonce=False):
             logger.warning("[OMEGA GATE] Event seal verificatie mislukt: %s van %s", event_type, bron)
             with self._lock:
                 self._stats["seals_rejected"] += 1

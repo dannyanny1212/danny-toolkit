@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 
 logger = logging.getLogger(__name__)
 import statistics
@@ -57,7 +58,9 @@ class PerformanceAnalyzer:
 
         self.data_dir = data_dir
         self.metrics_file = data_dir / "performance_metrics.json"
+        self._lock = threading.Lock()
         self._data = self._load()
+        self._save_counter = 0
 
     def _load(self) -> dict:
         """Laad metrics data uit bestand."""
@@ -107,14 +110,20 @@ class PerformanceAnalyzer:
             value=value,
             context=context or {}
         )
-        self._data["metrics"].append(asdict(metric))
+        with self._lock:
+            self._data["metrics"].append(asdict(metric))
 
-        # Keep last MAX_METRICS metrics
-        if len(self._data["metrics"]) > self.MAX_METRICS:
-            self._data["metrics"] = self._data["metrics"][-self.MAX_METRICS:]
+            # Keep last MAX_METRICS metrics
+            if len(self._data["metrics"]) > self.MAX_METRICS:
+                self._data["metrics"] = self._data["metrics"][-self.MAX_METRICS:]
 
-        self._update_trends(metric_type, name, value)
-        self.save()
+            self._update_trends(metric_type, name, value)
+            self._save_counter += 1
+            should_save = (self._save_counter % 5 == 0)
+
+        # Batch save: every 5 records to reduce disk I/O
+        if should_save:
+            self.save()
 
     def _update_trends(self, metric_type: str, name: str, value: float) -> None:
         """Update trend data voor een metric."""

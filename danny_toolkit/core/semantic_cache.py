@@ -141,7 +141,7 @@ class SemanticCache:
                         f"ALTER TABLE cache_entries ADD COLUMN {col} TEXT DEFAULT {default}"
                     )
                 except sqlite3.OperationalError:
-                    pass  # kolom bestaat al
+                    logger.debug("Column %s already exists", col)
             conn.commit()
             conn.close()
         except Exception as e:

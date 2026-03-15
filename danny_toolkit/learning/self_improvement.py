@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Callable
@@ -26,18 +27,7 @@ try:
 except ImportError:
     HAS_CONFIG = False
 
-try:
-    import pathlib
-    HAS_PATHLIB = True
-except ImportError:
-    HAS_PATHLIB = False
-
-try:
-    import random
-    HAS_RANDOM = True
-except ImportError:
-    HAS_RANDOM = False
-
+import random
 
 
 @dataclass
@@ -88,6 +78,7 @@ class SelfImprovementEngine:
         self.state_file = data_dir / "self_improvement_state.json"
         self.performance = performance_analyzer
         self.feedback = feedback_manager
+        self._lock = threading.Lock()
         self._state = self._load()
         self._adaptations: Dict[str, dict] = {}
 
@@ -304,7 +295,6 @@ class SelfImprovementEngine:
 
                     else:  # neutral
                         # Small random exploration
-                        pass  # import moved to top-level
                         adjustment = (random.random() - 0.5) * lr * 0.1
                         new_value = current + adjustment
 
@@ -344,8 +334,7 @@ class SelfImprovementEngine:
                         }
 
                 except Exception as e:
-                    # Log error but continue
-                    print(f"Adaptation error for {name}: {e}")
+                    logger.debug("Adaptation error for %s: %s", name, e)
 
         return None
 
@@ -455,8 +444,6 @@ class SelfImprovementEngine:
 
 def _cli() -> None:
     """Test CLI voor SelfImprovementEngine."""
-    pass  # import moved to top-level
-
     print("SelfImprovementEngine Test CLI")
     print("=" * 40)
 

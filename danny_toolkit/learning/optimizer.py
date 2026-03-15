@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 
 logger = logging.getLogger(__name__)
 from datetime import datetime, timedelta
@@ -37,6 +38,7 @@ class KnowledgeOptimizer:
         self.data_dir = Config.APPS_DATA_DIR / "learning"
         self.data_dir.mkdir(exist_ok=True)
         self.optimizer_file = self.data_dir / "optimizer_state.json"
+        self._lock = threading.Lock()
         self._state = self._load_state()
         self._memory = unified_memory
 
@@ -58,9 +60,10 @@ class KnowledgeOptimizer:
         }
 
     def _save_state(self) -> None:
-        """Sla optimizer state op."""
-        with open(self.optimizer_file, "w", encoding="utf-8") as f:
-            json.dump(self._state, f, indent=2, ensure_ascii=False)
+        """Sla optimizer state op (thread-safe)."""
+        with self._lock:
+            with open(self.optimizer_file, "w", encoding="utf-8") as f:
+                json.dump(self._state, f, indent=2, ensure_ascii=False)
 
     def _text_similarity(self, text1: str, text2: str) -> float:
         """Bereken tekst similariteit via word overlap."""

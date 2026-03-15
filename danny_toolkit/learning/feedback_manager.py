@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 
 logger = logging.getLogger(__name__)
 from datetime import datetime
@@ -55,6 +56,7 @@ class FeedbackManager:
 
         self.data_dir = data_dir
         self.feedback_file = data_dir / "feedback.json"
+        self._lock = threading.Lock()
         self._data = self._load()
 
     def _load(self) -> dict:
@@ -114,8 +116,9 @@ class FeedbackManager:
             comments=comments
         )
 
-        self._data["entries"].append(asdict(entry))
-        self._update_stats()
+        with self._lock:
+            self._data["entries"].append(asdict(entry))
+            self._update_stats()
         self.save()
         return True
 
@@ -161,15 +164,16 @@ class FeedbackManager:
         Returns:
             Dict met interaction_id -> score (0-1) mappings
         """
-        if not self._data["entries"]:
-            return {}
+        with self._lock:
+            if not self._data["entries"]:
+                return {}
 
-        signals = {}
-        for entry in self._data["entries"]:
-            int_id = entry["interaction_id"]
-            # Convert rating (1-5) to score (0-1)
-            # Rating 1 = 0.0, Rating 5 = 1.0
-            signals[int_id] = (entry["rating"] - 1) / 4.0
+            signals = {}
+            for entry in self._data["entries"]:
+                int_id = entry["interaction_id"]
+                # Convert rating (1-5) to score (0-1)
+                # Rating 1 = 0.0, Rating 5 = 1.0
+                signals[int_id] = (entry["rating"] - 1) / 4.0
 
         return signals
 

@@ -201,17 +201,18 @@ class UnifiedMemory:
             return list(self._memory["knowledge"]["facts"])
 
     def remove_fact(self, fact: str) -> bool:
-        """Verwijder een feit uit het geheugen."""
-        knowledge = self._memory["knowledge"]
-        if fact in knowledge["facts"]:
-            idx = knowledge["facts"].index(fact)
-            knowledge["facts"].pop(idx)
-            knowledge["sources"].pop(idx)
-            knowledge["learned_at"].pop(idx)
-            knowledge["usage_count"].pop(idx)
-            knowledge["success_scores"].pop(idx)
-            self.save()
-            return True
+        """Verwijder een feit uit het geheugen (thread-safe)."""
+        with self._lock:
+            knowledge = self._memory["knowledge"]
+            if fact in knowledge["facts"]:
+                idx = knowledge["facts"].index(fact)
+                knowledge["facts"].pop(idx)
+                knowledge["sources"].pop(idx)
+                knowledge["learned_at"].pop(idx)
+                knowledge["usage_count"].pop(idx)
+                knowledge["success_scores"].pop(idx)
+                self._save_unlocked()
+                return True
         return False
 
     def sync_with_huisdier(self, huisdier_kennis: dict) -> None:

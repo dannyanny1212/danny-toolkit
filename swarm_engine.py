@@ -907,7 +907,8 @@ class MemexAgent(BrainAgent):
                 ]
             else:
                 queries = []
-        except (json.JSONDecodeError, ValueError):
+        except (json.JSONDecodeError, ValueError) as _parse_err:
+            logger.debug("Query expansion parse failed: %s", _parse_err)
             queries = []
 
         # Originele vraag altijd als eerste
@@ -1777,9 +1778,10 @@ class AdaptiveRouter:
         "NAVIGATOR": [
             (
                 "web search internet online lookup"
-                " fetch scrape API research explore"
-                " discover browse zoeken onderzoek"
-                " vind informatie bronnen"
+                " fetch scrape API endpoint explore"
+                " discover browse website url http"
+                " download extern externe bron"
+                " duckduckgo google bing zoek op"
             ),
         ],
         "ORACLE": [
@@ -1823,6 +1825,16 @@ class AdaptiveRouter:
                 " source bronvermelding reference"
                 " opzoeken context ophalen"
                 " collectie bronnen"
+            ),
+            # Kennisvragen — wat/hoe/hoeveel/leg uit
+            (
+                "wat doet wat is hoe werkt leg uit"
+                " vertel over beschrijf uitleg waarvoor"
+                " wie is wat betekent doel van rol van"
+                " informatie over meer over welke"
+                " hoeveel waar zit waar staat wanneer"
+                " how does what is explain describe"
+                " how many agents modules system"
             ),
         ],
         "ALCHEMIST": [
@@ -1895,6 +1907,15 @@ class AdaptiveRouter:
                 " diepte onderzoek tweeling spiegel"
                 " achtergrond context verrijking"
                 " kennisverrijking systeem overzicht"
+            ),
+        ],
+        "WEAVER": [
+            (
+                "samenvatting summary synthesize merge"
+                " combine integrate consolidate bundle"
+                " overview overzicht samenvattend"
+                " combineren integreren conclusie"
+                " rapport report totaalbeeld"
             ),
         ],
     }
@@ -2045,13 +2066,16 @@ class AdaptiveRouter:
                 if t not in exclude_agents
             ]
 
-        # Bij overlap: hoogste score wint
+        # Bij overlap: MEMEX wint van code/web agents bij kennisvragen
+        score_map = dict(scores)
         if "MEMEX" in targets and "IOLAAX" in targets:
-            score_map = dict(scores)
-            if score_map["MEMEX"] > score_map["IOLAAX"]:
+            if score_map.get("MEMEX", 0) > score_map.get("IOLAAX", 0):
                 targets.remove("IOLAAX")
             else:
                 targets.remove("MEMEX")
+        if "MEMEX" in targets and "NAVIGATOR" in targets:
+            if score_map.get("MEMEX", 0) > score_map.get("NAVIGATOR", 0) * 0.9:
+                targets.remove("NAVIGATOR")
 
         return targets or ["ECHO"]
 
@@ -2282,6 +2306,12 @@ class SwarmEngine:
         ],
         # LEGION: disabled
 
+        "WEAVER": [
+            "samenvatting", "summary", "combineer",
+            "synthesize", "merge", "integreer",
+            "consolideer", "samenvat", "bundel",
+            "overview", "overzicht",
+        ],
         "COHERENTIE": [
             "coherentie", "hardware", "gpu check",
             "cpu check", "validatie", "fingerprint",
@@ -2836,7 +2866,8 @@ class SwarmEngine:
                 )
                 _meta = {"error_type": "CircuitBreakerOpen", "fout_context": fc.to_dict()}
                 self._publish_error_classified(fc)
-            except Exception:
+            except Exception as _cb_err:
+                logger.debug("Circuit breaker metadata build: %s", _cb_err)
                 _meta = {"error_type": "CircuitBreakerOpen"}
             return SwarmPayload(
                 agent=agent_naam, type="error",
@@ -4020,9 +4051,11 @@ class SwarmEngine:
                 if t not in throttled
             ]
 
-        # MEMEX wint van IOLAAX bij kennisvragen
+        # MEMEX wint van IOLAAX en NAVIGATOR bij kennisvragen
         if "MEMEX" in targets and "IOLAAX" in targets:
             targets.remove("IOLAAX")
+        if "MEMEX" in targets and "NAVIGATOR" in targets:
+            targets.remove("NAVIGATOR")
 
         _log_to_cortical(
             "router", "keyword_fallback",
@@ -4254,7 +4287,7 @@ class SwarmEngine:
                     :enriched.index("]") + 1
                 ]
             except ValueError:
-                prefix = enriched[:40]
+                prefix = enriched[:40]  # no ']' found, truncate
             log(f"\u23f3 Chronos: {prefix} \u2713")
         else:
             enriched = user_input
@@ -4655,17 +4688,18 @@ class SwarmEngine:
                 r.trace_id = trace_id
 
         # Cortical Stack logging
-        _log_to_cortical(
-            "swarm", "response",
-            {
-                "agents": [r.agent for r in results],
-                "output_preview": str(
-                    results[0].content
-                )[:300],
-                "tuning": t.get_samenvatting(),
-            },
-            trace_id=trace_id,
-        )
+        if results:
+            _log_to_cortical(
+                "swarm", "response",
+                {
+                    "agents": [r.agent for r in results],
+                    "output_preview": str(
+                        results[0].content
+                    )[:300],
+                    "tuning": t.get_samenvatting(),
+                },
+                trace_id=trace_id,
+            )
 
         # Emit TASK_COMPLETE naar Sensorium
         try:

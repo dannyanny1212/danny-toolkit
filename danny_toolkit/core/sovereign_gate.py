@@ -1,18 +1,20 @@
 """
-THE SOVEREIGN GATE v6.19.0 — Golden Master Security Enforcer.
+THE SOVEREIGN GATE v7.0 — Golden Master Security Enforcer.
 
-10 security checks. Code weigert te draaien tenzij ALLE checks slagen.
+11 security checks. Code weigert te draaien tenzij ALLE checks slagen.
 Geen bypass. Geen test modus. Geen uitzonderingen.
 
 Laws 1-5: Original Sovereign Laws
 Laws 6-9: Security Hardening (Phase Golden Master)
 Law 10:   Silicon Seal C2 (Hardware Node-Lock via Remote Whitelist)
+Law 11:   CPU Hardware ID (Defense-in-depth direct processor verificatie)
 
   6. Brute Force Lockout   — 5 fails → 15 min lockout
   7. Boot Audit Log        — Elke pass/fail met timestamp
   8. Anti-Tamper Hash      — SHA256 self-verification
   9. Max Boot Frequency    — Max 10 boots per minuut
  10. Silicon Seal C2       — Hardware hash vs. remote C2 whitelist
+ 11. CPU Hardware ID       — 4-veld CPU fingerprint (ProcessorId, Name, Cores, Clock)
 """
 
 from __future__ import annotations
@@ -60,8 +62,8 @@ def _audit_log(status: str, law: str, detail: str = "") -> None:
         line = f"[{ts}] {status} | {law} | {detail}\n"
         with open(_AUDIT_LOG, "a", encoding="utf-8") as f:
             f.write(line)
-    except Exception:
-        pass  # Audit log mag nooit de gate blokkeren
+    except Exception as _audit_err:
+        logger.debug("Audit log write failed (non-fatal): %s", _audit_err)
 
 
 def _gate_fail(law: str, message: str) -> None:
@@ -92,8 +94,8 @@ def _record_failure() -> None:
 
         with open(_LOCKOUT_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f)
-    except Exception:
-        logger.debug("Suppressed error")
+    except Exception as _fail_err:
+        logger.debug("Failure record error (non-fatal): %s", _fail_err)
 
 
 def _record_boot() -> None:
@@ -112,8 +114,8 @@ def _record_boot() -> None:
 
         with open(_BOOT_TRACKER, "w", encoding="utf-8") as f:
             json.dump(data, f)
-    except Exception:
-        logger.debug("Suppressed error")
+    except Exception as _boot_err:
+        logger.debug("Boot record error (non-fatal): %s", _boot_err)
 
 
 def _compute_self_hash() -> str:
@@ -151,8 +153,8 @@ def lock_environment() -> None:
                     f"\U0001f6a8 [GATE] LOCKOUT ACTIVE. "
                     f"Too many failed attempts. Try again in {remaining}s."
                 )
-    except (json.JSONDecodeError, KeyError):
-        logger.debug("Suppressed error")
+    except (json.JSONDecodeError, KeyError) as _lock_err:
+        logger.debug("Lockout file parse failed (non-fatal): %s", _lock_err)
 
     # ═══════════════════════════════════════════════════════
     #  LAW 9: MAX BOOT FREQUENCY (anti fork-bomb)
@@ -169,8 +171,8 @@ def lock_environment() -> None:
                     f"Max boot frequency exceeded ({len(recent)}/{_MAX_BOOTS_PER_MINUTE} per minuut). "
                     "Possible fork-bomb detected.",
                 )
-    except (json.JSONDecodeError, KeyError):
-        logger.debug("Suppressed error")
+    except (json.JSONDecodeError, KeyError) as _boot_err:
+        logger.debug("Boot tracker parse failed (non-fatal): %s", _boot_err)
 
     # ═══════════════════════════════════════════════════════
     #  LAW 1: THE ROOT LAW
@@ -298,8 +300,8 @@ def lock_environment() -> None:
                 # Eerste boot — sla de hash op als referentie
                 with open(_HASH_FILE, "w", encoding="utf-8") as f:
                     f.write(current_hash)
-        except Exception:
-            pass  # Hash check is non-fatal bij file errors
+        except Exception as _hash_err:
+            logger.debug("Hash check non-fatal: %s", _hash_err)
 
     # ═══════════════════════════════════════════════════════
     #  LAW 10: SILICON SEAL C2 (Hardware Node-Lock)
@@ -318,12 +320,62 @@ def lock_environment() -> None:
         )
 
     # ═══════════════════════════════════════════════════════
+    #  LAW 11: CPU HARDWARE ID (Defense-in-Depth)
+    # ═══════════════════════════════════════════════════════
+    # Directe CPU fingerprint check IN de gate — niet alleen via
+    # hardware_anchor. Als iemand hardware_anchor omzeilt of
+    # manipuleert, vangt Law 11 het alsnog.
+    try:
+        from danny_toolkit.core.hardware_anchor import validate_cpu_fingerprint
+        cpu_valid, cpu_fp = validate_cpu_fingerprint()
+        if not cpu_valid:
+            unknown = [k for k, v in cpu_fp.items() if v == "UNKNOWN" or not v]
+            _gate_fail(
+                "Law 11: CPU Hardware ID",
+                f"Execution Denied. CPU fingerprint onvolledig — "
+                f"velden {unknown} niet leesbaar. "
+                f"Hardware identiteit kan niet bevestigd worden.",
+            )
+        # Cross-check: processor_id mag niet leeg of generiek zijn
+        pid = cpu_fp.get("processor_id", "")
+        if not pid or pid == "UNKNOWN" or len(pid) < 8:
+            _gate_fail(
+                "Law 11: CPU Hardware ID",
+                "Execution Denied. CPU Processor ID is te kort of ontbreekt. "
+                f"Ontvangen: '{pid}'. Verwacht: minimaal 8 hex karakters.",
+            )
+        # Cross-check: core count moet numeriek en realistisch zijn
+        cores = cpu_fp.get("cores", "")
+        try:
+            core_count = int(cores)
+            if core_count < 1 or core_count > 256:
+                raise ValueError(f"onrealistische core count: {core_count}")
+        except (ValueError, TypeError) as _cc_err:
+            _gate_fail(
+                "Law 11: CPU Hardware ID",
+                f"Execution Denied. CPU core count ongeldig: '{cores}'. "
+                f"Reden: {_cc_err}",
+            )
+        _audit_log(
+            "PASSED", "Law 11: CPU Hardware ID",
+            f"CPU={cpu_fp['name']}, Cores={cores}, "
+            f"PID={pid[:12]}..., Clock={cpu_fp.get('max_clock', '?')}MHz",
+        )
+    except PermissionError as e:
+        _gate_fail("Law 11: CPU Hardware ID", str(e))
+    except ImportError:
+        _gate_fail(
+            "Law 11: CPU Hardware ID",
+            "hardware_anchor module niet gevonden. CPU verificatie onmogelijk.",
+        )
+
+    # ═══════════════════════════════════════════════════════
     #  ALL LAWS PASSED — Welcome, Commander
     # ═══════════════════════════════════════════════════════
-    _audit_log("GRANTED", "ALL 10 LAWS", "Environment Verified. Welcome, Commander Danny.")
+    _audit_log("GRANTED", "ALL 11 LAWS", "Environment Verified. Welcome, Commander Danny.")
     _record_boot()
 
-    print("\u2705 [SOVEREIGN GATE v6.19.0] 10/10 Laws Verified. Welcome, Commander Danny.")
+    print("\u2705 [SOVEREIGN GATE v7.0] 11/11 Laws Verified. Welcome, Commander Danny.")
     return True
 
 
