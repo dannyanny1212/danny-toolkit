@@ -304,7 +304,7 @@ class ShardRouter:
                 logger.warning("Shard zoek geblokkeerd: %s", reason)
                 return []
         except ImportError:
-            pass  # VectorStore niet beschikbaar, skip guard
+            logger.debug("VectorStore rate guard niet beschikbaar — skip")
 
         zoek_shards = shards or ALL_SHARDS
         alle_resultaten = []
