@@ -608,7 +608,6 @@ class ToolRegistry:
         params: dict,
         agent_naam: str = None,
         skip_cache: bool = False,
-        skip_validation: bool = False,
         metadata: dict = None
     ) -> Union[str, ToolResult]:
         """
@@ -619,7 +618,6 @@ class ToolRegistry:
             params: Parameters voor de tool
             agent_naam: Naam van de aanroepende agent
             skip_cache: Skip cache lookup
-            skip_validation: Skip parameter validatie
 
         Returns:
             ToolResult of string (voor backwards compatibility)
@@ -647,8 +645,8 @@ class ToolRegistry:
         # Trigger on_execute hooks
         self._trigger_hooks(self.on_execute, tool, params)
 
-        # Parameter validatie
-        if not skip_validation:
+        # Parameter validatie (ALTIJD — skip_validation verwijderd in X32)
+        if True:
             schema = {
                 "type": "object",
                 "properties": tool.parameters,

@@ -22,6 +22,7 @@ import logging
 import os
 import random
 import secrets
+import threading
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -147,6 +148,7 @@ class PhantomAgent:
         self.is_decoy = True
         self.id = PHANTOM_ID
         self._activations = 0
+        self._lock = threading.Lock()
 
     async def process(self, task: str, brain: Any = None) -> Any:
         """Verwerk een geblokkeerd request met een decoy response.
@@ -168,10 +170,12 @@ class PhantomAgent:
         Returns:
             SwarmPayload met decoy content.
         """
-        self._activations += 1
+        with self._lock:
+            self._activations += 1
+            activation_num = self._activations
 
         # ═══ CERBERUS SILENT ALARM ═══
-        _fire_cerberus_alarm(task, self._activations)
+        _fire_cerberus_alarm(task, activation_num)
 
         tactic = random.choice(["fake_data", "boomerang"])
 
