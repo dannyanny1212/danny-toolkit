@@ -696,8 +696,8 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
                         print(kleur("ANTWOORD:", Kleur.GROEN))
                         print("-" * 50)
                         print(antwoord)
-                except ValueError:
-                    logger.debug("Suppressed error")
+                except ValueError as _sup_err:
+                    logger.debug("Suppressed: %s", _sup_err)
 
     def _instellingen_menu(self) -> None:
         """Instellingen aanpassen."""
@@ -735,22 +735,22 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
                     if 50 <= nieuwe <= 500:
                         inst["chunk_grootte"] = nieuwe
                         self.chunk_grootte = nieuwe
-                except ValueError:
-                    logger.debug("Suppressed error")
+                except ValueError as _sup_err:
+                    logger.debug("Suppressed: %s", _sup_err)
             elif keuze == "3":
                 try:
                     nieuwe = int(input("Nieuwe top K (1-20): "))
                     if 1 <= nieuwe <= 20:
                         inst["top_k"] = nieuwe
-                except ValueError:
-                    logger.debug("Suppressed error")
+                except ValueError as _sup_err:
+                    logger.debug("Suppressed: %s", _sup_err)
             elif keuze == "4":
                 try:
                     nieuwe = float(input("Nieuwe min. score (0.01-0.5): "))
                     if 0.01 <= nieuwe <= 0.5:
                         inst["min_score"] = nieuwe
-                except ValueError:
-                    logger.debug("Suppressed error")
+                except ValueError as _sup_err:
+                    logger.debug("Suppressed: %s", _sup_err)
             elif keuze == "5":
                 inst["gebruik_ai"] = not inst["gebruik_ai"]
                 if inst["gebruik_ai"] and not self.ai_client:
@@ -805,8 +805,8 @@ Geef een beknopt en accuraat antwoord gebaseerd op de context."""
             try:
                 idx = int(keuze) - 1
                 self._toon_document_info(idx)
-            except ValueError:
-                logger.debug("Suppressed error")
+            except ValueError as _sup_err:
+                logger.debug("Suppressed: %s", _sup_err)
 
     def _toon_keywords(self) -> None:
         """Toon belangrijkste keywords."""

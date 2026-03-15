@@ -423,8 +423,8 @@ class Watchtower:
                 f" (scan elke {self._interval}s){Kleur.RESET}",
                 flush=True,
             )
-        except UnicodeEncodeError:
-            logger.debug("Suppressed error")
+        except UnicodeEncodeError as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
 
         # Eerste scan onmiddellijk
         try:

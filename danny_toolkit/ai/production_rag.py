@@ -546,8 +546,8 @@ It also performs various checks, such as ensuring the existence of required dire
                     nieuwe = int(input("Nieuwe top-K (1-20): "))
                     if 1 <= nieuwe <= 20:
                         inst["top_k"] = nieuwe
-                except ValueError:
-                    logger.debug("Suppressed error")
+                except ValueError as _sup_err:
+                    logger.debug("Suppressed: %s", _sup_err)
             elif keuze == "2":
                 inst["gebruik_conversatie"] = not inst["gebruik_conversatie"]
                 if not inst["gebruik_conversatie"]:

@@ -1011,8 +1011,8 @@ class SchatzoekApp:
                 elif item == "bom":
                     self.data["inventory"].remove(item)
                     return "bom"  # Special return voor gevecht
-        except (ValueError, IndexError):
-            logger.debug("Suppressed error")
+        except (ValueError, IndexError) as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
 
     # ==================== MONSTER AI ====================
 
@@ -1317,8 +1317,8 @@ class SchatzoekApp:
                         succes(f"Je hebt {item} gekocht!")
                     else:
                         fout("Niet genoeg muntjes!")
-            except ValueError:
-                logger.debug("Suppressed error")
+            except ValueError as _sup_err:
+                logger.debug("Suppressed: %s", _sup_err)
 
             input(kleur("\n  Druk op Enter...", "grijs"))
 
@@ -1613,8 +1613,8 @@ class SchatzoekApp:
             idx = int(keuze) - 1
             if 0 <= idx < len(inv):
                 self._gebruik_powerup(inv[idx])
-        except ValueError:
-            logger.debug("Suppressed error")
+        except ValueError as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
 
         input(kleur("\n  Druk op Enter...", "grijs"))
 
@@ -1660,8 +1660,8 @@ class SchatzoekApp:
             if 0 <= idx < len(classes):
                 self.data["profiel"]["class"] = classes[idx]
                 succes(f"Je speelt nu als {self.CLASSES[classes[idx]]['naam']}!")
-        except ValueError:
-            logger.debug("Suppressed error")
+        except ValueError as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
 
     # ==================== MAIN MENU ====================
 

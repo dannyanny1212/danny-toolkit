@@ -679,8 +679,8 @@ class NLPStudioApp:
             try:
                 with open(self.bestand, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
-                logger.debug("Suppressed error")
+            except (json.JSONDecodeError, IOError) as _sup_err:
+                logger.debug("Suppressed: %s", _sup_err)
         return {
             "modellen": {},
             "training_data": {},

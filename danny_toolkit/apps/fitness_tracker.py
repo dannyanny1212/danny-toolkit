@@ -65,8 +65,8 @@ class FitnessTrackerApp:
             try:
                 with open(self.data_file, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
-                logger.debug("Suppressed error")
+            except (json.JSONDecodeError, IOError) as _sup_err:
+                logger.debug("Suppressed: %s", _sup_err)
         return {
             "profiel": {},
             "workouts": [],
@@ -118,15 +118,15 @@ class FitnessTrackerApp:
             gewicht = input(f"  Gewicht in kg [{profiel.get('gewicht', '')}]: ").strip()
             if gewicht:
                 profiel["gewicht"] = float(gewicht)
-        except ValueError:
-            logger.debug("Suppressed error")
+        except ValueError as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
 
         try:
             lengte = input(f"  Lengte in cm [{profiel.get('lengte', '')}]: ").strip()
             if lengte:
                 profiel["lengte"] = float(lengte)
-        except ValueError:
-            logger.debug("Suppressed error")
+        except ValueError as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
 
         doel = input(f"  Doel (afvallen/opbouwen/fit) [{profiel.get('doel', 'fit')}]: ").strip()
         if doel:

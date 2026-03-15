@@ -822,8 +822,8 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
         for client in clients:
             try:
                 await client.close()
-            except Exception:
-                logger.debug("Suppressed error")
+            except Exception as _sup_err:
+                logger.debug("Suppressed: %s", _sup_err)
 
     # ------------------------------------------------------------------
     # Status & Diagnostiek

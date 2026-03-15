@@ -116,8 +116,8 @@ class LanguageTutorApp:
                 self.data["actieve_taal"] = talen[keuze - 1]
                 self._sla_op()
                 print(f"\n  Actieve taal: {self.data['actieve_taal']}")
-        except (ValueError, IndexError):
-            logger.debug("Suppressed error")
+        except (ValueError, IndexError) as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
 
         input("\n  Druk op Enter...")
 

@@ -423,8 +423,8 @@ class ClaudeChatApp:
             keys = list(self.TEMPLATES.keys())
             if 0 <= idx < len(keys):
                 self._gebruik_template(keys[idx])
-        except ValueError:
-            logger.debug("Suppressed error")
+        except ValueError as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
 
     def _gebruik_template(self, template_key: str) -> None:
         """Gebruik een specifieke template."""
@@ -512,8 +512,8 @@ class ClaudeChatApp:
                 print(kleur(f"\n[OK] Gesprek '{gesprek['naam']}' geladen!", Kleur.GROEN))
                 print(f"    Persona: {self._get_huidige_persona()['naam']}")
                 print(f"    Berichten: {len(self.conversatie)}")
-        except ValueError:
-            logger.debug("Suppressed error")
+        except ValueError as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
 
     def _toon_history(self) -> None:
         """Toon de huidige gespreksgeschiedenis."""
@@ -752,8 +752,8 @@ class ClaudeChatApp:
                     f.write(code.strip())
 
                 print(kleur(f"\n[OK] Code opgeslagen naar: {path}", Kleur.GROEN))
-        except ValueError:
-            logger.debug("Suppressed error")
+        except ValueError as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
 
     def _snelle_vertaling(self) -> None:
         """Snelle vertaling tool."""
@@ -840,8 +840,8 @@ class ClaudeChatApp:
                     idx = int(keuze) - 1
                     if 0 <= idx < len(favorieten):
                         self._gebruik_favoriet(favorieten[idx])
-                except ValueError:
-                    logger.debug("Suppressed error")
+                except ValueError as _sup_err:
+                    logger.debug("Suppressed: %s", _sup_err)
 
     def _voeg_favoriet_toe(self) -> None:
         """Voeg een nieuwe favoriete prompt toe."""

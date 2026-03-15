@@ -348,8 +348,8 @@ class DocumentProcessor:
                     if reader.metadata.subject:
                         metadata["pdf_onderwerp"] = reader.metadata.subject
 
-        except ImportError:
-            logger.debug("Suppressed error")
+        except ImportError as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
         except Exception as e:
             logger.debug("PDF metadata extractie mislukt: %s", e)
 

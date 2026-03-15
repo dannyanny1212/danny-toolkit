@@ -66,8 +66,8 @@ def _detect_base_dir() -> Path:
     if Config is not None:
         try:
             return Path(Config.BASE_DIR)
-        except Exception:
-            logger.debug("Suppressed error")
+        except Exception as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
 
     for anchor in (Path(__file__).resolve(), Path.cwd()):
         current = anchor

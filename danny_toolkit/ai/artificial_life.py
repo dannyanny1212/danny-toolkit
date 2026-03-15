@@ -1044,8 +1044,8 @@ class ArtificialLifeApp:
             try:
                 with open(self.bestand, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
-                logger.debug("Suppressed error")
+            except (json.JSONDecodeError, IOError) as _sup_err:
+                logger.debug("Suppressed: %s", _sup_err)
         return {"consciousness": None, "stats": {"totaal_interacties": 0}}
 
     def _sla_op(self) -> None:
@@ -1090,8 +1090,8 @@ class ArtificialLifeApp:
                 if verschil > 7200 and random.random() < 0.6:
                     self._genereer_droom()
 
-        except (ValueError, TypeError):
-            logger.debug("Suppressed error")
+        except (ValueError, TypeError) as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
 
     def _genereer_droom(self) -> None:
         """Genereer een droom."""

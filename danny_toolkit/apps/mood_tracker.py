@@ -157,8 +157,8 @@ class MoodTrackerApp(BaseApp):
                     self.activiteiten[i] for i in indices
                     if 0 <= i < len(self.activiteiten)
                 ]
-            except ValueError:
-                logger.debug("Suppressed error")
+            except ValueError as _sup_err:
+                logger.debug("Suppressed: %s", _sup_err)
 
         # Optionele notitie
         notitie = input("\nNotitie (optioneel): ").strip()

@@ -19,8 +19,8 @@ try:
     if sys.platform == "win32":
         sys.stdout.reconfigure(encoding="utf-8")
         sys.stderr.reconfigure(encoding="utf-8")
-except Exception:
-    logger.debug("Suppressed error")
+except Exception as _sup_err:
+    logger.debug("Suppressed: %s", _sup_err)
 
 # ── Textual imports ──────────────────────────────────────────────
 from textual.app import App, ComposeResult
@@ -303,8 +303,8 @@ class NeuralStreamPanel(RichLog):
                         if line.strip():
                             self.write(f"[dim]{line}[/]")
                     self.write("[dim]── live feed ──[/]\n")
-            except Exception:
-                logger.debug("Suppressed error")
+            except Exception as _sup_err:
+                logger.debug("Suppressed: %s", _sup_err)
 
     def _on_bus_event(self, event: Any) -> None:
         """Handle incoming NeuralBus event (called from any thread)."""
@@ -326,8 +326,8 @@ class NeuralStreamPanel(RichLog):
             )
             # Thread-safe write via call_from_thread
             self.app.call_from_thread(self.write, line)
-        except Exception:
-            logger.debug("Suppressed error")
+        except Exception as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -722,8 +722,8 @@ class ZesdeZintuigApp(App):
             self.query_one(VitalsPanel)._refresh_vitals()
             self.query_one(IntelligencePanel)._refresh_intelligence()
             self._log_stream("[green]All panels refreshed[/]")
-        except Exception:
-            logger.debug("Suppressed error")
+        except Exception as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
 
     # ── Log helper ────────────────────────────────────────────
     def _log_stream(self, text: str) -> None:
@@ -732,8 +732,8 @@ class ZesdeZintuigApp(App):
             stream = self.query_one(NeuralStreamPanel)
             ts = datetime.now().strftime("%H:%M:%S")
             stream.write(f"[dim]{ts}[/] {text}")
-        except Exception:
-            logger.debug("Suppressed error")
+        except Exception as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
 import logging
 
 try:

@@ -289,8 +289,8 @@ class SemanticCache:
                     meta = {}
                     try:
                         meta = json.loads(p_meta) if p_meta else {}
-                    except (json.JSONDecodeError, TypeError):
-                        logger.debug("Suppressed error")
+                    except (json.JSONDecodeError, TypeError) as _sup_err:
+                        logger.debug("Suppressed: %s", _sup_err)
                     return {
                         "content": response,
                         "type": p_type or "text",
@@ -335,8 +335,8 @@ class SemanticCache:
                 meta = {}
                 try:
                     meta = json.loads(p_meta) if p_meta else {}
-                except (json.JSONDecodeError, TypeError):
-                    logger.debug("Suppressed error")
+                except (json.JSONDecodeError, TypeError) as _sup_err:
+                    logger.debug("Suppressed: %s", _sup_err)
                 return {
                     "content": response,
                     "type": p_type or "text",

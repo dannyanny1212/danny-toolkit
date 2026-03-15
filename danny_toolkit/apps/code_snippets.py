@@ -360,8 +360,8 @@ class CodeSnippetsApp:
                     idx2 = int(keuze2) - 1
                     if 0 <= idx2 < len(resultaten):
                         self._toon_snippet(resultaten[idx2])
-        except (ValueError, IndexError):
-            logger.debug("Suppressed error")
+        except (ValueError, IndexError) as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
 
     def _toon_favorieten(self) -> None:
         """Toon favoriete snippets."""

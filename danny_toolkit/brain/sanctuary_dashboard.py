@@ -640,8 +640,8 @@ class SanctuaryDashboard:
             from danny_toolkit.brain import __version__ as brain_ver
             lines.append(_box_row(""))
             lines.append(_box_row(f"  BRAIN VERSION    {brain_ver}"))
-        except Exception:
-            logger.debug("Suppressed error")
+        except Exception as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
 
         # Python / venv info
         py_ver = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"

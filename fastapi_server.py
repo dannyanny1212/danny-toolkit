@@ -1037,7 +1037,7 @@ def _scorched_earth_terminate(mutated_file: str, expected: str, actual: str) -> 
         )
         get_cortical_stack().flush()
     except Exception:
-        pass
+        pass  # Server gaat dood, flush is best-effort
 
     # ═══ VERNIETIG ALLE CREDENTIALS IN RAM ═══
     _SENSITIVE_PREFIXES = (

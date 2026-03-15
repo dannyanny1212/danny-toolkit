@@ -122,8 +122,8 @@ is available and AI functionality is enabled."""
             try:
                 with open(self.data_file, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
-                logger.debug("Suppressed error")
+            except (json.JSONDecodeError, IOError) as _sup_err:
+                logger.debug("Suppressed: %s", _sup_err)
         return {
             "sessies": [],
             "favoriete_vragen": [],
@@ -248,8 +248,8 @@ is available and AI functionality is enabled."""
             keuze = int(input("  Keuze: ").strip())
             if 1 <= keuze <= len(modes):
                 self._start_sessie(modes[keuze - 1])
-        except (ValueError, IndexError):
-            logger.debug("Suppressed error")
+        except (ValueError, IndexError) as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
 
     def _diepe_vraag(self) -> None:
         """Krijg een diepe vraag om over na te denken."""

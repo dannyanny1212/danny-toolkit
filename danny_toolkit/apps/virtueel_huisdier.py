@@ -439,8 +439,8 @@ class VirtueelHuisdierApp:
             try:
                 with open(self.kennis_bestand, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
-                logger.debug("Suppressed error")
+            except (json.JSONDecodeError, IOError) as _sup_err:
+                logger.debug("Suppressed: %s", _sup_err)
         return {
             "feiten": [],
             "bronnen": [],
@@ -2993,8 +2993,8 @@ Maak het dromerig en fantasierijk."""
                         except Exception as e:
                             print(f"  [!] Kon {bestand.name} niet lezen")
 
-        except ImportError:
-            logger.debug("Suppressed error")
+        except ImportError as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
 
         if not echte_rag:
             print(f"  [!] Geen RAG beschikbaar, gebruik ingebouwde kennis...")
@@ -3336,7 +3336,7 @@ Maak het dromerig en fantasierijk."""
                             print(f"  [_] {naam} kende dit al...")
 
         except Exception as e:
-            logger.debug("Suppressed error")
+            logger.debug("Suppressed: %s", e)
 
         if not echte_nieuws:
             print(f"  [!] Nieuws Agent niet beschikbaar, gebruik cache...")
@@ -3489,7 +3489,7 @@ Maak het dromerig en fantasierijk."""
                     intel_bonus += 1
 
         except Exception as e:
-            logger.debug("Suppressed error")
+            logger.debug("Suppressed: %s", e)
 
         if not echte_weer:
             print(f"  {naam} kijkt naar buiten...")
@@ -5535,22 +5535,22 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                     idx = int(keuze[1:]) - 1
                     if 0 <= idx < len(in_training):
                         self._train_trick(in_training[idx][0])
-                except (ValueError, IndexError):
-                    logger.debug("Suppressed error")
+                except (ValueError, IndexError) as _sup_err:
+                    logger.debug("Suppressed: %s", _sup_err)
             elif keuze.startswith("n") and len(keuze) > 1:
                 try:
                     idx = int(keuze[1:]) - 1
                     if 0 <= idx < len(beschikbaar):
                         self._start_trick_training(beschikbaar[idx][0])
-                except (ValueError, IndexError):
-                    logger.debug("Suppressed error")
+                except (ValueError, IndexError) as _sup_err:
+                    logger.debug("Suppressed: %s", _sup_err)
             else:
                 try:
                     idx = int(keuze) - 1
                     if 0 <= idx < len(geleerde):
                         self._voer_trick_uit(geleerde[idx])
-                except (ValueError, IndexError):
-                    logger.debug("Suppressed error")
+                except (ValueError, IndexError) as _sup_err:
+                    logger.debug("Suppressed: %s", _sup_err)
 
             input("\nDruk op Enter...")
 
@@ -5856,8 +5856,8 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                             self._unlock_achievement("alle_accessoires")
                     else:
                         print("\nJe hebt niet genoeg munten!")
-            except (ValueError, IndexError):
-                logger.debug("Suppressed error")
+            except (ValueError, IndexError) as _sup_err:
+                logger.debug("Suppressed: %s", _sup_err)
 
             input("\nDruk op Enter...")
 
@@ -6268,8 +6268,8 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
 
                 self._voeg_dagboek_toe(f"{event['naam']}: {act_naam}")
                 self._sla_op()
-        except (ValueError, IndexError):
-            logger.debug("Suppressed error")
+        except (ValueError, IndexError) as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
 
     def _competities(self) -> None:
         """Doe mee aan competities met je huisdier!"""
@@ -6569,8 +6569,8 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                             self._voeg_dagboek_toe(f"Nieuwe kamer: {kamer_naam}")
                         else:
                             print("\n  [!] Niet genoeg munten!")
-                except (ValueError, IndexError):
-                    logger.debug("Suppressed error")
+                except (ValueError, IndexError) as _sup_err:
+                    logger.debug("Suppressed: %s", _sup_err)
 
             elif keuze == "2":
                 print("\n  Beschikbare meubels:")
@@ -6593,8 +6593,8 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                                 print("\n  [!] Niet genoeg munten!")
                         else:
                             print("\n  [!] Je hebt dit meubel al!")
-                except (ValueError, IndexError):
-                    logger.debug("Suppressed error")
+                except (ValueError, IndexError) as _sup_err:
+                    logger.debug("Suppressed: %s", _sup_err)
 
             elif keuze == "3":
                 print(f"\n  --- {naam}'s HUIS ---")
@@ -6698,8 +6698,8 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                             print(f"\n  [PLANT] {gewas_naam.title()} geplant!")
                         else:
                             print("\n  [!] Niet genoeg munten!")
-                except (ValueError, IndexError):
-                    logger.debug("Suppressed error")
+                except (ValueError, IndexError) as _sup_err:
+                    logger.debug("Suppressed: %s", _sup_err)
 
             elif keuze == "2":
                 geoogst = []
@@ -6851,8 +6851,8 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                         self._voeg_dagboek_toe(f"Crafting: {item_naam}")
                     else:
                         print("\n  [!] Niet genoeg materialen!")
-            except (ValueError, IndexError):
-                logger.debug("Suppressed error")
+            except (ValueError, IndexError) as _sup_err:
+                logger.debug("Suppressed: %s", _sup_err)
 
             self._sla_op()
 
@@ -6948,8 +6948,8 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                             print(f"\n  [OK] {item_naam.title()} gekocht!")
                         else:
                             print("\n  [!] Niet genoeg munten!")
-                except (ValueError, IndexError):
-                    logger.debug("Suppressed error")
+                except (ValueError, IndexError) as _sup_err:
+                    logger.debug("Suppressed: %s", _sup_err)
 
             elif keuze == "b":
                 if "farm" in self.huisdier and self.huisdier["farm"]["voorraad"]:
@@ -6987,8 +6987,8 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                             self._voeg_dagboek_toe(f"Kookte: {recept_naam}")
                         else:
                             print("\n  [!] Niet genoeg ingrediënten!")
-                except (ValueError, IndexError):
-                    logger.debug("Suppressed error")
+                except (ValueError, IndexError) as _sup_err:
+                    logger.debug("Suppressed: %s", _sup_err)
 
             self._sla_op()
 
@@ -7357,8 +7357,8 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                     doel_id, _ = beschikbaar[idx]
                     doelen["actief"] = doel_id
                     print(f"\n  [OK] Nieuw doel: {alle_doelen[doel_id]['naam']}")
-            except (ValueError, IndexError):
-                logger.debug("Suppressed error")
+            except (ValueError, IndexError) as _sup_err:
+                logger.debug("Suppressed: %s", _sup_err)
 
         elif keuze == "2":
             if doelen["actief"]:
@@ -7772,8 +7772,8 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                         else:
                             magie["geleerde_spreuken"].append(sp_id)
                             print(f"\n  [MAGIE] {sp_data['naam']} geleerd!")
-                except (ValueError, IndexError):
-                    logger.debug("Suppressed error")
+                except (ValueError, IndexError) as _sup_err:
+                    logger.debug("Suppressed: %s", _sup_err)
 
             elif keuze == "2":
                 if not magie["geleerde_spreuken"]:
@@ -7809,8 +7809,8 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
                                 print(f"  [+] {stat.title()}: +{waarde}")
                         else:
                             print(f"\n  [!] Niet genoeg mana! Nodig: {sp['mana']}")
-                except (ValueError, IndexError):
-                    logger.debug("Suppressed error")
+                except (ValueError, IndexError) as _sup_err:
+                    logger.debug("Suppressed: %s", _sup_err)
 
             elif keuze == "3":
                 if self.huisdier["munten"] >= 20:
@@ -9039,7 +9039,7 @@ Kort, praktisch, direct toepasbaar. Nederlands."""
 
         except Exception as e:
             # Silently fail - learning is optional
-            logger.debug("Suppressed error")
+            logger.debug("Suppressed: %s", e)
 
     def run(self) -> None:
         """Start de app."""

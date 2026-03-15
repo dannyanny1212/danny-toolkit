@@ -106,8 +106,8 @@ Configures the pad and tracks hash changes."""
                 # Verifieer integriteit
                 self._verifieer_hash(data)
                 return data
-            except (json.JSONDecodeError, IOError):
-                logger.debug("Suppressed error")
+            except (json.JSONDecodeError, IOError) as _sup_err:
+                logger.debug("Suppressed: %s", _sup_err)
 
         # Eerste keer: schrijf defaults
         self._schrijf(_DEFAULT_CONFIG)

@@ -335,8 +335,8 @@ class ToolDispatcher:
             km = get_key_manager()
             self._groq_client = km.create_sync_client("Tribunal")
             self._groq_model = "meta-llama/llama-4-scout-17b-16e-instruct"
-        except ImportError:
-            logger.debug("Suppressed error")
+        except ImportError as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
 
         if not self._groq_client:
             try:
@@ -345,8 +345,8 @@ class ToolDispatcher:
                 if key:
                     self._groq_client = Groq(api_key=key)
                     self._groq_model = "meta-llama/llama-4-scout-17b-16e-instruct"
-            except ImportError:
-                logger.debug("Suppressed error")
+            except ImportError as _sup_err:
+                logger.debug("Suppressed: %s", _sup_err)
 
     def select_tools(self, user_input: str) -> Set[str]:
         """Selecteer relevante apps voor de user query.

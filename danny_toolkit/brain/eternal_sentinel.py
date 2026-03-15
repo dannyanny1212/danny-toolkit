@@ -170,8 +170,8 @@ class EternalSentinel:
         try:
             pass  # import moved to top-level
             requests.get(f"{API_BASE}/api/v1/health", headers=HEADERS, timeout=5)
-        except Exception:
-            logger.debug("Suppressed error")
+        except Exception as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
         while self._running:
             self._check_pulse()
             time.sleep(PULSE_CHECK_INTERVAL)
@@ -369,8 +369,8 @@ class EternalSentinel:
         try:
             pass  # import moved to top-level
             get_bus().publish(event_name, data, bron="eternal_sentinel")
-        except Exception:
-            logger.debug("Suppressed error")
+        except Exception as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
 
 
 # ── Singleton ─────────────────────────────────────────────

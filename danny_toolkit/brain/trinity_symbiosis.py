@@ -161,8 +161,8 @@ class TrinitySymbiosis:
                             linked=member_data.get("linked", True)
                         )
             except (json.JSONDecodeError, IOError, OSError,
-                    KeyError, ValueError):
-                logger.debug("Suppressed error")
+                    KeyError, ValueError) as _sup_err:
+                logger.debug("Suppressed: %s", _sup_err)
 
     def _save_state(self) -> None:
         """Sla Trinity staat op."""

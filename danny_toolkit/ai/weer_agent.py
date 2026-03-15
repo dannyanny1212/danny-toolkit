@@ -208,8 +208,8 @@ class WeerAgentApp:
             try:
                 with open(self.data_bestand, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
-                logger.debug("Suppressed error")
+            except (json.JSONDecodeError, IOError) as _sup_err:
+                logger.debug("Suppressed: %s", _sup_err)
         return {
             "versie": self.VERSIE,
             "favoriete_locaties": [],
@@ -1017,8 +1017,8 @@ are handled internally by the function."""
                     verwijderd = self.data["favoriete_locaties"].pop(idx)
                     self._sla_data_op()
                     print(kleur(f"{verwijderd} verwijderd!", Kleur.GROEN))
-            except ValueError:
-                logger.debug("Suppressed error")
+            except ValueError as _sup_err:
+                logger.debug("Suppressed: %s", _sup_err)
 
     # ==================== AGENTIC LOOP ====================
 

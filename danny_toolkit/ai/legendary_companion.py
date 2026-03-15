@@ -1314,8 +1314,8 @@ ANTWOORD: [het antwoord]"""
                             print(kleur(f"[OK] +{result['xp_gained']} XP! Volgende review in {result['next_review_days']} dagen.", Kleur.GROEN))
                         else:
                             print(kleur(f"[REVIEW] We proberen het morgen opnieuw!", Kleur.GEEL))
-                    except ValueError:
-                        logger.debug("Suppressed error")
+                    except ValueError as _sup_err:
+                        logger.debug("Suppressed: %s", _sup_err)
                 else:
                     print(kleur("[OK] Geen quizzes op dit moment!", Kleur.GROEN))
 

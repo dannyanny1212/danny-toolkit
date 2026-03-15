@@ -302,8 +302,8 @@ class AgendaPlannerApp(BaseApp):
                         })
                         print(f"[OK] Taak '{t['titel']}' voltooid!")
                         break
-            except ValueError:
-                logger.debug("Suppressed error")
+            except ValueError as _sup_err:
+                logger.debug("Suppressed: %s", _sup_err)
 
     def _verwijder_afspraak(self) -> None:
         """Verwijder een afspraak."""
@@ -322,8 +322,8 @@ class AgendaPlannerApp(BaseApp):
                         self._sla_op()
                         print("[OK] Afspraak verwijderd!")
                     break
-        except ValueError:
-            logger.debug("Suppressed error")
+        except ValueError as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
 
     # ==================== AI FUNCTIES ====================
 

@@ -326,8 +326,8 @@ class Generator:
         try:
             self._statistieken["tokens_in"] += response.usage.input_tokens
             self._statistieken["tokens_uit"] += response.usage.output_tokens
-        except AttributeError:
-            logger.debug("Suppressed error")
+        except AttributeError as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
 
     # =========================================================================
     # STREAMING

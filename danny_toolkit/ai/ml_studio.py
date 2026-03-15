@@ -488,8 +488,8 @@ class MLStudioApp:
             try:
                 with open(self.data_file, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except (json.JSONDecodeError, IOError):
-                logger.debug("Suppressed error")
+            except (json.JSONDecodeError, IOError) as _sup_err:
+                logger.debug("Suppressed: %s", _sup_err)
         return {
             "generaties": [],
             "rag_documenten": [],
@@ -878,8 +878,8 @@ class MLStudioApp:
 
                     input("\n  Druk op Enter...")
 
-            except (ValueError, IndexError):
-                logger.debug("Suppressed error")
+            except (ValueError, IndexError) as _sup_err:
+                logger.debug("Suppressed: %s", _sup_err)
 
     def _model_benchmark(self) -> None:
         """Vergelijk model prestaties."""

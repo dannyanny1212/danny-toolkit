@@ -403,8 +403,8 @@ class GoalsTrackerApp(BaseApp):
                 cat_idx = int(input("\nKeuze: ").strip()) - 1
                 cat_key = cats[cat_idx][0]
                 doelen = [d for d in doelen if d.get("categorie") == cat_key]
-            except (ValueError, IndexError):
-                logger.debug("Suppressed error")
+            except (ValueError, IndexError) as _sup_err:
+                logger.debug("Suppressed: %s", _sup_err)
 
         if not doelen:
             print("\nGeen doelen gevonden met deze filter.")
@@ -480,8 +480,8 @@ class GoalsTrackerApp(BaseApp):
             if deadline_input:
                 try:
                     deadline = datetime.strptime(deadline_input, "%d-%m-%Y").isoformat()
-                except ValueError:
-                    logger.debug("Suppressed error")
+                except ValueError as _sup_err:
+                    logger.debug("Suppressed: %s", _sup_err)
 
             milestone = {
                 "id": len(self.data["milestones"]) + 1,

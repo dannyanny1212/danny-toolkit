@@ -528,8 +528,8 @@ class CentralBrain:
             mirror_ctx = TheMirror().get_context_injection()
             if mirror_ctx:
                 mirror_section = f"\n{mirror_ctx}\n"
-        except Exception:
-            logger.debug("Suppressed error")
+        except Exception as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
 
         # System message
         system_message = f"""Je bent Danny's AI assistant — de kern van het Omega ecosysteem.

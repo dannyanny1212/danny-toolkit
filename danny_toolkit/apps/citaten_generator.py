@@ -244,8 +244,8 @@ class CitatenGeneratorApp(BaseApp):
                     verwijderd = self.data["favorieten"].pop(idx)
                     self._sla_op()
                     print(f"[OK] Verwijderd uit favorieten.")
-            except ValueError:
-                logger.debug("Suppressed error")
+            except ValueError as _sup_err:
+                logger.debug("Suppressed: %s", _sup_err)
 
     def _eigen_citaten(self) -> None:
         """Bekijk eigen citaten."""

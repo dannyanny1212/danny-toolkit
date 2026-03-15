@@ -272,8 +272,8 @@ def render_pulse() -> None:
         for _etype, event_list in context.items():
             for ev_dict in event_list:
                 all_events.append(ev_dict)
-    except Exception:
-        logger.debug("Suppressed error")
+    except Exception as _sup_err:
+        logger.debug("Suppressed: %s", _sup_err)
 
     # Sorteer op timestamp (nieuwste eerst)
     all_events.sort(key=lambda e: e.get("timestamp", ""), reverse=True)
@@ -572,8 +572,8 @@ def render_swarm() -> None:
         stale = waakhuis.check_heartbeats()
         if stale:
             st.warning(f"Stale agents (>60s geen activiteit): {', '.join(stale)}")
-    except Exception:
-        logger.debug("Suppressed error")
+    except Exception as _sup_err:
+        logger.debug("Suppressed: %s", _sup_err)
 import logging
 
 logger = logging.getLogger(__name__)

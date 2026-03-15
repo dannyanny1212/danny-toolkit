@@ -1478,8 +1478,8 @@ class Launcher:
         try:
             from danny_toolkit.core.startup_validator import valideer_opstart
             valideer_opstart()
-        except ImportError:
-            logger.debug("Suppressed error")
+        except ImportError as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
 
         Config.laad_voorkeuren()
         self.stats = LauncherStats()

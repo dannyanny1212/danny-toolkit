@@ -185,8 +185,8 @@ class NotitieApp(BaseApp):
                         print(n["inhoud"])
                         print(f"{'=' * 50}")
                         break
-            except ValueError:
-                logger.debug("Suppressed error")
+            except ValueError as _sup_err:
+                logger.debug("Suppressed: %s", _sup_err)
 
     def _zoek_notitie(self) -> None:
         """Zoek in notities."""
@@ -216,8 +216,8 @@ class NotitieApp(BaseApp):
                         self._sla_op()
                         print("[OK] Notitie verwijderd!")
                     break
-        except ValueError:
-            logger.debug("Suppressed error")
+        except ValueError as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
 
     def _beheer_categorieen(self) -> None:
         """Beheer categorieen."""

@@ -408,8 +408,8 @@ class BoodschappenlijstApp:
             idx = int(keuze) - 1
             if 0 <= idx < len(cats):
                 return cats[idx][0]
-        except ValueError:
-            logger.debug("Suppressed error")
+        except ValueError as _sup_err:
+            logger.debug("Suppressed: %s", _sup_err)
         return "overig"
 
     def _voeg_toe(self) -> None:
@@ -588,8 +588,8 @@ class BoodschappenlijstApp:
                     idx = int(num) - 1
                     if 0 <= idx < len(items):
                         items[idx]["afgevinkt"] = not items[idx]["afgevinkt"]
-                except ValueError:
-                    logger.debug("Suppressed error")
+                except ValueError as _sup_err:
+                    logger.debug("Suppressed: %s", _sup_err)
             succes("Items bijgewerkt!")
         else:
             try:
@@ -639,8 +639,8 @@ class BoodschappenlijstApp:
                 if prijs_str:
                     try:
                         item["prijs"] = float(prijs_str.replace(",", "."))
-                    except ValueError:
-                        logger.debug("Suppressed error")
+                    except ValueError as _sup_err:
+                        logger.debug("Suppressed: %s", _sup_err)
 
                 notitie = input(f"  Notitie [{item.get('notitie', '')}]: ").strip()
                 if notitie:
