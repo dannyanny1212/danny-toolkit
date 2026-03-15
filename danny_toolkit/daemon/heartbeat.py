@@ -1050,16 +1050,15 @@ Initializes a new instance of the class.
                             ls.consolidate()
                             ls.remove_duplicates()
                             ls.rank_knowledge()
-                            # X2: extract facts from recent CorticalStack events
+                            # X6: extract facts from CorticalStack
                             stack = self._get_stack()
                             if stack:
+                                # 1. Episodic events → extract structured knowledge
                                 recent = stack.get_recent_events(count=20)
                                 facts = []
                                 for ev in recent:
                                     details = ev.get("details", "")
-                                    # _row_to_dict parses JSON → dict; handle both
                                     if isinstance(details, dict):
-                                        # Extract meaningful fields from structured data
                                         for key in ("result", "summary", "response", "content", "output"):
                                             val = details.get(key, "")
                                             if isinstance(val, str) and len(val) > 30:
@@ -1069,6 +1068,23 @@ Initializes a new instance of the class.
                                         facts.append(details[:200])
                                 if facts:
                                     ls.log_learning("cortical_extract", facts[:10])
+                                # 2. Semantic memory → seed UnifiedMemory (the missing link)
+                                sem_facts = stack.recall_all(min_confidence=0.6)
+                                seeded = 0
+                                for sf in sem_facts[:20]:
+                                    val = sf.get("value", "")
+                                    key = sf.get("key", "")
+                                    conf = sf.get("confidence", 0.5)
+                                    if val and len(val) > 10:
+                                        added = ls.memory.add_fact(
+                                            f"{key}: {val}" if key else val,
+                                            source="cortical_semantic",
+                                            success_score=min(conf, 1.0),
+                                        )
+                                        if added:
+                                            seeded += 1
+                                if seeded:
+                                    logger.info("X6: seeded %d semantic facts into learning memory", seeded)
                         except Exception as _e:
                             logger.debug("X6 hyper learn mini-cycle: %s", _e)
 

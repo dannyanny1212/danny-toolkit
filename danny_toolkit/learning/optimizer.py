@@ -297,7 +297,7 @@ class KnowledgeOptimizer:
 
         last = self._state["last_optimization"]
         if not last:
-            return fact_count >= 50
+            return fact_count >= 10
 
         last_date = datetime.fromisoformat(last)
         days_since = (datetime.now() - last_date).days
