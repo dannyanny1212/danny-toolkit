@@ -318,6 +318,11 @@ class Config:
         conn.execute(f"PRAGMA busy_timeout = {Config.SQLITE_BUSY_TIMEOUT}")
         conn.execute("PRAGMA temp_store = MEMORY")
 
+    # Swarm Agent Tuning
+    DEFAULT_AGENT_TIMEOUT = int(os.environ.get("AGENT_TIMEOUT", "20"))
+    CIRCUIT_BREAKER_THRESHOLD = int(os.environ.get("CB_THRESHOLD", "3"))
+    CIRCUIT_BREAKER_COOLDOWN = int(os.environ.get("CB_COOLDOWN", "12"))
+
     # RAG Settings
     CHUNK_SIZE = 350
     CHUNK_OVERLAP = 50

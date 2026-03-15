@@ -70,7 +70,7 @@ _B95_EXECUTOR = ThreadPoolExecutor(max_workers=2, thread_name_prefix="b95")
 
 # ── Phase 31: PER-AGENT TIMEOUTS (seconden) ──
 
-_DEFAULT_AGENT_TIMEOUT = 20  # seconden
+_DEFAULT_AGENT_TIMEOUT = int(os.environ.get("AGENT_TIMEOUT", "20"))
 _AGENT_TIMEOUTS: Dict[str, float] = {
     "MEMEX": 10,
     "Strategist": 18,
@@ -82,8 +82,8 @@ _AGENT_TIMEOUTS: Dict[str, float] = {
 
 # ── Phase 31: PER-AGENT CIRCUIT BREAKER ──
 
-_CIRCUIT_BREAKER_THRESHOLD = 3   # opeenvolgende fouten → open
-_CIRCUIT_BREAKER_COOLDOWN = 12   # cycli (queries) dat agent uitgeschakeld is
+_CIRCUIT_BREAKER_THRESHOLD = int(os.environ.get("CB_THRESHOLD", "3"))
+_CIRCUIT_BREAKER_COOLDOWN = int(os.environ.get("CB_COOLDOWN", "12"))
 _AGENT_CIRCUIT_STATE: Dict[str, Dict[str, Any]] = {}
 _CIRCUIT_LOCK = _threading.Lock()
 
