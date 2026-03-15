@@ -421,8 +421,9 @@ class LearningSystem:
     def _analyze_patterns(self) -> None:
         """Analyseer patronen na elke X chats."""
         recent = self.tracker.get_recent(20, interaction_type="chat")
-        queries = [i["input"] for i in recent]
-        self.patterns.detect_topic_preference(queries)
+        queries = [i.get("input", "") for i in recent if i.get("input")]
+        if queries:
+            self.patterns.detect_topic_preference(queries)
 
     def consolidate(self) -> int:
         """Consolideer gerelateerde kennis.

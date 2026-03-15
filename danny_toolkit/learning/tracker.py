@@ -14,7 +14,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 from danny_toolkit.core.config import Config
@@ -116,7 +116,9 @@ class InteractionTracker:
         by_type[interaction_type] = by_type.get(interaction_type, 0) + 1
 
         self._update_avg_success()
-        self.save()
+        # Batch save: every 5 interactions to reduce disk I/O
+        if self._data["stats"]["total"] % 5 == 0:
+            self.save()
 
         return interaction_id
 

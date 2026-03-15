@@ -68,15 +68,24 @@ class UnifiedMemory:
         fact: str,
         source: str = "unknown",
         success_score: float = 0.5,
-    ) -> None:
-        """Voeg een feit toe aan het geheugen."""
+    ) -> bool:
+        """Voeg een feit toe aan het geheugen.
+
+        Returns:
+            True als nieuw feit toegevoegd, False als bestaand bijgewerkt.
+        """
+        if not fact or len(fact.strip()) < 5:
+            return False
+
         knowledge = self._memory["knowledge"]
 
+        # Check exact match
         if fact in knowledge["facts"]:
             idx = knowledge["facts"].index(fact)
             knowledge["usage_count"][idx] += 1
             old_score = knowledge["success_scores"][idx]
             knowledge["success_scores"][idx] = (old_score + success_score) / 2
+            self.save()
             return False
 
         knowledge["facts"].append(fact)

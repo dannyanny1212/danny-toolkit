@@ -14,7 +14,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 from danny_toolkit.core.config import Config
@@ -23,7 +23,7 @@ from danny_toolkit.core.config import Config
 class PatternRecognizer:
     """Herken patronen in gebruikersinteracties."""
 
-    MIN_CACHE_SCORE = 0.8
+    MIN_CACHE_SCORE = 0.75
     MIN_FREQUENCY_FOR_CACHE = 3
 
     def __init__(self) -> None:
@@ -86,7 +86,10 @@ class PatternRecognizer:
 
         freq = self._data["frequent_queries"]
         freq[normalized] = freq.get(normalized, 0) + 1
-        self.save()
+        # Batch save: only persist every 10 queries to reduce disk I/O
+        total = sum(freq.values())
+        if total % 10 == 0:
+            self.save()
 
     def get_cached_response(self, query: str) -> Optional[str]:
         """Haal cached response op als beschikbaar.
