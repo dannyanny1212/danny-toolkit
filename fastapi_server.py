@@ -861,6 +861,240 @@ def _check_rate_limit(request: Request) -> None:
     bucket.append(now)
 
 
+# ═══════════════════════════════════════════════════════════════
+#  PROTOCOL CERBERUS — Laag 2: TARPIT (Kwantum-Quarantaine)
+# ═══════════════════════════════════════════════════════════════
+# Luistert naar CERBERUS_HONEYPOT_BREACH op de OmegaBus.
+# Zodra Agent 9042 een inbreuk detecteert, schakelt de server
+# over naar Tarpit Mode: alle requests krijgen langzaam
+# nep-JSON terug. De hacker zit vast in een virtueel moeras.
+
+import hashlib as _hashlib
+import threading as _cerberus_threading
+import random as _cerberus_random
+
+_TARPIT_MODE = False
+_TARPIT_LOCK = _cerberus_threading.Lock()
+_TARPIT_ACTIVATED_AT: float = 0.0
+_TARPIT_BREACH_COUNT = 0
+
+_TARPIT_DECOY_MESSAGES = [
+    {"status": "decrypting_root", "progress": "12%", "eta": "43s"},
+    {"status": "loading_sovereign_keys", "progress": "27%", "layer": "3/7"},
+    {"status": "verifying_hardware_seal", "progress": "41%", "cpu_id": "scanning"},
+    {"status": "authenticating_session", "progress": "58%", "token": "validating"},
+    {"status": "fetching_cortical_data", "progress": "73%", "shards": "2/3"},
+    {"status": "compiling_response", "progress": "89%", "agents": "finalizing"},
+    {"status": "quantum_handshake", "progress": "6%", "retry": "pending"},
+    {"status": "decoding_payload", "progress": "34%", "encryption": "AES-256"},
+    {"status": "sync_neural_bus", "progress": "51%", "latency": "optimizing"},
+    {"status": "building_seal_chain", "progress": "95%", "almost": "ready"},
+]
+
+
+def _activate_tarpit(event: Any = None) -> None:
+    """Activeer Tarpit Mode — aangeroepen door Bus subscriber."""
+    global _TARPIT_MODE, _TARPIT_ACTIVATED_AT, _TARPIT_BREACH_COUNT
+    with _TARPIT_LOCK:
+        _TARPIT_BREACH_COUNT += 1
+        if not _TARPIT_MODE:
+            _TARPIT_MODE = True
+            _TARPIT_ACTIVATED_AT = time.time()
+            logger.critical(
+                "[CERBERUS TARPIT] QUARANTAINE GEACTIVEERD — "
+                "alle requests worden omgeleid naar het moeras"
+            )
+            # Publiceer tarpit event
+            try:
+                from danny_toolkit.core.neural_bus import get_bus, EventTypes
+                get_bus().publish(
+                    EventTypes.CERBERUS_TARPIT_ENGAGED,
+                    {
+                        "activated_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+                        "breach_count": _TARPIT_BREACH_COUNT,
+                    },
+                    bron="cerberus_tarpit",
+                )
+            except Exception as _tp_err:
+                logger.debug("Tarpit bus publish: %s", _tp_err)
+
+
+def _is_tarpit_active() -> bool:
+    """Check of Tarpit Mode actief is (thread-safe)."""
+    with _TARPIT_LOCK:
+        return _TARPIT_MODE
+
+
+async def _tarpit_response() -> Response:
+    """Genereer een langzame nep-JSON response die de hacker vastzet."""
+    from fastapi.responses import JSONResponse
+    # Willekeurige vertraging: 2-5 seconden (moeras effect)
+    delay = _cerberus_random.uniform(2.0, 5.0)
+    await asyncio.sleep(delay)
+    decoy = _cerberus_random.choice(_TARPIT_DECOY_MESSAGES).copy()
+    decoy["request_id"] = _secrets.token_hex(8)
+    decoy["timestamp"] = time.strftime("%Y-%m-%dT%H:%M:%S")
+    return JSONResponse(content=decoy, status_code=200)
+
+
+# Subscriber wiring: luister naar HONEYPOT_BREACH bij startup
+def _wire_cerberus_tarpit() -> None:
+    """Verbind de Tarpit subscriber met de OmegaBus."""
+    try:
+        from danny_toolkit.core.neural_bus import get_bus, EventTypes
+        bus = get_bus()
+        bus.subscribe(EventTypes.CERBERUS_HONEYPOT_BREACH, _activate_tarpit)
+        logger.info("[CERBERUS] Tarpit subscriber gewired op HONEYPOT_BREACH")
+    except Exception as _wire_err:
+        logger.debug("Cerberus tarpit wire: %s", _wire_err)
+
+
+# ═══════════════════════════════════════════════════════════════
+#  PROTOCOL CERBERUS — Laag 3: SCORCHED EARTH (Integriteitsmonitor)
+# ═══════════════════════════════════════════════════════════════
+# Checkt elke 30s de SHA-256 hash van kritieke bestanden.
+# Als de hash muteert tijdens runtime → iemand heeft de broncode
+# aangepast → alle env keys vernietigd → harde terminatie.
+
+_SCORCHED_EARTH_FILES = [
+    os.path.join(_ROOT, "fastapi_server.py"),
+    os.path.join(_ROOT, "danny_toolkit", "core", "neural_bus.py"),
+    os.path.join(_ROOT, "danny_toolkit", "core", "sovereign_gate.py"),
+    os.path.join(_ROOT, "danny_toolkit", "core", "sandbox.py"),
+]
+_SCORCHED_EARTH_HASHES: Dict[str, str] = {}
+_SCORCHED_EARTH_INTERVAL = 30  # seconden
+
+
+def _compute_file_hash(filepath: str) -> str:
+    """Bereken SHA-256 hash van een bestand."""
+    h = _hashlib.sha256()
+    with open(filepath, "rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _snapshot_hashes() -> Dict[str, str]:
+    """Maak een snapshot van alle kritieke bestands-hashes."""
+    hashes = {}
+    for fpath in _SCORCHED_EARTH_FILES:
+        try:
+            hashes[fpath] = _compute_file_hash(fpath)
+        except Exception as e:
+            logger.warning("[SCORCHED EARTH] Hash snapshot mislukt voor %s: %s", fpath, e)
+    return hashes
+
+
+def _scorched_earth_terminate(mutated_file: str, expected: str, actual: str) -> None:
+    """SCORCHED EARTH — Vernietig alle credentials en termineer.
+
+    Dit is het nucleaire protocol. Geen sierlijke shutdown.
+    """
+    logger.critical(
+        "\033[91m[SCORCHED EARTH] CORE INTEGRITEIT DOORBROKEN!\033[0m"
+    )
+    logger.critical(
+        "[SCORCHED EARTH] Bestand gewijzigd: %s", mutated_file,
+    )
+    logger.critical(
+        "[SCORCHED EARTH] Verwacht: %s...  Actueel: %s...",
+        expected[:16], actual[:16],
+    )
+    logger.critical(
+        "[SCORCHED EARTH] Alle credentials worden vernietigd. "
+        "Zelfvernietiging geactiveerd."
+    )
+
+    # Publiceer event (best-effort, server gaat sowieso dood)
+    try:
+        from danny_toolkit.core.neural_bus import get_bus, EventTypes
+        get_bus().publish(
+            EventTypes.CERBERUS_SCORCHED_EARTH,
+            {
+                "mutated_file": os.path.basename(mutated_file),
+                "expected_hash": expected[:16],
+                "actual_hash": actual[:16],
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            },
+            bron="cerberus_scorched_earth",
+        )
+    except Exception:
+        pass  # Server gaat dood, bus publish is best-effort
+
+    # CorticalStack (best-effort)
+    try:
+        from danny_toolkit.brain.cortical_stack import get_cortical_stack
+        get_cortical_stack().log_event(
+            actor="cerberus_scorched_earth",
+            action="integrity_breach_terminate",
+            details={
+                "file": mutated_file,
+                "expected": expected[:16],
+                "actual": actual[:16],
+            },
+            source="scorched_earth",
+        )
+        get_cortical_stack().flush()
+    except Exception:
+        pass
+
+    # ═══ VERNIETIG ALLE CREDENTIALS IN RAM ═══
+    _SENSITIVE_PREFIXES = (
+        "GROQ_API_KEY", "ANTHROPIC_API_KEY", "VOYAGE_API_KEY",
+        "NVIDIA_NIM_API_KEY", "HF_TOKEN", "GOOGLE_API_KEY",
+        "FASTAPI_SECRET_KEY", "OMEGA_BUS_SIGNING_KEY",
+        "GITHUB_TOKEN", "GH_TOKEN", "OPENAI_API_KEY",
+        "C2_AUTH_URL", "TELEGRAM_BOT_TOKEN",
+        "AUTHORIZED_SILICON_SEAL",
+    )
+    destroyed = 0
+    for key in list(os.environ.keys()):
+        for prefix in _SENSITIVE_PREFIXES:
+            if key.startswith(prefix):
+                os.environ.pop(key, None)
+                destroyed += 1
+                break
+
+    logger.critical(
+        "[SCORCHED EARTH] %d credentials vernietigd. TERMINATIE.",
+        destroyed,
+    )
+
+    # ═══ HARDE TERMINATIE — geen cleanup, geen hooks ═══
+    os._exit(1)
+
+
+async def _scorched_earth_loop() -> None:
+    """Background task: controleer elke 30s de integriteit van kritieke bestanden."""
+    global _SCORCHED_EARTH_HASHES
+
+    # Wacht even zodat de server volledig opgestart is
+    await asyncio.sleep(5)
+
+    # Snapshot de hashes bij eerste run
+    _SCORCHED_EARTH_HASHES = _snapshot_hashes()
+    file_count = len(_SCORCHED_EARTH_HASHES)
+    logger.info(
+        "[SCORCHED EARTH] Integriteitsmonitor actief — %d bestanden bewaakt",
+        file_count,
+    )
+
+    while True:
+        await asyncio.sleep(_SCORCHED_EARTH_INTERVAL)
+        for fpath, expected_hash in _SCORCHED_EARTH_HASHES.items():
+            try:
+                current_hash = _compute_file_hash(fpath)
+                if current_hash != expected_hash:
+                    # ═══ BREACH DETECTED ═══
+                    _scorched_earth_terminate(fpath, expected_hash, current_hash)
+            except FileNotFoundError:
+                # Bestand verwijderd = even erg als gewijzigd
+                _scorched_earth_terminate(fpath, expected_hash, "FILE_DELETED")
+            except Exception as _se_err:
+                logger.debug("Scorched earth check: %s", _se_err)
+
+
 # ─── Global Exception Handler (strip error details) ───
 @app.exception_handler(HTTPException)
 async def _sanitized_http_exception(request: Request, exc: HTTPException) -> Response:
@@ -878,7 +1112,11 @@ async def _sanitized_http_exception(request: Request, exc: HTTPException) -> Res
 # ─── Optimalisatie 1: Security headers + process-time + rate limit ───
 @app.middleware("http")
 async def security_middleware(request: Request, call_next: Any) -> Response:
-    """Security headers + latentie monitoring + rate limit + single-user."""
+    """Security headers + latentie monitoring + rate limit + single-user + Cerberus Tarpit."""
+    # ═══ CERBERUS TARPIT — als actief, ALLE requests naar het moeras ═══
+    if _is_tarpit_active():
+        return await _tarpit_response()
+
     # Skip rate limit + session check voor static/docs
     path = request.url.path
     if not path.startswith(("/static", "/docs", "/redoc", "/openapi.json")):
@@ -970,6 +1208,12 @@ async def _startup_event() -> None:
     # 3. Synaptic Decay background task (v6.19.0)
     # Draait elke 24 uur: verzwakt ongebruikte pathways met 1%, floor 0.50
     asyncio.create_task(_synaptic_decay_loop())
+
+    # 4. Protocol Cerberus — Tarpit subscriber wiring
+    _wire_cerberus_tarpit()
+
+    # 5. Protocol Cerberus — Scorched Earth integriteitsmonitor
+    asyncio.create_task(_scorched_earth_loop())
 
 
 async def _synaptic_decay_loop() -> None:
