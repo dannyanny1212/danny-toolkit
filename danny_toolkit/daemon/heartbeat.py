@@ -1142,6 +1142,127 @@ Initializes a new instance of the class.
                 "[/bold magenta]"
             )
 
+    def start_headless(self) -> None:
+        """Start de daemon ZONDER Rich Live display (voor thread/Omega integratie).
+
+        Draait dezelfde loop als start() maar zonder terminal overname.
+        Geschikt voor boot_sovereign() daemon thread.
+        """
+        self._running = True
+        self._start_time = datetime.now()
+        self._stop_event.clear()
+
+        stack = self._get_stack()
+        if stack:
+            try:
+                stack.log_event(
+                    actor="heartbeat",
+                    action="daemon_start_headless",
+                    details={"version": self.VERSION, "mode": "headless"},
+                    source="sovereign_core",
+                )
+            except Exception as e:
+                logger.debug("Daemon headless start log: %s", e)
+
+        self._log_activity("start", "Heartbeat Daemon (headless) gestart")
+        logger.info("[SOVEREIGN] HeartbeatDaemon headless started")
+
+        try:
+            while not self._stop_event.is_set():
+                self._pulse_count += 1
+                self._monitor_system()
+
+                # Reflectie
+                self._reflection_cycle()
+                if self._reflection_count > 0:
+                    self._autonomous_growth()
+
+                # Learning pulse
+                if self._reflection_count > 0 and self._reflection_count % 5 == 0:
+                    self._learning_pulse()
+
+                # Swarm schedule (elke 60 pulsen)
+                if self._pulse_count % 60 == 0:
+                    self._check_swarm_schedule()
+
+                # Singularity tick (elke 10 pulsen)
+                if self._pulse_count % 10 == 0:
+                    singularity = self._get_singularity()
+                    if singularity:
+                        try:
+                            singularity.tick()
+                        except Exception as e:
+                            logger.debug("Singularity tick: %s", e)
+
+                # Security scan (elke uur)
+                now_ts = time.time()
+                if now_ts - self._last_security_scan > 3600:
+                    self._last_security_scan = now_ts
+                    security = self._get_security()
+                    if security:
+                        self._worker_pool.submit(self._execute_security_scan, security)
+
+                # Proactive check (elke 60 pulsen)
+                if self._pulse_count % 60 == 0:
+                    proactive = self._get_proactive()
+                    if proactive:
+                        try:
+                            proactive._check_timer_regels()
+                        except Exception as e:
+                            logger.debug("Proactive check: %s", e)
+
+                # Morning Protocol 07:00
+                now_dt = datetime.now()
+                if now_dt.hour == 7 and self._last_morning_protocol_date != now_dt.date():
+                    self._last_morning_protocol_date = now_dt.date()
+                    self._run_morning_protocol()
+
+                # Dream Observation (nacht)
+                if 0 <= now_dt.hour < 6 and self._pulse_count % 600 == 0 and self._pulse_count > 0:
+                    now_ts3 = time.time()
+                    if now_ts3 - self._last_dream_observation > 550:
+                        self._last_dream_observation = now_ts3
+                        self._run_dream_observation()
+
+                # Dreamer REM 04:00
+                if now_dt.hour == 4 and self._last_rem_date != now_dt.date():
+                    self._last_rem_date = now_dt.date()
+                    try:
+                        from danny_toolkit.brain.dreamer import Dreamer
+                        dreamer = Dreamer()
+                        self._worker_pool.submit(lambda: asyncio.run(dreamer.rem_cycle()))
+                    except Exception as _e:
+                        logger.debug("REM cycle: %s", _e)
+
+                # X6 Hyper Learn (elk uur, niet 04:00)
+                if now_dt.hour != 4 and now_dt.minute == 0 and self._pulse_count % 60 == 0:
+                    try:
+                        from danny_toolkit.learning import LearningSystem
+                        ls = LearningSystem()
+                        ls.run_learning_cycle()
+                    except Exception as _e:
+                        logger.debug("X6 hyper learn: %s", _e)
+
+                # Oracle Eye (elke 300 pulsen)
+                if self._pulse_count % 300 == 0:
+                    self._check_oracle_forecast()
+
+                # DevOps CI (elke 5 min)
+                if self._pulse_count % 300 == 0 and self._pulse_count > 0:
+                    now_ts2 = time.time()
+                    if now_ts2 - self._last_devops_check > 290:
+                        self._last_devops_check = now_ts2
+                        self._run_devops_check()
+
+                self._stop_event.wait(self.HEARTBEAT_INTERVAL)
+
+        except Exception as e:
+            logger.debug("Heartbeat headless loop: %s", e)
+        finally:
+            self._running = False
+            self._worker_pool.shutdown(wait=False)
+            logger.info("[SOVEREIGN] HeartbeatDaemon headless stopped (pulses=%d)", self._pulse_count)
+
     def stop(self) -> None:
         """Stop de daemon en worker pool."""
         self._stop_event.set()

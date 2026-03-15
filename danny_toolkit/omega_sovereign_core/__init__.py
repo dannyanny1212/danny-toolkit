@@ -120,15 +120,17 @@ def boot_sovereign(
     else:
         status["api"] = {"ok": True, "mode": "disabled"}
 
-    # 4. HeartbeatDaemon (background thread)
+    # 4. HeartbeatDaemon (headless background thread — geen Rich Live)
     if start_daemon:
         try:
             from danny_toolkit.daemon.heartbeat import HeartbeatDaemon
             daemon = HeartbeatDaemon()
-            daemon_thread = threading.Thread(target=daemon.run, daemon=True, name="heartbeat-sovereign")
+            daemon_thread = threading.Thread(
+                target=daemon.start_headless, daemon=True, name="heartbeat-sovereign",
+            )
             daemon_thread.start()
-            status["daemon"] = {"ok": True}
-            logger.info("[SOVEREIGN] HeartbeatDaemon: started")
+            status["daemon"] = {"ok": True, "mode": "headless"}
+            logger.info("[SOVEREIGN] HeartbeatDaemon: headless started")
         except Exception as e:
             status["daemon"] = {"ok": False, "error": str(e)[:80]}
     else:
