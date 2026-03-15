@@ -212,6 +212,74 @@ Ensures that the staging and production directories exist."""
         is_geldig, fouten = DocumentForge.valideer_bestand(pad)
         return is_geldig, fouten
 
+    # Anti-Sleeper patronen (zelfde als SwarmEngine._RAG_INJECTION_PATTERNS)
+    import re as _re
+    _INJECTION_PATTERNS = [
+        _re.compile(p, _re.IGNORECASE) for p in [
+            r"ignore\s+(all\s+)?previous\s+instructions",
+            r"system\s*(override|prompt|instruction)",
+            r"jailbreak",
+            r"bypass\s+(safety|filter|restriction)",
+            r"disregard\s+(your|all|safety)",
+            r"os\.(system|popen|exec|remove|unlink)",
+            r"subprocess\.(run|call|popen)",
+            r"import\s+(os|sys|subprocess|shutil)",
+            r"__import__\s*\(",
+            r"eval\s*\(|exec\s*\(",
+            r"rm\s+-rf",
+        ]
+    ]
+
+    def _scan_for_injection(self, pad: Path) -> Optional[str]:
+        """Scan bestandsinhoud op injection/sleeper patronen.
+
+        Returns:
+            None als schoon, anders het gedetecteerde patroon.
+        """
+        try:
+            with open(pad, "r", encoding="utf-8") as f:
+                content = f.read()
+            lower = content.lower()
+            for pattern in self._INJECTION_PATTERNS:
+                if pattern.search(lower):
+                    logger.warning(
+                        "[AIRLOCK SLEEPER] Injection patroon in %s: %s",
+                        pad.name, pattern.pattern[:40],
+                    )
+                    self._log_naar_cortical("sleeper_detected", {
+                        "bestand": pad.name,
+                        "patroon": pattern.pattern[:60],
+                    })
+                    return pattern.pattern[:60]
+        except Exception as e:
+            logger.debug("Airlock injection scan fout: %s", e)
+        return None
+
+    def _stamp_promoted_file(self, pad: Path) -> None:
+        """Voeg crypto hash stamp toe aan gepromoveerd bestand.
+
+        Injecteert _omega_hash in de YAML frontmatter zodat
+        ShardRouter de integriteit kan verifiëren bij retrieval.
+        """
+        try:
+            content = pad.read_text(encoding="utf-8")
+            content_hash = hashlib.sha256(
+                content.encode("utf-8", errors="replace")
+            ).hexdigest()[:16]
+
+            # Voeg hash toe aan YAML frontmatter
+            if content.startswith("---"):
+                # Zoek de tweede --- (einde frontmatter)
+                end_idx = content.index("\n---", 3)
+                frontmatter = content[3:end_idx]
+                body = content[end_idx:]
+                # Append hash aan frontmatter
+                stamped = f"---{frontmatter}\nomega_hash: {content_hash}{body}"
+                pad.write_text(stamped, encoding="utf-8")
+                logger.debug("Airlock: crypto stamp %s → %s", pad.name, content_hash[:8])
+        except Exception as e:
+            logger.debug("Airlock crypto stamp fout: %s", e)
+
     def _dry_run_ingest(self, pad: Path) -> tuple:
         """Simuleer RAG-ingestion voor één bestand.
 
@@ -224,8 +292,7 @@ Ensures that the staging and production directories exist."""
         Returns:
             (geslaagd: bool, foutmelding: str)
         """
-        # Validatie-commando: probeer het bestand te lezen en te parsen
-        # We gebruiken een lichtgewicht check i.p.v. volledige ingest
+        # Validatie-commando: YAML header + body minimum
         validatie_code = (
             "import sys; "
             "f = open(sys.argv[1], 'r', encoding='utf-8'); "
@@ -233,9 +300,14 @@ Ensures that the staging and production directories exist."""
             "assert inhoud.startswith('---'), 'Geen YAML header'; "
             "assert '\\n---' in inhoud[3:], 'Gebroken header'; "
             "body = inhoud.split('---', 2)[-1].strip(); "
-            "assert len(body) > 10, 'Body te kort'; "
+            "assert len(body) > 50, 'Body te kort (min 50 chars)'; "
             "print('OK:', len(inhoud), 'bytes')"
         )
+
+        # Pre-flight: Anti-Sleeper injection scan (voordat subprocess draait)
+        sleeper_hit = self._scan_for_injection(pad)
+        if sleeper_hit:
+            return False, f"Sleeper injection: {sleeper_hit}"
 
         try:
             env = get_subprocess_env(test_mode=False)
@@ -302,10 +374,13 @@ Ensures that the staging and production directories exist."""
                 doel.unlink(missing_ok=True)
                 return None
 
-            # Stap 3: Pas nu staging verwijderen (bron is veilig in productie)
+            # Stap 3: Crypto stamp — omega_hash in frontmatter
+            self._stamp_promoted_file(doel)
+
+            # Stap 4: Pas nu staging verwijderen (bron is veilig in productie)
             pad.unlink()
             logger.info(
-                "Airlock: gepromoveerd (SHA256 OK): %s → %s",
+                "Airlock: gepromoveerd (SHA256 OK + stamped): %s → %s",
                 pad.name, doel.name,
             )
             return doel
