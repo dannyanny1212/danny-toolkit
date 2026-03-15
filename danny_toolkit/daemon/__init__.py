@@ -1,5 +1,4 @@
-"""
-Digital Daemon - De Levende Interface.
+"""Digital Daemon — De Levende Interface.
 
 Het Virtuele Huisdier als Always-On Symbiotische Entiteit.
 """
@@ -11,11 +10,16 @@ from danny_toolkit.daemon.limbic_system import LimbicSystem
 from danny_toolkit.daemon.metabolisme import Metabolisme
 from danny_toolkit.daemon.daemon_core import DigitalDaemon
 
+__all__ = [
+    "Sensorium",
+    "LimbicSystem",
+    "Metabolisme",
+    "DigitalDaemon",
+    "HeartbeatDaemon",
+]
+
 def __getattr__(name: str) -> type:
-    """Dynamic attribute accessor.
-Returns the specified attribute if it exists, otherwise raises an AttributeError.
-Currently supports:
-  - HeartbeatDaemon: A daemon for handling heartbeats."""
+    """Lazy import voor HeartbeatDaemon (zware deps)."""
     if name == "HeartbeatDaemon":
         try:
             from danny_toolkit.daemon.heartbeat import HeartbeatDaemon
