@@ -41,8 +41,20 @@ _SWARM_MAX_WORKERS = min(max(os.cpu_count() or 4, 4), 16)
 from dataclasses import dataclass, field
 from datetime import datetime
 
-import numpy as np
-import pandas as pd
+# Lazy-load: numpy/pandas alleen nodig voor demo data + charts, niet voor core pipeline
+np = None  # type: ignore[assignment]
+pd = None  # type: ignore[assignment]
+
+
+def _ensure_np_pd() -> None:
+    """Lazy-load numpy + pandas bij eerste gebruik."""
+    global np, pd
+    if np is None:
+        import numpy
+        np = numpy
+    if pd is None:
+        import pandas
+        pd = pandas
 
 logger = logging.getLogger(__name__)
 
@@ -207,6 +219,15 @@ try:
 except ImportError:
     HAS_SWARM_TOOLS = False
 
+# ── PHANTOM AGENT (Mirror Shield Honeypot) ──
+
+try:
+    from danny_toolkit.agents.phantom_agent import PhantomAgent
+    HAS_PHANTOM = True
+except ImportError:
+    HAS_PHANTOM = False
+    PhantomAgent = None
+
 # ── CORTICAL STACK LOGGING ──
 
 try:
@@ -318,6 +339,7 @@ class SwarmPayload:
 
 def _crypto_metrics() -> dict:
     """Genereer crypto market ticker + 30d chart data."""
+    _ensure_np_pd()
     np.random.seed(42)
     dagen = pd.date_range(
         end=datetime.now(), periods=30, freq="D"
@@ -370,6 +392,7 @@ def _crypto_metrics() -> dict:
 
 def _health_chart() -> dict:
     """Genereer 24-uur HRV + hartslag data."""
+    _ensure_np_pd()
     np.random.seed(7)
     uren = pd.date_range(
         end=datetime.now(), periods=24, freq="h"
@@ -388,6 +411,7 @@ def _health_chart() -> dict:
 
 def _data_chart() -> dict:
     """Genereer 6 systeem-metrics bar chart."""
+    _ensure_np_pd()
     np.random.seed(13)
     labels = [
         "CPU", "RAM", "Disk", "Net",
@@ -485,7 +509,12 @@ class BrainAgent(Agent):
 
 
 class EchoAgent(Agent):
-    """Fast-track smalltalk, geen AI nodig."""
+    """Circuit Breaker — O(1) latency veiligheidsklep.
+
+    Zero-LLM fallback node voor Out-Of-Domain queries
+    en Swarm overbelasting. Geen netwerkcalls, geen
+    embeddings. Puur defensief routeren.
+    """
 
     RESPONSES = [
         "Hoi! Alle systemen operationeel."
@@ -496,20 +525,24 @@ class EchoAgent(Agent):
     ]
 
     async def process(self, task: str, brain: Any = None) -> SwarmPayload:
-        """Retourneer willekeurige begroeting zonder AI."""
+        """O(1) deterministische response — geen AI, geen netwerk."""
         resp = random.choice(self.RESPONSES)
         return SwarmPayload(
-            agent=self.name, type="text",
+            agent=self.name, type="echo",
             content=resp,
             display_text=resp,
         )
 
 
 class CipherAgent(BrainAgent):
-    """Crypto specialist — levert metrics payload."""
+    """Quantitative JSON Engine — real-time financiële/crypto parser.
+
+    Verwerkt numerieke data-stromen en OHLCV data.
+    Output is strict machine-readable JSON (type: 'metrics').
+    """
 
     async def process(self, task: str, brain: Any = None) -> SwarmPayload:
-        """Verwerk crypto-gerelateerde taak met metrics payload."""
+        """Verwerk financiële/crypto data naar metrics JSON payload."""
         try:
             payload = await super().process(task, brain)
         except Exception as e:
@@ -525,10 +558,14 @@ class CipherAgent(BrainAgent):
 
 
 class VitaAgent(BrainAgent):
-    """Health specialist — levert area_chart payload."""
+    """Time-Series Telemetry — chronologische data aggregator.
+
+    Normaliseert en aggregeert tijdgebonden datapunten
+    voor area_chart visualisatie ([timestamp, value] pairs).
+    """
 
     async def process(self, task: str, brain: Any = None) -> SwarmPayload:
-        """Verwerk gezondheidstaak met area chart payload."""
+        """Verwerk time-series data naar area_chart payload."""
         try:
             payload = await super().process(task, brain)
         except Exception as e:
@@ -544,10 +581,14 @@ class VitaAgent(BrainAgent):
 
 
 class AlchemistAgent(BrainAgent):
-    """Data specialist — levert bar_chart payload."""
+    """Categorical Transformer — dimensionality reduction & bucketing.
+
+    Transformeert multi-variabele data naar gecategoriseerde
+    datasets voor bar_chart en pie_chart rendering.
+    """
 
     async def process(self, task: str, brain: Any = None) -> SwarmPayload:
-        """Verwerk datataak met bar chart payload."""
+        """Verwerk categorische data naar bar_chart payload."""
         try:
             payload = await super().process(task, brain)
         except Exception as e:
@@ -1093,6 +1134,7 @@ class CoherentieAgent(Agent):
         ]
 
         # Chart data: CPU vs GPU reeksen
+        _ensure_np_pd()
         chart_data = pd.DataFrame({
             "CPU %": rapport["cpu_reeks"],
             "GPU %": rapport["gpu_reeks"],
@@ -1167,7 +1209,12 @@ class StrategistAgent(Agent):
 
 
 class ArtificerAgent(Agent):
-    """Autonomous skill forge-verify-execute loop."""
+    """AST-Safe Code Engine — geïsoleerde code generator.
+
+    Creëert modulaire, sandbox-ready Python scripts.
+    Output is altijd AST-parsable, PEP-8 compliant code
+    met type hints en Google-style docstrings.
+    """
 
     def _get_artificer(self) -> Any:
         """Lazy-load Artificer instantie."""
@@ -3067,15 +3114,26 @@ class SwarmEngine:
 
     @property
     def _governor(self) -> Any:
-        """Lazy OmegaGovernor voor rate limit tracking."""
+        """Lazy OmegaGovernor voor rate limit tracking.
+
+        FAIL-CLOSED: als Governor niet laadt, raise PermissionError.
+        Zonder Governor is er geen rate limiting, injection detection,
+        of PII scrubbing — te gevaarlijk om door te laten.
+        """
         if not hasattr(self, "_gov_instance"):
             try:
                 from danny_toolkit.brain.governor import (
                     OmegaGovernor,
                 )
-            except ImportError:
-                logger.debug("brain.governor niet beschikbaar")
-                OmegaGovernor = None
+            except ImportError as e:
+                if os.getenv("DANNY_TEST_MODE") == "1":
+                    logger.debug("brain.governor niet beschikbaar (test mode)")
+                    self._gov_instance = None
+                    return self._gov_instance
+                raise PermissionError(
+                    f"[FAIL-CLOSED] OmegaGovernor niet laadbaar: {e}. "
+                    "Swarm executie geblokkeerd zonder safety guardian."
+                ) from e
             self._gov_instance = OmegaGovernor() if OmegaGovernor is not None else None
         return self._gov_instance
 
@@ -3156,6 +3214,11 @@ class SwarmEngine:
                 "#@*VirtualTwin", "Analysis",
             ),
             # LEGION: disabled
+
+            # Mirror Shield: Honeypot voor geblokkeerde requests
+            **({"PHANTOM": PhantomAgent(
+                "Phantom", "Decoy",
+            )} if HAS_PHANTOM else {}),
 
         }
 
@@ -3901,6 +3964,22 @@ class SwarmEngine:
         except ImportError:
             logger.debug("KeyManager niet beschikbaar voor throttle check")
 
+        # OracleEye advisory: bias routing model recommendation
+        oracle_model_advisory = None
+        try:
+            from danny_toolkit.brain.oracle_eye import get_oracle_eye
+            import psutil
+            _oe = get_oracle_eye()
+            _cpu = psutil.cpu_percent(interval=0)
+            oracle_model_advisory = _oe.suggest_model(
+                {"cpu": _cpu, "ram": psutil.virtual_memory().percent},
+            )
+            if oracle_model_advisory:
+                self._swarm_metrics.setdefault("oracle_eye_advisories", 0)
+                self._swarm_metrics["oracle_eye_advisories"] += 1
+        except Exception as e:
+            logger.debug("OracleEye advisory: %s", e)
+
         # Probeer embedding-based routing
         try:
             targets = self._router.route(
@@ -3911,7 +3990,8 @@ class SwarmEngine:
                 "router", "adaptive",
                 {"targets": targets,
                  "input": user_input[:200],
-                 "synapse_bias": bool(bias)},
+                 "synapse_bias": bool(bias),
+                 "oracle_model": oracle_model_advisory},
             )
             return targets
         except Exception as e:
@@ -4092,6 +4172,16 @@ class SwarmEngine:
                 self._swarm_metrics[
                     "governor_blocks"
                 ] += 1
+                # Mirror Shield: stuur naar PhantomAgent
+                _phantom = self.agents.get("PHANTOM")
+                if _phantom is not None:
+                    try:
+                        decoy = await _phantom.process(user_input)
+                        log("👻 PhantomAgent: Mirror Shield actief")
+                        return [decoy]
+                    except Exception as e:
+                        logger.debug("PhantomAgent fout: %s", e)
+                # Fallback: kale blokkade
                 blocked = f"BLOCKED: {reason}"
                 return [SwarmPayload(
                     agent="Governor", type="text",

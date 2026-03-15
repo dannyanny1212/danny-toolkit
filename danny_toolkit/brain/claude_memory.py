@@ -95,7 +95,7 @@ class ClaudeMemory:
         # Laad index
         self._load_index()
 
-    def _load_index(self):
+    def _load_index(self) -> None:
         """Laad de geheugen-index van schijf."""
         if self._index_path.exists():
             try:
@@ -104,7 +104,7 @@ class ClaudeMemory:
             except Exception as e:
                 logger.debug("Index load error: %s", e)
 
-    def _save_index(self):
+    def _save_index(self) -> None:
         """Sla de geheugen-index op."""
         try:
             self._index_path.parent.mkdir(parents=True, exist_ok=True)

@@ -665,8 +665,14 @@ Sets the governor, oracle, and repair log to their initial states:
                 ),
             }
 
+    # Whitelist van veilige shell-commando's voor self-repair
+    _SHELL_WHITELIST = frozenset({
+        "pip", "python", "git", "pytest", "mypy",
+        "flake8", "black", "isort", "ruff",
+    })
+
     def _voer_shell_uit(self, commando: object, args: object) -> None:
-        """Voer een shell-commando uit.
+        """Voer een shell-commando uit (whitelist-beveiligd).
 
         Args:
             commando: Het uit te voeren commando.
@@ -675,10 +681,50 @@ Sets the governor, oracle, and repair log to their initial states:
         Returns:
             dict met stap, resultaat, geslaagd, detail.
         """
+        # Sanitize: commando moet string zijn
+        cmd_str = str(commando).strip()
+        if not cmd_str:
+            return {
+                "stap": commando,
+                "resultaat": "leeg commando",
+                "geslaagd": False,
+                "detail": "Commando is leeg",
+            }
+
+        # Parse naar lijst — GEEN shell=True
+        import shlex
+        try:
+            cmd_parts = shlex.split(cmd_str)
+        except ValueError as e:
+            return {
+                "stap": commando,
+                "resultaat": "parse fout",
+                "geslaagd": False,
+                "detail": f"Commando parse error: {e}",
+            }
+
+        # Whitelist check — alleen bekende tools
+        base_cmd = cmd_parts[0].lower().split("/")[-1].split("\\")[-1]
+        base_cmd = base_cmd.replace(".exe", "")
+        if base_cmd not in self._SHELL_WHITELIST:
+            logger.warning(
+                "Self-repair BLOCKED: '%s' niet in whitelist",
+                base_cmd,
+            )
+            return {
+                "stap": commando,
+                "resultaat": "geblokkeerd",
+                "geslaagd": False,
+                "detail": (
+                    f"Commando '{base_cmd}' niet toegestaan. "
+                    f"Whitelist: {sorted(self._SHELL_WHITELIST)}"
+                ),
+            }
+
         try:
             result = subprocess.run(
-                commando,
-                shell=True,
+                cmd_parts,
+                shell=False,
                 capture_output=True,
                 text=True,
                 timeout=60,

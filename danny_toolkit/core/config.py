@@ -15,10 +15,12 @@ logger = logging.getLogger(__name__)
 
 try:
     from dotenv import load_dotenv
-    load_dotenv(
-        Path(__file__).parent.parent.parent / ".env",
-        override=False,
-    )
+    # Skip als cruciale keys al geladen zijn (voorkomt 3-4s redundante I/O)
+    if not os.environ.get("GROQ_API_KEY"):
+        load_dotenv(
+            Path(__file__).parent.parent.parent / ".env",
+            override=False,
+        )
 except ImportError:
     logger.debug("dotenv not available, skipping .env load")
 
@@ -337,7 +339,7 @@ class Config:
 
     # GhostWriter (overnight REM)
     GHOSTWRITER_DRY_RUN = os.environ.get(
-        "GHOSTWRITER_DRY_RUN", "1"
+        "GHOSTWRITER_DRY_RUN", "0"
     ).lower() not in ("0", "false", "no")
     GHOSTWRITER_MAX_PER_CYCLE = int(os.environ.get(
         "GHOSTWRITER_MAX_PER_CYCLE", "10"

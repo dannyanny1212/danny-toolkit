@@ -14,7 +14,7 @@ import time
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +92,7 @@ Attributes:
         self._bus = get_bus() if HAS_BUS else None
         self._cache: Dict[str, tuple] = {}  # key -> (timestamp, data)
 
-    def _get_cached(self, key: str):
+    def _get_cached(self, key: str) -> Optional[Any]:
         """Haal gecachte waarde op als TTL niet verlopen."""
         if key in self._cache:
             ts, data = self._cache[key]
@@ -102,7 +102,7 @@ Attributes:
                 del self._cache[key]
         return None
 
-    def _set_cached(self, key: str, data):
+    def _set_cached(self, key: str, data: Any) -> None:
         """Sla waarde op in cache met eager eviction."""
         # Evict expired entries first
         now = time.time()

@@ -361,7 +361,7 @@ class GhostAmplifier:
 
         return "elaboratie"
 
-    def _log_amplification(self, result: AmplifiedResult):
+    def _log_amplification(self, result: AmplifiedResult) -> None:
         """Log amplificatie naar CorticalStack."""
         if not HAS_STACK:
             return

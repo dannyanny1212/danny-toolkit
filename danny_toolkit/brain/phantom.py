@@ -438,63 +438,77 @@ method is called to initialize the database schema."""
             logger.debug("Phantom get_predictions failed: %s", e)
             return []
 
-    def pre_warm_context(self, engine: object=None) -> None:
-        """Pre-fetch MEMEX context for top prediction.
+    def pre_warm_context(self, engine: object = None) -> None:
+        """Pre-fetch MEMEX context for top predictions.
 
         Called after predict_next(). Fetches vector search results
         and stores them in pop-once cache.
+
+        Works with or without an engine reference:
+        - With engine: uses engine._ophalen_memex_context()
+        - Without engine: uses VectorStore directly for RAG lookup
         """
         predictions = self.predict_next()
-        if not predictions or not engine:
+        if not predictions:
             return
 
-        top = predictions[0]
-        category = top["category"]
+        for pred in predictions[:3]:
+            category = pred["category"]
 
-        # Build a synthetic query from category agents
-        agents = category.split("+")
-        try:
-            from danny_toolkit.core.engine import AdaptiveRouter
-            query_parts = []
-            for agent in agents:
-                profielen = AdaptiveRouter.AGENT_PROFIELEN.get(agent, [])
-                if profielen:
-                    # Take first 5 words from first profile
-                    words = profielen[0].split()[:5]
-                    query_parts.extend(words)
-            synthetic_query = " ".join(query_parts)
-        except Exception as e:
-            logger.debug("Synthetic query generatie: %s", e)
-            synthetic_query = " ".join(agents)
+            # Build a synthetic query from category
+            agents = category.split("+")
+            try:
+                from swarm_engine import AdaptiveRouter
+                query_parts = []
+                for agent in agents:
+                    profielen = AdaptiveRouter.AGENT_PROFIELEN.get(agent, [])
+                    if profielen:
+                        words = profielen[0].split()[:5]
+                        query_parts.extend(words)
+                synthetic_query = " ".join(query_parts)
+            except Exception as e:
+                logger.debug("Synthetic query generatie: %s", e)
+                synthetic_query = " ".join(agents)
 
-        if not synthetic_query:
-            return
+            if not synthetic_query:
+                continue
 
-        # Fetch MEMEX context
-        try:
-            if hasattr(engine, "_ophalen_memex_context"):
-                context = engine._ophalen_memex_context(synthetic_query)
-                if context:
-                    with self._cache_lock:
-                        self._pre_warmed[category] = context
+            # Fetch MEMEX context — engine or standalone VectorStore
+            context = None
+            try:
+                if engine and hasattr(engine, "_ophalen_memex_context"):
+                    context = engine._ophalen_memex_context(synthetic_query)
+                else:
+                    # Standalone: query VectorStore directly
+                    from danny_toolkit.core.vector_store import VectorStore
+                    vs = VectorStore()
+                    resultaten = vs.zoek(synthetic_query, top_k=5, min_score=0.3)
+                    context = [r.get("tekst", "") for r in resultaten if r.get("tekst")]
+            except Exception as e:
+                logger.debug("Phantom MEMEX fetch failed: %s", e)
+                continue
 
-                    # Mark prediction as pre-warmed
+            if context:
+                with self._cache_lock:
+                    self._pre_warmed[category] = context
+
+                # Mark prediction as pre-warmed
+                try:
                     self._conn.execute(
                         """UPDATE phantom_predictions
                            SET pre_warmed = 1
                            WHERE resolved = 0
-                           AND predicted_category = ?
-                           ORDER BY id DESC LIMIT 1""",
+                           AND predicted_category = ?""",
                         (category,),
                     )
                     self._conn.commit()
+                except Exception as e:
+                    logger.debug("Phantom pre-warm DB update: %s", e)
 
-                    logger.info(
-                        "Phantom: pre-warmed %d fragments for %s",
-                        len(context), category,
-                    )
-        except Exception as e:
-            logger.debug("Phantom pre-warm failed: %s", e)
+                logger.info(
+                    "Phantom: pre-warmed %d fragments for %s",
+                    len(context), category,
+                )
 
     def get_pre_warmed(self, category: str) -> List[str]:
         """Pop pre-warmed context for a category (pop-once).

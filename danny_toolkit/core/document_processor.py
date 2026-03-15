@@ -46,7 +46,7 @@ class DocumentProcessor:
         if extensie == ".pdf":
             return self._laad_pdf(pad)
 
-        with open(pad, "r", encoding="utf-8") as f:
+        with open(pad, "r", encoding="utf-8", errors="replace") as f:
             return f.read()
 
     def _laad_pdf(self, pad: Path) -> str:

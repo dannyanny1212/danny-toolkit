@@ -200,6 +200,7 @@ screenshot_sanctuary_*.png
 
 # Data runtime (gate, pid, scripts)
 data/.api_server.pid
+data/.api_key_meta.json
 data/.gate_boots.json
 data/.gate_hash
 data/.gate_lockout.json

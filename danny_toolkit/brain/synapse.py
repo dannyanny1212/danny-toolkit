@@ -916,17 +916,30 @@ class TheSynapse:
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
+        if not isinstance(data, dict):
+            logger.warning("Synapse weights: verwacht dict, kreeg %s", type(data).__name__)
+            return 0
+
         imported = 0
         for category, agents in data.get("pathways", {}).items():
+            if not isinstance(agents, dict):
+                logger.warning("Synapse weights: skip category %s (geen dict)", category)
+                continue
             for agent, info in agents.items():
-                strength = info.get("strength", self.DEFAULT_STRENGTH)
+                if not isinstance(info, dict):
+                    logger.warning("Synapse weights: skip %s/%s (geen dict)", category, agent)
+                    continue
+                raw_strength = info.get("strength", self.DEFAULT_STRENGTH)
+                if not isinstance(raw_strength, (int, float)) or raw_strength != raw_strength:
+                    raw_strength = self.DEFAULT_STRENGTH
                 strength = max(
                     self.MIN_STRENGTH,
-                    min(self.MAX_STRENGTH, strength),
+                    min(self.MAX_STRENGTH, float(raw_strength)),
                 )
-                fires = info.get("fires", 0)
-                successes = info.get("successes", 0)
-                fails = info.get("fails", 0)
+                _MAX_COUNT = 1_000_000  # overflow guard
+                fires = min(_MAX_COUNT, abs(int(info.get("fires", 0)))) if isinstance(info.get("fires"), (int, float)) else 0
+                successes = min(_MAX_COUNT, abs(int(info.get("successes", 0)))) if isinstance(info.get("successes"), (int, float)) else 0
+                fails = min(_MAX_COUNT, abs(int(info.get("fails", 0)))) if isinstance(info.get("fails"), (int, float)) else 0
 
                 self._conn.execute(
                     """INSERT INTO synaptic_pathways
@@ -1320,8 +1333,8 @@ def synaptic_decay(synapse: "TheSynapse" | None = None) -> int:
                         {"type": "synaptic_decay", "decayed": decayed},
                         bron="TheSynapse",
                     )
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("NeuralBus decay publish: %s", e)
         return decayed
 
     except Exception as e:

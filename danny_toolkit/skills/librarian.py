@@ -423,6 +423,16 @@ class TheLibrarian:
                             time.sleep(22)
                     totaal_chunks += len(ids)
 
+                    # AccessTracker wiring — registreer nieuwe chunks
+                    try:
+                        from danny_toolkit.core.self_pruning import SelfPruning
+                        pruner = SelfPruning()
+                        pruner.registreer_creatie(
+                            ids[b_start:b_end], COLLECTION_NAME,
+                        )
+                    except (ImportError, Exception) as e:
+                        logger.debug("AccessTracker wiring: %s", e)
+
                     # Phase 34: ShardRouter parallel ingest
                     shard_router = self._get_shard_router()
                     if shard_router is not None:

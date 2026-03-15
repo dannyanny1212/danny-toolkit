@@ -3,6 +3,7 @@ NeuralBus - Centraal Pub/Sub Event Systeem voor inter-app communicatie.
 
 Singleton event bus die apps laat communiceren via events.
 Thread-safe, met optionele UnifiedMemory persistentie.
+HMAC-SHA256 payload signing via OMEGA_BUS_SIGNING_KEY.
 
 Gebruik:
     from danny_toolkit.core.neural_bus import get_bus, EventTypes
@@ -15,7 +16,11 @@ Gebruik:
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import hmac
+import json
 import logging
+import os
 import threading
 from collections import defaultdict, deque
 from datetime import datetime
@@ -75,12 +80,155 @@ class EventTypes:
     SENTINEL_THROTTLE = "sentinel_throttle"
     SENTINEL_GPU_BOOST = "sentinel_gpu_boost"
     SENTINEL_REINDEX = "sentinel_reindex"
+    # Omega Bus: Agent-to-Agent chaining
+    AGENT_CHAIN_REQUEST = "agent_chain_request"
+    AGENT_CHAIN_RESPONSE = "agent_chain_response"
+    AGENT_CHAIN_BLOCKED = "agent_chain_blocked"
+
+
+class OmegaSeal:
+    """HMAC-SHA256 payload signing voor interne bus-communicatie.
+
+    Elke payload die over de NeuralBus reist krijgt een 'omega_seal'
+    handtekening. Ontvangende agents verifiëren het zegel voordat
+    ze de payload verwerken.
+
+    Key derivatie (3-laags):
+        1. OMEGA_BUS_SIGNING_KEY   — software secret uit .env
+        2. LIVE hardware fingerprint — real-time CPU+GPU+moederbord scan
+        3. SHA-256(key | live_seal) — derived HMAC key
+
+        De LIVE scan is cruciaal: zelfs als .env gestolen wordt,
+        kan de key niet gereconstrueerd worden zonder het fysieke
+        silicium. De opgeslagen AUTHORIZED_SILICON_SEAL wordt NIET
+        gebruikt voor key derivatie — alleen de live hardware scan.
+    """
+
+    _key: Optional[bytes] = None
+    _hardware_verified: bool = False
+    _live_seal: str = ""
+
+    @classmethod
+    def _scan_live_hardware(cls) -> str:
+        """Haal de live hardware seal op (cached, single scan).
+
+        Gebruikt _scan_hardware_once() — dezelfde cache als C2 verify.
+        Geen dubbele WMIC/nvidia-smi subprocess calls.
+        """
+        seal = _scan_hardware_once()
+        if seal:
+            logger.info(
+                "[OMEGA SEAL] Live hardware seal: %s...%s",
+                seal[:8], seal[-4:],
+            )
+            return seal
+
+        # Fallback: gebruik opgeslagen seal uit .env
+        fallback = os.environ.get("AUTHORIZED_SILICON_SEAL", "")
+        if fallback:
+            logger.warning(
+                "[OMEGA SEAL] Fallback naar opgeslagen seal — minder veilig"
+            )
+        return fallback
+
+    @classmethod
+    def _load_key(cls) -> Optional[bytes]:
+        """Laad OMEGA_BUS_SIGNING_KEY en fuseer met LIVE hardware seal.
+
+        Key = SHA-256(OMEGA_BUS_SIGNING_KEY | LIVE_SILICON_SEAL)
+
+        De live scan maakt de key onreconstrueerbaar zonder het
+        fysieke silicium, zelfs als de .env volledig gelekt is.
+        """
+        if cls._key is None:
+            bus_key = os.environ.get("OMEGA_BUS_SIGNING_KEY", "")
+            if bus_key:
+                cls._live_seal = cls._scan_live_hardware()
+                if cls._live_seal:
+                    combined = f"{bus_key}|{cls._live_seal}"
+                    cls._key = hashlib.sha256(combined.encode("utf-8")).digest()
+                    cls._hardware_verified = True
+                    logger.info(
+                        "[OMEGA SEAL] Key derived from LIVE hardware + bus key"
+                    )
+                else:
+                    # Geen hardware seal — software-only mode
+                    cls._key = hashlib.sha256(bus_key.encode("utf-8")).digest()
+                    cls._hardware_verified = False
+                    logger.warning(
+                        "[OMEGA SEAL] SOFTWARE-ONLY — geen hardware binding!"
+                    )
+        return cls._key
+
+    @classmethod
+    def sign_payload(cls, payload: dict) -> str:
+        """Genereer HMAC-SHA256 handtekening voor een payload dict.
+
+        Returns:
+            Hex-encoded HMAC digest, of lege string als key ontbreekt.
+        """
+        key = cls._load_key()
+        if not key:
+            return ""
+        canonical = json.dumps(payload, sort_keys=True, default=str)
+        return hmac.new(key, canonical.encode("utf-8"), hashlib.sha256).hexdigest()
+
+    @classmethod
+    def verify(cls, payload: dict, seal: str) -> bool:
+        """Verifieer een omega_seal tegen de payload.
+
+        Timing-safe vergelijking via hmac.compare_digest.
+
+        Returns:
+            True als het zegel klopt, False als het ontbreekt of corrupt is.
+        """
+        if not seal:
+            return False
+        expected = cls.sign_payload(payload)
+        if not expected:
+            return False
+        return hmac.compare_digest(expected, seal)
+
+    @classmethod
+    def is_armed(cls) -> bool:
+        """Check of de signing key geladen is."""
+        return cls._load_key() is not None
+
+    @classmethod
+    def is_hardware_bound(cls) -> bool:
+        """Check of de key gebonden is aan de hardware (Silicon Seal)."""
+        cls._load_key()
+        return cls._hardware_verified
+
+
+def verified_callback(callback: Callable) -> Callable:
+    """Decorator die inkomende BusEvents verifieert voor een callback.
+
+    Gebruik:
+        @verified_callback
+        def mijn_handler(event: BusEvent):
+            ...  # Alleen uitgevoerd als seal geldig is
+
+    Events zonder geldig omega_seal worden geweigerd en gelogd.
+    """
+    def wrapper(event: BusEvent) -> Any:
+        if hasattr(event, "verify_seal") and not event.verify_seal():
+            logger.warning(
+                "[OMEGA GATE] Event geweigerd — ongeldig seal: "
+                "type=%s bron=%s", event.event_type, event.bron,
+            )
+            return None
+        return callback(event)
+
+    wrapper.__name__ = callback.__name__
+    wrapper.__qualname__ = callback.__qualname__
+    return wrapper
 
 
 class BusEvent:
     """Representatie van een event op de bus."""
 
-    __slots__ = ("event_type", "data", "bron", "timestamp")
+    __slots__ = ("event_type", "data", "bron", "timestamp", "omega_seal")
 
     def __init__(
         self,
@@ -90,20 +238,23 @@ class BusEvent:
     ) -> None:
         """Initializes an event object.
 
- Args:
-   event_type (str): The type of event.
-   data (Dict[str, Any]): Additional data associated with the event.
-   bron (str, optional): The source of the event. Defaults to "unknown".
-
- Attributes:
-   event_type (str): The type of event.
-   data (Dict[str, Any]): Additional data associated with the event.
-   bron (str): The source of the event.
-   timestamp (datetime): The timestamp when the event was created."""
+        Args:
+            event_type: The type of event.
+            data: Additional data associated with the event.
+            bron: The source of the event.
+        """
         self.event_type = event_type
         self.data = data
         self.bron = bron
         self.timestamp = datetime.now()
+        # Cryptografisch zegel — sign de payload bij creatie
+        seal_payload = {"event_type": event_type, "data": data, "bron": bron}
+        self.omega_seal = OmegaSeal.sign_payload(seal_payload)
+
+    def verify_seal(self) -> bool:
+        """Verifieer het omega_seal van dit event."""
+        seal_payload = {"event_type": self.event_type, "data": self.data, "bron": self.bron}
+        return OmegaSeal.verify(seal_payload, self.omega_seal)
 
     def to_dict(self) -> dict:
         """To dict."""
@@ -112,6 +263,7 @@ class BusEvent:
             "data": self.data,
             "bron": self.bron,
             "timestamp": self.timestamp.isoformat(),
+            "omega_seal": self.omega_seal,
         }
 
 
@@ -124,9 +276,10 @@ class NeuralBus:
     """
 
     _MAX_HISTORY = 100  # events per type
+    _MAX_CHAIN_DEPTH = 5  # agent-to-agent recursion limit
 
     def __init__(self) -> None:
-        """Init  ."""
+        """Init."""
         self._lock = threading.RLock()
         # event_type -> [callback, ...]
         self._subscribers: Dict[str, List[Callable]] = defaultdict(list)
@@ -139,10 +292,16 @@ class NeuralBus:
         # Optionele UnifiedMemory koppeling
         self._memory = None
         self._persist = False
+        # Agent chain tracking — voorkomt infinite loops
+        self._active_chains: Dict[str, int] = {}  # chain_id -> depth
+        self._chain_lock = threading.Lock()
         self._stats = {
             "events_gepubliceerd": 0,
             "events_afgeleverd": 0,
             "fouten": 0,
+            "seals_verified": 0,
+            "seals_rejected": 0,
+            "chains_blocked": 0,
         }
 
     def enable_persistence(self) -> None:
@@ -208,6 +367,11 @@ class NeuralBus:
         """
         Publiceer een event naar alle subscribers.
 
+        Elk event wordt automatisch cryptografisch gesigned bij creatie
+        (HMAC-SHA256 via OMEGA_BUS_SIGNING_KEY + AUTHORIZED_SILICON_SEAL).
+        Bij aflevering wordt het seal geverifieerd — events met een
+        ongeldig seal worden geweigerd en gelogd.
+
         Args:
             event_type: EventTypes constante
             data: Event payload (dict)
@@ -215,9 +379,26 @@ class NeuralBus:
         """
         event = BusEvent(event_type, data, bron)
 
+        # Seal verificatie op het moment van publicatie
+        if OmegaSeal.is_armed() and event.omega_seal:
+            if not event.verify_seal():
+                logger.warning(
+                    "[OMEGA GATE] Event GEWEIGERD — seal corrupt bij publicatie: "
+                    "type=%s bron=%s", event_type, bron,
+                )
+                with self._lock:
+                    self._stats["seals_rejected"] += 1
+                return
+            with self._lock:
+                self._stats["seals_verified"] += 1
+
         with self._lock:
-            # Voeg toe aan history (deque maxlen handelt overflow af)
-            self._history[event_type].append(event)
+            # Overflow detectie — log als events verloren gaan
+            hist = self._history[event_type]
+            if len(hist) >= self._MAX_HISTORY:
+                self._stats.setdefault("events_dropped", 0)
+                self._stats["events_dropped"] += 1
+            hist.append(event)
 
             self._stats["events_gepubliceerd"] += 1
 
@@ -257,6 +438,84 @@ class NeuralBus:
                 )
             except Exception as e:
                 logger.debug("Event persistentie mislukt: %s", e)
+
+    def publish_verified(
+        self,
+        event_type: str,
+        data: Dict[str, Any],
+        bron: str = "unknown",
+    ) -> bool:
+        """Publiceer een event en verifieer het seal na creatie.
+
+        Returns:
+            True als het event succesvol gesigned en gepubliceerd is.
+        """
+        event = BusEvent(event_type, data, bron)
+        if not event.verify_seal():
+            logger.warning("[OMEGA GATE] Event seal verificatie mislukt: %s van %s", event_type, bron)
+            with self._lock:
+                self._stats["seals_rejected"] += 1
+            return False
+        with self._lock:
+            self._stats["seals_verified"] += 1
+        self.publish(event_type, data, bron)
+        return True
+
+    def chain_dispatch(
+        self,
+        source_agent: str,
+        target_agent: str,
+        payload: Dict[str, Any],
+        chain_id: Optional[str] = None,
+    ) -> bool:
+        """Agent-to-Agent chaining met recursion guard.
+
+        Sta toe dat Agent A een commando genereert voor Agent B,
+        met een harde recursion limit (_MAX_CHAIN_DEPTH) om
+        infinite loops te voorkomen.
+
+        Args:
+            source_agent: Naam van de bronagent
+            target_agent: Naam van de doelagent
+            payload: Data voor de doelagent
+            chain_id: Optionele chain ID (auto-generated als None)
+
+        Returns:
+            True als de chain-dispatch is toegestaan en gepubliceerd.
+        """
+        if chain_id is None:
+            chain_id = f"chain_{source_agent}_{datetime.now().strftime('%H%M%S%f')}"
+
+        with self._chain_lock:
+            depth = self._active_chains.get(chain_id, 0)
+            if depth >= self._MAX_CHAIN_DEPTH:
+                logger.warning(
+                    "[OMEGA BUS] Chain depth limit (%d) bereikt: %s → %s (chain=%s)",
+                    self._MAX_CHAIN_DEPTH, source_agent, target_agent, chain_id,
+                )
+                self._stats["chains_blocked"] += 1
+                self.publish(
+                    EventTypes.AGENT_CHAIN_BLOCKED,
+                    {"source": source_agent, "target": target_agent, "depth": depth, "chain_id": chain_id},
+                    bron="omega_bus",
+                )
+                return False
+            self._active_chains[chain_id] = depth + 1
+
+        chain_data = {
+            "source_agent": source_agent,
+            "target_agent": target_agent,
+            "chain_id": chain_id,
+            "chain_depth": depth + 1,
+            "payload": payload,
+        }
+        self.publish(EventTypes.AGENT_CHAIN_REQUEST, chain_data, bron=source_agent)
+        return True
+
+    def chain_complete(self, chain_id: str) -> None:
+        """Markeer een agent chain als voltooid."""
+        with self._chain_lock:
+            self._active_chains.pop(chain_id, None)
 
     def get_history(
         self,
@@ -385,12 +644,20 @@ class NeuralBus:
                 )
                 subscriber_count += len(self._wildcard_subscribers)
 
+                with self._chain_lock:
+                    active_chains = len(self._active_chains)
+
                 return {
                     "subscribers": subscriber_count,
                     "event_types_actief": len(self._history),
                     "events_in_history": sum(
                         len(h) for h in self._history.values()
                     ),
+                    "omega_seal_armed": OmegaSeal.is_armed(),
+                    "hardware_bound": OmegaSeal.is_hardware_bound(),
+                    "c2_verified": _c2_verified,
+                    "active_chains": active_chains,
+                    "max_chain_depth": self._MAX_CHAIN_DEPTH,
                     **self._stats,
                 }
         except Exception as e:
@@ -417,7 +684,12 @@ class NeuralBus:
                     "events_gepubliceerd": 0,
                     "events_afgeleverd": 0,
                     "fouten": 0,
+                    "seals_verified": 0,
+                    "seals_rejected": 0,
+                    "chains_blocked": 0,
                 }
+            with self._chain_lock:
+                self._active_chains.clear()
         except Exception as e:
             logger.debug("NeuralBus reset fout: %s", e)
 
@@ -427,17 +699,177 @@ except ImportError:
     logger.debug("Optional import not available: danny_toolkit.core.memory_interface")
 
 
+def _auto_load_env() -> None:
+    """Laad .env automatisch als OMEGA_BUS_SIGNING_KEY niet in env staat.
+
+    Zoekt .env in de project root (3 dirs omhoog van dit bestand).
+    Parsed KEY=VALUE regels zonder externe dependencies (geen dotenv nodig).
+    """
+    if os.environ.get("OMEGA_BUS_SIGNING_KEY"):
+        return  # Al geladen
+
+    env_candidates = [
+        os.path.join(os.path.dirname(__file__), "..", "..", ".env"),
+        os.path.join(os.getcwd(), ".env"),
+    ]
+    _CRYPTO_KEYS = {
+        "OMEGA_BUS_SIGNING_KEY",
+        "AUTHORIZED_SILICON_SEAL",
+        "C2_AUTH_URL",
+    }
+    for env_path in env_candidates:
+        env_file = os.path.normpath(env_path)
+        if os.path.isfile(env_file):
+            try:
+                with open(env_file, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if not line or line.startswith("#") or "=" not in line:
+                            continue
+                        k, _, v = line.partition("=")
+                        k = k.strip()
+                        v = v.strip()
+                        if k in _CRYPTO_KEYS and k not in os.environ:
+                            os.environ[k] = v
+                logger.debug("Auto-loaded crypto keys from %s", env_file)
+                return
+            except Exception as e:
+                logger.debug("Auto-load .env mislukt (%s): %s", env_file, e)
+
+
+_cached_live_seal: Optional[str] = None
+
+
+def _scan_hardware_once() -> str:
+    """Scan hardware EENMALIG en cache het resultaat.
+
+    Voorkomt dubbele WMIC/nvidia-smi subprocess calls.
+    Resultaat wordt hergebruikt door zowel C2 verify als OmegaSeal.
+    """
+    global _cached_live_seal
+    if _cached_live_seal is not None:
+        return _cached_live_seal
+    try:
+        from danny_toolkit.core.hardware_anchor import generate_silicon_seal
+        seal = generate_silicon_seal()
+        if seal and len(seal) == 64:
+            _cached_live_seal = seal
+            return seal
+    except ImportError:
+        logger.debug("[HARDWARE] hardware_anchor niet beschikbaar")
+    except Exception as e:
+        logger.warning("[HARDWARE] Scan mislukt: %s", e)
+    return ""
+
+
+def _c2_hardware_verify() -> bool:
+    """Verifieer hardware tegen C2 Master bij bus startup.
+
+    Gebruikt de gecachte live seal (single hardware scan voor
+    het hele startup-proces). Constant-time vergelijking.
+
+    Returns:
+        True als hardware geautoriseerd is, False bij fout of mismatch.
+    """
+    try:
+        from danny_toolkit.core.hardware_anchor import fetch_c2_seals
+        import secrets as _secrets
+
+        live = _scan_hardware_once()
+        if not live:
+            logger.critical("[OMEGA BUS C2] Geen live seal — hardware scan mislukt")
+            return False
+
+        authorized = fetch_c2_seals()
+
+        if not authorized:
+            logger.critical(
+                "[OMEGA BUS C2] Lege whitelist — geen machine geautoriseerd!"
+            )
+            return False
+
+        for seal in authorized:
+            if _secrets.compare_digest(seal, live):
+                logger.info(
+                    "[OMEGA BUS C2] Hardware VERIFIED: %s...%s",
+                    live[:8], live[-4:],
+                )
+                return True
+
+        logger.critical(
+            "[OMEGA BUS C2] Hardware NOT AUTHORIZED! Live: %s...%s",
+            live[:8], live[-4:],
+        )
+        return False
+    except ConnectionError as e:
+        logger.critical("[OMEGA BUS C2] Server onbereikbaar: %s", e)
+        return False
+    except PermissionError as e:
+        logger.critical("[OMEGA BUS C2] Configuratie fout: %s", e)
+        return False
+    except ImportError:
+        logger.debug("[OMEGA BUS C2] hardware_anchor niet beschikbaar — skip")
+        return True
+    except Exception as e:
+        logger.warning("[OMEGA BUS C2] Onverwachte fout: %s", e)
+        return False
+
+
 # -- Singleton --
 
 _bus_instance: Optional[NeuralBus] = None
 _bus_lock = threading.Lock()
+_c2_verified: bool = False
 
 
 def get_bus() -> NeuralBus:
-    """Verkrijg de singleton NeuralBus instantie."""
-    global _bus_instance
+    """Verkrijg de singleton NeuralBus instantie.
+
+    Bij eerste aanroep (volledige hardware-gebonden startup):
+    1. Laadt OMEGA_BUS_SIGNING_KEY + C2_AUTH_URL uit .env
+    2. Scant LIVE hardware (CPU+GPU+moederbord) → Silicon Seal
+    3. Verifieert live seal tegen C2 Master (externe whitelist)
+    4. Deriveert HMAC key: SHA-256(BUS_KEY | LIVE_SEAL)
+    5. Creëert de singleton NeuralBus met auto-sign/verify
+
+    De LIVE hardware scan is de kern: zelfs als .env gestolen wordt,
+    kan de HMAC key niet gereconstrueerd worden zonder het fysieke
+    silicium van deze machine.
+    """
+    global _bus_instance, _c2_verified
     if _bus_instance is None:
         with _bus_lock:
             if _bus_instance is None:
+                # Stap 1: Laad crypto env vars
+                _auto_load_env()
+
+                # Stap 2+3: C2 hardware verificatie (scant live hardware)
+                _c2_verified = _c2_hardware_verify()
+
+                # Stap 4: OmegaSeal key derivatie (scant live hardware opnieuw)
+                # Dit forceert de live scan in _load_key()
+                OmegaSeal._load_key()
+
+                # Stap 5: Creëer de bus
                 _bus_instance = NeuralBus()
+
+                # Status rapport
+                if OmegaSeal.is_armed():
+                    hw = "HARDWARE-BOUND" if OmegaSeal.is_hardware_bound() else "SOFTWARE-ONLY"
+                    c2 = "C2-VERIFIED" if _c2_verified else "C2-UNVERIFIED"
+                    live = OmegaSeal._live_seal
+                    seal_short = f"{live[:8]}...{live[-4:]}" if live else "NONE"
+                    logger.info(
+                        "[OMEGA BUS] ARMED (%s, %s, seal=%s)",
+                        hw, c2, seal_short,
+                    )
+                else:
+                    logger.warning(
+                        "[OMEGA BUS] NOT ARMED — bus draait onbeveiligd!"
+                    )
     return _bus_instance
+
+
+def is_c2_verified() -> bool:
+    """Check of de C2 hardware verificatie geslaagd is."""
+    return _c2_verified

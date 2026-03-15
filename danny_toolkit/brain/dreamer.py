@@ -130,8 +130,8 @@ Sets the model attribute to the LLM model specified in the configuration."""
 
         # 5.6 Phantom rebuild — temporal pattern analysis
         try:
-            from danny_toolkit.brain.phantom import ThePhantom
-            phantom = ThePhantom()
+            from danny_toolkit.brain.phantom import get_phantom
+            phantom = get_phantom()
             phantom.update_patterns()
             print(f"{Kleur.GROEN}👻 Phantom patterns rebuilt.{Kleur.RESET}")
         except Exception as e:
@@ -256,10 +256,11 @@ Sets the model attribute to the LLM model specified in the configuration."""
 
         # 5.14 Phantom pre-warm — pre-warm MEMEX context voor morgen
         try:
-            from danny_toolkit.brain.phantom import ThePhantom
-            phantom = ThePhantom()
+            from danny_toolkit.brain.phantom import get_phantom
+            phantom = get_phantom()
             phantom.pre_warm_context()
-            print(f"{Kleur.GROEN}👻 Phantom pre-warm context geladen{Kleur.RESET}")
+            pre_warmed_count = len(phantom._pre_warmed)
+            print(f"{Kleur.GROEN}👻 Phantom pre-warm: {pre_warmed_count} categorieën geladen{Kleur.RESET}")
         except Exception as e:
             logger.debug("Phantom pre-warm REM failed: %s", e)
 

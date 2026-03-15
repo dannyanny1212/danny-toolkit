@@ -134,7 +134,7 @@ class UnifiedMemory:
                 logger.debug("UnifiedMemory event log corrupt, resetting: %s", e)
         return []
 
-    def _sla_event_log_op(self):
+    def _sla_event_log_op(self) -> None:
         """Sla event log op."""
         data = {
             "events": [e.to_dict() for e in self.event_log[-1000:]],  # Bewaar laatste 1000
@@ -421,7 +421,7 @@ class UnifiedMemory:
             "laatste_activiteit": max(e.timestamp for e in events).isoformat()
         }
 
-    def clear_old_events(self, dagen: int = 90):
+    def clear_old_events(self, dagen: int = 90) -> None:
         """
         Verwijder oude events om ruimte te besparen.
 
@@ -461,7 +461,7 @@ class UnifiedMemory:
         print(f"   [OK] Context geëxporteerd: {output_file.name}")
         return output_file
 
-    def import_app_data(self, app: str, data_file: Path):
+    def import_app_data(self, app: str, data_file: Path) -> None:
         """
         Importeer bestaande app data in unified memory.
 

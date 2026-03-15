@@ -2,6 +2,7 @@
 
 Gebruik: python -m danny_toolkit.brain
 """
+from __future__ import annotations
 
 from danny_toolkit.brain.trinity_omega import main
 

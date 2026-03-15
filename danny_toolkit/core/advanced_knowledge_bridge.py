@@ -450,8 +450,8 @@ class AdvancedKnowledgeBridge:
         # Stap 2: drop collectie (negeert als niet bestaat)
         try:
             self._client.delete_collection(COLLECTION_NAME)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Collection delete (niet-fataal): %s", e)
 
         # Stap 3: reset interne state zodat _get_collection() vers begint
         self._collection = None

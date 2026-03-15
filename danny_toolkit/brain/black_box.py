@@ -86,7 +86,7 @@ class Antibody:
         """Antibody is nog actief (sterkte > 5%)."""
         return self.strength > 0.05
 
-    def reinforce(self):
+    def reinforce(self) -> None:
         """Herhaalde encounter — escaleer severity + reset klok."""
         self.encounters += 1
         self.last_seen = time.time()
@@ -176,7 +176,7 @@ class BlackBox:
 
     # ── Persistence ──
 
-    def _load_immune_memory(self):
+    def _load_immune_memory(self) -> None:
         """Laad antibodies van schijf."""
         if not self._antibody_path.exists():
             return
@@ -190,7 +190,7 @@ class BlackBox:
         except (json.JSONDecodeError, IOError, KeyError) as e:
             logger.debug("Immune memory load failed: %s", e)
 
-    def _save_immune_memory(self):
+    def _save_immune_memory(self) -> None:
         """Bewaar actieve antibodies naar schijf."""
         Config.ensure_dirs()
         (Config.DATA_DIR / "memory").mkdir(parents=True, exist_ok=True)
@@ -283,7 +283,7 @@ class BlackBox:
             f"Do NOT repeat this pattern. If uncertain, say so explicitly."
         )
 
-    def _vaccinate(self, antibody: Antibody, context: str = ""):
+    def _vaccinate(self, antibody: Antibody, context: str = "") -> None:
         """Broadcast immunity event op NeuralBus.
 
         Alle agents die luisteren naar IMMUNE_RESPONSE krijgen de

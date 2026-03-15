@@ -1,4 +1,5 @@
 """Forge Tool: Phoenix Ping — SSD sector health check."""
+from __future__ import annotations
 
 
 def ping_ssd(sectors: int) -> str:

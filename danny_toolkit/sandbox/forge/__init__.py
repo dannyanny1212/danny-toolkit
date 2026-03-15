@@ -7,6 +7,7 @@ v6.19.0: Smart __init__ met expliciete __all__ voor forge discovery.
 Nieuwe tools worden automatisch toegevoegd door de Artificer na
 Diamond Polish verificatie (score >= 9.0 A+).
 """
+from __future__ import annotations
 
 __all__ = [
     "calculator",

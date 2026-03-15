@@ -516,7 +516,7 @@ class ObservatorySync:
 
     # -- Logging --
 
-    def _log_auction(self, entry: AuctionLogEntry):
+    def _log_auction(self, entry: AuctionLogEntry) -> None:
         """Log veiling naar CorticalStack."""
         if not HAS_STACK:
             return
@@ -537,7 +537,7 @@ class ObservatorySync:
         except Exception as e:
             logger.debug("ObservatorySync CorticalStack log error: %s", e)
 
-    def _publiceer_auction(self, entry: AuctionLogEntry):
+    def _publiceer_auction(self, entry: AuctionLogEntry) -> None:
         """Publiceer veiling-event op NeuralBus."""
         if not HAS_BUS:
             return

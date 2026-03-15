@@ -1,16 +1,18 @@
 """
-THE SOVEREIGN GATE v6.11.0 — Golden Master Security Enforcer.
+THE SOVEREIGN GATE v6.19.0 — Golden Master Security Enforcer.
 
-9 security checks. Code weigert te draaien tenzij ALLE checks slagen.
+10 security checks. Code weigert te draaien tenzij ALLE checks slagen.
 Geen bypass. Geen test modus. Geen uitzonderingen.
 
 Laws 1-5: Original Sovereign Laws
 Laws 6-9: Security Hardening (Phase Golden Master)
+Law 10:   Silicon Seal C2 (Hardware Node-Lock via Remote Whitelist)
 
   6. Brute Force Lockout   — 5 fails → 15 min lockout
   7. Boot Audit Log        — Elke pass/fail met timestamp
   8. Anti-Tamper Hash      — SHA256 self-verification
   9. Max Boot Frequency    — Max 10 boots per minuut
+ 10. Silicon Seal C2       — Hardware hash vs. remote C2 whitelist
 """
 
 from __future__ import annotations
@@ -129,7 +131,7 @@ def _compute_self_hash() -> str:
 
 def lock_environment() -> None:
     """
-    THE SOVEREIGN GATE — 9 Security Laws.
+    THE SOVEREIGN GATE — 10 Security Laws.
     Executes before Omega boots. If any check fails, the process dies instantly.
     """
 
@@ -300,12 +302,28 @@ def lock_environment() -> None:
             pass  # Hash check is non-fatal bij file errors
 
     # ═══════════════════════════════════════════════════════
+    #  LAW 10: SILICON SEAL C2 (Hardware Node-Lock)
+    # ═══════════════════════════════════════════════════════
+    try:
+        from danny_toolkit.core.hardware_anchor import verify_hardware_anchor
+        verify_hardware_anchor()
+    except PermissionError as e:
+        _gate_fail("Law 10: Silicon Seal C2", str(e))
+    except ConnectionError as e:
+        _gate_fail("Law 10: Silicon Seal C2", str(e))
+    except ImportError:
+        _gate_fail(
+            "Law 10: Silicon Seal C2",
+            "hardware_anchor module niet gevonden. Installatie corrupt.",
+        )
+
+    # ═══════════════════════════════════════════════════════
     #  ALL LAWS PASSED — Welcome, Commander
     # ═══════════════════════════════════════════════════════
-    _audit_log("GRANTED", "ALL 9 LAWS", "Environment Verified. Welcome, Commander Danny.")
+    _audit_log("GRANTED", "ALL 10 LAWS", "Environment Verified. Welcome, Commander Danny.")
     _record_boot()
 
-    print("\u2705 [SOVEREIGN GATE v6.11.0] 9/9 Laws Verified. Welcome, Commander Danny.")
+    print("\u2705 [SOVEREIGN GATE v6.19.0] 10/10 Laws Verified. Welcome, Commander Danny.")
     return True
 
 

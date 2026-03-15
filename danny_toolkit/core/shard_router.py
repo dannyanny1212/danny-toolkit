@@ -210,7 +210,17 @@ class ShardRouter:
             try:
                 ids = [d["id"] for d in docs]
                 documents = [d["tekst"] for d in docs]
-                metadatas = [d.get("metadata", {}) for d in docs]
+                # Sanitize metadata: alleen str/int/float/bool values,
+                # keys en string values gecapt op 500 chars
+                raw_metas = [d.get("metadata", {}) for d in docs]
+                metadatas = []
+                for m in raw_metas:
+                    clean = {}
+                    for k, v in (m if isinstance(m, dict) else {}).items():
+                        if isinstance(v, (str, int, float, bool)):
+                            sk = str(k)[:500]
+                            clean[sk] = str(v)[:500] if isinstance(v, str) else v
+                    metadatas.append(clean)
 
                 coll.upsert(
                     ids=ids,

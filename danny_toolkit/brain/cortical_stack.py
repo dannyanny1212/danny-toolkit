@@ -51,8 +51,8 @@ class CorticalStack:
     """
 
     SCHEMA_VERSION = 1
-    _BATCH_SIZE = 20        # flush na N writes
-    _BATCH_INTERVAL = 5.0   # flush elke N seconden
+    _BATCH_SIZE = 100       # flush na N writes (5x minder WAL checkpoints)
+    _BATCH_INTERVAL = 10.0  # flush elke N seconden (WAL buffert efficiënter)
 
     def __init__(self, db_path: Optional[Path] = None) -> None:
         """Initializes a database connection.
@@ -202,9 +202,12 @@ class CorticalStack:
             Het id van het ingevoegde record.
         """
         now = datetime.now().isoformat()
-        details_json = json.dumps(
+        raw_json = json.dumps(
             details or {}, ensure_ascii=False
         )
+        # Guard: cap event payload op 10 KB — voorkomt unbounded DB groei
+        _MAX_DETAIL_BYTES = 10_240
+        details_json = raw_json[:_MAX_DETAIL_BYTES]
 
         with self._lock:
             cur = self._conn.execute(
@@ -262,7 +265,7 @@ class CorticalStack:
             WHERE details LIKE ?
             ORDER BY id DESC LIMIT ?
             """,
-            (f"%{query}%", limit),
+            (f"%{query.replace('%', '').replace('_', '')}%", limit),
         ).fetchall()
         return [self._row_to_dict(r) for r in rows]
 
@@ -279,6 +282,10 @@ class CorticalStack:
         Returns:
             True als het feit is opgeslagen.
         """
+        # Guard: key en value bounds + confidence clamp
+        key = key[:500]
+        value = value[:10_000]
+        confidence = max(0.0, min(1.0, float(confidence)))
         now = datetime.now().isoformat()
 
         with self._lock:
@@ -362,7 +369,7 @@ class CorticalStack:
                 WHERE key LIKE ? AND confidence >= ?
                 ORDER BY access_count DESC
                 """,
-                (f"{prefix}%", min_confidence),
+                (f"{prefix.replace('%', '').replace('_', '')}%", min_confidence),
             ).fetchall()
         else:
             rows = self._conn.execute(

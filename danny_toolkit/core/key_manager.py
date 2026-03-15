@@ -608,7 +608,7 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
             return None
 
         weight = WEIGHT_CLASS.get(agent_naam, "light")
-        logger.debug(f"Dual-Core: {agent_naam} → {weight} pool (key ...{key[-6:]})")
+        logger.debug(f"Dual-Core: {agent_naam} → {weight} pool")
         client = AsyncGroq(api_key=key)
         self._async_clients.append(client)
         return client
@@ -633,7 +633,7 @@ Note that this is a singleton class, and subsequent calls to `__init__` will not
             return None
 
         weight = WEIGHT_CLASS.get(agent_naam, "light")
-        logger.debug(f"Dual-Core: {agent_naam} → {weight} pool (key ...{key[-6:]})")
+        logger.debug(f"Dual-Core: {agent_naam} → {weight} pool")
         return Groq(api_key=key)
 
     def create_sync_client_for_model(self, agent_naam: str, model: str) -> None:

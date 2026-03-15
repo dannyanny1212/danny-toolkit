@@ -31,37 +31,39 @@
 </head>
 <body class="bg-sovereign-bg text-gray-200 min-h-screen font-mono">
 
-    <!-- AUTH GATE -->
-    <div id="auth-gate" class="fixed inset-0 bg-sovereign-bg z-50 flex items-center justify-center">
-        <div class="bg-sovereign-panel border border-sovereign-border rounded-lg p-8 w-96 shadow-2xl">
-            <div class="text-center mb-6">
-                <div class="text-4xl mb-2">&#937;</div>
-                <h1 class="text-xl font-bold text-sovereign-glow">OMEGA Command Center</h1>
-                <p class="text-gray-500 text-sm mt-1">Sovereign Authentication Required</p>
-            </div>
-            <input id="api-key-input" type="password"
-                   placeholder="X-API-Key"
-                   class="w-full bg-sovereign-bg border border-sovereign-border rounded px-4 py-3 text-gray-200 focus:border-sovereign-accent focus:outline-none mb-4"
-                   onkeydown="if(event.key==='Enter')authenticate()">
-            <button onclick="authenticate()"
-                    class="w-full bg-sovereign-accent hover:bg-purple-600 text-white font-bold py-3 rounded transition-colors">
-                AUTHENTICATE
-            </button>
-            <p id="auth-error" class="text-sovereign-red text-sm mt-3 hidden text-center">Access Denied</p>
+    <!-- HARDWARE AUTH LOADING -->
+    <div id="auth-gate" class="fixed inset-0 bg-sovereign-bg z-50 flex items-center justify-center"
+         style="position:fixed;top:0;left:0;right:0;bottom:0;background:#0a0a0f;z-index:50;display:flex;align-items:center;justify-content:center;">
+        <div style="text-align:center;">
+            <div style="font-size:2.25rem;margin-bottom:1rem;color:#a78bfa;">&#937;</div>
+            <h1 style="font-size:1.125rem;font-weight:700;color:#a78bfa;margin-bottom:0.5rem;">OMEGA Command Center</h1>
+            <p style="color:#6b7280;font-size:0.875rem;">Hardware authenticatie...</p>
+            <p id="auth-error" class="hidden" style="color:#ef4444;font-size:0.875rem;margin-top:0.75rem;display:none;">Hardware auth mislukt — niet op localhost?</p>
         </div>
     </div>
 
     <!-- MAIN DASHBOARD -->
-    <div id="dashboard" class="hidden">
+    <div id="dashboard" class="hidden flex flex-col h-screen" style="display:none;flex-direction:column;height:100vh;">
 
         <!-- HEADER -->
-        <header class="border-b border-sovereign-border px-6 py-3 flex items-center justify-between">
+        <header class="border-b border-sovereign-border px-6 py-2 flex items-center justify-between shrink-0">
             <div class="flex items-center gap-3">
                 <span class="text-2xl">&#937;</span>
                 <h1 class="text-lg font-bold text-sovereign-glow">OMEGA Command Center</h1>
-                <span class="text-xs text-gray-500">v6.12.0</span>
+                <span class="text-xs text-gray-500">v6.19.0</span>
             </div>
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-6">
+                <!-- Quick Stats Bar -->
+                <div class="flex items-center gap-4 text-xs">
+                    <span class="flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-sovereign-green status-pulse"></span>
+                        <span id="hdr-agents" class="text-gray-400">0 agents</span>
+                    </span>
+                    <span class="text-gray-600">|</span>
+                    <span id="hdr-ram" class="text-gray-400">-- MB</span>
+                    <span class="text-gray-600">|</span>
+                    <span id="hdr-gpu-temp" class="text-gray-400">GPU --</span>
+                </div>
                 <span id="header-status" class="flex items-center gap-2 text-sm">
                     <span class="w-2 h-2 rounded-full bg-gray-500 animate-pulse" id="status-dot"></span>
                     <span id="status-text" class="text-gray-400">Connecting...</span>
@@ -70,172 +72,1095 @@
             </div>
         </header>
 
-        <!-- 3-PANEL GRID -->
-        <main class="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 h-[calc(100vh-56px)]">
+        <!-- TAB NAVIGATION -->
+        <nav class="border-b border-sovereign-border px-4 flex gap-1 shrink-0 overflow-x-auto" id="tab-nav">
+            <button class="tab-btn active" data-tab="overview">Overview</button>
+            <button class="tab-btn" data-tab="observatory">Observatory</button>
+            <button class="tab-btn" data-tab="memory">Memory</button>
+            <button class="tab-btn" data-tab="security">Security</button>
+            <button class="tab-btn" data-tab="brain">Omega Brain</button>
+            <button class="tab-btn" data-tab="swarm">Swarm Commander</button>
+            <button class="tab-btn" data-tab="apps">Apps Hub</button>
+            <button class="tab-btn" data-tab="knowledge">Knowledge Forge</button>
+            <button class="tab-btn" data-tab="daemon">Daemon &amp; Dreams</button>
+        </nav>
 
-            <!-- PANEL A: TELEMETRIE RING -->
-            <section class="bg-sovereign-panel border border-sovereign-border rounded-lg overflow-hidden flex flex-col">
-                <div class="px-4 py-3 border-b border-sovereign-border flex items-center gap-2">
-                    <span class="text-sovereign-cyan">&#9678;</span>
-                    <h2 class="font-bold text-sm text-sovereign-cyan uppercase tracking-wider">Telemetrie Ring</h2>
-                </div>
-                <div class="p-4 flex-1 overflow-y-auto space-y-4" id="telemetry-content">
-                    <!-- Server Status -->
-                    <div class="space-y-2">
-                        <h3 class="text-xs text-gray-500 uppercase tracking-wider">Server Status</h3>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div class="bg-sovereign-bg rounded p-3">
-                                <div class="text-xs text-gray-500">Status</div>
-                                <div id="sys-status" class="text-sm font-bold text-gray-400">--</div>
+        <!-- ═══════════════════════════════════════════════ -->
+        <!--  TAB: OVERVIEW (Default)                        -->
+        <!-- ═══════════════════════════════════════════════ -->
+        <div id="tab-overview" class="tab-content active flex-1 overflow-hidden">
+            <main class="grid grid-cols-1 lg:grid-cols-4 gap-3 p-3 h-full overflow-y-auto">
+
+                <!-- PANEL A: TELEMETRIE RING -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-cyan">&#9678;</span>
+                        <h2 class="panel-title text-sovereign-cyan">Telemetrie Ring</h2>
+                    </div>
+                    <div class="panel-body" id="telemetry-content">
+                        <div class="space-y-2">
+                            <h3 class="section-label">Server Status</h3>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="stat-box">
+                                    <div class="stat-label">Status</div>
+                                    <div id="sys-status" class="stat-value">--</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">Uptime</div>
+                                    <div id="sys-uptime" class="stat-value">--</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">RAM</div>
+                                    <div id="sys-ram" class="stat-value">--</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">CPU</div>
+                                    <div id="sys-cpu" class="stat-value">--</div>
+                                </div>
                             </div>
-                            <div class="bg-sovereign-bg rounded p-3">
-                                <div class="text-xs text-gray-500">Uptime</div>
-                                <div id="sys-uptime" class="text-sm font-bold text-gray-400">--</div>
+                        </div>
+
+                        <!-- GPU Status -->
+                        <div class="space-y-2">
+                            <h3 class="section-label">GPU (RTX 3060 Ti)</h3>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="stat-box">
+                                    <div class="stat-label">VRAM Used</div>
+                                    <div id="gpu-vram" class="stat-value">--</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">Temp</div>
+                                    <div id="gpu-temp" class="stat-value">--</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">Power</div>
+                                    <div id="gpu-power" class="stat-value">--</div>
+                                </div>
+                                <div class="stat-box">
+                                    <div class="stat-label">Clock</div>
+                                    <div id="gpu-clock" class="stat-value">--</div>
+                                </div>
                             </div>
-                            <div class="bg-sovereign-bg rounded p-3">
-                                <div class="text-xs text-gray-500">RAM</div>
-                                <div id="sys-ram" class="text-sm font-bold text-gray-400">--</div>
+                        </div>
+
+                        <!-- ChromaDB -->
+                        <div class="space-y-2">
+                            <h3 class="section-label">ChromaDB Kluis</h3>
+                            <div class="stat-box">
+                                <div class="flex justify-between items-center">
+                                    <span class="stat-label">Chunks in database</span>
+                                    <span id="db-chunks" class="text-sm font-bold text-sovereign-green">--</span>
+                                </div>
                             </div>
-                            <div class="bg-sovereign-bg rounded p-3">
-                                <div class="text-xs text-gray-500">CPU</div>
-                                <div id="sys-cpu" class="text-sm font-bold text-gray-400">--</div>
+                        </div>
+
+                        <!-- Groq Cores -->
+                        <div class="space-y-2">
+                            <h3 class="section-label">Groq API Keys</h3>
+                            <div id="groq-cores" class="space-y-1">
+                                <div class="text-xs text-gray-500">Loading...</div>
                             </div>
                         </div>
                     </div>
+                </section>
 
-                    <!-- ChromaDB -->
-                    <div class="space-y-2">
-                        <h3 class="text-xs text-gray-500 uppercase tracking-wider">ChromaDB Kluis</h3>
-                        <div class="bg-sovereign-bg rounded p-3">
+                <!-- PANEL B: AGENTS + LEADERBOARD -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-amber">&#9670;</span>
+                        <h2 class="panel-title text-sovereign-amber">Swarm Intelligence</h2>
+                    </div>
+                    <div class="panel-body">
+                        <!-- Active Agents -->
+                        <div class="space-y-2">
+                            <h3 class="section-label">Active Agents</h3>
+                            <div class="agent-row text-xs text-gray-600 border-b border-sovereign-border pb-1 mb-1">
+                                <span class="flex-1">Agent</span>
+                                <span class="w-14 text-right">SP</span>
+                                <span class="w-16 text-center">Status</span>
+                                <span class="w-14 text-right">Tasks</span>
+                                <span class="ml-2 w-6"></span>
+                            </div>
+                            <div id="agent-list" class="space-y-1">
+                                <div class="text-xs text-gray-500">Loading...</div>
+                            </div>
+                        </div>
+
+                        <!-- Synaptic Leaderboard -->
+                        <div class="space-y-2">
+                            <h3 class="section-label flex items-center gap-2">
+                                <span>&#129504;</span> Synaptic Leaderboard
+                                <span id="synapse-pulse" class="w-1.5 h-1.5 rounded-full bg-sovereign-green status-pulse ml-auto"></span>
+                            </h3>
+                            <div id="synapse-leaderboard" class="space-y-2">
+                                <div class="text-xs text-gray-600">Scanning pathways...</div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 text-xs">
+                                <div class="stat-box p-2">
+                                    <div class="text-gray-600">Swarm Avg</div>
+                                    <div id="synapse-avg" class="text-sovereign-cyan font-bold">--</div>
+                                </div>
+                                <div class="stat-box p-2">
+                                    <div class="text-gray-600">Total Fires</div>
+                                    <div id="synapse-fires" class="text-sovereign-green font-bold">--</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- BlackBox Immune Memory -->
+                        <div class="space-y-2">
+                            <h3 class="section-label">BlackBox Immune Memory</h3>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="stat-box p-2">
+                                    <div class="stat-label">Failures</div>
+                                    <div id="bb-failures" class="text-sm font-bold text-sovereign-red">--</div>
+                                </div>
+                                <div class="stat-box p-2">
+                                    <div class="stat-label">Antibodies</div>
+                                    <div id="bb-antibodies" class="text-sm font-bold text-sovereign-amber">--</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PANEL C: NEURALE BRUG (CHAT) -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-glow">&#9672;</span>
+                        <h2 class="panel-title text-sovereign-glow">Neurale Brug</h2>
+                    </div>
+
+                    <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3">
+                        <div class="text-xs text-gray-600 text-center py-8">
+                            <div class="text-2xl mb-2">&#937;</div>
+                            <p>Stel een vraag aan de SwarmEngine</p>
+                            <p class="mt-1 text-gray-700">17-agent netwerk met AdaptiveRouter</p>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-sovereign-border p-3">
+                        <div class="flex gap-2">
+                            <input id="chat-input" type="text"
+                                   placeholder="Vraag aan het Omega-brein..."
+                                   class="flex-1 bg-sovereign-bg border border-sovereign-border rounded px-3 py-2 text-sm text-gray-200 focus:border-sovereign-accent focus:outline-none"
+                                   onkeydown="if(event.key==='Enter')sendQuery()">
+                            <button onclick="sendQuery()"
+                                    class="bg-sovereign-accent hover:bg-purple-600 text-white px-4 py-2 rounded text-sm font-bold transition-colors">
+                                &#9658;
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PANEL D: INGESTIE + EVENTS -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-green">&#9670;</span>
+                        <h2 class="panel-title text-sovereign-green">Ingestie &amp; Events</h2>
+                    </div>
+                    <div class="panel-body">
+                        <!-- Drop Zone (compact) -->
+                        <div id="drop-zone"
+                             class="border-2 border-dashed border-sovereign-border rounded-lg p-4 text-center transition-all cursor-pointer hover:border-sovereign-accent"
+                             ondragover="event.preventDefault(); this.classList.add('border-sovereign-accent','bg-purple-900/10')"
+                             ondragleave="this.classList.remove('border-sovereign-accent','bg-purple-900/10')"
+                             ondrop="handleDrop(event)"
+                             onclick="document.getElementById('file-input').click()">
+                            <div class="text-2xl mb-1 text-gray-500">&#128194;</div>
+                            <p class="text-xs text-gray-400">Drop bestanden hier</p>
+                            <p class="text-xs text-gray-600">.txt .md .py .json .csv .pdf</p>
+                            <input id="file-input" type="file" multiple class="hidden"
+                                   accept=".txt,.md,.py,.json,.csv,.pdf,.yaml,.yml,.toml,.cfg,.ini,.xml,.html,.log"
+                                   onchange="handleFiles(this.files)">
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-xs text-gray-500 uppercase tracking-wider">Tags</label>
+                            <input id="ingest-tags" type="text" placeholder="project:x, status:oud"
+                                   class="w-full bg-sovereign-bg border border-sovereign-border rounded px-3 py-1.5 text-xs text-gray-300 focus:border-sovereign-accent focus:outline-none">
+                        </div>
+
+                        <!-- Job Queue -->
+                        <div class="space-y-2">
                             <div class="flex justify-between items-center">
-                                <span class="text-xs text-gray-500">Chunks in database</span>
-                                <span id="db-chunks" class="text-sm font-bold text-sovereign-green">--</span>
+                                <h3 class="section-label">Job Queue</h3>
+                                <span id="job-counter" class="text-xs text-gray-500">0 jobs</span>
+                            </div>
+                            <div id="job-list" class="space-y-2 max-h-32 overflow-y-auto">
+                                <div class="text-xs text-gray-600 text-center py-2">Geen actieve jobs</div>
+                            </div>
+                        </div>
+
+                        <!-- NeuralBus Live Events -->
+                        <div class="space-y-2">
+                            <h3 class="section-label flex items-center gap-2">
+                                <span>&#9889;</span> NeuralBus Events
+                                <span id="ws-status" class="w-1.5 h-1.5 rounded-full bg-gray-500 status-pulse ml-auto"></span>
+                            </h3>
+                            <div id="event-log" class="bg-sovereign-bg rounded p-2 max-h-40 overflow-y-auto space-y-1 font-mono text-xs">
+                                <div class="text-gray-600">Wachten op events...</div>
+                            </div>
+                        </div>
+
+                        <!-- Ouroboros Self-Healing -->
+                        <div class="space-y-2">
+                            <h3 class="section-label">Ouroboros Self-Healing</h3>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="stat-box p-2">
+                                    <div class="stat-label">Status</div>
+                                    <div id="ouro-status" class="stat-value text-sovereign-green">--</div>
+                                </div>
+                                <div class="stat-box p-2">
+                                    <div class="stat-label">Cycles</div>
+                                    <div id="ouro-cycles" class="stat-value">--</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recent Errors -->
+                        <div class="space-y-2">
+                            <h3 class="section-label">Recent Errors</h3>
+                            <div id="recent-errors" class="space-y-1 max-h-24 overflow-y-auto">
+                                <div class="text-xs text-gray-600">Loading...</div>
                             </div>
                         </div>
                     </div>
+                </section>
+            </main>
+        </div>
 
-                    <!-- Groq Cores -->
-                    <div class="space-y-2">
-                        <h3 class="text-xs text-gray-500 uppercase tracking-wider">Groq API Keys</h3>
-                        <div id="groq-cores" class="space-y-1">
-                            <div class="text-xs text-gray-500">Loading...</div>
+        <!-- ═══════════════════════════════════════════════ -->
+        <!--  TAB: OBSERVATORY                               -->
+        <!-- ═══════════════════════════════════════════════ -->
+        <div id="tab-observatory" class="tab-content hidden flex-1 overflow-hidden">
+            <main class="grid grid-cols-1 lg:grid-cols-3 gap-3 p-3 h-full overflow-y-auto">
+
+                <!-- Model Leaderboard -->
+                <section class="panel-card col-span-2">
+                    <div class="panel-header">
+                        <span class="text-sovereign-cyan">&#127942;</span>
+                        <h2 class="panel-title text-sovereign-cyan">Model Leaderboard</h2>
+                        <button onclick="pollObservatory()" class="ml-auto text-xs text-gray-500 hover:text-sovereign-cyan">&#x21bb; Refresh</button>
+                    </div>
+                    <div class="panel-body">
+                        <div id="model-leaderboard" class="overflow-x-auto">
+                            <div class="text-xs text-gray-600">Loading model stats...</div>
                         </div>
                     </div>
+                </section>
 
-                    <!-- Active Agents -->
-                    <div class="space-y-2">
-                        <h3 class="text-xs text-gray-500 uppercase tracking-wider">Active Agents</h3>
-                        <div class="agent-row text-xs text-gray-600 border-b border-sovereign-border pb-1 mb-1">
-                            <span class="flex-1">Agent</span>
-                            <span class="w-14 text-right">SP</span>
-                            <span class="w-16 text-center">Status</span>
-                            <span class="w-14 text-right">Tasks</span>
-                            <span class="ml-2 w-6"></span>
-                        </div>
-                        <div id="agent-list" class="space-y-1">
-                            <div class="text-xs text-gray-500">Loading...</div>
+                <!-- Cost Analysis -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-amber">&#128176;</span>
+                        <h2 class="panel-title text-sovereign-amber">Token Costs</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div id="cost-analysis" class="space-y-3">
+                            <div class="text-xs text-gray-600">Loading costs...</div>
                         </div>
                     </div>
+                </section>
 
-                    <!-- Synaptic Leaderboard -->
-                    <div class="space-y-2">
-                        <h3 class="text-xs text-gray-500 uppercase tracking-wider flex items-center gap-2">
-                            <span>&#129504;</span> Synaptic Leaderboard
-                            <span id="synapse-pulse" class="w-1.5 h-1.5 rounded-full bg-sovereign-green status-pulse ml-auto"></span>
-                        </h3>
-                        <div id="synapse-leaderboard" class="space-y-2">
-                            <div class="text-xs text-gray-600">Scanning pathways...</div>
+                <!-- Failure Analysis -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-red">&#9888;</span>
+                        <h2 class="panel-title text-sovereign-red">Failure Analysis</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div id="failure-analysis" class="space-y-2">
+                            <div class="text-xs text-gray-600">Loading failures...</div>
                         </div>
-                        <div class="grid grid-cols-2 gap-2 text-xs">
-                            <div class="bg-sovereign-bg rounded p-2">
-                                <div class="text-gray-600">Swarm Avg</div>
-                                <div id="synapse-avg" class="text-sovereign-cyan font-bold">--</div>
+                    </div>
+                </section>
+
+                <!-- Phantom Predictions -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-glow">&#128302;</span>
+                        <h2 class="panel-title text-sovereign-glow">Phantom Predictions</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div id="phantom-stats" class="space-y-2">
+                            <div class="text-xs text-gray-600">Loading predictions...</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Tribunal Stats -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-cyan">&#9878;</span>
+                        <h2 class="panel-title text-sovereign-cyan">Tribunal &amp; Shield</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="stat-box p-2">
+                                <div class="stat-label">Tribunal Accepted</div>
+                                <div id="trib-accepted" class="stat-value text-sovereign-green">--</div>
                             </div>
-                            <div class="bg-sovereign-bg rounded p-2">
-                                <div class="text-gray-600">Total Fires</div>
-                                <div id="synapse-fires" class="text-sovereign-green font-bold">--</div>
+                            <div class="stat-box p-2">
+                                <div class="stat-label">Tribunal Failed</div>
+                                <div id="trib-failed" class="stat-value text-sovereign-red">--</div>
+                            </div>
+                            <div class="stat-box p-2">
+                                <div class="stat-label">Shield Blocked</div>
+                                <div id="shield-blocked" class="stat-value text-sovereign-red">--</div>
+                            </div>
+                            <div class="stat-box p-2">
+                                <div class="stat-label">Shield Passed</div>
+                                <div id="shield-passed" class="stat-value text-sovereign-green">--</div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            <!-- PANEL B: INGESTIE SLUIS -->
-            <section class="bg-sovereign-panel border border-sovereign-border rounded-lg overflow-hidden flex flex-col">
-                <div class="px-4 py-3 border-b border-sovereign-border flex items-center gap-2">
-                    <span class="text-sovereign-amber">&#9670;</span>
-                    <h2 class="font-bold text-sm text-sovereign-amber uppercase tracking-wider">Ingestie Sluis</h2>
-                </div>
-                <div class="p-4 flex-1 overflow-y-auto space-y-4">
-                    <!-- Drop Zone -->
-                    <div id="drop-zone"
-                         class="border-2 border-dashed border-sovereign-border rounded-lg p-8 text-center transition-all cursor-pointer hover:border-sovereign-accent"
-                         ondragover="event.preventDefault(); this.classList.add('border-sovereign-accent','bg-purple-900/10')"
-                         ondragleave="this.classList.remove('border-sovereign-accent','bg-purple-900/10')"
-                         ondrop="handleDrop(event)"
-                         onclick="document.getElementById('file-input').click()">
-                        <div class="text-3xl mb-2 text-gray-500">&#128194;</div>
-                        <p class="text-sm text-gray-400">Drop bestanden hier</p>
-                        <p class="text-xs text-gray-600 mt-1">.txt .md .py .json .csv .pdf .yaml .toml</p>
-                        <input id="file-input" type="file" multiple class="hidden"
-                               accept=".txt,.md,.py,.json,.csv,.pdf,.yaml,.yml,.toml,.cfg,.ini,.xml,.html,.log"
-                               onchange="handleFiles(this.files)">
+                <!-- Model Registry -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-green">&#9881;</span>
+                        <h2 class="panel-title text-sovereign-green">Model Registry</h2>
                     </div>
-
-                    <!-- Tags Input -->
-                    <div class="space-y-1">
-                        <label class="text-xs text-gray-500 uppercase tracking-wider">Tags (optioneel)</label>
-                        <input id="ingest-tags" type="text"
-                               placeholder="project:frontend, status:oud"
-                               class="w-full bg-sovereign-bg border border-sovereign-border rounded px-3 py-1.5 text-xs text-gray-300 focus:border-sovereign-accent focus:outline-none"
-                               title="Comma-separated key:value paren of losse tags">
-                    </div>
-
-                    <!-- Job Queue -->
-                    <div class="space-y-2">
-                        <div class="flex justify-between items-center">
-                            <h3 class="text-xs text-gray-500 uppercase tracking-wider">Job Queue</h3>
-                            <span id="job-counter" class="text-xs text-gray-500">0 jobs</span>
-                        </div>
-                        <div id="job-list" class="space-y-2 max-h-96 overflow-y-auto">
-                            <div class="text-xs text-gray-600 text-center py-4">Geen actieve jobs</div>
+                    <div class="panel-body">
+                        <div id="model-registry" class="space-y-2">
+                            <div class="text-xs text-gray-600">Loading registry...</div>
                         </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            <!-- PANEL C: NEURALE BRUG (CHAT) -->
-            <section class="bg-sovereign-panel border border-sovereign-border rounded-lg overflow-hidden flex flex-col">
-                <div class="px-4 py-3 border-b border-sovereign-border flex items-center gap-2">
-                    <span class="text-sovereign-glow">&#9672;</span>
-                    <h2 class="font-bold text-sm text-sovereign-glow uppercase tracking-wider">Neurale Brug</h2>
+                <!-- Auction Logs -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-amber">&#128200;</span>
+                        <h2 class="panel-title text-sovereign-amber">Auction Logs</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div id="auction-logs" class="space-y-1 max-h-[400px] overflow-y-auto">
+                            <div class="text-xs text-gray-600">Loading auctions...</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Shard Stats -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-glow">&#128451;</span>
+                        <h2 class="panel-title text-sovereign-glow">ChromaDB Shards</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div id="shard-stats" class="space-y-2">
+                            <div class="text-xs text-gray-600">Loading shards...</div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!--  TAB: MEMORY                                    -->
+        <!-- ═══════════════════════════════════════════════ -->
+        <div id="tab-memory" class="tab-content hidden flex-1 overflow-hidden">
+            <main class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-3 p-3 h-full overflow-y-auto">
+
+                <!-- Cortical Stack Recent -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-glow">&#129504;</span>
+                        <h2 class="panel-title text-sovereign-glow">CorticalStack — Recent Events</h2>
+                        <button onclick="pollMemory()" class="ml-auto text-xs text-gray-500 hover:text-sovereign-glow">&#x21bb;</button>
+                    </div>
+                    <div class="panel-body">
+                        <div id="cortical-events" class="space-y-2 max-h-[600px] overflow-y-auto">
+                            <div class="text-xs text-gray-600">Loading episodic memory...</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- NeuralBus Stats + Alert History -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-cyan">&#9889;</span>
+                        <h2 class="panel-title text-sovereign-cyan">NeuralBus &amp; Alerts</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div class="space-y-2">
+                            <h3 class="section-label">Bus Statistics</h3>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="stat-box p-2"><div class="stat-label">Subscribers</div><div id="bus-subs" class="stat-value">--</div></div>
+                                <div class="stat-box p-2"><div class="stat-label">Events Published</div><div id="bus-published" class="stat-value">--</div></div>
+                                <div class="stat-box p-2"><div class="stat-label">Delivered</div><div id="bus-delivered" class="stat-value">--</div></div>
+                                <div class="stat-box p-2"><div class="stat-label">Errors</div><div id="bus-errors" class="stat-value text-sovereign-red">--</div></div>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <h3 class="section-label">Alert History</h3>
+                            <div id="alert-history" class="space-y-1 max-h-64 overflow-y-auto">
+                                <div class="text-xs text-gray-600">Loading alerts...</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Request Traces -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-amber">&#128269;</span>
+                        <h2 class="panel-title text-sovereign-amber">Request Traces</h2>
+                        <button onclick="pollMemory()" class="ml-auto text-xs text-gray-500 hover:text-sovereign-amber">&#x21bb;</button>
+                    </div>
+                    <div class="panel-body">
+                        <div id="trace-list" class="space-y-1 max-h-[400px] overflow-y-auto">
+                            <div class="text-xs text-gray-600">Loading traces...</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Knowledge Search -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-green">&#128218;</span>
+                        <h2 class="panel-title text-sovereign-green">Knowledge Search</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div class="flex gap-2">
+                            <input id="knowledge-input" type="text" placeholder="Zoek in 422 OMEGA documenten..."
+                                   class="flex-1 bg-sovereign-bg border border-sovereign-border rounded px-3 py-1.5 text-xs text-gray-300 focus:border-sovereign-accent focus:outline-none"
+                                   onkeydown="if(event.key==='Enter')searchKnowledge()">
+                            <button onclick="searchKnowledge()"
+                                    class="bg-sovereign-accent hover:bg-purple-600 text-white px-3 py-1.5 rounded text-xs font-bold transition-colors">
+                                &#128270;
+                            </button>
+                        </div>
+                        <div id="knowledge-results" class="space-y-2 max-h-[400px] overflow-y-auto">
+                            <div class="text-xs text-gray-600 text-center py-4">Typ een zoekopdracht</div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!--  TAB: SECURITY                                  -->
+        <!-- ═══════════════════════════════════════════════ -->
+        <div id="tab-security" class="tab-content hidden flex-1 overflow-hidden">
+            <main class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-3 h-full overflow-y-auto">
+
+                <!-- Sovereign Gate -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-green">&#128274;</span>
+                        <h2 class="panel-title text-sovereign-green">Sovereign Gate</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div class="bg-sovereign-bg rounded p-3 space-y-2">
+                            <div class="flex justify-between"><span class="stat-label">Laws Verified</span><span class="text-xs font-bold text-sovereign-green">10/10</span></div>
+                            <div class="flex justify-between"><span class="stat-label">Silicon Seal C2</span><span class="text-xs font-bold text-sovereign-green">VERIFIED</span></div>
+                            <div class="flex justify-between"><span class="stat-label">Auth Mode</span><span class="text-xs font-bold text-sovereign-accent">Hardware-Bound</span></div>
+                            <div class="flex justify-between"><span class="stat-label">Root Lock</span><span class="text-xs font-bold text-sovereign-green">C:\Users\danny\danny-toolkit</span></div>
+                            <div class="flex justify-between"><span class="stat-label">Admin</span><span class="text-xs font-bold text-sovereign-green">ELEVATED</span></div>
+                            <div class="flex justify-between"><span class="stat-label">Terminal</span><span class="text-xs font-bold text-sovereign-green">PowerShell</span></div>
+                            <div class="flex justify-between"><span class="stat-label">Console</span><span class="text-xs font-bold text-sovereign-green">PHYSICAL</span></div>
+                            <div class="flex justify-between"><span class="stat-label">Identity</span><span class="text-xs font-bold text-sovereign-green">danny.laurent1988</span></div>
+                            <div class="flex justify-between"><span class="stat-label">Anti-Tamper</span><span class="text-xs font-bold text-sovereign-green">INTACT</span></div>
+                            <div class="flex justify-between"><span class="stat-label">Boot Freq</span><span class="text-xs font-bold text-sovereign-green">NORMAL</span></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Governor Guard -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-amber">&#128737;</span>
+                        <h2 class="panel-title text-sovereign-amber">Governor Guard</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div class="bg-sovereign-bg rounded p-3 space-y-2">
+                            <div class="flex justify-between"><span class="stat-label">Injection Detection</span><span id="sec-injection" class="text-xs font-bold text-sovereign-green">ARMED</span></div>
+                            <div class="flex justify-between"><span class="stat-label">PII Scrubbing</span><span class="text-xs font-bold text-sovereign-green">ACTIVE</span></div>
+                            <div class="flex justify-between"><span class="stat-label">Token Budget</span><span class="text-xs font-bold text-sovereign-green">ENFORCED</span></div>
+                            <div class="flex justify-between"><span class="stat-label">Rate Limiter</span><span class="text-xs font-bold text-sovereign-green">120/min</span></div>
+                            <div class="flex justify-between"><span class="stat-label">Single-User Lock</span><span class="text-xs font-bold text-sovereign-green">ACTIVE</span></div>
+                            <div class="flex justify-between"><span class="stat-label">Session Timeout</span><span class="text-xs font-bold text-gray-400">5 min</span></div>
+                            <div class="flex justify-between"><span class="stat-label">WS Max Clients</span><span id="sec-ws" class="text-xs font-bold text-gray-400">0/3</span></div>
+                            <div class="flex justify-between"><span class="stat-label">Error Sanitization</span><span class="text-xs font-bold text-sovereign-green">21 vars</span></div>
+                        </div>
+
+                        <!-- Circuit Breakers -->
+                        <div class="space-y-2">
+                            <h3 class="section-label">Circuit Breakers</h3>
+                            <div id="circuit-breakers" class="space-y-1">
+                                <div class="text-xs text-gray-600">Scanning...</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Config Audit -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-cyan">&#128269;</span>
+                        <h2 class="panel-title text-sovereign-cyan">Config Audit</h2>
+                        <button onclick="pollConfigAudit()" class="ml-auto text-xs text-gray-500 hover:text-sovereign-cyan">&#x21bb; Scan</button>
+                    </div>
+                    <div class="panel-body">
+                        <div id="config-audit" class="space-y-2">
+                            <div class="text-xs text-gray-600">Klik Scan voor audit...</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Omega Bus Cryptographic Status -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-accent">&#128272;</span>
+                        <h2 class="panel-title text-sovereign-accent">Omega Bus</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div class="bg-sovereign-bg rounded p-3 space-y-2">
+                            <div class="flex justify-between"><span class="stat-label">HMAC Signing</span><span id="bus-seal-armed" class="text-xs font-bold text-gray-400">...</span></div>
+                            <div class="flex justify-between"><span class="stat-label">Hardware Bound</span><span id="bus-hardware-bound" class="text-xs font-bold text-gray-400">...</span></div>
+                            <div class="flex justify-between"><span class="stat-label">C2 Master</span><span id="bus-c2-verified" class="text-xs font-bold text-gray-400">...</span></div>
+                            <div class="flex justify-between"><span class="stat-label">Events Published</span><span id="bus-events-pub" class="text-xs font-bold text-gray-400">0</span></div>
+                            <div class="flex justify-between"><span class="stat-label">Seals Verified</span><span id="bus-seals-ok" class="text-xs font-bold text-gray-400">0</span></div>
+                            <div class="flex justify-between"><span class="stat-label">Seals Rejected</span><span id="bus-seals-fail" class="text-xs font-bold text-gray-400">0</span></div>
+                            <div class="flex justify-between"><span class="stat-label">Active Chains</span><span id="bus-chains" class="text-xs font-bold text-gray-400">0</span></div>
+                            <div class="flex justify-between"><span class="stat-label">Chains Blocked</span><span id="bus-chains-blocked" class="text-xs font-bold text-gray-400">0</span></div>
+                            <div class="flex justify-between"><span class="stat-label">Chain Depth Limit</span><span class="text-xs font-bold text-sovereign-accent">5</span></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Governor Rate Limits -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-red">&#9201;</span>
+                        <h2 class="panel-title text-sovereign-red">Rate Limits</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div id="rate-limits" class="space-y-2">
+                            <div class="text-xs text-gray-600">Loading rate limits...</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Deep Health -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-green">&#128154;</span>
+                        <h2 class="panel-title text-sovereign-green">Deep Health</h2>
+                        <button onclick="pollSecurity()" class="ml-auto text-xs text-gray-500 hover:text-sovereign-green">&#x21bb;</button>
+                    </div>
+                    <div class="panel-body">
+                        <div id="deep-health" class="space-y-2">
+                            <div class="text-xs text-gray-600">Loading deep health...</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Error Taxonomy -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-amber">&#128027;</span>
+                        <h2 class="panel-title text-sovereign-amber">Error Taxonomy</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div id="error-taxonomy" class="space-y-1 max-h-[300px] overflow-y-auto">
+                            <div class="text-xs text-gray-600">Loading taxonomy...</div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!--  TAB: OMEGA BRAIN                               -->
+        <!-- ═══════════════════════════════════════════════ -->
+        <div id="tab-brain" class="tab-content hidden flex-1 overflow-hidden">
+            <main class="grid grid-cols-1 lg:grid-cols-3 gap-3 p-3 h-full overflow-y-auto">
+
+                <!-- Agent Grid -->
+                <section class="panel-card col-span-2">
+                    <div class="panel-header">
+                        <span class="text-sovereign-glow">&#129504;</span>
+                        <h2 class="panel-title text-sovereign-glow">Agent Grid</h2>
+                        <button onclick="pollBrain()" class="ml-auto text-xs text-gray-500 hover:text-sovereign-glow">&#x21bb; Refresh</button>
+                    </div>
+                    <div class="panel-body">
+                        <div id="brain-agent-grid" class="grid grid-cols-2 xl:grid-cols-3 gap-2">
+                            <div class="text-xs text-gray-600">Loading agents...</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Consciousness State -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-cyan">&#10024;</span>
+                        <h2 class="panel-title text-sovereign-cyan">Consciousness</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div class="text-center py-4">
+                            <div id="consciousness-mode" class="text-3xl font-bold text-sovereign-glow mb-2">--</div>
+                            <div id="consciousness-label" class="text-xs text-gray-500 uppercase tracking-wider">Modus</div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="stat-box p-2">
+                                <div class="stat-label">Score</div>
+                                <div id="consciousness-score" class="stat-value">--</div>
+                            </div>
+                            <div class="stat-box p-2">
+                                <div class="stat-label">Dromen</div>
+                                <div id="consciousness-dreams" class="stat-value">--</div>
+                            </div>
+                            <div class="stat-box p-2">
+                                <div class="stat-label">Inzichten</div>
+                                <div id="consciousness-insights" class="stat-value">--</div>
+                            </div>
+                            <div class="stat-box p-2">
+                                <div class="stat-label">Modus Sinds</div>
+                                <div id="consciousness-since" class="stat-value text-xs">--</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Goal Commander -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-amber">&#9733;</span>
+                        <h2 class="panel-title text-sovereign-amber">Goal Commander</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div class="flex gap-2">
+                            <input id="brain-goal-input" type="text"
+                                   placeholder="Decomponeer een doel..."
+                                   class="flex-1 bg-sovereign-bg border border-sovereign-border rounded px-3 py-2 text-sm text-gray-200 focus:border-sovereign-accent focus:outline-none"
+                                   onkeydown="if(event.key==='Enter')submitBrainGoal()">
+                            <button onclick="submitBrainGoal()"
+                                    class="bg-sovereign-accent hover:bg-purple-600 text-white px-4 py-2 rounded text-sm font-bold">
+                                &#9658;
+                            </button>
+                        </div>
+                        <div id="brain-goal-result" class="space-y-2 max-h-48 overflow-y-auto">
+                            <div class="text-xs text-gray-600 text-center py-4">Stel een goal in</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Cortex Graph -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-green">&#127760;</span>
+                        <h2 class="panel-title text-sovereign-green">Cortex Graph</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="stat-box p-2">
+                                <div class="stat-label">Nodes</div>
+                                <div id="cortex-nodes" class="stat-value text-sovereign-green">--</div>
+                            </div>
+                            <div class="stat-box p-2">
+                                <div class="stat-label">Edges</div>
+                                <div id="cortex-edges" class="stat-value text-sovereign-cyan">--</div>
+                            </div>
+                            <div class="stat-box p-2">
+                                <div class="stat-label">Density</div>
+                                <div id="cortex-density" class="stat-value">--</div>
+                            </div>
+                            <div class="stat-box p-2">
+                                <div class="stat-label">Components</div>
+                                <div id="cortex-components" class="stat-value">--</div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 mt-2">
+                            <input id="cortex-search-input" type="text" placeholder="Zoek in graph..."
+                                   class="flex-1 bg-sovereign-bg border border-sovereign-border rounded px-3 py-1.5 text-xs text-gray-300 focus:border-sovereign-accent focus:outline-none"
+                                   onkeydown="if(event.key==='Enter')searchCortex()">
+                            <button onclick="searchCortex()"
+                                    class="bg-sovereign-accent hover:bg-purple-600 text-white px-3 py-1.5 rounded text-xs font-bold">&#128270;</button>
+                        </div>
+                        <div id="cortex-search-results" class="space-y-1 max-h-32 overflow-y-auto mt-2"></div>
+                    </div>
+                </section>
+
+                <!-- Virtual Twin -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-red">&#128123;</span>
+                        <h2 class="panel-title text-sovereign-red">Virtual Twin</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="stat-box p-2">
+                                <div class="stat-label">Twin</div>
+                                <div id="twin-status" class="stat-value">--</div>
+                            </div>
+                            <div class="stat-box p-2">
+                                <div class="stat-label">Shadow Zone</div>
+                                <div id="twin-zone" class="stat-value">--</div>
+                            </div>
+                            <div class="stat-box p-2 col-span-2">
+                                <div class="stat-label">Rules</div>
+                                <div id="twin-rules" class="stat-value">--</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!--  TAB: SWARM COMMANDER                           -->
+        <!-- ═══════════════════════════════════════════════ -->
+        <div id="tab-swarm" class="tab-content hidden flex-1 overflow-hidden">
+            <main class="grid grid-cols-1 lg:grid-cols-2 gap-3 p-3 h-full overflow-y-auto">
+
+                <!-- Goal Input -->
+                <section class="panel-card col-span-1 lg:col-span-2">
+                    <div class="panel-header">
+                        <span class="text-sovereign-glow">&#9889;</span>
+                        <h2 class="panel-title text-sovereign-glow">Swarm Goal</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div class="flex gap-2">
+                            <input id="swarm-goal-input" type="text"
+                                   placeholder="Beschrijf een high-level doel voor het 17-agent netwerk..."
+                                   class="flex-1 bg-sovereign-bg border border-sovereign-border rounded px-3 py-2 text-sm text-gray-200 focus:border-sovereign-accent focus:outline-none"
+                                   onkeydown="if(event.key==='Enter')submitSwarmGoal()">
+                            <label class="flex items-center gap-1.5 text-xs text-gray-400">
+                                <input type="checkbox" id="swarm-use-models" class="accent-sovereign-accent"> Models
+                            </label>
+                            <button onclick="submitSwarmGoal()"
+                                    class="bg-sovereign-accent hover:bg-purple-600 text-white px-6 py-2 rounded text-sm font-bold">
+                                Execute &#9658;
+                            </button>
+                        </div>
+                        <!-- Progress stages -->
+                        <div id="swarm-progress" class="hidden flex gap-1 mt-3">
+                            <div class="swarm-stage" data-stage="decompose"><span>1</span> Decompose</div>
+                            <div class="swarm-stage" data-stage="auction"><span>2</span> Auction</div>
+                            <div class="swarm-stage" data-stage="execute"><span>3</span> Execute</div>
+                            <div class="swarm-stage" data-stage="synthesize"><span>4</span> Synthesize</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Task Breakdown -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-cyan">&#128203;</span>
+                        <h2 class="panel-title text-sovereign-cyan">Task Breakdown</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div id="swarm-tasks" class="space-y-2">
+                            <div class="text-xs text-gray-600 text-center py-8">Submit een goal om taken te zien</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Agent Payloads -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-amber">&#128640;</span>
+                        <h2 class="panel-title text-sovereign-amber">Agent Payloads</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div id="swarm-payloads" class="space-y-2">
+                            <div class="text-xs text-gray-600 text-center py-8">Wachten op uitvoering...</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Execution History -->
+                <section class="panel-card col-span-1 lg:col-span-2">
+                    <div class="panel-header">
+                        <span class="text-sovereign-green">&#128214;</span>
+                        <h2 class="panel-title text-sovereign-green">Execution History</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div id="swarm-history" class="space-y-2 max-h-48 overflow-y-auto">
+                            <div class="text-xs text-gray-600 text-center py-4">Geen eerdere goals</div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!--  TAB: APPS HUB                                  -->
+        <!-- ═══════════════════════════════════════════════ -->
+        <div id="tab-apps" class="tab-content hidden flex-1 overflow-hidden">
+            <main class="p-3 h-full overflow-y-auto">
+
+                <!-- Category Filter -->
+                <div class="flex gap-2 mb-3 flex-wrap" id="app-category-bar">
+                    <button class="app-cat-btn active" data-cat="all" onclick="filterApps('all')">All</button>
+                    <button class="app-cat-btn" data-cat="productiviteit" onclick="filterApps('productiviteit')">&#128203; Productiviteit</button>
+                    <button class="app-cat-btn" data-cat="ai" onclick="filterApps('ai')">&#129504; AI</button>
+                    <button class="app-cat-btn" data-cat="gezondheid" onclick="filterApps('gezondheid')">&#10084; Gezondheid</button>
+                    <button class="app-cat-btn" data-cat="financien" onclick="filterApps('financien')">&#128176; Financien</button>
+                    <button class="app-cat-btn" data-cat="creatief" onclick="filterApps('creatief')">&#127912; Creatief</button>
+                    <button class="app-cat-btn" data-cat="leren" onclick="filterApps('leren')">&#128218; Leren</button>
+                    <button class="app-cat-btn" data-cat="lifestyle" onclick="filterApps('lifestyle')">&#11088; Lifestyle</button>
+                    <button class="app-cat-btn" data-cat="systeem" onclick="filterApps('systeem')">&#9881; Systeem</button>
                 </div>
 
-                <!-- Chat Messages -->
-                <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3">
-                    <div class="text-xs text-gray-600 text-center py-8">
-                        <div class="text-2xl mb-2">&#937;</div>
-                        <p>Stel een vraag aan het RAG-systeem</p>
-                        <p class="mt-1 text-gray-700">384d BGE-small ChromaDB kluis actief</p>
+                <!-- App Grid -->
+                <div id="app-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                    <div class="text-xs text-gray-600 col-span-full text-center py-8">Loading apps...</div>
+                </div>
+            </main>
+
+            <!-- App Modal Overlay -->
+            <div id="app-modal-overlay" class="app-modal-overlay hidden" onclick="if(event.target===this)closeAppModal()">
+                <div class="app-modal">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 id="app-modal-title" class="text-lg font-bold text-sovereign-glow"></h2>
+                        <button onclick="closeAppModal()" class="text-gray-500 hover:text-white text-xl">&times;</button>
+                    </div>
+                    <p id="app-modal-desc" class="text-sm text-gray-400 mb-4"></p>
+
+                    <!-- Action buttons -->
+                    <div id="app-modal-actions" class="flex flex-wrap gap-2 mb-4"></div>
+
+                    <!-- Parameter form -->
+                    <div id="app-modal-params" class="space-y-3 mb-4"></div>
+
+                    <!-- Execute button -->
+                    <button id="app-modal-execute" onclick="executeAppAction()"
+                            class="w-full bg-sovereign-accent hover:bg-purple-600 text-white py-2 rounded font-bold hidden">
+                        Execute
+                    </button>
+
+                    <!-- Result display -->
+                    <div id="app-modal-result" class="mt-4 hidden">
+                        <h3 class="section-label mb-2">Result</h3>
+                        <pre id="app-modal-result-text" class="bg-sovereign-bg rounded p-3 text-xs text-gray-300 max-h-64 overflow-y-auto whitespace-pre-wrap"></pre>
+                    </div>
+
+                    <!-- State viewer -->
+                    <div id="app-modal-state" class="mt-4 hidden">
+                        <h3 class="section-label mb-2">App State</h3>
+                        <pre id="app-modal-state-text" class="bg-sovereign-bg rounded p-3 text-xs text-gray-400 max-h-48 overflow-y-auto whitespace-pre-wrap"></pre>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <!-- Chat Input -->
-                <div class="border-t border-sovereign-border p-3">
-                    <div class="flex gap-2">
-                        <input id="chat-input" type="text"
-                               placeholder="Vraag aan het Omega-brein..."
-                               class="flex-1 bg-sovereign-bg border border-sovereign-border rounded px-3 py-2 text-sm text-gray-200 focus:border-sovereign-accent focus:outline-none"
-                               onkeydown="if(event.key==='Enter')sendQuery()">
-                        <button onclick="sendQuery()"
-                                class="bg-sovereign-accent hover:bg-purple-600 text-white px-4 py-2 rounded text-sm font-bold transition-colors">
-                            &#9658;
+        <!-- ═══════════════════════════════════════════════ -->
+        <!--  TAB: KNOWLEDGE FORGE                           -->
+        <!-- ═══════════════════════════════════════════════ -->
+        <div id="tab-knowledge" class="tab-content hidden flex-1 overflow-hidden">
+            <main class="grid grid-cols-1 lg:grid-cols-3 gap-3 p-3 h-full overflow-y-auto">
+
+                <!-- RAG Search -->
+                <section class="panel-card col-span-2">
+                    <div class="panel-header">
+                        <span class="text-sovereign-glow">&#128270;</span>
+                        <h2 class="panel-title text-sovereign-glow">RAG Search</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div class="flex gap-2">
+                            <input id="kg-search-input" type="text" placeholder="Doorzoek de OMEGA kennisbank..."
+                                   class="flex-1 bg-sovereign-bg border border-sovereign-border rounded px-3 py-2 text-sm text-gray-200 focus:border-sovereign-accent focus:outline-none"
+                                   onkeydown="if(event.key==='Enter')searchKnowledgeForge()">
+                            <label class="flex items-center gap-1.5 text-xs text-gray-400 whitespace-nowrap">
+                                <input type="checkbox" id="kg-include-web" class="accent-sovereign-accent"> + Web
+                            </label>
+                            <button onclick="searchKnowledgeForge()"
+                                    class="bg-sovereign-accent hover:bg-purple-600 text-white px-4 py-2 rounded text-sm font-bold">&#128270;</button>
+                        </div>
+                        <div id="kg-search-results" class="space-y-2 max-h-[500px] overflow-y-auto mt-3">
+                            <div class="text-xs text-gray-600 text-center py-8">Typ een zoekopdracht</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Shard Browser -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-cyan">&#128451;</span>
+                        <h2 class="panel-title text-sovereign-cyan">ChromaDB Shards</h2>
+                        <button onclick="pollKnowledge()" class="ml-auto text-xs text-gray-500 hover:text-sovereign-cyan">&#x21bb;</button>
+                    </div>
+                    <div class="panel-body">
+                        <div id="kg-shards" class="space-y-2">
+                            <div class="text-xs text-gray-600">Loading shards...</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Ingestion Control -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-green">&#128194;</span>
+                        <h2 class="panel-title text-sovereign-green">Bulk Ingestion</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div class="space-y-2">
+                            <input id="kg-bulk-path" type="text" placeholder="Map pad (bijv. danny_toolkit/brain)"
+                                   class="w-full bg-sovereign-bg border border-sovereign-border rounded px-3 py-1.5 text-xs text-gray-300 focus:border-sovereign-accent focus:outline-none">
+                            <input id="kg-bulk-tags" type="text" placeholder="Tags (bijv. bron:brain, type:core)"
+                                   class="w-full bg-sovereign-bg border border-sovereign-border rounded px-3 py-1.5 text-xs text-gray-300 focus:border-sovereign-accent focus:outline-none">
+                            <button onclick="startBulkAssimilate()"
+                                    class="w-full bg-sovereign-accent hover:bg-purple-600 text-white py-1.5 rounded text-xs font-bold">
+                                Assimilate &#9889;
+                            </button>
+                        </div>
+                        <div id="kg-bulk-status" class="text-xs text-gray-600 mt-2"></div>
+                    </div>
+                </section>
+
+                <!-- Pruning Control -->
+                <section class="panel-card col-span-2">
+                    <div class="panel-header">
+                        <span class="text-sovereign-amber">&#9986;</span>
+                        <h2 class="panel-title text-sovereign-amber">Pruning Control</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div class="grid grid-cols-4 gap-2">
+                            <div class="stat-box p-2">
+                                <div class="stat-label">Tracked</div>
+                                <div id="kg-prune-tracked" class="stat-value">--</div>
+                            </div>
+                            <div class="stat-box p-2">
+                                <div class="stat-label">Entropy</div>
+                                <div id="kg-prune-entropy" class="stat-value">--</div>
+                            </div>
+                            <div class="stat-box p-2">
+                                <div class="stat-label">Redundancy</div>
+                                <div id="kg-prune-redundancy" class="stat-value">--</div>
+                            </div>
+                            <div class="stat-box p-2">
+                                <div class="stat-label">Decay Days</div>
+                                <div id="kg-prune-decay" class="stat-value">--</div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 mt-3">
+                            <button onclick="previewPrune()"
+                                    class="flex-1 bg-sovereign-panel border border-sovereign-border hover:border-sovereign-amber text-sovereign-amber py-1.5 rounded text-xs font-bold">
+                                Preview
+                            </button>
+                            <button onclick="executePrune()"
+                                    class="flex-1 bg-sovereign-amber/20 hover:bg-sovereign-amber/30 text-sovereign-amber py-1.5 rounded text-xs font-bold">
+                                Execute Prune
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════ -->
+        <!--  TAB: DAEMON & DREAMS                           -->
+        <!-- ═══════════════════════════════════════════════ -->
+        <div id="tab-daemon" class="tab-content hidden flex-1 overflow-hidden">
+            <main class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 p-3 h-full overflow-y-auto">
+
+                <!-- Organism Avatar -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-glow">&#129302;</span>
+                        <h2 class="panel-title text-sovereign-glow">Digital Organism</h2>
+                    </div>
+                    <div class="panel-body items-center justify-center">
+                        <div id="daemon-avatar" class="avatar-focus w-24 h-24 mx-auto rounded-full flex items-center justify-center text-4xl mb-3">
+                            &#129302;
+                        </div>
+                        <div id="daemon-mood-text" class="text-center text-sm text-gray-300 font-bold">--</div>
+                        <div id="daemon-form-text" class="text-center text-xs text-gray-500 mt-1">--</div>
+                    </div>
+                </section>
+
+                <!-- Emotional State -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-amber">&#128150;</span>
+                        <h2 class="panel-title text-sovereign-amber">Emotional State</h2>
+                        <button onclick="pollDaemon()" class="ml-auto text-xs text-gray-500 hover:text-sovereign-amber">&#x21bb;</button>
+                    </div>
+                    <div class="panel-body">
+                        <div id="daemon-emotions" class="space-y-3">
+                            <div class="text-xs text-gray-600">Loading emotions...</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Metabolism -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-green">&#127807;</span>
+                        <h2 class="panel-title text-sovereign-green">Metabolism</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div id="daemon-metabolism" class="space-y-2">
+                            <div class="text-xs text-gray-600">Loading nutrients...</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Coherence Monitor -->
+                <section class="panel-card">
+                    <div class="panel-header">
+                        <span class="text-sovereign-cyan">&#128200;</span>
+                        <h2 class="panel-title text-sovereign-cyan">Coherence</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="stat-box p-2">
+                                <div class="stat-label">CPU Avg</div>
+                                <div id="coherence-cpu" class="stat-value">--</div>
+                            </div>
+                            <div class="stat-box p-2">
+                                <div class="stat-label">GPU Avg</div>
+                                <div id="coherence-gpu" class="stat-value">--</div>
+                            </div>
+                            <div class="stat-box p-2">
+                                <div class="stat-label">Correlatie</div>
+                                <div id="coherence-corr" class="stat-value">--</div>
+                            </div>
+                            <div class="stat-box p-2">
+                                <div class="stat-label">Verdict</div>
+                                <div id="coherence-verdict" class="stat-value">--</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Dream Cycle -->
+                <section class="panel-card col-span-1 md:col-span-2">
+                    <div class="panel-header">
+                        <span class="text-sovereign-glow">&#127769;</span>
+                        <h2 class="panel-title text-sovereign-glow">Dream Cycle</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div id="daemon-dreams" class="space-y-2 max-h-48 overflow-y-auto">
+                            <div class="text-xs text-gray-600">Loading dreams...</div>
+                        </div>
+                        <button onclick="triggerDream()"
+                                class="mt-3 w-full bg-sovereign-panel border border-sovereign-glow/30 hover:border-sovereign-glow text-sovereign-glow py-2 rounded text-xs font-bold">
+                            &#127769; Trigger REM Cycle
                         </button>
                     </div>
-                </div>
-            </section>
+                </section>
 
-        </main>
+                <!-- Heartbeat -->
+                <section class="panel-card col-span-1 md:col-span-2">
+                    <div class="panel-header">
+                        <span class="text-sovereign-red heartbeat-pulse">&#10084;</span>
+                        <h2 class="panel-title text-sovereign-red">Heartbeat</h2>
+                    </div>
+                    <div class="panel-body">
+                        <div id="daemon-heartbeats" class="space-y-1 max-h-48 overflow-y-auto">
+                            <div class="text-xs text-gray-600">Loading heartbeats...</div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
     </div>
 
     <script src="/cmd/app.js"></script>

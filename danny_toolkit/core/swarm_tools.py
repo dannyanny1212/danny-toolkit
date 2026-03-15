@@ -54,7 +54,7 @@ try:
 except ImportError:
     _VENV_PYTHON = sys.executable
 
-    def _get_env(**_kwargs):
+    def _get_env(**_kwargs) -> Optional[dict]:
         return None
 
 
