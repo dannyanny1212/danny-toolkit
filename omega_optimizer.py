@@ -112,6 +112,11 @@ class OmegaOptimizer:
             print(f"{Kleur.BLAUW}  > CorticalStack defragmenteren (VACUUM)...{Kleur.RESET}")
             try:
                 conn = sqlite3.connect(self.db_path)
+                try:
+                    from danny_toolkit.core.config import Config
+                    Config.apply_sqlite_perf(conn)
+                except ImportError:
+                    pass
                 conn.execute("VACUUM")
                 conn.close()
                 print(f"{Kleur.GROEN}✔ Database geoptimaliseerd.{Kleur.RESET}")

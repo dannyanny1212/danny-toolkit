@@ -156,9 +156,13 @@ def bench_sqlite() -> dict:
         return result
 
     conn = sqlite3.connect(str(db_path))
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA cache_size=-65536")  # 64 MB
-    conn.execute("PRAGMA mmap_size=268435456")  # 256 MB
+    try:
+        from danny_toolkit.core.config import Config
+        Config.apply_sqlite_perf(conn)
+    except ImportError:
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA cache_size=-65536")
+        conn.execute("PRAGMA mmap_size=268435456")
 
     # Count events
     row = conn.execute("SELECT COUNT(*) FROM episodic_memory").fetchone()

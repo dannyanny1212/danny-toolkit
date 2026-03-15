@@ -3514,6 +3514,7 @@ async def brain_cortex_graph(
         cortex_db = Config.DATA_DIR / "cortex_knowledge.db"
         if cortex_db.exists():
             conn = sqlite3.connect(str(cortex_db), timeout=2)
+            Config.apply_sqlite_perf(conn)
             try:
                 nodes = conn.execute("SELECT COUNT(*) FROM nodes").fetchone()[0]
                 edges = conn.execute("SELECT COUNT(*) FROM edges").fetchone()[0]

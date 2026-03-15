@@ -705,6 +705,7 @@ class WillProtocol:
 
         # Actieve segment UUIDs uit SQLite
         conn = sqlite3.connect(str(sqlite_pad))
+        Config.apply_sqlite_perf(conn)
         try:
             cur = conn.cursor()
             cur.execute("SELECT id FROM segments")
